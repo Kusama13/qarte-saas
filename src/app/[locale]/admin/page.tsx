@@ -51,6 +51,7 @@ interface Merchant {
   bio: string | null;
   planning_enabled: boolean;
   auto_booking_enabled: boolean;
+  booking_mode: 'slots' | 'free' | null;
   referral_program_enabled: boolean;
   birthday_gift_enabled: boolean;
   welcome_offer_enabled: boolean;
@@ -126,6 +127,9 @@ export default function AdminDashboardPage() {
     weeklyActiveMerchants: 0,
     cagnotteMerchants: 0,
     mrr: 0,
+    planningActive: 0,
+    resaEnLigne: 0,
+    modeLibre: 0,
   });
   const [recentMerchants, setRecentMerchants] = useState<Merchant[]>([]);
 
@@ -182,10 +186,10 @@ export default function AdminDashboardPage() {
       { data: allVisits },
       { data: recentMerchantsList },
     ] = await Promise.all([
-      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, billing_period_start, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode, bio, planning_enabled, auto_booking_enabled, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, shield_enabled, tier2_enabled'),
+      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, billing_period_start, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode, bio, planning_enabled, auto_booking_enabled, booking_mode, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, shield_enabled, tier2_enabled'),
       supabase.from('super_admins').select('user_id'),
       supabase.from('visits').select('merchant_id, visited_at'),
-      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, billing_period_start, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode, bio, planning_enabled, auto_booking_enabled, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, shield_enabled, tier2_enabled').order('created_at', { ascending: false }).limit(10),
+      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, billing_period_start, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode, bio, planning_enabled, auto_booking_enabled, booking_mode, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, shield_enabled, tier2_enabled').order('created_at', { ascending: false }).limit(10),
     ]);
 
     // Fetch merchant emails via API
@@ -239,6 +243,9 @@ export default function AdminDashboardPage() {
     const weeklyActive = new Set([...scans7dMap.keys()].filter(id => merchants.some((m: Merchant) => m.id === id)));
 
     const cagnotte = merchants.filter((m: Merchant) => m.loyalty_mode === 'cagnotte');
+    const planningActive = merchants.filter((m: Merchant) => m.planning_enabled);
+    const resaEnLigne = merchants.filter((m: Merchant) => m.auto_booking_enabled);
+    const modeLibre = merchants.filter((m: Merchant) => m.booking_mode === 'free');
 
     // MRR: prix reel par merchant (19€ anciens, 24€ nouveaux, annuel /12)
     const mrr = active.reduce((sum: number, m: Merchant) => {
@@ -254,6 +261,9 @@ export default function AdminDashboardPage() {
       weeklyActiveMerchants: weeklyActive.size,
       cagnotteMerchants: cagnotte.length,
       mrr,
+      planningActive: planningActive.length,
+      resaEnLigne: resaEnLigne.length,
+      modeLibre: modeLibre.length,
     });
 
     // Helper to enrich merchant for action segments
@@ -599,6 +609,12 @@ export default function AdminDashboardPage() {
         <StatCard label="Annules" value={stats.canceledMerchants} icon={UserX} color="red" />
         <StatCard label="Actifs 7j" value={stats.weeklyActiveMerchants} icon={Users} color="blue" />
         <StatCard label="Conversion" value={`${conversionRate}%`} icon={Percent} color="green" />
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <StatCard label="Planning actif" value={stats.planningActive} icon={Calendar} color="blue" />
+        <StatCard label="Resa en ligne" value={stats.resaEnLigne} icon={Calendar} color="emerald" />
+        <StatCard label="Mode Libre" value={stats.modeLibre} icon={Calendar} color="purple" />
       </div>
 
 

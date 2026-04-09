@@ -174,6 +174,8 @@ function computeHealthScore(
   if (merchant.welcome_offer_enabled) score += 5;
   if (merchant.birthday_gift_enabled) score += 3;
   if (merchant.double_days_enabled) score += 2;
+  if (merchant.planning_enabled) score += 5;
+  if (merchant.auto_booking_enabled) score += 5;
   return Math.min(score, 100);
 }
 
@@ -197,7 +199,7 @@ function HealthDot({ score }: { score: number }) {
 // --- Shared Sub-Components ---
 
 /** Badges shown next to merchant name */
-function MerchantBadges({ isAdmin, noContact, pending, pendingDeposits, pwaInstalled, welcomeOffer, cagnotte, pageRemplie }: { isAdmin: boolean; noContact: boolean | null; pending: number; pendingDeposits: number; pwaInstalled: boolean; welcomeOffer: boolean; cagnotte: boolean; pageRemplie: boolean }) {
+function MerchantBadges({ isAdmin, noContact, pending, pendingDeposits, pwaInstalled, welcomeOffer, cagnotte, pageRemplie, planningEnabled, resaEnLigne, bookingMode }: { isAdmin: boolean; noContact: boolean | null; pending: number; pendingDeposits: number; pwaInstalled: boolean; welcomeOffer: boolean; cagnotte: boolean; pageRemplie: boolean; planningEnabled: boolean; resaEnLigne: boolean; bookingMode: 'slots' | 'free' | null }) {
   return (
     <>
       {isAdmin && (
@@ -226,6 +228,16 @@ function MerchantBadges({ isAdmin, noContact, pending, pendingDeposits, pwaInsta
         >
           <Hourglass className="w-3 h-3" />
           {pendingDeposits}
+        </span>
+      )}
+      {planningEnabled && (
+        <span className={cn("px-1.5 py-0.5 text-[10px] font-semibold rounded-full flex-shrink-0", resaEnLigne ? "bg-emerald-100 text-emerald-700" : "bg-sky-100 text-sky-700")} title={resaEnLigne ? "Planning + resa en ligne" : "Planning actif (resa en ligne desactivee)"}>
+          {resaEnLigne ? 'Resa' : 'Planning'}
+        </span>
+      )}
+      {planningEnabled && bookingMode === 'free' && (
+        <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-teal-100 text-teal-700 rounded-full flex-shrink-0" title="Mode libre">
+          Libre
         </span>
       )}
       {pwaInstalled && (
@@ -546,8 +558,10 @@ export default function AdminMerchantsPage() {
   function getWhatsAppMessages(merchant: Merchant, _lifecycle: LifecycleStage, _customers: number): { label: string; text: string }[] {
     const name = merchant.shop_name;
     return [
-      { label: 'Bienvenue', text: `Bienvenue sur Qarte ${name} ! En résumé :\n\n→ Tes clients ne perdent plus leur carte de fidélité\n→ T'as une vitrine en ligne prête pour tes réseaux\n→ Tes clients reviennent grâce aux notifs et au parrainage\n→ Tu remplis ton planning les jours calmes\n\nTout est dans ton espace pro. Je suis ${ADMIN_CONTACT_NAME}, je t'accompagne 😊` },
-      { label: 'Message libre', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. ` },
+      { label: 'Premier contact', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte, comment tu gères tes réservations et ta fidélisation clients actuellement ?` },
+      { label: 'Problématique', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte, qu'est-ce qui te prend le plus la tête au quotidien ? Les no-shows, les clientes qui reviennent pas, ou remplir les jours creux ?` },
+      { label: 'Fidélisation', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte, t'as déjà un système pour faire revenir tes clientes ou c'est surtout du bouche-à-oreille pour l'instant ?` },
+      { label: 'Visibilité', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte, comment tes nouvelles clientes te trouvent aujourd'hui ? Instagram, Google, recommandations ?` },
     ];
   }
 
@@ -835,7 +849,7 @@ export default function AdminMerchantsPage() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
                               <p className="font-medium text-gray-900 truncate max-w-[180px] text-sm">{merchant.shop_name}</p>
-                              <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pendingDeposits={pendingDeposits} pwaInstalled={!!merchant.pwa_installed_at} welcomeOffer={!!merchant.welcome_offer_enabled} cagnotte={merchant.loyalty_mode === 'cagnotte'} pageRemplie={!!(data?.servicesCounts[merchant.id] && data?.photosCounts[merchant.id] && merchant.shop_address)} />
+                              <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pendingDeposits={pendingDeposits} pwaInstalled={!!merchant.pwa_installed_at} welcomeOffer={!!merchant.welcome_offer_enabled} cagnotte={merchant.loyalty_mode === 'cagnotte'} pageRemplie={!!(data?.servicesCounts[merchant.id] && data?.photosCounts[merchant.id] && merchant.shop_address)} planningEnabled={!!merchant.planning_enabled} resaEnLigne={!!merchant.auto_booking_enabled} bookingMode={merchant.booking_mode || null} />
                             </div>
                             <div className="flex items-center gap-2 text-[11px] text-gray-400">
                               {data?.userEmails[merchant.user_id] && (
@@ -939,7 +953,7 @@ export default function AdminMerchantsPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
                           <p className="font-medium text-gray-900 truncate text-sm">{merchant.shop_name}</p>
-                          <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pendingDeposits={pendingDeposits} pwaInstalled={!!merchant.pwa_installed_at} welcomeOffer={!!merchant.welcome_offer_enabled} cagnotte={merchant.loyalty_mode === 'cagnotte'} pageRemplie={!!(data?.servicesCounts[merchant.id] && data?.photosCounts[merchant.id] && merchant.shop_address)} />
+                          <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pendingDeposits={pendingDeposits} pwaInstalled={!!merchant.pwa_installed_at} welcomeOffer={!!merchant.welcome_offer_enabled} cagnotte={merchant.loyalty_mode === 'cagnotte'} pageRemplie={!!(data?.servicesCounts[merchant.id] && data?.photosCounts[merchant.id] && merchant.shop_address)} planningEnabled={!!merchant.planning_enabled} resaEnLigne={!!merchant.auto_booking_enabled} bookingMode={merchant.booking_mode || null} />
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className={cn("px-1.5 py-0.5 text-[10px] font-semibold rounded-full", lifecycle.bgColor, lifecycle.color)}>

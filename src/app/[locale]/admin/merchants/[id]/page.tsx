@@ -44,6 +44,7 @@ import {
   FileText,
   CreditCard,
   Hourglass,
+  XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn, generateQRCode, getScanUrl, formatDoubleDays, formatPhoneForWhatsApp, COUNTRY_FLAGS } from '@/lib/utils';
@@ -80,6 +81,7 @@ interface Stats {
   planningSlotsCount: number;
   planningBookingsCount: number;
   pendingDepositsCount: number;
+  onlineBookingsCount: number;
 }
 
 interface MemberProgram {
@@ -136,6 +138,8 @@ function computeHealthScore(
   if (merchant.welcome_offer_enabled) score += 5;
   if (merchant.birthday_gift_enabled) score += 3;
   if (merchant.double_days_enabled) score += 2;
+  if (merchant.planning_enabled) score += 5;
+  if (merchant.auto_booking_enabled) score += 5;
   return Math.min(score, 100);
 }
 
@@ -214,10 +218,14 @@ function FeatureBadge({ active, icon, label }: { active: boolean; icon: React.Re
 
 // --- WhatsApp message templates ---
 
+const ADMIN_CONTACT_NAME = 'Elodie';
+
 function getWhatsAppMarketing(name: string, _customers: number): { label: string; text: string }[] {
   return [
-    { label: 'Bienvenue', text: `Bienvenue sur Qarte ${name} ! En résumé :\n\n→ Tes clients ne perdent plus leur carte de fidélité\n→ T'as une vitrine en ligne prête pour tes réseaux\n→ Tes clients reviennent grâce aux notifs et au parrainage\n→ Tu gères ton planning et tes réservations en ligne\n\nTout est dans ton espace pro. Je suis Elodie, je t'accompagne 😊` },
-    { label: 'Message libre', text: `C'est Elodie de Qarte. ` },
+    { label: 'Premier contact', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte, comment tu gères tes réservations et ta fidélisation clients actuellement ?` },
+    { label: 'Problématique', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte, qu'est-ce qui te prend le plus la tête au quotidien ? Les no-shows, les clientes qui reviennent pas, ou remplir les jours creux ?` },
+    { label: 'Fidélisation', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte, t'as déjà un système pour faire revenir tes clientes ou c'est surtout du bouche-à-oreille pour l'instant ?` },
+    { label: 'Visibilité', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte, comment tes nouvelles clientes te trouvent aujourd'hui ? Instagram, Google, recommandations ?` },
   ];
 }
 
@@ -292,7 +300,7 @@ export default function MerchantDetailPage() {
     totalCustomers: 0, activeCustomers: 0, totalVisits: 0, totalRedemptions: 0,
     pushSubscribers: 0, pushSent: 0, smsSent: 0, pendingPoints: 0, weeklyScans: 0,
     lastVisitDate: null, totalReferrals: 0, pendingReferrals: 0, completedReferrals: 0,
-    servicesCount: 0, photosCount: 0, welcomeVouchers: 0, offerVouchers: 0, planningSlotsCount: 0, planningBookingsCount: 0, pendingDepositsCount: 0,
+    servicesCount: 0, photosCount: 0, welcomeVouchers: 0, offerVouchers: 0, planningSlotsCount: 0, planningBookingsCount: 0, pendingDepositsCount: 0, onlineBookingsCount: 0,
   });
   const [memberPrograms, setMemberPrograms] = useState<MemberProgram[]>([]);
   const [loading, setLoading] = useState(true);
@@ -827,6 +835,11 @@ export default function MerchantDetailPage() {
           <FeatureBadge active={merchant.shield_enabled} icon={<Shield className="w-3 h-3" />} label="Shield" />
           <FeatureBadge active={merchant.welcome_offer_enabled} icon={<Gift className="w-3 h-3" />} label="Bienvenue" />
           <FeatureBadge active={merchant.auto_booking_enabled} icon={<CalendarDays className="w-3 h-3" />} label="Resa en ligne" />
+          <FeatureBadge active={merchant.planning_enabled} icon={<Clock className="w-3 h-3" />} label="Planning" />
+          {merchant.booking_mode === 'free' && <FeatureBadge active icon={<Zap className="w-3 h-3" />} label="Mode Libre" />}
+          {Number(merchant.buffer_minutes || 0) > 0 && <FeatureBadge active icon={<Clock className="w-3 h-3" />} label={`Buffer ${merchant.buffer_minutes}min`} />}
+          {merchant.allow_customer_cancel && <FeatureBadge active icon={<XCircle className="w-3 h-3" />} label={`Annulation J-${merchant.cancel_deadline_days || 0}`} />}
+          {merchant.allow_customer_reschedule && <FeatureBadge active icon={<CalendarDays className="w-3 h-3" />} label={`Modif J-${merchant.reschedule_deadline_days || 0}`} />}
           <FeatureBadge active={merchant.tier2_enabled} icon={<Zap className="w-3 h-3" />} label="Palier 2" />
           {merchant.double_days_enabled && (
             <FeatureBadge active icon={<Zap className="w-3 h-3" />} label={`Jours x2 : ${formatDoubleDays(merchant.double_days_of_week) || '—'}`} />
@@ -1008,6 +1021,7 @@ export default function MerchantDetailPage() {
             <StatCard icon={<StatIcon icon={Scissors} color="violet" />} value={stats.servicesCount} label="Prestations" />
             <StatCard icon={<StatIcon icon={Image} color="cyan" />} value={stats.photosCount} label="Photos" />
             <StatCard icon={<StatIcon icon={CalendarDays} color="indigo" />} value={`${stats.planningBookingsCount} / ${stats.planningSlotsCount}`} label="Reservations / creneaux" highlight={stats.planningBookingsCount > 0 ? 'green' : undefined} />
+            <StatCard icon={<StatIcon icon={Globe} color="emerald" />} value={stats.onlineBookingsCount} label="Resas en ligne (total)" highlight={stats.onlineBookingsCount > 0 ? 'green' : undefined} />
             <StatCard
               icon={<div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", stats.pendingDepositsCount > 0 ? "bg-amber-100" : "bg-gray-50")}><Hourglass className={cn("w-4 h-4", stats.pendingDepositsCount > 0 ? "text-amber-600" : "text-gray-400")} /></div>}
               value={stats.pendingDepositsCount}
@@ -1024,15 +1038,16 @@ export default function MerchantDetailPage() {
 
         {merchant.opening_hours && Object.values(merchant.opening_hours).some(v => v !== null) && (
           <div>
-            <SectionTitle icon={<Clock className="w-4 h-4 text-amber-600" />}>Horaires</SectionTitle>
+            <SectionTitle icon={<Clock className="w-4 h-4 text-amber-600" />}>Horaires{merchant.booking_mode === 'free' ? ' (mode libre)' : ''}</SectionTitle>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day, i) => {
                 const key = String(i + 1 === 7 ? 0 : i + 1);
                 const hours = merchant.opening_hours?.[key];
+                const hasBreak = hours?.break_start && hours?.break_end;
                 return (
                   <div key={day} className={cn("px-3 py-2 rounded-lg text-sm", hours ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-400")}>
                     <span className="font-medium">{day}</span>{' '}
-                    {hours ? `${hours.open}–${hours.close}` : 'Fermé'}
+                    {hours ? (hasBreak ? `${hours.open}–${hours.break_start} / ${hours.break_end}–${hours.close}` : `${hours.open}–${hours.close}`) : 'Fermé'}
                   </div>
                 );
               })}
