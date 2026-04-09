@@ -543,84 +543,18 @@ export default function AdminMerchantsPage() {
     </button>
   );
 
-  function getWhatsAppMessages(merchant: Merchant, lifecycle: LifecycleStage, customers: number): { label: string; text: string }[] {
+  function getWhatsAppMessages(merchant: Merchant, _lifecycle: LifecycleStage, _customers: number): { label: string; text: string }[] {
     const name = merchant.shop_name;
-    const msgs: { label: string; text: string }[] = [];
-    const l = lifecycle.label.toLowerCase();
-
-    // Bienvenue benefit (toujours en premier)
-    msgs.push({ label: 'Bienvenue', text: `Bienvenue sur Qarte ${name} ! En résumé :\n\n→ Tes clients ne perdent plus leur carte de fidélité\n→ T'as une vitrine en ligne prête pour tes réseaux\n→ Tes clients reviennent grâce aux notifs et au parrainage\n→ Tu remplis ton planning les jours calmes\n\nTout est dans ton espace pro. Je suis ${ADMIN_CONTACT_NAME}, je t'accompagne 😊` });
-
-    if (l.includes('config programme')) {
-      msgs.push({ label: 'Aide config', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Ton programme n'est pas encore en ligne — dis-moi juste ta récompense habituelle et je configure tout pour toi en 30 secondes 😊` });
-    } else if (l.includes('1er scan')) {
-      msgs.push({ label: '1er scan', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Ta carte est prête ! Montre le QR code à tes 3 prochains clients au moment de payer — ils scannent, c'est fait 😊` });
-    } else if (l.includes('essai j-')) {
-      msgs.push({ label: 'Fin essai', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME}. Ton essai se termine bientôt${customers > 0 ? ` et tes ${customers} clients comptent sur leur carte` : ''}. On continue ensemble ? 😊` });
-      msgs.push({ label: 'Dispo', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Des questions avant la fin de l'essai ? Je suis là, on peut même s'appeler 2 min si tu veux 📞` });
-    } else if (l.includes('expiré')) {
-      msgs.push({ label: 'Relance', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Ton essai est terminé mais rien n'est perdu ! ${customers > 0 ? `Tes ${customers} clients gardent leur carte. ` : ''}On relance ? 😊` });
-      msgs.push({ label: 'Feedback', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Un truc a coincé pendant l'essai ? Tes retours m'aident beaucoup — et je peux sûrement débloquer ça 🙏` });
-    } else if (l.includes('inactif')) {
-      msgs.push({ label: 'Nouvelles', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Comment ça se passe au salon ? Un coup de main avec Qarte ? 😊` });
-      msgs.push({ label: 'Défi', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Petit défi : montre le QR code à 5 clients aujourd'hui. La réaction c'est toujours "ah trop bien !" 😄` });
-    } else if (l.includes('annulation')) {
-      msgs.push({ label: 'Rétention', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. J'ai vu pour l'annulation — aucun souci ! Qu'est-ce qui t'a manqué ? Tes retours m'aident à améliorer Qarte 🙏` });
-    } else if (l === 'actif') {
-      msgs.push({ label: 'Suivi', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Comment ça se passe ? Tes clients sont contents ? Si t'as des idées je suis là 😊` });
-      if (customers >= 5) {
-        msgs.push({ label: 'Bravo', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Bravo, déjà ${customers} clients ! Tu sais que tu peux leur envoyer des notifs pour les faire revenir ? Je te montre si tu veux 🚀` });
-      }
-      msgs.push({ label: 'Astuce QR', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. L'astuce qui change tout : colle le QR code près de la caisse. Les clients le scannent tout seuls 📱` });
-    }
-
-    // Messages contextuels
-    const hasSocial = merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.snapchat_url;
-    if (!hasSocial) {
-      msgs.push({ label: 'Réseaux', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Ajoute ton lien Instagram dans Espace Pro → Ma Page. Tes clients le voient sur leur carte — visibilité gratuite ! 📲` });
-    }
-    if (!merchant.review_link) {
-      msgs.push({ label: 'Avis Google', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Ajoute ton lien Google dans Espace Pro → Programme → Avis Google. On demande l'avis à tes clients au bon moment — dès le 1er passage et à chaque récompense ⭐` });
-    }
-    if (!merchant.logo_url) {
-      msgs.push({ label: 'Logo', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Ajoute ton logo dans Espace Pro → Programme. La carte est plus pro et tes clients la reconnaissent tout de suite 🎨` });
-    }
-    if (!merchant.planning_enabled) {
-      msgs.push({ label: 'Planning', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Tu savais que tes clients peuvent réserver en ligne depuis ta vitrine ? Active le planning dans Espace Pro → Planning → Résa en ligne. SMS de rappel automatique la veille 📅` });
-    }
-    if (!merchant.booking_url && !merchant.planning_enabled) {
-      msgs.push({ label: 'Réservation', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Ajoute ton lien de réservation dans Espace Pro → Ma Page. Tes clients auront un bouton "Réserver" directement sur leur carte 📅` });
-    }
-    if (merchant.referral_program_enabled === false) {
-      msgs.push({ label: 'Parrainage', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Tes clients peuvent inviter un ami — les deux reçoivent un cadeau. Ça s'active en 1 clic dans Espace Pro → Parrainage. Acquisition gratuite ! 🤝` });
-    }
-    const pending = data?.pendingPoints[merchant.id] || 0;
-    if (pending > 0) {
-      msgs.push({ label: `${pending} en attente`, text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. T'as ${pending} passage${pending > 1 ? 's' : ''} en attente dans Espace Pro → Clients. Un clic pour valider ou refuser ✅` });
-    }
-
-    msgs.push({ label: 'Message libre', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. ` });
-    return msgs;
+    return [
+      { label: 'Bienvenue', text: `Bienvenue sur Qarte ${name} ! En résumé :\n\n→ Tes clients ne perdent plus leur carte de fidélité\n→ T'as une vitrine en ligne prête pour tes réseaux\n→ Tes clients reviennent grâce aux notifs et au parrainage\n→ Tu remplis ton planning les jours calmes\n\nTout est dans ton espace pro. Je suis ${ADMIN_CONTACT_NAME}, je t'accompagne 😊` },
+      { label: 'Message libre', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. ` },
+    ];
   }
 
   function getWhatsAppTutoMessages(name: string): { label: string; text: string }[] {
     return [
       { label: 'Comment ça marche', text: `Hello ${name} ! QR code en caisse → le client scanne → sa carte est créée. À chaque passage il rescanne, le tampon s'ajoute tout seul. Pas d'appli à télécharger 📱` },
-      { label: 'La récompense', text: `Hello ${name} ! Quand un client atteint le bon nombre de tampons, sa récompense apparaît. Il te la montre, tu valides, son compteur repart à zéro 🎁` },
       { label: 'L\'espace pro', text: `Hello ${name} ! Ton espace pro (getqarte.com → Espace Pro) : clients, tampons, stats, notifs. Tout depuis ton téléphone 📊` },
-      { label: 'Notifs push', text: `Hello ${name} ! Envoie des notifs push à tes clients en 1 clic — top pour remplir un créneau calme ou rappeler une promo 🔔` },
-      { label: 'Push auto', text: `Hello ${name} ! Active les push automatiques : tes clients inactifs depuis 30 jours reçoivent un rappel tout seuls. Espace Pro → Push → Automatisations 🤖` },
-      { label: 'Parrainage', text: `Hello ${name} ! Chaque client a un lien de parrainage sur sa carte. Un ami s'inscrit → les deux reçoivent un cadeau. Espace Pro → Parrainage 🤝` },
-      { label: 'Vitrine en ligne', text: `Hello ${name} ! Ta vitrine c'est ton lien en bio : photos, prestations, offre de bienvenue. Espace Pro → Ma Page 📲` },
-      { label: 'Réservation en ligne', text: `Hello ${name} ! Tes clients peuvent réserver directement depuis ta vitrine. Tu gères ton planning dans Espace Pro → Planning. SMS de rappel automatique la veille 📅` },
-      { label: 'Offre bienvenue', text: `Hello ${name} ! Un geste pour les nouveaux clients (ex: -20% 1ère visite). Ils la voient sur ta vitrine, ils viennent, ils scannent → dans ta base. Espace Pro → Ma Page 🎁` },
-      { label: 'Offre promo', text: `Hello ${name} ! Lance une offre promo visible sur ta vitrine et sur la carte de tes clients. Durée limitée, ça crée de l'urgence. Espace Pro → Ma Page → Offre promo 🔥` },
-      { label: 'Jours x2', text: `Hello ${name} ! Active les jours x2 : tes clients gagnent le double de tampons certains jours. Parfait pour remplir les jours calmes. Espace Pro → Programme → Jours x2 ⚡` },
-      { label: 'SMS rappel', text: `Hello ${name} ! Tes clients reçoivent un SMS de rappel la veille de leur RDV — automatique, rien à faire. Moins de no-shows ! 💬` },
-      { label: 'Kit promo', text: `Hello ${name} ! QR code HD + visuels prêts pour Instagram dans Espace Pro → QR code & Supports 🖼️` },
-      { label: 'Avis Google', text: `Hello ${name} ! On demande l'avis à tes clients au 1er passage et à chaque récompense. Ajoute ton lien Google dans Espace Pro → Programme ⭐` },
-      { label: 'Le Shield', text: `Hello ${name} ! Un client scanne 2 fois le même jour ? Le 2ème est mis en attente. Un clic pour valider ou refuser dans Espace Pro → Clients ✅` },
-      { label: 'Prix', text: `Hello ${name} ! 24€/mois sans engagement, clients illimités 💳` },
     ];
   }
 

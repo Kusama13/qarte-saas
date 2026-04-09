@@ -214,16 +214,9 @@ function FeatureBadge({ active, icon, label }: { active: boolean; icon: React.Re
 
 // --- WhatsApp message templates ---
 
-function getWhatsAppMarketing(name: string, customers: number): { label: string; text: string }[] {
+function getWhatsAppMarketing(name: string, _customers: number): { label: string; text: string }[] {
   return [
     { label: 'Bienvenue', text: `Bienvenue sur Qarte ${name} ! En résumé :\n\n→ Tes clients ne perdent plus leur carte de fidélité\n→ T'as une vitrine en ligne prête pour tes réseaux\n→ Tes clients reviennent grâce aux notifs et au parrainage\n→ Tu gères ton planning et tes réservations en ligne\n\nTout est dans ton espace pro. Je suis Elodie, je t'accompagne 😊` },
-    { label: 'Présentation', text: `Hello ${name} ! C'est Elodie de Qarte, je t'accompagne pendant ton essai. La moindre question, je suis dispo ici 😊` },
-    { label: 'Relance config', text: `Hello ${name} ! Ton programme n'est pas encore en ligne — dis-moi ta récompense habituelle et je configure tout pour toi en 30 secondes 😊` },
-    { label: 'Planning', text: `Hello ${name} ! Tes clients peuvent réserver en ligne depuis ta vitrine. Active le planning dans Espace Pro → Planning → Résa en ligne. SMS de rappel automatique la veille, moins de no-shows 📅` },
-    { label: 'Offre bienvenue', text: `Hello ${name} ! Un geste pour les nouveaux clients (ex: -20% 1ère visite). Ils le voient sur ta vitrine, ils viennent, ils scannent → dans ta base. Espace Pro → Ma Page 🎁` },
-    { label: 'Offre promo', text: `Hello ${name} ! Lance une offre promo visible sur ta vitrine et sur la carte de tes clients. Durée limitée, ça crée de l'urgence. Espace Pro → Ma Page → Offre promo 🔥` },
-    { label: 'SEO Google', text: `Hello ${name} ! Ta vitrine est référencée sur Google. Ajoute tes prestations, photos et adresse pour ressortir quand quelqu'un cherche un salon près de chez toi 🔍` },
-    { label: 'Fin essai', text: `Hello ${name} ! Ton essai se termine bientôt${customers > 0 ? ` et tes ${customers} clients comptent sur leur carte` : ''}. On continue ensemble ? 😊` },
     { label: 'Message libre', text: `C'est Elodie de Qarte. ` },
   ];
 }
@@ -231,19 +224,7 @@ function getWhatsAppMarketing(name: string, customers: number): { label: string;
 function getWhatsAppTuto(name: string): { label: string; text: string }[] {
   return [
     { label: 'Comment ça marche', text: `Hello ${name} ! QR code en caisse → le client scanne → sa carte est créée. À chaque passage il rescanne, le tampon s'ajoute tout seul. Pas d'appli 📱` },
-    { label: 'La récompense', text: `Hello ${name} ! Bon nombre de tampons atteint → la récompense apparaît. Il te la montre, tu valides, compteur à zéro 🎁` },
     { label: 'L\'espace pro', text: `Hello ${name} ! Ton espace pro (getqarte.com → Espace Pro) : clients, tampons, stats, notifs. Tout depuis ton téléphone 📊` },
-    { label: 'Notifs push', text: `Hello ${name} ! Envoie des notifs push en 1 clic — top pour remplir un créneau calme ou rappeler une promo 🔔` },
-    { label: 'Push auto', text: `Hello ${name} ! Active les push automatiques : tes clients inactifs depuis 30 jours reçoivent un rappel tout seuls. Espace Pro → Push → Automatisations 🤖` },
-    { label: 'Résa en ligne', text: `Hello ${name} ! Tes clients réservent en ligne depuis ta vitrine. Tu gères ton planning, ils reçoivent un SMS de rappel la veille. Espace Pro → Planning 📅` },
-    { label: 'Vitrine en ligne', text: `Hello ${name} ! Ta vitrine c'est ton lien en bio : photos, prestations, offre de bienvenue. Espace Pro → Ma Page 📲` },
-    { label: 'Parrainage', text: `Hello ${name} ! Un ami s'inscrit via le lien de ton client → les deux reçoivent un cadeau. Espace Pro → Parrainage 🤝` },
-    { label: 'Offre promo', text: `Hello ${name} ! Lance une offre promo sur ta vitrine + carte client. Durée limitée → urgence. Espace Pro → Ma Page → Offre promo 🔥` },
-    { label: 'Jours x2', text: `Hello ${name} ! Active les jours x2 : double de tampons certains jours. Parfait pour remplir les jours calmes. Espace Pro → Programme ⚡` },
-    { label: 'Kit promo', text: `Hello ${name} ! QR code HD + visuels prêts pour Instagram dans Espace Pro → QR code & Supports 🖼️` },
-    { label: 'Avis Google', text: `Hello ${name} ! On demande l'avis à tes clients au 1er passage et à chaque récompense. Ajoute ton lien Google dans Espace Pro → Programme ⭐` },
-    { label: 'Le Shield', text: `Hello ${name} ! Un client scanne 2 fois le même jour ? Le 2ème est mis en attente. Un clic pour valider ou refuser ✅` },
-    { label: 'Prix', text: `Hello ${name} ! 24€/mois sans engagement, clients illimités 💳` },
   ];
 }
 
