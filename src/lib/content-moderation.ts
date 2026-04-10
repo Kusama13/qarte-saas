@@ -9,12 +9,13 @@ export const FORBIDDEN_WORDS = [
   'escroquerie', 'arnaque', 'fraude'
 ];
 
+// Use word boundaries to avoid matching substrings (e.g. "nu" in "bienvenue", "arme" in "charme")
+const FORBIDDEN_REGEX = new RegExp(
+  '\\b(' + FORBIDDEN_WORDS.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b',
+  'i'
+);
+
 export function containsForbiddenWords(text: string): string | null {
-  const lowerText = text.toLowerCase();
-  for (const word of FORBIDDEN_WORDS) {
-    if (lowerText.includes(word)) {
-      return word;
-    }
-  }
-  return null;
+  const match = text.match(FORBIDDEN_REGEX);
+  return match ? match[1].toLowerCase() : null;
 }
