@@ -2846,6 +2846,7 @@
   },
   "booking": {
     "bookSlot": "Réserver ce créneau",
+    "bookAppointment": "Prendre rendez-vous",
     "at": "à",
     "selectServices": "Choisissez vos prestations",
     "from": "à partir de",

@@ -2846,6 +2846,7 @@
   },
   "booking": {
     "bookSlot": "Book this slot",
+    "bookAppointment": "Book an appointment",
     "at": "at",
     "selectServices": "Select your services",
     "from": "from",

@@ -47,26 +47,34 @@ function PersonalizeContent() {
   const [saveError, setSaveError] = useState(false);
   const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [initialized, setInitialized] = useState(false);
+  const initializedFor = useRef<string | null>(null);
 
   useEffect(() => {
     return () => { if (redirectTimer.current) clearTimeout(redirectTimer.current); };
   }, []);
 
-  // Init once from merchant data — runs only on first load, not on background refetch
+  // Failsafe: si MerchantContext n'a pas pu charger le merchant (network error,
+  // race condition post-signup, redirect intercepté), on retourne au login apres 5s
+  // au lieu de laisser un spinner infini
   useEffect(() => {
-    if (merchant && !initialized) {
-      setInitialized(true);
-      if (merchant.logo_url) setLogoUrl(merchant.logo_url);
-      // Si les couleurs sont les valeurs génériques par défaut (jamais choisies),
-      // garder Glamour pré-sélectionné plutôt que d'afficher aucune palette cochée
+    if (!loading && !merchant) {
+      const t = setTimeout(() => router.push('/auth/merchant'), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [loading, merchant, router]);
+
+  // Init form when merchant.id changes (handles cache → fresh fetch swap post-signup)
+  useEffect(() => {
+    if (merchant && initializedFor.current !== merchant.id) {
+      initializedFor.current = merchant.id;
+      setLogoUrl(merchant.logo_url || '');
       const isDefaultColor = merchant.primary_color === '#654EDA' && merchant.secondary_color === '#9D8FE8';
       if (!isDefaultColor) {
         if (merchant.primary_color) setPrimaryColor(merchant.primary_color);
         if (merchant.secondary_color) setSecondaryColor(merchant.secondary_color);
       }
     }
-  }, [merchant, initialized]);
+  }, [merchant]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

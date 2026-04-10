@@ -290,7 +290,7 @@ export default function BookingModal({
             <h3 className="text-base font-bold text-gray-900">
               {step === 'confirm'
                 ? (depositResult?.link ? t('bookingPending') : t('bookingConfirmed'))
-                : t('bookSlot')}
+                : isFreeMod ? t('bookAppointment') : t('bookSlot')}
             </h3>
             {effectiveDate && effectiveTime ? (
               <p className="text-xs text-gray-500 mt-0.5 capitalize">

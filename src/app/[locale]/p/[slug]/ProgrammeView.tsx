@@ -483,7 +483,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             {!merchant.auto_booking_enabled && (
               <p className="text-[11px] text-gray-400 mb-3">{t('planningManualHint')}</p>
             )}
-            {merchant.auto_booking_enabled && (
+            {merchant.auto_booking_enabled && !isFreeMod && (
               <p className="text-[11px] text-emerald-500 font-medium mb-3">{t('planningAutoHint')}</p>
             )}
 
@@ -506,10 +506,10 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             )}
 
             {/* Mode libre: single "Réserver" CTA */}
-            {isFreeMod && canBookOnline && !isDemo && (
+            {isFreeMod && canBookOnline && (
               <button
                 type="button"
-                onClick={() => setBookingSlot({ date: null, time: null })}
+                onClick={isDemo ? noOp : () => setBookingSlot({ date: null, time: null })}
                 className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 mb-3"
                 style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
               >

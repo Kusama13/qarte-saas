@@ -86,10 +86,16 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
         .then(() => {});
     } catch (err) {
       console.error('MerchantContext error:', err);
+      // Failsafe: si l'exception happen avant tout setMerchant et qu'on n'a pas
+      // de cache, on bounce vers auth pour eviter un spinner infini
+      if (!merchant) {
+        localStorage.removeItem(CACHE_KEY);
+        router.push('/auth/merchant');
+      }
     } finally {
       setLoading(false);
     }
-  }, [supabase, router]);
+  }, [supabase, router, merchant]);
 
   useEffect(() => {
     // If we have cached data, still fetch fresh data in background
