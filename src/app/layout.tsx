@@ -108,11 +108,13 @@ export default async function RootLayout({
         {/* Disable auto-translate (Google Translate sur Chrome Android cause crash React #310 sur mobile) */}
         <meta name="google" content="notranslate" />
 
-        {/* Defense-in-depth : patch Node.removeChild/insertBefore pour eviter crash si une extension
-            (Google Translate, 1Password, Grammarly, ad blockers) modifie le DOM sous React */}
+        {/* Defense-in-depth : patch Node.removeChild/insertBefore pour eviter crash React #310
+            si une extension (Google Translate, 1Password, Grammarly, ad blockers, iOS content
+            blockers) modifie le DOM sous React. Si on ne patch pas, React crash en commit phase,
+            l'URL change via router.push mais le DOM reste fige → user stuck visually. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){if(typeof Node==='function'&&Node.prototype){var r=Node.prototype.removeChild;Node.prototype.removeChild=function(c){if(c.parentNode!==this){try{return r.apply(c.parentNode,arguments)}catch(e){return c}}return r.apply(this,arguments)};var i=Node.prototype.insertBefore;Node.prototype.insertBefore=function(n,b){if(b&&b.parentNode!==this){try{return i.apply(b.parentNode,arguments)}catch(e){return n}}return i.apply(this,arguments)}}})();`,
+            __html: `(function(){if(typeof Node!=='function'||!Node.prototype)return;var r=Node.prototype.removeChild;Node.prototype.removeChild=function(c){if(!c||c.parentNode===this)return r.call(this,c);try{console.warn('[qarte] removeChild: wrong parent, silent skip')}catch(e){}return c};var i=Node.prototype.insertBefore;Node.prototype.insertBefore=function(n,b){if(!b||b.parentNode===this)return i.call(this,n,b);try{console.warn('[qarte] insertBefore: wrong parent, appending')}catch(e){}return i.call(this,n,null)}})();`,
           }}
         />
 

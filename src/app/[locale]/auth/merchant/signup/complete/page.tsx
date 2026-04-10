@@ -151,18 +151,26 @@ export default function CompleteProfilePage() {
         return;
       }
 
-      // Track signup completed + merchant creation + FB CompleteRegistration + StartTrial
-      trackSignupCompleted(userId!, 'email');
-      trackSetupCompleted({ merchant_id: result.merchant?.id || userId!, business_type: formData.shopType || undefined });
-      fbEvents.completeRegistration();
-      fbEvents.startTrial();
-      // TikTok: identify user (await pour que le hash soit prêt) + CompleteRegistration + StartTrial
-      await ttIdentify({ email: userEmail || undefined, phone: formattedPhone, externalId: userId || undefined });
-      ttEvents.completeRegistration();
-      ttEvents.startTrial();
+      // Track signup completed (fire-and-forget — ne JAMAIS bloquer la nav)
+      try {
+        trackSignupCompleted(userId!, 'email');
+        trackSetupCompleted({ merchant_id: result.merchant?.id || userId!, business_type: formData.shopType || undefined });
+        fbEvents.completeRegistration();
+        fbEvents.startTrial();
+        // ttIdentify est async mais on ne l'attend pas — analytics ne doivent pas bloquer le user
+        ttIdentify({ email: userEmail || undefined, phone: formattedPhone, externalId: userId || undefined }).catch(() => {});
+        ttEvents.completeRegistration();
+        ttEvents.startTrial();
+      } catch {
+        // Analytics failure ne doit jamais bloquer le user
+      }
 
-      // Redirect to personalize screen
-      router.push('/dashboard/personalize');
+      // Hard navigation via window.location — plus robuste que router.push sur mobile
+      // (evite les crashes React qui laissent le DOM fige sur /signup/complete alors
+      // que l'URL devrait passer a /personalize)
+      const localePrefix = window.location.pathname.startsWith('/en/') ? '/en' : '';
+      window.location.href = `${localePrefix}/dashboard/personalize`;
+      return; // ne pas setLoading(false) — la page navigue
     } catch {
       setError(t('genericError'));
     } finally {

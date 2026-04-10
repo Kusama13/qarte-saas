@@ -125,7 +125,12 @@ function PersonalizeContent() {
         const destination = from === 'public-page' ? '/dashboard/public-page' : '/dashboard/program';
         redirectTimer.current = setTimeout(() => router.push(destination), 1200);
       } else {
-        router.push('/dashboard/program');
+        // Hard navigation via window.location — plus robuste que router.push sur mobile
+        // apres un signup frais (evite les crash React qui laissent le DOM fige sur
+        // /personalize alors que l'URL devrait changer)
+        const locale = window.location.pathname.startsWith('/en/') ? '/en' : '';
+        window.location.href = `${locale}/dashboard/program`;
+        return; // ne pas setSaving(false) — la page est en train de naviguer
       }
     } catch (error) {
       console.error('Error saving:', error);
