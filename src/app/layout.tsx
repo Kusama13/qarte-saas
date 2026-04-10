@@ -3,7 +3,6 @@ import { Plus_Jakarta_Sans, Playfair_Display, Poppins } from 'next/font/google';
 import { getLocale } from 'next-intl/server';
 import './globals.css';
 import { Analytics } from '@vercel/analytics/react';
-import { MicrosoftClarity } from '@/components/analytics/MicrosoftClarity';
 
 const plusJakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-inter' });
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
@@ -106,6 +105,13 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={`${plusJakarta.variable} ${playfair.variable} ${poppins.variable}`}>
       <head>
+        {/* Microsoft Clarity — loaded inline in <head> to track all pages from first paint */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","vjx7g9ttax");`,
+          }}
+        />
+
         {/* Preconnect for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -166,7 +172,6 @@ export default async function RootLayout({
       <body className="font-sans">
         {children}
         <Analytics />
-        <MicrosoftClarity />
       </body>
     </html>
   );
