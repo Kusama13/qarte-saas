@@ -108,7 +108,7 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
     const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
     return registration;
   } catch (error) {
-    console.error('Service Worker registration failed:', error);
+    console.error('[push] SW registration failed:', error);
     return null;
   }
 }
@@ -180,19 +180,22 @@ export async function subscribeToPush(
           customerId,
         }),
         signal: subController.signal,
+        credentials: 'include', // Force cookie send — Android PWA safety
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Server error');
+        console.error('[push] /api/push/subscribe failed:', response.status, errorData);
+        throw new Error(errorData.error || `Server error (${response.status})`);
       }
+      console.log('[push] subscribed successfully for customer', customerId);
     } finally {
       clearTimeout(subTimeout);
     }
 
     return { success: true, subscription };
   } catch (error) {
-    console.error('Push subscription error:', error);
+    console.error('[push] subscription error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
