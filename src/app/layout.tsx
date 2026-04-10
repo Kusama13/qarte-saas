@@ -103,8 +103,19 @@ export default async function RootLayout({
     : 'Un seul lien pour tout montrer (bio, prestations, planning, photos) + programme de fidélité digital (QR code, tampons, cagnotte, notifications push). Sans application à télécharger.';
 
   return (
-    <html lang={locale} className={`${plusJakarta.variable} ${playfair.variable} ${poppins.variable}`}>
+    <html lang={locale} translate="no" className={`${plusJakarta.variable} ${playfair.variable} ${poppins.variable} notranslate`}>
       <head>
+        {/* Disable auto-translate (Google Translate sur Chrome Android cause crash React #310 sur mobile) */}
+        <meta name="google" content="notranslate" />
+
+        {/* Defense-in-depth : patch Node.removeChild/insertBefore pour eviter crash si une extension
+            (Google Translate, 1Password, Grammarly, ad blockers) modifie le DOM sous React */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){if(typeof Node==='function'&&Node.prototype){var r=Node.prototype.removeChild;Node.prototype.removeChild=function(c){if(c.parentNode!==this){try{return r.apply(c.parentNode,arguments)}catch(e){return c}}return r.apply(this,arguments)};var i=Node.prototype.insertBefore;Node.prototype.insertBefore=function(n,b){if(b&&b.parentNode!==this){try{return i.apply(b.parentNode,arguments)}catch(e){return n}}return i.apply(this,arguments)}}})();`,
+          }}
+        />
+
         {/* Microsoft Clarity — loaded inline in <head> to track all pages from first paint */}
         <script
           dangerouslySetInnerHTML={{
