@@ -82,9 +82,9 @@ export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const t = useTranslations('faq');
 
-  const faqItems = Array.from({ length: 12 }, (_, i) => ({
-    question: t(`q${i + 1}`),
-    answer: t(`a${i + 1}`),
+  const faqItems = [13, 1, 2, 4, 5, 6, 9, 10, 11, 12].map((i) => ({
+    question: t(`q${i}`),
+    answer: t(`a${i}`),
   }));
 
   const faqJsonLd = {

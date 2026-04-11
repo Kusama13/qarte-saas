@@ -68,12 +68,12 @@ export function PricingSection() {
 
                 {/* Feature list */}
                 <ul className="w-full max-w-sm space-y-2.5 mb-8 text-left">
-                  {([1,2,3,4,5,6,7,8] as const).map(i => (
+                  {([1,3,2,9,4,5,6,7,8] as const).map((i, idx) => (
                     <li key={i} className="flex items-start gap-2.5">
                       <svg className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       </svg>
-                      <span className="text-sm text-gray-700">{t(`feature${i}`)}</span>
+                      <span className={idx < 4 ? 'text-base font-semibold text-gray-900' : 'text-sm text-gray-700'}>{t(`feature${i}`)}</span>
                     </li>
                   ))}
                 </ul>

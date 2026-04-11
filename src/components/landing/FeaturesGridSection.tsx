@@ -11,11 +11,11 @@ export function FeaturesGridSection() {
   const features = [
     { emoji: '\u{1F4C5}', titleKey: 'bookingTitle', descKey: 'bookingDesc' },
     { emoji: '\u{1F514}', titleKey: 'remindersTitle', descKey: 'remindersDesc' },
+    { emoji: '\u{1F4F1}', titleKey: 'dashboardTitle', descKey: 'dashboardDesc' },
     { emoji: '\u{1F3A8}', titleKey: 'profileTitle', descKey: 'profileDesc' },
     { emoji: '\u{1F451}', titleKey: 'policyTitle', descKey: 'policyDesc' },
     { emoji: '\u{1F49C}', titleKey: 'loyaltyTitle', descKey: 'loyaltyDesc' },
     { emoji: '\u{1F3C6}', titleKey: 'contestTitle', descKey: 'contestDesc' },
-    { emoji: '\u{1F4CA}', titleKey: 'dashboardTitle', descKey: 'dashboardDesc' },
     { emoji: '\u{1F680}', titleKey: 'automationTitle', descKey: 'automationDesc' },
     { emoji: '\u2B50', titleKey: 'reviewsTitle', descKey: 'reviewsDesc' },
   ] as const;
