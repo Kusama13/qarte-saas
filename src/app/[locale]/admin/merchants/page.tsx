@@ -23,7 +23,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
-import { cn, formatPhoneForWhatsApp } from '@/lib/utils';
+import { cn, formatPhoneForWhatsApp, getAllPhoneFormats } from '@/lib/utils';
 import type { Merchant, MerchantCountry, ShopType } from '@/types';
 import { SHOP_TYPES } from '@/types';
 
@@ -459,17 +459,22 @@ export default function AdminMerchantsPage() {
       filtered = filtered.filter((m) => !!m.pwa_installed_at);
     }
 
-    // Search (accent-insensitive, email, local phone)
+    // Search (accent-insensitive across name/email/address/phone — phone matches FR/BE/CH variants)
     if (searchQuery) {
       const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       const q = normalize(searchQuery);
-      // Convert local phone (06xxx) to E.164 (336xxx) for matching
-      const phoneQ = q.replace(/\s/g, '');
-      const phoneE164 = phoneQ.startsWith('0') ? '33' + phoneQ.substring(1) : phoneQ;
+      // Phone matching only when the query looks phone-shaped (digits + phone separators only)
+      // — avoids false matches like "studio 2024" hitting phones containing "2024"
+      const trimmed = searchQuery.trim();
+      const looksLikePhone = trimmed.length > 0 && /^[\d\s+\-().]+$/.test(trimmed);
+      const digitsOnly = trimmed.replace(/\D/g, '');
+      const phoneVariants = looksLikePhone && digitsOnly.length >= 4
+        ? [...getAllPhoneFormats(digitsOnly), digitsOnly]
+        : [];
       filtered = filtered.filter(
         (m) =>
           normalize(m.shop_name).includes(q) ||
-          m.phone.includes(phoneE164) ||
+          phoneVariants.some(v => m.phone.includes(v)) ||
           (m.shop_address && normalize(m.shop_address).includes(q)) ||
           (data.userEmails[m.user_id] && normalize(data.userEmails[m.user_id]).includes(q)),
       );

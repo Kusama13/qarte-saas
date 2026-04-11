@@ -27,7 +27,6 @@ import {
   ExternalLink,
   Star,
   Share2,
-  ListChecks,
   Shield,
   ChevronDown,
   Ban,
@@ -45,6 +44,9 @@ import {
   CreditCard,
   Hourglass,
   XCircle,
+  GraduationCap,
+  Heart,
+  Trophy,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn, generateQRCode, getScanUrl, formatDoubleDays, formatPhoneForWhatsApp, COUNTRY_FLAGS } from '@/lib/utils';
@@ -216,6 +218,84 @@ function FeatureBadge({ active, icon, label }: { active: boolean; icon: React.Re
   );
 }
 
+const HIGHLIGHT_STYLES = {
+  amber: { container: 'bg-amber-50 border-amber-200', value: 'text-amber-700' },
+  green: { container: 'bg-green-50 border-green-200', value: 'text-green-700' },
+  red:   { container: 'bg-red-50 border-red-200',     value: 'text-red-700' },
+} as const;
+
+function LoyaltyRow({
+  icon: Icon, iconClass, label, description,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  iconClass: string;
+  label: string;
+  description: string | null;
+}) {
+  return (
+    <div className="flex items-start gap-3 px-3 py-2.5">
+      <Icon className={cn("w-4 h-4 mt-0.5 flex-shrink-0", iconClass)} />
+      <div className="min-w-0 flex-1">
+        <span className="font-semibold text-gray-900">{label}</span>
+        <span className="text-gray-500"> · {description || 'Non configuré'}</span>
+      </div>
+    </div>
+  );
+}
+
+function CompactStat({
+  icon: Icon, value, label, color = 'brand', highlight,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  value: string | number;
+  label: string;
+  color?: keyof typeof STAT_ICON_COLORS;
+  highlight?: keyof typeof HIGHLIGHT_STYLES;
+}) {
+  const c = STAT_ICON_COLORS[color];
+  const h = highlight ? HIGHLIGHT_STYLES[highlight] : null;
+  return (
+    <div className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg border", h ? h.container : "bg-white border-gray-100")}>
+      <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0", c.bg)}>
+        <Icon className={cn("w-4 h-4", c.text)} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className={cn("text-base font-bold leading-tight", h ? h.value : "text-gray-900")}>{value}</p>
+        <p className="text-[11px] text-gray-500 leading-tight truncate mt-0.5">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+function CollapsibleCard({
+  icon, title, badge, isOpen, onToggle, children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  badge?: React.ReactNode;
+  isOpen: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50/50 transition-colors"
+        aria-expanded={isOpen}
+      >
+        <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+          {icon}
+          {title}
+          {badge}
+        </h3>
+        <ChevronDown className={cn("w-5 h-5 text-gray-400 transition-transform flex-shrink-0", isOpen && "rotate-180")} />
+      </button>
+      {isOpen && <div className="px-5 pb-5 space-y-4">{children}</div>}
+    </div>
+  );
+}
+
 // --- WhatsApp message templates ---
 
 const ADMIN_CONTACT_NAME = 'Elodie';
@@ -253,15 +333,20 @@ const EMAIL_LABELS: Record<number, string> = {
   [-112]: 'Relance inactif J+30',
   [-113]: 'Relance grace period',
   [-120]: 'Auto-suggestion recompense',
+  [-150]: 'Signup incomplet J+1',
   [-200]: 'Email de bienvenue',
   [-201]: 'Trial expire J-1',
   [-203]: 'Trial expire J-3',
   [-211]: 'Trial expire +1j',
   [-212]: 'Trial expire +2j',
+  [-213]: 'Churn survey reminder',
+  [-214]: 'Recap features (one-off)',
   [-301]: 'Rappel config programme J+1',
   [-302]: 'Rappel config programme J+2',
   [-303]: 'Rappel config programme J+3',
+  [-304]: 'Rappel vitrine J+3',
   [-305]: 'Check-in J+5',
+  [-308]: 'Rappel planning J+4',
 };
 
 // --- StatIcon helper ---
@@ -277,6 +362,7 @@ const STAT_ICON_COLORS = {
   violet: { bg: 'bg-violet-50', text: 'text-violet-600' },
   indigo: { bg: 'bg-indigo-50', text: 'text-indigo-600' },
   cyan: { bg: 'bg-cyan-50', text: 'text-cyan-600' },
+  gray: { bg: 'bg-gray-50', text: 'text-gray-400' },
 } as const;
 
 function StatIcon({ icon: Icon, color }: { icon: React.ComponentType<{ className?: string }>; color: keyof typeof STAT_ICON_COLORS }) {
@@ -310,6 +396,10 @@ export default function MerchantDetailPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [emailTrackings, setEmailTrackings] = useState<{ reminder_day: number; sent_at: string }[]>([]);
   const [qrOpen, setQrOpen] = useState(false);
+  const [loyaltyOpen, setLoyaltyOpen] = useState(true);
+  const [vitrineOpen, setVitrineOpen] = useState(true);
+  const [emailsOpen, setEmailsOpen] = useState(false);
+  const [bioOpen, setBioOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -434,7 +524,18 @@ export default function MerchantDetailPage() {
     [merchant, stats.totalCustomers, stats.weeklyScans, stats.lastVisitDate]
   );
 
-  // Vitrine en ligne completion
+  const formattedEmailTrackings = useMemo(
+    () => emailTrackings.map((t, i) => ({
+      key: i,
+      label: EMAIL_LABELS[t.reminder_day] || `Code ${t.reminder_day}`,
+      date: new Date(t.sent_at).toLocaleDateString('fr-FR', {
+        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+      }),
+      isMerchantEmail: t.reminder_day < 0,
+    })),
+    [emailTrackings]
+  );
+
   const { pageProItems, pageProDone, pageProPct } = useMemo(() => {
     if (!merchant) return { pageProItems: [], pageProDone: 0, pageProPct: 0 };
     const items = [
@@ -452,19 +553,6 @@ export default function MerchantDetailPage() {
     const done = items.filter(i => i.done).length;
     return { pageProItems: items, pageProDone: done, pageProPct: Math.round((done / items.length) * 100) };
   }, [merchant, stats.servicesCount, stats.photosCount]);
-
-  // Onboarding checklist
-  const { onboardingItems, onboardingDone } = useMemo(() => {
-    if (!merchant) return { onboardingItems: [], onboardingDone: 0 };
-    const items = [
-      { label: 'Programme configure', done: !!merchant.reward_description },
-      { label: 'Logo ajoute', done: !!merchant.logo_url },
-      { label: 'Reseau social ajoute', done: !!(merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.snapchat_url) },
-      { label: 'QR code telecharge', done: stats.totalVisits > 0 },
-      { label: 'Premiers scans obtenus', done: stats.totalVisits >= 2 },
-    ];
-    return { onboardingItems: items, onboardingDone: items.filter(i => i.done).length };
-  }, [merchant, stats.totalVisits]);
 
   if (loading) {
     return (
@@ -648,27 +736,28 @@ export default function MerchantDetailPage() {
         )}
       </div>
 
-      {/* ═══════════ STATS & ONBOARDING ═══════════ */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-6">
+      {/* ═══════════ STATS & ACTIVITÉ ═══════════ */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
         <div>
           <SectionTitle icon={<TrendingUp className="w-4 h-4 text-[#5167fc]" />}>Activité</SectionTitle>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <StatCard icon={<StatIcon icon={Users} color="brand" />} value={stats.totalCustomers} label="Clients inscrits" highlight={stats.totalCustomers === 0 ? 'red' : undefined} />
-            <StatCard icon={<StatIcon icon={TrendingUp} color="green" />} value={stats.activeCustomers} label="Actifs (30j)" />
-            <StatCard icon={<StatIcon icon={Clock} color="amber" />} value={stats.totalVisits} label="Visites totales" />
-            <StatCard icon={<StatIcon icon={Gift} color="pink" />} value={stats.totalRedemptions} label="Recompenses" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            <CompactStat icon={Users} color="brand" value={stats.totalCustomers} label="Clients inscrits" highlight={stats.totalCustomers === 0 ? 'red' : undefined} />
+            <CompactStat icon={TrendingUp} color="green" value={stats.activeCustomers} label="Actifs (30j)" />
+            <CompactStat icon={Clock} color="amber" value={stats.totalVisits} label="Visites totales" />
+            <CompactStat icon={Gift} color="pink" value={stats.totalRedemptions} label="Récompenses" />
           </div>
         </div>
 
         <div>
           <SectionTitle icon={<Bell className="w-4 h-4 text-blue-600" />}>Push & Marketing</SectionTitle>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <StatCard icon={<StatIcon icon={Bell} color="blue" />} value={stats.pushSubscribers} label="Abonnes push" />
-            <StatCard icon={<StatIcon icon={Send} color="purple" />} value={stats.pushSent} label="Notifs envoyees" />
-            <StatCard icon={<StatIcon icon={MessageCircle} color="emerald" />} value={stats.smsSent} label="SMS envoyes" />
-            <StatCard icon={<StatIcon icon={TrendingUp} color="emerald" />} value={stats.weeklyScans} label="Scans (7j)" />
-            <StatCard
-              icon={<div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", merchant.pwa_installed_at ? "bg-green-100" : "bg-gray-50")}><Smartphone className={cn("w-4 h-4", merchant.pwa_installed_at ? "text-green-600" : "text-gray-400")} /></div>}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-1.5">
+            <CompactStat icon={Bell} color="blue" value={stats.pushSubscribers} label="Abonnés push" />
+            <CompactStat icon={Send} color="purple" value={stats.pushSent} label="Notifs envoyées" />
+            <CompactStat icon={MessageCircle} color="emerald" value={stats.smsSent} label="SMS envoyés" />
+            <CompactStat icon={TrendingUp} color="emerald" value={stats.weeklyScans} label="Scans (7j)" />
+            <CompactStat
+              icon={Smartphone}
+              color={merchant.pwa_installed_at ? 'green' : 'gray'}
               value={merchant.pwa_installed_at ? new Date(merchant.pwa_installed_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—'}
               label={`PWA ${merchant.pwa_installed_at ? 'installée' : 'non installée'}`}
               highlight={merchant.pwa_installed_at ? 'green' : undefined}
@@ -678,19 +767,14 @@ export default function MerchantDetailPage() {
 
         <div>
           <SectionTitle icon={<Share2 className="w-4 h-4 text-violet-600" />}>Acquisition</SectionTitle>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <StatCard icon={<StatIcon icon={Share2} color="violet" />} value={stats.totalReferrals} label="Parrainages" />
-            <StatCard icon={<StatIcon icon={UserPlus} color="indigo" />} value={stats.welcomeVouchers} label="Vouchers bienvenue" />
-            <StatCard icon={<StatIcon icon={Tag} color="amber" />} value={stats.offerVouchers} label="Vouchers promo" />
-            <StatCard
-              icon={<div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", stats.pendingPoints > 0 ? "bg-amber-100" : "bg-gray-50")}><Shield className={cn("w-4 h-4", stats.pendingPoints > 0 ? "text-amber-600" : "text-gray-400")} /></div>}
-              value={stats.pendingPoints} label="Points en attente"
-              highlight={stats.pendingPoints > 0 ? 'amber' : undefined}
-            />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            <CompactStat icon={Share2} color="violet" value={stats.totalReferrals} label="Parrainages" />
+            <CompactStat icon={UserPlus} color="indigo" value={stats.welcomeVouchers} label="Vouchers bienvenue" />
+            <CompactStat icon={Tag} color="amber" value={stats.offerVouchers} label="Vouchers promo" />
+            <CompactStat icon={Shield} color="amber" value={stats.pendingPoints} label="Points en attente" highlight={stats.pendingPoints > 0 ? 'amber' : undefined} />
           </div>
         </div>
 
-        {/* Dernière visite */}
         <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
           <div className="w-10 h-10 rounded-full bg-[#5167fc]/10 flex items-center justify-center">
             <Clock className="w-5 h-5 text-[#5167fc]" />
@@ -703,26 +787,6 @@ export default function MerchantDetailPage() {
           </div>
         </div>
 
-        {/* Onboarding */}
-        <div>
-          <SectionTitle
-            icon={<ListChecks className="w-4 h-4 text-[#5167fc]" />}
-            badge={<span className="text-sm font-normal text-gray-500">{onboardingDone}/{onboardingItems.length}</span>}
-          >Onboarding</SectionTitle>
-          <div className="h-2 bg-gray-200/60 rounded-full mb-3 overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-[#5167fc] to-violet-500 rounded-full transition-all" style={{ width: `${(onboardingDone / onboardingItems.length) * 100}%` }} />
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {onboardingItems.map((item) => (
-              <div key={item.label} className={cn("flex items-center gap-2 px-3 py-2 rounded-lg text-sm", item.done ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-400")}>
-                {item.done ? <Check className="w-4 h-4 flex-shrink-0" /> : <div className="w-4 h-4 rounded-full border-2 border-gray-300 flex-shrink-0" />}
-                <span className={item.done ? '' : 'line-through'}>{item.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* QR Code — collapsible */}
         <div>
           <button onClick={() => setQrOpen(!qrOpen)} className="w-full flex items-center justify-between text-left">
             <SectionTitle icon={<QrCode className="w-4 h-4 text-[#5167fc]" />}>QR Code de scan</SectionTitle>
@@ -758,7 +822,7 @@ export default function MerchantDetailPage() {
       </div>
 
       {/* ═══════════ LIENS & RÉSEAUX ═══════════ */}
-      {(merchant.slug || merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.snapchat_url || merchant.booking_url || merchant.review_link || merchant.deposit_link) && (
+      {(merchant.slug || merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.snapchat_url || merchant.whatsapp_url || merchant.booking_url || merchant.review_link || merchant.deposit_link || merchant.deposit_link_2) && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <SectionTitle icon={<ExternalLink className="w-4 h-4 text-[#5167fc]" />}>Liens & Réseaux</SectionTitle>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -791,6 +855,11 @@ export default function MerchantDetailPage() {
                 <span className="truncate">@{extractPseudo(merchant.snapchat_url)}</span>
               </a>
             )}
+            {merchant.whatsapp_url && (
+              <a href={merchant.whatsapp_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-2 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-sm text-emerald-700 transition-colors">
+                <MessageCircle className="w-4 h-4 flex-shrink-0" /><span className="truncate">WhatsApp</span>
+              </a>
+            )}
             {merchant.booking_url && (
               <a href={merchant.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 text-sm text-gray-700 hover:text-[#5167fc] transition-colors">
                 <Calendar className="w-4 h-4 flex-shrink-0" /><span className="truncate">Réservation</span>
@@ -806,13 +875,25 @@ export default function MerchantDetailPage() {
               >
                 <CreditCard className="w-4 h-4 flex-shrink-0" />
                 <span className="truncate">
-                  Acompte
+                  {merchant.deposit_link_label || 'Acompte'}
                   {merchant.deposit_amount != null
                     ? ` · ${merchant.deposit_amount}€`
                     : merchant.deposit_percent != null
                       ? ` · ${merchant.deposit_percent}%`
                       : ''}
                 </span>
+              </a>
+            )}
+            {merchant.deposit_link_2 && (
+              <a
+                href={merchant.deposit_link_2}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-sm text-emerald-700 transition-colors"
+                title={merchant.deposit_link_2}
+              >
+                <CreditCard className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{merchant.deposit_link_2_label || 'Acompte 2'}</span>
               </a>
             )}
             {merchant.review_link && (
@@ -825,166 +906,145 @@ export default function MerchantDetailPage() {
       )}
 
       {/* ═══════════ PROGRAMME FIDÉLITÉ ═══════════ */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-5">
-        <SectionTitle icon={<Gift className="w-4 h-4 text-[#5167fc]" />}>Programme de fidélité</SectionTitle>
-
-        <div className="flex flex-wrap gap-2">
-          <FeatureBadge active={merchant.loyalty_mode === 'cagnotte'} icon={<Wallet className="w-3 h-3" />} label={merchant.loyalty_mode === 'cagnotte' ? 'Cagnotte' : 'Par visite'} />
+      <CollapsibleCard
+        icon={<Gift className="w-4 h-4 text-[#5167fc]" />}
+        title="Programme de fidélité"
+        isOpen={loyaltyOpen}
+        onToggle={() => setLoyaltyOpen(!loyaltyOpen)}
+      >
+        <div className="flex flex-wrap gap-1.5">
+          <FeatureBadge
+            active
+            icon={merchant.loyalty_mode === 'cagnotte' ? <Wallet className="w-3 h-3" /> : <Gift className="w-3 h-3" />}
+            label={`Mode : ${merchant.loyalty_mode === 'cagnotte' ? 'Cagnotte' : 'Par visite'}`}
+          />
           <FeatureBadge active={merchant.referral_program_enabled} icon={<Share2 className="w-3 h-3" />} label="Parrainage" />
           <FeatureBadge active={merchant.birthday_gift_enabled} icon={<Cake className="w-3 h-3" />} label="Anniversaire" />
+          <FeatureBadge active={merchant.duo_offer_enabled} icon={<Heart className="w-3 h-3" />} label="Offre duo" />
+          <FeatureBadge active={merchant.student_offer_enabled} icon={<GraduationCap className="w-3 h-3" />} label="Offre étudiant" />
+          <FeatureBadge active={merchant.contest_enabled} icon={<Trophy className="w-3 h-3" />} label="Jeu concours" />
           <FeatureBadge active={merchant.shield_enabled} icon={<Shield className="w-3 h-3" />} label="Shield" />
-          <FeatureBadge active={merchant.welcome_offer_enabled} icon={<Gift className="w-3 h-3" />} label="Bienvenue" />
-          <FeatureBadge active={merchant.auto_booking_enabled} icon={<CalendarDays className="w-3 h-3" />} label="Resa en ligne" />
-          <FeatureBadge active={merchant.planning_enabled} icon={<Clock className="w-3 h-3" />} label="Planning" />
-          {merchant.booking_mode === 'free' && <FeatureBadge active icon={<Zap className="w-3 h-3" />} label="Mode Libre" />}
-          {Number(merchant.buffer_minutes || 0) > 0 && <FeatureBadge active icon={<Clock className="w-3 h-3" />} label={`Buffer ${merchant.buffer_minutes}min`} />}
-          {merchant.allow_customer_cancel && <FeatureBadge active icon={<XCircle className="w-3 h-3" />} label={`Annulation J-${merchant.cancel_deadline_days || 0}`} />}
-          {merchant.allow_customer_reschedule && <FeatureBadge active icon={<CalendarDays className="w-3 h-3" />} label={`Modif J-${merchant.reschedule_deadline_days || 0}`} />}
           <FeatureBadge active={merchant.tier2_enabled} icon={<Zap className="w-3 h-3" />} label="Palier 2" />
           {merchant.double_days_enabled && (
             <FeatureBadge active icon={<Zap className="w-3 h-3" />} label={`Jours x2 : ${formatDoubleDays(merchant.double_days_of_week) || '—'}`} />
           )}
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className={cn("p-4 rounded-xl border", merchant.loyalty_mode === 'cagnotte' ? "bg-purple-50 border-purple-200" : "bg-[#5167fc]/5 border-[#5167fc]/10")}>
-            <div className="flex items-center gap-2 mb-2">
-              {merchant.loyalty_mode === 'cagnotte' ? <Wallet className="w-5 h-5 text-purple-600" /> : <Gift className="w-5 h-5 text-[#5167fc]" />}
-              <span className="font-medium text-gray-900">Palier 1</span>
+        <div className="rounded-xl border border-gray-100 bg-gray-50/40 divide-y divide-gray-100 text-sm">
+          <div className="flex items-start gap-3 px-3 py-2.5">
+            {merchant.loyalty_mode === 'cagnotte' ? <Wallet className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" /> : <Gift className="w-4 h-4 text-[#5167fc] mt-0.5 flex-shrink-0" />}
+            <div className="min-w-0 flex-1">
+              <span className="font-semibold text-gray-900">Palier 1</span>
+              <span className="text-gray-700"> · {merchant.stamps_required} passages</span>
+              {merchant.loyalty_mode === 'cagnotte' && (
+                <span className="text-gray-700"> → <span className="font-semibold">{merchant.cagnotte_percent ?? 0}%</span> cagnotte</span>
+              )}
+              <span className="text-gray-500"> · {merchant.reward_description || 'Non configuré'}</span>
             </div>
-            {merchant.loyalty_mode === 'cagnotte' ? (
-              <>
-                <p className="text-gray-700"><span className="font-semibold">{merchant.stamps_required} passages</span> → <span className="font-semibold">{merchant.cagnotte_percent ?? 0}%</span> cagnotte</p>
-                <p className="text-gray-700 mt-1 text-sm">Reward : {merchant.reward_description || 'Non configuré'}</p>
-              </>
-            ) : (
-              <p className="text-gray-700"><span className="font-semibold">{merchant.stamps_required} passages</span> → {merchant.reward_description || 'Non configuré'}</p>
-            )}
           </div>
-
-          {merchant.tier2_enabled && merchant.tier2_stamps_required ? (
-            <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
-              <div className="flex items-center gap-2 mb-2">
-                {merchant.loyalty_mode === 'cagnotte' ? <Wallet className="w-5 h-5 text-amber-600" /> : <Gift className="w-5 h-5 text-amber-600" />}
-                <span className="font-medium text-gray-900">Palier 2</span>
-                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">Actif</span>
-              </div>
-              {merchant.loyalty_mode === 'cagnotte' ? (
+          <div className="flex items-start gap-3 px-3 py-2.5">
+            <Zap className={cn("w-4 h-4 mt-0.5 flex-shrink-0", merchant.tier2_enabled ? "text-amber-600" : "text-gray-300")} />
+            <div className="min-w-0 flex-1">
+              <span className={cn("font-semibold", merchant.tier2_enabled ? "text-gray-900" : "text-gray-400")}>Palier 2</span>
+              {merchant.tier2_enabled && merchant.tier2_stamps_required ? (
                 <>
-                  <p className="text-gray-700"><span className="font-semibold">{merchant.tier2_stamps_required} passages</span> → <span className="font-semibold">{merchant.cagnotte_tier2_percent ?? 0}%</span> cagnotte</p>
-                  <p className="text-gray-700 mt-1 text-sm">Reward : {merchant.tier2_reward_description || 'Non configuré'}</p>
+                  <span className="text-gray-700"> · {merchant.tier2_stamps_required} passages</span>
+                  {merchant.loyalty_mode === 'cagnotte' && (
+                    <span className="text-gray-700"> → <span className="font-semibold">{merchant.cagnotte_tier2_percent ?? 0}%</span> cagnotte</span>
+                  )}
+                  <span className="text-gray-500"> · {merchant.tier2_reward_description || 'Non configuré'}</span>
                 </>
               ) : (
-                <p className="text-gray-700"><span className="font-semibold">{merchant.tier2_stamps_required} passages</span> → {merchant.tier2_reward_description || 'Non configuré'}</p>
+                <span className="text-gray-400"> · non activé</span>
               )}
             </div>
-          ) : (
-            <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-              <div className="flex items-center gap-2 mb-2">
-                <Gift className="w-5 h-5 text-gray-400" />
-                <span className="font-medium text-gray-500">Palier 2</span>
-                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-500">Non activé</span>
-              </div>
-              <p className="text-gray-500 text-sm">Le commerçant n&apos;a pas activé le second palier.</p>
-            </div>
+          </div>
+          {merchant.birthday_gift_enabled && (
+            <LoyaltyRow icon={Cake} iconClass="text-pink-600" label="Anniversaire" description={merchant.birthday_gift_description} />
+          )}
+          {merchant.duo_offer_enabled && (
+            <LoyaltyRow icon={Heart} iconClass="text-rose-600" label="Offre duo" description={merchant.duo_offer_description} />
+          )}
+          {merchant.student_offer_enabled && (
+            <LoyaltyRow icon={GraduationCap} iconClass="text-blue-600" label="Offre étudiant" description={merchant.student_offer_description} />
+          )}
+          {merchant.contest_enabled && (
+            <LoyaltyRow icon={Trophy} iconClass="text-amber-500" label="Jeu concours" description={merchant.contest_prize} />
           )}
         </div>
 
-        {merchant.birthday_gift_enabled && (
-          <div className="p-4 bg-pink-50 rounded-xl border border-pink-200">
-            <div className="flex items-center gap-2 mb-1">
-              <Cake className="w-4 h-4 text-pink-600" />
-              <span className="font-medium text-gray-900 text-sm">Cadeau anniversaire</span>
-            </div>
-            <p className="text-gray-700 text-sm">{merchant.birthday_gift_description || 'Non configuré'}</p>
-          </div>
-        )}
-
         {merchant.referral_program_enabled && (merchant.referral_reward_referrer || merchant.referral_reward_referred) && (
-          <div className="p-4 bg-violet-50 rounded-xl border border-violet-200">
-            <div className="flex items-center gap-2 mb-3">
-              <Share2 className="w-4 h-4 text-violet-600" />
-              <span className="font-medium text-gray-900 text-sm">Récompenses parrainage</span>
+          <div className="p-3 bg-violet-50 rounded-lg border border-violet-200">
+            <div className="flex items-center gap-2 mb-2">
+              <Share2 className="w-3.5 h-3.5 text-violet-600" />
+              <span className="font-medium text-gray-900 text-xs">Récompenses parrainage</span>
             </div>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-1.5 sm:grid-cols-2">
               {merchant.referral_reward_referrer && (
-                <div className="flex items-start gap-2 p-2.5 bg-white rounded-lg">
-                  <span className="text-xs font-semibold text-violet-600 uppercase tracking-wide mt-0.5">Parrain</span>
-                  <span className="text-sm text-gray-700">{merchant.referral_reward_referrer}</span>
+                <div className="flex items-start gap-2 px-2 py-1.5 bg-white rounded">
+                  <span className="text-[10px] font-semibold text-violet-600 uppercase tracking-wide mt-0.5">Parrain</span>
+                  <span className="text-xs text-gray-700">{merchant.referral_reward_referrer}</span>
                 </div>
               )}
               {merchant.referral_reward_referred && (
-                <div className="flex items-start gap-2 p-2.5 bg-white rounded-lg">
-                  <span className="text-xs font-semibold text-violet-600 uppercase tracking-wide mt-0.5">Filleul</span>
-                  <span className="text-sm text-gray-700">{merchant.referral_reward_referred}</span>
+                <div className="flex items-start gap-2 px-2 py-1.5 bg-white rounded">
+                  <span className="text-[10px] font-semibold text-violet-600 uppercase tracking-wide mt-0.5">Filleul</span>
+                  <span className="text-xs text-gray-700">{merchant.referral_reward_referred}</span>
                 </div>
               )}
             </div>
             {stats.totalReferrals > 0 && (
-              <div className="grid grid-cols-3 gap-2 mt-3">
-                <div className="text-center p-2 bg-white rounded-lg">
-                  <p className="text-lg font-bold text-violet-700">{stats.totalReferrals}</p>
-                  <p className="text-[10px] text-gray-500 font-medium">Total</p>
+              <div className="grid grid-cols-3 gap-1.5 mt-2">
+                <div className="text-center px-2 py-1 bg-white rounded">
+                  <p className="text-sm font-bold text-violet-700">{stats.totalReferrals}</p>
+                  <p className="text-[9px] text-gray-500 font-medium">Total</p>
                 </div>
-                <div className="text-center p-2 bg-white rounded-lg">
-                  <p className="text-lg font-bold text-amber-600">{stats.pendingReferrals}</p>
-                  <p className="text-[10px] text-gray-500 font-medium">En cours</p>
+                <div className="text-center px-2 py-1 bg-white rounded">
+                  <p className="text-sm font-bold text-amber-600">{stats.pendingReferrals}</p>
+                  <p className="text-[9px] text-gray-500 font-medium">En cours</p>
                 </div>
-                <div className="text-center p-2 bg-white rounded-lg">
-                  <p className="text-lg font-bold text-green-600">{stats.completedReferrals}</p>
-                  <p className="text-[10px] text-gray-500 font-medium">Finalisés</p>
+                <div className="text-center px-2 py-1 bg-white rounded">
+                  <p className="text-sm font-bold text-green-600">{stats.completedReferrals}</p>
+                  <p className="text-[9px] text-gray-500 font-medium">Finalisés</p>
                 </div>
               </div>
-            )}
-          </div>
-        )}
-
-        {merchant.welcome_offer_enabled && (
-          <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-200">
-            <div className="flex items-center gap-2 mb-1">
-              <Gift className="w-4 h-4 text-indigo-600" />
-              <span className="font-medium text-gray-900 text-sm">Offre de bienvenue</span>
-            </div>
-            <p className="text-sm text-gray-700">{merchant.welcome_offer_description || 'Non configuré'}</p>
-            {merchant.welcome_referral_code && (
-              <p className="text-xs text-gray-500 mt-1">Code : <span className="font-mono font-semibold text-indigo-700">{merchant.welcome_referral_code}</span></p>
             )}
           </div>
         )}
 
         {merchant.offer_active && merchant.offer_title && (
-          <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
-            <div className="flex items-center justify-between mb-1">
+          <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+            <div className="flex items-center justify-between mb-0.5">
               <div className="flex items-center gap-2">
-                <Tag className="w-4 h-4 text-amber-600" />
-                <span className="font-medium text-amber-900 text-sm">Offre temporaire</span>
+                <Tag className="w-3.5 h-3.5 text-amber-600" />
+                <span className="font-medium text-amber-900 text-xs">Offre temporaire</span>
               </div>
               {merchant.offer_expires_at && (
-                <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", new Date(merchant.offer_expires_at) < new Date() ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700")}>
+                <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-full", new Date(merchant.offer_expires_at) < new Date() ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700")}>
                   {new Date(merchant.offer_expires_at) < new Date() ? "Expirée" : `Expire le ${formatDate(merchant.offer_expires_at)}`}
                 </span>
               )}
             </div>
-            <p className="font-semibold text-amber-800">{merchant.offer_title}</p>
-            {merchant.offer_description && <p className="text-amber-700 text-sm mt-1">{merchant.offer_description}</p>}
+            <p className="font-semibold text-amber-800 text-sm">{merchant.offer_title}</p>
+            {merchant.offer_description && <p className="text-amber-700 text-xs mt-0.5">{merchant.offer_description}</p>}
           </div>
         )}
 
         {memberPrograms.length > 0 && (
           <div>
-            <SectionTitle icon={<Users className="w-4 h-4 text-[#5167fc]" />}>Programmes d&apos;adhésion ({memberPrograms.length})</SectionTitle>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Programmes d&apos;adhésion ({memberPrograms.length})</p>
+            <div className="grid gap-2 sm:grid-cols-2">
               {memberPrograms.map((program) => {
                 const memberCount = program.member_cards?.[0]?.count || 0;
                 return (
-                  <div key={program.id} className={cn("p-4 rounded-xl border", program.is_active ? "bg-[#5167fc]/5 border-[#5167fc]/20" : "bg-gray-50 border-gray-200")}>
-                    <div className="flex items-center justify-between mb-1">
+                  <div key={program.id} className={cn("p-3 rounded-lg border text-sm", program.is_active ? "bg-[#5167fc]/5 border-[#5167fc]/20" : "bg-gray-50 border-gray-200")}>
+                    <div className="flex items-center justify-between mb-0.5">
                       <span className="font-semibold text-gray-900">{program.name}</span>
-                      <span className={cn("px-2 py-0.5 text-xs font-medium rounded-full", program.is_active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600")}>{program.is_active ? 'Actif' : 'Inactif'}</span>
+                      <span className={cn("px-2 py-0.5 text-[10px] font-medium rounded-full", program.is_active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600")}>{program.is_active ? 'Actif' : 'Inactif'}</span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-1">{program.benefit_label}</p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span>Durée: {program.duration_months >= 1 ? `${program.duration_months} mois` : `${Math.round(program.duration_months * 30)} jours`}</span>
+                    <p className="text-xs text-gray-600 mb-1">{program.benefit_label}</p>
+                    <div className="flex items-center gap-3 text-[11px] text-gray-500">
+                      <span>{program.duration_months >= 1 ? `${program.duration_months} mois` : `${Math.round(program.duration_months * 30)} jours`}</span>
                       <span className="flex items-center gap-1"><Users className="w-3 h-3" />{memberCount} membre{memberCount > 1 ? 's' : ''}</span>
                     </div>
                   </div>
@@ -993,59 +1053,125 @@ export default function MerchantDetailPage() {
             </div>
           </div>
         )}
-      </div>
+      </CollapsibleCard>
 
       {/* ═══════════ VITRINE EN LIGNE ═══════════ */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-5">
-        <div>
-          <SectionTitle
-            icon={<Globe className="w-4 h-4 text-[#5167fc]" />}
-            badge={<span className={cn("px-2 py-0.5 text-xs font-bold rounded-full", pageProPct === 100 ? "bg-green-100 text-green-700" : pageProPct >= 50 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700")}>{pageProPct}%</span>}
-          >Vitrine en ligne</SectionTitle>
-          <div className="h-2 bg-gray-200/60 rounded-full mb-3 overflow-hidden">
-            <div className={cn("h-full rounded-full transition-all", pageProPct === 100 ? "bg-green-500" : pageProPct >= 50 ? "bg-amber-500" : "bg-red-400")} style={{ width: `${pageProPct}%` }} />
+      <CollapsibleCard
+        icon={<Globe className="w-4 h-4 text-[#5167fc]" />}
+        title="Vitrine en ligne"
+        badge={<span className={cn("px-2 py-0.5 text-xs font-bold rounded-full", pageProPct === 100 ? "bg-green-100 text-green-700" : pageProPct >= 50 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700")}>{pageProPct}%</span>}
+        isOpen={vitrineOpen}
+        onToggle={() => setVitrineOpen(!vitrineOpen)}
+      >
+        <div className="flex flex-wrap gap-1.5">
+          <FeatureBadge active={merchant.planning_enabled} icon={<Clock className="w-3 h-3" />} label="Planning" />
+          <FeatureBadge active={merchant.auto_booking_enabled} icon={<CalendarDays className="w-3 h-3" />} label="Resa en ligne" />
+          <FeatureBadge active={merchant.welcome_offer_enabled} icon={<Gift className="w-3 h-3" />} label="Bienvenue" />
+          <FeatureBadge active={merchant.show_public_page_on_card} icon={<Globe className="w-3 h-3" />} label="Lien sur carte" />
+          {merchant.booking_mode === 'free' && <FeatureBadge active icon={<Zap className="w-3 h-3" />} label="Mode Libre" />}
+          {Number(merchant.buffer_minutes || 0) > 0 && <FeatureBadge active icon={<Clock className="w-3 h-3" />} label={`Buffer ${merchant.buffer_minutes}min`} />}
+          {merchant.allow_customer_cancel && <FeatureBadge active icon={<XCircle className="w-3 h-3" />} label={`Annulation J-${merchant.cancel_deadline_days || 0}`} />}
+          {merchant.allow_customer_reschedule && <FeatureBadge active icon={<CalendarDays className="w-3 h-3" />} label={`Modif J-${merchant.reschedule_deadline_days || 0}`} />}
+          {merchant.deposit_deadline_hours != null && merchant.deposit_deadline_hours > 0 && (
+            <FeatureBadge active icon={<Hourglass className="w-3 h-3" />} label={`Acompte sous ${merchant.deposit_deadline_hours}h`} />
+          )}
+        </div>
+
+        {merchant.welcome_offer_enabled && (
+          <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+            <div className="flex items-center gap-2 mb-0.5">
+              <Gift className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="font-medium text-gray-900 text-xs">Offre de bienvenue</span>
+            </div>
+            <p className="text-sm text-gray-700">{merchant.welcome_offer_description || 'Non configuré'}</p>
+            {merchant.welcome_referral_code && (
+              <p className="text-[11px] text-gray-500 mt-0.5">Code : <span className="font-mono font-semibold text-indigo-700">{merchant.welcome_referral_code}</span></p>
+            )}
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-            {pageProItems.map((item) => (
-              <div key={item.label} className={cn("flex items-center gap-2 px-3 py-2 rounded-lg text-sm", item.done ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-400")}>
-                {item.done ? <Check className="w-4 h-4 flex-shrink-0" /> : <div className="w-4 h-4 rounded-full border-2 border-gray-300 flex-shrink-0" />}
-                <span>{item.label}</span>
+        )}
+
+        {(merchant.planning_message || merchant.booking_message) && (
+          <div className="rounded-xl border border-gray-100 bg-gray-50/40 divide-y divide-gray-100 text-sm">
+            {merchant.planning_message && (
+              <div className="flex items-start gap-3 px-3 py-2.5">
+                <StickyNote className="w-4 h-4 text-violet-600 mt-0.5 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <span className="font-semibold text-gray-900">Message planning</span>
+                  <span className="text-gray-500"> · {merchant.planning_message}</span>
+                  {merchant.planning_message_expires && (
+                    <span className="text-[11px] text-gray-400"> (expire le {formatDate(merchant.planning_message_expires)})</span>
+                  )}
+                </div>
               </div>
-            ))}
+            )}
+            {merchant.booking_message && (
+              <div className="flex items-start gap-3 px-3 py-2.5">
+                <StickyNote className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <span className="font-semibold text-gray-900">Message réservation</span>
+                  <span className="text-gray-500"> · {merchant.booking_message}</span>
+                </div>
+              </div>
+            )}
           </div>
+        )}
+
+        <div className="h-2 bg-gray-200/60 rounded-full overflow-hidden">
+          <div className={cn("h-full rounded-full transition-all", pageProPct === 100 ? "bg-green-500" : pageProPct >= 50 ? "bg-amber-500" : "bg-red-400")} style={{ width: `${pageProPct}%` }} />
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
+          {pageProItems.map((item) => (
+            <div key={item.label} className={cn("flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs", item.done ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-400")}>
+              {item.done ? <Check className="w-3.5 h-3.5 flex-shrink-0" /> : <div className="w-3.5 h-3.5 rounded-full border-2 border-gray-300 flex-shrink-0" />}
+              <span className="truncate">{item.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          <StatCard icon={<StatIcon icon={Scissors} color="violet" />} value={stats.servicesCount} label="Prestations" />
+          <StatCard icon={<StatIcon icon={Image} color="cyan" />} value={stats.photosCount} label="Photos" />
+          <StatCard icon={<StatIcon icon={CalendarDays} color="indigo" />} value={`${stats.planningBookingsCount} / ${stats.planningSlotsCount}`} label="Resa / creneaux" highlight={stats.planningBookingsCount > 0 ? 'green' : undefined} />
+          <StatCard icon={<StatIcon icon={Globe} color="emerald" />} value={stats.onlineBookingsCount} label="Resas en ligne" highlight={stats.onlineBookingsCount > 0 ? 'green' : undefined} />
+          <StatCard
+            icon={<div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", stats.pendingDepositsCount > 0 ? "bg-amber-100" : "bg-gray-50")}><Hourglass className={cn("w-4 h-4", stats.pendingDepositsCount > 0 ? "text-amber-600" : "text-gray-400")} /></div>}
+            value={stats.pendingDepositsCount}
+            label="Resas en attente acompte"
+            highlight={stats.pendingDepositsCount > 0 ? 'amber' : undefined}
+          />
         </div>
 
         <div>
-          <SectionTitle icon={<FileText className="w-4 h-4 text-violet-600" />}>Contenu</SectionTitle>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <StatCard icon={<StatIcon icon={Scissors} color="violet" />} value={stats.servicesCount} label="Prestations" />
-            <StatCard icon={<StatIcon icon={Image} color="cyan" />} value={stats.photosCount} label="Photos" />
-            <StatCard icon={<StatIcon icon={CalendarDays} color="indigo" />} value={`${stats.planningBookingsCount} / ${stats.planningSlotsCount}`} label="Reservations / creneaux" highlight={stats.planningBookingsCount > 0 ? 'green' : undefined} />
-            <StatCard icon={<StatIcon icon={Globe} color="emerald" />} value={stats.onlineBookingsCount} label="Resas en ligne (total)" highlight={stats.onlineBookingsCount > 0 ? 'green' : undefined} />
-            <StatCard
-              icon={<div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", stats.pendingDepositsCount > 0 ? "bg-amber-100" : "bg-gray-50")}><Hourglass className={cn("w-4 h-4", stats.pendingDepositsCount > 0 ? "text-amber-600" : "text-gray-400")} /></div>}
-              value={stats.pendingDepositsCount}
-              label="Resas en attente d'acompte"
-              highlight={stats.pendingDepositsCount > 0 ? 'amber' : undefined}
-            />
-            <StatCard
-              icon={<div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", merchant.bio ? "bg-green-50" : "bg-gray-50")}><FileText className={cn("w-4 h-4", merchant.bio ? "text-green-600" : "text-gray-400")} /></div>}
-              value={merchant.bio ? 'Oui' : '—'} label="Bio renseignée"
-              highlight={merchant.bio ? 'green' : undefined}
-            />
-          </div>
+          <button
+            onClick={() => merchant.bio && setBioOpen(!bioOpen)}
+            disabled={!merchant.bio}
+            className={cn(
+              "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-colors",
+              merchant.bio
+                ? "bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                : "bg-gray-50 border-gray-200 text-gray-400 cursor-default"
+            )}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            Bio {merchant.bio ? 'renseignée' : 'non renseignée'}
+            {merchant.bio && <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", bioOpen && "rotate-180")} />}
+          </button>
+          {merchant.bio && bioOpen && (
+            <p className="mt-2 p-3 text-sm text-gray-700 bg-gray-50 rounded-lg border border-gray-200 whitespace-pre-wrap">{merchant.bio}</p>
+          )}
         </div>
 
         {merchant.opening_hours && Object.values(merchant.opening_hours).some(v => v !== null) && (
           <div>
-            <SectionTitle icon={<Clock className="w-4 h-4 text-amber-600" />}>Horaires{merchant.booking_mode === 'free' ? ' (mode libre)' : ''}</SectionTitle>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Horaires{merchant.booking_mode === 'free' ? ' (mode libre)' : ''}</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
               {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day, i) => {
                 const key = String(i + 1 === 7 ? 0 : i + 1);
                 const hours = merchant.opening_hours?.[key];
                 const hasBreak = hours?.break_start && hours?.break_end;
                 return (
-                  <div key={day} className={cn("px-3 py-2 rounded-lg text-sm", hours ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-400")}>
+                  <div key={day} className={cn("px-2.5 py-1.5 rounded-lg text-xs", hours ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-400")}>
                     <span className="font-medium">{day}</span>{' '}
                     {hours ? (hasBreak ? `${hours.open}–${hours.break_start} / ${hours.break_end}–${hours.close}` : `${hours.open}–${hours.close}`) : 'Fermé'}
                   </div>
@@ -1054,29 +1180,26 @@ export default function MerchantDetailPage() {
             </div>
           </div>
         )}
+      </CollapsibleCard>
 
-      </div>
-
-      {/* ═══════════ EMAILS ENVOYÉS ═══════════ */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-        <SectionTitle icon={<Mail className="w-4 h-4 text-[#5167fc]" />}>Emails envoyés ({emailTrackings.length})</SectionTitle>
-        {emailTrackings.length > 0 ? (
-          <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
-            {emailTrackings.map((t, i) => {
-              const label = EMAIL_LABELS[t.reminder_day] || `Code ${t.reminder_day}`;
-              const date = new Date(t.sent_at).toLocaleDateString('fr-FR', {
-                day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
-              });
-              return (
-                <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50">
-                  <div className="flex items-center gap-2">
-                    <div className={cn("w-2 h-2 rounded-full", t.reminder_day < 0 ? "bg-green-500" : "bg-amber-500")} />
-                    <span className="text-sm font-medium text-gray-700">{label}</span>
-                  </div>
-                  <span className="text-xs text-gray-500">{date}</span>
+      <CollapsibleCard
+        icon={<Mail className="w-4 h-4 text-[#5167fc]" />}
+        title="Emails envoyés"
+        badge={<span className="text-sm font-normal text-gray-500">({formattedEmailTrackings.length})</span>}
+        isOpen={emailsOpen}
+        onToggle={() => setEmailsOpen(!emailsOpen)}
+      >
+        {formattedEmailTrackings.length > 0 ? (
+          <div className="space-y-1 max-h-[400px] overflow-y-auto">
+            {formattedEmailTrackings.map((t) => (
+              <div key={t.key} className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-gray-50">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className={cn("w-2 h-2 rounded-full flex-shrink-0", t.isMerchantEmail ? "bg-green-500" : "bg-amber-500")} />
+                  <span className="text-sm font-medium text-gray-700 truncate">{t.label}</span>
                 </div>
-              );
-            })}
+                <span className="text-xs text-gray-500 flex-shrink-0 ml-2">{t.date}</span>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="text-center py-6 text-gray-400">
@@ -1084,7 +1207,7 @@ export default function MerchantDetailPage() {
             <p className="text-sm">Aucun email envoyé</p>
           </div>
         )}
-      </div>
+      </CollapsibleCard>
     </div>
   );
 }
