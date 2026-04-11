@@ -337,6 +337,9 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Source unique** : `src/lib/churn-survey-config.ts` — enums partages entre Zod API, client page, admin page
 - **Table** : `merchant_churn_surveys` (UNIQUE merchant_id) + colonne `merchants.churn_survey_seen_at TIMESTAMPTZ`
 - **Routes** : `POST /api/churn-survey` (merchant auth), `GET /api/admin/churn-surveys` (admin auth)
+- **Scripts one-off** :
+  - `scripts/send-churn-survey-email.mjs` — relance churn survey aux merchants deja expired au moment du deploy (tracking -213)
+  - `scripts/send-features-recap.mjs` — recap des 6 features cles (vitrine, planning, SMS, fidelite, bienvenue, avis Google) avec gift box "+2 jours" pointant vers `/dashboard/survey` (tracking -214, scheduled_at Resend)
 
 ---
 
