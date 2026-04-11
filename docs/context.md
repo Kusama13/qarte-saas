@@ -326,6 +326,18 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Cartes de membre avec validite, avantages personnalises
 - Tables `member_programs` + `member_cards`
 
+### Churn Retention Survey (mig 106)
+- **Trigger** : merchants fully expired (> J+3) et `churn_survey_seen_at IS NULL` sont rediriges par le dashboard layout vers `/dashboard/survey` au lieu de `/dashboard/subscription`
+- **Questionnaire** : 4 questions (blocker, missing_feature optionnel, features_tested multi, would_convince), avec textarea libre finale
+- **Bonus** : +2 jours ajoutes sur `trial_ends_at` (calcul `GREATEST(NOW(), current) + 2 days` pour gerer les dates dans le passe) + pose `churn_survey_seen_at` (one-shot definitif)
+- **Skip** : lien "Passer" discret → redirect direct vers `/dashboard/subscription` SANS poser de flag. Le merchant revoit le questionnaire a la prochaine visite (incite a repondre)
+- **Promo conditionnelle** : si `would_convince === 'lower_price'`, la page de succes affiche un code Stripe `QARTEPRO10` (-10% sur 3 premiers mois, coupon Stripe cree manuellement — generique non-individuel)
+- **Email de relance** : `ChurnSurveyReminderEmail` envoye par cron morning au J+3 (tracking code -213, idempotent)
+- **Admin view** : `/admin/churn-surveys` avec stats agregees (blockers/convinces/features/converted count), filtres + recherche + expand par ligne pour voir toutes les reponses
+- **Source unique** : `src/lib/churn-survey-config.ts` — enums partages entre Zod API, client page, admin page
+- **Table** : `merchant_churn_surveys` (UNIQUE merchant_id) + colonne `merchants.churn_survey_seen_at TIMESTAMPTZ`
+- **Routes** : `POST /api/churn-survey` (merchant auth), `GET /api/admin/churn-surveys` (admin auth)
+
 ---
 
 ## 6. Routes API
@@ -548,7 +560,7 @@ WelcomeEmail, IncompleteSignupEmail (+1h), IncompleteSignupReminder2Email (+3h),
 FirstScanEmail (2e visite), Day5CheckinEmail, FirstRewardEmail, Tier2UpsellEmail, WeeklyDigestEmail, PendingPointsEmail (Shield)
 
 ### Retention & Trial
-TrialEndingEmail (J-5/3/1), TrialExpiredEmail (J+1/3/5), InactiveMerchantDay7/14/30Email
+TrialEndingEmail (J-5/3/1), TrialExpiredEmail (J+1/3/5), ChurnSurveyReminderEmail (J+3 — code -213, vers `/dashboard/survey`, bonus +2 jours si complete), InactiveMerchantDay7/14/30Email
 
 ### Stripe
 SubscriptionConfirmedEmail, PaymentFailedEmail, SubscriptionCanceledEmail, SubscriptionReactivatedEmail, ReactivationEmail (J+7/14/30, sans code promo)

@@ -568,7 +568,30 @@
 **Index** : `idx_merchant_contests_merchant` (merchant_id, contest_month DESC)
 **RLS** : merchants SELECT own, service role full access
 
-### 2.29 sms_logs (mig 092-094)
+### 2.29 merchant_churn_surveys (mig 106)
+
+Questionnaire de retention affiche aux merchants dont le trial est fully expired (> J+3). Une seule reponse par merchant. Completion accorde +2 jours bonus sur `trial_ends_at` + pose `merchants.churn_survey_seen_at`. Si Q4 = `lower_price`, le code promo Stripe `QARTEPRO10` (-10% 3 mois) est affiche sur la page de succes.
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| merchant_id | UUID FK | NOT NULL | → merchants(id) ON DELETE CASCADE, UNIQUE |
+| blocker | TEXT | NOT NULL | CHECK IN (`price`, `not_enough_clients`, `missing_feature`, `too_complex`, `other`) |
+| missing_feature | TEXT | | Optionnel — texte libre Q2 |
+| features_tested | TEXT[] | `{}` | NOT NULL — array de `loyalty` / `planning` / `online_booking` / `sms` / `push_offers` / `referral` |
+| would_convince | TEXT | NOT NULL | CHECK IN (`lower_price`, `longer_trial`, `team_demo`, `more_features`, `nothing`) |
+| free_comment | TEXT | | Optionnel |
+| bonus_days_granted | INTEGER | 0 | NOT NULL |
+| created_at | TIMESTAMPTZ | `NOW()` | |
+
+**Index** : `idx_churn_surveys_created` (created_at DESC), `idx_churn_surveys_blocker` (blocker)
+**RLS** : merchants INSERT/SELECT own, service role full access
+
+**Colonne ajoutee sur `merchants`** : `churn_survey_seen_at TIMESTAMPTZ` — posee a la completion (PAS au skip, le skip n'est pas persiste pour que le merchant reverra le questionnaire a la prochaine visite).
+
+**Source unique** : les enums + labels sont dans `src/lib/churn-survey-config.ts` (partages entre Zod API, client page, admin page).
+
+### 2.30 sms_logs (mig 092-094)
 
 | Colonne | Type | Default | Contrainte |
 |---------|------|---------|------------|
@@ -1069,6 +1092,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 103 | planning_free_mode | Colonnes `booking_mode VARCHAR(10) DEFAULT 'slots'` + `buffer_minutes SMALLINT DEFAULT 0` sur `merchants`. Colonne `total_duration_minutes SMALLINT NULL` sur `merchant_planning_slots` (NULL=mode créneaux, non-null=mode libre). Les horaires d'ouverture mode libre réutilisent le champ JSON `merchant.opening_hours` existant (clés "1"=Lun…"7"=Dim) |
 | 104 | notification_center | Colonnes `title`, `body`, `url` TEXT + `read` BOOLEAN DEFAULT false sur `merchant_push_logs`. Index `idx_merchant_push_logs_unread`. Policies SELECT/UPDATE pour merchants |
 | 105 | monthly_contest | Colonnes `contest_enabled` BOOLEAN + `contest_prize` TEXT sur `merchants`. Table `merchant_contests` (tirage au sort mensuel) avec UNIQUE(merchant_id, contest_month) |
+| 106 | churn_survey | Table `merchant_churn_surveys` (questionnaire de retention post-J+3) + colonne `churn_survey_seen_at` TIMESTAMPTZ sur `merchants` (posee a la completion seulement, pas au skip) |
 
 ---
 

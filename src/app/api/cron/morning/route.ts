@@ -6,6 +6,7 @@ import {
   sendPendingPointsEmail,
   sendTrialEndingEmail,
   sendTrialExpiredEmail,
+  sendChurnSurveyReminderEmail,
   sendProgramReminderEmail,
   sendProgramReminderDay2Email,
   sendProgramReminderDay3Email,
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
   }
 
   const results = {
-    trialEmails: { processed: 0, ending: 0, expired: 0, errors: 0 },
+    trialEmails: { processed: 0, ending: 0, expired: 0, churnSurvey: 0, errors: 0 },
     programReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     programRemindersDay2: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     programRemindersDay3: { processed: 0, sent: 0, skipped: 0, errors: 0 },
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest) {
   // Single fetch for all merchants — sections filter in JS instead of separate DB queries
   const { data: allMerchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, shop_type, slug, user_id, locale, country, trial_ends_at, subscription_status, created_at, updated_at, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, referral_code, no_contact, birthday_gift_enabled, birthday_gift_description, offer_active, offer_title, offer_expires_at, pwa_installed_at, bio, shop_address, planning_enabled');
+    .select('id, shop_name, shop_type, slug, user_id, locale, country, trial_ends_at, subscription_status, churn_survey_seen_at, created_at, updated_at, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, referral_code, no_contact, birthday_gift_enabled, birthday_gift_description, offer_active, offer_title, offer_expires_at, pwa_installed_at, bio, shop_address, planning_enabled');
 
   const allMerchantsList = allMerchants || [];
   const allMerchantsMap = new Map(allMerchantsList.map(m => [m.id, m]));
@@ -158,6 +159,17 @@ export async function GET(request: NextRequest) {
               await sendTrialExpiredEmail(email, merchant.shop_name, trialStatus.daysUntilDeletion, (merchant.locale as EmailLocale) || 'fr');
               await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
               results.trialEmails.expired++;
+              merchantsSentTrialEmail.add(merchant.id);
+              await rateLimitDelay();
+            }
+          }
+          // Tracking code -213 prevents re-sends after merchant completes survey
+          if (trialStatus.isFullyExpired && !merchant.churn_survey_seen_at) {
+            const trackCode = -213;
+            if (!globalTrackingSet.has(`${merchant.id}:${trackCode}`)) {
+              await sendChurnSurveyReminderEmail(email, merchant.shop_name, (merchant.locale as EmailLocale) || 'fr');
+              await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
+              results.trialEmails.churnSurvey++;
               merchantsSentTrialEmail.add(merchant.id);
               await rateLimitDelay();
             }

@@ -98,17 +98,29 @@ function DashboardLayoutContent({
     merchant?.subscription_status || 'trial'
   );
 
-  const shouldRedirect = !loading
+  // Skip is intentionally not persisted — merchant sees survey again until they complete it
+  const needsSurvey = trialStatus.isFullyExpired && !merchant?.churn_survey_seen_at;
+
+  const shouldRedirectSurvey = !loading
     && !!merchant
-    && (trialStatus.isInGracePeriod || trialStatus.isFullyExpired)
+    && needsSurvey
+    && pathname !== '/dashboard/survey'
     && pathname !== '/dashboard/subscription';
+
+  const shouldRedirectSubscription = !loading
+    && !!merchant
+    && (trialStatus.isInGracePeriod || (trialStatus.isFullyExpired && !!merchant.churn_survey_seen_at))
+    && pathname !== '/dashboard/subscription'
+    && pathname !== '/dashboard/survey';
 
   // Redirection forcée dès la fin de l'essai (grâce ou expiration complète)
   useEffect(() => {
-    if (shouldRedirect) {
+    if (shouldRedirectSurvey) {
+      router.push('/dashboard/survey');
+    } else if (shouldRedirectSubscription) {
       router.push('/dashboard/subscription');
     }
-  }, [shouldRedirect, router]);
+  }, [shouldRedirectSurvey, shouldRedirectSubscription, router]);
 
 
   if (!hasMounted || loading) {
@@ -119,11 +131,11 @@ function DashboardLayoutContent({
     );
   }
 
-  if (shouldRedirect) {
+  if (shouldRedirectSurvey || shouldRedirectSubscription) {
     return null;
   }
 
-  if (pathname === '/dashboard/setup') {
+  if (pathname === '/dashboard/setup' || pathname === '/dashboard/survey') {
     return <>{children}</>;
   }
 

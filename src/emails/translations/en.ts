@@ -43,6 +43,7 @@ export const en = {
     birthdayNotification: 'Client birthday{plural} today',
     announcementMaPage: '{shopName}, see what we\'ve prepared for you',
     winBack: '{shopName} — we\'ve changed a lot, come take a look',
+    churnSurveyReminder: '{shopName}, 2 free days',
   },
 
   baseLayout: {
@@ -710,6 +711,21 @@ export const en = {
     featureDesc: 'You create available time slots, clients book online and you get an instant notification. You can also request a deposit.',
     trialNote: 'You have <strong>{daysRemaining} day{daysPlural}</strong> left in your trial.',
     cta: 'Enable my calendar',
+    signature: 'The Qarte Team',
+  },
+
+  churnSurveyReminder: {
+    preview: '{shopName}, 2 free days if you help us understand',
+    heading: '2 free days, in exchange for 30 seconds',
+    greeting: 'Hi <strong>{shopName}</strong>,',
+    intro: 'Your Qarte trial has ended and we\'d really love to understand what held you back. Your feedback helps us improve the tool for all salons.',
+    offerBadge: 'Thank-you gift',
+    offerTitle: '2 extra trial days',
+    offerText: 'Answer 4 quick questions about your experience and we\'ll reactivate your account for 2 more days. Our way of saying thank you.',
+    cta: 'Answer and get 2 days',
+    duration: '4 questions, under 1 minute.',
+    questionText: 'A question? Just reply to this email, we read everything.',
+    signaturePrefix: 'Talk soon,',
     signature: 'The Qarte Team',
   },
 } as const;

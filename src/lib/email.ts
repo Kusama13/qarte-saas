@@ -36,6 +36,7 @@ import {
   BookingNotificationEmail,
   VitrineReminderEmail,
   PlanningReminderEmail,
+  ChurnSurveyReminderEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import logger from './logger';
@@ -216,6 +217,16 @@ export async function sendTrialExpiredEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'trialExpired', { shopName }), TrialExpiredEmail, { shopName, daysUntilDeletion, locale }, {
     logLabel: `Trial expired email (${daysUntilDeletion} days until deletion)`,
+  });
+}
+
+export async function sendChurnSurveyReminderEmail(
+  to: string,
+  shopName: string,
+  locale: EmailLocale = 'fr'
+): Promise<SendEmailResult> {
+  return sendEmail(to, subj(locale, 'churnSurveyReminder', { shopName }), ChurnSurveyReminderEmail, { shopName, locale }, {
+    logLabel: 'Churn survey reminder email (J+3)',
   });
 }
 

@@ -43,6 +43,7 @@ export const fr = {
     birthdayNotification: 'Anniversaire client{plural} aujourd\'hui',
     announcementMaPage: '{shopName}, découvre ce qu\'on a préparé pour toi',
     winBack: '{shopName} — on a tout changé, reviens voir',
+    churnSurveyReminder: '{shopName}, 2 jours offerts',
   },
 
   baseLayout: {
@@ -710,6 +711,21 @@ export const fr = {
     featureDesc: 'Tu crées tes créneaux disponibles, tes clients réservent en ligne et tu reçois une notification instantanée. Tu peux aussi demander un acompte.',
     trialNote: 'Il te reste <strong>{daysRemaining} jour{daysPlural}</strong> d\'essai.',
     cta: 'Activer mon planning',
+    signature: 'L\'équipe Qarte',
+  },
+
+  churnSurveyReminder: {
+    preview: '{shopName}, 2 jours offerts si tu nous aides à comprendre',
+    heading: '2 jours offerts, en échange de 30 secondes',
+    greeting: 'Bonjour <strong>{shopName}</strong>,',
+    intro: 'Ton essai Qarte est terminé, et on aimerait vraiment comprendre ce qui t\'a bloqué. Ton retour nous aide à améliorer l\'outil pour tous les salons.',
+    offerBadge: 'Cadeau de remerciement',
+    offerTitle: '2 jours d\'essai en plus',
+    offerText: 'Réponds à 4 questions rapides sur ton expérience et on te rallume ton compte pour 2 jours supplémentaires. C\'est notre façon de te dire merci.',
+    cta: 'Répondre et obtenir 2 jours',
+    duration: '4 questions, moins de 1 minute.',
+    questionText: 'Une question ? Réponds directement à cet email, on te lit.',
+    signaturePrefix: 'À très vite,',
     signature: 'L\'équipe Qarte',
   },
 } as const;
