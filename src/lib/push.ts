@@ -157,6 +157,22 @@ export async function subscribeToPush(
     // Wait for the service worker to be ready
     await navigator.serviceWorker.ready;
 
+    // Workaround: sw.js no longer calls clients.claim() (would crash personalize page),
+    // so on first SW install the page may not yet be controlled — pushManager.subscribe()
+    // then throws "Registration failed - push service error" on Chrome Android & iOS PWA.
+    // Reload once (sessionStorage flag prevents loop) so the SW takes control.
+    if (navigator.serviceWorker.controller === null) {
+      const reloadFlagKey = 'qarte_push_sw_reload';
+      const alreadyReloaded = sessionStorage.getItem(reloadFlagKey) === 'true';
+      if (!alreadyReloaded) {
+        console.log('[push] SW not yet controlling client — reloading once');
+        sessionStorage.setItem(reloadFlagKey, 'true');
+        window.location.reload();
+        return { success: false, error: 'Mise à jour, rechargement...' };
+      }
+      console.warn('[push] SW still not controlling client after reload, attempting subscription anyway');
+    }
+
     // Check if already subscribed
     let subscription = await registration.pushManager.getSubscription();
 
@@ -189,6 +205,7 @@ export async function subscribeToPush(
         throw new Error(errorData.error || `Server error (${response.status})`);
       }
       console.log('[push] subscribed successfully for customer', customerId);
+      sessionStorage.removeItem('qarte_push_sw_reload');
     } finally {
       clearTimeout(subTimeout);
     }

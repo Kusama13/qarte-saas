@@ -53,6 +53,10 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
   const [editDuration, setEditDuration] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editPriceFrom, setEditPriceFrom] = useState(false);
+  const [editCategoryId, setEditCategoryId] = useState<string | null>(null);
+  const [editNewCatName, setEditNewCatName] = useState('');
+  const [editShowNewCat, setEditShowNewCat] = useState(false);
+  const [editAddingCat, setEditAddingCat] = useState(false);
 
   // Edit category
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
@@ -199,6 +203,30 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
     }
   };
 
+  const handleCreateCategoryInEdit = async () => {
+    const name = editNewCatName.trim();
+    if (!name) return;
+    setEditAddingCat(true);
+    try {
+      const res = await fetch('/api/services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'category', merchant_id: merchant.id, name }),
+      });
+      const data = await res.json();
+      if (res.ok && data.category) {
+        setCategories(prev => [...prev, data.category]);
+        setEditCategoryId(data.category.id);
+        setEditNewCatName('');
+        setEditShowNewCat(false);
+      }
+    } catch {
+      // silent
+    } finally {
+      setEditAddingCat(false);
+    }
+  };
+
   const handleUpdateService = async (id: string) => {
     if (!editName.trim() || !editPrice) return;
     const price = parseFloat(editPrice);
@@ -217,6 +245,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
           duration: editDuration ? parseInt(editDuration) : null,
           description: editDescription.trim() || null,
           price_from: editPriceFrom,
+          category_id: editCategoryId,
         }),
       });
       const data = await res.json();
@@ -315,6 +344,70 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
             placeholder={t('svcDescOpt')}
             className="w-full text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
           />
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] text-gray-400 font-medium">{t('svcIn')}</span>
+            <button
+              onClick={() => setEditCategoryId(null)}
+              className={`px-2.5 py-1 text-[11px] font-medium rounded-full border transition-all ${
+                !editCategoryId
+                  ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
+                  : 'border-gray-200 text-gray-500 hover:border-gray-300'
+              }`}
+            >
+              {t('svcNoCat')}
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setEditCategoryId(cat.id)}
+                className={`px-2.5 py-1 text-[11px] font-medium rounded-full border transition-all ${
+                  editCategoryId === cat.id
+                    ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
+                    : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+            {editShowNewCat ? (
+              <div className="flex items-center gap-1">
+                <input
+                  value={editNewCatName}
+                  onChange={(e) => setEditNewCatName(e.target.value)}
+                  placeholder={t('svcCatPlaceholder')}
+                  className="text-[11px] bg-white border border-indigo-300 rounded-full px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 max-w-[140px]"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleCreateCategoryInEdit();
+                    if (e.key === 'Escape') { setEditShowNewCat(false); setEditNewCatName(''); }
+                  }}
+                  autoFocus
+                />
+                <button
+                  onClick={handleCreateCategoryInEdit}
+                  disabled={editAddingCat || !editNewCatName.trim()}
+                  className="p-1 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+                >
+                  {editAddingCat ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                </button>
+                <button
+                  onClick={() => { setEditShowNewCat(false); setEditNewCatName(''); }}
+                  className="p-1 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              categories.length < 10 && (
+                <button
+                  onClick={() => setEditShowNewCat(true)}
+                  className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-full border border-dashed border-indigo-300 text-indigo-600 hover:bg-indigo-50 transition-all"
+                >
+                  <Plus className="w-3 h-3" />
+                  {t('svcAddCat')}
+                </button>
+              )
+            )}
+          </div>
           <div className="flex items-center gap-1.5 justify-end">
             <button onClick={() => setEditingService(null)} className="px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200 transition-colors">
               {t('svcCancel')}
@@ -354,6 +447,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                 setEditDuration(service.duration ? String(service.duration) : '');
                 setEditDescription(service.description || '');
                 setEditPriceFrom(service.price_from || false);
+                setEditCategoryId(service.category_id || null);
               }}
               className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
             >
