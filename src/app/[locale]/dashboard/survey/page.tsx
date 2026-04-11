@@ -145,34 +145,29 @@ export default function ChurnSurveyPage() {
   // Loading state
   if (loading || !merchant) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f7f6fb]">
-        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-8 h-8 text-[#4b0082] animate-spin" />
       </div>
     );
   }
 
   return (
     <div
-      className="min-h-screen bg-[#f7f6fb] relative overflow-hidden"
+      className="min-h-screen bg-gray-50 relative"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      {/* Header minimaliste */}
-      <header className="relative z-10 flex items-center justify-between px-4 md:px-6 py-4 md:py-5 max-w-2xl mx-auto">
-        <span className="text-xl md:text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-          Qarte
-        </span>
-        {!success && (
-          <button
-            type="button"
-            onClick={handleSkip}
-            className="text-sm text-gray-400 hover:text-gray-600 transition-colors font-medium"
-          >
-            {t('skip')}
-          </button>
-        )}
-      </header>
+      {/* Skip button flottant */}
+      {!success && (
+        <button
+          type="button"
+          onClick={handleSkip}
+          className="fixed z-40 top-4 right-4 md:top-6 md:right-6 px-3 py-1.5 bg-white/90 backdrop-blur-xl border border-gray-100 rounded-lg shadow-sm text-sm text-gray-500 hover:text-gray-700 transition-colors font-medium"
+        >
+          {t('skip')}
+        </button>
+      )}
 
-      <main className="relative z-10 px-4 md:px-6 pb-8 pt-2 md:py-6 max-w-2xl mx-auto">
+      <main className="px-4 pt-14 pb-20 lg:pt-8 lg:px-8 lg:pb-8 max-w-3xl mx-auto">
         <AnimatePresence mode="wait">
           {!success ? (
             <motion.div
@@ -182,16 +177,18 @@ export default function ChurnSurveyPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.4 }}
             >
-              {/* Title */}
-              <div className="text-center mb-6 md:mb-8 px-2">
-                <h1 className="text-2xl md:text-4xl font-black text-gray-900 leading-tight mb-2">
+              {/* Title bandeau — aligned with other dashboard pages */}
+              <div className="mb-5 md:mb-10 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
+                <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
                   {t('title')}
                 </h1>
-                <p className="text-sm md:text-base text-gray-500 font-medium">{t('subtitle')}</p>
+                <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
+                  {t('subtitle')}
+                </p>
               </div>
 
               {/* Form card */}
-              <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl shadow-indigo-200/20 rounded-3xl space-y-6 md:space-y-8">
+              <div className="p-5 md:p-8 bg-white border border-gray-100 shadow-sm rounded-2xl space-y-6 md:space-y-8">
                 {/* Q1 — Blocker */}
                 <div>
                   <label className="block text-sm font-bold text-gray-800 mb-3">
@@ -221,7 +218,7 @@ export default function ChurnSurveyPage() {
                     onChange={(e) => setMissingFeature(e.target.value.slice(0, 200))}
                     placeholder={t('q2Placeholder')}
                     rows={3}
-                    className="w-full px-4 py-3 text-base leading-normal border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
+                    className="w-full px-4 py-3 text-base leading-normal border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4b0082]/30 focus:border-[#4b0082] transition-all resize-none"
                   />
                   <p className="mt-1 text-xs text-gray-400 text-right">{missingFeature.length}/200</p>
                 </div>
@@ -270,7 +267,7 @@ export default function ChurnSurveyPage() {
                     onChange={(e) => setFreeComment(e.target.value.slice(0, 500))}
                     placeholder={t('freeCommentPlaceholder')}
                     rows={3}
-                    className="w-full px-4 py-3 text-base leading-normal border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
+                    className="w-full px-4 py-3 text-base leading-normal border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4b0082]/30 focus:border-[#4b0082] transition-all resize-none"
                   />
                   <p className="mt-1 text-xs text-gray-400 text-right">{freeComment.length}/500</p>
                 </div>
@@ -287,7 +284,7 @@ export default function ChurnSurveyPage() {
                   type="button"
                   onClick={handleSubmit}
                   disabled={!canSubmit || submitting}
-                  className="w-full h-12 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg shadow-indigo-200/50 hover:shadow-xl hover:shadow-indigo-200/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full h-12 rounded-xl bg-gradient-to-r from-[#4b0082] to-violet-600 text-white font-semibold shadow-lg shadow-[#4b0082]/20 hover:shadow-xl hover:shadow-[#4b0082]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {submitting ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -310,7 +307,7 @@ export default function ChurnSurveyPage() {
               className="mt-6 md:mt-12"
             >
               {/* Success card */}
-              <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl shadow-indigo-200/20 rounded-3xl text-center">
+              <div className="p-5 md:p-8 bg-white border border-gray-100 shadow-sm rounded-2xl text-center">
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -320,7 +317,7 @@ export default function ChurnSurveyPage() {
                   <Check className="w-8 h-8 text-white" strokeWidth={3} />
                 </motion.div>
 
-                <h2 className="text-2xl font-black text-gray-900 mb-2">{t('successTitle')}</h2>
+                <h2 className="text-2xl font-extrabold text-gray-900 mb-2">{t('successTitle')}</h2>
                 <p className="text-gray-500 mb-6">{t('successMessage')}</p>
 
                 {/* Conditional promo card */}
@@ -329,7 +326,7 @@ export default function ChurnSurveyPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3, duration: 0.4 }}
-                    className="relative p-4 md:p-5 mb-5 md:mb-6 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white overflow-hidden"
+                    className="relative p-4 md:p-5 mb-5 md:mb-6 rounded-2xl bg-gradient-to-br from-[#4b0082] to-violet-600 text-white overflow-hidden"
                   >
                     <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10 blur-2xl pointer-events-none" />
                     <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/10 blur-2xl pointer-events-none" />
@@ -342,7 +339,7 @@ export default function ChurnSurveyPage() {
                         </span>
                       </div>
 
-                      <h3 className="text-lg md:text-xl font-black mb-3 flex items-center justify-center gap-2">
+                      <h3 className="text-lg md:text-xl font-extrabold mb-3 flex items-center justify-center gap-2">
                         <Tag className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
                         <span>{t('promoTitle')}</span>
                       </h3>
@@ -379,7 +376,7 @@ export default function ChurnSurveyPage() {
                 <button
                   type="button"
                   onClick={handleContinue}
-                  className="w-full h-12 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg shadow-indigo-200/50 hover:shadow-xl hover:shadow-indigo-200/60 transition-all flex items-center justify-center gap-2"
+                  className="w-full h-12 rounded-xl bg-gradient-to-r from-[#4b0082] to-violet-600 text-white font-semibold shadow-lg shadow-[#4b0082]/20 hover:shadow-xl hover:shadow-[#4b0082]/30 transition-all flex items-center justify-center gap-2"
                 >
                   {t('continueToSubscription')}
                   <ArrowRight className="w-5 h-5" />
@@ -402,15 +399,15 @@ interface OptionButtonProps {
 
 function OptionButton({ type, label, checked, onClick }: OptionButtonProps) {
   const borderClass = checked
-    ? 'border-indigo-600 bg-indigo-50 shadow-sm'
-    : 'border-gray-100 bg-white hover:border-indigo-200';
+    ? 'border-[#4b0082] bg-[#4b0082]/[0.06] shadow-sm'
+    : 'border-gray-100 bg-white hover:border-[#4b0082]/40';
 
   const indicatorBase =
     'flex items-center justify-center shrink-0 border-2 transition-colors';
   const indicatorShape =
     type === 'radio' ? 'w-4 h-4 rounded-full' : 'w-5 h-5 rounded-md';
   const indicatorColor = checked
-    ? 'border-indigo-600 bg-indigo-600'
+    ? 'border-[#4b0082] bg-[#4b0082]'
     : 'border-gray-300';
 
   return (
