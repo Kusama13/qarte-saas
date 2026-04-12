@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
     tier2Upsell: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     inactiveMerchants: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     reactivation: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    referralReminder: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     incompleteRelance: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     gracePeriodSetup: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     pendingReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
@@ -843,7 +844,7 @@ export async function GET(request: NextRequest) {
         { minDays: 29, maxDays: 31, trackingCode: -317 }, // J+30
       ];
 
-      const referralReminderStats = { processed: 0, sent: 0, skipped: 0, errors: 0 };
+
 
       for (const window of referralReminderWindows) {
         const minDate = new Date(now.getTime() - window.maxDays * 24 * 60 * 60 * 1000);
@@ -859,7 +860,7 @@ export async function GET(request: NextRequest) {
           await runStandardEmailSection(supabase, {
             candidates,
             trackingCode: window.trackingCode,
-            stats: referralReminderStats,
+            stats: results.referralReminder,
             sendFn: (email, m) => sendReferralReminderEmail(email, m.shop_name, m.slug, (m.locale as EmailLocale) || 'fr'),
             emailMap: globalEmailMap,
             globalTrackingSet,

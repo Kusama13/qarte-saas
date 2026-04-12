@@ -107,8 +107,7 @@ export default function NotificationBell() {
       // next-intl router.push doesn't handle query strings in raw URLs reliably
       // Use window.location for URLs with query params, router.push for simple paths
       if (notif.url.includes('?')) {
-        const prefix = window.location.pathname.startsWith('/en/') ? '/en' : '/fr';
-        window.location.href = `${prefix}${notif.url}`;
+        window.location.href = `/${locale}${notif.url}`;
       } else {
         router.push(notif.url);
       }

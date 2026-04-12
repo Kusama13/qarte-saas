@@ -56,8 +56,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, skipped: true });
     }
 
-    // Schedule email 1: T+15 minutes
-    const result1 = await scheduleIncompleteSignupEmail(email, 15);
+    // Schedule both emails in parallel: T+15min and T+2h
+    const [result1, result2] = await Promise.all([
+      scheduleIncompleteSignupEmail(email, 15),
+      scheduleIncompleteSignupEmail(email, 120),
+    ]);
 
     if (!result1.success) {
       logger.error(`Failed to schedule incomplete email 1 for ${email}`, result1.error);
@@ -66,9 +69,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    // Schedule email 2: T+2 hours
-    const result2 = await scheduleIncompleteSignupEmail(email, 120);
     if (!result2.success) {
       logger.warn(`Failed to schedule incomplete email 2 for ${email}`, result2.error);
     }

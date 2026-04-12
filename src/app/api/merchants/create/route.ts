@@ -179,16 +179,13 @@ export async function POST(request: NextRequest) {
       const scheduledEmailId = userData.user.user_metadata?.scheduled_incomplete_email_id;
       const scheduledEmailId2 = userData.user.user_metadata?.scheduled_incomplete_email_id_2;
 
-      if (scheduledEmailId) {
-        await cancelScheduledEmail(scheduledEmailId).catch((err) => {
+      const cancelPromises = [scheduledEmailId, scheduledEmailId2].filter(Boolean).map(id =>
+        cancelScheduledEmail(id!).catch((err) => {
           logger.error('Failed to cancel scheduled incomplete email', err);
-        });
-        await delay(600);
-      }
-      if (scheduledEmailId2) {
-        await cancelScheduledEmail(scheduledEmailId2).catch((err) => {
-          logger.error('Failed to cancel scheduled incomplete email 2', err);
-        });
+        })
+      );
+      if (cancelPromises.length > 0) {
+        await Promise.all(cancelPromises);
         await delay(600);
       }
 

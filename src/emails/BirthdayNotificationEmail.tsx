@@ -104,11 +104,6 @@ const giftBox = {
   border: '2px solid #fde68a',
 };
 
-const giftEmoji = {
-  fontSize: '40px',
-  margin: '0 0 8px 0',
-};
-
 const giftLabel = {
   color: '#92400e',
   fontSize: '13px',
