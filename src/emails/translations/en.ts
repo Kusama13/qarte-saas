@@ -54,7 +54,7 @@ export const en = {
 
   baseLayout: {
     allRightsReserved: '© {year} Qarte. All rights reserved.',
-    address: 'Qarte — 128 Rue la Boétie, 75008 Paris, France',
+    address: 'Qarte — 58 rue de Monceau, 75380 Paris, France',
     website: 'Website',
     contact: 'Contact',
     privacy: 'Privacy',

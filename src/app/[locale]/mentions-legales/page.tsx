@@ -23,7 +23,7 @@ function MentionsContentFR() {
           <strong>Qarte</strong><br />
           SAS Tenga Labs<br />
           Capital social : 5 000 €<br />
-          Siège social : 60 rue François 1er, 75008 Paris<br />
+          Siège social : 58 rue de Monceau, CS 48756, 75380 Paris Cedex 08<br />
           SIRET : [à compléter]<br />
           RCS : [ville — à compléter]<br />
           N° TVA intracommunautaire : [à compléter]<br />

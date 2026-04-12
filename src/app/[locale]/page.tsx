@@ -30,9 +30,9 @@ const organizationJsonLd = {
   },
   address: {
     '@type': 'PostalAddress',
-    streetAddress: '60 rue François 1er',
+    streetAddress: '58 rue de Monceau, CS 48756',
     addressLocality: 'Paris',
-    postalCode: '75008',
+    postalCode: '75380',
     addressCountry: 'FR',
   },
 };

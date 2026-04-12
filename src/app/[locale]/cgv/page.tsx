@@ -19,7 +19,7 @@ function CGVContentFR() {
           1. Objet
         </h2>
         <p className="text-gray-600">
-          Les présentes Conditions Générales de Vente (ci-après « CGV ») régissent les relations contractuelles entre la société SAS Tenga Labs, éditrice du service Qarte, dont le siège social est situé au 60 rue François 1er, 75008 Paris (ci-après « le Prestataire ») et tout professionnel ou particulier (ci-après « le Client ») souscrivant au service Qarte, une plateforme SaaS de page professionnelle et de programme de fidélité digital pour les professionnels de la beauté et du bien-être.
+          Les présentes Conditions Générales de Vente (ci-après « CGV ») régissent les relations contractuelles entre la société SAS Tenga Labs, éditrice du service Qarte, dont le siège social est situé au 58 rue de Monceau, CS 48756, 75380 Paris Cedex 08 (ci-après « le Prestataire ») et tout professionnel ou particulier (ci-après « le Client ») souscrivant au service Qarte, une plateforme SaaS de page professionnelle et de programme de fidélité digital pour les professionnels de la beauté et du bien-être.
         </p>
         <p className="text-gray-600 mt-2">
           Toute souscription au Service implique l&apos;acceptation pleine et entière des présentes CGV, qui prévalent sur tout autre document.

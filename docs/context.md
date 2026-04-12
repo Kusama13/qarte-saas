@@ -14,7 +14,7 @@
 - **Ton FR:** tutoiement dashboard merchant, vouvoiement client-facing
 - **Essai:** 7 jours | **Prix:** 24€/mois ou 240€/an
 - **Cible:** Salons de beaute (coiffeurs, barbiers, instituts, ongleries, spas, estheticiennes)
-- **Entite:** SAS Tenga Labs — 60 rue Francois 1er, 75008 Paris
+- **Entite:** SAS Tenga Labs — 58 rue de Monceau, CS 48756, 75380 Paris Cedex 08
 
 ---
 

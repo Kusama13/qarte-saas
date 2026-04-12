@@ -24,7 +24,7 @@ function PrivacyContentFR() {
         </p>
         <p className="text-gray-600 mt-2">
           <strong>SAS Tenga Labs (Qarte)</strong><br />
-          60 rue François 1er, 75008 Paris<br />
+          58 rue de Monceau, CS 48756, 75380 Paris Cedex 08<br />
           Téléphone : +33 6 07 44 74 20<br />
           Email :{' '}
           <a href="mailto:contact@getqarte.com" className="text-indigo-600 hover:text-indigo-800 underline">
