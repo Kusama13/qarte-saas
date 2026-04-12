@@ -12,7 +12,6 @@ import {
 } from '@/components/landing';
 import ClientShell from '@/components/landing/ClientShell';
 import { LazyFideliteSection, LazyFAQSection } from '@/components/landing/LazySections';
-import PlanityBooksyBanner from '@/components/landing/PlanityBooksyBanner';
 
 const organizationJsonLd = {
   '@context': 'https://schema.org',
@@ -77,7 +76,6 @@ export default function LandingPageV4() {
       <main className="overflow-hidden">
         <HeroSection />
         <SocialProofSection />
-        <PlanityBooksyBanner />
         <FeaturesGridSection />
         <LazyFideliteSection />
         <PageProSection />

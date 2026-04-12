@@ -395,8 +395,8 @@
     "journalNote2": "Balayage + soin K. habituel",
     "journalPinned": "Épinglée",
     "contestTitle": "Un jeu concours",
-    "contestTitleBold": "chaque mois.",
-    "contestDesc": "Tes clientes qui réservent participent automatiquement au tirage. Un gagnant chaque mois, une story prête à poster. Elles adorent, elles reviennent.",
+    "contestTitleBold": "en option.",
+    "contestDesc": "Active le jeu concours et tes clientes qui r\u00e9servent participent automatiquement au tirage. Un gagnant chaque mois, une story pr\u00eate \u00e0 poster. Elles adorent, elles reviennent.",
     "contestVisualTitle": "Tirage du mois",
     "contestVisualSub": "Avril 2026",
     "contestVisualPrize": "Lot à gagner",
@@ -404,7 +404,10 @@
     "contestVisualParticipants": "5 participantes",
     "contestVisualAuto": "Tirage automatique le 1er du mois",
     "contestBadge": "1 gagnante !",
-    "cta": "Fidélise tes clientes en 5 min",
+    "planityTitle": "D\u00e9j\u00e0 sur Planity ou Booksy ?",
+    "planityDesc": "Garde ta plateforme de r\u00e9sa. Ajoute Qarte uniquement pour la fid\u00e9lit\u00e9, le parrainage et les avis Google — c'est compatible.",
+    "planityCta": "Voir le comparatif",
+    "cta": "Fid\u00e9lise tes clientes en 5 min",
     "ctaSub": "7 jours gratuits, sans carte bancaire"
   },
   "howItWorks": {
