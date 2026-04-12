@@ -557,20 +557,25 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 **i18n** : Tous les templates utilisent `getEmailT(locale)` de `src/emails/translations/{fr,en}.ts`. La locale vient de `merchants.locale`. Aucun texte hardcode FR restant.
 
-### Onboarding
-WelcomeEmail, IncompleteSignupEmail (+1h), IncompleteSignupReminder2Email (+3h), ProgramReminderEmail (J+1), ProgramReminderDay2Email (J+2, par shop_type), ProgramReminderDay3Email (J+3), QRCodeEmail, FirstClientScriptEmail (J+2 post-config), QuickCheckEmail (J+4 si 0 scans), ChallengeCompletedEmail (DESACTIVE)
+### Onboarding (epure — max 1 email/jour)
+WelcomeEmail, IncompleteSignupEmail (+15min), GuidedSignupEmail (J+1 incomplete), ProgramReminderEmail (J+1 non configure), QRCodeEmail (une fois configure), FirstClientScriptEmail (J+2 post-config, 0 scans), VitrineReminderEmail (J+3, vitrine vide), PlanningReminderEmail (J+4, planning desactive)
+
+**Supprimes** : ProgramReminderDay2Email (J+2), ProgramReminderDay3Email (J+3), Day5CheckinEmail, QuickCheckEmail (J+4), AutoSuggestRewardEmail (J+5) — trop d'emails les premiers jours, doublon de ton
 
 ### Engagement
-FirstScanEmail (2e visite), Day5CheckinEmail, FirstRewardEmail, Tier2UpsellEmail, WeeklyDigestEmail, PendingPointsEmail (Shield)
+FirstScanEmail (2e visite), FirstRewardEmail, Tier2UpsellEmail, PendingPointsEmail (Shield), WeeklyDigestEmail (DESACTIVE)
 
-### Retention & Trial
-TrialEndingEmail (J-5/3/1), TrialExpiredEmail (J+1/3/5), ChurnSurveyReminderEmail (J+3 — code -213, vers `/dashboard/survey`, bonus +2 jours si complete), InactiveMerchantDay7/14/30Email
+### Retention & Trial (epure)
+TrialEndingEmail (J-2 uniquement — etait J-3 + J-1), TrialExpiredEmail (J+1 uniquement — etait J+1 + J+2), ChurnSurveyReminderEmail (J+3 fully expired — code -213, vers `/dashboard/survey`, bonus +2 jours), InactiveMerchantDay7/14/30Email
 
-### Stripe
-SubscriptionConfirmedEmail, PaymentFailedEmail, SubscriptionCanceledEmail, SubscriptionReactivatedEmail, ReactivationEmail (J+7/14/30, sans code promo)
+### Stripe & Post-subscription
+SubscriptionConfirmedEmail, PaymentFailedEmail (4 steps dunning: J+0 webhook, J+3/J+7/J+10 cron — ton escalade progressif), SubscriptionCanceledEmail, SubscriptionReactivatedEmail, ReactivationEmail (J+7/14/30), **ReferralPromoEmail (J+2 post-abonnement — "Gagne 10€ par pro recommande", lien `?ref={slug}`)**
+
+### Cancel flow — Save offer
+Modal dans `/dashboard/subscription` : quand le merchant clique "Gerer", questionnaire raison d'annulation (6 choix). Si "trop cher" → offre 2 mois offerts avec code `2MOISQARTEPRO25`. Churn survey post-expiration → 3 mois offerts avec code `3MOISQARTEPRO25` (remplace QARTEPRO10)
 
 ### Autres
-GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotificationEmail, GracePeriodSetupEmail, ProductUpdateEmail, SetupForYouEmail, AnnouncementMaPageEmail, WinBackEmail (envoi manuel admin — 3 features, sans code promo), VitrineReminderEmail (J+3), PlanningReminderEmail (J+4)
+BirthdayNotificationEmail, GracePeriodSetupEmail, ProductUpdateEmail, AnnouncementMaPageEmail, WinBackEmail (envoi manuel admin), BookingNotificationEmail (transactionnel)
 
 ### Codes promo
 Tous les codes promo emails ont ete supprimes (QARTE50, QARTEBOOST, QARTELAST, QARTECHALLENGE2026, QARTEPROEHJT). Aucun code de reduction n'est envoye automatiquement.
@@ -585,10 +590,16 @@ Tous les codes promo emails ont ete supprimes (QARTE50, QARTEBOOST, QARTELAST, Q
 | `/api/cron/monthly-contest` | 08:00 UTC, 1er du mois | Tirage au sort mensuel : pick random parmi clients ayant reserve le mois precedent, insert merchant_contests, push + email merchant |
 | `/api/cron/reactivation` | — | Deprecie (integre dans morning, section 7) |
 
-### Anti-spam
-- `List-Unsubscribe` + `List-Unsubscribe-Post` headers
+### Anti-spam & Delivrabilite
+- `List-Unsubscribe` + `List-Unsubscribe-Post` headers (RFC 8058, one-click unsubscribe)
+- One-click unsubscribe endpoint : `POST /api/email/unsubscribe?token=` (HMAC token par merchant, expire 90j)
+- Lien GET dans footer email pour desinscription via navigateur
 - Dedup via `pending_email_tracking` table
 - WhatsApp retire de tous les emails (delivrabilite)
+- Bounce/complaint webhook : `POST /api/resend/webhook` (signature svix). Marque `email_bounced_at` (bounce) ou `email_unsubscribed_at` (complaint) sur merchants
+- Crons filtrent les merchants avec `email_bounced_at` ou `email_unsubscribed_at` non null (plus aucun email envoye)
+- Tags Resend sur chaque email (categorie) pour analytics dans le dashboard Resend
+- Env var : `RESEND_WEBHOOK_SECRET` (svix signing secret depuis Resend dashboard)
 
 ---
 

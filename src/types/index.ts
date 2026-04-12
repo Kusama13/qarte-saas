@@ -156,6 +156,9 @@ export interface Merchant {
   // Monthly contest
   contest_enabled: boolean;
   contest_prize: string | null;
+  // Email deliverability
+  email_bounced_at: string | null;
+  email_unsubscribed_at: string | null;
 }
 
 export type BookingMode = 'slots' | 'free';

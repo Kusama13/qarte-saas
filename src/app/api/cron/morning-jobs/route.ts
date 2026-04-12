@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
   // ==================== PREFETCH ====================
   const { data: allMerchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, user_id, locale, country, subscription_status, no_contact, birthday_gift_enabled, birthday_gift_description, pwa_installed_at');
+    .select('id, shop_name, user_id, locale, country, subscription_status, no_contact, birthday_gift_enabled, birthday_gift_description, pwa_installed_at, email_bounced_at, email_unsubscribed_at');
 
   const allMerchantsList = allMerchants || [];
   const allMerchantsMap = new Map(allMerchantsList.map(m => [m.id, m]));
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     const targetDay = targetDate.getDate();
 
     const birthdayMerchants = allMerchantsList.filter(m =>
-      m.birthday_gift_enabled === true && !m.no_contact &&
+      m.birthday_gift_enabled === true && !m.no_contact && !m.email_bounced_at && !m.email_unsubscribed_at &&
       ['trial', 'active'].includes(m.subscription_status)
     );
 

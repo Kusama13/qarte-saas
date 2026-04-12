@@ -34,3 +34,4 @@ export { BookingNotificationEmail } from './BookingNotificationEmail';
 export { VitrineReminderEmail } from './VitrineReminderEmail';
 export { PlanningReminderEmail } from './PlanningReminderEmail';
 export { ChurnSurveyReminderEmail } from './ChurnSurveyReminderEmail';
+export { ReferralPromoEmail } from './ReferralPromoEmail';

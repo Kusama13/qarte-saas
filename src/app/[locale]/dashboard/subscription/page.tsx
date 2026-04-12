@@ -15,6 +15,8 @@ import {
   XCircle,
   ArrowLeft,
   ShieldCheck,
+  Gift,
+  Copy,
 } from 'lucide-react';
 import { Button, Modal } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -58,6 +60,10 @@ export default function SubscriptionPage() {
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [showNfcModal, setShowNfcModal] = useState(false);
+  const [showSaveOffer, setShowSaveOffer] = useState(false);
+  const [cancelReason, setCancelReason] = useState<string | null>(null);
+  const [showPromoCode, setShowPromoCode] = useState(false);
+  const [promoCopied, setPromoCopied] = useState(false);
   const [polling, setPolling] = useState(() => {
     if (typeof window !== 'undefined') {
       const flag = sessionStorage.getItem('qarte_portal_return');
@@ -638,7 +644,7 @@ export default function SubscriptionPage() {
                   <p className="text-xs text-gray-500 text-center mt-2">{t('pastDueCtaHint')}</p>
                 </>
               ) : (
-                <Button variant="outline" className="w-full h-11 rounded-2xl text-gray-500 border-gray-200 hover:text-gray-700 hover:border-gray-300 font-medium text-sm" onClick={handleOpenPortal} loading={loadingPortal}>
+                <Button variant="outline" className="w-full h-11 rounded-2xl text-gray-500 border-gray-200 hover:text-gray-700 hover:border-gray-300 font-medium text-sm" onClick={() => setShowSaveOffer(true)} loading={loadingPortal}>
                   {t('manageSubscription')}
                 </Button>
               )}
@@ -667,6 +673,92 @@ export default function SubscriptionPage() {
           <h3 className="text-lg font-bold text-gray-900 mb-2">{t('nfcModalTitle')}</h3>
           <p className="text-sm text-gray-500 leading-relaxed">{t('nfcModalDesc')}</p>
           <p className="text-xs text-gray-400 mt-3">{t('nfcModalDelivery')}</p>
+        </div>
+      </Modal>
+
+      {/* Save offer modal — intercepts cancel flow */}
+      <Modal isOpen={showSaveOffer} onClose={() => { setShowSaveOffer(false); setCancelReason(null); setShowPromoCode(false); }} size="sm">
+        <div className="space-y-4">
+          {!showPromoCode ? (
+            <>
+              <h3 className="text-lg font-bold text-gray-900">{t('saveOfferTitle')}</h3>
+              <p className="text-sm text-gray-500">{t('saveOfferSubtitle')}</p>
+
+              <div className="space-y-2">
+                {['too_expensive', 'not_using', 'missing_feature', 'switching', 'temporary', 'other'].map(reason => (
+                  <button
+                    key={reason}
+                    onClick={() => setCancelReason(reason)}
+                    className={`w-full text-left px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                      cancelReason === reason
+                        ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
+                        : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    {t(`saveReason_${reason}`)}
+                  </button>
+                ))}
+              </div>
+
+              {cancelReason === 'too_expensive' && (
+                <div className="p-4 bg-gradient-to-br from-violet-50 to-indigo-50 rounded-2xl border border-violet-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Gift className="w-4 h-4 text-violet-600" />
+                    <span className="text-sm font-bold text-violet-900">{t('saveOfferPromoTitle')}</span>
+                  </div>
+                  <p className="text-sm text-violet-700">{t('saveOfferPromoDesc')}</p>
+                  <Button
+                    className="w-full mt-3 h-10 rounded-xl bg-violet-600 hover:bg-violet-700 font-bold text-sm"
+                    onClick={() => setShowPromoCode(true)}
+                  >
+                    {t('saveOfferPromoAccept')}
+                  </Button>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 h-10 rounded-xl text-sm font-medium"
+                  onClick={() => { setShowSaveOffer(false); setCancelReason(null); }}
+                >
+                  {t('saveOfferKeep')}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 h-10 rounded-xl text-sm font-medium text-gray-400 border-gray-200"
+                  onClick={() => { setShowSaveOffer(false); setCancelReason(null); handleOpenPortal(); }}
+                  loading={loadingPortal}
+                >
+                  {t('saveOfferContinueCancel')}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="text-center space-y-4">
+              <div className="w-12 h-12 mx-auto rounded-full bg-violet-100 flex items-center justify-center">
+                <Gift className="w-6 h-6 text-violet-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">{t('saveOfferPromoTitle')}</h3>
+              <p className="text-sm text-gray-500">{t('saveOfferPromoApply')}</p>
+              <div className="flex items-center justify-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                <span className="font-mono font-bold text-lg text-indigo-700">2MOISQARTEPRO25</span>
+                <button
+                  onClick={() => { navigator.clipboard.writeText('2MOISQARTEPRO25'); setPromoCopied(true); setTimeout(() => setPromoCopied(false), 2000); }}
+                  className="p-1.5 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  {promoCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-400" />}
+                </button>
+              </div>
+              <p className="text-xs text-gray-400">{t('saveOfferPromoHint')}</p>
+              <Button
+                className="w-full h-11 rounded-xl font-bold"
+                onClick={() => { setShowSaveOffer(false); setShowPromoCode(false); setCancelReason(null); }}
+              >
+                {t('saveOfferPromoDone')}
+              </Button>
+            </div>
+          )}
         </div>
       </Modal>
 

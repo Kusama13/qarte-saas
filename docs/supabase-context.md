@@ -68,6 +68,8 @@
 | country | VARCHAR(2) | `'FR'` | mig 029 |
 | custom_scan_message | TEXT | NULL | mig 047 |
 | no_contact | BOOLEAN | `FALSE` | mig 036 |
+| email_bounced_at | TIMESTAMPTZ | NULL | mig 107 |
+| email_unsubscribed_at | TIMESTAMPTZ | NULL | mig 107 |
 | admin_notes | TEXT | NULL | mig 036 |
 | pwa_installed | BOOLEAN | `FALSE` | mig 043 |
 | pwa_installed_at | TIMESTAMPTZ | NULL | mig 043 |
@@ -1093,6 +1095,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 104 | notification_center | Colonnes `title`, `body`, `url` TEXT + `read` BOOLEAN DEFAULT false sur `merchant_push_logs`. Index `idx_merchant_push_logs_unread`. Policies SELECT/UPDATE pour merchants |
 | 105 | monthly_contest | Colonnes `contest_enabled` BOOLEAN + `contest_prize` TEXT sur `merchants`. Table `merchant_contests` (tirage au sort mensuel) avec UNIQUE(merchant_id, contest_month) |
 | 106 | churn_survey | Table `merchant_churn_surveys` (questionnaire de retention post-J+3) + colonne `churn_survey_seen_at` TIMESTAMPTZ sur `merchants` (posee a la completion seulement, pas au skip) |
+| 107 | email_deliverability | Colonnes `email_bounced_at` + `email_unsubscribed_at` TIMESTAMPTZ sur `merchants`. Index partiels. Fonction RPC `get_user_id_by_email(target_email)` pour lookup auth.users par email (utilise par webhook Resend) |
 
 ---
 

@@ -10,50 +10,51 @@ import { getEmailT, type EmailLocale } from './translations';
 
 interface PaymentFailedEmailProps {
   shopName: string;
+  step?: 1 | 2 | 3 | 4;
   locale?: EmailLocale;
 }
 
-export function PaymentFailedEmail({ shopName, locale = 'fr' }: PaymentFailedEmailProps) {
+export function PaymentFailedEmail({ shopName, step = 1, locale = 'fr' }: PaymentFailedEmailProps) {
   const t = getEmailT(locale);
+  const stepKey = `paymentFailed.step${step}` as const;
 
   return (
-    <BaseLayout preview={t('paymentFailed.preview', { shopName })} locale={locale}>
-      <Heading style={heading}>
-        {t('paymentFailed.heading')}
+    <BaseLayout preview={t(`${stepKey}.preview` as any, { shopName })} locale={locale}>
+      <Heading style={step >= 3 ? headingUrgent : heading}>
+        {t(`${stepKey}.heading` as any)}
       </Heading>
 
-      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('paymentFailed.greeting', { shopName }) }} />
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t(`${stepKey}.greeting` as any, { shopName }) }} />
 
       <Text style={paragraph}>
-        {t('paymentFailed.intro')}
+        {t(`${stepKey}.intro` as any)}
       </Text>
 
-      <Section style={warningBox}>
-        <Text style={warningTitle}>{t('paymentFailed.whyTitle')}</Text>
-        <Text style={warningText}>
-          {t('paymentFailed.whyText')}
-        </Text>
-      </Section>
+      {step === 1 && (
+        <Section style={warningBox}>
+          <Text style={warningTitle}>{t('paymentFailed.step1.whyTitle')}</Text>
+          <Text style={warningText}>{t('paymentFailed.step1.whyText')}</Text>
+        </Section>
+      )}
 
-      <Section style={impactSection}>
-        <Text style={impactTitle}>{t('paymentFailed.impactTitle')}</Text>
-        <Text style={impactItem}>{t('paymentFailed.impact1')}</Text>
-        <Text style={impactItem}>{t('paymentFailed.impact2')}</Text>
-        <Text style={impactItem}>{t('paymentFailed.impact3')}</Text>
-      </Section>
+      {step >= 3 && (
+        <Section style={urgentBox}>
+          <Text style={urgentText}>{t(`${stepKey}.urgentText` as any)}</Text>
+        </Section>
+      )}
 
       <Section style={buttonContainer}>
-        <Button style={button} href="https://getqarte.com/dashboard/subscription">
-          {t('paymentFailed.ctaUpdate')}
+        <Button style={step >= 3 ? buttonUrgent : button} href="https://getqarte.com/dashboard/subscription">
+          {t(`${stepKey}.cta` as any)}
         </Button>
       </Section>
 
       <Text style={paragraph}>
-        {t('paymentFailed.helpText')}
+        {t(`${stepKey}.helpText` as any)}
       </Text>
 
       <Text style={signature}>
-        {t('paymentFailed.signature')}
+        {t('paymentFailed.step1.signature')}
       </Text>
     </BaseLayout>
   );
@@ -62,7 +63,15 @@ export function PaymentFailedEmail({ shopName, locale = 'fr' }: PaymentFailedEma
 const heading = {
   color: '#f59e0b',
   fontSize: '24px',
-  fontWeight: '600',
+  fontWeight: '600' as const,
+  lineHeight: '1.3',
+  margin: '0 0 24px 0',
+};
+
+const headingUrgent = {
+  color: '#dc2626',
+  fontSize: '24px',
+  fontWeight: '700' as const,
   lineHeight: '1.3',
   margin: '0 0 24px 0',
 };
@@ -127,10 +136,37 @@ const button = {
   borderRadius: '8px',
   color: '#ffffff',
   fontSize: '16px',
-  fontWeight: '600',
+  fontWeight: '600' as const,
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '14px 32px',
+};
+
+const buttonUrgent = {
+  backgroundColor: '#dc2626',
+  borderRadius: '8px',
+  color: '#ffffff',
+  fontSize: '16px',
+  fontWeight: '700' as const,
+  textDecoration: 'none',
+  textAlign: 'center' as const,
+  padding: '14px 32px',
+};
+
+const urgentBox = {
+  backgroundColor: '#fef2f2',
+  borderRadius: '12px',
+  padding: '20px 24px',
+  margin: '24px 0',
+  border: '2px solid #fecaca',
+};
+
+const urgentText = {
+  color: '#991b1b',
+  fontSize: '15px',
+  lineHeight: '1.6',
+  fontWeight: '600' as const,
+  margin: '0',
 };
 
 const signature = {

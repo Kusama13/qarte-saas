@@ -1,4 +1,4 @@
-import { resend, EMAIL_FROM, EMAIL_REPLY_TO, EMAIL_HEADERS } from './resend';
+import { resend, EMAIL_FROM, EMAIL_REPLY_TO, EMAIL_HEADERS, getEmailHeaders } from './resend';
 import { render } from '@react-email/render';
 import {
   WelcomeEmail,
@@ -37,6 +37,7 @@ import {
   VitrineReminderEmail,
   PlanningReminderEmail,
   ChurnSurveyReminderEmail,
+  ReferralPromoEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import logger from './logger';
@@ -71,7 +72,7 @@ async function sendEmail<P extends Record<string, unknown>>(
   subject: string,
   Component: (props: P) => React.JSX.Element,
   props: P,
-  options?: { scheduledAt?: string; replyTo?: string; logLabel?: string }
+  options?: { scheduledAt?: string; replyTo?: string; logLabel?: string; merchantId?: string }
 ): Promise<SendEmailResult> {
   const check = checkResend();
   if (check) return check;
@@ -94,7 +95,8 @@ async function sendEmail<P extends Record<string, unknown>>(
           subject,
           html,
           text,
-          headers: EMAIL_HEADERS,
+          headers: getEmailHeaders(options?.merchantId),
+          tags: [{ name: 'category', value: options?.logLabel?.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50) || 'general' }],
           ...(options?.scheduledAt ? { scheduledAt: options.scheduledAt } : {}),
         });
 
@@ -143,7 +145,7 @@ async function scheduleEmail<P extends Record<string, unknown>>(
   Component: (props: P) => React.JSX.Element,
   props: P,
   scheduledAt: string,
-  options?: { logLabel?: string }
+  options?: { logLabel?: string; merchantId?: string }
 ): Promise<ScheduleEmailResult> {
   const check = checkResend();
   if (check) return { success: false, error: check.error };
@@ -164,7 +166,8 @@ async function scheduleEmail<P extends Record<string, unknown>>(
       subject,
       html,
       text,
-      headers: EMAIL_HEADERS,
+      headers: getEmailHeaders(options?.merchantId),
+      tags: [{ name: 'category', value: label.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50) }],
       scheduledAt,
     });
 
@@ -308,9 +311,11 @@ export async function sendPendingPointsEmail(
 export async function sendPaymentFailedEmail(
   to: string,
   shopName: string,
-  locale: EmailLocale = 'fr'
+  locale: EmailLocale = 'fr',
+  step: 1 | 2 | 3 | 4 = 1
 ): Promise<SendEmailResult> {
-  return sendEmail(to, subj(locale, 'paymentFailed'), PaymentFailedEmail, { shopName, locale }, { logLabel: 'Payment failed email' });
+  const subjectKey = step === 1 ? 'paymentFailed' : `paymentFailedStep${step}`;
+  return sendEmail(to, subj(locale, subjectKey, { shopName }), PaymentFailedEmail, { shopName, step, locale }, { logLabel: `Payment failed email (step ${step})` });
 }
 
 export async function sendSubscriptionCanceledEmail(
@@ -707,5 +712,16 @@ export async function sendBookingNotificationEmail(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return sendEmail(to, subject, BookingNotificationEmail as any, params as any, {
     logLabel: 'Booking notification email',
+  });
+}
+
+export async function sendReferralPromoEmail(
+  to: string,
+  shopName: string,
+  slug: string,
+  locale: EmailLocale = 'fr'
+): Promise<SendEmailResult> {
+  return sendEmail(to, subj(locale, 'referralPromo'), ReferralPromoEmail, { shopName, slug, locale }, {
+    logLabel: 'Referral promo email',
   });
 }
