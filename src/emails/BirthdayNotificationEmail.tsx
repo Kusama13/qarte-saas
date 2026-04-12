@@ -49,14 +49,23 @@ export function BirthdayNotificationEmail({ shopName, clientNames, giftDescripti
         {t('birthdayNotification.reminderText')}
       </Text>
 
-      <Section style={isSubscribed ? smsConfirmBox : smsUpsellBox}>
-        <Text style={isSubscribed ? smsConfirmText : smsUpsellText}>
-          {isSubscribed
-            ? t('birthdayNotification.smsConfirm')
-            : t('birthdayNotification.smsUpsell')
-          }
-        </Text>
-      </Section>
+      {isSubscribed ? (
+        <Section style={smsConfirmBox}>
+          <Text style={smsConfirmTitle}>{t('birthdayNotification.smsConfirmTitle')}</Text>
+          <Section style={smsPreviewBox}>
+            <Text style={smsPreviewText}>
+              {t('birthdayNotification.smsPreview', { shopName, giftDescription })}
+            </Text>
+          </Section>
+          <Text style={smsConfirmNote}>{t('birthdayNotification.smsConfirmNote')}</Text>
+        </Section>
+      ) : (
+        <Section style={smsUpsellBox}>
+          <Text style={smsUpsellText}>
+            {t('birthdayNotification.smsUpsell')}
+          </Text>
+        </Section>
+      )}
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/customers">
@@ -118,16 +127,38 @@ const giftText = {
 
 const smsConfirmBox = {
   backgroundColor: '#ecfdf5',
-  borderRadius: '8px',
-  padding: '12px 16px',
+  borderRadius: '12px',
+  padding: '16px 20px',
   margin: '0 0 16px 0',
   border: '1px solid #d1fae5',
 };
 
-const smsConfirmText = {
+const smsConfirmTitle = {
   color: '#065f46',
   fontSize: '14px',
-  fontWeight: '500' as const,
+  fontWeight: '600' as const,
+  margin: '0 0 10px 0',
+};
+
+const smsPreviewBox = {
+  backgroundColor: '#ffffff',
+  borderRadius: '8px',
+  padding: '12px 16px',
+  margin: '0 0 10px 0',
+  border: '1px solid #d1fae5',
+};
+
+const smsPreviewText = {
+  color: '#374151',
+  fontSize: '13px',
+  fontStyle: 'italic' as const,
+  lineHeight: '1.5',
+  margin: '0',
+};
+
+const smsConfirmNote = {
+  color: '#065f46',
+  fontSize: '13px',
   margin: '0',
 };
 

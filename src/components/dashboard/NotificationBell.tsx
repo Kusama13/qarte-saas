@@ -102,10 +102,17 @@ export default function NotificationBell() {
         body: JSON.stringify({ merchantId: merchant.id, notificationId: notif.id }),
       }).catch(() => {});
     }
-    if (notif.url) {
-      router.push(notif.url);
-    }
     setOpen(false);
+    if (notif.url) {
+      // next-intl router.push doesn't handle query strings in raw URLs reliably
+      // Use window.location for URLs with query params, router.push for simple paths
+      if (notif.url.includes('?')) {
+        const prefix = window.location.pathname.startsWith('/en/') ? '/en' : '/fr';
+        window.location.href = `${prefix}${notif.url}`;
+      } else {
+        router.push(notif.url);
+      }
+    }
   };
 
   if (!merchant || !hasNotifs) return null;
