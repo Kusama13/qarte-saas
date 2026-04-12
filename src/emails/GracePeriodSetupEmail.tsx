@@ -27,9 +27,7 @@ export function GracePeriodSetupEmail({ shopName, daysUntilDeletion, locale = 'f
 
       <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('gracePeriodSetup.greeting', { shopName }) }} />
 
-      <Text style={paragraph}>
-        {t('gracePeriodSetup.intro')}
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('gracePeriodSetup.intro') }} />
 
       <Section style={infoBox}>
         <Text style={infoText} dangerouslySetInnerHTML={{ __html: t('gracePeriodSetup.dataRetention', { daysUntilDeletion: String(daysUntilDeletion), daysPlural }) }} />

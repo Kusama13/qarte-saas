@@ -32,9 +32,9 @@ export function WelcomeEmail({ shopName, trialDays = 7, locale = 'fr' }: Welcome
       {/* What changes for you */}
       <Section style={benefitsBox}>
         <Text style={sectionTitle}>{t('welcome.benefitsTitle')}</Text>
-        <Text style={benefitItem}>&#x2713; {t('welcome.benefit1')}</Text>
-        <Text style={benefitItem}>&#x2713; {t('welcome.benefit2')}</Text>
-        <Text style={benefitItem}>&#x2713; {t('welcome.benefit3')}</Text>
+        <Text style={benefitItem} dangerouslySetInnerHTML={{ __html: `&#x2713; ${t('welcome.benefit1')}` }} />
+        <Text style={benefitItem} dangerouslySetInnerHTML={{ __html: `&#x2713; ${t('welcome.benefit2')}` }} />
+        <Text style={benefitItem} dangerouslySetInnerHTML={{ __html: `&#x2713; ${t('welcome.benefit3')}` }} />
       </Section>
 
       {/* SMS unlock */}
