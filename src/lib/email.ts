@@ -40,6 +40,7 @@ import {
   ChurnSurveyReminderEmail,
   ReferralPromoEmail,
   ReferralReminderEmail,
+  SocialProofEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import logger from './logger';
@@ -748,5 +749,15 @@ export async function sendReferralReminderEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'referralReminder', { shopName }), ReferralReminderEmail, { shopName, slug, locale }, {
     logLabel: 'Referral reminder email',
+  });
+}
+
+export async function sendSocialProofEmail(
+  to: string,
+  shopName: string,
+  locale: EmailLocale = 'fr'
+): Promise<SendEmailResult> {
+  return sendEmail(to, subj(locale, 'socialProof', { shopName }), SocialProofEmail, { shopName, locale }, {
+    logLabel: 'Social proof email',
   });
 }

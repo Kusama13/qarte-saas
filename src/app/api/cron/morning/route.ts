@@ -24,6 +24,7 @@ import {
   sendPlanningReminderEmail,
   sendReferralPromoEmail,
   sendReferralReminderEmail,
+  sendSocialProofEmail,
   sendPaymentFailedEmail,
 } from '@/lib/email';
 import type { EmailLocale } from '@/emails/translations';
@@ -58,6 +59,7 @@ export async function GET(request: NextRequest) {
   const results = {
     trialEmails: { processed: 0, ending: 0, expired: 0, churnSurvey: 0, errors: 0 },
     programReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    socialProof: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     day5Checkin: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     qrCode: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     firstClientScript: { processed: 0, sent: 0, skipped: 0, errors: 0 },
@@ -218,6 +220,29 @@ export async function GET(request: NextRequest) {
 
     // Program Reminder J+2 and J+3 removed — too many emails in first days
     // Kept: J+1 only + Vitrine/Planning reminders for configured merchants
+
+    // 2c-bis. SOCIAL PROOF EMAIL (J+3, ALL trial merchants)
+    {
+      const seventyThreeHoursAgoSP = new Date(now.getTime() - 73 * 60 * 60 * 1000);
+      const seventyTwoHoursAgoSP = new Date(now.getTime() - 72 * 60 * 60 * 1000);
+
+      const socialProofCandidates = allMerchantsList.filter(m =>
+        m.subscription_status === 'trial' && canEmail(m) &&
+        m.created_at >= seventyThreeHoursAgoSP.toISOString() &&
+        m.created_at <= seventyTwoHoursAgoSP.toISOString()
+      );
+
+      if (socialProofCandidates.length > 0) {
+        await runStandardEmailSection(supabase, {
+          candidates: socialProofCandidates,
+          trackingCode: -310,
+          stats: results.socialProof,
+          sendFn: (email, m) => sendSocialProofEmail(email, m.shop_name, (m.locale as EmailLocale) || 'fr'),
+          emailMap: globalEmailMap,
+          globalTrackingSet,
+        });
+      }
+    }
 
     // 2d-bis. VITRINE REMINDER (J+3, programme configure, vitrine vide)
     {
