@@ -672,10 +672,11 @@ export async function sendBirthdayNotificationEmail(
   shopName: string,
   clientNames: string[],
   giftDescription: string,
-  locale: EmailLocale = 'fr'
+  locale: EmailLocale = 'fr',
+  isSubscribed: boolean = false
 ): Promise<SendEmailResult> {
   const plural = clientNames.length > 1 ? 's' : '';
-  return sendEmail(to, subj(locale, 'birthdayNotification', { plural }), BirthdayNotificationEmail, { shopName, clientNames, giftDescription, locale }, {
+  return sendEmail(to, subj(locale, 'birthdayNotification', { plural }), BirthdayNotificationEmail, { shopName, clientNames, giftDescription, isSubscribed, locale }, {
     logLabel: 'Birthday notification email',
   });
 }

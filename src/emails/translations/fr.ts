@@ -662,6 +662,8 @@ export const fr = {
     introPlural: '{count} de tes clients fêtent leur anniversaire aujourd\'hui :',
     giftLabel: 'Cadeau à offrir : {giftDescription}',
     reminderText: 'N\'oublie pas de leur souhaiter un bon anniversaire lors de leur prochaine visite !',
+    smsConfirm: 'Un SMS a ete envoye automatiquement a ton/ta client(e) pour lui souhaiter un joyeux anniversaire.',
+    smsUpsell: 'Abonne-toi pour envoyer automatiquement un SMS d\'anniversaire a tes clients le jour J.',
     ctaDashboard: 'Voir mes clients',
     signature: 'L\'équipe Qarte',
   },

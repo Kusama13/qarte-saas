@@ -258,12 +258,14 @@ export async function GET(request: NextRequest) {
               if (!bm) continue;
               const merchantEmail = emailMap.get(bm.user_id);
               if (merchantEmail) {
+                const isSubscribed = bm.subscription_status === 'active' || bm.subscription_status === 'canceling';
                 await sendBirthdayNotificationEmail(
                   merchantEmail,
                   bm.shop_name,
                   clientNames,
                   bm.birthday_gift_description || 'Cadeau anniversaire',
-                  (bm.locale as EmailLocale) || 'fr'
+                  (bm.locale as EmailLocale) || 'fr',
+                  isSubscribed
                 ).catch(() => {});
                 await rateLimitDelay();
               }

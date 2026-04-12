@@ -662,6 +662,8 @@ export const en = {
     introPlural: '{count} of your clients have birthdays today:',
     giftLabel: 'Gift to offer: {giftDescription}',
     reminderText: 'Don\'t forget to wish them a happy birthday on their next visit!',
+    smsConfirm: 'An SMS was automatically sent to your client to wish them a happy birthday.',
+    smsUpsell: 'Subscribe to automatically send a birthday SMS to your clients on their special day.',
     ctaDashboard: 'View my clients',
     signature: 'The Qarte Team',
   },

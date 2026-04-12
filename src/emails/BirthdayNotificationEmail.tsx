@@ -12,10 +12,11 @@ interface BirthdayNotificationEmailProps {
   shopName: string;
   clientNames: string[];
   giftDescription: string;
+  isSubscribed?: boolean;
   locale?: EmailLocale;
 }
 
-export function BirthdayNotificationEmail({ shopName, clientNames, giftDescription, locale = 'fr' }: BirthdayNotificationEmailProps) {
+export function BirthdayNotificationEmail({ shopName, clientNames, giftDescription, isSubscribed = false, locale = 'fr' }: BirthdayNotificationEmailProps) {
   const t = getEmailT(locale);
   const plural = clientNames.length > 1;
   const pluralSuffix = plural ? 's' : '';
@@ -47,6 +48,15 @@ export function BirthdayNotificationEmail({ shopName, clientNames, giftDescripti
       <Text style={paragraph}>
         {t('birthdayNotification.reminderText')}
       </Text>
+
+      <Section style={isSubscribed ? smsConfirmBox : smsUpsellBox}>
+        <Text style={isSubscribed ? smsConfirmText : smsUpsellText}>
+          {isSubscribed
+            ? t('birthdayNotification.smsConfirm')
+            : t('birthdayNotification.smsUpsell')
+          }
+        </Text>
+      </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/customers">
@@ -103,6 +113,36 @@ const giftText = {
   color: '#78350f',
   fontSize: '18px',
   fontWeight: '700',
+  margin: '0',
+};
+
+const smsConfirmBox = {
+  backgroundColor: '#ecfdf5',
+  borderRadius: '8px',
+  padding: '12px 16px',
+  margin: '0 0 16px 0',
+  border: '1px solid #d1fae5',
+};
+
+const smsConfirmText = {
+  color: '#065f46',
+  fontSize: '14px',
+  fontWeight: '500' as const,
+  margin: '0',
+};
+
+const smsUpsellBox = {
+  backgroundColor: '#f0edfc',
+  borderRadius: '8px',
+  padding: '12px 16px',
+  margin: '0 0 16px 0',
+  border: '1px solid #e0d6fc',
+};
+
+const smsUpsellText = {
+  color: '#4b0082',
+  fontSize: '14px',
+  fontWeight: '500' as const,
   margin: '0',
 };
 
