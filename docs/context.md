@@ -555,7 +555,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 ---
 
-## 9. Emails (35 templates)
+## 9. Emails (36 templates)
 
 **i18n** : Tous les templates utilisent `getEmailT(locale)` de `src/emails/translations/{fr,en}.ts`. La locale vient de `merchants.locale`. Aucun texte hardcode FR restant.
 
@@ -573,7 +573,7 @@ FirstScanEmail (2e visite), **FirstBookingEmail (1ere resa en ligne, tracking -1
 TrialEndingEmail (J-2 uniquement — etait J-3 + J-1), TrialExpiredEmail (J+1 uniquement — etait J+1 + J+2), ChurnSurveyReminderEmail (J+3 fully expired — code -213, vers `/dashboard/survey`, bonus +2 jours), InactiveMerchantDay7/14/30Email
 
 ### Stripe & Post-subscription
-SubscriptionConfirmedEmail, PaymentFailedEmail (4 steps dunning: J+0 webhook, J+3/J+7/J+10 cron — ton escalade progressif), SubscriptionCanceledEmail, SubscriptionReactivatedEmail, ReactivationEmail (J+7/14/30), **ReferralPromoEmail (J+2 post-abonnement — "Gagne 10€ par pro recommande", lien `?ref={slug}`)**
+SubscriptionConfirmedEmail, PaymentFailedEmail (4 steps dunning: J+0 webhook, J+3/J+7/J+10 cron — ton escalade progressif), SubscriptionCanceledEmail, SubscriptionReactivatedEmail, ReactivationEmail (J+7/14/30), **ReferralPromoEmail (J+2 post-abonnement — "Gagne 10€ par pro recommande", lien `?ref={slug}`)**, **ReferralReminderEmail (J+14 et J+30 post-abo, tracking -316/-317, uniquement si 0 referrals)**
 
 ### Cancel flow — Save offer
 Modal dans `/dashboard/subscription` : quand le merchant clique "Gerer", questionnaire raison d'annulation (6 choix). Si "trop cher" → offre 2 mois offerts avec code `2MOISQARTEPRO25`. Churn survey post-expiration → 3 mois offerts avec code `3MOISQARTEPRO25` (remplace QARTEPRO10)

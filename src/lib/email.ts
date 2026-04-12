@@ -39,6 +39,7 @@ import {
   PlanningReminderEmail,
   ChurnSurveyReminderEmail,
   ReferralPromoEmail,
+  ReferralReminderEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import logger from './logger';
@@ -735,5 +736,16 @@ export async function sendReferralPromoEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'referralPromo'), ReferralPromoEmail, { shopName, slug, locale }, {
     logLabel: 'Referral promo email',
+  });
+}
+
+export async function sendReferralReminderEmail(
+  to: string,
+  shopName: string,
+  slug: string,
+  locale: EmailLocale = 'fr'
+): Promise<SendEmailResult> {
+  return sendEmail(to, subj(locale, 'referralReminder', { shopName }), ReferralReminderEmail, { shopName, slug, locale }, {
+    logLabel: 'Referral reminder email',
   });
 }

@@ -49,6 +49,7 @@ export const fr = {
     winBack: '{shopName} — on a tout changé, reviens voir',
     churnSurveyReminder: '{shopName}, 2 jours offerts',
     referralPromo: 'Gagne 10 € pour chaque pro que tu recommandes',
+    referralReminder: '{shopName}, tu n\'as pas encore partage ton lien',
   },
 
   baseLayout: {
@@ -794,5 +795,16 @@ export const fr = {
     linkLabel: 'Ton lien de parrainage',
     cta: 'Copier mon lien',
     closing: 'Pas de limite : plus tu recommandes, plus tu économises. Merci de faire grandir Qarte avec nous.',
+  },
+
+  referralReminder: {
+    preview: '{shopName}, 10 € t\'attendent',
+    heading: '10 € t\'attendent',
+    greeting: 'Bonjour <strong>{shopName}</strong>,',
+    intro: 'Tu n\'as pas encore partage ton lien de parrainage. Pourtant, tu connais surement un(e) collegue ou ami(e) pro qui cherche a fideliser ses clients ou etre plus visible en ligne. Partage ton lien — tu y gagnes aussi.',
+    rewardDetail: 'par pro inscrit via ton lien',
+    linkLabel: 'Ton lien de parrainage',
+    cta: 'Partager mon lien',
+    signature: 'L\'equipe Qarte',
   },
 } as const;

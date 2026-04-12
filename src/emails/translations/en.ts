@@ -49,6 +49,7 @@ export const en = {
     winBack: '{shopName} — we\'ve changed a lot, come take a look',
     churnSurveyReminder: '{shopName}, 2 free days',
     referralPromo: 'Earn €10 for every pro you refer',
+    referralReminder: '{shopName}, you haven\'t shared your link yet',
   },
 
   baseLayout: {
@@ -794,5 +795,16 @@ export const en = {
     linkLabel: 'Your referral link',
     cta: 'Copy my link',
     closing: 'No limit: the more you refer, the more you save. Thanks for helping Qarte grow.',
+  },
+
+  referralReminder: {
+    preview: '{shopName}, €10 are waiting for you',
+    heading: '€10 are waiting for you',
+    greeting: 'Hi <strong>{shopName}</strong>,',
+    intro: 'You haven\'t shared your referral link yet. You probably know a colleague or friend who\'s looking to retain clients or get more visibility online. Share your link — you\'ll earn from it too.',
+    rewardDetail: 'per pro who signs up via your link',
+    linkLabel: 'Your referral link',
+    cta: 'Share my link',
+    signature: 'The Qarte Team',
   },
 } as const;

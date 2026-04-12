@@ -23,6 +23,7 @@ import {
   sendVitrineReminderEmail,
   sendPlanningReminderEmail,
   sendReferralPromoEmail,
+  sendReferralReminderEmail,
   sendPaymentFailedEmail,
 } from '@/lib/email';
 import type { EmailLocale } from '@/emails/translations';
@@ -816,6 +817,60 @@ export async function GET(request: NextRequest) {
     sectionStatuses.push({ name: 'referralPromo', status: 'ok' });
   } catch (error) {
     sectionStatuses.push({ name: 'referralPromo', status: 'error', error: String(error) });
+  }
+
+  // ==================== SECTION 7b2: REFERRAL REMINDERS (J+14, J+30 post-subscription, 0 referrals) ====================
+  if (isTimedOut()) { sectionStatuses.push({ name: 'referralReminder', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
+    // Active merchants with billing_period_start, filter J+14 or J+30
+    const activeMerchantsWithBilling = allMerchantsList.filter(m =>
+      m.subscription_status === 'active' && canEmail(m) && m.billing_period_start && m.slug
+    );
+
+    if (activeMerchantsWithBilling.length > 0) {
+      // Check which of these merchants have 0 referrals
+      const merchantIds = activeMerchantsWithBilling.map(m => m.id);
+      const { data: referralCounts } = await supabase
+        .from('referrals')
+        .select('merchant_id')
+        .in('merchant_id', merchantIds);
+
+      const merchantsWithReferrals = new Set((referralCounts || []).map(r => r.merchant_id));
+
+      // Filter to merchants with 0 referrals at J+14 or J+30
+      const referralReminderWindows = [
+        { minDays: 13, maxDays: 15, trackingCode: -316 }, // J+14
+        { minDays: 29, maxDays: 31, trackingCode: -317 }, // J+30
+      ];
+
+      const referralReminderStats = { processed: 0, sent: 0, skipped: 0, errors: 0 };
+
+      for (const window of referralReminderWindows) {
+        const minDate = new Date(now.getTime() - window.maxDays * 24 * 60 * 60 * 1000);
+        const maxDate = new Date(now.getTime() - window.minDays * 24 * 60 * 60 * 1000);
+
+        const candidates = activeMerchantsWithBilling.filter(m =>
+          !merchantsWithReferrals.has(m.id) &&
+          m.billing_period_start! >= minDate.toISOString() &&
+          m.billing_period_start! <= maxDate.toISOString()
+        );
+
+        if (candidates.length > 0) {
+          await runStandardEmailSection(supabase, {
+            candidates,
+            trackingCode: window.trackingCode,
+            stats: referralReminderStats,
+            sendFn: (email, m) => sendReferralReminderEmail(email, m.shop_name, m.slug, (m.locale as EmailLocale) || 'fr'),
+            emailMap: globalEmailMap,
+            globalTrackingSet,
+          });
+        }
+      }
+    }
+
+    sectionStatuses.push({ name: 'referralReminder', status: 'ok' });
+  } catch (error) {
+    sectionStatuses.push({ name: 'referralReminder', status: 'error', error: String(error) });
   }
 
   // ==================== SECTION 7c: DUNNING — PAYMENT FAILED SEQUENCE ====================
