@@ -33,6 +33,8 @@ export function ProgramReminderEmail({ shopName, locale = 'fr' }: ProgramReminde
         {t('programReminder.timeText')}
       </Text>
 
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('programReminder.bonusText') }} />
+
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/program">
           {t('programReminder.ctaSetup')}

@@ -6,7 +6,7 @@
 
 ## 1. Overview
 
-**Qarte** — Plateforme SaaS de cartes de fidelite digitales via QR/NFC.
+**Qarte** — Plateforme SaaS tout-en-un : reservation en ligne + fidelite (tampons/cagnotte) + vitrine SEO. Le client qui reserve recoit automatiquement sa carte de fidelite.
 
 - **URL:** getqarte.com | **Deploiement:** Vercel
 - **Langues:** Francais uniquement (EN desactive via redirect 301, infra conservee) via `next-intl` | **Version:** 0.1.0
@@ -487,12 +487,14 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 3. **Personnalisation** (`/dashboard/personalize`) — logo + ambiance couleurs (12 palettes : Elegant, Glamour, Moderne, Zen, Sable, Dore, Ocean, Passion, Menthe, Indigo, Terracotta, Noir). Sauvegarde `logo_url`, `primary_color`, `secondary_color` puis redirige vers `/dashboard/program`. Page onboarding-only (pas dans la sidebar). **Défaut UI : Glamour** — si le merchant a encore les couleurs par défaut DB (`#654EDA`/`#9D8FE8`, aucune palette ne les propose), la page pré-coche Glamour pour éviter de laisser aucune palette sélectionnée. **Guards critiques** : (1) init couleurs/logo se déclenche une seule fois (`initialized` flag) pour éviter écrasement par background refetch ; (2) bouton Continuer désactivé pendant upload (`disabled={saving || uploading}`) ; (3) pas de `refetch()` avant `router.push` — évite race condition session qui redirigeait vers `/auth/merchant` ; (4) erreur upload affichée (`uploadError` state, clé i18n `personalize.uploadError`) ; (5) extension fichier fallback `png|jpg` si absente.
 4. **Welcome** (`/dashboard/welcome`) — redirige vers `/dashboard/program` (page legacy conservee pour eviter 404 sur URLs bookmarkees).
 5. `/dashboard/program` → config (couleurs, stamps, reward, extras : parrainage, avis Google, duo, jours x2, anniversaire)
-6. Premiere sauvegarde → modal "Ton programme est en ligne !" → "Voir le parcours client" (`/scan/{code}`) ou "Plus tard" → `/dashboard/qr-download`
+6. Premiere sauvegarde → modal "Tout est connecte !" (interconnexion 3 piliers : vitrine → reservation → carte fidelite auto) → "Voir le parcours client" (`/scan/{code}`) ou "Plus tard" → `/dashboard/qr-download`
 7. QR download → modal (1x) "Aide-nous a te rendre visible" → "Completer ma page" (`/dashboard/public-page`)
 8. `isFirstSetup` = true quand `reward_description` is null
 9. Email QR code envoye a la premiere config
 
-**OnboardingChecklist** : 15 etapes en 3 groupes accordion (Fidelite 6, Vitrine 5, Planning 4). Groupe Fidelite : programme, logo, QR, parrainage, anniversaire, 1er client. Groupe Vitrine : bio, adresse, photos, prestations, reseaux. Groupe Planning : activer planning, creneaux, resa en ligne, 1ere resa. Progress ring SVG par groupe + barre globale. Celebrations sparkles (sparkleSubtle par etape, sparkleMedium par groupe, sparkleGrand quand 15/15). Auto-dismiss 3 jours apres completion. Visible en trial uniquement. **CTA "S'abonner" standalone** : bloc amber toujours visible entre la barre de progression et les groupes (hors groupes, ne compte pas dans le score). **Dismiss avec confirmation** : cliquer X bascule le header en mode confirmation ("Il te reste X etapes") avec boutons "Oui, fermer" / "Continuer" — fermeture directe sans confirmation si tout est complete.
+**OnboardingChecklist** : 15 etapes en 2 groupes accordion. Groupe "Essentiel pour lancer" (7) : programme, logo, bio, prestations, planning, resa en ligne, QR. Groupe "Pour aller plus loin" (8) : adresse, photos, creneaux, parrainage, anniversaire, reseaux, 1er client, 1ere resa. Progress ring SVG par groupe + barre globale. Celebrations sparkles (sparkleSubtle par etape, sparkleMedium par groupe, sparkleGrand quand tout complete). Auto-dismiss 3 jours apres completion. Visible en trial uniquement. **CTA "S'abonner" standalone** : bloc amber toujours visible entre la barre de progression et les groupes (hors groupes, ne compte pas dans le score). **Dismiss avec confirmation** : cliquer X bascule le header en mode confirmation ("Il te reste X etapes") avec boutons "Oui, fermer" / "Continuer" — fermeture directe sans confirmation si tout est complete.
+
+**ZeroScansCoach** : 3 etapes interconnectees avec fleches (ArrowDown) montrant le parcours client : (1) "Ta vitrine attire" → vitrine, (2) "Elles reservent en ligne" → planning, (3) "Carte fidelite automatique" (resultat auto, pas de lien). Visible quand 0 scans en trial.
 
 **MilestoneModal** : celebrations in-app trial only. 6 milestones one-shot : vitrine_live (bio+adresse), services_added (1+ prestation), planning_active (planning active), first_scan (1+ client), first_booking (1+ resa en ligne), first_reward (1+ recompense). Modal glassmorphism centree + sparkleGrand() + Framer Motion. Dedup localStorage permanent (`qarte_milestone_{type}_{merchantId}`). Priorite d'affichage : vitrine > services > planning > scan > booking > reward. 1 seul modal par chargement. Queries milestone conditionnelles `subscription_status === 'trial'`.
 
@@ -553,17 +555,19 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 ---
 
-## 9. Emails (34 templates)
+## 9. Emails (35 templates)
 
 **i18n** : Tous les templates utilisent `getEmailT(locale)` de `src/emails/translations/{fr,en}.ts`. La locale vient de `merchants.locale`. Aucun texte hardcode FR restant.
 
 ### Onboarding (epure — max 1 email/jour)
-WelcomeEmail, IncompleteSignupEmail (+15min), GuidedSignupEmail (J+1 incomplete), ProgramReminderEmail (J+1 non configure), QRCodeEmail (une fois configure), FirstClientScriptEmail (J+2 post-config, 0 scans), VitrineReminderEmail (J+3, vitrine vide), PlanningReminderEmail (J+4, planning desactive)
+WelcomeEmail, IncompleteSignupEmail (+15min + +2h), GuidedSignupEmail (J+1 incomplete), ProgramReminderEmail (J+1 non configure, mentionne interconnexion booking→fidelite), QRCodeEmail (une fois configure), FirstClientScriptEmail (J+2 post-config, 0 scans), VitrineReminderEmail (J+3, vitrine vide), PlanningReminderEmail (J+4, planning desactive, mentionne interconnexion booking→carte fidelite auto)
+
+**Abandon signup** : 3 relances escaladees — T+15min (Resend schedule), T+2h (Resend schedule), T+24h (cron morning -150). Les 2 emails schedules sont annules si le merchant complete son inscription.
 
 **Supprimes** : ProgramReminderDay2Email (J+2), ProgramReminderDay3Email (J+3), Day5CheckinEmail, QuickCheckEmail (J+4), AutoSuggestRewardEmail (J+5) — trop d'emails les premiers jours, doublon de ton
 
 ### Engagement
-FirstScanEmail (2e visite), FirstRewardEmail, Tier2UpsellEmail, PendingPointsEmail (Shield), WeeklyDigestEmail (DESACTIVE)
+FirstScanEmail (2e visite), **FirstBookingEmail (1ere resa en ligne, tracking -105)**, FirstRewardEmail, Tier2UpsellEmail, PendingPointsEmail (Shield), WeeklyDigestEmail (DESACTIVE)
 
 ### Retention & Trial (epure)
 TrialEndingEmail (J-2 uniquement — etait J-3 + J-1), TrialExpiredEmail (J+1 uniquement — etait J+1 + J+2), ChurnSurveyReminderEmail (J+3 fully expired — code -213, vers `/dashboard/survey`, bonus +2 jours), InactiveMerchantDay7/14/30Email

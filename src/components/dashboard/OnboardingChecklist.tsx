@@ -147,44 +147,35 @@ export default function OnboardingChecklist() {
 
         const newGroups: Group[] = [
           {
-            id: 'loyalty',
-            name: t('groupLoyalty'),
-            icon: Heart,
-            gradient: 'from-violet-500 to-purple-600',
-            sparkleColors: ['#7C3AED', '#A78BFA', '#DDD6FE', '#FFD700'],
+            id: 'essential',
+            name: t('groupEssential'),
+            icon: Sparkles,
+            gradient: 'from-indigo-500 to-violet-600',
+            sparkleColors: ['#6366F1', '#7C3AED', '#A78BFA', '#FFD700'],
             steps: [
               { id: 'program', label: t('stepProgram'), done: !!merchant.reward_description, href: '/dashboard/program', icon: Gift },
               { id: 'logo', label: t('stepLogo'), done: !!merchant.logo_url, href: '/dashboard/personalize', icon: ImageIcon },
+              { id: 'bio', label: t('stepBio'), done: !!merchant.bio, href: '/dashboard/public-page', icon: FileText },
+              { id: 'services', label: t('stepServices'), done: servicesCount >= 1, href: '/dashboard/public-page', icon: Scissors },
+              { id: 'planning', label: t('stepPlanning'), done: merchant.planning_enabled === true, href: '/dashboard/planning', icon: CalendarDays },
+              { id: 'booking', label: t('stepBooking'), done: merchant.auto_booking_enabled === true, href: '/dashboard/planning', icon: Calendar },
               { id: 'qr', label: t('stepQr'), done: qrDownloaded, href: '/dashboard/qr-download', icon: QrCode },
-              { id: 'referral', label: t('stepReferral'), done: merchant.referral_program_enabled === true, href: '/dashboard/referrals', icon: UserPlus },
-              { id: 'birthday', label: t('stepBirthday'), done: merchant.birthday_gift_enabled === true, href: '/dashboard/program', icon: Cake },
-              { id: 'first_client', label: t('stepFirstClient'), done: visitsCount >= 1, href: '/dashboard/qr-download', icon: Users },
             ],
           },
           {
-            id: 'vitrine',
-            name: t('groupVitrine'),
-            icon: Globe,
-            gradient: 'from-indigo-500 to-blue-600',
-            sparkleColors: ['#6366F1', '#818CF8', '#C7D2FE', '#FFD700'],
+            id: 'advanced',
+            name: t('groupAdvanced'),
+            icon: Heart,
+            gradient: 'from-violet-500 to-pink-500',
+            sparkleColors: ['#7C3AED', '#EC4899', '#F9A8D4', '#FFD700'],
             steps: [
-              { id: 'bio', label: t('stepBio'), done: !!merchant.bio, href: '/dashboard/public-page', icon: FileText },
               { id: 'address', label: t('stepAddress'), done: !!merchant.shop_address, href: '/dashboard/public-page', icon: MapPin },
               { id: 'photos', label: t('stepPhotos'), done: photosCount >= 1, href: '/dashboard/public-page', icon: Camera },
-              { id: 'services', label: t('stepServices'), done: servicesCount >= 1, href: '/dashboard/public-page', icon: Scissors },
-              { id: 'social', label: t('stepSocial'), done: hasSocial, href: '/dashboard/public-page', icon: Share2 },
-            ],
-          },
-          {
-            id: 'planning',
-            name: t('groupPlanning'),
-            icon: CalendarDays,
-            gradient: 'from-cyan-500 to-teal-600',
-            sparkleColors: ['#06B6D4', '#22D3EE', '#CFFAFE', '#FFD700'],
-            steps: [
-              { id: 'planning', label: t('stepPlanning'), done: merchant.planning_enabled === true, href: '/dashboard/planning', icon: CalendarDays },
               { id: 'slots', label: t('stepSlots'), done: slotsCount >= 1, href: '/dashboard/planning', icon: Calendar },
-              { id: 'booking', label: t('stepBooking'), done: merchant.auto_booking_enabled === true, href: '/dashboard/planning', icon: Calendar },
+              { id: 'referral', label: t('stepReferral'), done: merchant.referral_program_enabled === true, href: '/dashboard/referrals', icon: UserPlus },
+              { id: 'birthday', label: t('stepBirthday'), done: merchant.birthday_gift_enabled === true, href: '/dashboard/program', icon: Cake },
+              { id: 'social', label: t('stepSocial'), done: hasSocial, href: '/dashboard/public-page', icon: Share2 },
+              { id: 'first_client', label: t('stepFirstClient'), done: visitsCount >= 1, href: '/dashboard/qr-download', icon: Users },
               { id: 'first_booking', label: t('stepFirstBooking'), done: bookedCount >= 1, href: '/dashboard/planning', icon: Users },
             ],
           },
@@ -378,7 +369,7 @@ export default function OnboardingChecklist() {
           const progress = trackableSteps.length > 0 ? doneCount / trackableSteps.length : 0;
 
           // Color map for progress ring
-          const ringColor = group.id === 'loyalty' ? '#7C3AED' : group.id === 'vitrine' ? '#6366F1' : '#06B6D4';
+          const ringColor = group.id === 'essential' ? '#6366F1' : '#7C3AED';
 
           return (
             <div key={group.id}>

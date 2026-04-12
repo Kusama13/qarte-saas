@@ -34,6 +34,11 @@ export function PlanningReminderEmail({ shopName, daysRemaining, locale = 'fr' }
         <Text style={featureDesc}>{t('planningReminder.featureDesc')}</Text>
       </Section>
 
+      <Section style={bonusBox}>
+        <Text style={featureTitle}>{t('planningReminder.bonusTitle')}</Text>
+        <Text style={featureDesc} dangerouslySetInnerHTML={{ __html: t('planningReminder.bonusDesc') }} />
+      </Section>
+
       <Section style={urgencyBox}>
         <Text style={urgencyText} dangerouslySetInnerHTML={{ __html: t('planningReminder.trialNote', { daysRemaining, daysPlural: daysRemaining > 1 ? 's' : '' }) }} />
       </Section>
@@ -86,6 +91,14 @@ const featureDesc = {
   fontSize: '14px',
   lineHeight: '1.6',
   margin: '0',
+};
+
+const bonusBox = {
+  backgroundColor: '#f0edfc',
+  borderRadius: '12px',
+  padding: '20px 24px',
+  margin: '0 0 16px 0',
+  border: '1px solid #e0d6fc',
 };
 
 const urgencyBox = {

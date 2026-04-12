@@ -18,6 +18,7 @@ import {
   InactiveMerchantDay30Email,
   QRCodeEmail,
   FirstScanEmail,
+  FirstBookingEmail,
   FirstRewardEmail,
   WeeklyDigestEmail,
   Day5CheckinEmail,
@@ -501,6 +502,17 @@ export async function sendFirstScanEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'firstScan', { shopName }), FirstScanEmail, { shopName, referralCode, slug, locale }, {
     logLabel: 'First scan email',
+  });
+}
+
+export async function sendFirstBookingEmail(
+  to: string,
+  shopName: string,
+  slug?: string,
+  locale: EmailLocale = 'fr'
+): Promise<SendEmailResult> {
+  return sendEmail(to, subj(locale, 'firstBooking', { shopName }), FirstBookingEmail, { shopName, slug, locale }, {
+    logLabel: 'First booking email',
   });
 }
 

@@ -13,6 +13,7 @@ import {
   sendInactiveMerchantDay30Email,
   sendQRCodeEmail,
   sendFirstScanEmail,
+  sendFirstBookingEmail,
   sendFirstRewardEmail,
   sendTier2UpsellEmail,
   sendReactivationEmail,
@@ -60,6 +61,7 @@ export async function GET(request: NextRequest) {
     qrCode: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     firstClientScript: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     firstScan: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    firstBooking: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     firstReward: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     tier2Upsell: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     inactiveMerchants: { processed: 0, sent: 0, skipped: 0, errors: 0 },
@@ -91,7 +93,7 @@ export async function GET(request: NextRequest) {
   // Single fetch for all merchants — sections filter in JS instead of separate DB queries
   const { data: allMerchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, shop_type, slug, user_id, locale, country, trial_ends_at, subscription_status, churn_survey_seen_at, created_at, updated_at, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, referral_code, no_contact, birthday_gift_enabled, birthday_gift_description, offer_active, offer_title, offer_expires_at, pwa_installed_at, bio, shop_address, planning_enabled, email_bounced_at, email_unsubscribed_at, billing_period_start');
+    .select('id, shop_name, shop_type, slug, user_id, locale, country, trial_ends_at, subscription_status, churn_survey_seen_at, created_at, updated_at, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, referral_code, no_contact, birthday_gift_enabled, birthday_gift_description, offer_active, offer_title, offer_expires_at, pwa_installed_at, bio, shop_address, planning_enabled, auto_booking_enabled, email_bounced_at, email_unsubscribed_at, billing_period_start');
 
   const allMerchantsList = allMerchants || [];
   const allMerchantsMap = new Map(allMerchantsList.map(m => [m.id, m]));
@@ -444,7 +446,45 @@ export async function GET(request: NextRequest) {
         }, pushPromises);
       }
 
-      // 2f. FIRST REWARD EMAIL
+      // 2f. FIRST BOOKING EMAIL
+      // Merchants with auto_booking_enabled who received exactly 1 online booking
+      const bookingEnabledMerchants = allConfiguredMerchants.filter(m => m.auto_booking_enabled);
+      if (bookingEnabledMerchants.length > 0) {
+        const bookingMerchantIds = bookingEnabledMerchants.map(m => m.id);
+        const { data: bookingCounts } = await supabase
+          .from('merchant_planning_slots')
+          .select('merchant_id')
+          .in('merchant_id', bookingMerchantIds)
+          .not('client_name', 'is', null)
+          .not('client_name', 'eq', '__blocked__');
+
+        const bookingCountMap = new Map<string, number>();
+        for (const b of bookingCounts || []) {
+          bookingCountMap.set(b.merchant_id, (bookingCountMap.get(b.merchant_id) || 0) + 1);
+        }
+
+        const firstBookingMerchants = bookingEnabledMerchants.filter(m => bookingCountMap.get(m.id) === 1);
+
+        if (firstBookingMerchants.length > 0) {
+          await runStandardEmailSection(supabase, {
+            candidates: firstBookingMerchants,
+            trackingCode: -105,
+            stats: results.firstBooking,
+            sendFn: (email, m) => sendFirstBookingEmail(email, m.shop_name, m.slug, (m.locale as EmailLocale) || 'fr'),
+            emailMap: globalEmailMap,
+            globalTrackingSet,
+          });
+
+          sendOnboardingPushes(sendMerchantPush, supabase, firstBookingMerchants, {
+            notificationType: 'onboarding_first_booking',
+            titleFr: 'Premiere reservation en ligne !', titleEn: 'First online booking!',
+            bodyFr: 'Une cliente vient de reserver depuis ta page.', bodyEn: 'A client just booked from your page.',
+            url: '/dashboard/planning',
+          }, pushPromises);
+        }
+      }
+
+      // 2g. FIRST REWARD EMAIL
       // Reuse allConfiguredMerchants (same filter)
       if (allConfiguredMerchants.length > 0) {
         const programIds = allConfiguredMerchants.map(m => m.id);

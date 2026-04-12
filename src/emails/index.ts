@@ -15,6 +15,7 @@ export { InactiveMerchantDay7Email } from './InactiveMerchantDay7Email';
 export { InactiveMerchantDay14Email } from './InactiveMerchantDay14Email';
 export { InactiveMerchantDay30Email } from './InactiveMerchantDay30Email';
 export { FirstScanEmail } from './FirstScanEmail';
+export { FirstBookingEmail } from './FirstBookingEmail';
 export { FirstRewardEmail } from './FirstRewardEmail';
 export { WeeklyDigestEmail } from './WeeklyDigestEmail';
 export { Day5CheckinEmail } from './Day5CheckinEmail';

@@ -135,7 +135,7 @@ function DashboardLayoutContent({
     return null;
   }
 
-  if (pathname === '/dashboard/setup' || pathname === '/dashboard/survey') {
+  if (pathname === '/dashboard/setup' || pathname === '/dashboard/survey' || pathname === '/dashboard/personalize') {
     return <>{children}</>;
   }
 

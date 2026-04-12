@@ -175,19 +175,29 @@ export async function POST(request: NextRequest) {
     if (userData?.user?.email) {
       const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-      // Cancel scheduled incomplete signup email if it exists
+      // Cancel scheduled incomplete signup emails if they exist
       const scheduledEmailId = userData.user.user_metadata?.scheduled_incomplete_email_id;
+      const scheduledEmailId2 = userData.user.user_metadata?.scheduled_incomplete_email_id_2;
 
       if (scheduledEmailId) {
         await cancelScheduledEmail(scheduledEmailId).catch((err) => {
           logger.error('Failed to cancel scheduled incomplete email', err);
         });
         await delay(600);
+      }
+      if (scheduledEmailId2) {
+        await cancelScheduledEmail(scheduledEmailId2).catch((err) => {
+          logger.error('Failed to cancel scheduled incomplete email 2', err);
+        });
+        await delay(600);
+      }
 
+      if (scheduledEmailId || scheduledEmailId2) {
         await supabaseAdmin.auth.admin.updateUserById(user_id, {
           user_metadata: {
             ...userData.user.user_metadata,
             scheduled_incomplete_email_id: null,
+            scheduled_incomplete_email_id_2: null,
           },
         }).catch((err) => {
           logger.error('Failed to clear scheduled email metadata', err);

@@ -67,20 +67,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Store scheduled email ID in user metadata for later cancellation
+    // Schedule email 2: T+2 hours
+    const result2 = await scheduleIncompleteSignupEmail(email, 120);
+    if (!result2.success) {
+      logger.warn(`Failed to schedule incomplete email 2 for ${email}`, result2.error);
+    }
+
+    // Store scheduled email IDs in user metadata for later cancellation
     const metadata: Record<string, string | null> = {
       ...userData.user.user_metadata,
     };
     if (result1.emailId) metadata.scheduled_incomplete_email_id = result1.emailId;
+    if (result2?.emailId) metadata.scheduled_incomplete_email_id_2 = result2.emailId;
 
     await supabaseAdmin.auth.admin.updateUserById(userId, {
       user_metadata: metadata,
     });
-    logger.info(`Stored scheduled email ID for user ${userId}: ${result1.emailId}`);
+    logger.info(`Stored scheduled email IDs for user ${userId}: ${result1.emailId}, ${result2?.emailId}`);
 
     return NextResponse.json({
       success: true,
       emailId: result1.emailId,
+      emailId2: result2?.emailId,
     });
   } catch (error) {
     logger.error('Error in schedule-incomplete API', error);

@@ -7,7 +7,7 @@ import {
   Save,
   Loader2,
   Check,
-  QrCode,
+  Sparkles,
   Smartphone,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -356,7 +356,7 @@ export default function ProgramPage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 text-center animate-in zoom-in-95 duration-300">
             <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200/50">
-              <QrCode className="w-7 h-7 text-white" />
+              <Sparkles className="w-7 h-7 text-white" />
             </div>
 
             <h3 className="text-lg font-bold text-gray-900 mb-2">
