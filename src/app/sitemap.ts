@@ -47,9 +47,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry('/p/demo-tatouage', { priority: 0.6, lastModified: new Date('2026-03-15') }),
   ];
 
+  // --- Compare pages ---
+  const comparePages: MetadataRoute.Sitemap = [
+    entry('/compare/planity', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-04-12') }),
+    entry('/compare/booksy', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-04-12') }),
+  ];
+
   // Merchant pages (/p/slug) are NOT included in the sitemap.
   // Each merchant page has its own SEO identity via JSON-LD LocalBusiness
   // and should be discovered organically, not listed under getqarte.com.
 
-  return [...staticPages, ...blogPages, ...demoPages];
+  return [...staticPages, ...blogPages, ...demoPages, ...comparePages];
 }

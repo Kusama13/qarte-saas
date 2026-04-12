@@ -13,3 +13,4 @@ export { ComparisonSection } from './ComparisonSection';
 export { BentoSection } from './BentoSection';
 export { ScrollToTopButton } from './ScrollToTopButton';
 export { MobileStickyCta } from './MobileStickyCta';
+export { CaseStudySection } from './CaseStudySection';

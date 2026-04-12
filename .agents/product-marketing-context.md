@@ -103,7 +103,7 @@
 
 ## Proof Points
 **Metrics:**
-- +250 pros de la beaute utilisent Qarte
+- +400 pros de la beaute utilisent Qarte
 - +30% de retour client en moyenne
 - 3x plus d'avis Google
 - +40% de visibilite Google
