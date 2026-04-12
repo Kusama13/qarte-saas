@@ -16,9 +16,8 @@ interface WelcomeEmailProps {
   locale?: EmailLocale;
 }
 
-export function WelcomeEmail({ shopName, slug, trialDays = 7, locale = 'fr' }: WelcomeEmailProps) {
+export function WelcomeEmail({ shopName, trialDays = 7, locale = 'fr' }: WelcomeEmailProps) {
   const t = getEmailT(locale);
-  const publicPageUrl = slug ? `https://getqarte.com/p/${slug}` : null;
 
   return (
     <BaseLayout preview={t('welcome.preview', { shopName })} locale={locale}>
@@ -51,14 +50,6 @@ export function WelcomeEmail({ shopName, slug, trialDays = 7, locale = 'fr' }: W
           {t('welcome.ctaPersonalize')}
         </Button>
       </Section>
-
-      {publicPageUrl && (
-        <Section style={buttonContainer}>
-          <Button style={buttonSecondary} href={publicPageUrl}>
-            {t('welcome.ctaPublicPage')}
-          </Button>
-        </Section>
-      )}
 
       <Hr style={divider} />
 
