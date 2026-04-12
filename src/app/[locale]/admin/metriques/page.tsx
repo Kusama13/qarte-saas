@@ -519,7 +519,7 @@ export default function MetriquesPage() {
       { label: 'PWA installee', count: eligible.filter(m => !!m.pwa_installed_at).length, pct: 0 },
       { label: 'Shield', count: eligible.filter(m => m.shield_enabled).length, pct: 0 },
       { label: 'Palier 2', count: eligible.filter(m => m.tier2_enabled).length, pct: 0 },
-      { label: 'Offre bienvenue', count: eligible.filter(m => m.welcome_offer_enabled).length, pct: 0 },
+      { label: 'Offre nouveaux clients', count: eligible.filter(m => m.welcome_offer_enabled).length, pct: 0 },
       { label: 'Double jours', count: eligible.filter(m => m.double_days_enabled).length, pct: 0 },
       { label: 'Adresse', count: eligible.filter(m => !!m.shop_address).length, pct: 0 },
       { label: 'Mode cagnotte', count: eligible.filter(m => m.loyalty_mode === 'cagnotte').length, pct: 0 },

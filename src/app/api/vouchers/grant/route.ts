@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
 
     if (type === 'welcome') {
       if (!merchant.welcome_offer_enabled) {
-        return NextResponse.json({ error: 'Offre de bienvenue non activée' }, { status: 400 });
+        return NextResponse.json({ error: 'Offre nouveaux clients non activée' }, { status: 400 });
       }
 
       // Block if client already has stamps
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
         loyalty_card_id: card.id,
         merchant_id,
         customer_id,
-        reward_description: merchant.welcome_offer_description || 'Offre de bienvenue',
+        reward_description: merchant.welcome_offer_description || 'Offre nouveaux clients',
         source: 'welcome',
         expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       });

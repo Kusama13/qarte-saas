@@ -247,8 +247,8 @@ function MerchantBadges({ isAdmin, noContact, pending, pendingDeposits, pwaInsta
         </span>
       )}
       {welcomeOffer && (
-        <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-100 text-indigo-700 rounded-full flex-shrink-0" title="Offre de bienvenue active">
-          Bienvenue
+        <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-100 text-indigo-700 rounded-full flex-shrink-0" title="Offre nouveaux clients active">
+          Nouveaux clients
         </span>
       )}
       {cagnotte && (

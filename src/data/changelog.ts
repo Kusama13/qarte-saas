@@ -55,7 +55,7 @@ export const changelog: Record<string, ChangelogEntry[]> = {
   ],
   '2026-03-12': [
     { tag: 'design', text: 'Landing — repositionnement vitrine en ligne + fidelite, demos /p/demo-*' },
-    { tag: 'feature', text: 'Offre bienvenue + page publique /p/[slug] redesign' },
+    { tag: 'feature', text: 'Offre nouveaux clients + page publique /p/[slug] redesign' },
     { tag: 'design', text: 'Redesign page login client (floating cards + gradient mesh)' },
     { tag: 'marketing', text: 'Emails — mention page publique dans Welcome, FirstScan, TrialEnding' },
   ],

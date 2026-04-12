@@ -218,7 +218,7 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    const SOURCE_LABELS: Record<string, string> = { birthday: 'Anniversaire', welcome: 'Bienvenue', offer: 'Offre promo', referral: 'Parrainage', redemption: 'Récompense' };
+    const SOURCE_LABELS: Record<string, string> = { birthday: 'Anniversaire', welcome: 'Nouveaux clients', offer: 'Offre promo', referral: 'Parrainage', redemption: 'Récompense' };
     (usedVouchers || []).forEach((v: { used_at: string; merchant_id: string; source: string | null; reward_description: string | null }) => {
       const sourceLabel = (v.source && SOURCE_LABELS[v.source]) || 'Récompense';
       events.push({
@@ -255,8 +255,8 @@ export async function GET(request: NextRequest) {
       events.push({
         type: 'welcome',
         timestamp: w.created_at,
-        title: `Offre bienvenue chez ${merchantNameMap.get(w.merchant_id) || 'Inconnu'}`,
-        subtitle: w.reward_description || 'Offre de bienvenue',
+        title: `Offre nouveaux clients chez ${merchantNameMap.get(w.merchant_id) || 'Inconnu'}`,
+        subtitle: w.reward_description || 'Offre nouveaux clients',
         merchant_id: w.merchant_id,
       });
     });

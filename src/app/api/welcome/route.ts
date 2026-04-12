@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// ── POST: Inscription client via offre de bienvenue
+// ── POST: Inscription client via offre nouveaux clients
 const welcomeSchema = z.object({
   welcome_code: z.string().min(1),
   phone_number: z.string().min(1),
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (!merchant) {
-      return NextResponse.json({ error: 'Code offre de bienvenue invalide' }, { status: 400 });
+      return NextResponse.json({ error: 'Code offre nouveaux clients invalide' }, { status: 400 });
     }
 
     // Check subscription status
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
         loyalty_card_id: cardId,
         merchant_id: merchant.id,
         customer_id: customerId,
-        reward_description: merchant.welcome_offer_description || 'Offre de bienvenue',
+        reward_description: merchant.welcome_offer_description || 'Offre nouveaux clients',
         source: 'welcome',
         expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       })

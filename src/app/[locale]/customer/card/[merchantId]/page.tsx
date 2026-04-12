@@ -279,7 +279,7 @@ export default function CustomerCardPage({
           inOneWeek.setDate(inOneWeek.getDate() + 7);
           setOffer({
             active: true,
-            title: 'Offre de bienvenue : -20% cette semaine',
+            title: 'Offre nouveaux clients : -20% cette semaine',
             description: 'Profitez de -20% sur votre prochaine prestation. Offre réservée à nos clients fidèles !',
             imageUrl: null,
             expiresAt: inOneWeek.toISOString(),

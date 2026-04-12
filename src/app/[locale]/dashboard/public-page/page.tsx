@@ -72,7 +72,6 @@ export default function PublicPageDashboard() {
       { label: t('completionLogo'), ok: !!merchant.logo_url },
       { label: t('completionHours'), ok: !!merchant.opening_hours && Object.values(merchant.opening_hours as Record<string, unknown>).some(Boolean) },
       { label: t('completionSocial'), ok: !!(merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.snapchat_url || merchant.whatsapp_url) },
-      { label: t('completionWelcome'), ok: !!merchant.welcome_offer_enabled },
     ];
     return { done: items.filter(i => i.ok).length, total: items.length, items };
   }, [merchant]);

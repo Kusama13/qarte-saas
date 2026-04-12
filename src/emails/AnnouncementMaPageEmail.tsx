@@ -42,7 +42,7 @@ export function AnnouncementMaPageEmail({ shopName, slug, isSubscribed = true, l
         </Button>
       </Section>
 
-      {/* 2. Offre de bienvenue */}
+      {/* 2. Offre nouveaux clients */}
       <Section style={featureBoxBlue}>
         <Text style={featureBadgeBlue}>{t('announcementMaPage.badgeAcquisition')}</Text>
         <Text style={featureTitle}>{t('announcementMaPage.feature2Title')}</Text>

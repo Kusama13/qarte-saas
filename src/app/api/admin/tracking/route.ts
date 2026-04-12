@@ -182,7 +182,7 @@ export async function GET(request: NextRequest) {
       mkF('Logo', fc_counts.logo),
       mkF('Parrainage', fc_counts.referral),
       mkF('Anniversaire', fc_counts.birthday),
-      mkF('Offre bienvenue', fc_counts.welcome),
+      mkF('Offre nouveaux clients', fc_counts.welcome),
       mkF('Jours doubles', fc_counts.doubleDays),
       mkF('Planning', fc_counts.planning),
       mkF('Qarte Shield', fc_counts.shield),
@@ -200,7 +200,7 @@ export async function GET(request: NextRequest) {
     const manualPushSent = (pushHistoryRes.data || []).reduce((s, p) => s + (p.sent_count || 0), 0);
     const automations = pushAutomationsRes.data || [];
     const automationBreakdown = [
-      { type: 'Bienvenue', count: automations.reduce((s, a) => s + (a.welcome_sent || 0), 0) },
+      { type: 'Nouveaux clients', count: automations.reduce((s, a) => s + (a.welcome_sent || 0), 0) },
       { type: 'Proche recompense', count: automations.reduce((s, a) => s + (a.close_to_reward_sent || 0), 0) },
       { type: 'Recompense prete', count: automations.reduce((s, a) => s + (a.reward_ready_sent || 0), 0) },
       { type: 'Relance inactif', count: automations.reduce((s, a) => s + (a.inactive_reminder_sent || 0), 0) },

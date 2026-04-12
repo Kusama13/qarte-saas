@@ -199,9 +199,9 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Dashboard `/dashboard/referrals` : toggle, config recompenses, stats, tableau
 - Config aussi dans `/dashboard/program` (ExtrasSection) : toggle + recompenses parrain/filleul — synchro avec la page Parrainage (memes champs DB)
 
-### Offre de Bienvenue (mig 056)
+### Offre Nouveaux Clients (mig 056)
 - Code welcome par merchant (`welcome_referral_code`, genere a l'activation)
-- Lien `/scan/{code}?welcome={welcome_code}` → banner "Offre de bienvenue" + inscription
+- Lien `/scan/{code}?welcome={welcome_code}` → banner "Offre nouveaux clients" + inscription
 - API separee `/api/welcome` (GET validation + POST inscription) — zero impact sur `/api/referrals`
 - Referral cree avec `referrer=null` (parrain virtuel = Qarte), `status='completed'`
 - Voucher `source='welcome'`, expire 30 jours
@@ -299,7 +299,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Delai d'acompte** : `deposit_deadline_hours` (merchant config 1h/2h/3h/4h + custom, default 1h, NULL=libre). `deposit_deadline_at` (TIMESTAMPTZ sur le slot) calcule par `computeDepositDeadline()` dans `api/planning/book/route.ts` avec **grace nuit silencieuse** : si la deadline brute tombe entre 22h et 9h heure merchant, elle est repoussee a 9h du matin (large marge reveil). Cap absolu : RDV - 4h. Si RDV dans moins de 4h, pas de deadline. Auto-liberation par cron morning-jobs + evening. Le client ne voit jamais l'heure exacte (incite a payer tout de suite). Message statique dans la config dashboard informe le merchant de la grace nuit. **Encart info merchant** sous le delai : rappelle qu'il recoit un email + notif push a chaque resa et doit valider vite, avec warning spam ("ajoute contact@qarte.fr a tes contacts").
 - **Source reservation** : `booked_online` BOOLEAN (mig 088) — true si reserve via `/api/planning/book` (vitrine), false si cree manuellement par le merchant. Utilise dans admin activite pour distinguer "Reservation en ligne" vs "Reservation manuelle"
 - **Priorite resa Qarte vs externe** : quand `auto_booking_enabled`, le CTA externe (`booking_url`) est masque sur la vitrine et la carte de fidelite affiche un seul lien "Reserver" vers `/p/{slug}`. Warning dans les settings si les deux sont configures
-- **Guard offres vitrine** : les sections offre bienvenue et promo utilisent `canBookOnline = auto_booking_enabled && planningSlots.length > 0`. Si resa en ligne activee mais aucun creneau disponible, fallback vers le mode scan (bouton "En profiter" + lien `/scan/{code}`)
+- **Guard offres vitrine** : les sections offre nouveaux clients et promo utilisent `canBookOnline = auto_booking_enabled && planningSlots.length > 0`. Si resa en ligne activee mais aucun creneau disponible, fallback vers le mode scan (bouton "En profiter" + lien `/scan/{code}`)
 - **Annulation/modification par le client** (mig 096-097) : `allow_customer_cancel` + `allow_customer_reschedule` (2 toggles independants) + `cancel_deadline_days` / `reschedule_deadline_days` (delais separes en jours avant le RDV, min 1 = la veille). API `DELETE/PATCH /api/planning/customer-edit` (auth cookie phone). Boutons "Annuler" (rouge) et "Modifier" (couleur merchant) dans `UpcomingAppointmentsSection` sur la carte client. Modal bottom-sheet pour confirmation annulation + modal reschedule (selecteur date horizontal + grille horaires, charge slots via `GET /api/planning?public=true`). Push + email au merchant. Tous les RDV sont editables (pas de restriction `booked_online`)
 - Multi-services, photos inspiration, photos resultat ("avant/apres"), liens sociaux clients
 - 1 creneau = 1 ligne en DB (date + heure debut). `client_name IS NULL` = disponible, rempli = pris
@@ -315,7 +315,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Modal selection client** : recherche par nom OU telephone (API normalise le numero en E.164 via `getAllPhoneFormats`). Bouton "Passer" masque si un numero est saisi (force creation client). Bouton "Etape suivante" masque si aucun client selectionne
 - **Modal edition** : prestations selectionnees en haut, non-selectionnees en dessous (4 visibles + "Voir X autres" expandable). Toggle SMS confirmation (nouveau RDV uniquement). Overlay deplacement avec toggle SMS. Overlay annulation avec confirmation + toggle SMS
 - **Creation client depuis planning** : reutilise `/api/customers/create`. Si client existe deja (409), l'API retourne `customer_id` et le planning le reutilise automatiquement
-- **Auto-creation client + voucher bienvenue** : a la reservation en ligne, si nouveau client, creation automatique du customer + carte fidelite + voucher bienvenue (si `welcome_offer_enabled`)
+- **Auto-creation client + voucher nouveaux clients** : a la reservation en ligne, si nouveau client, creation automatique du customer + carte fidelite + voucher nouveaux clients (si `welcome_offer_enabled`)
 - Tables : `merchant_planning_slots` (mig 063+065+083+084), `planning_slot_services` (mig 071), `planning_slot_photos` (mig 072), `planning_slot_result_photos` (mig 074)
 - Colonnes `instagram_handle`, `tiktok_handle`, `facebook_url` sur `customers` (mig 073)
 - API `/api/planning` (GET avec join services+photos+result_photos+customer social, filtre `customerId`/POST/PATCH avec cascade fillers/DELETE avec cascade fillers) + `/api/planning/book` (POST public, rate-limited) + `/api/planning/copy-week` + `/api/planning/photos` + `/api/planning/result-photos` + `/api/planning/shift-slot` + `/api/customers/social`
@@ -377,13 +377,13 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `GET /api/referrals?code=` — Info code parrainage
 - `POST /api/referrals` — Inscription filleul (cree customer + carte + voucher)
 - `POST /api/vouchers/use` — Consommer voucher (auto-cree voucher parrain si referral). Bonus +1 stamp sauf birthday et sauf si visite confirmee aujourd'hui (evite double stamp scan+voucher)
-- `POST /api/merchants/referral-config` — Config parrainage + offre bienvenue (merchant auth)
+- `POST /api/merchants/referral-config` — Config parrainage + offre nouveaux clients (merchant auth)
 
-### Offre de bienvenue
+### Offre nouveaux clients
 - `GET /api/welcome?code=` — Valider code welcome (public)
-- `POST /api/welcome` — Inscription via offre bienvenue. Accepte les clients existants si `current_stamps === 0` et pas de voucher welcome/referral existant (ex: client cree via planning). Bloque si stamps > 0 ou voucher deja attribue.
+- `POST /api/welcome` — Inscription via offre nouveaux clients. Accepte les clients existants si `current_stamps === 0` et pas de voucher welcome/referral existant (ex: client cree via planning). Bloque si stamps > 0 ou voucher deja attribue.
 - `POST /api/vouchers/grant` — Attribution manuelle voucher welcome/promo (merchant auth). Verification stamps + doublons. `PATCH` = consommer, `DELETE` = retirer, `GET` = lister vouchers client
-- Offre de bienvenue : eligible si nouveau client OU client existant avec 0 tampons et sans voucher welcome/referral
+- Offre nouveaux clients : eligible si nouveau client OU client existant avec 0 tampons et sans voucher welcome/referral
 
 ### Push & Marketing (Client)
 - `POST /api/push/subscribe` — Abonnement push client (auth cookie phone)
@@ -640,12 +640,12 @@ Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 fi
 - **QR Code & Supports** (`/dashboard/qr-download`) : QR code + Kit reseaux sociaux (image HD, legendes, grille 2x2 coloree de 4 tips + lien cross-promo vers Ma Page). Post-QR modal redirige vers Ma Page.
 
 ### Admin (`/admin`)
-Metriques startup (MRR, churn, ARPU, LTV), lifecycle segments, health score, annonces, leads, analytics, depenses, tracking. **Exclut les comptes admin** des stats. Feature adoption : 15 features trackees (programme, logo, reseaux, parrainage, anniversaire, reservation, avis, offre active, PWA, shield, palier 2, offre bienvenue, double jours, adresse, mode cagnotte). Health score : /100 (programme +15, logo +10, reseaux +5, avis +5, reservation +5, clients +10-20, activite +15, recence +5-10, parrainage +5, shield +5, palier2 +5, bienvenue +5, anniversaire +3, double jours +2, planning +5, resa en ligne +5). **Dashboard** : 3 stat cards planning (Planning actif, Resa en ligne, Mode Libre). Badges merchants : Admin, NC, Shield pending, Resa/Planning, Libre, PWA, Bienvenue, Cagnotte, Page. **Detail merchant** : stat planning "X reservations / Y creneaux" + "Resas en ligne (total)", feature badges (Planning, Mode Libre, Buffer Xmin, Annulation J-X, Modif J-X), horaires avec pause dejeuner. **WhatsApp** : dropdown 2 onglets (Marketing 4 msgs + Tuto 2 msgs), constante `ADMIN_CONTACT_NAME` — sur liste et detail.
+Metriques startup (MRR, churn, ARPU, LTV), lifecycle segments, health score, annonces, leads, analytics, depenses, tracking. **Exclut les comptes admin** des stats. Feature adoption : 15 features trackees (programme, logo, reseaux, parrainage, anniversaire, reservation, avis, offre active, PWA, shield, palier 2, offre nouveaux clients, double jours, adresse, mode cagnotte). Health score : /100 (programme +15, logo +10, reseaux +5, avis +5, reservation +5, clients +10-20, activite +15, recence +5-10, parrainage +5, shield +5, palier2 +5, bienvenue +5, anniversaire +3, double jours +2, planning +5, resa en ligne +5). **Dashboard** : 3 stat cards planning (Planning actif, Resa en ligne, Mode Libre). Badges merchants : Admin, NC, Shield pending, Resa/Planning, Libre, PWA, Bienvenue, Cagnotte, Page. **Detail merchant** : stat planning "X reservations / Y creneaux" + "Resas en ligne (total)", feature badges (Planning, Mode Libre, Buffer Xmin, Annulation J-X, Modif J-X), horaires avec pause dejeuner. **WhatsApp** : dropdown 2 onglets (Marketing 4 msgs + Tuto 2 msgs), constante `ADMIN_CONTACT_NAME` — sur liste et detail.
 
 **Notification Bell** (mig 104) : icone cloche dans le header dashboard (mobile top-right fixe + desktop sidebar) avec badge rouge unread count. Dropdown 10 dernières notifs avec emoji par type (📅 booking, ❌ annulé, 🔄 déplacé, ⏰ acompte expiré, ⚠️ acompte bientôt, 🎂 anniversaire, 🎉 concours, 👋 onboarding, 🔔 default). "Tout lu" pour marquer comme lues. Click → deep link vers la bonne date du planning. Polling 60s. API `/api/merchant-notifications` (GET + PATCH). Composant `src/components/dashboard/NotificationBell.tsx`.
 
 ### Page Publique Programme (`/p/[slug]`)
-Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette page (sauf CTA offre bienvenue → `/scan/{code}?welcome=`).
+Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette page (sauf CTA offre nouveaux clients → `/scan/{code}?welcome=`).
 
 **Ordre des sections :**
 1. Hero (logo glow couleurs merchant, nom gradient, adresse + badge "Y aller", bio glassmorphism)
@@ -653,7 +653,7 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 2. CTA "Prendre rendez-vous" (conditionnel sur `booking_url`) + sticky bar quand hors viewport + detection plateforme ("via Planity/Treatwell/Fresha/Instagram/TikTok/WhatsApp/..." via `detectBookingPlatform()` dans utils.ts — 15 plateformes detectees)
 3. Horaires (grille 7 jours, aujourd'hui mis en evidence)
 4. Planning disponibilites (si `planning_enabled` : banniere message libre + creneaux 60j glissants groupes par mois, preview 4 jours + bouton "Voir plus", creneaux du jour passes masques automatiquement)
-5. Offre de bienvenue (CTA conditionnel si `welcome_offer_enabled`, pointe vers `/scan/{code}?welcome=`)
+5. Offre nouveaux clients (CTA conditionnel si `welcome_offer_enabled`, pointe vers `/scan/{code}?welcome=`)
 5b. Offre promo (amber, depuis `merchant_offers`, CTA vers `/scan/{code}?offer={id}`)
 6. Carte fidelite simulee ("Carte de fidelite" + texte explicatif recompenses)
 7. Palier 2 (si `tier2_enabled`)

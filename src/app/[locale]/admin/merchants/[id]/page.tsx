@@ -547,7 +547,7 @@ export default function MerchantDetailPage() {
       { label: 'Photos', done: stats.photosCount > 0 },
       { label: 'Reseau social', done: !!(merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.snapchat_url) },
       { label: 'Planning', done: merchant.planning_enabled },
-      { label: 'Offre bienvenue', done: merchant.welcome_offer_enabled },
+      { label: 'Offre nouveaux clients', done: merchant.welcome_offer_enabled },
       { label: 'Lien avis', done: !!merchant.review_link },
     ];
     const done = items.filter(i => i.done).length;
@@ -769,7 +769,7 @@ export default function MerchantDetailPage() {
           <SectionTitle icon={<Share2 className="w-4 h-4 text-violet-600" />}>Acquisition</SectionTitle>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
             <CompactStat icon={Share2} color="violet" value={stats.totalReferrals} label="Parrainages" />
-            <CompactStat icon={UserPlus} color="indigo" value={stats.welcomeVouchers} label="Vouchers bienvenue" />
+            <CompactStat icon={UserPlus} color="indigo" value={stats.welcomeVouchers} label="Vouchers nouveaux clients" />
             <CompactStat icon={Tag} color="amber" value={stats.offerVouchers} label="Vouchers promo" />
             <CompactStat icon={Shield} color="amber" value={stats.pendingPoints} label="Points en attente" highlight={stats.pendingPoints > 0 ? 'amber' : undefined} />
           </div>
@@ -1066,7 +1066,7 @@ export default function MerchantDetailPage() {
         <div className="flex flex-wrap gap-1.5">
           <FeatureBadge active={merchant.planning_enabled} icon={<Clock className="w-3 h-3" />} label="Planning" />
           <FeatureBadge active={merchant.auto_booking_enabled} icon={<CalendarDays className="w-3 h-3" />} label="Resa en ligne" />
-          <FeatureBadge active={merchant.welcome_offer_enabled} icon={<Gift className="w-3 h-3" />} label="Bienvenue" />
+          <FeatureBadge active={merchant.welcome_offer_enabled} icon={<Gift className="w-3 h-3" />} label="Nouveaux clients" />
           <FeatureBadge active={merchant.show_public_page_on_card} icon={<Globe className="w-3 h-3" />} label="Lien sur carte" />
           {merchant.booking_mode === 'free' && <FeatureBadge active icon={<Zap className="w-3 h-3" />} label="Mode Libre" />}
           {Number(merchant.buffer_minutes || 0) > 0 && <FeatureBadge active icon={<Clock className="w-3 h-3" />} label={`Buffer ${merchant.buffer_minutes}min`} />}
@@ -1081,7 +1081,7 @@ export default function MerchantDetailPage() {
           <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
             <div className="flex items-center gap-2 mb-0.5">
               <Gift className="w-3.5 h-3.5 text-indigo-600" />
-              <span className="font-medium text-gray-900 text-xs">Offre de bienvenue</span>
+              <span className="font-medium text-gray-900 text-xs">Offre nouveaux clients</span>
             </div>
             <p className="text-sm text-gray-700">{merchant.welcome_offer_description || 'Non configuré'}</p>
             {merchant.welcome_referral_code && (

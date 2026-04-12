@@ -736,7 +736,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           );
         })()}
 
-        {/* ── OFFRE DE BIENVENUE (nouveaux clients) ── */}
+        {/* ── OFFRE NOUVEAUX CLIENTS ── */}
         {merchant.welcome_offer_enabled && merchant.welcome_offer_description && (canBookOnline || (merchant.welcome_referral_code && merchant.scan_code)) && (
           <motion.div
             initial={{ opacity: 0, y: 14 }}

@@ -57,7 +57,7 @@ const EVENT_CONFIG: Record<EventType, { icon: React.ElementType; color: string; 
   voucher: { icon: Cake, color: 'text-pink-600', bg: 'bg-pink-50', label: 'Vouchers', summaryKey: 'vouchers' },
   booking: { icon: CalendarDays, color: 'text-cyan-600', bg: 'bg-cyan-50', label: 'Reservations', summaryKey: 'bookings' },
   referral: { icon: UserCheck, color: 'text-violet-600', bg: 'bg-violet-50', label: 'Parrainages', summaryKey: 'referrals' },
-  welcome: { icon: Sparkles, color: 'text-orange-600', bg: 'bg-orange-50', label: 'Bienvenue', summaryKey: 'welcome' },
+  welcome: { icon: Sparkles, color: 'text-orange-600', bg: 'bg-orange-50', label: 'Nouveaux clients', summaryKey: 'welcome' },
 };
 
 export default function ActivitePage() {
@@ -178,7 +178,7 @@ export default function ActivitePage() {
         <SummaryCard label="Récompenses" value={summary.redemptions} icon={Gift} color="pink" />
         <SummaryCard label="Vouchers" value={summary.vouchers} icon={Cake} color="rose" />
         <SummaryCard label="Nouveaux clients" value={summary.newCustomers} icon={Users} color="indigo" />
-        <SummaryCard label="Bienvenue" value={summary.welcome} icon={Sparkles} color="orange" />
+        <SummaryCard label="Offres nouveaux clients" value={summary.welcome} icon={Sparkles} color="orange" />
         <SummaryCard label="Reservations" value={summary.bookings} icon={CalendarDays} color="cyan" />
         <SummaryCard label="Parrainages" value={summary.referrals || 0} icon={UserCheck} color="violet" />
         <SummaryCard label="Messages" value={summary.contacts} icon={MessageCircle} color="amber" />

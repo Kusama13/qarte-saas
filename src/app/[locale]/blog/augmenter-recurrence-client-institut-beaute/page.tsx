@@ -604,7 +604,7 @@ export default function AugmenterRecurrenceInstitutPage() {
             <p className="text-gray-700 leading-relaxed mb-4">
               Le principe est simple : &laquo; Parrainez une amie et gagnez des points
               de fidélité (ou un soin offert). &raquo; La marraine gagne un avantage, et la
-              filleule bénéficie d&apos;une offre de bienvenue. Tout le monde y gagne.
+              filleule bénéficie d&apos;une offre nouveaux clients. Tout le monde y gagne.
             </p>
 
             <div className="bg-gray-50 rounded-2xl p-6 mb-6 border border-gray-100">

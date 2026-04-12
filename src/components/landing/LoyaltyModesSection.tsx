@@ -44,7 +44,7 @@ function SeoCard({ t }: { t: (key: string) => string }) {
   );
 }
 
-/* ── Card: Offre de Bienvenue ── */
+/* ── Card: Offre Nouveaux Clients ── */
 function WelcomeOfferCard({ t }: { t: (key: string) => string }) {
   return (
     <div className="relative bg-gradient-to-br from-violet-50 to-pink-50 rounded-2xl border border-violet-100 shadow-xl shadow-violet-100/30 p-6 flex flex-col h-full">
