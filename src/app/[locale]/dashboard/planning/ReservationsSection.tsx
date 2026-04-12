@@ -79,7 +79,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
   // Split into upcoming and past groups
   const { upcomingGroups, pastGroups } = useMemo(() => {
     // Only show primary slots (not fillers from multi-slot bookings)
-    const primarySlots = slots.filter(s => s.client_name && !s.primary_slot_id);
+    const primarySlots = slots.filter(s => s.client_name && s.client_name !== '__blocked__' && !s.primary_slot_id);
     const groups = new Map<string, PlanningSlot[]>();
 
     for (const slot of primarySlots) {

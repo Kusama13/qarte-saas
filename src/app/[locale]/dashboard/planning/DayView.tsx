@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Plus, Clock } from 'lucide-react';
+import { Plus, Clock, Lock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot } from '@/types';
 import { formatTime } from '@/lib/utils';
@@ -108,28 +108,34 @@ export default function DayView({
         ))}
 
         {/* Slot cards */}
-        {slotCards.map(({ slot, top, height, color, serviceNames, durationMins }) => (
+        {slotCards.map(({ slot, top, height, color, serviceNames, durationMins }) => {
+          const isBlocked = slot.client_name === '__blocked__';
+          return (
           <button
             key={slot.id}
             onClick={() => onSlotClick(slot)}
             className={`absolute left-14 right-3 rounded-xl border px-3 py-1.5 text-left transition-all hover:shadow-md active:scale-[0.99] overflow-hidden ${
               isPast ? 'opacity-50' : ''
-            }`}
+            } ${isBlocked ? 'border-dashed border-gray-300' : ''}`}
             style={{
               top,
               height: Math.max(height, 28),
-              backgroundColor: color ? `${color}10` : slot.client_name ? '#eef2ff' : '#ecfdf5',
-              borderColor: color || (slot.client_name ? '#c7d2fe' : '#a7f3d0'),
-              borderLeftWidth: color ? '3px' : '1px',
-              borderLeftColor: color || undefined,
+              backgroundColor: isBlocked ? '#f3f4f6' : color ? `${color}10` : slot.client_name ? '#eef2ff' : '#ecfdf5',
+              borderColor: isBlocked ? '#d1d5db' : color || (slot.client_name ? '#c7d2fe' : '#a7f3d0'),
+              borderLeftWidth: color && !isBlocked ? '3px' : '1px',
+              borderLeftColor: color && !isBlocked ? color : undefined,
             }}
           >
             <div className="flex items-center gap-2">
-              <span className={`text-xs font-bold ${slot.client_name ? 'text-gray-800' : 'text-emerald-700'}`}>
+              <span className={`text-xs font-bold ${isBlocked ? 'text-gray-400' : slot.client_name ? 'text-gray-800' : 'text-emerald-700'}`}>
+                {isBlocked && <Lock className="w-2.5 h-2.5 inline mr-1 opacity-60" />}
                 {formatTime(slot.start_time, locale)}
               </span>
-              {slot.client_name && (
+              {slot.client_name && !isBlocked && (
                 <span className="text-xs font-medium text-gray-600 truncate">{slot.client_name}</span>
+              )}
+              {isBlocked && slot.notes && (
+                <span className="text-xs text-gray-400 truncate">{slot.notes}</span>
               )}
             </div>
             {serviceNames && height >= 40 && (
@@ -142,7 +148,8 @@ export default function DayView({
               </div>
             )}
           </button>
-        ))}
+        );
+        })}
 
         {/* Empty state */}
         {daySlots.length === 0 && (
