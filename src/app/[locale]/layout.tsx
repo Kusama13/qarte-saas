@@ -17,13 +17,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (locale === 'en') {
     return {
       title: {
-        default: 'Qarte — Salon page & loyalty for beauty pros',
+        default: 'Qarte — Online booking, loyalty & salon page for beauty pros',
         template: '%s | Qarte',
       },
-      description: 'Create your salon page in 5 min: services, photos, schedule, Google reviews. Built-in loyalty program. For hair salons, barbers and nail studios. Free trial.',
+      description: 'Online booking with 0% commission, digital loyalty program and SEO salon page. Each client who books gets their loyalty card automatically. Free trial.',
       openGraph: {
-        title: 'Qarte — Salon page & loyalty for beauty pros',
-        description: 'Create your salon page in 5 min: services, photos, schedule, Google reviews. Built-in loyalty program. Free trial.',
+        title: 'Qarte — Online booking, loyalty & salon page for beauty pros',
+        description: 'Online booking with 0% commission, digital loyalty program and SEO salon page. Each client who books gets their loyalty card automatically. Free trial.',
         locale: 'en_US',
         alternateLocale: ['fr_FR'],
       },
@@ -37,13 +37,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // FR: title + description + alternates + og:locale:alternate
   return {
     title: {
-      default: 'Qarte — Vitrine digitale et fidélité pour salons de beauté',
+      default: 'Qarte — Réservation en ligne, fidélité et vitrine pour salons de beauté',
       template: '%s | Qarte',
     },
-    description: 'Créez votre vitrine en ligne en 5 min : prestations, photos, planning, avis Google. Programme de fidélité intégré. Essai gratuit.',
+    description: 'Réservation en ligne 0% commission, programme de fidélité et vitrine SEO pour salons de beauté. Chaque cliente qui réserve reçoit sa carte de fidélité. Essai gratuit.',
     openGraph: {
-      title: 'Qarte — Vitrine digitale et fidélité pour salons de beauté',
-      description: 'Créez votre vitrine en ligne en 5 min : prestations, photos, planning, avis Google. Programme de fidélité intégré. Essai gratuit.',
+      title: 'Qarte — Réservation en ligne, fidélité et vitrine pour salons de beauté',
+      description: 'Réservation en ligne 0% commission, programme de fidélité et vitrine SEO pour salons de beauté. Chaque cliente qui réserve reçoit sa carte de fidélité. Essai gratuit.',
       locale: 'fr_FR',
       alternateLocale: ['en_US'],
     },

@@ -3,7 +3,7 @@ import { ImageResponse } from 'next/og';
 // TODO: i18n — OG image is static, not locale-aware
 export const runtime = 'edge';
 
-export const alt = 'Qarte - Programme de fidélité digital pour salons de beauté';
+export const alt = 'Qarte - Réservation en ligne, fidélité et vitrine pour salons de beauté';
 export const size = {
   width: 1200,
   height: 630,
@@ -56,19 +56,19 @@ export default async function Image() {
           {/* Headline */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <span style={{ fontSize: 42, fontWeight: 800, color: '#111827', lineHeight: 1.15 }}>
-              Le programme de fidélité
+              Réservation, fidélité
             </span>
             <span style={{ fontSize: 42, fontWeight: 800, lineHeight: 1.15, backgroundImage: 'linear-gradient(90deg, #f43f5e, #ec4899, #8b5cf6)', backgroundClip: 'text', color: 'transparent' }}>
-              qui fait revenir
+              et vitrine en ligne
             </span>
             <span style={{ fontSize: 42, fontWeight: 800, lineHeight: 1.15, backgroundImage: 'linear-gradient(90deg, #f43f5e, #ec4899, #8b5cf6)', backgroundClip: 'text', color: 'transparent' }}>
-              vos client(e)s.
+              pour votre salon.
             </span>
           </div>
 
           {/* Subtitle */}
           <span style={{ fontSize: 20, color: '#6b7280', lineHeight: 1.5 }}>
-            QR code, points, récompenses. Conçu pour les instituts de beauté, ongleries et salons.
+            0% commission. Chaque cliente qui réserve reçoit sa carte de fidélité.
           </span>
 
           {/* CTA badge */}

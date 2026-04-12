@@ -16,24 +16,24 @@ export async function generateMetadata(): Promise<Metadata> {
   const isEn = locale === 'en';
 
   const title = isEn
-    ? 'Qarte — Salon page & loyalty for beauty pros'
-    : 'Qarte — Vitrine digitale et fidélité pour salons de beauté';
+    ? 'Qarte — Online booking, loyalty & salon page for beauty pros'
+    : 'Qarte — Réservation en ligne, fidélité et vitrine pour salons de beauté';
 
   const description = isEn
-    ? 'Create your salon page in 5 min: services, photos, schedule, Google reviews. Built-in loyalty program. For hair salons, barbers and nail studios. Free trial.'
-    : 'Créez votre vitrine en ligne en 5 min : prestations, photos, planning, avis Google. Programme de fidélité intégré. Essai gratuit.';
+    ? 'Online booking with 0% commission, digital loyalty program and SEO salon page. Each client who books gets their loyalty card automatically. Free trial.'
+    : 'Réservation en ligne 0% commission, programme de fidélité et vitrine SEO pour salons de beauté. Chaque cliente qui réserve reçoit sa carte de fidélité. Essai gratuit.';
 
   const ogDescription = isEn
-    ? 'Create your salon page in 5 min: services, photos, schedule, Google reviews. Built-in loyalty program. Free trial.'
-    : 'Créez votre vitrine en ligne en 5 min : prestations, photos, planning, avis Google. Programme de fidélité intégré. Essai gratuit.';
+    ? 'Online booking with 0% commission, digital loyalty program and SEO salon page. Each client who books gets their loyalty card automatically. Free trial.'
+    : 'Réservation en ligne 0% commission, programme de fidélité et vitrine SEO pour salons de beauté. Chaque cliente qui réserve reçoit sa carte de fidélité. Essai gratuit.';
 
   const twitterDescription = isEn
-    ? 'Create your salon page in 5 min: services, photos, schedule, Google reviews. Built-in loyalty program. Free trial.'
-    : 'Créez votre vitrine en ligne en 5 min : prestations, photos, planning, avis Google. Programme de fidélité intégré. Essai gratuit.';
+    ? 'Online booking with 0% commission, digital loyalty program and SEO salon page. Each client who books gets their loyalty card automatically. Free trial.'
+    : 'Réservation en ligne 0% commission, programme de fidélité et vitrine SEO pour salons de beauté. Chaque cliente qui réserve reçoit sa carte de fidélité. Essai gratuit.';
 
   const keywords = isEn
-    ? ['beauty salon bio link', 'linktree for hair salons', 'beauty salon mini-site', 'digital loyalty card', 'loyalty program hair salon', 'beauty client retention', 'QR code loyalty', 'online showcase hair salon', 'hair salon', 'barber', 'nail studio', 'beauty salon', 'Google reviews salon', 'online scheduling hair salon']
-    : ['lien en bio salon de beauté', 'linktree coiffeur', 'mini-site salon de beauté', 'carte de fidélité digitale', 'programme fidélité coiffeur', 'fidélisation client beauté', 'QR code fidélité', 'vitrine en ligne coiffeur', 'salon de coiffure', 'barbier', 'onglerie', 'institut de beauté', 'avis Google salon', 'planning en ligne coiffeur'];
+    ? ['online booking beauty salon', 'beauty salon booking system', 'digital loyalty card', 'loyalty program hair salon', 'beauty client retention', 'QR code loyalty', 'salon page', 'hair salon', 'barber', 'nail studio', 'beauty salon', 'Google reviews salon', 'online scheduling hair salon', 'commission free booking']
+    : ['réservation en ligne salon de beauté', 'planning en ligne coiffeur', 'carte de fidélité digitale', 'programme fidélité coiffeur', 'fidélisation client beauté', 'QR code fidélité', 'vitrine en ligne coiffeur', 'salon de coiffure', 'barbier', 'onglerie', 'institut de beauté', 'avis Google salon', 'réservation sans commission', 'lien en bio salon de beauté'];
 
   return {
     metadataBase: new URL(baseUrl),

@@ -571,9 +571,8 @@ export function FideliteSection() {
           transition={{ duration: 0.5, ease: EASE }}
           className="mt-16"
         >
-          <Link
-            href="/compare/planity"
-            className="block bg-gradient-to-r from-indigo-50 via-violet-50 to-pink-50 border border-indigo-100/60 rounded-2xl md:rounded-3xl p-6 md:p-8 hover:shadow-md hover:-translate-y-0.5 transition-all duration-500 group"
+          <div
+            className="bg-gradient-to-r from-indigo-50 via-violet-50 to-pink-50 border border-indigo-100/60 rounded-2xl md:rounded-3xl p-6 md:p-8"
           >
             <div className="flex flex-col md:flex-row items-center gap-5 md:gap-8">
               <div className="flex items-center gap-3 shrink-0">
@@ -589,12 +588,8 @@ export function FideliteSection() {
                   {t('planityDesc')}
                 </p>
               </div>
-              <div className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-indigo-200 rounded-xl text-sm font-semibold text-indigo-600 group-hover:bg-indigo-50 group-hover:border-indigo-300 transition-all">
-                {t('planityCta')}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </div>
             </div>
-          </Link>
+          </div>
         </motion.div>
 
         <motion.div

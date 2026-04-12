@@ -2844,10 +2844,10 @@
     "close": "Close"
   },
   "pricingMeta": {
-    "title": "Pricing — Salon page & loyalty all-inclusive from $24/month",
-    "description": "One price for everything: your salon page (bio, services, schedule, photos) and loyalty program (stamps, cashback, auto follow-ups, Google reviews). Free 7-day trial, no credit card required.",
-    "ogTitle": "Pricing — Salon page & loyalty all-inclusive from $24/month | Qarte",
-    "ogDescription": "Salon page + loyalty program for beauty salons. $24/month all-inclusive, free 7-day trial with no credit card."
+    "title": "Pricing — Booking, loyalty & salon page all-inclusive from $24/month",
+    "description": "One price for everything: online booking with 0% commission, loyalty program (stamps, cashback, auto follow-ups, Google reviews) and SEO salon page. Free 7-day trial, no credit card required.",
+    "ogTitle": "Pricing — Booking, loyalty & salon page all-inclusive from $24/month | Qarte",
+    "ogDescription": "Online booking + loyalty + salon page for beauty salons. $24/month all-inclusive, free 7-day trial with no credit card."
   },
   "socialMediaTemplate": {
     "loyaltyProgram": "Loyalty Program",
