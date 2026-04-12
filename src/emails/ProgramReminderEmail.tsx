@@ -39,6 +39,12 @@ export function ProgramReminderEmail({ shopName, locale = 'fr' }: ProgramReminde
         </Button>
       </Section>
 
+      <Section style={testimonialBox}>
+        <Text style={testimonialQuote}>
+          {t('programReminder.testimonial')}
+        </Text>
+      </Section>
+
       <Text style={signature}>
         {t('programReminder.signature')}
       </Text>

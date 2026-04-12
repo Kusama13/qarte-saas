@@ -82,7 +82,7 @@ export const en = {
   },
 
   trialEnding: {
-    preview: 'Your Qarte trial ends in {daysRemaining} day{daysPlural}',
+    preview: 'Add your card to keep your clients and data',
     heading: 'Your trial is ending soon',
     greeting: 'Hi <strong>{shopName}</strong>,',
     intro: 'Your free Qarte trial ends in ',
@@ -345,12 +345,13 @@ export const en = {
   },
 
   programReminder: {
-    preview: '{shopName}, 3 minutes to set everything up',
-    heading: 'Just one more step',
+    preview: 'Salons on Qarte see 47% more returning clients',
+    heading: 'Your first client is waiting for her card',
     greeting: 'Hi <strong>{shopName}</strong>,',
-    intro: 'Your salon page is ready, but your loyalty reward isn\'t set up yet. Your clients can\'t earn points until it\'s done.',
-    timeText: '3 minutes flat. Pick your reward, let\'s go.',
+    intro: 'Salons that activate their loyalty program on Qarte see on average 47% more clients coming back within the month. You\'re one step away from making it work for you too.',
+    timeText: '3 minutes. Pick your reward (e.g., a free treatment after 10 visits) and you\'re set.',
     ctaSetup: 'Set up my reward',
+    testimonial: '"The new client offer converts instantly and referrals do the rest. I should have signed up sooner." — Nour Beaute, hair salon',
     signature: 'The Qarte Team',
   },
 
@@ -719,26 +720,26 @@ export const en = {
   },
 
   vitrineReminder: {
-    preview: '{shopName}, complete your online page',
-    heading: 'Your page is almost ready',
+    preview: 'Salons visible on Google get 3x more bookings',
+    heading: '73% of clients search for a salon on Google',
     greeting: 'Hi <strong>{shopName}</strong>,',
-    intro: 'Your loyalty program is set up, great job! Now complete your online page to be visible to new clients.',
-    featureTitle: 'Why does it matter?',
-    featureDesc: 'Your page appears on Google and lets clients find you, see your services and book. Add your bio and address to maximize visibility.',
+    intro: 'You\'ve set up your loyalty program — great! But your future clients don\'t know about you yet. Salons that complete their Qarte page appear on Google and get on average 3 times more inquiries.',
+    featureTitle: 'What your future clients see',
+    featureDesc: 'Your services, prices, photos, hours and reviews — all on one page. They find you, they book. 2 minutes to complete.',
     trialNote: 'You have <strong>{daysRemaining} day{daysPlural}</strong> left in your trial.',
-    cta: 'Complete my page',
+    cta: 'Make my salon visible',
     signature: 'The Qarte Team',
   },
 
   planningReminder: {
-    preview: '{shopName}, enable your booking calendar',
-    heading: 'Start receiving online bookings',
+    preview: 'Marie from L\'Atelier got 12 bookings in 1 week',
+    heading: 'Your clients want to book at 11pm',
     greeting: 'Hi <strong>{shopName}</strong>,',
-    intro: 'Did you know you can receive bookings directly from your Qarte page? Enable your calendar in one click.',
-    featureTitle: 'How does it work?',
-    featureDesc: 'You create available time slots, clients book online and you get an instant notification. You can also request a deposit.',
+    intro: '60% of online bookings are made outside business hours. Your clients want to book from their couch at night — not call you while you\'re busy with a client.',
+    featureTitle: 'How it works',
+    featureDesc: 'Set your hours or time slots. Clients book from your page. You get a notification. Deposit is secured automatically.',
     trialNote: 'You have <strong>{daysRemaining} day{daysPlural}</strong> left in your trial.',
-    cta: 'Enable my calendar',
+    cta: 'Get my first bookings',
     signature: 'The Qarte Team',
   },
 

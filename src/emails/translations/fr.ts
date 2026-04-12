@@ -82,7 +82,7 @@ export const fr = {
   },
 
   trialEnding: {
-    preview: 'Ton essai Qarte se termine dans {daysRemaining} jour{daysPlural}',
+    preview: 'Ajoute ta carte pour garder tes clients et tes donnees',
     heading: 'Ton essai se termine bientôt',
     greeting: 'Bonjour <strong>{shopName}</strong>,',
     intro: 'Ton essai gratuit Qarte se termine dans ',
@@ -345,13 +345,14 @@ export const fr = {
   },
 
   programReminder: {
-    preview: '{shopName}, 3 minutes pour tout configurer',
-    heading: 'Plus qu\'une étape',
+    preview: 'Les salons sur Qarte voient 47% de clientes en plus revenir',
+    heading: 'Ta 1ere cliente attend sa carte',
     greeting: 'Bonjour <strong>{shopName}</strong>,',
-    intro: 'Ta vitrine en ligne est prête, mais ta récompense fidélité n\'est pas encore configurée. Tes clientes ne pourront pas cumuler de points tant que c\'est pas fait.',
-    timeText: '3 minutes chrono. Choisis ta récompense, c\'est parti.',
-    ctaSetup: 'Configurer ma récompense',
-    signature: 'L\'équipe Qarte',
+    intro: 'Les salons qui activent leur programme de fidelite sur Qarte voient en moyenne 47% de clientes en plus revenir dans le mois. Il te reste une seule etape pour que ca marche chez toi aussi.',
+    timeText: '3 minutes. Tu choisis ta recompense (ex: un soin offert apres 10 passages) et c\'est parti.',
+    ctaSetup: 'Configurer ma recompense',
+    testimonial: '"L\'offre nouveaux clients convertit direct et le parrainage fait le reste. J\'aurais du prendre avant." — Nour Beaute, salon de coiffure',
+    signature: 'L\'equipe Qarte',
   },
 
   programReminderDay2: {
@@ -719,27 +720,27 @@ export const fr = {
   },
 
   vitrineReminder: {
-    preview: '{shopName}, complète ta vitrine en ligne',
-    heading: 'Ta vitrine est presque prête',
+    preview: 'Les salons visibles sur Google recoivent 3x plus de reservations',
+    heading: '73% des clientes cherchent un salon sur Google',
     greeting: 'Bonjour <strong>{shopName}</strong>,',
-    intro: 'Ton programme de fidélité est configuré, bravo ! Il ne te reste plus qu\'à compléter ta vitrine pour être visible en ligne.',
-    featureTitle: 'Pourquoi c\'est important ?',
-    featureDesc: 'Ta vitrine apparaît sur Google et permet à tes clients de te trouver, voir tes prestations et réserver. Ajoute ta bio et ton adresse pour maximiser ta visibilité.',
+    intro: 'Tu as configure ton programme de fidelite — bravo ! Mais tes futures clientes ne le savent pas encore. Les salons qui completent leur vitrine Qarte apparaissent sur Google et recoivent en moyenne 3 fois plus de demandes.',
+    featureTitle: 'Ce que voient tes futures clientes',
+    featureDesc: 'Tes prestations, tes tarifs, tes photos, tes horaires et tes avis — tout sur une seule page. Elles te trouvent, elles reservent. 2 minutes pour tout completer.',
     trialNote: 'Il te reste <strong>{daysRemaining} jour{daysPlural}</strong> d\'essai.',
-    cta: 'Compléter ma vitrine',
-    signature: 'L\'équipe Qarte',
+    cta: 'Rendre mon salon visible',
+    signature: 'L\'equipe Qarte',
   },
 
   planningReminder: {
-    preview: '{shopName}, active ton planning',
-    heading: 'Reçois des réservations en ligne',
+    preview: 'Marie de L\'Atelier a recu 12 resas en 1 semaine',
+    heading: 'Tes clientes veulent reserver a 23h',
     greeting: 'Bonjour <strong>{shopName}</strong>,',
-    intro: 'Savais-tu que tu peux recevoir des réservations directement depuis ta vitrine Qarte ? Active ton planning en un clic.',
-    featureTitle: 'Comment ça marche ?',
-    featureDesc: 'Tu crées tes créneaux disponibles, tes clients réservent en ligne et tu reçois une notification instantanée. Tu peux aussi demander un acompte.',
+    intro: '60% des reservations en ligne sont faites en dehors des heures d\'ouverture. Tes clientes veulent reserver le soir depuis leur canape — pas t\'appeler pendant que tu as les mains dans le shampoing.',
+    featureTitle: 'Comment ca marche',
+    featureDesc: 'Tu definis tes horaires ou tes creneaux. Tes clientes reservent depuis ta page. Tu recois une notif. L\'acompte est securise automatiquement.',
     trialNote: 'Il te reste <strong>{daysRemaining} jour{daysPlural}</strong> d\'essai.',
-    cta: 'Activer mon planning',
-    signature: 'L\'équipe Qarte',
+    cta: 'Recevoir mes premieres resas',
+    signature: 'L\'equipe Qarte',
   },
 
   churnSurveyReminder: {
