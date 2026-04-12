@@ -61,6 +61,8 @@ export function PricingSection() {
                   </div>
                 </div>
 
+                <p className="text-xs font-medium text-indigo-600 mb-3">{t('dailyPrice')}</p>
+
                 {/* Annual option */}
                 <p className="text-sm text-gray-500 mb-6">
                   {t('annualOr')} <span className="font-semibold text-indigo-600">{t('annualPrice')}</span> {t('annualLabel')}

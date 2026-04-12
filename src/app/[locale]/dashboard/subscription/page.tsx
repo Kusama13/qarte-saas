@@ -64,6 +64,7 @@ export default function SubscriptionPage() {
   const [cancelReason, setCancelReason] = useState<string | null>(null);
   const [showPromoCode, setShowPromoCode] = useState(false);
   const [promoCopied, setPromoCopied] = useState(false);
+  const [cancelStats, setCancelStats] = useState<{ customers: number; visits: number } | null>(null);
   const [polling, setPolling] = useState(() => {
     if (typeof window !== 'undefined') {
       const flag = sessionStorage.getItem('qarte_portal_return');
@@ -644,7 +645,16 @@ export default function SubscriptionPage() {
                   <p className="text-xs text-gray-500 text-center mt-2">{t('pastDueCtaHint')}</p>
                 </>
               ) : (
-                <Button variant="outline" className="w-full h-11 rounded-2xl text-gray-500 border-gray-200 hover:text-gray-700 hover:border-gray-300 font-medium text-sm" onClick={() => setShowSaveOffer(true)} loading={loadingPortal}>
+                <Button variant="outline" className="w-full h-11 rounded-2xl text-gray-500 border-gray-200 hover:text-gray-700 hover:border-gray-300 font-medium text-sm" onClick={async () => {
+                  setShowSaveOffer(true);
+                  if (merchant && !cancelStats) {
+                    const [custRes, visitRes] = await Promise.all([
+                      supabase.from('customers').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
+                      supabase.from('visits').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id).eq('status', 'confirmed'),
+                    ]);
+                    setCancelStats({ customers: custRes.count || 0, visits: visitRes.count || 0 });
+                  }
+                }} loading={loadingPortal}>
                   {t('manageSubscription')}
                 </Button>
               )}
@@ -683,6 +693,17 @@ export default function SubscriptionPage() {
             <>
               <h3 className="text-lg font-bold text-gray-900">{t('saveOfferTitle')}</h3>
               <p className="text-sm text-gray-500">{t('saveOfferSubtitle')}</p>
+
+              {cancelStats && (cancelStats.customers > 0 || cancelStats.visits > 0) && (
+                <div className="p-3 bg-red-50 rounded-xl border border-red-200">
+                  <p className="text-sm font-semibold text-red-800">{t('saveOfferLossTitle')}</p>
+                  <p className="text-xs text-red-600 mt-1">
+                    {cancelStats.customers > 0 && t('saveOfferLossClients', { count: cancelStats.customers })}
+                    {cancelStats.customers > 0 && cancelStats.visits > 0 && ' · '}
+                    {cancelStats.visits > 0 && t('saveOfferLossVisits', { count: cancelStats.visits })}
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 {['too_expensive', 'not_using', 'missing_feature', 'switching', 'temporary', 'other'].map(reason => (

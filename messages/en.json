@@ -78,6 +78,7 @@
     "subtitle": "No surprises, no hidden fees. Built for you.",
     "trialBadge": "7-day free trial",
     "perMonth": "/mo",
+    "dailyPrice": "Less than $1 per day",
     "perDay": "that's",
     "perDayAmount": "~$0.80",
     "perDayLabel": "per day",
@@ -1507,6 +1508,9 @@
     "saveOfferPromoApply": "Enter this code in your billing portal to get 2 free months.",
     "saveOfferPromoHint": "Code valid for 30 days.",
     "saveOfferPromoDone": "Thanks, I'm staying!",
+    "saveOfferLossTitle": "By canceling, your clients lose everything",
+    "saveOfferLossClients": "{count} registered clients",
+    "saveOfferLossVisits": "{count} recorded visits",
     "saveOfferKeep": "I'll stay",
     "saveOfferContinueCancel": "Continue"
   },
