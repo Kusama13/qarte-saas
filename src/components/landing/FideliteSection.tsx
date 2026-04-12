@@ -561,16 +561,6 @@ export function FideliteSection() {
             delay={0.05}
           />
 
-          <Separator />
-
-          <FeatureBlock
-            title={t('contestTitle')}
-            titleBold={t('contestTitleBold')}
-            description={t('contestDesc')}
-            visual={<ContestVisual t={t} />}
-            reverse
-            delay={0.05}
-          />
         </div>
 
         {/* Planity/Booksy banner */}
