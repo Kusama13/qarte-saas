@@ -87,7 +87,7 @@ export function CaseStudySection() {
               <div className="space-y-8">
                 <div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-black">+127%</span>
+                    <span className="text-5xl font-black">+45%</span>
                     <TrendingUp className="w-6 h-6 text-emerald-300" />
                   </div>
                   <p className="text-indigo-200 mt-1">{t('regularClients')}</p>
@@ -95,7 +95,7 @@ export function CaseStudySection() {
 
                 <div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-black">847</span>
+                    <span className="text-5xl font-black">83</span>
                   </div>
                   <p className="text-indigo-200 mt-1">{t('loyaltyCards')}</p>
                 </div>

@@ -121,7 +121,7 @@
 | Visibilite Google | +40% visibilite, 3x avis Google, temoignage Comptoir du Visage |
 | Acquisition | 8 nouvelles clientes/mois (Nour Beaute), parrainage automatique |
 | Simplicite | Zero app, 2 min de setup, temoignage Lunzia Studio |
-| ROI | +2340EUR/mois (etude de cas Nail Salon by Elodie) |
+| ROI | +270EUR/mois estime (etude de cas Nail Salon by Elodie — ~6 clientes en plus/mois x 45EUR) |
 
 ## Goals
 **Business goal:** Convertir les merchants trial en abonnes payants (24EUR/mois) et reduire le churn post-trial.

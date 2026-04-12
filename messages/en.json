@@ -505,8 +505,8 @@
     "regularClients": "regular clients",
     "loyaltyCards": "active loyalty cards",
     "googleRating": "Google rating (vs 4.2 before)",
-    "revenue": "estimated additional monthly revenue",
-    "revenueAmount": "+$2,340",
+    "revenue": "estimated additional revenue (~6 extra clients/mo \u00d7 \u20AC45)",
+    "revenueAmount": "+\u20AC270",
     "revenuePerMonth": "/mo"
   },
   "referral": {

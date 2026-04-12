@@ -501,12 +501,12 @@
     "change2": "QR code à l'accueil",
     "change3": "Récompense : 10ème pose offerte",
     "change4": "Notification push avant les fêtes",
-    "resultsTitle": "Résultats après 6 mois",
-    "regularClients": "de clients réguliers",
-    "loyaltyCards": "cartes de fidélité actives",
+    "resultsTitle": "R\u00e9sultats apr\u00e8s 6 mois",
+    "regularClients": "de clientes r\u00e9guli\u00e8res",
+    "loyaltyCards": "cartes de fid\u00e9lit\u00e9 actives",
     "googleRating": "note Google (vs 4.2 avant)",
-    "revenue": "de chiffre d'affaires additionnel estimé",
-    "revenueAmount": "+2 340€",
+    "revenue": "de CA additionnel estim\u00e9 (~6 clientes en plus/mois \u00d7 45 \u20AC)",
+    "revenueAmount": "+270\u20AC",
     "revenuePerMonth": "/mois"
   },
   "referral": {
