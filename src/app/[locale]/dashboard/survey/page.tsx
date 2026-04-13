@@ -29,6 +29,8 @@ export default function ChurnSurveyPage() {
 
   const [success, setSuccess] = useState(false);
   const [promoCode, setPromoCode] = useState<string | null>(null);
+  const [bonusDays, setBonusDays] = useState(2);
+  const [demoRequested, setDemoRequested] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // Defense in depth: if merchant not expired or already completed, go away
@@ -111,6 +113,8 @@ export default function ChurnSurveyPage() {
 
       const data = await res.json();
       setPromoCode(data.promo_code);
+      setBonusDays(data.bonus_days || 2);
+      setDemoRequested(data.demo_requested || false);
       setSuccess(true);
       // Refresh merchant context (new trial_ends_at + churn_survey_seen_at)
       await refetch();
@@ -318,7 +322,20 @@ export default function ChurnSurveyPage() {
                 </motion.div>
 
                 <h2 className="text-2xl font-extrabold text-gray-900 mb-2">{t('successTitle')}</h2>
-                <p className="text-gray-500 mb-6">{t('successMessage')}</p>
+                <p className="text-gray-500 mb-6">{t('successMessage', { days: String(bonusDays) })}</p>
+
+                {/* Demo requested */}
+                {demoRequested && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, duration: 0.4 }}
+                    className="p-4 mb-5 md:mb-6 rounded-xl bg-indigo-50 border border-indigo-200 text-left"
+                  >
+                    <p className="text-sm font-semibold text-indigo-800 mb-1">{t('demoTitle')}</p>
+                    <p className="text-sm text-indigo-600">{t('demoMessage')}</p>
+                  </motion.div>
+                )}
 
                 {/* Conditional promo card */}
                 {promoCode && (

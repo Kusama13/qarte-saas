@@ -7,9 +7,10 @@ import {
   BLOCKER_VALUES,
   CONVINCE_VALUES,
   FEATURE_VALUES,
-  CHURN_BONUS_DAYS,
+  CHURN_BONUS_DAYS_BY_CONVINCE,
   CHURN_PROMO_CODE,
 } from '@/lib/churn-survey-config';
+import { resend, EMAIL_FROM, EMAIL_HEADERS } from '@/lib/resend';
 import logger from '@/lib/logger';
 
 const surveySchema = z.object({
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
     // Fetch merchant + verify ownership + check trial status + idempotence
     const { data: merchant, error: merchantError } = await supabaseAdmin
       .from('merchants')
-      .select('id, trial_ends_at, subscription_status, churn_survey_seen_at')
+      .select('id, trial_ends_at, subscription_status, churn_survey_seen_at, shop_name, email, phone')
       .eq('user_id', user.id)
       .is('deleted_at', null)
       .single();
@@ -69,6 +70,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Questionnaire non applicable' }, { status: 403 });
     }
 
+    const bonusDays = CHURN_BONUS_DAYS_BY_CONVINCE[parsed.data.would_convince];
+
     const { error: insertError } = await supabaseAdmin
       .from('merchant_churn_surveys')
       .insert({
@@ -78,7 +81,7 @@ export async function POST(request: NextRequest) {
         features_tested: parsed.data.features_tested,
         would_convince: parsed.data.would_convince,
         free_comment: parsed.data.free_comment?.trim() || null,
-        bonus_days_granted: CHURN_BONUS_DAYS,
+        bonus_days_granted: bonusDays,
       });
 
     if (insertError) {
@@ -90,7 +93,7 @@ export async function POST(request: NextRequest) {
     const now = new Date();
     const currentEnd = new Date(merchant.trial_ends_at);
     const base = currentEnd.getTime() > now.getTime() ? currentEnd : now;
-    const newTrialEnd = new Date(base.getTime() + CHURN_BONUS_DAYS * 24 * 60 * 60 * 1000);
+    const newTrialEnd = new Date(base.getTime() + bonusDays * 24 * 60 * 60 * 1000);
 
     const { error: updateError } = await supabaseAdmin
       .from('merchants')
@@ -106,12 +109,26 @@ export async function POST(request: NextRequest) {
     }
 
     const promoEligible = parsed.data.would_convince === 'lower_price';
+    const demoRequested = parsed.data.would_convince === 'team_demo';
+
+    // Send admin alert for demo requests (fire-and-forget)
+    if (demoRequested) {
+      resend?.emails.send({
+        from: EMAIL_FROM,
+        headers: EMAIL_HEADERS,
+        to: 'contact@getqarte.com',
+        subject: `[Demo demandee] ${merchant.shop_name}`,
+        text: `Le merchant ${merchant.shop_name} (${merchant.email}) a demande une demo.\n\nTelephone : ${merchant.phone || 'non renseigne'}\nBlocker : ${parsed.data.blocker}\nCommentaire : ${parsed.data.free_comment || 'aucun'}\n\nContacte-le sous 24h.`,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({
       success: true,
       new_trial_ends_at: newTrialEnd.toISOString(),
+      bonus_days: bonusDays,
       promo_eligible: promoEligible,
       promo_code: promoEligible ? CHURN_PROMO_CODE : null,
+      demo_requested: demoRequested,
     });
   } catch (error) {
     logger.error('Churn survey error', error);

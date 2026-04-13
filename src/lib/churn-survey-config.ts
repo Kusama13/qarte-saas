@@ -69,4 +69,13 @@ export const BLOCKER_BADGE_CLASSES: Record<ChurnBlocker, string> = {
 // Reciprocity : merchant who selects "lower_price" unlocks a Stripe promo code.
 // Must match a coupon created manually in the Stripe dashboard.
 export const CHURN_PROMO_CODE = '3MOISQARTEPRO25';
-export const CHURN_BONUS_DAYS = 2;
+export const CHURN_BONUS_DAYS_DEFAULT = 2;
+
+// Bonus days vary by Q4 answer
+export const CHURN_BONUS_DAYS_BY_CONVINCE: Record<ChurnConvince, number> = {
+  lower_price: 2,
+  longer_trial: 7,
+  team_demo: 5,
+  more_features: 2,
+  nothing: 2,
+};
