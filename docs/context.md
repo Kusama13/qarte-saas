@@ -661,6 +661,7 @@ Metriques startup (MRR, churn, ARPU, LTV), lifecycle segments, health score, ann
 
 ### Page Publique Programme (`/p/[slug]`)
 Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette page (sauf CTA offre nouveaux clients → `/scan/{code}?welcome=`).
+**Pas de pixels FB/TT ni cookie banner** sur cette page (c'est la vitrine du merchant, pas la landing Qarte). Seul `trackCtaClick` (Vercel Analytics, first-party, exempt RGPD) est conserve. Le `CookieBanner` detecte `/p/` et ne s'affiche pas.
 
 **Ordre des sections :**
 1. Hero (logo glow couleurs merchant, nom gradient, adresse + badge "Y aller", bio glassmorphism)

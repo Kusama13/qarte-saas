@@ -311,8 +311,8 @@ function getWhatsAppMarketing(name: string, _customers: number): { label: string
 
 function getWhatsAppTuto(name: string): { label: string; text: string }[] {
   return [
-    { label: 'Comment ça marche', text: `Hello ${name} ! QR code en caisse → le client scanne → sa carte est créée. À chaque passage il rescanne, le tampon s'ajoute tout seul. Pas d'appli 📱` },
-    { label: 'L\'espace pro', text: `Hello ${name} ! Ton espace pro (getqarte.com → Espace Pro) : clients, tampons, stats, notifs. Tout depuis ton téléphone 📊` },
+    { label: 'Comment ça marche', text: `Hello ${name} ! Tes clientes te trouvent sur Google via ta vitrine, elles réservent en ligne depuis ta page, et elles reçoivent automatiquement leur carte de fidélité. Pas d'appli à télécharger, ni pour toi ni pour elles 📱` },
+    { label: 'L\'espace pro', text: `Hello ${name} ! Ton espace pro (getqarte.com → Espace Pro) : planning, réservations, clientes, fidélité, stats. Tout depuis ton téléphone 📊` },
   ];
 }
 

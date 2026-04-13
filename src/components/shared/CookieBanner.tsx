@@ -1,20 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { X } from 'lucide-react';
 
 export default function CookieBanner() {
   const t = useTranslations('cookie');
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
 
+  // No cookie banner on merchant public pages (no tracking pixels)
+  const isMerchantPage = /^\/[a-z]{2}\/p\//.test(pathname);
+
   useEffect(() => {
+    if (isMerchantPage) return;
     const consent = localStorage.getItem('cookie-consent');
     if (!consent) {
       setIsVisible(true);
     }
-  }, []);
+  }, [isMerchantPage]);
 
   const acceptCookies = () => {
     localStorage.setItem('cookie-consent', 'accepted');

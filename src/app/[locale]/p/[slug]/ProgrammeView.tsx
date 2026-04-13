@@ -10,8 +10,6 @@ import BookingModal from './BookingModal';
 import { useInView } from '@/hooks/useInView';
 import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency, detectBookingPlatform } from '@/lib/utils';
 import { trackCtaClick } from '@/lib/analytics';
-import { fbEvents } from '@/components/analytics/FacebookPixel';
-import { ttEvents } from '@/components/analytics/TikTokPixel';
 import { useLocale, useTranslations } from 'next-intl';
 import type { Merchant } from '@/types';
 
@@ -1075,7 +1073,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           href="https://getqarte.com/auth/merchant/signup?ref=vitrine-en-ligne"
           target="_blank"
           rel="noopener noreferrer"
-          onClick={() => { trackCtaClick('vitrine_footer_cta', 'vitrine_page'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
+          onClick={() => { trackCtaClick('vitrine_footer_cta', 'vitrine_page'); }}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
@@ -1115,7 +1113,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 href={isDemo ? '/auth/merchant/signup' : safeBookingUrl!}
                 target={isDemo ? undefined : '_blank'}
                 rel={isDemo ? undefined : 'noopener noreferrer'}
-                onClick={isDemo ? () => { trackCtaClick('demo_vitrine_sticky_cta', 'vitrine_page'); fbEvents.initiateCheckout(); ttEvents.clickButton(); } : undefined}
+                onClick={isDemo ? () => { trackCtaClick('demo_vitrine_sticky_cta', 'vitrine_page'); } : undefined}
                 className={`shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all active:scale-95 ${isDemo ? 'bg-gradient-to-r from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/25' : ''}`}
                 style={isDemo ? undefined : {
                   background: `linear-gradient(135deg, ${p}, ${s})`,

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import {
-  Check, Sparkles, X, Heart, Globe, CalendarDays,
+  Check, Sparkles, X, Globe, CalendarDays,
   Gift, ImageIcon, Share2, MapPin, Camera, QrCode,
   Users, UserPlus, Cake, Calendar, ChevronDown, ArrowRight,
   Scissors, FileText, CreditCard,
@@ -27,7 +27,8 @@ interface Step {
 interface Group {
   id: string;
   name: string;
-  icon: React.ElementType;
+  icon?: React.ElementType;
+  emoji?: string;
   gradient: string;
   sparkleColors: string[];
   steps: Step[];
@@ -149,7 +150,7 @@ export default function OnboardingChecklist() {
           {
             id: 'essential',
             name: t('groupEssential'),
-            icon: Sparkles,
+            emoji: '\uD83D\uDC9C',
             gradient: 'from-indigo-500 to-violet-600',
             sparkleColors: ['#6366F1', '#7C3AED', '#A78BFA', '#FFD700'],
             steps: [
@@ -165,7 +166,7 @@ export default function OnboardingChecklist() {
           {
             id: 'advanced',
             name: t('groupAdvanced'),
-            icon: Heart,
+            emoji: '\u2728',
             gradient: 'from-violet-500 to-pink-500',
             sparkleColors: ['#7C3AED', '#EC4899', '#F9A8D4', '#FFD700'],
             steps: [
@@ -392,9 +393,11 @@ export default function OnboardingChecklist() {
                 }`}>
                   {isComplete ? (
                     <Check className="w-4 h-4 stroke-[3]" />
-                  ) : (
+                  ) : group.emoji ? (
+                    <span className="text-base leading-none">{group.emoji}</span>
+                  ) : group.icon ? (
                     <group.icon className="w-4 h-4" />
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Group name */}

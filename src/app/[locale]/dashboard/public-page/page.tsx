@@ -192,7 +192,7 @@ export default function PublicPageDashboard() {
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 font-bold text-xs flex items-center justify-center">
                   <Check className="w-3 h-3" />
                 </span>
-                <p>{t('helpStep4')}</p>
+                <p dangerouslySetInnerHTML={{ __html: t('helpStep4') }} />
               </div>
             </div>
 
