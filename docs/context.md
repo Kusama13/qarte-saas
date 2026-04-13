@@ -329,9 +329,10 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 ### Churn Retention Survey (mig 106)
 - **Trigger** : merchants fully expired (> J+3) et `churn_survey_seen_at IS NULL` sont rediriges par le dashboard layout vers `/dashboard/survey` au lieu de `/dashboard/subscription`
 - **Questionnaire** : 4 questions (blocker, missing_feature optionnel, features_tested multi, would_convince), avec textarea libre finale
-- **Bonus** : +2 jours ajoutes sur `trial_ends_at` (calcul `GREATEST(NOW(), current) + 2 days` pour gerer les dates dans le passe) + pose `churn_survey_seen_at` (one-shot definitif)
+- **Bonus variable selon Q4** : `CHURN_BONUS_DAYS_BY_CONVINCE` dans `churn-survey-config.ts` — lower_price +2j, longer_trial +7j, team_demo +5j, more_features +2j, nothing +2j. Calcul `GREATEST(NOW(), current) + bonus days` + pose `churn_survey_seen_at` (one-shot definitif)
 - **Skip** : lien "Passer" discret → redirect direct vers `/dashboard/subscription` SANS poser de flag. Le merchant revoit le questionnaire a la prochaine visite (incite a repondre)
-- **Promo conditionnelle** : si `would_convince === 'lower_price'`, la page de succes affiche un code Stripe `QARTEPRO10` (-10% sur 3 premiers mois, coupon Stripe cree manuellement — generique non-individuel)
+- **Promo conditionnelle** : si `would_convince === 'lower_price'`, la page de succes affiche un code Stripe `3MOISQARTEPRO25` (-25% sur 3 premiers mois)
+- **Demo equipe** : si `would_convince === 'team_demo'`, email admin envoye a `contact@getqarte.com` (shop_name, email, phone, blocker, commentaire) + message "On te contacte sous 24h" dans la page de succes
 - **Email de relance** : `ChurnSurveyReminderEmail` envoye par cron morning au J+3 (tracking code -213, idempotent)
 - **Admin view** : `/admin/churn-surveys` avec stats agregees (blockers/convinces/features/converted count), filtres + recherche + expand par ligne pour voir toutes les reponses
 - **Source unique** : `src/lib/churn-survey-config.ts` — enums partages entre Zod API, client page, admin page
@@ -339,7 +340,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Routes** : `POST /api/churn-survey` (merchant auth), `GET /api/admin/churn-surveys` (admin auth)
 - **Scripts one-off** :
   - `scripts/send-churn-survey-email.mjs` — relance churn survey aux merchants deja expired au moment du deploy (tracking -213)
-  - `scripts/send-features-recap.mjs` — recap des 6 features cles (vitrine, planning, SMS, fidelite, bienvenue, avis Google) avec gift box "+2 jours" pointant vers `/dashboard/survey` (tracking -214, scheduled_at Resend)
+  - `scripts/send-features-recap.mjs` — recap des 6 features cles (vitrine, planning, SMS, fidelite, bienvenue, avis Google) avec gift box bonus pointant vers `/dashboard/survey` (tracking -214, scheduled_at Resend)
 
 ---
 
