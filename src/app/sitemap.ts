@@ -3,7 +3,7 @@ import { MetadataRoute } from 'next';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
 
-  // Helper: generate entry with FR/EN alternates
+  // Helper: generate entry (FR only — EN disabled via 301 redirect)
   const entry = (
     path: string,
     opts: { priority?: number; changeFrequency?: MetadataRoute.Sitemap[number]['changeFrequency']; lastModified?: Date } = {}
@@ -12,17 +12,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: opts.lastModified ?? new Date(),
     changeFrequency: opts.changeFrequency ?? 'monthly',
     priority: opts.priority ?? 0.7,
-    alternates: {
-      languages: {
-        fr: `${baseUrl}${path}`,
-        en: `${baseUrl}/en${path}`,
-      },
-    },
   });
 
   // --- Static pages ---
   const staticPages: MetadataRoute.Sitemap = [
-    entry('', { priority: 1, changeFrequency: 'weekly', lastModified: new Date('2026-04-01') }),
+    entry('', { priority: 1, changeFrequency: 'weekly', lastModified: new Date('2026-04-14') }),
     entry('/pricing', { priority: 0.9, changeFrequency: 'weekly', lastModified: new Date('2026-03-15') }),
     entry('/contact', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-03-01') }),
     entry('/pros', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-03-15') }),
@@ -40,12 +34,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry('/blog/augmenter-recurrence-client-institut-beaute', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-03-01') }),
   ];
 
-  // --- Demo pages ---
-  const demoPages: MetadataRoute.Sitemap = [
-    entry('/p/demo-onglerie', { priority: 0.6, lastModified: new Date('2026-03-15') }),
-    entry('/p/demo-coiffure', { priority: 0.6, lastModified: new Date('2026-03-15') }),
-    entry('/p/demo-tatouage', { priority: 0.6, lastModified: new Date('2026-03-15') }),
+  // --- Demo pages (8 types x 2 modes = 16 pages) ---
+  const demoSlugs = [
+    'demo-onglerie', 'demo-coiffure', 'demo-tatouage', 'demo-barbier',
+    'demo-institut', 'demo-spa', 'demo-estheticienne', 'demo-autre',
   ];
+  const demoPages: MetadataRoute.Sitemap = demoSlugs.flatMap(slug => [
+    entry(`/p/${slug}`, { priority: 0.6, lastModified: new Date('2026-04-14') }),
+    entry(`/p/${slug}-libre`, { priority: 0.5, lastModified: new Date('2026-04-14') }),
+  ]);
 
   // --- Compare pages ---
   const comparePages: MetadataRoute.Sitemap = [
