@@ -41,6 +41,7 @@ import {
   ReferralPromoEmail,
   ReferralReminderEmail,
   SocialProofEmail,
+  SlotReleasedEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import logger from './logger';
@@ -208,7 +209,7 @@ export async function sendTrialEndingEmail(
 ): Promise<SendEmailResult> {
   const subject = daysRemaining <= 1
     ? subj(locale, 'trialEndingLastDay', { shopName })
-    : subj(locale, 'trialEndingDays', { daysRemaining });
+    : subj(locale, 'trialEndingDays', { shopName, daysRemaining });
 
   return sendEmail(to, subject, TrialEndingEmail, { shopName, daysRemaining, locale }, {
     logLabel: `Trial ending email (${daysRemaining} days)`,
@@ -451,7 +452,7 @@ export async function sendInactiveMerchantDay14Email(
   stampsRequired?: number,
   locale: EmailLocale = 'fr'
 ): Promise<SendEmailResult> {
-  return sendEmail(to, subj(locale, 'inactiveDay14'), InactiveMerchantDay14Email, { shopName, rewardDescription, stampsRequired, locale }, {
+  return sendEmail(to, subj(locale, 'inactiveDay14', { shopName }), InactiveMerchantDay14Email, { shopName, rewardDescription, stampsRequired, locale }, {
     logLabel: 'Inactive merchant day 14 email',
   });
 }
@@ -749,6 +750,25 @@ export async function sendReferralReminderEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'referralReminder', { shopName }), ReferralReminderEmail, { shopName, slug, locale }, {
     logLabel: 'Referral reminder email',
+  });
+}
+
+export async function sendSlotReleasedEmail(
+  to: string,
+  params: { shopName: string; clientName: string; date: string; time: string; locale?: EmailLocale }
+): Promise<SendEmailResult> {
+  const locale = params.locale || 'fr';
+  const subject = locale === 'en'
+    ? `Slot released — ${params.clientName}`
+    : `Créneau libéré — ${params.clientName}`;
+  return sendEmail(to, subject, SlotReleasedEmail as any, {
+    shopName: params.shopName,
+    clientName: params.clientName,
+    date: params.date,
+    time: params.time,
+    locale,
+  } as any, {
+    logLabel: 'Slot released email',
   });
 }
 

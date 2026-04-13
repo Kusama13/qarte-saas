@@ -15,7 +15,7 @@ const SMS_TEMPLATES: Record<string, Record<SmsType, (...args: string[]) => strin
     reminder_j1: (shop, time) => `Rappel : RDV demain à ${time} chez ${shop}. Cumulez vos points fidélité lors de votre passage !`,
     confirmation_no_deposit: (shop, date, time) => `RDV confirmé chez ${shop} le ${date} à ${time}. Cumulez vos points fidélité lors de votre passage !`,
     confirmation_deposit: (shop, date, time) => `Acompte validé ! RDV chez ${shop} le ${date} à ${time}. À bientôt !`,
-    birthday: (shop, gift) => `Joyeux anniversaire ! ${shop} vous offre : ${gift}. Rendez-vous vite pour en profiter !`,
+    birthday: (shop, gift, name) => name ? `${name}, joyeux anniversaire ! ${shop} vous offre : ${gift}. Rendez-vous vite pour en profiter !` : `Joyeux anniversaire ! ${shop} vous offre : ${gift}. Rendez-vous vite pour en profiter !`,
     referral_reward: (shop, reward) => `Bonne nouvelle ! Votre filleul(e) a utilisé sa récompense. Votre cadeau vous attend chez ${shop} : ${reward}`,
     booking_moved: (shop, date, time) => `Votre RDV chez ${shop} a été déplacé au ${date} à ${time}. À bientôt !`,
     booking_cancelled: (shop, date, time) => `Votre RDV chez ${shop} le ${date} à ${time} a été annulé. Contactez-nous pour reprogrammer.`,
@@ -24,7 +24,7 @@ const SMS_TEMPLATES: Record<string, Record<SmsType, (...args: string[]) => strin
     reminder_j1: (shop, time) => `Reminder: appointment tomorrow at ${time} at ${shop}. Earn loyalty points on your visit!`,
     confirmation_no_deposit: (shop, date, time) => `Booking confirmed at ${shop} on ${date} at ${time}. Earn loyalty points on your visit!`,
     confirmation_deposit: (shop, date, time) => `Deposit confirmed! Appointment at ${shop} on ${date} at ${time}. See you soon!`,
-    birthday: (shop, gift) => `Happy birthday! ${shop} offers you: ${gift}. Visit us to claim it!`,
+    birthday: (shop, gift, name) => name ? `${name}, happy birthday! ${shop} offers you: ${gift}. Visit us to claim it!` : `Happy birthday! ${shop} offers you: ${gift}. Visit us to claim it!`,
     referral_reward: (shop, reward) => `Great news! Your referral used their reward. Your gift is waiting at ${shop}: ${reward}`,
     booking_moved: (shop, date, time) => `Your appointment at ${shop} has been moved to ${date} at ${time}. See you soon!`,
     booking_cancelled: (shop, date, time) => `Your appointment at ${shop} on ${date} at ${time} has been cancelled. Contact us to reschedule.`,
@@ -131,6 +131,7 @@ interface SendSmsParams {
   time?: string;
   // For birthday
   gift?: string;
+  clientName?: string;
   // For referral
   reward?: string;
   // Pass pre-fetched config to avoid re-querying in loops
@@ -142,7 +143,7 @@ interface SendSmsParams {
  * Checks global toggle, subscription status, and dedup before sending.
  */
 export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsParams): Promise<boolean> {
-  const { merchantId, slotId, phone, shopName, smsType, locale, subscriptionStatus, date, time, gift, reward, globalConfig: preloadedConfig } = params;
+  const { merchantId, slotId, phone, shopName, smsType, locale, subscriptionStatus, date, time, gift, clientName, reward, globalConfig: preloadedConfig } = params;
 
   if (!phone) return false;
 
@@ -198,7 +199,7 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
         message = template(shopName, fmtDate, time || '');
         break;
       case 'birthday':
-        message = template(shopName, gift || '');
+        message = template(shopName, gift || '', clientName || '');
         break;
       case 'referral_reward':
         message = template(shopName, reward || '');

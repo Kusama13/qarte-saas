@@ -663,7 +663,7 @@ export const fr = {
     giftLabel: 'Cadeau à offrir : {giftDescription}',
     reminderText: 'N\'oublie pas de leur souhaiter un bon anniversaire lors de leur prochaine visite !',
     smsConfirmTitle: 'Un SMS a \u00e9t\u00e9 envoy\u00e9 \u00e0 ton/ta client(e) :',
-    smsPreview: 'Joyeux anniversaire ! {shopName} vous offre : {giftDescription}. Rendez-vous vite pour en profiter !',
+    smsPreview: '{clientName}, joyeux anniversaire ! {shopName} vous offre : {giftDescription}. Rendez-vous vite pour en profiter !',
     smsConfirmNote: 'Ton/ta client(e) n\'oubliera pas ce geste. C\'est un(e) client(e) fidélisé(e) pour longtemps.',
     smsUpsell: 'Abonne-toi et tes clients recevront un SMS d\'anniversaire automatiquement le jour J — 0 effort, 100% fid\u00e9lisation.',
     ctaDashboard: 'Voir mes clients',

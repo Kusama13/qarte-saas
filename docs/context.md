@@ -56,7 +56,7 @@ src/
 │   ├── loyalty/           # StampsSection, CagnotteSection, RewardCard, RedeemModal, StickyRedeemBar, HistorySection, VoucherRewards, VoucherModals, ReviewModal, ReviewCard, ReferralModal, BirthdaySection, SocialLinks, CardHeader, InstallPrompts, UpcomingAppointmentsSection
 │   └── analytics/         # GTM, FacebookPixel, TikTokPixel, MicrosoftClarity
 │
-├── emails/               # 34 templates React Email + BaseLayout
+├── emails/               # 35 templates React Email + BaseLayout
 ├── lib/                  # supabase.ts, stripe.ts, utils.ts, scripts.ts, push.ts, logger.ts, analytics.ts, facebook-capi.ts, email.ts
 ├── types/index.ts        # Merchant, LoyaltyCard, Visit, Customer, etc.
 ├── contexts/             # MerchantContext
@@ -415,7 +415,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
   - `confirmation_deposit` — validation acompte par le merchant avec toggle opt-in (BookingDetailsModal + ReservationsSection)
   - `booking_moved` — notification client quand le merchant deplace un RDV (toggle opt-in dans move overlay)
   - `booking_cancelled` — notification client quand le merchant annule un RDV (toggle opt-in dans cancel overlay)
-  - `birthday` — voeux + cadeau anniversaire (cron morning-jobs)
+  - `birthday` — voeux + cadeau anniversaire, personnalise avec le prenom du client (cron morning-jobs)
   - `referral_reward` — notification parrain quand le filleul utilise sa recompense (`POST /api/vouchers/use`)
 - **Toggles SMS merchant** : 4 toggles opt-in dans les modaux planning (confirmation nouveau RDV, validation acompte, deplacement, annulation). Design harmonise : bandeau cliquable + toggle switch. Desactive par defaut. En trial : grise + badge "Pro". Visible uniquement si le slot a un numero de telephone. Aucun auto-envoi — toujours opt-in.
 - **Compteur SMS** : visible dans dashboard principal + planning parametres (barre de progression), cycle aligne sur la date d'abonnement Stripe (`billing_period_start`)
@@ -555,7 +555,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 ---
 
-## 9. Emails (36 templates)
+## 9. Emails (37 templates)
 
 **i18n** : Tous les templates utilisent `getEmailT(locale)` de `src/emails/translations/{fr,en}.ts`. La locale vient de `merchants.locale`. Aucun texte hardcode FR restant.
 
@@ -579,7 +579,7 @@ SubscriptionConfirmedEmail, PaymentFailedEmail (4 steps dunning: J+0 webhook, J+
 Modal dans `/dashboard/subscription` : quand le merchant clique "Gerer", questionnaire raison d'annulation (6 choix). Si "trop cher" → offre 2 mois offerts avec code `2MOISQARTEPRO25`. Churn survey post-expiration → 3 mois offerts avec code `3MOISQARTEPRO25` (remplace QARTEPRO10)
 
 ### Autres
-BirthdayNotificationEmail, GracePeriodSetupEmail, ProductUpdateEmail, AnnouncementMaPageEmail, WinBackEmail (envoi manuel admin), BookingNotificationEmail (transactionnel)
+BirthdayNotificationEmail, GracePeriodSetupEmail, ProductUpdateEmail, AnnouncementMaPageEmail, WinBackEmail (envoi manuel admin), BookingNotificationEmail (transactionnel), SlotReleasedEmail (acompte non recu — cron evening/morning-jobs)
 
 ### Codes promo
 Tous les codes promo emails ont ete supprimes (QARTE50, QARTEBOOST, QARTELAST, QARTECHALLENGE2026, QARTEPROEHJT). Aucun code de reduction n'est envoye automatiquement.

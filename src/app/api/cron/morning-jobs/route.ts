@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 import { getTodayInParis, getTodayForCountry } from '@/lib/utils';
-import { sendBirthdayNotificationEmail } from '@/lib/email';
+import { sendBirthdayNotificationEmail, sendSlotReleasedEmail } from '@/lib/email';
 import type { EmailLocale } from '@/emails/translations';
 import { sendMerchantPush } from '@/lib/merchant-push';
 import { sendBookingSms } from '@/lib/sms';
@@ -206,8 +206,8 @@ export async function GET(request: NextRequest) {
                           JSON.stringify({
                             title: bMerchant.shop_name,
                             body: bMerchant.locale === 'en'
-                              ? `Happy birthday! ${bMerchant.shop_name} offers you: ${bMerchant.birthday_gift_description || 'a gift'}`
-                              : `Joyeux anniversaire ! ${bMerchant.shop_name} vous offre : ${bMerchant.birthday_gift_description || 'un cadeau'}`,
+                              ? `${customer.first_name ? customer.first_name + ', happy' : 'Happy'} birthday! ${bMerchant.shop_name} offers you: ${bMerchant.birthday_gift_description || 'a gift'}`
+                              : `${customer.first_name ? customer.first_name + ', joyeux' : 'Joyeux'} anniversaire ! ${bMerchant.shop_name} vous offre : ${bMerchant.birthday_gift_description || 'un cadeau'}`,
                             icon: '/icon-192.png',
                             url: `/customer/card/${customer.merchant_id}`,
                             tag: `qarte-birthday-${customer.merchant_id}`,
@@ -237,6 +237,7 @@ export async function GET(request: NextRequest) {
                 locale: bMerchant.locale || 'fr',
                 subscriptionStatus: bMerchant.subscription_status,
                 gift: bMerchant.birthday_gift_description || (bMerchant.locale === 'en' ? 'a gift' : 'un cadeau'),
+                clientName: customer.first_name || '',
               }).catch(() => {});
             }
           } catch {
@@ -352,13 +353,13 @@ export async function GET(request: NextRequest) {
           try {
             const { data: authUser } = await supabase.auth.admin.getUserById(bm.user_id);
             if (authUser?.user?.email) {
-              const subject = isEN
-                ? `Slot released — ${slot.client_name}`
-                : `Créneau libéré — ${slot.client_name}`;
-              const text = isEN
-                ? `The slot on ${slot.slot_date} at ${slot.start_time} for ${slot.client_name} has been released — the deposit was not received in time.\n\nLog in to your dashboard to see your bookings.\nhttps://getqarte.com/dashboard/planning`
-                : `Le créneau du ${slot.slot_date} à ${slot.start_time} pour ${slot.client_name} a été libéré — l'acompte n'a pas été reçu à temps.\n\nConnecte-toi sur ton dashboard pour voir tes réservations.\nhttps://getqarte.com/dashboard/planning`;
-              resend?.emails.send({ from: EMAIL_FROM, headers: EMAIL_HEADERS, to: authUser.user.email, subject, text }).catch(() => {});
+              sendSlotReleasedEmail(authUser.user.email, {
+                shopName: bm.shop_name,
+                clientName: slot.client_name,
+                date: slot.slot_date,
+                time: slot.start_time,
+                locale: (bm.locale || 'fr') as 'fr' | 'en',
+              }).catch(() => {});
             }
           } catch { /* silent */ }
         })();

@@ -663,7 +663,7 @@ export const en = {
     giftLabel: 'Gift to offer: {giftDescription}',
     reminderText: 'Don\'t forget to wish them a happy birthday on their next visit!',
     smsConfirmTitle: 'An SMS was sent to your client:',
-    smsPreview: 'Happy birthday! {shopName} offers you: {giftDescription}. Visit us to claim it!',
+    smsPreview: '{clientName}, happy birthday! {shopName} offers you: {giftDescription}. Visit us to claim it!',
     smsConfirmNote: 'Your client won\'t forget this gesture. That\'s a loyal client for a long time.',
     smsUpsell: 'Subscribe and your clients will automatically receive a birthday SMS — zero effort, 100% loyalty.',
     ctaDashboard: 'View my clients',

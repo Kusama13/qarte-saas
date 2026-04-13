@@ -7,6 +7,7 @@ import { getTodayForCountry } from '@/lib/utils';
 import { sendMerchantPush } from '@/lib/merchant-push';
 import { sendBookingSms, getGlobalSmsConfig } from '@/lib/sms';
 import { resend, EMAIL_FROM, EMAIL_HEADERS } from '@/lib/resend';
+import { sendSlotReleasedEmail } from '@/lib/email';
 import { verifyCronAuth, rateLimitDelay } from '@/lib/cron-helpers';
 import logger from '@/lib/logger';
 
@@ -241,13 +242,13 @@ export async function GET(request: NextRequest) {
             try {
               const { data: authUser } = await supabase.auth.admin.getUserById(depositMerchant.user_id);
               if (authUser?.user?.email) {
-                const subject = isEN
-                  ? `Slot released — ${slot.client_name}`
-                  : `Créneau libéré — ${slot.client_name}`;
-                const text = isEN
-                  ? `The slot on ${slot.slot_date} at ${slot.start_time} for ${slot.client_name} has been released — the deposit was not received in time.\n\nLog in to your dashboard to see your bookings.\nhttps://getqarte.com/dashboard/planning`
-                  : `Le créneau du ${slot.slot_date} à ${slot.start_time} pour ${slot.client_name} a été libéré — l'acompte n'a pas été reçu à temps.\n\nConnecte-toi sur ton dashboard pour voir tes réservations.\nhttps://getqarte.com/dashboard/planning`;
-                resend?.emails.send({ from: EMAIL_FROM, headers: EMAIL_HEADERS, to: authUser.user.email, subject, text }).catch(() => {});
+                sendSlotReleasedEmail(authUser.user.email, {
+                  shopName: depositMerchant.shop_name,
+                  clientName: slot.client_name,
+                  date: slot.slot_date,
+                  time: slot.start_time,
+                  locale: (depositMerchant.locale || 'fr') as 'fr' | 'en',
+                }).catch(() => {});
               }
             } catch { /* silent */ }
           })();

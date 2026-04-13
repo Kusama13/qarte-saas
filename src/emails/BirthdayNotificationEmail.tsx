@@ -54,7 +54,7 @@ export function BirthdayNotificationEmail({ shopName, clientNames, giftDescripti
           <Text style={smsConfirmTitle}>{t('birthdayNotification.smsConfirmTitle')}</Text>
           <Section style={smsPreviewBox}>
             <Text style={smsPreviewText}>
-              {t('birthdayNotification.smsPreview', { shopName, giftDescription })}
+              {t('birthdayNotification.smsPreview', { shopName, giftDescription, clientName: clientNames[0] })}
             </Text>
           </Section>
           <Text style={smsConfirmNote}>{t('birthdayNotification.smsConfirmNote')}</Text>

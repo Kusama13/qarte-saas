@@ -38,3 +38,4 @@ export { ChurnSurveyReminderEmail } from './ChurnSurveyReminderEmail';
 export { ReferralPromoEmail } from './ReferralPromoEmail';
 export { ReferralReminderEmail } from './ReferralReminderEmail';
 export { SocialProofEmail } from './SocialProofEmail';
+export { SlotReleasedEmail } from './SlotReleasedEmail';
