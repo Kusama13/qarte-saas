@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       supabaseAdmin
         .from('merchants')
-        .select('id, signup_source, first_feature_choice, created_at, subscription_status, trial_ends_at, user_id, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, planning_enabled, auto_booking_enabled, shield_enabled, tier2_enabled, pwa_installed_at, logo_url, review_link, booking_url, shop_name, loyalty_mode'),
+        .select('id, signup_source, first_feature_choice, created_at, subscription_status, trial_ends_at, user_id, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, planning_enabled, auto_booking_enabled, shield_enabled, tier2_enabled, pwa_installed_at, logo_url, review_link, booking_url, shop_name, loyalty_mode, booking_mode'),
       supabaseAdmin.from('super_admins').select('user_id'),
       supabaseAdmin
         .from('visits')
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
     const merchantsWithServices = new Set((servicesRes.data || []).map((s: { merchant_id: string }) => s.merchant_id));
     const merchantsWithPhotos = new Set((photosRes.data || []).map((p: { merchant_id: string }) => p.merchant_id));
 
-    const fc_counts = { logo: 0, referral: 0, birthday: 0, welcome: 0, doubleDays: 0, planning: 0, autoBooking: 0, shield: 0, tier2: 0, pwa: 0, review: 0, booking: 0, services: 0, photos: 0, cagnotte: 0 };
+    const fc_counts = { logo: 0, referral: 0, birthday: 0, welcome: 0, doubleDays: 0, planning: 0, autoBooking: 0, shield: 0, tier2: 0, pwa: 0, review: 0, booking: 0, services: 0, photos: 0, cagnotte: 0, modeSlots: 0, modeFree: 0 };
 
     for (const m of merchants) {
       const src = m.signup_source || 'direct';
@@ -145,6 +145,8 @@ export async function GET(request: NextRequest) {
       if (m.booking_url) fc_counts.booking++;
       if (m.auto_booking_enabled) fc_counts.autoBooking++;
       if (m.loyalty_mode === 'cagnotte') fc_counts.cagnotte++;
+      if (m.booking_mode === 'slots') fc_counts.modeSlots++;
+      if (m.booking_mode === 'free') fc_counts.modeFree++;
       if (merchantsWithServices.has(m.id)) fc_counts.services++;
       if (merchantsWithPhotos.has(m.id)) fc_counts.photos++;
     }
@@ -194,6 +196,8 @@ export async function GET(request: NextRequest) {
       mkF('Prestations', fc_counts.services),
       mkF('Photos', fc_counts.photos),
       mkF('Mode cagnotte', fc_counts.cagnotte),
+      mkF('Planning creneaux', fc_counts.modeSlots),
+      mkF('Planning libre', fc_counts.modeFree),
     ];
 
     // ── Section 4: Push & Email ──

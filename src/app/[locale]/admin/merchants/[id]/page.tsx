@@ -1068,7 +1068,7 @@ export default function MerchantDetailPage() {
           <FeatureBadge active={merchant.auto_booking_enabled} icon={<CalendarDays className="w-3 h-3" />} label="Resa en ligne" />
           <FeatureBadge active={merchant.welcome_offer_enabled} icon={<Gift className="w-3 h-3" />} label="Nouveaux clients" />
           <FeatureBadge active={merchant.show_public_page_on_card} icon={<Globe className="w-3 h-3" />} label="Lien sur carte" />
-          {merchant.booking_mode === 'free' && <FeatureBadge active icon={<Zap className="w-3 h-3" />} label="Mode Libre" />}
+          {merchant.booking_mode && <FeatureBadge active icon={<Zap className="w-3 h-3" />} label={merchant.booking_mode === 'free' ? 'Mode Libre' : 'Mode Creneaux'} />}
           {Number(merchant.buffer_minutes || 0) > 0 && <FeatureBadge active icon={<Clock className="w-3 h-3" />} label={`Buffer ${merchant.buffer_minutes}min`} />}
           {merchant.allow_customer_cancel && <FeatureBadge active icon={<XCircle className="w-3 h-3" />} label={`Annulation J-${merchant.cancel_deadline_days || 0}`} />}
           {merchant.allow_customer_reschedule && <FeatureBadge active icon={<CalendarDays className="w-3 h-3" />} label={`Modif J-${merchant.reschedule_deadline_days || 0}`} />}
