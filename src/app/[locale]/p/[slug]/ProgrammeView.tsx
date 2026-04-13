@@ -1208,7 +1208,18 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             '@context': 'https://schema.org',
-            '@type': 'LocalBusiness',
+            '@type': (() => {
+              const typeMap: Record<string, string> = {
+                coiffeur: 'HairSalon',
+                barbier: 'BarberShop',
+                institut_beaute: 'BeautySalon',
+                onglerie: 'NailSalon',
+                spa: 'DaySpa',
+                estheticienne: 'BeautySalon',
+                tatouage: 'TattooParlor',
+              };
+              return typeMap[merchant.shop_type] || 'LocalBusiness';
+            })(),
             name: merchant.shop_name,
             ...(merchant.shop_address && {
               address: {
@@ -1243,10 +1254,38 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               const links = [merchant.instagram_url, merchant.facebook_url, merchant.tiktok_url].filter(Boolean);
               return links.length > 0 ? { sameAs: links } : {};
             })(),
-            makesOffer: {
-              '@type': 'Offer',
-              description: t('jsonLdOffer'),
-            },
+            ...(services.length > 0 && {
+              hasOfferCatalog: {
+                '@type': 'OfferCatalog',
+                name: t('jsonLdOffer'),
+                itemListElement: services.slice(0, 20).map((s) => ({
+                  '@type': 'Offer',
+                  itemOffered: {
+                    '@type': 'Service',
+                    name: s.name,
+                    ...(s.description && { description: s.description }),
+                  },
+                  ...(s.price > 0 && {
+                    price: s.price,
+                    priceCurrency: 'EUR',
+                  }),
+                })),
+              },
+            }),
+            ...(merchant.auto_booking_enabled && {
+              potentialAction: {
+                '@type': 'ReserveAction',
+                target: {
+                  '@type': 'EntryPoint',
+                  urlTemplate: `https://getqarte.com/p/${merchant.slug}`,
+                  actionPlatform: ['http://schema.org/DesktopWebPlatform', 'http://schema.org/MobileWebPlatform'],
+                },
+                result: {
+                  '@type': 'Reservation',
+                  name: t('jsonLdOffer'),
+                },
+              },
+            }),
           }),
         }}
       />

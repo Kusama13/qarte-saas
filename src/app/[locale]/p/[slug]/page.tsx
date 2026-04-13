@@ -116,17 +116,23 @@ export async function generateMetadata({
   if (!result) return {};
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
-  const { merchant, photos } = result;
+  const { merchant, photos, services } = result;
   const shopLabel = SHOP_TYPES[merchant.shop_type as keyof typeof SHOP_TYPES] || '';
   const location = merchant.shop_address ? ` à ${merchant.shop_address}` : '';
 
   const isEN = locale === 'en';
   const title = isEN
-    ? `${merchant.shop_name} — ${shopLabel || 'Salon'} | Qarte`
-    : `${merchant.shop_name} — ${shopLabel || 'Salon'} | Qarte`;
+    ? `${merchant.shop_name} — ${shopLabel || 'Salon'}${merchant.shop_address ? ` in ${merchant.shop_address}` : ''}`
+    : `${merchant.shop_name} — ${shopLabel || 'Salon'}${location}`;
+
+  // Build a richer description with top services
+  const topServices = services.slice(0, 3).map((s: { name: string }) => s.name).join(', ');
+  const bookingHint = merchant.auto_booking_enabled
+    ? (isEN ? 'Book online 24/7.' : 'Réservation en ligne 24h/24.')
+    : '';
   const description = isEN
-    ? `${merchant.shop_name}${merchant.shop_address ? ` in ${merchant.shop_address}` : ''}. Services, photos, schedule and loyalty program.`
-    : `${merchant.shop_name}${location}. ${shopLabel} — prestations, photos, horaires et programme de fidélité.`;
+    ? `${merchant.shop_name}${merchant.shop_address ? ` in ${merchant.shop_address}` : ''}. ${topServices ? `Services: ${topServices}. ` : ''}${bookingHint} Schedule, photos and loyalty program.`
+    : `${merchant.shop_name}${location}. ${shopLabel}${topServices ? ` — ${topServices}.` : '.'} ${bookingHint} Horaires, photos et programme de fidélité.`;
 
   return {
     title,
