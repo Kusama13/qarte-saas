@@ -26,6 +26,8 @@ import {
   sendReferralReminderEmail,
   sendSocialProofEmail,
   sendPaymentFailedEmail,
+  sendPostSurveyFollowUpEmail,
+  sendPostSurveyLastChanceEmail,
 } from '@/lib/email';
 import type { EmailLocale } from '@/emails/translations';
 import { getTrialStatus, getTodayInParis } from '@/lib/utils';
@@ -39,6 +41,7 @@ import {
   rateLimitDelay,
   fetchAllTracking,
 } from '@/lib/cron-helpers';
+import { CHURN_BONUS_DAYS_BY_CONVINCE } from '@/lib/churn-survey-config';
 import logger from '@/lib/logger';
 
 const supabase = createClient(
@@ -57,7 +60,8 @@ export async function GET(request: NextRequest) {
   }
 
   const results = {
-    trialEmails: { processed: 0, ending: 0, expired: 0, churnSurvey: 0, errors: 0 },
+    trialEmails: { processed: 0, ending: 0, expired: 0, churnSurvey: 0, skipped: 0, errors: 0 },
+    postSurveyEmails: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     programReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     socialProof: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     day5Checkin: { processed: 0, sent: 0, skipped: 0, errors: 0 },
@@ -144,6 +148,12 @@ export async function GET(request: NextRequest) {
 
         if (!email) continue;
 
+        // Skip generic trial emails for post-survey merchants — handled in Section 1b
+        if (merchant.churn_survey_seen_at) {
+          results.trialEmails.skipped++;
+          continue;
+        }
+
         try {
           // Single trial ending email at J-2 (avoid spam — was J-3 + J-1 before)
           if (trialStatus.isActive && trialStatus.daysRemaining === 2) {
@@ -187,6 +197,85 @@ export async function GET(request: NextRequest) {
     sectionStatuses.push({ name: 'trialEmails', status: 'ok' });
   } catch (error) {
     sectionStatuses.push({ name: 'trialEmails', status: 'error', error: String(error) });
+  }
+
+  // ==================== 1b. POST-SURVEY TRIAL EMAILS ====================
+  // Targeted emails for merchants who completed the churn survey and got bonus days.
+  // Tracking codes: -221 (mid-bonus), -222 (last day), -223 (last chance post-expiry)
+  if (isTimedOut()) { sectionStatuses.push({ name: 'postSurveyEmails', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
+    const postSurveyMerchants = allMerchantsList.filter(
+      m => m.subscription_status === 'trial' && m.churn_survey_seen_at && canEmail(m)
+    );
+
+    if (postSurveyMerchants.length > 0) {
+      // Fetch survey data (would_convince) for these merchants
+      const { data: surveyData } = await supabase
+        .from('merchant_churn_surveys')
+        .select('merchant_id, would_convince')
+        .in('merchant_id', postSurveyMerchants.map(m => m.id));
+      const surveyMap = new Map(surveyData?.map(s => [s.merchant_id, s.would_convince as string]) || []);
+
+      for (const merchant of postSurveyMerchants) {
+        results.postSurveyEmails.processed++;
+        const variant = surveyMap.get(merchant.id);
+        if (!variant) { results.postSurveyEmails.skipped++; continue; }
+
+        const bonusDays = CHURN_BONUS_DAYS_BY_CONVINCE[variant as keyof typeof CHURN_BONUS_DAYS_BY_CONVINCE] || 2;
+        const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
+        const email = globalEmailMap.get(merchant.user_id);
+        if (!email) { results.postSurveyEmails.skipped++; continue; }
+
+        const mLocale = (merchant.locale as EmailLocale) || 'fr';
+        const midDay = Math.ceil(bonusDays / 2);
+
+        try {
+          // Mid-bonus follow-up
+          if (trialStatus.isActive && trialStatus.daysRemaining === midDay) {
+            const trackCode = -221;
+            if (!globalTrackingSet.has(`${merchant.id}:${trackCode}`)) {
+              const result = await sendPostSurveyFollowUpEmail(email, merchant.shop_name, variant, trialStatus.daysRemaining, mLocale);
+              if (result.success) {
+                await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
+                results.postSurveyEmails.sent++;
+                await rateLimitDelay();
+              }
+            }
+          }
+
+          // Last day follow-up (skip if midDay === 1 to avoid double-send)
+          if (trialStatus.isActive && trialStatus.daysRemaining === 1 && midDay !== 1) {
+            const trackCode = -222;
+            if (!globalTrackingSet.has(`${merchant.id}:${trackCode}`)) {
+              const result = await sendPostSurveyFollowUpEmail(email, merchant.shop_name, variant, trialStatus.daysRemaining, mLocale);
+              if (result.success) {
+                await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
+                results.postSurveyEmails.sent++;
+                await rateLimitDelay();
+              }
+            }
+          }
+
+          // Last chance after bonus expiry (J+1)
+          if (trialStatus.isInGracePeriod && Math.abs(trialStatus.daysRemaining) === 1) {
+            const trackCode = -223;
+            if (!globalTrackingSet.has(`${merchant.id}:${trackCode}`)) {
+              const result = await sendPostSurveyLastChanceEmail(email, merchant.shop_name, variant, mLocale);
+              if (result.success) {
+                await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
+                results.postSurveyEmails.sent++;
+                await rateLimitDelay();
+              }
+            }
+          }
+        } catch {
+          results.postSurveyEmails.errors++;
+        }
+      }
+    }
+    sectionStatuses.push({ name: 'postSurveyEmails', status: 'ok' });
+  } catch (error) {
+    sectionStatuses.push({ name: 'postSurveyEmails', status: 'error', error: String(error) });
   }
 
   // ==================== SECTION 2: PROGRAM REMINDERS (J+1/J+2/J+3) ====================

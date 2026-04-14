@@ -339,6 +339,11 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Source unique** : `src/lib/churn-survey-config.ts` — enums partages entre Zod API, client page, admin page
 - **Table** : `merchant_churn_surveys` (UNIQUE merchant_id) + colonne `merchants.churn_survey_seen_at TIMESTAMPTZ`
 - **Routes** : `POST /api/churn-survey` (merchant auth), `GET /api/admin/churn-surveys` (admin auth)
+- **Flow email post-survey** : apres completion du survey + bonus, les merchants ne recoivent plus les emails trial generiques (TrialEnding/TrialExpired). A la place, emails cibles selon `would_convince` :
+  - `PostSurveyFollowUpEmail` (tracking -221 mid-bonus, -222 dernier jour) : contenu adapte par variant (lower_price = rappel promo, longer_trial = features pas testees, team_demo = suivi demo, more_features = nouveautes, nothing = social proof)
+  - `PostSurveyLastChanceEmail` (tracking -223, J+1 apres expiration bonus) : urgence finale, CTA subscription
+  - Guard dans cron morning Section 1 : `if (churn_survey_seen_at) continue` → skip emails trial generiques
+  - Nouvelle Section 1b dans cron morning : fetch `would_convince` depuis `merchant_churn_surveys`, calcul midDay/lastDay selon bonus days
 - **Scripts one-off** :
   - `scripts/send-churn-survey-email.mjs` — relance churn survey aux merchants deja expired au moment du deploy (tracking -213)
   - `scripts/send-features-recap.mjs` — recap des 6 features cles (vitrine, planning, SMS, fidelite, bienvenue, avis Google) avec gift box bonus pointant vers `/dashboard/survey` (tracking -214, scheduled_at Resend)
@@ -572,7 +577,7 @@ WelcomeEmail, IncompleteSignupEmail (+15min + +2h), GuidedSignupEmail (J+1 incom
 FirstScanEmail (2e visite), **FirstBookingEmail (1ere resa en ligne, tracking -105)**, FirstRewardEmail, Tier2UpsellEmail, PendingPointsEmail (Shield), WeeklyDigestEmail (DESACTIVE)
 
 ### Retention & Trial (epure)
-TrialEndingEmail (J-2 uniquement — etait J-3 + J-1), TrialExpiredEmail (J+1 uniquement — etait J+1 + J+2), ChurnSurveyReminderEmail (J+3 fully expired — code -213, vers `/dashboard/survey`, bonus +2 jours), InactiveMerchantDay7/14/30Email
+TrialEndingEmail (J-2 uniquement — etait J-3 + J-1), TrialExpiredEmail (J+1 uniquement — etait J+1 + J+2), ChurnSurveyReminderEmail (J+3 fully expired — code -213, vers `/dashboard/survey`, bonus +2 jours), PostSurveyFollowUpEmail (mid-bonus -221, last day -222 — contenu cible par variant would_convince), PostSurveyLastChanceEmail (J+1 post-expiration bonus -223), InactiveMerchantDay7/14/30Email
 
 ### Stripe & Post-subscription
 SubscriptionConfirmedEmail, PaymentFailedEmail (4 steps dunning: J+0 webhook, J+3/J+7/J+10 cron — ton escalade progressif), SubscriptionCanceledEmail, SubscriptionReactivatedEmail, ReactivationEmail (J+7/14/30), **ReferralPromoEmail (J+2 post-abonnement — "Gagne 10€ par pro recommande", lien `?ref={slug}`)**, **ReferralReminderEmail (J+14 et J+30 post-abo, tracking -316/-317, uniquement si 0 referrals)**

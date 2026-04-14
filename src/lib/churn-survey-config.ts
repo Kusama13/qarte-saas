@@ -30,6 +30,15 @@ export type ChurnBlocker = (typeof BLOCKER_VALUES)[number];
 export type ChurnConvince = (typeof CONVINCE_VALUES)[number];
 export type ChurnFeature = (typeof FEATURE_VALUES)[number];
 
+// Mapping from snake_case DB values to camelCase translation keys
+export const CONVINCE_VARIANT_KEYS: Record<ChurnConvince, string> = {
+  lower_price: 'lowerPrice',
+  longer_trial: 'longerTrial',
+  team_demo: 'teamDemo',
+  more_features: 'moreFeatures',
+  nothing: 'nothing',
+};
+
 // French-only labels for admin page (clients use i18n via next-intl).
 // Keep in sync with messages/fr.json churnSurvey namespace.
 export const BLOCKER_LABELS_FR: Record<ChurnBlocker, string> = {

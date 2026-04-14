@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     // Schedule both emails in parallel: T+15min and T+2h
     const [result1, result2] = await Promise.all([
       scheduleIncompleteSignupEmail(email, 15),
-      scheduleIncompleteSignupEmail(email, 120),
+      scheduleIncompleteSignupEmail(email, 120, 'fr', 2),
     ]);
 
     if (!result1.success) {

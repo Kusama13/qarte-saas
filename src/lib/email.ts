@@ -11,6 +11,7 @@ import {
   ReactivationEmail,
   ProgramReminderEmail,
   IncompleteSignupEmail,
+  IncompleteSignupReminder2Email,
   ProgramReminderDay2Email,
   ProgramReminderDay3Email,
   InactiveMerchantDay7Email,
@@ -42,6 +43,8 @@ import {
   ReferralReminderEmail,
   SocialProofEmail,
   SlotReleasedEmail,
+  PostSurveyFollowUpEmail,
+  PostSurveyLastChanceEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import logger from './logger';
@@ -237,6 +240,44 @@ export async function sendChurnSurveyReminderEmail(
   });
 }
 
+// Post-survey follow-up (targeted by Q4 variant)
+const FOLLOW_UP_SUBJECT_KEYS: Record<string, string> = {
+  lower_price: 'postSurveyFollowUpLowerPrice',
+  longer_trial: 'postSurveyFollowUpLongerTrial',
+  team_demo: 'postSurveyFollowUpTeamDemo',
+  more_features: 'postSurveyFollowUpMoreFeatures',
+  nothing: 'postSurveyFollowUpNothing',
+};
+
+export async function sendPostSurveyFollowUpEmail(
+  to: string,
+  shopName: string,
+  variant: string,
+  daysRemaining: number,
+  locale: EmailLocale = 'fr'
+): Promise<SendEmailResult> {
+  const subjectKey = daysRemaining <= 1 ? 'postSurveyFollowUpLastDay' : (FOLLOW_UP_SUBJECT_KEYS[variant] || 'postSurveyFollowUpNothing');
+  return sendEmail(to, subj(locale, subjectKey, { shopName }), PostSurveyFollowUpEmail, { shopName, variant, daysRemaining, locale }, {
+    logLabel: `Post-survey follow-up (${variant}, ${daysRemaining <= 1 ? 'last day' : 'mid'})`,
+  });
+}
+
+const LAST_CHANCE_SUBJECT_KEYS: Record<string, string> = {
+  lower_price: 'postSurveyLastChanceLowerPrice',
+};
+
+export async function sendPostSurveyLastChanceEmail(
+  to: string,
+  shopName: string,
+  variant: string,
+  locale: EmailLocale = 'fr'
+): Promise<SendEmailResult> {
+  const subjectKey = LAST_CHANCE_SUBJECT_KEYS[variant] || 'postSurveyLastChance';
+  return sendEmail(to, subj(locale, subjectKey, { shopName }), PostSurveyLastChanceEmail, { shopName, variant, locale }, {
+    logLabel: `Post-survey last chance (${variant})`,
+  });
+}
+
 // Notification interne nouveau commerçant (always FR — internal)
 export async function sendNewMerchantNotification(
   shopName: string,
@@ -343,14 +384,21 @@ export async function sendSubscriptionReactivatedEmail(
   });
 }
 
+const INCOMPLETE_SIGNUP_CONFIGS = {
+  1: { subjectKey: 'incompleteSignup', Component: IncompleteSignupEmail, label: 'Incomplete signup email' },
+  2: { subjectKey: 'incompleteSignup2', Component: IncompleteSignupReminder2Email, label: 'Incomplete signup reminder 2' },
+} as const;
+
 export async function scheduleIncompleteSignupEmail(
   to: string,
   delayMinutes: number = 60,
-  locale: EmailLocale = 'fr'
+  locale: EmailLocale = 'fr',
+  step: 1 | 2 = 1
 ): Promise<ScheduleEmailResult> {
+  const config = INCOMPLETE_SIGNUP_CONFIGS[step];
   const scheduledAt = new Date(Date.now() + delayMinutes * 60 * 1000).toISOString();
-  return scheduleEmail(to, subj(locale, 'incompleteSignup'), IncompleteSignupEmail, { email: to, locale }, scheduledAt, {
-    logLabel: `Incomplete signup email (in ${delayMinutes} min)`,
+  return scheduleEmail(to, subj(locale, config.subjectKey), config.Component, { email: to, locale }, scheduledAt, {
+    logLabel: `${config.label} (in ${delayMinutes} min)`,
   });
 }
 
