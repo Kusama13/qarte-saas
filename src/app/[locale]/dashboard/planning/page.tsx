@@ -11,7 +11,7 @@ import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotificatio
 import { AnimatePresence, motion } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
 import { PHONE_CONFIG, formatTime, toBCP47, getCurrencySymbol, formatCurrency, formatPhoneLabel } from '@/lib/utils';
-import { formatDate, formatDateFr, getServiceColorMap, getSlotColor, colorBorderStyle, getWeekStart } from './utils';
+import { formatDate, formatDateFr, getServiceColorMap, getSlotColor, colorBorderStyle, getWeekStart, getSlotServiceIds, timeToMinutes, minutesToTime } from './utils';
 import { handleDownloadStory } from './StoryExport';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
@@ -63,6 +63,20 @@ export default function PlanningDashboard() {
 
   // Service color map
   const serviceColorMap = useMemo(() => getServiceColorMap(services), [services]);
+
+  // Helper: get service names and end time for a slot
+  const getSlotDetails = useCallback((slot: PlanningSlot) => {
+    const svcIds = getSlotServiceIds(slot);
+    const names = svcIds.map(id => services.find(s => s.id === id)?.name).filter(Boolean) as string[];
+    let totalDuration = 0;
+    for (const id of svcIds) {
+      const svc = services.find(s => s.id === id);
+      if (svc?.duration) totalDuration += svc.duration;
+    }
+    if (!totalDuration) totalDuration = 30;
+    const endTime = minutesToTime(timeToMinutes(slot.start_time) + totalDuration);
+    return { names, totalDuration, endTime };
+  }, [services]);
 
   // Handle ?slot= deep link from dashboard
   const searchParams = useSearchParams();
@@ -891,6 +905,7 @@ export default function PlanningDashboard() {
                                   </button>
                                 );
                                 const slotColor = getSlotColor(slot, serviceColorMap);
+                                const details = slot.client_name ? getSlotDetails(slot) : null;
                                 return (
                                   <button
                                     key={slot.id}
@@ -898,13 +913,19 @@ export default function PlanningDashboard() {
                                     draggable={!past}
                                     onDragStart={(e) => handleDragStart(e, slot.id)}
                                     onDragEnd={handleDragEnd}
-                                    className={`w-full text-left px-2 py-1 rounded-lg text-[11px] font-medium transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden cursor-grab active:cursor-grabbing ${
+                                    className={`w-full text-left px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden cursor-grab active:cursor-grabbing ${
                                       dragSlotId === slot.id ? 'opacity-40' : ''
                                     } ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
                                     style={colorBorderStyle(slotColor)}
                                   >
-                                    <span className="font-bold">{formatTime(slot.start_time, locale)}</span>
-                                    {slot.client_name && <span className="ml-1 opacity-70">— {slot.client_name.length > 8 ? slot.client_name.slice(0, 8) + '…' : slot.client_name}</span>}
+                                    <div className="flex items-center gap-1">
+                                      <span className="font-bold">{formatTime(slot.start_time, locale)}</span>
+                                      {details && <span className="opacity-50">→ {formatTime(details.endTime, locale)}</span>}
+                                    </div>
+                                    {slot.client_name && <p className="truncate opacity-70 mt-0.5">— {slot.client_name}</p>}
+                                    {details && details.names.length > 0 && (
+                                      <p className="truncate text-[10px] opacity-50 mt-0.5">{details.names.join(', ')}</p>
+                                    )}
                                   </button>
                                 );
                               })}
@@ -952,7 +973,7 @@ export default function PlanningDashboard() {
                               )}
                             </div>
                             {daySlots.length > 0 ? (
-                              <div className="flex flex-wrap gap-1.5">
+                              <div className="space-y-1.5">
                                 {daySlots.map(slot => {
                                   const isBlocked = slot.client_name === '__blocked__';
                                   if (isBlocked) return (
@@ -966,18 +987,25 @@ export default function PlanningDashboard() {
                                     </button>
                                   );
                                   const slotColor = getSlotColor(slot, serviceColorMap);
+                                  const details = slot.client_name ? getSlotDetails(slot) : null;
                                   return (
                                     <button
                                       key={slot.id}
                                       onClick={() => openEditSlot(slot)}
-                                      className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
+                                      className={`w-full text-left px-2.5 py-2 rounded-lg text-xs font-medium transition-all active:scale-95 ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
                                       style={{
                                         borderLeftWidth: slotColor ? '3px' : undefined,
                                         borderLeftColor: slotColor || undefined,
                                       }}
                                     >
-                                      {formatTime(slot.start_time, locale)}
-                                      {slot.client_name && <span className="ml-1 opacity-70">— {slot.client_name}</span>}
+                                      <div className="flex items-center gap-1">
+                                        <span className="font-bold">{formatTime(slot.start_time, locale)}</span>
+                                        {details && <span className="opacity-50 text-[11px]">→ {formatTime(details.endTime, locale)}</span>}
+                                        {slot.client_name && <span className="ml-1 opacity-70">— {slot.client_name}</span>}
+                                      </div>
+                                      {details && details.names.length > 0 && (
+                                        <p className="truncate text-[10px] opacity-50 mt-0.5">{details.names.join(', ')}</p>
+                                      )}
                                     </button>
                                   );
                                 })}
