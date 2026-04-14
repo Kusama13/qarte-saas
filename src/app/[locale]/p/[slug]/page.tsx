@@ -48,7 +48,7 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
       'loyalty_mode, cagnotte_percent, cagnotte_tier2_percent, ' +
       'planning_enabled, planning_message, planning_message_expires, booking_message, ' +
       'auto_booking_enabled, deposit_link, deposit_percent, deposit_amount, phone, display_phone, country, ' +
-      'student_offer_enabled, student_offer_description, subscription_status, ' +
+      'student_offer_enabled, student_offer_description, subscription_status, trial_ends_at, ' +
       'booking_mode, buffer_minutes, ' +
       'allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days, ' +
       'contest_enabled, contest_prize'

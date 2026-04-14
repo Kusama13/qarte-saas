@@ -11,6 +11,7 @@ import { useInView } from '@/hooks/useInView';
 import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency, detectBookingPlatform, displayPhoneWithFlag } from '@/lib/utils';
 import { trackCtaClick } from '@/lib/analytics';
 import { useLocale, useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import type { Merchant } from '@/types';
 
 type Photo = { id: string; url: string; position: number };
@@ -75,6 +76,7 @@ type MerchantPublic = Pick<
   | 'display_phone'
   | 'country'
   | 'subscription_status'
+  | 'trial_ends_at'
   | 'booking_mode'
   | 'buffer_minutes'
   | 'allow_customer_cancel'
@@ -95,7 +97,17 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const p = merchant.primary_color;
   const s = merchant.secondary_color || merchant.primary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
-  const isSuspended = !isDemo && !['trial', 'active', 'canceling', 'past_due'].includes(merchant.subscription_status);
+  const isSuspended = !isDemo && (() => {
+    if (['active', 'canceling', 'past_due'].includes(merchant.subscription_status)) return false;
+    if (merchant.subscription_status === 'trial') {
+      if (!merchant.trial_ends_at) return true;
+      const grace = 3;
+      const end = new Date(merchant.trial_ends_at);
+      end.setDate(end.getDate() + grace);
+      return new Date() > end;
+    }
+    return true; // canceled or any other status
+  })();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [servicesExpanded, setServicesExpanded] = useState(false);
   const [planningExpanded, setPlanningExpanded] = useState(false);
@@ -1349,6 +1361,16 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           promoOffer={promoOffer}
           onClose={() => setBookingSlot(null)}
         />
+      )}
+
+      {/* ── DEMO BANNER ── */}
+      {isDemo && (
+        <div className="fixed bottom-0 inset-x-0 z-50 bg-gray-900/95 backdrop-blur-sm text-white text-center py-3 px-4 flex items-center justify-center gap-3">
+          <span className="text-sm font-medium">{t('demoBanner')}</span>
+          <Link href="/auth/merchant/signup" className="px-4 py-1.5 bg-white text-gray-900 text-sm font-bold rounded-full hover:bg-gray-100 transition-colors">
+            {t('demoBannerCta')}
+          </Link>
+        </div>
       )}
     </div>
   );
