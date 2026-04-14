@@ -64,19 +64,31 @@ export default function PlanningDashboard() {
   // Service color map
   const serviceColorMap = useMemo(() => getServiceColorMap(services), [services]);
 
+  // Service lookup map for O(1) access
+  const serviceMap = useMemo(() => {
+    const map = new Map<string, typeof services[0]>();
+    for (const s of services) map.set(s.id, s);
+    return map;
+  }, [services]);
+
   // Helper: get service names and end time for a slot
   const getSlotDetails = useCallback((slot: PlanningSlot) => {
     const svcIds = getSlotServiceIds(slot);
-    const names = svcIds.map(id => services.find(s => s.id === id)?.name).filter(Boolean) as string[];
+    const names: string[] = [];
     let totalDuration = 0;
     for (const id of svcIds) {
-      const svc = services.find(s => s.id === id);
+      const svc = serviceMap.get(id);
+      if (svc?.name) names.push(svc.name);
       if (svc?.duration) totalDuration += svc.duration;
     }
     if (!totalDuration) totalDuration = 30;
     const endTime = minutesToTime(timeToMinutes(slot.start_time) + totalDuration);
     return { names, totalDuration, endTime };
-  }, [services]);
+  }, [serviceMap]);
+
+  const openBlockModal = useCallback((date: string) => {
+    setBlockDate(date); setBlockEndDate(''); setBlockAllDay(false); setBlockReason(''); setShowBlockModal(true);
+  }, []);
 
   // Handle ?slot= deep link from dashboard
   const searchParams = useSearchParams();
@@ -739,7 +751,7 @@ export default function PlanningDashboard() {
                             {t('addManualBooking')}
                           </button>
                           <button
-                            onClick={() => { setBlockDate(todayStr >= formatDate(weekStart) ? todayStr : formatDate(weekStart)); setBlockEndDate(''); setBlockAllDay(false); setBlockReason(''); setShowBlockModal(true); }}
+                            onClick={() => openBlockModal(todayStr >= formatDate(weekStart) ? todayStr : formatDate(weekStart))}
                             className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
                           >
                             <Lock className="w-3.5 h-3.5" />
@@ -791,7 +803,7 @@ export default function PlanningDashboard() {
                             {t('addManualBooking')}
                           </button>
                           <button
-                            onClick={() => { setBlockDate(selectedDayStr); setBlockEndDate(''); setBlockAllDay(false); setBlockReason(''); setShowBlockModal(true); }}
+                            onClick={() => openBlockModal(selectedDayStr)}
                             className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
                           >
                             <Lock className="w-3.5 h-3.5" />
@@ -800,7 +812,7 @@ export default function PlanningDashboard() {
                         </div>
                       ) : (
                         <button
-                          onClick={() => { setBlockDate(selectedDayStr); setBlockEndDate(''); setBlockAllDay(false); setBlockReason(''); setShowBlockModal(true); }}
+                          onClick={() => openBlockModal(selectedDayStr)}
                           className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
                         >
                           <Lock className="w-3.5 h-3.5" />
@@ -918,13 +930,13 @@ export default function PlanningDashboard() {
                                     } ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
                                     style={colorBorderStyle(slotColor)}
                                   >
-                                    <div className="flex items-center gap-1">
+                                    <div className="flex items-center gap-1 flex-wrap">
                                       <span className="font-bold">{formatTime(slot.start_time, locale)}</span>
-                                      {details && <span className="opacity-50">→ {formatTime(details.endTime, locale)}</span>}
+                                      {details && <span className="opacity-50 hidden lg:inline">→ {formatTime(details.endTime, locale)}</span>}
                                     </div>
-                                    {slot.client_name && <p className="truncate opacity-70 mt-0.5">— {slot.client_name}</p>}
+                                    {slot.client_name && <p className="truncate opacity-70 mt-0.5">— {slot.client_name.length > 10 ? slot.client_name.slice(0, 10) + '…' : slot.client_name}</p>}
                                     {details && details.names.length > 0 && (
-                                      <p className="truncate text-[10px] opacity-50 mt-0.5">{details.names.join(', ')}</p>
+                                      <p className="truncate text-[10px] opacity-50 mt-0.5 hidden xl:block">{details.names.join(', ')}</p>
                                     )}
                                   </button>
                                 );

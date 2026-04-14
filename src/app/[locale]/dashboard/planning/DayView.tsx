@@ -5,7 +5,7 @@ import { Plus, Clock, Lock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot } from '@/types';
 import { formatTime } from '@/lib/utils';
-import { formatDate, formatDateFr, getSlotServiceIds, timeToMinutes, getSlotColor } from './utils';
+import { formatDate, formatDateFr, getSlotServiceIds, timeToMinutes, minutesToTime, getSlotColor } from './utils';
 import type { ServiceWithDuration } from './usePlanningState';
 
 interface DayViewProps {
@@ -70,7 +70,8 @@ export default function DayView({
       const color = getSlotColor(slot, serviceColorMap);
       const serviceNames = svcIds.map(id => serviceMap.get(id)?.name).filter(Boolean).join(', ');
 
-      return { slot, top, height, color, serviceNames, durationMins };
+      const endTime = minutesToTime(mins + durationMins);
+      return { slot, top, height, color, serviceNames, durationMins, endTime };
     });
   }, [daySlots, serviceMap, serviceColorMap]);
 
@@ -108,7 +109,7 @@ export default function DayView({
         ))}
 
         {/* Slot cards */}
-        {slotCards.map(({ slot, top, height, color, serviceNames, durationMins }) => {
+        {slotCards.map(({ slot, top, height, color, serviceNames, durationMins, endTime }) => {
           const isBlocked = slot.client_name === '__blocked__';
           return (
           <button
@@ -130,6 +131,7 @@ export default function DayView({
               <span className={`text-xs font-bold ${isBlocked ? 'text-gray-400' : slot.client_name ? 'text-gray-800' : 'text-emerald-700'}`}>
                 {isBlocked && <Lock className="w-2.5 h-2.5 inline mr-1 opacity-60" />}
                 {formatTime(slot.start_time, locale)}
+                {slot.client_name && !isBlocked && <span className="font-normal opacity-50"> → {formatTime(endTime, locale)}</span>}
               </span>
               {slot.client_name && !isBlocked && (
                 <span className="text-xs font-medium text-gray-600 truncate">{slot.client_name}</span>
