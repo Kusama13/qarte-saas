@@ -735,7 +735,7 @@ export default function PlanningDashboard() {
                 {/* Actions row */}
                 <div className="flex gap-2">
                   {/* View mode toggle */}
-                  <div className="hidden sm:flex items-center bg-gray-100 rounded-lg p-0.5">
+                  <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
                     <button
                       onClick={() => setViewMode('week')}
                       className={`p-1.5 rounded-md transition-colors ${viewMode === 'week' ? 'bg-white shadow-sm text-gray-700' : 'text-gray-400 hover:text-gray-600'}`}
@@ -755,20 +755,22 @@ export default function PlanningDashboard() {
                   {viewMode === 'week' && (
                     <>
                       {isFreeMod ? (
-                        <div className="flex-1 grid grid-cols-2 gap-2">
+                        <div className="flex-1 flex gap-2">
                           <button
                             onClick={() => openManualBookingModal(todayStr)}
-                            className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 transition-all"
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 transition-all"
+                            title={t('addManualBooking')}
                           >
-                            <Plus className="w-3.5 h-3.5" />
-                            {t('addManualBooking')}
+                            <Plus className="w-3.5 h-3.5 shrink-0" />
+                            <span className="hidden sm:inline">{t('addManualBooking')}</span>
                           </button>
                           <button
                             onClick={() => openBlockModal(todayStr >= formatDate(weekStart) ? todayStr : formatDate(weekStart))}
-                            className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
+                            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
+                            title={t('blockSlot')}
                           >
-                            <Lock className="w-3.5 h-3.5" />
-                            {t('blockSlot')}
+                            <Lock className="w-3.5 h-3.5 shrink-0" />
+                            <span className="hidden sm:inline">{t('blockSlot')}</span>
                           </button>
                         </div>
                       ) : (
@@ -807,38 +809,43 @@ export default function PlanningDashboard() {
                   {viewMode === 'day' && !selectedDayIsPast && (
                     <>
                       {isFreeMod ? (
-                        <div className="flex-1 grid grid-cols-2 gap-2">
+                        <div className="flex-1 flex gap-2">
                           <button
                             onClick={() => openManualBookingModal(selectedDayStr)}
-                            className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 transition-all"
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 transition-all"
+                            title={t('addManualBooking')}
                           >
-                            <Plus className="w-3.5 h-3.5" />
-                            {t('addManualBooking')}
+                            <Plus className="w-3.5 h-3.5 shrink-0" />
+                            <span className="hidden sm:inline">{t('addManualBooking')}</span>
                           </button>
                           <button
                             onClick={() => openBlockModal(selectedDayStr)}
-                            className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
+                            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
+                            title={t('blockSlot')}
                           >
-                            <Lock className="w-3.5 h-3.5" />
-                            {t('blockSlot')}
+                            <Lock className="w-3.5 h-3.5 shrink-0" />
+                            <span className="hidden sm:inline">{t('blockSlot')}</span>
                           </button>
                         </div>
                       ) : (
                         <button
                           onClick={() => openBlockModal(selectedDayStr)}
-                          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
+                          className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
+                          title={t('blockSlot')}
                         >
                           <Lock className="w-3.5 h-3.5" />
-                          {t('blockSlot')}
+                          <span className="hidden sm:inline">{t('blockSlot')}</span>
                         </button>
                       )}
                       {selectedDayFreeCount > 0 && (
                         <button
                           onClick={() => openBulkDelete('day')}
-                          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-50 border border-red-100 text-red-600 font-semibold text-xs hover:bg-red-100 transition-colors"
+                          className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl bg-red-50 border border-red-100 text-red-600 font-semibold text-xs hover:bg-red-100 transition-colors"
+                          title={t('deleteAll')}
+                          aria-label={t('deleteAll')}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                          {t('deleteAll')}
+                          <span className="hidden sm:inline">{t('deleteAll')}</span>
                         </button>
                       )}
                     </>
