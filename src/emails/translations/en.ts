@@ -76,6 +76,7 @@ export const en = {
     heading: 'Welcome to Qarte.',
     greeting: 'Hi <strong>{shopName}</strong>,',
     intro: 'Your account is ready. Here\'s what Qarte will do for you:',
+    replyPrompt: 'Reply <strong>OK</strong> to this email to activate your 7-day free trial.',
     benefitsTitle: 'Everything is connected:',
     benefit1: 'Your <strong>online page</strong> attracts new clients via Google',
     benefit2: 'They <strong>book online</strong> from your page, even at 11pm',

@@ -279,6 +279,9 @@ export default function CompleteProfilePage() {
                 {t('cta')}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
+              <p className="text-[11px] text-gray-400 text-center mt-2 leading-relaxed">
+                {t('ctaEmailHint')}
+              </p>
             </form>
 
             {/* Reassurance */}

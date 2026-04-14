@@ -632,6 +632,7 @@
     "countryLabel": "Country",
     "phoneLabel": "Phone",
     "cta": "Start my free trial",
+    "ctaEmailHint": "Reply OK to the email we'll send you to activate your 7-day free trial.",
     "noCreditCard": "No credit card",
     "readyIn2min": "Ready in 2 min",
     "back": "Back",

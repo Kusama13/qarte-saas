@@ -632,6 +632,7 @@
     "countryLabel": "Pays",
     "phoneLabel": "Téléphone",
     "cta": "Lancer mon essai gratuit",
+    "ctaEmailHint": "Réponds OK à l'email qu'on va t'envoyer pour activer tes 7 jours d'essai gratuit.",
     "noCreditCard": "Sans carte bancaire",
     "readyIn2min": "Prêt en 2 min",
     "back": "Retour",

@@ -29,6 +29,11 @@ export function WelcomeEmail({ shopName, trialDays = 7, locale = 'fr' }: Welcome
 
       <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('welcome.intro') }} />
 
+      {/* Reply OK prompt — warms up email deliverability */}
+      <Section style={replyBox}>
+        <Text style={replyText} dangerouslySetInnerHTML={{ __html: t('welcome.replyPrompt') }} />
+      </Section>
+
       {/* What changes for you */}
       <Section style={benefitsBox}>
         <Text style={sectionTitle}>{t('welcome.benefitsTitle')}</Text>
@@ -95,6 +100,23 @@ const sectionTitle = {
   fontSize: '17px',
   fontWeight: '700',
   margin: '0 0 12px 0',
+};
+
+const replyBox = {
+  backgroundColor: '#fef9e7',
+  borderRadius: '12px',
+  padding: '16px 20px',
+  margin: '20px 0 0 0',
+  border: '1px solid #f6e58d',
+  textAlign: 'center' as const,
+};
+
+const replyText = {
+  color: '#2d3436',
+  fontSize: '15px',
+  fontWeight: '600',
+  lineHeight: '1.5',
+  margin: '0',
 };
 
 const benefitsBox = {
