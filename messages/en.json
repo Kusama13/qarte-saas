@@ -2193,8 +2193,8 @@
   },
   "programmeView": {
     "suspendedBanner": "Page suspended — inactive account. A subscription is required to reactivate this page.",
-    "demoBannerCta": "Create my account",
     "demoBanner": "Demo mode — actions are disabled",
+    "demoBannerCta": "Create my account",
     "goThere": "Directions",
     "returningShortcutEyebrow": "Already a client",
     "returningShortcutTitle": "My bookings & loyalty",

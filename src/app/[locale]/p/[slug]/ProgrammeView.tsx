@@ -8,7 +8,7 @@ import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import SimulatedCard from './SimulatedCard';
 import BookingModal from './BookingModal';
 import { useInView } from '@/hooks/useInView';
-import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency, detectBookingPlatform, displayPhoneWithFlag } from '@/lib/utils';
+import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency, detectBookingPlatform, displayPhoneWithFlag, getTrialStatus } from '@/lib/utils';
 import { trackCtaClick } from '@/lib/analytics';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
@@ -97,17 +97,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const p = merchant.primary_color;
   const s = merchant.secondary_color || merchant.primary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
-  const isSuspended = !isDemo && (() => {
-    if (['active', 'canceling', 'past_due'].includes(merchant.subscription_status)) return false;
-    if (merchant.subscription_status === 'trial') {
-      if (!merchant.trial_ends_at) return true;
-      const grace = 3;
-      const end = new Date(merchant.trial_ends_at);
-      end.setDate(end.getDate() + grace);
-      return new Date() > end;
-    }
-    return true; // canceled or any other status
-  })();
+  const isSuspended = !isDemo && getTrialStatus(merchant.trial_ends_at, merchant.subscription_status).isFullyExpired;
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [servicesExpanded, setServicesExpanded] = useState(false);
   const [planningExpanded, setPlanningExpanded] = useState(false);
