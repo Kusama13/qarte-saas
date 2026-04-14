@@ -322,6 +322,9 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Helpers partages : `_photo-helpers.ts`, `computeDepositAmount()` dans `planning/utils.ts`
 - Page publique `/p/[slug]` : section "Disponibilites" (60j glissants, groupes par mois, preview 4 jours + bouton Voir plus), banniere message libre
 - `display_phone` (mig 108) : numero fixe/portable affiche sur vitrine publique (E.164 sans +), configurable dans dashboard > Ma Vitrine > Mon salon avec PhoneInput + selecteur pays, affiche formate avec drapeau sur `/p/[slug]` + lien `tel:` cliquable, prioritaire dans JSON-LD `telephone`
+- **Bandeau "Page suspendue"** : bandeau rouge sticky en haut de `/p/[slug]` quand `subscription_status` n'est pas trial/active/canceling/past_due. Message : "Page suspendue — compte inactif. Un abonnement est necessaire pour reactiver cette page." Pression sociale pour inciter le merchant a s'abonner.
+- **Acompte** : toggle on/off dans parametres planning (`depositEnabled` state local, sync au load). `computeDepositAmount()` cappe au prix total (`Math.min`). Si acompte >= prix → affiche "Paiement integral" au lieu de "Acompte" (vitrine + dashboard).
+- **Reply OK warm-up** : texte sous bouton signup "Reponds OK a l'email pour activer tes 7 jours d'essai gratuit" + encart jaune dans Welcome email demandant de repondre OK (warm-up deliverabilite)
 
 ### Programmes Membres
 - Cartes de membre avec validite, avantages personnalises
