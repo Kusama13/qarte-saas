@@ -495,7 +495,9 @@ export default function BookingDetailsModal({
                     return depAmt ? (
                       <div className="px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-100">
                         <p className="text-[11px] text-amber-700 font-medium">
-                          {t('depositRecap', { deposit: formatCurrency(depAmt, merchantCountry, locale), remaining: formatCurrency(totalPrice - depAmt, merchantCountry, locale) })}
+                          {depAmt >= totalPrice
+                            ? t('depositFullPaymentRecap', { deposit: formatCurrency(depAmt, merchantCountry, locale) })
+                            : t('depositRecap', { deposit: formatCurrency(depAmt, merchantCountry, locale), remaining: formatCurrency(totalPrice - depAmt, merchantCountry, locale) })}
                         </p>
                         {slot.deposit_confirmed === false && (
                           <div className="flex flex-wrap items-center gap-1 mt-0.5">

@@ -386,13 +386,16 @@ export default function BookingModal({
                       const rawDeposit = merchant.deposit_amount
                         ? Number(merchant.deposit_amount)
                         : Math.round(totalPrice * (merchant.deposit_percent || 0) / 100);
+                      const isFullPayment = rawDeposit >= totalPrice;
                       const cappedDeposit = Math.min(rawDeposit, totalPrice);
                       return (
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-500">
-                            {merchant.deposit_amount
-                              ? t('depositFixedLabel')
-                              : t('depositLabel', { percent: merchant.deposit_percent || 0 })}
+                            {isFullPayment
+                              ? t('depositFullPayment')
+                              : merchant.deposit_amount
+                                ? t('depositFixedLabel')
+                                : t('depositLabel', { percent: merchant.deposit_percent || 0 })}
                           </span>
                           <span className="font-bold" style={{ color: p }}>
                             {formatCurrency(cappedDeposit, country, locale)}

@@ -404,7 +404,9 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                           {viewingSlot.deposit_confirmed !== null && depAmt && (
                             <div className="mt-1.5 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-100">
                               <p className="text-[11px] text-amber-700 font-medium">
-                                {t('depositRecap', { deposit: formatCurrency(depAmt, merchantCountry, locale), remaining: formatCurrency(total - depAmt, merchantCountry, locale) })}
+                                {depAmt >= total
+                                  ? t('depositFullPaymentRecap', { deposit: formatCurrency(depAmt, merchantCountry, locale) })
+                                  : t('depositRecap', { deposit: formatCurrency(depAmt, merchantCountry, locale), remaining: formatCurrency(total - depAmt, merchantCountry, locale) })}
                               </p>
                             </div>
                           )}
