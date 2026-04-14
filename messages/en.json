@@ -1317,6 +1317,7 @@
     "svcPrice": "Price",
     "svcDuration": "Duration (min)",
     "svcFrom": "From",
+    "svcFromLabel": "Variable price (shows \"from\")",
     "svcDescOpt": "Description (optional)",
     "svcCancel": "Cancel",
     "svcSave": "Save",

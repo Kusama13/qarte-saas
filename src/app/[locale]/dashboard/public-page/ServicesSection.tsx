@@ -311,7 +311,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                 step="0.01"
                 min="0"
                 placeholder={t('svcPrice')}
-                className="w-full text-sm font-bold bg-white border border-gray-200 rounded-lg px-3 py-2 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+                className={`w-full text-sm font-bold bg-white border rounded-lg px-3 py-2 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 ${editPriceFrom ? 'border-indigo-200 bg-indigo-50/30' : 'border-gray-200'}`}
                 onKeyDown={(e) => e.key === 'Enter' && handleUpdateService(service.id)}
               />
               <Euro className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
@@ -328,16 +328,19 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
               />
               <Clock className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             </div>
-            <label className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors shrink-0">
-              <input
-                type="checkbox"
-                checked={editPriceFrom}
-                onChange={(e) => setEditPriceFrom(e.target.checked)}
-                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/30"
-              />
-              <span className="text-[11px] text-gray-500 whitespace-nowrap">{t('svcFrom')}</span>
-            </label>
           </div>
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={editPriceFrom}
+              onClick={() => setEditPriceFrom(!editPriceFrom)}
+              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${editPriceFrom ? 'bg-indigo-600' : 'bg-gray-200'}`}
+            >
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform ${editPriceFrom ? 'translate-x-4' : 'translate-x-0.5'}`} />
+            </button>
+            <span className={`text-[12px] transition-colors ${editPriceFrom ? 'text-indigo-600 font-medium' : 'text-gray-400'}`}>{t('svcFromLabel')}</span>
+          </label>
           <input
             value={editDescription}
             onChange={(e) => setEditDescription(e.target.value)}
@@ -632,16 +635,19 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                       />
                       <Clock className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                     </div>
-                    <label className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 cursor-pointer hover:bg-white transition-all shrink-0">
-                      <input
-                        type="checkbox"
-                        checked={newServicePriceFrom}
-                        onChange={(e) => setNewServicePriceFrom(e.target.checked)}
-                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/30"
-                      />
-                      <span className="text-[11px] text-gray-500 whitespace-nowrap">{t('svcFrom')}</span>
-                    </label>
                   </div>
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={newServicePriceFrom}
+                      onClick={() => setNewServicePriceFrom(!newServicePriceFrom)}
+                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${newServicePriceFrom ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                    >
+                      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform ${newServicePriceFrom ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                    </button>
+                    <span className={`text-[12px] transition-colors ${newServicePriceFrom ? 'text-indigo-600 font-medium' : 'text-gray-400'}`}>{t('svcFromLabel')}</span>
+                  </label>
                   <input
                     value={newServiceDescription}
                     onChange={(e) => setNewServiceDescription(e.target.value)}

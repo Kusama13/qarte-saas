@@ -1317,6 +1317,7 @@
     "svcPrice": "Prix",
     "svcDuration": "Durée (min)",
     "svcFrom": "Dès",
+    "svcFromLabel": "Prix variable (affiche \"dès\")",
     "svcDescOpt": "Description (optionnel)",
     "svcCancel": "Annuler",
     "svcSave": "Enregistrer",
