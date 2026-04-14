@@ -321,6 +321,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - API `/api/planning` (GET avec join services+photos+result_photos+customer social, filtre `customerId`/POST/PATCH avec cascade fillers/DELETE avec cascade fillers) + `/api/planning/book` (POST public, rate-limited) + `/api/planning/copy-week` + `/api/planning/photos` + `/api/planning/result-photos` + `/api/planning/shift-slot` + `/api/customers/social`
 - Helpers partages : `_photo-helpers.ts`, `computeDepositAmount()` dans `planning/utils.ts`
 - Page publique `/p/[slug]` : section "Disponibilites" (60j glissants, groupes par mois, preview 4 jours + bouton Voir plus), banniere message libre
+- `display_phone` (mig 108) : numero fixe/portable affiche sur vitrine publique (E.164 sans +), configurable dans dashboard > Ma Vitrine > Mon salon avec PhoneInput + selecteur pays, affiche formate avec drapeau sur `/p/[slug]` + lien `tel:` cliquable, prioritaire dans JSON-LD `telephone`
 
 ### Programmes Membres
 - Cartes de membre avec validite, avantages personnalises

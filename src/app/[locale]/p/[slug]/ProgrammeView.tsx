@@ -8,7 +8,7 @@ import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import SimulatedCard from './SimulatedCard';
 import BookingModal from './BookingModal';
 import { useInView } from '@/hooks/useInView';
-import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency, detectBookingPlatform } from '@/lib/utils';
+import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency, detectBookingPlatform, displayPhoneWithFlag } from '@/lib/utils';
 import { trackCtaClick } from '@/lib/analytics';
 import { useLocale, useTranslations } from 'next-intl';
 import type { Merchant } from '@/types';
@@ -72,6 +72,7 @@ type MerchantPublic = Pick<
   | 'deposit_percent'
   | 'deposit_amount'
   | 'phone'
+  | 'display_phone'
   | 'country'
   | 'subscription_status'
   | 'booking_mode'
@@ -292,6 +293,21 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             </motion.div>
           )}
 
+          {merchant.display_phone && (() => {
+            const { flag, display } = displayPhoneWithFlag(merchant.display_phone);
+            return (
+              <motion.a
+                href={`tel:+${merchant.display_phone}`}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.16, duration: 0.35 }}
+                className="flex items-center gap-1 text-[12px] text-gray-400 font-medium hover:text-gray-600 transition-colors"
+              >
+                <Phone className="w-3 h-3 shrink-0" />
+                <span>{flag} {display}</span>
+              </motion.a>
+            );
+          })()}
 
         </div>
       </section>
@@ -1232,7 +1248,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             }),
             ...(merchant.logo_url && { logo: merchant.logo_url }),
             url: `https://getqarte.com/p/${merchant.slug}`,
-            ...(merchant.phone && { telephone: `+${merchant.phone}` }),
+            ...(merchant.display_phone ? { telephone: merchant.display_phone } : merchant.phone ? { telephone: `+${merchant.phone}` } : {}),
             priceRange: '€€',
             ...(hasHours && {
               openingHoursSpecification: (() => {

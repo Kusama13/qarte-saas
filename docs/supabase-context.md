@@ -86,6 +86,7 @@
 | tiktok_url | TEXT | NULL | mig 051 |
 | snapchat_url | TEXT | NULL | mig 051 |
 | whatsapp_url | TEXT | NULL | mig 079 |
+| display_phone | TEXT | NULL | mig 108, numero fixe/portable affiche sur vitrine publique (E.164 sans +) |
 | booking_url | TEXT | NULL | mig 051 |
 | billing_interval | TEXT | `'monthly'` | mig 051 |
 | billing_period_start | TIMESTAMPTZ | NULL | mig 095, Stripe billing cycle start for SMS quota |

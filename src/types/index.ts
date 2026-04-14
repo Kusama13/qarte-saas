@@ -64,6 +64,7 @@ export interface Merchant {
   shop_address: string | null;
   bio: string | null;
   phone: string;
+  display_phone: string | null;
   country: MerchantCountry;
   logo_url: string | null;
   primary_color: string;

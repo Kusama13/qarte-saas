@@ -10,11 +10,11 @@ import {
   Check,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Input } from '@/components/ui';
+import { Input, PhoneInput } from '@/components/ui';
 import { AddressAutocomplete } from '@/components/ui/AddressAutocomplete';
 import { getSupabase } from '@/lib/supabase';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
-import { formatPhoneNumber } from '@/lib/utils';
+import { formatPhoneNumber, toLocalPhone, PHONE_COUNTRIES } from '@/lib/utils';
 import type { Merchant, MerchantCountry } from '@/types';
 
 interface InfoSectionProps {
@@ -30,6 +30,8 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
   const [shopName, setShopName] = useState('');
   const [address, setAddress] = useState('');
   const [bio, setBio] = useState('');
+  const [displayPhone, setDisplayPhone] = useState('');
+  const [displayPhoneCountry, setDisplayPhoneCountry] = useState<MerchantCountry>((merchant.country as MerchantCountry) || 'FR');
   const [bookingUrl, setBookingUrl] = useState('');
   const [instagramUrl, setInstagramUrl] = useState('');
   const [facebookUrl, setFacebookUrl] = useState('');
@@ -54,6 +56,14 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
       setHoursEnabled(Object.values(merchant.opening_hours as Record<string, unknown>).some(Boolean));
     } else {
       setHoursEnabled(false);
+    }
+    if (merchant.display_phone) {
+      const { local, country: detectedCountry } = toLocalPhone(merchant.display_phone);
+      setDisplayPhone(local);
+      setDisplayPhoneCountry(detectedCountry);
+    } else {
+      setDisplayPhone('');
+      setDisplayPhoneCountry((merchant.country as MerchantCountry) || 'FR');
     }
     setBookingUrl(merchant.booking_url || '');
     setInstagramUrl(merchant.instagram_url || '');
@@ -94,6 +104,7 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
           shop_name: shopName.trim() || null,
           shop_address: address.trim() || null,
           bio: bio.trim() || null,
+          display_phone: displayPhone.trim() ? formatPhoneNumber(displayPhone.trim(), displayPhoneCountry) : null,
           opening_hours: hoursEnabled && Object.values(openingHours).some(Boolean) ? openingHours : null,
           booking_url: normalizedUrl,
           instagram_url: normalizeSocialUrl(instagramUrl, 'instagram') || null,
@@ -144,6 +155,18 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
               className="input h-auto resize-none text-sm"
             />
             <p className="text-xs text-gray-400 mt-1">{bio.length}/160</p>
+          </div>
+          <div>
+            <PhoneInput
+              label={t('infoDisplayPhone')}
+              value={displayPhone}
+              onChange={setDisplayPhone}
+              country={displayPhoneCountry}
+              onCountryChange={setDisplayPhoneCountry}
+              countries={PHONE_COUNTRIES}
+              className="h-10 text-sm"
+            />
+            <p className="text-xs text-gray-400 mt-1">{t('infoDisplayPhoneHint')}</p>
           </div>
         </div>
       </div>
