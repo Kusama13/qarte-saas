@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
       query = query.gte('slot_date', d.toISOString().split('T')[0]);
     }
     if (to) query = query.lte('slot_date', to);
-    if (searchParams.get('booked') === 'true') query = query.not('client_name', 'is', null);
+    if (searchParams.get('booked') === 'true') query = query.not('client_name', 'is', null).neq('client_name', '__blocked__');
     const customerId = searchParams.get('customerId');
     if (customerId) query = query.eq('customer_id', customerId);
     query = query.limit(1000);

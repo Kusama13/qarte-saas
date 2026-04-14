@@ -306,6 +306,7 @@ export default function DashboardPage() {
                 .select('id, slot_date, start_time, client_name, deposit_confirmed')
                 .eq('merchant_id', merchant.id)
                 .not('client_name', 'is', null)
+                .neq('client_name', '__blocked__')
                 .is('primary_slot_id', null)
                 .gte('slot_date', todayStr)
                 .order('slot_date', { ascending: true })
@@ -348,6 +349,7 @@ export default function DashboardPage() {
                 .select('*', { count: 'exact', head: true })
                 .eq('merchant_id', merchant.id)
                 .not('client_name', 'is', null)
+                .neq('client_name', '__blocked__')
             : Promise.resolve({ count: 0 }),
           // Activity feed: referrals, welcome
           supabase
