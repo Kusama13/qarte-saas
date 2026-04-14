@@ -765,14 +765,44 @@ export default function PlanningDashboard() {
                       )}
                     </>
                   )}
-                  {viewMode === 'day' && selectedDayFreeCount > 0 && !selectedDayIsPast && (
-                    <button
-                      onClick={() => openBulkDelete('day')}
-                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-50 border border-red-100 text-red-600 font-semibold text-xs hover:bg-red-100 transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      {t('deleteAll')}
-                    </button>
+                  {viewMode === 'day' && !selectedDayIsPast && (
+                    <>
+                      {isFreeMod ? (
+                        <div className="flex-1 grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => openManualBookingModal(selectedDayStr)}
+                            className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 transition-all"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            {t('addManualBooking')}
+                          </button>
+                          <button
+                            onClick={() => { setBlockDate(selectedDayStr); setBlockEndDate(''); setBlockAllDay(false); setBlockReason(''); setShowBlockModal(true); }}
+                            className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
+                          >
+                            <Lock className="w-3.5 h-3.5" />
+                            {t('blockSlot')}
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setBlockDate(selectedDayStr); setBlockEndDate(''); setBlockAllDay(false); setBlockReason(''); setShowBlockModal(true); }}
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
+                        >
+                          <Lock className="w-3.5 h-3.5" />
+                          {t('blockSlot')}
+                        </button>
+                      )}
+                      {selectedDayFreeCount > 0 && (
+                        <button
+                          onClick={() => openBulkDelete('day')}
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-50 border border-red-100 text-red-600 font-semibold text-xs hover:bg-red-100 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          {t('deleteAll')}
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
