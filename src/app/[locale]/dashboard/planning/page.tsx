@@ -11,7 +11,7 @@ import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotificatio
 import { AnimatePresence, motion } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
 import { PHONE_CONFIG, formatTime, toBCP47, getCurrencySymbol, formatCurrency, formatPhoneLabel } from '@/lib/utils';
-import { formatDate, formatDateFr, getServiceColorMap, getSlotColor, colorBorderStyle, getWeekStart } from './utils';
+import { formatDate, formatDateFr, getServiceColorMap, getSlotColor, colorBorderStyle, getWeekStart, getSlotServiceIds, timeToMinutes, minutesToTime } from './utils';
 import { handleDownloadStory } from './StoryExport';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
@@ -63,6 +63,32 @@ export default function PlanningDashboard() {
 
   // Service color map
   const serviceColorMap = useMemo(() => getServiceColorMap(services), [services]);
+
+  // Service lookup map for O(1) access
+  const serviceMap = useMemo(() => {
+    const map = new Map<string, typeof services[0]>();
+    for (const s of services) map.set(s.id, s);
+    return map;
+  }, [services]);
+
+  // Helper: get service names and end time for a slot
+  const getSlotDetails = useCallback((slot: PlanningSlot) => {
+    const svcIds = getSlotServiceIds(slot);
+    const names: string[] = [];
+    let totalDuration = 0;
+    for (const id of svcIds) {
+      const svc = serviceMap.get(id);
+      if (svc?.name) names.push(svc.name);
+      if (svc?.duration) totalDuration += svc.duration;
+    }
+    if (!totalDuration) totalDuration = 30;
+    const endTime = minutesToTime(timeToMinutes(slot.start_time) + totalDuration);
+    return { names, totalDuration, endTime };
+  }, [serviceMap]);
+
+  const openBlockModal = useCallback((date: string) => {
+    setBlockDate(date); setBlockEndDate(''); setBlockAllDay(false); setBlockReason(''); setShowBlockModal(true);
+  }, []);
 
   // Handle ?slot= deep link from dashboard
   const searchParams = useSearchParams();
@@ -517,23 +543,25 @@ export default function PlanningDashboard() {
         </button>
       </div>
 
-      {/* ── TABS (3 tabs, full width) ── */}
-      <div className="grid grid-cols-3 gap-0 bg-gray-100 p-1 rounded-xl mb-5">
-        {(['slots', 'reservations', 'settings'] as const).map(tabKey => (
-          <button
-            key={tabKey}
-            onClick={() => {
-              setTab(tabKey);
-              if (tabKey === 'reservations' && merchant?.planning_enabled) {
-                state.fetchReservations();
-              }
-            }}
-            className={`py-2.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${tab === tabKey ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            {tabKey === 'slots' ? t('tabSlots') : tabKey === 'reservations' ? t('tabReservations') : t('tabSettings')}
-          </button>
-        ))}
-      </div>
+      {/* ── TABS (3 tabs, only when planning enabled) ── */}
+      {planningEnabled && (
+        <div className="grid grid-cols-3 gap-0 bg-gray-100 p-1 rounded-xl mb-5">
+          {(['slots', 'reservations', 'settings'] as const).map(tabKey => (
+            <button
+              key={tabKey}
+              onClick={() => {
+                setTab(tabKey);
+                if (tabKey === 'reservations' && merchant?.planning_enabled) {
+                  state.fetchReservations();
+                }
+              }}
+              className={`py-2.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${tab === tabKey ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              {tabKey === 'slots' ? t('tabSlots') : tabKey === 'reservations' ? t('tabReservations') : t('tabSettings')}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Global error banner */}
       {depositError && (
@@ -544,24 +572,27 @@ export default function PlanningDashboard() {
         </div>
       )}
 
-      {/* ── TAB: CRENEAUX ── */}
-      {tab === 'slots' && (
-        <>
-          {!planningEnabled ? (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 text-center max-w-md mx-auto">
-              <CalendarDays className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-              <p className="text-sm font-semibold text-gray-700 mb-1">{t('disabledTitle')}</p>
-              <p className="text-xs text-gray-400 mb-4">{t('disabledHint')}</p>
-              <div className="text-left space-y-2.5">
-                {[1, 2, 3].map(n => (
-                  <div key={n} className="flex items-start gap-2.5">
-                    <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold flex items-center justify-center mt-0.5">{n}</span>
-                    <p className="text-xs text-gray-500">{t(`disabledStep${n}` as 'disabledStep1')}</p>
-                  </div>
-                ))}
+      {/* ── PLANNING DISABLED: activation screen ── */}
+      {!planningEnabled && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 text-center max-w-md mx-auto">
+          <CalendarDays className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-gray-700 mb-1">{t('disabledTitle')}</p>
+          <p className="text-xs text-gray-400 mb-4">{t('disabledHint')}</p>
+          <div className="text-left space-y-2.5">
+            {[1, 2, 3].map(n => (
+              <div key={n} className="flex items-start gap-2.5">
+                <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold flex items-center justify-center mt-0.5">{n}</span>
+                <p className="text-xs text-gray-500">{t(`disabledStep${n}` as 'disabledStep1')}</p>
               </div>
-            </div>
-          ) : showModeChoice ? (
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB: CRENEAUX ── */}
+      {planningEnabled && tab === 'slots' && (
+        <>
+          {showModeChoice ? (
             /* ── MODE CHOICE SCREEN (first activation) ── */
             <div className="max-w-lg mx-auto">
               <div className="text-center mb-6">
@@ -725,7 +756,7 @@ export default function PlanningDashboard() {
                             {t('addManualBooking')}
                           </button>
                           <button
-                            onClick={() => { setBlockDate(todayStr >= formatDate(weekStart) ? todayStr : formatDate(weekStart)); setBlockEndDate(''); setBlockAllDay(false); setBlockReason(''); setShowBlockModal(true); }}
+                            onClick={() => openBlockModal(todayStr >= formatDate(weekStart) ? todayStr : formatDate(weekStart))}
                             className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
                           >
                             <Lock className="w-3.5 h-3.5" />
@@ -777,7 +808,7 @@ export default function PlanningDashboard() {
                             {t('addManualBooking')}
                           </button>
                           <button
-                            onClick={() => { setBlockDate(selectedDayStr); setBlockEndDate(''); setBlockAllDay(false); setBlockReason(''); setShowBlockModal(true); }}
+                            onClick={() => openBlockModal(selectedDayStr)}
                             className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
                           >
                             <Lock className="w-3.5 h-3.5" />
@@ -786,7 +817,7 @@ export default function PlanningDashboard() {
                         </div>
                       ) : (
                         <button
-                          onClick={() => { setBlockDate(selectedDayStr); setBlockEndDate(''); setBlockAllDay(false); setBlockReason(''); setShowBlockModal(true); }}
+                          onClick={() => openBlockModal(selectedDayStr)}
                           className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
                         >
                           <Lock className="w-3.5 h-3.5" />
@@ -891,6 +922,7 @@ export default function PlanningDashboard() {
                                   </button>
                                 );
                                 const slotColor = getSlotColor(slot, serviceColorMap);
+                                const details = slot.client_name ? getSlotDetails(slot) : null;
                                 return (
                                   <button
                                     key={slot.id}
@@ -898,13 +930,19 @@ export default function PlanningDashboard() {
                                     draggable={!past}
                                     onDragStart={(e) => handleDragStart(e, slot.id)}
                                     onDragEnd={handleDragEnd}
-                                    className={`w-full text-left px-2 py-1 rounded-lg text-[11px] font-medium transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden cursor-grab active:cursor-grabbing ${
+                                    className={`w-full text-left px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden cursor-grab active:cursor-grabbing ${
                                       dragSlotId === slot.id ? 'opacity-40' : ''
                                     } ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
                                     style={colorBorderStyle(slotColor)}
                                   >
-                                    <span className="font-bold">{formatTime(slot.start_time, locale)}</span>
-                                    {slot.client_name && <span className="ml-1 opacity-70">— {slot.client_name.length > 8 ? slot.client_name.slice(0, 8) + '…' : slot.client_name}</span>}
+                                    <div className="flex items-center gap-1 flex-wrap">
+                                      <span className="font-bold">{formatTime(slot.start_time, locale)}</span>
+                                      {details && <span className="opacity-50 hidden lg:inline">→ {formatTime(details.endTime, locale)}</span>}
+                                    </div>
+                                    {slot.client_name && <p className="truncate opacity-70 mt-0.5">— {slot.client_name.length > 10 ? slot.client_name.slice(0, 10) + '…' : slot.client_name}</p>}
+                                    {details && details.names.length > 0 && (
+                                      <p className="truncate text-[10px] opacity-50 mt-0.5 hidden xl:block">{details.names.join(', ')}</p>
+                                    )}
                                   </button>
                                 );
                               })}
@@ -952,7 +990,7 @@ export default function PlanningDashboard() {
                               )}
                             </div>
                             {daySlots.length > 0 ? (
-                              <div className="flex flex-wrap gap-1.5">
+                              <div className="space-y-1.5">
                                 {daySlots.map(slot => {
                                   const isBlocked = slot.client_name === '__blocked__';
                                   if (isBlocked) return (
@@ -966,18 +1004,25 @@ export default function PlanningDashboard() {
                                     </button>
                                   );
                                   const slotColor = getSlotColor(slot, serviceColorMap);
+                                  const details = slot.client_name ? getSlotDetails(slot) : null;
                                   return (
                                     <button
                                       key={slot.id}
                                       onClick={() => openEditSlot(slot)}
-                                      className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
+                                      className={`w-full text-left px-2.5 py-2 rounded-lg text-xs font-medium transition-all active:scale-95 ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
                                       style={{
                                         borderLeftWidth: slotColor ? '3px' : undefined,
                                         borderLeftColor: slotColor || undefined,
                                       }}
                                     >
-                                      {formatTime(slot.start_time, locale)}
-                                      {slot.client_name && <span className="ml-1 opacity-70">— {slot.client_name}</span>}
+                                      <div className="flex items-center gap-1">
+                                        <span className="font-bold">{formatTime(slot.start_time, locale)}</span>
+                                        {details && <span className="opacity-50 text-[11px]">→ {formatTime(details.endTime, locale)}</span>}
+                                        {slot.client_name && <span className="ml-1 opacity-70">— {slot.client_name}</span>}
+                                      </div>
+                                      {details && details.names.length > 0 && (
+                                        <p className="truncate text-[10px] opacity-50 mt-0.5">{details.names.join(', ')}</p>
+                                      )}
                                     </button>
                                   );
                                 })}
@@ -1019,7 +1064,7 @@ export default function PlanningDashboard() {
       )}
 
       {/* ── TAB: RESERVATIONS ── */}
-      {tab === 'reservations' && (
+      {planningEnabled && tab === 'reservations' && (
         <ReservationsSection
           slots={upcomingSlots}
           services={services}
@@ -1042,7 +1087,7 @@ export default function PlanningDashboard() {
       {/* (Online tab removed — toggle moved to header, config merged into Settings) */}
 
       {/* ── TAB: PARAMETRES ── */}
-      {tab === 'settings' && (
+      {planningEnabled && tab === 'settings' && (
         <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0">
 
           {/* Card: Resa en ligne */}
