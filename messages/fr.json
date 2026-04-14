@@ -2192,6 +2192,7 @@
     "hairSalon": "Coiffure"
   },
   "programmeView": {
+    "suspendedBanner": "Page suspendue — compte inactif. Un abonnement est nécessaire pour réactiver cette page.",
     "goThere": "Y aller",
     "returningShortcutEyebrow": "Déjà client",
     "returningShortcutTitle": "Mes RDV & fidélité",

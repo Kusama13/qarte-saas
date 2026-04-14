@@ -95,6 +95,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const p = merchant.primary_color;
   const s = merchant.secondary_color || merchant.primary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
+  const isSuspended = !isDemo && !['trial', 'active', 'canceling', 'past_due'].includes(merchant.subscription_status);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [servicesExpanded, setServicesExpanded] = useState(false);
   const [planningExpanded, setPlanningExpanded] = useState(false);
@@ -226,6 +227,13 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
 
   return (
     <div className="min-h-screen bg-[#f7f6fb] relative">
+
+      {/* ── SUSPENDED BANNER ── */}
+      {isSuspended && (
+        <div className="sticky top-0 z-50 bg-red-600 text-white text-center py-3 px-4 font-semibold text-sm tracking-wide shadow-lg">
+          ⚠️ {t('suspendedBanner')}
+        </div>
+      )}
 
       {/* ── AMBIENT BACKGROUND BLOBS ── */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
