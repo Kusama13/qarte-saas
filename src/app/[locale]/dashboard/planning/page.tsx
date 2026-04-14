@@ -109,8 +109,16 @@ export default function PlanningDashboard() {
     setWeekOffset(diffWeeks);
   }, [searchParams, setWeekOffset]);
 
-  // Deposit validation error
+  // Deposit toggle + validation error
+  const [depositEnabled, setDepositEnabled] = useState(false);
   const [depositError, setDepositError] = useState<string | null>(null);
+
+  // Sync deposit toggle when merchant loads
+  useEffect(() => {
+    if (merchant) {
+      setDepositEnabled(!!(merchant.deposit_link || merchant.deposit_percent || merchant.deposit_amount));
+    }
+  }, [merchant?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Mode choice (shown when planning is freshly enabled with no slots)
   const [showModeChoice, setShowModeChoice] = useState(false);
@@ -360,8 +368,8 @@ export default function PlanningDashboard() {
 
   const handleSaveSettings = async () => {
     if (!merchant) return;
-    // Validate deposit config: if link → need amount, if amount → need link
-    if (autoBookingEnabled) {
+    // Validate deposit config: if enabled, link + amount are both required
+    if (autoBookingEnabled && depositEnabled) {
       const hasLink = !!depositLink.trim();
       const hasAmount = !!(depositPercent || depositAmount);
       if (hasAmount && !hasLink) { setDepositError(t('depositLinkRequired')); return; }
@@ -375,17 +383,17 @@ export default function PlanningDashboard() {
         planning_message_expires: messageEnabled && messageExpires ? messageExpires : null,
         booking_message: bookingMessage.trim() || null,
         auto_booking_enabled: autoBookingEnabled,
-        deposit_link: autoBookingEnabled && depositLink.trim()
+        deposit_link: autoBookingEnabled && depositEnabled && depositLink.trim()
           ? (/^https?:\/\//i.test(depositLink.trim()) ? depositLink.trim() : `https://${depositLink.trim()}`)
           : null,
-        deposit_link_label: autoBookingEnabled && depositLink.trim() && depositLinkLabel.trim() ? depositLinkLabel.trim() : null,
-        deposit_link_2: autoBookingEnabled && depositLink2.trim()
+        deposit_link_label: autoBookingEnabled && depositEnabled && depositLink.trim() && depositLinkLabel.trim() ? depositLinkLabel.trim() : null,
+        deposit_link_2: autoBookingEnabled && depositEnabled && depositLink2.trim()
           ? (/^https?:\/\//i.test(depositLink2.trim()) ? depositLink2.trim() : `https://${depositLink2.trim()}`)
           : null,
-        deposit_link_2_label: autoBookingEnabled && depositLink2.trim() && depositLink2Label.trim() ? depositLink2Label.trim() : null,
-        deposit_percent: autoBookingEnabled && depositPercent ? parseInt(depositPercent) : null,
-        deposit_amount: autoBookingEnabled && depositAmount ? parseFloat(depositAmount) : null,
-        deposit_deadline_hours: autoBookingEnabled && depositDeadlineHours ? parseInt(depositDeadlineHours) : null,
+        deposit_link_2_label: autoBookingEnabled && depositEnabled && depositLink2.trim() && depositLink2Label.trim() ? depositLink2Label.trim() : null,
+        deposit_percent: autoBookingEnabled && depositEnabled && depositPercent ? parseInt(depositPercent) : null,
+        deposit_amount: autoBookingEnabled && depositEnabled && depositAmount ? parseFloat(depositAmount) : null,
+        deposit_deadline_hours: autoBookingEnabled && depositEnabled && depositDeadlineHours ? parseInt(depositDeadlineHours) : null,
         allow_customer_cancel: allowCustomerCancel,
         allow_customer_reschedule: allowCustomerReschedule,
         cancel_deadline_days: parseInt(cancelDeadlineDays) || 1,
@@ -1354,16 +1362,19 @@ export default function PlanningDashboard() {
               {(() => {
                 const hasAmount = !!(depositPercent || depositAmount);
                 const hasLink = !!depositLink.trim();
-                const linkMissing = hasAmount && !hasLink;
-                const amountMissing = hasLink && !hasAmount;
+                const linkMissing = depositEnabled && hasAmount && !hasLink;
+                const amountMissing = depositEnabled && hasLink && !hasAmount;
                 return (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden sm:col-span-2">
                     <div className="px-4 sm:px-5 py-3 bg-amber-50/50 border-b border-amber-100/50 flex items-center gap-2">
                       <CreditCard className="w-4 h-4 text-amber-500 shrink-0" />
                       <h2 className="text-sm font-bold text-gray-800">{t('depositTitle')}</h2>
-                      <span className="text-[10px] text-gray-400 ml-auto shrink-0">({t('optional')})</span>
+                      <button type="button" role="switch" aria-checked={depositEnabled} onClick={() => setDepositEnabled(!depositEnabled)}
+                        className={`ml-auto relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${depositEnabled ? 'bg-indigo-600' : 'bg-gray-200'}`}>
+                        <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${depositEnabled ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
+                      </button>
                     </div>
-                    <div className="p-4 sm:p-5 space-y-4">
+                    {depositEnabled && <div className="p-4 sm:p-5 space-y-4">
                       <div>
                         <label className="text-xs font-semibold text-gray-600 mb-1.5 block">{t('depositLinkLabel')}</label>
                         <div className="flex gap-2">
@@ -1445,7 +1456,7 @@ export default function PlanningDashboard() {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </div>}
                   </div>
                 );
               })()}
