@@ -434,7 +434,7 @@ export default function BookingDetailsModal({
                     <div className={`w-3.5 h-3.5 rounded shrink-0 flex items-center justify-center border ${isChecked ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
                       {isChecked && <Check className="w-2.5 h-2.5 text-white" />}
                     </div>
-                    <span className="font-medium truncate">{svc.name}</span>
+                    <span className="font-medium">{svc.name}</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-[11px] text-gray-400 shrink-0 ml-2">
                     {svc.price > 0 && <span>{formatCurrency(svc.price, merchantCountry, locale)}</span>}
@@ -666,7 +666,7 @@ export default function BookingDetailsModal({
                                   <span className="text-xs font-bold text-gray-700">{histDate.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })}</span>
                                   <span className="text-[11px] text-gray-400">{formatTime(h.start_time, locale)}</span>
                                 </div>
-                                {svcNames && <p className="text-[10px] text-gray-400 truncate max-w-[200px]">{svcNames}</p>}
+                                {svcNames && <p className="text-[10px] text-gray-400">{svcNames}</p>}
                               </div>
                               {svcIds.length > 0 && (
                                 <div className="flex gap-0.5">

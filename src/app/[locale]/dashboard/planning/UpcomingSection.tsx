@@ -118,7 +118,7 @@ export default function UpcomingSection({ slots, services, locale, onSlotClick }
                     <div>
                       <p className="text-sm font-semibold text-gray-800">{slot.client_name}</p>
                       {serviceNames && (
-                        <p className="text-xs text-gray-400 truncate max-w-[200px]">{serviceNames}</p>
+                        <p className="text-xs text-gray-400">{serviceNames}</p>
                       )}
                       {duration !== null && duration > 0 && (
                         <div className="flex items-center gap-1 mt-0.5 text-xs text-gray-300">

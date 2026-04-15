@@ -308,6 +308,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
   - **Reservations** : tous les RDV reserves (a venir + passes), modal detail (prestations, duree, prix, acompte, notes, photos, historique client), boutons modifier + confirmer/annuler acompte + **ajouter a mon agenda** (export .ics RFC 5545 client-side via `src/lib/ics.ts`, compatible Apple Calendar / Google Calendar, timezone merchant)
   - **Resa en ligne** : toggle activation, config acompte (lien, pourcentage ou montant fixe, message), info et warning si lien externe
   - **Parametres** : message libre public, conditions de reservation
+- **Noms de prestations** : affiches en entier (pas de truncate) dans la selection de services, les listes de reservations, les prochains RDV et l'historique client. Truncate conserve uniquement dans les vues compactes (DayView timeline, week view cells) ou l'espace est physiquement limite
 - **Couleurs services** : palette 10 couleurs attribuees automatiquement aux services, affichees sur les creneaux en vue semaine/jour
 - **Historique client** : dans le modal booking, affiche les RDV passes du client (via `GET /api/planning?customerId=`)
 - **Photos resultat** : photos "apres" prestation (max 3/creneau), separees des photos inspiration. Groupees sous un depliant "Photos" (Avant/Apres) dans le modal edition
@@ -568,7 +569,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 ## 9. Emails (37 templates)
 
-**i18n** : Tous les templates utilisent `getEmailT(locale)` de `src/emails/translations/{fr,en}.ts`. La locale vient de `merchants.locale`. Aucun texte hardcode FR restant.
+**i18n** : Tous les templates utilisent `getEmailT(locale)` de `src/emails/translations/{fr,en}.ts`. La locale vient de `merchants.locale`. Aucun texte hardcode FR restant. `getEmailT` supporte les cles imbriquees a N niveaux (ex: `paymentFailed.step1.heading`, `postSurveyFollowUp.lowerPrice.intro`).
 
 ### Onboarding (epure — max 1 email/jour)
 WelcomeEmail, IncompleteSignupEmail (+15min + +2h), GuidedSignupEmail (J+1 incomplete), ProgramReminderEmail (J+1 non configure, mentionne interconnexion booking→fidelite), QRCodeEmail (une fois configure), FirstClientScriptEmail (J+2 post-config, 0 scans), VitrineReminderEmail (J+3, vitrine vide), PlanningReminderEmail (J+4, planning desactive, mentionne interconnexion booking→carte fidelite auto)

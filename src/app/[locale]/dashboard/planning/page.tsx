@@ -1630,7 +1630,7 @@ export default function PlanningDashboard() {
                                   <div className="w-3.5 h-3.5 rounded shrink-0 flex items-center justify-center border bg-indigo-600 border-indigo-600">
                                     <Check className="w-2.5 h-2.5 text-white" />
                                   </div>
-                                  <span className="font-medium truncate">{svc.name}</span>
+                                  <span className="font-medium">{svc.name}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5 text-[11px] text-gray-400 shrink-0 ml-2">
                                   {svc.price > 0 && <span>{formatCurrency(svc.price, merchant?.country, locale)}</span>}
@@ -1652,7 +1652,7 @@ export default function PlanningDashboard() {
                               >
                                 <div className="flex items-center gap-2 min-w-0">
                                   <div className="w-3.5 h-3.5 rounded shrink-0 flex items-center justify-center border border-gray-300" />
-                                  <span className="font-medium truncate">{svc.name}</span>
+                                  <span className="font-medium">{svc.name}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5 text-[11px] text-gray-400 shrink-0 ml-2">
                                   {svc.price > 0 && <span>{formatCurrency(svc.price, merchant?.country, locale)}</span>}

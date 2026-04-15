@@ -221,7 +221,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                 <div className="min-w-0">
                   <p className={`text-sm font-semibold ${group.isPast ? 'text-gray-500' : 'text-gray-800'}`}>{slot.client_name}</p>
                   {serviceNames && (
-                    <p className="text-xs text-gray-400 truncate max-w-[180px] sm:max-w-[250px]">{serviceNames}</p>
+                    <p className="text-xs text-gray-400">{serviceNames}</p>
                   )}
                   <div className="flex items-center gap-2 mt-0.5">
                     {duration !== null && duration > 0 && (

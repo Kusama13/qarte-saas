@@ -14,10 +14,13 @@ export function getEmailT(locale: EmailLocale = 'fr') {
   const dict = translations[locale] || translations.fr;
 
   return function t(key: string, params?: Record<string, string | number>): string {
-    const [ns, ...rest] = key.split('.');
-    const k = rest.join('.');
+    const parts = key.split('.');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const val = (dict as any)?.[ns]?.[k];
+    let val: any = dict;
+    for (const p of parts) {
+      val = val?.[p];
+      if (val === undefined) return key;
+    }
     if (typeof val !== 'string') return key;
 
     if (!params) return val;
