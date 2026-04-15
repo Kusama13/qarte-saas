@@ -92,6 +92,17 @@ export default function NotificationBell() {
     setLoading(false);
   };
 
+  const handleClearAll = async () => {
+    if (!merchant?.id) return;
+    setLoading(true);
+    try {
+      await fetch(`/api/merchant-notifications?merchantId=${merchant.id}`, { method: 'DELETE' });
+      setNotifications([]);
+      setUnreadCount(0);
+    } catch { /* silent */ }
+    setLoading(false);
+  };
+
   const handleClick = (notif: Notification) => {
     if (!notif.read && merchant?.id) {
       setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
@@ -179,6 +190,17 @@ export default function NotificationBell() {
                 ))
               )}
             </div>
+            {notifications.length > 0 && (
+              <div className="border-t border-gray-100 px-4 py-2.5 text-center">
+                <button
+                  onClick={handleClearAll}
+                  disabled={loading}
+                  className="text-xs font-medium text-gray-400 hover:text-red-500 disabled:opacity-50 transition-colors"
+                >
+                  {t('clearAll')}
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}

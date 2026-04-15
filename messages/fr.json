@@ -1064,6 +1064,10 @@
     "skipDepositHint": "Le client ne paiera pas d'acompte à la réservation en ligne",
     "discountBadge": "-{percent}%",
     "skipDepositBadge": "Sans acompte",
+    "emptyMembers": "Aucun membre",
+    "emptyMembersHint": "Commence par ajouter des clients à ce programme",
+    "activeMembers": "Membres actifs",
+    "expiredMembers": "Membres expirés",
     "benefitsSection": "Avantages du programme",
     "benefitHint": "Texte libre affiché sur la carte du client"
   },
@@ -2959,7 +2963,8 @@
   "notifBell": {
     "title": "Notifications",
     "markAllRead": "Tout lu",
-    "empty": "Aucune notification"
+    "empty": "Aucune notification",
+    "clearAll": "Effacer les notifications"
   },
   "contest": {
     "pageTitle": "Jeu concours mensuel",

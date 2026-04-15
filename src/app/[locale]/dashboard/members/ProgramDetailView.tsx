@@ -9,6 +9,7 @@ import {
   Clock,
   ArrowLeft,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui';
 import type { MemberCard, MerchantCountry } from '@/types';
 import type { ProgramWithCount, CustomerWithCard, DurationUnit } from './types';
@@ -92,6 +93,7 @@ export default function ProgramDetailView({
   assign,
   actions,
 }: ProgramDetailViewProps) {
+  const t = useTranslations('members');
   const memberCount = programMembers.length;
   const activeMembers = programMembers.filter(m => new Date(m.valid_until) > new Date()).length;
 
@@ -104,7 +106,7 @@ export default function ProgramDetailView({
           className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Retour aux programmes
+          {t('backToList')}
         </button>
 
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -135,7 +137,7 @@ export default function ProgramDetailView({
               className="bg-indigo-600 hover:bg-indigo-700 text-white flex-1 sm:flex-none text-sm sm:text-base"
             >
               <UserPlus className="w-4 h-4 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Ajouter un</span> membre
+              {t('addToProgram')}
             </Button>
             <Button
               variant="outline"
@@ -151,11 +153,11 @@ export default function ProgramDetailView({
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <div className="p-4 sm:p-5 bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-xs sm:text-sm text-gray-500 mb-1">Membres actifs</p>
+          <p className="text-xs sm:text-sm text-gray-500 mb-1">{t('activeMembers')}</p>
           <p className="text-2xl sm:text-3xl font-black text-emerald-600">{activeMembers}</p>
         </div>
         <div className="p-4 sm:p-5 bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-xs sm:text-sm text-gray-500 mb-1">Membres expir&eacute;s</p>
+          <p className="text-xs sm:text-sm text-gray-500 mb-1">{t('expiredMembers')}</p>
           <p className="text-2xl sm:text-3xl font-black text-gray-400">{memberCount - activeMembers}</p>
         </div>
       </div>
@@ -170,14 +172,14 @@ export default function ProgramDetailView({
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-50 flex items-center justify-center">
             <UserPlus className="w-8 h-8 text-indigo-400" />
           </div>
-          <h3 className="text-lg font-bold text-gray-900 mb-2">Aucun membre</h3>
-          <p className="text-gray-500 mb-6">Commencez par ajouter des clients &agrave; ce programme</p>
+          <h3 className="text-lg font-bold text-gray-900 mb-2">{t('emptyMembers')}</h3>
+          <p className="text-gray-500 mb-6">{t('emptyMembersHint')}</p>
           <Button
             onClick={() => assign.setAssignModalOpen(true)}
             className="bg-indigo-600 hover:bg-indigo-700 text-white"
           >
             <UserPlus className="w-4 h-4 mr-2" />
-            Ajouter un membre
+            {t('addToProgram')}
           </Button>
         </div>
       ) : (

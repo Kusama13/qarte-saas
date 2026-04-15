@@ -1064,6 +1064,10 @@
     "skipDepositHint": "Client will not pay a deposit when booking online",
     "discountBadge": "-{percent}%",
     "skipDepositBadge": "No deposit",
+    "emptyMembers": "No members",
+    "emptyMembersHint": "Start by adding clients to this program",
+    "activeMembers": "Active members",
+    "expiredMembers": "Expired members",
     "benefitsSection": "Program benefits",
     "benefitHint": "Free text displayed on the client card"
   },
@@ -2959,7 +2963,8 @@
   "notifBell": {
     "title": "Notifications",
     "markAllRead": "Mark all read",
-    "empty": "No notifications"
+    "empty": "No notifications",
+    "clearAll": "Clear notifications"
   },
   "contest": {
     "pageTitle": "Monthly contest",
