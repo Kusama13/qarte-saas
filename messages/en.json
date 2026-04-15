@@ -1064,6 +1064,7 @@
     "skipDepositHint": "Client will not pay a deposit when booking online",
     "discountBadge": "-{percent}%",
     "skipDepositBadge": "No deposit",
+    "memberCount": "{count, plural, =0 {member} =1 {member} other {members}}",
     "emptyMembers": "No members",
     "emptyMembersHint": "Start by adding clients to this program",
     "activeMembers": "Active members",

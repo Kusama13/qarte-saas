@@ -117,13 +117,13 @@ export default function ProgramDetailView({
               </div>
               <div className="min-w-0">
                 <h1 className="text-xl sm:text-2xl font-black text-gray-900 truncate">{selectedProgram.name}</h1>
-                <p className="text-indigo-600 font-semibold text-sm sm:text-base truncate">{selectedProgram.benefit_label}</p>
+                {selectedProgram.benefit_label && <p className="text-indigo-600 font-semibold text-sm sm:text-base truncate">{selectedProgram.benefit_label}</p>}
               </div>
             </div>
             <div className="flex items-center gap-3 sm:gap-4 mt-4 text-xs sm:text-sm text-gray-500">
               <span className="flex items-center gap-1.5">
                 <Users className="w-4 h-4" />
-                {memberCount} membre{memberCount > 1 ? 's' : ''}
+                {memberCount} {t('memberCount', { count: memberCount })}
               </span>
               <span className="flex items-center gap-1.5">
                 <Clock className="w-4 h-4" />

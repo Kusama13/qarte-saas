@@ -1064,6 +1064,7 @@
     "skipDepositHint": "Le client ne paiera pas d'acompte à la réservation en ligne",
     "discountBadge": "-{percent}%",
     "skipDepositBadge": "Sans acompte",
+    "memberCount": "{count, plural, =0 {membre} =1 {membre} other {membres}}",
     "emptyMembers": "Aucun membre",
     "emptyMembersHint": "Commence par ajouter des clients à ce programme",
     "activeMembers": "Membres actifs",
