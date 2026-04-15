@@ -37,6 +37,7 @@
   ],
   "exclude": [
     "node_modules",
+    "remotion",
     "MAJ du 08:02"
   ]
 }
