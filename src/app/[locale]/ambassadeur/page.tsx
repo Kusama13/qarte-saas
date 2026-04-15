@@ -3,7 +3,7 @@ import { ScrollToTopButton } from '@/components/landing';
 import LandingNav from '@/components/landing/LandingNav';
 import AmbassadeurContent from './AmbassadeurContent';
 
-export async function generateStaticParams() {
+export function generateStaticParams() {
   return [{ locale: 'fr' }];
 }
 

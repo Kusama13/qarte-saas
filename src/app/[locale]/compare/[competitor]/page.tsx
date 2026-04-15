@@ -12,7 +12,9 @@ function isValidCompetitor(c: string): c is Competitor {
 }
 
 export async function generateStaticParams() {
-  return COMPETITORS.map((competitor) => ({ competitor }));
+  return COMPETITORS.flatMap((competitor) => [
+    { locale: 'fr', competitor },
+  ]);
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; competitor: string }> }) {
@@ -24,7 +26,9 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     booksy: { title: 'metaTitleBooksy', desc: 'metaDescBooksy' },
     bookinbeautiful: { title: 'metaTitleBookinbeautiful', desc: 'metaDescBookinbeautiful' },
   };
-  const { title: key, desc: descKey } = metaKeys[competitor];
+  const meta = metaKeys[competitor];
+  if (!meta) return {};
+  const { title: key, desc: descKey } = meta;
   return {
     title: t(key),
     description: t(descKey),
