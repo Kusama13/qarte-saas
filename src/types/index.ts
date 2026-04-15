@@ -373,6 +373,8 @@ export interface MemberProgram {
   benefit_label: string;
   duration_months: number;
   is_active: boolean;
+  discount_percent?: number | null;
+  skip_deposit?: boolean;
   created_at: string;
   merchant?: Merchant;
 }

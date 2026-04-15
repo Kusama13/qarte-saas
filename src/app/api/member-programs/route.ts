@@ -10,6 +10,8 @@ const createProgramSchema = z.object({
   benefit_label: z.string().min(1, "L'avantage est requis"),
   // Allow any positive duration: days (0.033+), weeks (0.25+), months (1+)
   duration_months: z.number().min(0.01).max(999).default(12),
+  discount_percent: z.number().int().refine(v => [5, 10, 15, 20].includes(v)).nullable().optional(),
+  skip_deposit: z.boolean().optional().default(false),
 });
 
 // GET: Liste des programmes du commerçant
@@ -94,7 +96,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Commerçant non trouvé' }, { status: 404 });
     }
 
-    const { name, benefit_label, duration_months } = validation.data;
+    const { name, benefit_label, duration_months, discount_percent, skip_deposit } = validation.data;
 
     // Create program
     const { data: program, error } = await supabaseAdmin
@@ -105,6 +107,8 @@ export async function POST(request: NextRequest) {
         benefit_label,
         duration_months,
         is_active: true,
+        discount_percent: discount_percent ?? null,
+        skip_deposit: skip_deposit ?? false,
       })
       .select()
       .single();

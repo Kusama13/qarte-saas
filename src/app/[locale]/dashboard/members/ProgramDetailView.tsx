@@ -110,12 +110,12 @@ export default function ProgramDetailView({
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shrink-0">
                 <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div className="min-w-0">
                 <h1 className="text-xl sm:text-2xl font-black text-gray-900 truncate">{selectedProgram.name}</h1>
-                <p className="text-amber-600 font-semibold text-sm sm:text-base truncate">{selectedProgram.benefit_label}</p>
+                <p className="text-indigo-600 font-semibold text-sm sm:text-base truncate">{selectedProgram.benefit_label}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 sm:gap-4 mt-4 text-xs sm:text-sm text-gray-500">
@@ -132,7 +132,7 @@ export default function ProgramDetailView({
           <div className="flex gap-2 w-full sm:w-auto">
             <Button
               onClick={() => assign.setAssignModalOpen(true)}
-              className="bg-amber-500 hover:bg-amber-600 text-white flex-1 sm:flex-none text-sm sm:text-base"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white flex-1 sm:flex-none text-sm sm:text-base"
             >
               <UserPlus className="w-4 h-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Ajouter un</span> membre
@@ -163,18 +163,18 @@ export default function ProgramDetailView({
       {/* Members list */}
       {loadingMembers ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+          <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
         </div>
       ) : programMembers.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-50 flex items-center justify-center">
-            <UserPlus className="w-8 h-8 text-amber-400" />
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-50 flex items-center justify-center">
+            <UserPlus className="w-8 h-8 text-indigo-400" />
           </div>
           <h3 className="text-lg font-bold text-gray-900 mb-2">Aucun membre</h3>
           <p className="text-gray-500 mb-6">Commencez par ajouter des clients &agrave; ce programme</p>
           <Button
             onClick={() => assign.setAssignModalOpen(true)}
-            className="bg-amber-500 hover:bg-amber-600 text-white"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white"
           >
             <UserPlus className="w-4 h-4 mr-2" />
             Ajouter un membre

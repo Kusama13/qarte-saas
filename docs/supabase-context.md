@@ -430,7 +430,7 @@
 
 ---
 
-### 2.20 member_programs (mig 018)
+### 2.20 member_programs (mig 018 + 109)
 
 | Colonne | Type | Default | Contrainte |
 |---------|------|---------|------------|
@@ -440,6 +440,8 @@
 | benefit_label | TEXT | NOT NULL | |
 | duration_months | NUMERIC(6,2) | `12` | CHECK (> 0) |
 | is_active | BOOLEAN | `TRUE` | |
+| discount_percent | INTEGER | NULL | CHECK IN (5, 10, 15, 20), mig 109 |
+| skip_deposit | BOOLEAN | `FALSE` | NOT NULL, mig 109 |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
 ### 2.21 member_cards (mig 018)

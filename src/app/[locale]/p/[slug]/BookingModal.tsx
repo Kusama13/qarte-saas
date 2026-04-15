@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Clock, ChevronRight, ChevronLeft, Loader2, Gift, CreditCard, CalendarDays, Hourglass, Info } from 'lucide-react';
+import { X, Check, Clock, ChevronRight, ChevronLeft, Loader2, Gift, CreditCard, CalendarDays, Hourglass, Info, Crown } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { formatTime, toBCP47, formatCurrency } from '@/lib/utils';
@@ -140,6 +140,39 @@ export default function BookingModal({
     message: string | null;
     deadline_hours: number | null;
   } | null>(null);
+
+  // Member benefit detection
+  const [memberBenefit, setMemberBenefit] = useState<{
+    first_name: string;
+    discount_percent: number | null;
+    skip_deposit: boolean;
+    benefit_label: string;
+    program_name: string;
+  } | null>(null);
+  const memberLookupRef = useRef<ReturnType<typeof setTimeout>>();
+  const memberAbortRef = useRef<AbortController>();
+
+  useEffect(() => {
+    clearTimeout(memberLookupRef.current);
+    memberAbortRef.current?.abort();
+    if (phone.length >= 10) {
+      memberLookupRef.current = setTimeout(async () => {
+        const ctrl = new AbortController();
+        memberAbortRef.current = ctrl;
+        try {
+          const res = await fetch(`/api/member-cards/lookup?phone=${encodeURIComponent(phone)}&merchant_id=${merchant.id}&country=${phoneCountry}`, { signal: ctrl.signal });
+          if (res.ok) {
+            const data = await res.json();
+            setMemberBenefit(data.memberCard || null);
+          }
+        } catch { /* aborted or network error */ }
+      }, 500);
+    } else {
+      setMemberBenefit(null);
+    }
+    return () => { clearTimeout(memberLookupRef.current); memberAbortRef.current?.abort(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phone, phoneCountry, merchant.id]);
 
   // Compute totals
   const selectedServices = useMemo(
@@ -617,6 +650,29 @@ export default function BookingModal({
                     />
                   </div>
                 </div>
+
+                {/* Member benefit banner */}
+                {memberBenefit && (
+                  <div className="px-3 py-3 rounded-xl bg-indigo-50 border border-indigo-100 mb-4">
+                    <div className="flex items-start gap-2.5">
+                      <Crown className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                      <div className="text-[12px] text-indigo-800 leading-relaxed">
+                        <p className="font-semibold">{t('memberDetected', { name: memberBenefit.first_name })}</p>
+                        <ul className="mt-1 space-y-0.5">
+                          {memberBenefit.discount_percent && (
+                            <li>→ {t('memberDiscount', { percent: memberBenefit.discount_percent })}</li>
+                          )}
+                          {memberBenefit.skip_deposit && (
+                            <li>→ {t('memberSkipDeposit')}</li>
+                          )}
+                          {memberBenefit.benefit_label && (
+                            <li>→ {memberBenefit.benefit_label}</li>
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Booking conditions */}
                 {merchant.booking_message && (

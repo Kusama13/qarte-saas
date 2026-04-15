@@ -26,7 +26,7 @@ export default function MemberItem({
   return (
     <div className={`group flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all duration-300 ${
       isValid
-        ? 'bg-white/70 backdrop-blur-md border-amber-100 shadow-sm hover:shadow-xl hover:shadow-amber-900/5 hover:border-amber-300 hover:-translate-y-0.5'
+        ? 'bg-white/70 backdrop-blur-md border-indigo-100 shadow-sm hover:shadow-xl hover:shadow-indigo-900/5 hover:border-indigo-300 hover:-translate-y-0.5'
         : 'bg-gray-50/50 border-gray-100 opacity-60 grayscale-[0.5]'
     }`}>
       {/* Top row on mobile: Avatar + Info + Status */}
@@ -35,14 +35,14 @@ export default function MemberItem({
         <div className="relative shrink-0">
           <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-white font-bold relative z-10 overflow-hidden ${
             isValid
-              ? 'bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 shadow-lg shadow-amber-200'
+              ? 'bg-gradient-to-br from-indigo-500 via-indigo-600 to-violet-600 shadow-lg shadow-indigo-200'
               : 'bg-gray-400'
           }`}>
             {isValid && <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent animate-shimmer" />}
             {member.customer?.first_name?.charAt(0) || '?'}
           </div>
           {isValid && (
-            <div className="absolute -inset-1 bg-amber-400/20 blur-lg rounded-xl transition-opacity opacity-0 group-hover:opacity-100" />
+            <div className="absolute -inset-1 bg-indigo-400/20 blur-lg rounded-xl transition-opacity opacity-0 group-hover:opacity-100" />
           )}
         </div>
 
@@ -56,7 +56,7 @@ export default function MemberItem({
             <span className="hidden sm:inline w-1 h-1 rounded-full bg-gray-300" />
             <span className="flex items-center gap-1">
               <span className="hidden sm:inline opacity-60">{t('expiresOn')}</span>
-              <span className={isValid ? 'text-amber-700 font-medium' : ''}>{formatDate(member.valid_until)}</span>
+              <span className={isValid ? 'text-indigo-700 font-medium' : ''}>{formatDate(member.valid_until)}</span>
             </span>
           </div>
         </div>
@@ -78,7 +78,7 @@ export default function MemberItem({
         {/* Dynamic Status Badges */}
         <div className="hidden sm:flex items-center gap-3">
           {isValid && daysRemaining <= 7 && (
-            <span className="px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-black uppercase tracking-wider rounded-lg shadow-sm">
+            <span className="px-2.5 py-1 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-black uppercase tracking-wider rounded-lg shadow-sm">
               {t('daysRemaining', { count: daysRemaining })}
             </span>
           )}
@@ -94,7 +94,7 @@ export default function MemberItem({
 
         {/* Mobile: Days remaining badge */}
         {isValid && daysRemaining <= 7 && (
-          <span className="sm:hidden px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold uppercase rounded-lg">
+          <span className="sm:hidden px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-bold uppercase rounded-lg">
             {t('daysRemainingShort', { count: daysRemaining })}
           </span>
         )}
@@ -103,7 +103,7 @@ export default function MemberItem({
         <div className="flex items-center gap-1">
           <button
             onClick={onExtend}
-            className="p-2 sm:p-2.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg sm:rounded-xl transition-all active:scale-95 border border-transparent hover:border-amber-100"
+            className="p-2 sm:p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg sm:rounded-xl transition-all active:scale-95 border border-transparent hover:border-indigo-100"
             title={t('renew')}
           >
             <RefreshCw className="w-4 h-4" />

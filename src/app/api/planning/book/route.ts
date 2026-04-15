@@ -150,7 +150,9 @@ export async function POST(request: NextRequest) {
     }
 
     const totalDuration = services.reduce((sum, s) => sum + (s.duration || 30), 0);
-    const totalPrice = services.reduce((sum, s) => sum + Number(s.price || 0), 0);
+    const rawTotalPrice = services.reduce((sum, s) => sum + Number(s.price || 0), 0);
+    // Member discount applied after member lookup (section 6b) — use rawTotalPrice until then
+    let totalPrice = rawTotalPrice;
 
     if (isFreeMod) {
       // Mode libre: re-check conflict (race condition guard)
@@ -251,8 +253,33 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 6b. Check if customer is a loyal client (member card) for discount/deposit skip
+    let memberDiscount: number | null = null;
+    let memberSkipDeposit = false;
+    if (customerId) {
+      const { data: mc } = await supabaseAdmin
+        .from('member_cards')
+        .select('id, valid_until, program:member_programs!inner(discount_percent, skip_deposit, merchant_id)')
+        .eq('customer_id', customerId)
+        .eq('program.merchant_id', merchant_id)
+        .gt('valid_until', new Date().toISOString())
+        .limit(1)
+        .maybeSingle();
+      if (mc) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const prog = mc.program as any;
+        memberDiscount = prog?.discount_percent || null;
+        memberSkipDeposit = prog?.skip_deposit || false;
+      }
+    }
+
+    // Apply member discount to totalPrice
+    if (memberDiscount) {
+      totalPrice = Math.round(rawTotalPrice * (1 - memberDiscount / 100));
+    }
+
     // 7. Create/block slot(s)
-    const hasDeposit = !!merchant.deposit_link;
+    const hasDeposit = !!merchant.deposit_link && !memberSkipDeposit;
     const bookedAt = new Date().toISOString();
 
     // Compute deposit deadline (shared between modes)
@@ -395,7 +422,7 @@ export async function POST(request: NextRequest) {
     const link2 = normalizeLink(merchant.deposit_link_2);
     if (link2) links.push({ label: merchant.deposit_link_2_label || null, url: link2 });
 
-    const deposit = links.length > 0 ? {
+    const deposit = links.length > 0 && hasDeposit ? {
       link: links[0].url, // retro-compat
       links,
       percent: merchant.deposit_percent || null,
@@ -451,6 +478,11 @@ export async function POST(request: NextRequest) {
         slots_blocked: slotsBlocked,
       },
       deposit,
+      member_benefit: memberDiscount || memberSkipDeposit ? {
+        discount_percent: memberDiscount,
+        original_price: rawTotalPrice,
+        skip_deposit: memberSkipDeposit,
+      } : null,
     });
 
     setPhoneCookie(jsonResponse, formattedPhone);

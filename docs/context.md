@@ -328,9 +328,17 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Acompte** : toggle on/off dans parametres planning (`depositEnabled` state local, sync au load). `computeDepositAmount()` cappe au prix total (`Math.min`). Si acompte >= prix → affiche "Paiement integral" au lieu de "Acompte" (vitrine + dashboard).
 - **Reply OK warm-up** : texte sous bouton signup "Reponds OK a l'email pour activer tes 7 jours d'essai gratuit" + encart jaune dans Welcome email demandant de repondre OK (warm-up deliverabilite)
 
-### Programmes Membres
-- Cartes de membre avec validite, avantages personnalises
+### Clients fideles (ex Programmes Membres, mig 018 + 109)
+- Programmes de fidelite avances : nom, duree (jours/semaines/mois), avantages configurables
+- **Avantage texte libre** : `benefit_label` — affiche sur la carte client ("Brushing offert", "Acces prioritaire")
+- **Reduction** : `discount_percent` (pills 5/10/15/20%) — appliquee automatiquement a la reservation en ligne
+- **Exemption acompte** : `skip_deposit` — le client fidele ne paie pas d'acompte, booking confirme immediatement (deposit=null dans la reponse API)
+- **Detection automatique** : au booking, lookup par telephone via `GET /api/member-cards/lookup` (debounce 500ms, AbortController) → banner indigo "Bienvenue, client fidele" avec avantages listes
+- **Application serveur** : `POST /api/planning/book` applique la reduction au prix total et skip le depot si applicable (source de verite)
+- **Modal creation compact** : nom + pills rapides, duree inline (pills+input), section "Avantages" separee (reduction pills, acompte toggle avec hint, avantage texte libre avec hint), responsive mobile
+- Design dashboard : violet/indigo (coherent avec le reste, plus d'amber)
 - Tables `member_programs` + `member_cards`
+- Dashboard `/dashboard/members` accessible via bouton "Clients fideles" dans `/dashboard/customers`
 
 ### Churn Retention Survey (mig 106)
 - **Trigger** : merchants fully expired (> J+3) et `churn_survey_seen_at IS NULL` sont rediriges par le dashboard layout vers `/dashboard/survey` au lieu de `/dashboard/subscription`

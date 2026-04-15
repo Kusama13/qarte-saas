@@ -28,15 +28,15 @@ export const DURATION_UNITS = [
 export type DurationUnit = 'day' | 'week' | 'month';
 
 export const PROGRAM_NAME_SUGGESTIONS = [
-  'VIP Gold',
-  'Club Premium',
-  'Carte Privilege',
+  'Fidèle',
+  'VIP',
+  'Premium',
 ];
 
 export const BENEFIT_SUGGESTIONS = [
-  '-10% sur tout',
-  'Cafe offert a chaque visite',
-  'Acces prioritaire + surprises',
+  '-10% sur les prestations',
+  'Brushing offert',
+  'Accès prioritaire',
 ];
 
 // ============================================

@@ -1171,13 +1171,7 @@ export default function CustomerCardPage({
             animate={{ opacity: 1, y: 0 }}
             className="w-full mb-4"
           >
-            <div
-              className="flex items-center gap-3.5 p-4 rounded-2xl overflow-hidden"
-              style={{
-                background: `linear-gradient(135deg, ${merchant.primary_color}12, ${merchant.primary_color}08)`,
-                border: `1px solid ${merchant.primary_color}20`,
-              }}
-            >
+            <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-white shadow-lg shadow-gray-200/50 border border-gray-100/80">
               <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
                 <Trophy className="w-5 h-5 text-amber-500" />
               </div>

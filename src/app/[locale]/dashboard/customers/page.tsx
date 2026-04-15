@@ -406,15 +406,6 @@ export default function CustomersPage() {
               {t('contest')}
             </Button>
           </Link>
-          <Link href="/dashboard/marketing?tab=automations">
-            <Button
-              variant="outline"
-              className="h-9 px-3 text-sm border-pink-200 hover:border-pink-300 hover:bg-pink-50/50 text-pink-700 rounded-lg transition-all duration-200 shadow-sm"
-            >
-              <Cake className="w-3.5 h-3.5 mr-1.5 text-pink-500" />
-              {t('birthday')}
-            </Button>
-          </Link>
         </div>
       </div>
 

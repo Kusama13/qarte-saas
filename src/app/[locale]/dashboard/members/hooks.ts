@@ -116,6 +116,8 @@ export function useCreateProgram(fetchPrograms: () => Promise<void>) {
   const [programBenefit, setProgramBenefit] = useState('');
   const [durationUnit, setDurationUnit] = useState<DurationUnit>('month');
   const [durationNumber, setDurationNumber] = useState(12);
+  const [discountPercent, setDiscountPercent] = useState<number | null>(null);
+  const [skipDeposit, setSkipDeposit] = useState(false);
   const [creatingProgram, setCreatingProgram] = useState(false);
 
   const handleCreateProgram = async () => {
@@ -132,6 +134,8 @@ export function useCreateProgram(fetchPrograms: () => Promise<void>) {
           name: programName.trim(),
           benefit_label: programBenefit.trim(),
           duration_months: durationMonths,
+          discount_percent: discountPercent,
+          skip_deposit: skipDeposit,
         }),
       });
 
@@ -141,6 +145,8 @@ export function useCreateProgram(fetchPrograms: () => Promise<void>) {
         setProgramBenefit('');
         setDurationUnit('month');
         setDurationNumber(12);
+        setDiscountPercent(null);
+        setSkipDeposit(false);
         await fetchPrograms();
       }
     } catch (error) {
@@ -155,6 +161,8 @@ export function useCreateProgram(fetchPrograms: () => Promise<void>) {
     setProgramBenefit('');
     setDurationUnit('month');
     setDurationNumber(12);
+    setDiscountPercent(null);
+    setSkipDeposit(false);
   };
 
   return {
@@ -168,6 +176,10 @@ export function useCreateProgram(fetchPrograms: () => Promise<void>) {
     setDurationUnit,
     durationNumber,
     setDurationNumber,
+    discountPercent,
+    setDiscountPercent,
+    skipDeposit,
+    setSkipDeposit,
     creatingProgram,
     handleCreateProgram,
     closeCreateModal,

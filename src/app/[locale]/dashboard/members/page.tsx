@@ -45,7 +45,7 @@ export default function MembersPage() {
   if (data.loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
       </div>
     );
   }
@@ -89,10 +89,10 @@ export default function MembersPage() {
           </button>
           <Button
             onClick={() => createProgram.setCreateProgramOpen(true)}
-            className="bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm"
           >
-            <Plus className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">{t('newProgram')}</span>
+            <Plus className="w-4 h-4 mr-1.5 sm:mr-2" />
+            {t('newProgram')}
           </Button>
         </div>
       </div>
@@ -127,6 +127,10 @@ export default function MembersPage() {
         setDurationUnit={createProgram.setDurationUnit}
         durationNumber={createProgram.durationNumber}
         setDurationNumber={createProgram.setDurationNumber}
+        discountPercent={createProgram.discountPercent}
+        setDiscountPercent={createProgram.setDiscountPercent}
+        skipDeposit={createProgram.skipDeposit}
+        setSkipDeposit={createProgram.setSkipDeposit}
         creatingProgram={createProgram.creatingProgram}
         onCreateProgram={createProgram.handleCreateProgram}
       />

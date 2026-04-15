@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import { z } from 'zod';
 import logger from '@/lib/logger';
+
+const updateProgramSchema = z.object({
+  name: z.string().min(1).optional(),
+  benefit_label: z.string().min(1).optional(),
+  duration_months: z.number().min(0.01).max(999).optional(),
+  is_active: z.boolean().optional(),
+  discount_percent: z.number().int().refine(v => [5, 10, 15, 20].includes(v)).nullable().optional(),
+  skip_deposit: z.boolean().optional(),
+}).strict();
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -91,13 +101,15 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { name, benefit_label, duration_months, is_active } = body;
+    const validation = updateProgramSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 });
+    }
 
     const updateData: Record<string, unknown> = {};
-    if (name !== undefined) updateData.name = name;
-    if (benefit_label !== undefined) updateData.benefit_label = benefit_label;
-    if (duration_months !== undefined) updateData.duration_months = duration_months;
-    if (is_active !== undefined) updateData.is_active = is_active;
+    for (const [key, value] of Object.entries(validation.data)) {
+      if (value !== undefined) updateData[key] = value;
+    }
 
     const { data: program, error } = await supabaseAdmin
       .from('member_programs')
