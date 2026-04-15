@@ -33,7 +33,6 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
 import {
   HistorySection,
   ExclusiveOffer,
-  MemberCardModal,
   InstallPrompts,
   ReviewModal,
   ReviewCard,
@@ -163,7 +162,6 @@ export default function CustomerCardPage({
 
   // Member card state
   const [memberCard, setMemberCard] = useState<MemberCard | null>(null);
-  const [showMemberCardModal, setShowMemberCardModal] = useState(false);
 
   const [isMobile, setIsMobile] = useState(false);
 
@@ -813,7 +811,7 @@ export default function CustomerCardPage({
         isPreview={isPreview}
         isDemo={isDemo}
         merchantId={merchantId}
-        onShowMemberCard={() => setShowMemberCardModal(true)}
+        onShowMemberCard={() => document.getElementById('member-badge')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
       />
 
       <main className={`flex-1 px-4 w-full max-w-lg mx-auto z-10 ${showInstallBar ? 'pb-28' : 'pb-12'}`}>
@@ -1123,45 +1121,55 @@ export default function CustomerCardPage({
           onSelectVoucher={(v) => { setSelectedVoucher(v); setShowVoucherDetail(true); }}
         />
 
-        {/* Member Card Badge — dark premium card */}
+        {/* Member Card Badge — clean inline */}
         {memberCard && isMemberCardActive && (
-          <motion.button
+          <motion.div
+            id="member-badge"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setShowMemberCardModal(true)}
-            className="relative w-full mb-4 group"
+            className="w-full mb-4"
           >
-            <div
-              className="relative flex items-center gap-3.5 p-4 bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 rounded-2xl overflow-hidden shadow-lg shadow-zinc-900/20"
-              style={{ border: '1px solid rgba(251,191,36,0.12)' }}
-            >
-              {/* Shimmer sweep */}
-              <motion.div
-                animate={{ x: ['-200%', '200%'] }}
-                transition={{ duration: 3, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }}
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 pointer-events-none"
-              />
-              {/* Gold ambient glow */}
-              <div className="absolute inset-0 pointer-events-none" style={{
-                background: 'radial-gradient(ellipse at 15% 50%, rgba(251,191,36,0.06) 0%, transparent 60%)'
-              }} />
+            <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100/80 p-4">
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
+                    <Crown className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">{memberCard.program?.name}</p>
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t('privilegeMember')}</p>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                  {t('memberActive')}
+                </span>
+              </div>
 
-              <div className="relative z-10 w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/25 shrink-0">
-                <Crown className="w-5 h-5 text-white" />
-              </div>
-              <div className="relative z-10 flex-1 min-w-0 text-left">
-                <p className="text-amber-400 text-[10px] font-bold uppercase tracking-[0.15em]">{t('privilegeMember')}</p>
-                <p className="text-white/60 text-xs font-medium truncate mt-0.5">{memberCard.program?.benefit_label}</p>
-              </div>
-              <ChevronRight className="relative z-10 w-4 h-4 text-amber-500/40 shrink-0" />
+              {(memberCard.program?.discount_percent || memberCard.program?.skip_deposit || memberCard.program?.benefit_label) && (
+                <div className="flex flex-wrap gap-1.5 mb-2.5">
+                  {!!memberCard.program?.discount_percent && (
+                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-50 border border-emerald-100 text-emerald-700">
+                      -{memberCard.program.discount_percent}%
+                    </span>
+                  )}
+                  {memberCard.program?.skip_deposit && (
+                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-violet-50 border border-violet-100 text-violet-700">
+                      {t('memberSkipDeposit')}
+                    </span>
+                  )}
+                  {memberCard.program?.benefit_label && (
+                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-50 border border-indigo-100 text-indigo-700">
+                      {memberCard.program.benefit_label}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              <p className="text-[10px] text-gray-400">
+                {t('memberValidUntil')} {new Date(memberCard.valid_until).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
             </div>
-            {isPreview && (
-              <div className="absolute top-2.5 right-2.5 z-20 bg-black/60 backdrop-blur-sm text-[9px] font-bold text-white/80 px-2 py-0.5 rounded-full">
-                {t('example')}
-              </div>
-            )}
-          </motion.button>
+          </motion.div>
         )}
 
         {/* Contest Badge */}
@@ -1293,18 +1301,6 @@ export default function CustomerCardPage({
           : undefined}
         country={merchant.country}
       />
-
-      {/* Member Card Modal */}
-      {memberCard && (
-        <MemberCardModal
-          isOpen={showMemberCardModal}
-          onClose={() => setShowMemberCardModal(false)}
-          memberCard={memberCard}
-          merchant={merchant}
-          customerFirstName={card?.customer?.first_name}
-          customerLastName={card?.customer?.last_name}
-        />
-      )}
 
       {/* Push modals, toasts, and install prompts — at root level for correct fixed positioning */}
       <InstallPrompts

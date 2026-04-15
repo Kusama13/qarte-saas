@@ -2,7 +2,6 @@ export { MerchantSettingsForm, type LoyaltySettings } from './MerchantSettingsFo
 export { ClientScanView } from './ClientScanView';
 export { default as HistorySection } from './HistorySection';
 export { default as ExclusiveOffer } from './ExclusiveOffer';
-export { default as MemberCardModal } from './MemberCardModal';
 export { default as InstallPrompts } from './InstallPrompts';
 export { default as ScanSuccessStep } from './ScanSuccessStep';
 export { default as StampsSection } from './StampsSection';

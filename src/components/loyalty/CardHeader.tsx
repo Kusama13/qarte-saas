@@ -95,7 +95,7 @@ export default function CardHeader({
                   onClick={onShowMemberCard}
                   className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all"
                 >
-                  <Crown className="w-3 h-3 text-amber-300" />
+                  <Crown className="w-3 h-3 text-indigo-300" />
                   <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">{t('memberVip')}</span>
                 </motion.button>
               )}
