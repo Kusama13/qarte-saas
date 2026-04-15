@@ -121,7 +121,7 @@ export function useCreateProgram(fetchPrograms: () => Promise<void>) {
   const [creatingProgram, setCreatingProgram] = useState(false);
 
   const handleCreateProgram = async () => {
-    if (!programName.trim() || !programBenefit.trim() || durationNumber < 1) return;
+    if (!programName.trim() || durationNumber < 1 || (!discountPercent && !skipDeposit && !programBenefit.trim())) return;
 
     setCreatingProgram(true);
     try {
@@ -132,7 +132,7 @@ export function useCreateProgram(fetchPrograms: () => Promise<void>) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: programName.trim(),
-          benefit_label: programBenefit.trim(),
+          benefit_label: programBenefit.trim() || '',
           duration_months: durationMonths,
           discount_percent: discountPercent,
           skip_deposit: skipDeposit,

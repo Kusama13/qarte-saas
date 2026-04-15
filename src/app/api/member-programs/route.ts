@@ -7,7 +7,7 @@ const supabaseAdmin = getSupabaseAdmin();
 
 const createProgramSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
-  benefit_label: z.string().min(1, "L'avantage est requis"),
+  benefit_label: z.string().max(200).optional().default(''),
   // Allow any positive duration: days (0.033+), weeks (0.25+), months (1+)
   duration_months: z.number().min(0.01).max(999).default(12),
   discount_percent: z.number().int().refine(v => [5, 10, 15, 20].includes(v)).nullable().optional(),

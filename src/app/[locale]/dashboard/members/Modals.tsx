@@ -185,7 +185,7 @@ export function CreateProgramModal({
 
         <Button
           onClick={onCreateProgram}
-          disabled={!programName.trim() || durationNumber < 1 || creatingProgram}
+          disabled={!programName.trim() || durationNumber < 1 || (!discountPercent && !skipDeposit && !programBenefit.trim()) || creatingProgram}
           className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-11"
         >
           {creatingProgram ? (
