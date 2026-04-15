@@ -42,3 +42,4 @@ export { ReferralPromoEmail } from './ReferralPromoEmail';
 export { ReferralReminderEmail } from './ReferralReminderEmail';
 export { SocialProofEmail } from './SocialProofEmail';
 export { SlotReleasedEmail } from './SlotReleasedEmail';
+export { AmbassadorWelcomeEmail } from './AmbassadorWelcomeEmail';

@@ -834,6 +834,28 @@ Single-row table : id, content (TEXT, default ''), updated_at
 **Note** : UNIQUE sur slug cree un index implicite, pas d'index supplementaire
 **Lien merchants** : `merchants.signup_source = 'affiliate_{slug}'`
 
+### 2.40 ambassador_applications (mig 110)
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| first_name | TEXT | NOT NULL | |
+| last_name | TEXT | NOT NULL | |
+| email | TEXT | NOT NULL | UNIQUE partiel WHERE status='pending' |
+| phone | TEXT | NULL | |
+| profile_type | TEXT | NOT NULL | CHECK IN ('influencer','trainer','family_friend','sales_rep','other') |
+| message | TEXT | NOT NULL | |
+| requested_slug | TEXT | NULL | Code souhaite par l'ambassadeur |
+| status | TEXT | `'pending'` | CHECK IN ('pending','approved','rejected') |
+| affiliate_id | UUID FK → affiliate_links | NULL | ON DELETE SET NULL, lie a l'approbation |
+| created_at | TIMESTAMPTZ | `NOW()` | |
+| reviewed_at | TIMESTAMPTZ | NULL | Date approbation/refus |
+| notes | TEXT | NULL | Notes admin |
+
+**RLS** : active, aucune policy (service_role only)
+**Index** : `idx_ambassador_app_status (status, created_at DESC)` + `idx_ambassador_app_email_pending (email) WHERE status='pending'` (UNIQUE partiel anti-spam)
+**Flow** : candidature pending → admin approve → insert `affiliate_links` + set `affiliate_id` + email bienvenue
+
 ---
 
 ## 3. Colonnes date — Regles imperatives
@@ -1099,6 +1121,8 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 105 | monthly_contest | Colonnes `contest_enabled` BOOLEAN + `contest_prize` TEXT sur `merchants`. Table `merchant_contests` (tirage au sort mensuel) avec UNIQUE(merchant_id, contest_month) |
 | 106 | churn_survey | Table `merchant_churn_surveys` (questionnaire de retention post-J+3) + colonne `churn_survey_seen_at` TIMESTAMPTZ sur `merchants` (posee a la completion seulement, pas au skip) |
 | 107 | email_deliverability | Colonnes `email_bounced_at` + `email_unsubscribed_at` TIMESTAMPTZ sur `merchants`. Index partiels. Fonction RPC `get_user_id_by_email(target_email)` pour lookup auth.users par email (utilise par webhook Resend) |
+| 109 | member_program_benefits | `member_programs` : +`discount_percent` INTEGER NULL CHECK(5,10,15,20), +`skip_deposit` BOOLEAN DEFAULT false |
+| 110 | ambassador_applications | Table `ambassador_applications` (candidatures ambassadeur : first/last name, email, phone, profile_type, message, requested_slug, status pending/approved/rejected, affiliate_id FK, reviewed_at). Index status+date, UNIQUE partiel email pending. RLS sans policy (service_role) |
 
 ---
 

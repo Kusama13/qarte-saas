@@ -5,7 +5,6 @@ import { Link } from '@/i18n/navigation';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
-import LocaleSwitcher from '@/components/shared/LocaleSwitcher';
 import { Star } from 'lucide-react';
 
 export function FooterCta() {
@@ -112,6 +111,30 @@ export function FooterDark() {
                   {t('privacy')}
                 </Link>
               </li>
+              <li>
+                <Link href="/ambassadeur" className="text-gray-300 hover:text-white transition-colors text-sm underline underline-offset-4 decoration-gray-600 hover:decoration-white">
+                  {t('ambassador')}
+                </Link>
+              </li>
+            </ul>
+
+            <h3 className="font-semibold text-lg mt-8 mb-4">{t('alternatives')}</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link href="/compare/planity" className="text-gray-300 hover:text-white transition-colors text-sm underline underline-offset-4 decoration-gray-600 hover:decoration-white">
+                  Qarte vs Planity
+                </Link>
+              </li>
+              <li>
+                <Link href="/compare/booksy" className="text-gray-300 hover:text-white transition-colors text-sm underline underline-offset-4 decoration-gray-600 hover:decoration-white">
+                  Qarte vs Booksy
+                </Link>
+              </li>
+              <li>
+                <Link href="/compare/bookinbeautiful" className="text-gray-300 hover:text-white transition-colors text-sm underline underline-offset-4 decoration-gray-600 hover:decoration-white">
+                  Qarte vs Book in Beautiful
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -144,7 +167,6 @@ export function FooterDark() {
               </svg>
               <span>{t('securePayment')}</span>
             </div>
-            {/* <LocaleSwitcher /> */}
           </div>
         </div>
       </div>

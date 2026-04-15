@@ -6,7 +6,7 @@ import { useInView } from '@/hooks/useInView';
 import { Check, X, ArrowRight } from 'lucide-react';
 import { trackCtaClick } from '@/lib/analytics';
 
-type Competitor = 'planity' | 'booksy';
+type Competitor = 'planity' | 'booksy' | 'bookinbeautiful';
 
 interface CompareContentProps {
   competitor: Competitor;
@@ -15,21 +15,23 @@ interface CompareContentProps {
 type FeatureKey = 'booking' | 'loyalty' | 'storefront' | 'sms' | 'google_reviews' | 'referral' | 'welcome_offer' | 'birthday' | 'push' | 'commission' | 'app_download' | 'inactive_reminders' | 'qr_nfc' | 'interconnection';
 
 const FEATURES: Array<{ key: FeatureKey; qarteValue: 'yes' | 'custom'; competitorValue: Record<Competitor, 'yes' | 'no' | 'custom'> }> = [
-  { key: 'booking', qarteValue: 'yes', competitorValue: { planity: 'yes', booksy: 'yes' } },
-  { key: 'loyalty', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no' } },
-  { key: 'storefront', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no' } },
-  { key: 'sms', qarteValue: 'custom', competitorValue: { planity: 'custom', booksy: 'custom' } },
-  { key: 'google_reviews', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no' } },
-  { key: 'referral', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no' } },
-  { key: 'welcome_offer', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no' } },
-  { key: 'birthday', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no' } },
-  { key: 'push', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no' } },
-  { key: 'commission', qarteValue: 'custom', competitorValue: { planity: 'custom', booksy: 'custom' } },
-  { key: 'app_download', qarteValue: 'custom', competitorValue: { planity: 'custom', booksy: 'custom' } },
-  { key: 'inactive_reminders', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no' } },
-  { key: 'qr_nfc', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no' } },
-  { key: 'interconnection', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no' } },
+  { key: 'booking', qarteValue: 'yes', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'yes' } },
+  { key: 'loyalty', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
+  { key: 'storefront', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
+  { key: 'sms', qarteValue: 'custom', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'custom' } },
+  { key: 'google_reviews', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
+  { key: 'referral', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
+  { key: 'welcome_offer', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
+  { key: 'birthday', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
+  { key: 'push', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
+  { key: 'commission', qarteValue: 'custom', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'custom' } },
+  { key: 'app_download', qarteValue: 'custom', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'custom' } },
+  { key: 'inactive_reminders', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
+  { key: 'qr_nfc', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
+  { key: 'interconnection', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
 ];
+
+const FEATURES_BY_KEY = Object.fromEntries(FEATURES.map(f => [f.key, f])) as Record<FeatureKey, (typeof FEATURES)[number]>;
 
 const REASONS = [
   { emoji: '\u2728', key: 'reason1' },
@@ -58,7 +60,7 @@ export default function CompareContent({ competitor }: CompareContentProps) {
   }
 
   function getCompetitorDisplay(key: FeatureKey): { text: string; type: 'yes' | 'no' | 'custom' } {
-    const val = FEATURES.find(f => f.key === key)!.competitorValue[competitor];
+    const val = FEATURES_BY_KEY[key].competitorValue[competitor];
     if (val === 'yes') return { text: t('included'), type: 'yes' };
     if (val === 'no') return { text: t('notIncluded'), type: 'no' };
     if (key === 'sms') return { text: t(`${competitor}_sms`), type: 'custom' };
@@ -79,7 +81,7 @@ export default function CompareContent({ competitor }: CompareContentProps) {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-4">
               {t('heroTitle', { competitor: competitorName })}
             </h1>
-            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-8 leading-relaxed">
+            <p className="text-[1.05rem] md:text-lg lg:text-xl text-gray-800 max-w-2xl mx-auto mb-8 leading-relaxed">
               {t('heroSubtitle', { competitor: competitorName, price: '24\u20AC' })}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -97,11 +99,31 @@ export default function CompareContent({ competitor }: CompareContentProps) {
         </div>
       </section>
 
+      {/* ── TL;DR ── */}
+      <section className="relative py-12 md:py-16 bg-white">
+        <div className="max-w-3xl mx-auto px-6">
+          <div className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 rounded-2xl p-6 md:p-8">
+            <h2 className="text-lg font-bold text-gray-900 mb-3">{t('tldrTitle')}</h2>
+            <p className="text-sm md:text-base text-gray-700 leading-relaxed mb-4">{t(`${competitor}_tldr`, { competitor: competitorName })}</p>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="bg-white rounded-xl p-4 border border-gray-100">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{t('chooseCompetitor', { competitor: competitorName })}</p>
+                <p className="text-sm text-gray-600">{t(`${competitor}_chooseThem`)}</p>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-indigo-100">
+                <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">{t('chooseQarte')}</p>
+                <p className="text-sm text-gray-600">{t('chooseQarteDesc')}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── COMPARISON TABLE ── */}
       <section className="relative py-16 md:py-24 bg-white">
         <div ref={tableRef} className="relative max-w-4xl mx-auto px-6">
           <div className={`text-center mb-12 md:mb-16 ${tableInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-2">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
               {t('tableTitle')}{' '}
               <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
                 {t('tableSubtitle')}
@@ -160,11 +182,47 @@ export default function CompareContent({ competitor }: CompareContentProps) {
         </div>
       </section>
 
+      {/* ── WHO EACH IS BEST FOR ── */}
+      <section className="relative py-16 md:py-24 bg-gradient-to-b from-white to-gray-50">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-2xl p-7 shadow-sm border border-gray-100">
+              <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center mb-4">
+                <span className="text-base font-bold text-gray-500">{competitorName.charAt(0)}</span>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-3">{t('bestForCompetitor', { competitor: competitorName })}</h3>
+              <ul className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                    <Check className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                    {t(`${competitor}_bestFor${i}`)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-white rounded-2xl p-7 shadow-sm border border-indigo-100">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center mb-4">
+                <span className="text-xs font-black text-white">Q</span>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-3">{t('bestForQarte')}</h3>
+              <ul className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                    <Check className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
+                    {t(`qarte_bestFor${i}`)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── WHY QARTE ── */}
       <section className="relative py-16 md:py-24 bg-gradient-to-b from-gray-50 to-white">
         <div ref={whyRef} className="relative max-w-5xl mx-auto px-6">
           <div className={`text-center mb-12 md:mb-16 ${whyInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-2">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
               {t('whyTitle')}{' '}
               <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
                 {t('whyTitleBold')}
@@ -189,7 +247,7 @@ export default function CompareContent({ competitor }: CompareContentProps) {
       <section className="relative py-16 md:py-24 bg-white">
         <div ref={testimonialRef} className="relative max-w-5xl mx-auto px-6">
           <div className={`text-center mb-12 md:mb-16 ${testimonialInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
               {t('testimonialTitle')}
             </h2>
           </div>
@@ -222,7 +280,7 @@ export default function CompareContent({ competitor }: CompareContentProps) {
       <section className="relative py-16 md:py-24 bg-gradient-to-b from-gray-50 to-white">
         <div ref={pricingRef} className="relative max-w-3xl mx-auto px-6">
           <div className={`text-center ${pricingInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-2">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
               {t('pricingTitle')}{' '}
               <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
                 {t('pricingTitleBold')}
@@ -259,7 +317,7 @@ export default function CompareContent({ competitor }: CompareContentProps) {
       <section className="relative py-16 md:py-24 bg-white">
         <div ref={faqRef} className="relative max-w-3xl mx-auto px-6">
           <div className={`text-center mb-12 md:mb-16 ${faqInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-2">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
               {t('faqTitle')}{' '}
               <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
                 {t('faqTitleBold')}
@@ -283,8 +341,8 @@ export default function CompareContent({ competitor }: CompareContentProps) {
       <section className="relative py-16 md:py-24 bg-gradient-to-b from-gray-50 to-white">
         <div ref={finalRef} className="relative max-w-3xl mx-auto px-6 text-center">
           <div className={`${finalInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-3">{t('finalCtaTitle')}</h2>
-            <p className="text-base md:text-xl text-gray-500 mb-8">{t('finalCtaDesc')}</p>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">{t('finalCtaTitle')}</h2>
+            <p className="text-[1.05rem] md:text-lg text-gray-800 mb-8">{t('finalCtaDesc')}</p>
             <Link
               href="/auth/merchant/signup"
               onClick={() => trackCtaClick(`compare_${competitor}_final`, 'compare_final')}

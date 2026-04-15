@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Link2,
   Plus,
@@ -17,6 +17,9 @@ import {
   UserCheck,
   Clock,
   XCircle,
+  Mail,
+  Phone,
+  MessageSquare,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { generateSlug } from '@/lib/utils';
@@ -49,6 +52,30 @@ interface AffiliateLink {
   merchants: AffiliateMerchant[];
 }
 
+interface AmbassadorApplication {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string | null;
+  profile_type: 'influencer' | 'trainer' | 'family_friend' | 'sales_rep' | 'other';
+  message: string;
+  requested_slug: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  affiliate_id: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+  notes: string | null;
+}
+
+const PROFILE_LABELS: Record<string, { label: string; className: string }> = {
+  influencer: { label: 'Influenceur', className: 'bg-violet-100 text-violet-700' },
+  trainer: { label: 'Formateur', className: 'bg-blue-100 text-blue-700' },
+  family_friend: { label: 'Proche', className: 'bg-amber-100 text-amber-700' },
+  sales_rep: { label: 'Commercial', className: 'bg-indigo-100 text-indigo-700' },
+  other: { label: 'Autre', className: 'bg-gray-100 text-gray-600' },
+};
+
 // --- Helpers ---
 
 function statusBadge(status: string) {
@@ -73,6 +100,16 @@ export default function AffiliationPage() {
   const [editingLink, setEditingLink] = useState<AffiliateLink | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Tab + Applications state
+  const [tab, setTab] = useState<'links' | 'applications'>('links');
+  const [applications, setApplications] = useState<AmbassadorApplication[]>([]);
+  const [appLoading, setAppLoading] = useState(false);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [slugOverrides, setSlugOverrides] = useState<Record<string, string>>({});
+
+  const pendingApps: AmbassadorApplication[] = useMemo(() => applications.filter(a => a.status === 'pending'), [applications]);
+  const processedApps: AmbassadorApplication[] = useMemo(() => applications.filter(a => a.status !== 'pending'), [applications]);
 
   // Form state
   const [formName, setFormName] = useState('');
@@ -101,9 +138,74 @@ export default function AffiliationPage() {
     }
   }, [supabase]);
 
+  const fetchApplications = useCallback(async () => {
+    try {
+      setAppLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch('/api/admin/affiliation/applications', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setApplications(data.applications || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch applications:', err);
+    } finally {
+      setAppLoading(false);
+    }
+  }, [supabase]);
+
+  const handleApprove = async (appId: string, customSlug?: string) => {
+    setProcessingId(appId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`/api/admin/affiliation/applications/${appId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(customSlug ? { slug: customSlug } : {}),
+      });
+      if (res.ok) {
+        await Promise.all([fetchApplications(), fetchLinks()]);
+      }
+    } catch (err) {
+      console.error('Failed to approve:', err);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleReject = async (appId: string) => {
+    if (!confirm('Refuser cette candidature ?')) return;
+    setProcessingId(appId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      await fetch(`/api/admin/affiliation/applications/${appId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({}),
+      });
+      await fetchApplications();
+    } catch (err) {
+      console.error('Failed to reject:', err);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   useEffect(() => {
     fetchLinks();
-  }, [fetchLinks]);
+    fetchApplications();
+  }, [fetchLinks, fetchApplications]);
 
   const openCreate = () => {
     setEditingLink(null);
@@ -244,15 +346,171 @@ export default function AffiliationPage() {
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Affiliation</h1>
           <p className="text-sm text-gray-500 mt-1">Liens partenaires et suivi des commissions</p>
         </div>
+        {tab === 'links' && (
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#5167fc] text-white font-semibold text-sm rounded-xl hover:bg-[#4358e0] transition-colors shadow-md shadow-[#5167fc]/20"
+          >
+            <Plus className="w-4 h-4" />
+            Nouveau lien
+          </button>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl">
         <button
-          onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#5167fc] text-white font-semibold text-sm rounded-xl hover:bg-[#4358e0] transition-colors shadow-md shadow-[#5167fc]/20"
+          onClick={() => setTab('links')}
+          className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+            tab === 'links' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}
         >
-          <Plus className="w-4 h-4" />
-          Nouveau lien
+          Liens actifs ({links.length})
+        </button>
+        <button
+          onClick={() => setTab('applications')}
+          className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-colors relative ${
+            tab === 'applications' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Demandes
+          {pendingApps.length > 0 && (
+            <span className="ml-1.5 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-[11px] font-bold rounded-full">
+              {pendingApps.length}
+            </span>
+          )}
         </button>
       </div>
 
+      {/* Applications tab */}
+      {tab === 'applications' && (
+        <div className="space-y-4">
+          {appLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-[#5167fc]" />
+            </div>
+          ) : applications.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
+              <div className="p-4 rounded-2xl bg-gray-50 inline-block mb-4">
+                <Mail className="w-10 h-10 text-gray-300" />
+              </div>
+              <p className="font-semibold text-gray-900">Aucune candidature</p>
+              <p className="text-sm text-gray-500 mt-1">Les candidatures depuis la page ambassadeur apparaitront ici.</p>
+            </div>
+          ) : (
+            <>
+              {/* Pending */}
+              {pendingApps.length > 0 && (
+                <div className="space-y-3">
+                  <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider">En attente</h2>
+                  {pendingApps.map((app) => {
+                    const profile = PROFILE_LABELS[app.profile_type] || PROFILE_LABELS.other;
+                    return (
+                      <div key={app.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h3 className="font-bold text-gray-900">{app.first_name} {app.last_name}</h3>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="flex items-center gap-1 text-xs text-gray-500">
+                                <Mail className="w-3 h-3" />{app.email}
+                              </span>
+                              {app.phone && (
+                                <span className="flex items-center gap-1 text-xs text-gray-500">
+                                  <Phone className="w-3 h-3" />{app.phone}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${profile.className}`}>
+                            {profile.label}
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-2 px-3 py-2.5 bg-gray-50 rounded-xl mb-3">
+                          <MessageSquare className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
+                          <p className="text-sm text-gray-600 leading-relaxed">{app.message}</p>
+                        </div>
+                        {/* Slug */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-[11px] font-semibold text-gray-400 uppercase shrink-0">Code</span>
+                          <div className="flex items-center gap-1 flex-1">
+                            <span className="text-xs text-gray-400">?ref=</span>
+                            <input
+                              type="text"
+                              value={slugOverrides[app.id] ?? app.requested_slug ?? ''}
+                              onChange={(e) => setSlugOverrides(prev => ({ ...prev, [app.id]: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
+                              placeholder="auto-genere"
+                              className="flex-1 px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#5167fc]/30 focus:border-[#5167fc]"
+                              maxLength={30}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-[11px] text-gray-400">
+                            {new Date(app.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleReject(app.id)}
+                              disabled={processingId === app.id}
+                              className="px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              Refuser
+                            </button>
+                            <button
+                              onClick={() => {
+                                const slug = slugOverrides[app.id]?.trim() || app.requested_slug?.trim() || undefined;
+                                handleApprove(app.id, slug || undefined);
+                              }}
+                              disabled={processingId === app.id}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-500 hover:bg-emerald-600 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              {processingId === app.id && <Loader2 className="w-3 h-3 animate-spin" />}
+                              Approuver
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Processed */}
+              {processedApps.length > 0 && (
+                <div className="space-y-3">
+                  <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mt-6">Historique</h2>
+                  {processedApps.map((app) => {
+                    const profile = PROFILE_LABELS[app.profile_type] || PROFILE_LABELS.other;
+                    return (
+                      <div key={app.id} className="bg-white rounded-2xl border border-gray-100 p-4 opacity-70">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="font-semibold text-gray-900 text-sm">{app.first_name} {app.last_name}</span>
+                            <span className="text-xs text-gray-400 ml-2">{app.email}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${profile.className}`}>
+                              {profile.label}
+                            </span>
+                            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                              app.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                            }`}>
+                              {app.status === 'approved' ? 'Approuve' : 'Refuse'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Links tab */}
+      {tab === 'links' && (<>
       {/* Links list */}
       {links.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
@@ -434,6 +692,8 @@ export default function AffiliationPage() {
           })}
         </div>
       )}
+
+      </>)}
 
       {/* Create/Edit Modal */}
       {showModal && (

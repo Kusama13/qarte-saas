@@ -45,6 +45,7 @@ import {
   SlotReleasedEmail,
   PostSurveyFollowUpEmail,
   PostSurveyLastChanceEmail,
+  AmbassadorWelcomeEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import logger from './logger';
@@ -828,4 +829,20 @@ export async function sendSocialProofEmail(
   return sendEmail(to, subj(locale, 'socialProof', { shopName }), SocialProofEmail, { shopName, locale }, {
     logLabel: 'Social proof email',
   });
+}
+
+export async function sendAmbassadorWelcomeEmail(
+  to: string,
+  firstName: string,
+  affiliateSlug: string,
+): Promise<SendEmailResult> {
+  const signupUrl = `https://getqarte.com/auth/merchant/signup?ref=${affiliateSlug}`;
+  const homeUrl = `https://getqarte.com/?ref=${affiliateSlug}`;
+  return sendEmail(
+    to,
+    `${firstName}, voici ton lien ambassadeur Qarte !`,
+    AmbassadorWelcomeEmail,
+    { firstName, affiliateSlug, signupUrl, homeUrl },
+    { logLabel: 'Ambassador welcome email' }
+  );
 }
