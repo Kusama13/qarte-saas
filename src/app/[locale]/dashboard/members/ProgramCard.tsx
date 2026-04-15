@@ -54,9 +54,11 @@ export default function ProgramCard({
           </div>
 
           <div className="flex flex-wrap gap-1.5 mb-3">
-            <span className="inline-flex px-2 py-0.5 rounded bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold uppercase tracking-widest">
-              {program.benefit_label}
-            </span>
+            {!!program.benefit_label && (
+              <span className="inline-flex px-2 py-0.5 rounded bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold uppercase tracking-widest">
+                {program.benefit_label}
+              </span>
+            )}
             {!!program.discount_percent && (
               <span className="inline-flex px-2 py-0.5 rounded bg-emerald-50 border border-emerald-100 text-emerald-700 text-[10px] font-bold">
                 -{program.discount_percent}%

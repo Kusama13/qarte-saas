@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
         .order('adjusted_at', { ascending: false })
         .limit(20),
 
-      // Member card with program info
+      // Member card with program info (active only, best expiry first)
       supabaseAdmin
         .from('member_cards')
         .select(`
@@ -123,12 +123,17 @@ export async function POST(request: NextRequest) {
             id,
             name,
             benefit_label,
+            discount_percent,
+            skip_deposit,
             merchant_id,
             merchant:merchants (shop_name, logo_url, primary_color)
           )
         `)
         .eq('customer_id', customer.id)
         .eq('program.merchant_id', merchantId)
+        .gt('valid_until', new Date().toISOString())
+        .order('valid_until', { ascending: false })
+        .limit(1)
         .maybeSingle(),
 
       // Redemptions

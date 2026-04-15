@@ -184,6 +184,9 @@ export default function BookingModal({
     () => selectedServices.reduce((sum, s) => sum + Number(s.price || 0), 0),
     [selectedServices]
   );
+  const displayPrice = memberBenefit?.discount_percent
+    ? Math.round(totalPrice * (1 - memberBenefit.discount_percent / 100))
+    : totalPrice;
 
   const totalDuration = useMemo(
     () => selectedServices.reduce((sum, s) => sum + (s.duration || 30), 0),
@@ -413,9 +416,14 @@ export default function BookingModal({
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">{t('totalPrice')}</span>
-                      <span className="font-bold text-gray-900">{formatCurrency(totalPrice, country, locale)}</span>
+                      <span className="flex items-center gap-1.5">
+                        {memberBenefit?.discount_percent && totalPrice !== displayPrice && (
+                          <span className="text-xs text-gray-400 line-through">{formatCurrency(totalPrice, country, locale)}</span>
+                        )}
+                        <span className="font-bold text-gray-900">{formatCurrency(displayPrice, country, locale)}</span>
+                      </span>
                     </div>
-                    {merchant.deposit_link && (merchant.deposit_percent || merchant.deposit_amount) && totalPrice > 0 && (() => {
+                    {merchant.deposit_link && (merchant.deposit_percent || merchant.deposit_amount) && totalPrice > 0 && !memberBenefit?.skip_deposit && (() => {
                       const rawDeposit = merchant.deposit_amount
                         ? Number(merchant.deposit_amount)
                         : Math.round(totalPrice * (merchant.deposit_percent || 0) / 100);
