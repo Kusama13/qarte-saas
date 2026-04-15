@@ -577,28 +577,23 @@ export default function CustomersPage() {
                     onClick={() => handleOpenAdjustModal(card)}
                     className="w-full flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/30 active:scale-[0.98] transition-all text-left"
                   >
-                    {/* Avatar */}
-                    <div className={`relative flex items-center justify-center w-9 h-9 text-sm font-bold text-white rounded-lg shrink-0 ${
-                      isPushSubscriber
-                        ? 'bg-gradient-to-br from-amber-500 to-orange-500'
-                        : 'bg-gradient-to-br from-indigo-600 to-violet-600'
-                    }`}>
-                      {card.customer?.first_name?.charAt(0) || 'C'}
-                      {badge && (
-                        <div className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 border-[1.5px] border-white rounded-full ${isTier2Ready ? 'bg-violet-500' : 'bg-green-500'}`} />
-                      )}
-                      {isPushSubscriber && !badge && (
-                        <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-white rounded-full flex items-center justify-center shadow-sm">
-                          <Bell className="w-2 h-2 text-amber-500" />
-                        </div>
-                      )}
-                    </div>
+                    {/* Status dot */}
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${
+                      isTier2Ready ? 'bg-violet-500' :
+                      isTier1Ready ? 'bg-emerald-500' :
+                      'bg-gray-200'
+                    }`} />
 
                     {/* Name + badge */}
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-gray-900 truncate">
-                        {card.customer?.first_name} {card.customer?.last_name}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {card.customer?.first_name} {card.customer?.last_name}
+                        </p>
+                        {isPushSubscriber && (
+                          <Bell className="w-3 h-3 text-amber-500 shrink-0" />
+                        )}
+                      </div>
                       {badge && (
                         <span className={`inline-flex items-center px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded ${badge.color}`}>
                           {badge.text}
@@ -714,22 +709,12 @@ export default function CustomersPage() {
                     return (
                       <tr key={card.id} className="group hover:bg-indigo-50/30 transition-all duration-200 cursor-pointer" onClick={() => handleOpenAdjustModal(card)}>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-4">
-                            <div className={`relative flex items-center justify-center w-10 h-10 font-bold text-white rounded-xl shadow-md group-hover:scale-105 transition-transform ${
-                              isPushSubscriber
-                                ? 'bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-100'
-                                : 'bg-gradient-to-br from-indigo-600 to-violet-600 shadow-indigo-100'
-                            }`}>
-                              {card.customer?.first_name?.charAt(0) || 'C'}
-                              {badge && (
-                                <div className={`absolute -top-1 -right-1 w-3 h-3 border-2 border-white rounded-full animate-pulse ${isTier2Ready ? 'bg-violet-500' : 'bg-green-500'}`} />
-                              )}
-                              {isPushSubscriber && !badge && (
-                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow">
-                                  <Bell className="w-2.5 h-2.5 text-amber-500" />
-                                </div>
-                              )}
-                            </div>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                              isTier2Ready ? 'bg-violet-500' :
+                              isTier1Ready ? 'bg-emerald-500' :
+                              'bg-gray-200'
+                            }`} />
                             <div>
                               <div className="flex items-center gap-2">
                                 <p className="font-semibold text-gray-900">
