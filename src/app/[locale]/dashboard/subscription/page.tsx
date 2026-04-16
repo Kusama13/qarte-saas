@@ -262,6 +262,17 @@ export default function SubscriptionPage() {
     }
   };
 
+  const handleOpenCancelFlow = async () => {
+    setShowSaveOffer(true);
+    if (merchant && !cancelStats) {
+      const [custRes, visitRes] = await Promise.all([
+        supabase.from('customers').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
+        supabase.from('visits').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id).eq('status', 'confirmed'),
+      ]);
+      setCancelStats({ customers: custRes.count || 0, visits: visitRes.count || 0 });
+    }
+  };
+
   const handleSubscribe = async () => {
     setSubscribing(true);
     try {
@@ -645,18 +656,19 @@ export default function SubscriptionPage() {
                   <p className="text-xs text-gray-500 text-center mt-2">{t('pastDueCtaHint')}</p>
                 </>
               ) : (
-                <Button variant="outline" className="w-full h-11 rounded-2xl text-gray-500 border-gray-200 hover:text-gray-700 hover:border-gray-300 font-medium text-sm" onClick={async () => {
-                  setShowSaveOffer(true);
-                  if (merchant && !cancelStats) {
-                    const [custRes, visitRes] = await Promise.all([
-                      supabase.from('customers').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
-                      supabase.from('visits').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id).eq('status', 'confirmed'),
-                    ]);
-                    setCancelStats({ customers: custRes.count || 0, visits: visitRes.count || 0 });
-                  }
-                }} loading={loadingPortal}>
-                  {t('manageSubscription')}
-                </Button>
+                <>
+                  <Button className="w-full h-11 rounded-2xl font-bold" onClick={handleOpenPortal} loading={loadingPortal}>
+                    {t('manageSubscription')}
+                  </Button>
+                  <p className="text-xs text-gray-500 text-center mt-2">{t('manageSubscriptionHint')}</p>
+                  <button
+                    type="button"
+                    className="w-full mt-4 text-xs text-gray-400 hover:text-gray-600 font-medium underline underline-offset-2 transition-colors"
+                    onClick={handleOpenCancelFlow}
+                  >
+                    {t('cancelSubscription')}
+                  </button>
+                </>
               )}
             </div>
           ) : (

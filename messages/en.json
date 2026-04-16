@@ -1507,6 +1507,8 @@
     "cancelCancellation": "Cancel cancellation",
     "updatePayment": "Update payment",
     "manageSubscription": "Manage my subscription",
+    "manageSubscriptionHint": "Card, invoices, subscription",
+    "cancelSubscription": "Cancel my subscription",
     "securePayment": "Secure payment",
     "securePaymentDesc": "Via Stripe · No commitment",
     "socialProof": "400+ beauty professionals already build loyalty with Qarte.",

@@ -1507,6 +1507,8 @@
     "cancelCancellation": "Annuler la résiliation",
     "updatePayment": "Mettre à jour le paiement",
     "manageSubscription": "Gérer mon abonnement",
+    "manageSubscriptionHint": "Carte bancaire, factures, abonnement",
+    "cancelSubscription": "Annuler mon abonnement",
     "securePayment": "Paiement sécurisé",
     "securePaymentDesc": "Via Stripe · Sans engagement",
     "socialProof": "400+ pros de la beaut\u00e9 fid\u00e9lisent d\u00e9j\u00e0 avec Qarte.",

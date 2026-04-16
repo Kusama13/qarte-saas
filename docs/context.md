@@ -572,6 +572,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Reassurance sous CTA (icones ShieldCheck/Check/CreditCard) visible all screens
 - Textes explicatifs sous CTAs canceled ("Tes clients ne peuvent plus tamponner") et past_due
 - Countdown trial, syncing indicator, billing card avec methode paiement
+- **Bouton "Gerer mon abonnement"** (etat `active`) → ouvre directement le **portail Stripe** (`handleOpenPortal`) pour gerer carte bancaire, factures, abonnement. Sous-texte "Carte bancaire, factures, abonnement". Lien discret en dessous "Annuler mon abonnement" (underline gris) → declenche le save-offer modal (`handleOpenCancelFlow`). Anciennement le bouton "Gerer" ouvrait directement le flow d'annulation, ce qui empechait les pros de changer leur carte.
 
 ---
 
@@ -596,7 +597,7 @@ TrialEndingEmail (J-2 uniquement — etait J-3 + J-1), TrialExpiredEmail (J+1 un
 SubscriptionConfirmedEmail, PaymentFailedEmail (4 steps dunning: J+0 webhook, J+3/J+7/J+10 cron — ton escalade progressif), SubscriptionCanceledEmail, SubscriptionReactivatedEmail, ReactivationEmail (J+7/14/30), **ReferralPromoEmail (J+2 post-abonnement — "Gagne 10€ par pro recommande", lien `?ref={slug}`)**, **ReferralReminderEmail (J+14 et J+30 post-abo, tracking -316/-317, uniquement si 0 referrals)**
 
 ### Cancel flow — Save offer
-Modal dans `/dashboard/subscription` : quand le merchant clique "Gerer", questionnaire raison d'annulation (6 choix). Si "trop cher" → offre 2 mois offerts avec code `2MOISQARTEPRO25`. Churn survey post-expiration → 3 mois offerts avec code `3MOISQARTEPRO25` (remplace QARTEPRO10)
+Modal dans `/dashboard/subscription` : quand le merchant clique sur le lien discret "Annuler mon abonnement", questionnaire raison d'annulation (6 choix). Si "trop cher" → offre 2 mois offerts avec code `2MOISQARTEPRO25`. Churn survey post-expiration → 3 mois offerts avec code `3MOISQARTEPRO25` (remplace QARTEPRO10)
 
 ### Autres
 BirthdayNotificationEmail, GracePeriodSetupEmail, ProductUpdateEmail, AnnouncementMaPageEmail, WinBackEmail (envoi manuel admin), BookingNotificationEmail (transactionnel), SlotReleasedEmail (acompte non recu — cron evening/morning-jobs)
