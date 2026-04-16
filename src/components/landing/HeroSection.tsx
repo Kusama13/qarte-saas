@@ -2,6 +2,11 @@
 
 import {
   ChevronDown,
+  CalendarCheck,
+  UserPlus,
+  Heart,
+  Gift,
+  MessageSquare,
 } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
@@ -35,8 +40,8 @@ function LoyaltyCardMockup({ t }: { t: (key: string) => string }) {
       <div className="px-3.5 pt-1.5 pb-1">
         <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-200/60 rounded-xl p-2.5 shadow-sm">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-lg flex items-center justify-center flex-shrink-0 text-xs">
-              {'\uD83D\uDCC5'}
+            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-lg flex items-center justify-center flex-shrink-0">
+              <CalendarCheck className="w-4 h-4 text-white" strokeWidth={2.5} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[8px] font-bold text-gray-400 uppercase tracking-wider">{t('mockupNextBooking')}</p>
@@ -51,8 +56,8 @@ function LoyaltyCardMockup({ t }: { t: (key: string) => string }) {
       <div className="px-3.5 pt-1 pb-1">
         <div className="bg-gradient-to-r from-violet-50 to-pink-50 border border-violet-200/60 rounded-xl p-2.5 shadow-sm">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0 text-xs">
-              {'\uD83D\uDC65'}
+            <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
+              <UserPlus className="w-4 h-4 text-white" strokeWidth={2.5} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-extrabold text-gray-900">{t('mockupReferralTitle')}</p>
@@ -79,7 +84,7 @@ function LoyaltyCardMockup({ t }: { t: (key: string) => string }) {
                   : 'bg-gray-50 border-2 border-dashed border-gray-200'
               }`}>
                 {i < 7 ? (
-                  <span className="text-[8px]">{'\u2764\uFE0F'}</span>
+                  <Heart className="w-2.5 h-2.5 text-white fill-white" strokeWidth={2.5} />
                 ) : (
                   <span className="text-[8px] font-bold text-gray-300">{i + 1}</span>
                 )}
@@ -98,8 +103,8 @@ function LoyaltyCardMockup({ t }: { t: (key: string) => string }) {
       <div className="px-3.5 py-1.5">
         <div className="bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200/60 rounded-xl p-2.5 shadow-sm">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-rose-400 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0 text-sm">
-              {'\uD83C\uDF81'}
+            <div className="w-8 h-8 bg-gradient-to-br from-rose-400 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Gift className="w-4 h-4 text-white" strokeWidth={2.5} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-extrabold text-gray-900">{t('mockupReward')}</p>
@@ -197,6 +202,27 @@ export function HeroSection() {
             {/* Phone facing front */}
               <div className="relative w-[280px] h-[570px]">
                 <LoyaltyCardMockup t={t} />
+
+                {/* Floating SMS reminder notification — centered above phone on mobile, sticks out left on desktop */}
+                <div
+                  className="absolute z-20 w-[210px] sm:w-[230px] bg-white rounded-2xl shadow-xl shadow-gray-900/15 border border-gray-100 p-3 animate-float-subtle
+                             -top-12 left-1/2 -translate-x-1/2
+                             sm:-top-6 sm:left-auto sm:-right-2 md:-right-4 lg:-left-44 lg:right-auto lg:translate-x-0"
+                  style={{ animationDelay: '0.6s' }}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="w-7 h-7 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <MessageSquare className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-bold text-gray-900 leading-tight">{t('mockupSmsHeader')}</p>
+                      <p className="text-[8px] text-gray-400 leading-tight">{t('mockupSmsTime')}</p>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-gray-700 leading-snug">
+                    {t('mockupSmsBody')}
+                  </p>
+                </div>
               </div>
           </div>
         </div>

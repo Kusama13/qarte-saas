@@ -636,6 +636,7 @@ Hero titre : "Remplis ton salon, fidélise tes clientes" + part 2 gradient "sans
 Hero subtitle : "Un lien à mettre en bio Insta, les résas en direct, la carte de fidélité pour chaque cliente. Tout compris, sans commission sur les acomptes, sans supplément SMS."
 Hero CTAs : "Essai gratuit en 2 min" (primary, glassmorphism violet) — un seul CTA. "Voir la demo" supprime du hero
 Hero badges features VOC : 4 pilules blanches — "Ton lien en bio", "0% commission", "SMS inclus", "Fidélité auto" (vs anciens generiques Vitrine/Resa/Fidelite/SMS)
+Hero mockup : `LoyaltyCardMockup` (vue cliente, phone 280×570) avec **icones Lucide** (CalendarCheck, UserPlus, Heart, Gift) au lieu d'emojis pour meilleure lisibilite. **Badge SMS flottant** en overlay (texte exact du template `src/lib/sms.ts:reminder_j1` : "Rappel : RDV demain à 14h30 chez Elodie Nails Studio. Cumulez vos points fidélité lors de votre passage !") — responsive : centre au-dessus du phone sur mobile, droite sur sm/md, gauche sur lg+ pour eviter clipping.
 Footer badge Google Reviews : logo Google couleur + 5 etoiles + "5.0 sur Google" — sous "Concu avec amour a Marseille par Tenga Labs" dans FooterDark
 
 SocialProof bandeau : "Plus d'un millier de **pros de la beaute** attirent et **fidelisent** avec Qarte" — mots cles en indigo-600
