@@ -13,6 +13,26 @@ import { compressOfferImage } from '@/lib/image-compression';
 import { timeToMinutes, minutesToTime, roundUp5, formatDuration, getSlotServiceIds, colorBorderStyle, computeDepositAmount } from './utils';
 import type { BookingDraft, ServiceWithDuration } from './usePlanningState';
 
+function TabButton({ active, onClick, icon, label, badge }: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  badge?: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 transition-colors ${active ? 'bg-indigo-50 text-indigo-700' : 'text-gray-500 hover:bg-gray-50'}`}
+    >
+      {icon}
+      <span className="text-xs font-semibold">{label}</span>
+      {badge}
+    </button>
+  );
+}
+
 interface BookingDetailsModalProps {
   slot: PlanningSlot;
   customer: CustomerSearchResult | null;
@@ -79,8 +99,7 @@ export default function BookingDetailsModal({
   onFetchClientHistory,
 }: BookingDetailsModalProps) {
   const t = useTranslations('planning');
-  const [showPhotos, setShowPhotos] = useState(false);
-  const [showNotes, setShowNotes] = useState(false);
+  const [activeTab, setActiveTab] = useState<'photos' | 'notes' | 'history' | null>(null);
   const [localPhotos, setLocalPhotos] = useState(slot.planning_slot_photos || []);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoSuccess, setPhotoSuccess] = useState(false);
@@ -93,7 +112,6 @@ export default function BookingDetailsModal({
 
   const [clientHistory, setClientHistory] = useState<PlanningSlot[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
   const historyFetchedFor = useRef<string | null>(null);
 
   const [pinnedNotes, setPinnedNotes] = useState<Array<{ id: string; content: string; note_type: string }>>([]);
@@ -145,7 +163,7 @@ export default function BookingDetailsModal({
   const [freeModeLoading, setFreeModeLoading] = useState(false);
 
   useEffect(() => {
-    if (showHistory && draft.customerId && historyFetchedFor.current !== draft.customerId) {
+    if (activeTab === 'history' && draft.customerId && historyFetchedFor.current !== draft.customerId) {
       historyFetchedFor.current = draft.customerId;
       setHistoryLoading(true);
       onFetchClientHistory(draft.customerId).then(slots => {
@@ -154,7 +172,7 @@ export default function BookingDetailsModal({
         ).slice(0, 10));
       }).catch(() => {}).finally(() => setHistoryLoading(false));
     }
-  }, [showHistory, draft.customerId, slot.id, onFetchClientHistory]);
+  }, [activeTab, draft.customerId, slot.id, onFetchClientHistory]);
 
   useEffect(() => {
     if (draft.customerId && pinnedFetchedFor.current !== draft.customerId) {
@@ -625,160 +643,140 @@ export default function BookingDetailsModal({
             </div>
           )}
 
-          {/* ── Collapsible: Photos avant / apres ── */}
+          {/* ── Unified tabs: Photos · Notes · Historique ── */}
           <div className="border border-gray-100 rounded-xl overflow-hidden">
-            <button
-              onClick={() => setShowPhotos(!showPhotos)}
-              className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Camera className="w-3.5 h-3.5 text-gray-400" />
-                <span className="text-xs font-semibold text-gray-600">{t('photosSection')}</span>
-                {(localPhotos.length + localResultPhotos.length) > 0 && (
-                  <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
-                    {localPhotos.length + localResultPhotos.length}
-                  </span>
-                )}
-                {(photoSuccess || resultPhotoSuccess) && (
-                  <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{t('photoUploaded')}</span>
-                )}
-              </div>
-              <ChevronDown className={`w-4 h-4 text-gray-300 transition-transform ${showPhotos ? 'rotate-180' : ''}`} />
-            </button>
-            {showPhotos && (
-              <div className="px-3 pb-3 space-y-3 border-t border-gray-100 pt-3">
-                {/* Inspiration photos */}
-                <div>
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('inspirationPhotos')}</p>
-                  <div className="flex gap-2">
-                    {localPhotos.map(photo => (
-                      <div key={photo.id} className="relative group">
-                        <img src={photo.url} alt="" className="w-20 h-20 object-cover rounded-xl border border-gray-200" loading="lazy" />
-                        <button onClick={() => handleDeletePhoto(photo.id)} className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                    {localPhotos.length < 3 && (
-                      <button onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto} className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-300 hover:border-indigo-300 hover:text-indigo-400 transition-colors disabled:opacity-50">
-                        {uploadingPhoto ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImagePlus className="w-5 h-5" />}
-                      </button>
-                    )}
-                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-                  </div>
-                </div>
-                {/* Result photos */}
-                <div>
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('resultPhotos')}</p>
-                  <div className="flex gap-2">
-                    {localResultPhotos.map(photo => (
-                      <div key={photo.id} className="relative group">
-                        <img src={photo.url} alt="" className="w-20 h-20 object-cover rounded-xl border border-gray-200" loading="lazy" />
-                        <button onClick={() => handleDeleteResultPhoto(photo.id)} className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                    {localResultPhotos.length < 3 && (
-                      <button onClick={() => resultFileInputRef.current?.click()} disabled={uploadingResultPhoto} className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-300 hover:border-indigo-300 hover:text-indigo-400 transition-colors disabled:opacity-50">
-                        {uploadingResultPhoto ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImagePlus className="w-5 h-5" />}
-                      </button>
-                    )}
-                    <input ref={resultFileInputRef} type="file" accept="image/*" onChange={handleResultPhotoUpload} className="hidden" />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ── Collapsible: Notes ── */}
-          <div className="border border-gray-100 rounded-xl overflow-hidden">
-            <button
-              onClick={() => setShowNotes(!showNotes)}
-              className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <StickyNote className="w-3.5 h-3.5 text-gray-400" />
-                <span className="text-xs font-semibold text-gray-600">{t('notesLabel')}</span>
-                {draft.notes && <span className="text-[10px] text-gray-400 truncate max-w-[150px]">{draft.notes}</span>}
-              </div>
-              <ChevronDown className={`w-4 h-4 text-gray-300 transition-transform ${showNotes ? 'rotate-180' : ''}`} />
-            </button>
-            {showNotes && (
-              <div className="px-3 pb-3 border-t border-gray-100 pt-3">
-                <textarea
-                  value={draft.notes}
-                  onChange={(e) => onDraftChange({ notes: e.target.value })}
-                  placeholder={t('notesPlaceholder')}
-                  maxLength={300}
-                  rows={2}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none"
+            <div className="flex divide-x divide-gray-100">
+              <TabButton
+                active={activeTab === 'photos'}
+                onClick={() => setActiveTab(prev => prev === 'photos' ? null : 'photos')}
+                icon={<Camera className="w-3.5 h-3.5" />}
+                label={t('photosSection')}
+                badge={(photoSuccess || resultPhotoSuccess) ? (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                ) : (localPhotos.length + localResultPhotos.length) > 0 ? (
+                  <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 rounded-full tabular-nums">{localPhotos.length + localResultPhotos.length}</span>
+                ) : null}
+              />
+              <TabButton
+                active={activeTab === 'notes'}
+                onClick={() => setActiveTab(prev => prev === 'notes' ? null : 'notes')}
+                icon={<StickyNote className="w-3.5 h-3.5" />}
+                label={t('notesLabel')}
+                badge={draft.notes?.trim() ? <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" /> : null}
+              />
+              {draft.customerId && (
+                <TabButton
+                  active={activeTab === 'history'}
+                  onClick={() => setActiveTab(prev => prev === 'history' ? null : 'history')}
+                  icon={<History className="w-3.5 h-3.5" />}
+                  label={t('clientHistory')}
                 />
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* ── Collapsible: Historique client ── */}
-          {draft.customerId && (
-            <div className="border border-gray-100 rounded-xl overflow-hidden">
-              <button
-                onClick={() => setShowHistory(!showHistory)}
-                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <History className="w-3.5 h-3.5 text-gray-400" />
-                  <span className="text-xs font-semibold text-gray-600">{t('clientHistory')}</span>
-                </div>
-                <ChevronDown className={`w-4 h-4 text-gray-300 transition-transform ${showHistory ? 'rotate-180' : ''}`} />
-              </button>
-              {showHistory && (
-                <div className="px-3 pb-3 border-t border-gray-100 pt-3">
-                  {historyLoading ? (
-                    <div className="flex items-center justify-center py-3"><Loader2 className="w-4 h-4 animate-spin text-gray-400" /></div>
-                  ) : clientHistory.length === 0 ? (
-                    <p className="text-xs text-gray-400 text-center py-2">{t('noHistory')}</p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {clientHistory.map(h => {
-                        const svcIds = getSlotServiceIds(h);
-                        const svcNames = svcIds.map(id => serviceMap.get(id)?.name).filter(Boolean).join(', ');
-                        const histDate = new Date(h.slot_date + 'T12:00:00');
-                        const histResultPhotos = h.planning_slot_result_photos || [];
-                        return (
-                          <div key={h.id} className="px-2.5 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
-                            <div className="flex items-center justify-between">
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs font-bold text-gray-700">{histDate.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })}</span>
-                                  <span className="text-[11px] text-gray-400">{formatTime(h.start_time, locale)}</span>
-                                </div>
-                                {svcNames && <p className="text-[10px] text-gray-400">{svcNames}</p>}
+            {activeTab === 'photos' && (
+                  <div className="px-3 pb-3 space-y-3 border-t border-gray-100 pt-3">
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('inspirationPhotos')}</p>
+                      <div className="flex gap-2">
+                        {localPhotos.map(photo => (
+                          <div key={photo.id} className="relative group">
+                            <img src={photo.url} alt="" className="w-20 h-20 object-cover rounded-xl border border-gray-200" loading="lazy" />
+                            <button onClick={() => handleDeletePhoto(photo.id)} className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                        {localPhotos.length < 3 && (
+                          <button onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto} className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-300 hover:border-indigo-300 hover:text-indigo-400 transition-colors disabled:opacity-50">
+                            {uploadingPhoto ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImagePlus className="w-5 h-5" />}
+                          </button>
+                        )}
+                        <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('resultPhotos')}</p>
+                      <div className="flex gap-2">
+                        {localResultPhotos.map(photo => (
+                          <div key={photo.id} className="relative group">
+                            <img src={photo.url} alt="" className="w-20 h-20 object-cover rounded-xl border border-gray-200" loading="lazy" />
+                            <button onClick={() => handleDeleteResultPhoto(photo.id)} className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                        {localResultPhotos.length < 3 && (
+                          <button onClick={() => resultFileInputRef.current?.click()} disabled={uploadingResultPhoto} className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-300 hover:border-indigo-300 hover:text-indigo-400 transition-colors disabled:opacity-50">
+                            {uploadingResultPhoto ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImagePlus className="w-5 h-5" />}
+                          </button>
+                        )}
+                        <input ref={resultFileInputRef} type="file" accept="image/*" onChange={handleResultPhotoUpload} className="hidden" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'notes' && (
+                  <div className="px-3 pb-3 border-t border-gray-100 pt-3">
+                    <textarea
+                      value={draft.notes}
+                      onChange={(e) => onDraftChange({ notes: e.target.value })}
+                      placeholder={t('notesPlaceholder')}
+                      maxLength={300}
+                      rows={2}
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none"
+                    />
+                  </div>
+                )}
+
+            {activeTab === 'history' && draft.customerId && (
+              <div className="px-3 pb-3 border-t border-gray-100 pt-3">
+                {historyLoading ? (
+                  <div className="flex items-center justify-center py-3"><Loader2 className="w-4 h-4 animate-spin text-gray-400" /></div>
+                ) : clientHistory.length === 0 ? (
+                  <p className="text-xs text-gray-400 text-center py-2">{t('noHistory')}</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {clientHistory.map(h => {
+                      const svcIds = getSlotServiceIds(h);
+                      const svcNames = svcIds.map(id => serviceMap.get(id)?.name).filter(Boolean).join(', ');
+                      const histDate = new Date(h.slot_date + 'T12:00:00');
+                      const histResultPhotos = h.planning_slot_result_photos || [];
+                      return (
+                        <div key={h.id} className="px-2.5 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
+                          <div className="flex items-center justify-between">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-gray-700">{histDate.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })}</span>
+                                <span className="text-[11px] text-gray-400">{formatTime(h.start_time, locale)}</span>
                               </div>
-                              {svcIds.length > 0 && (
-                                <div className="flex gap-0.5">
-                                  {svcIds.slice(0, 3).map(id => {
-                                    const color = serviceColorMap.get(id);
-                                    return color ? <div key={id} className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} /> : null;
-                                  })}
-                                </div>
-                              )}
+                              {svcNames && <p className="text-[10px] text-gray-400">{svcNames}</p>}
                             </div>
-                            {histResultPhotos.length > 0 && (
-                              <div className="flex gap-1.5 mt-1.5">
-                                {histResultPhotos.map(p => (
-                                  <img key={p.id} src={p.url} alt="" className="w-8 h-8 object-cover rounded-lg border border-gray-200" loading="lazy" />
-                                ))}
+                            {svcIds.length > 0 && (
+                              <div className="flex gap-0.5">
+                                {svcIds.slice(0, 3).map(id => {
+                                  const color = serviceColorMap.get(id);
+                                  return color ? <div key={id} className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} /> : null;
+                                })}
                               </div>
                             )}
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+                          {histResultPhotos.length > 0 && (
+                            <div className="flex gap-1.5 mt-1.5">
+                              {histResultPhotos.map(p => (
+                                <img key={p.id} src={p.url} alt="" className="w-8 h-8 object-cover rounded-lg border border-gray-200" loading="lazy" />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Footer actions */}

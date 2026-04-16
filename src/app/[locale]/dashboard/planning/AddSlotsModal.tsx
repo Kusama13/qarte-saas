@@ -1,11 +1,11 @@
 'use client';
 
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, CalendarPlus } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { motion } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
-import { formatTime, toBCP47 } from '@/lib/utils';
-import { QUICK_TIMES } from './utils';
+import { formatTime } from '@/lib/utils';
+import { QUICK_TIMES, formatDateLong } from './utils';
+import PlanningModal, { ModalHeader, ModalFooter } from './PlanningModal';
 
 interface AddSlotsModalProps {
   addSlotsDay: string;
@@ -35,6 +35,8 @@ export default function AddSlotsModal({
   const MAX_SLOTS_PER_BATCH = 20;
   const atLimit = selectedTimes.length >= MAX_SLOTS_PER_BATCH;
 
+  const dateLabel = formatDateLong(new Date(addSlotsDay + 'T00:00:00'), locale);
+
   const toggleTime = (time: string) => {
     setSelectedTimes(prev => {
       if (prev.includes(time)) return prev.filter(t => t !== time);
@@ -53,30 +55,22 @@ export default function AddSlotsModal({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-2xl w-full sm:max-w-md p-5 shadow-xl max-h-[85vh] overflow-y-auto"
-      >
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="text-base font-bold text-gray-900">{t('addSlotsTitle')}</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg"><X className="w-4 h-4 text-gray-400" /></button>
-        </div>
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-xs text-gray-400 capitalize">
-            {new Date(addSlotsDay + 'T00:00:00').toLocaleDateString(toBCP47(locale), { weekday: 'long', day: 'numeric', month: 'long' })}
-          </p>
-          <span className={`text-[11px] font-semibold tabular-nums ${atLimit ? 'text-amber-600' : 'text-gray-400'}`}>
+    <PlanningModal onClose={onClose} size="md">
+      <ModalHeader
+        title={t('addSlotsTitle')}
+        subtitle={dateLabel}
+        icon={<CalendarPlus className="w-4 h-4" />}
+        iconTint="indigo"
+        badge={(
+          <span className={`shrink-0 text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-md ${atLimit ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>
             {selectedTimes.length}/{MAX_SLOTS_PER_BATCH}
           </span>
-        </div>
+        )}
+        onClose={onClose}
+      />
 
-        <div className="grid grid-cols-4 gap-2 mb-4">
+      <div className="p-4 space-y-3">
+        <div className="grid grid-cols-4 gap-2">
           {QUICK_TIMES.map(time => {
             const selected = selectedTimes.includes(time);
             const exists = (slotsByDate.get(addSlotsDay) || []).some(s => s.start_time === time);
@@ -94,23 +88,29 @@ export default function AddSlotsModal({
           })}
         </div>
 
-        <div className="flex gap-2 mb-2">
-          <input type="time" value={customTime} onChange={(e) => setCustomTime(e.target.value)} className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30" disabled={atLimit} />
+        <div className="flex gap-2">
+          <input
+            type="time"
+            value={customTime}
+            onChange={(e) => setCustomTime(e.target.value)}
+            className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+            disabled={atLimit}
+          />
           <button
             onClick={addCustomTime}
             disabled={!customTime || atLimit}
-            className="px-3 py-2 text-xs font-semibold bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-40"
+            className="px-3 py-2 text-xs font-bold bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-40"
           >
             {t('addCustomTime')}
           </button>
         </div>
 
         {atLimit && (
-          <p className="text-[11px] text-amber-600 mb-3">{t('maxSlotsReached', { max: MAX_SLOTS_PER_BATCH })}</p>
+          <p className="text-[11px] text-amber-600">{t('maxSlotsReached', { max: MAX_SLOTS_PER_BATCH })}</p>
         )}
 
         {selectedTimes.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
+          <div className="flex flex-wrap gap-1.5">
             {selectedTimes.sort().map(time => (
               <span key={time} className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-medium rounded-full">
                 {formatTime(time, locale)}
@@ -119,15 +119,23 @@ export default function AddSlotsModal({
             ))}
           </div>
         )}
+      </div>
 
+      <ModalFooter>
+        <button
+          onClick={onClose}
+          className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200 transition-colors"
+        >
+          {t('blockSlotCancel')}
+        </button>
         <button
           onClick={onSave}
           disabled={saving || selectedTimes.length === 0}
-          className="mx-auto block px-8 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50"
+          className="flex-[2] py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : (selectedTimes.length > 1 ? t('createSlotsPlural', { count: selectedTimes.length }) : t('createSlots', { count: selectedTimes.length }))}
         </button>
-      </motion.div>
-    </motion.div>
+      </ModalFooter>
+    </PlanningModal>
   );
 }

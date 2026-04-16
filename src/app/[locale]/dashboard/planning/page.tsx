@@ -24,6 +24,7 @@ import BookingDetailsModal from './BookingDetailsModal';
 import ReservationsSection from './ReservationsSection';
 import DayView from './DayView';
 import WeekView from './WeekView';
+import PlanningModal, { ModalHeader, ModalFooter } from './PlanningModal';
 
 const VIEW_MODE_KEY = 'qarte_planning_view';
 
@@ -1701,7 +1702,7 @@ export default function PlanningDashboard() {
                           body: JSON.stringify({ customer_id: id, merchant_id: merchant?.id, type: 'offer', offer_id: manualGrantOfferId }) }).catch(() => {});
                       }
                     }} disabled={creatingCustomer}
-                      className="flex items-center justify-center gap-2 mx-auto px-6 py-2.5 rounded-xl border-2 border-dashed border-emerald-300 text-emerald-600 text-xs font-semibold hover:bg-emerald-50 transition-colors disabled:opacity-50">
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50">
                       {creatingCustomer
                         ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {t('creating')}</>
                         : <><UserPlus className="w-3.5 h-3.5" /> {t('createAsNewClient', { name: draft.clientName.trim().split(' ')[0] })}</>
@@ -1766,13 +1767,13 @@ export default function PlanningDashboard() {
                   {manualStep === 1 ? (
                     <>
                       <button onClick={() => setShowManualBookingModal(false)}
-                        className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-sm font-semibold hover:bg-gray-200 transition-colors">
+                        className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200 transition-colors">
                         {t('blockSlotCancel')}
                       </button>
                       <button
                         onClick={() => setManualStep(2)}
                         disabled={!manualDate || !manualStartTime || manualServiceIds.length === 0 || !!manualConflict}
-                        className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
                         {t('next')}
                       </button>
@@ -1782,14 +1783,14 @@ export default function PlanningDashboard() {
                       <button
                         onClick={() => setManualStep(1)}
                         disabled={savingManual}
-                        className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-sm font-semibold hover:bg-gray-200 transition-colors"
+                        className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200 transition-colors"
                       >
                         {t('back')}
                       </button>
                       <button
                         onClick={() => handleManualBookingSubmit()}
                         disabled={savingManual || !manualDate || !draft.clientName.trim()}
-                        className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
                         {savingManual ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : t('confirmBooking')}
                       </button>
@@ -1803,17 +1804,16 @@ export default function PlanningDashboard() {
       </AnimatePresence>
 
       {/* ── MODAL: Block slot/period (unified) ── */}
-      {showBlockModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowBlockModal(false)}>
-          <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-5" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
-                <Lock className="w-4 h-4 text-gray-600" />
-              </div>
-              <h3 className="text-sm font-bold text-gray-900">{t('blockSlotTitle')}</h3>
-            </div>
-            <div className="space-y-3">
-              {/* Dates */}
+      <AnimatePresence>
+        {showBlockModal && (
+          <PlanningModal onClose={() => setShowBlockModal(false)} size="sm">
+            <ModalHeader
+              title={t('blockSlotTitle')}
+              icon={<Lock className="w-4 h-4" />}
+              iconTint="gray"
+              onClose={() => setShowBlockModal(false)}
+            />
+            <div className="p-4 space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">{t('blockSlotDate')}</label>
@@ -1822,7 +1822,7 @@ export default function PlanningDashboard() {
                     value={blockDate}
                     min={todayStr}
                     onChange={e => { setBlockDate(e.target.value); if (blockEndDate && blockEndDate < e.target.value) setBlockEndDate(''); }}
-                    className="mt-1 w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+                    className="mt-1 w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                   />
                 </div>
                 <div>
@@ -1832,12 +1832,11 @@ export default function PlanningDashboard() {
                     value={blockEndDate}
                     min={blockDate || todayStr}
                     onChange={e => setBlockEndDate(e.target.value)}
-                    className="mt-1 w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+                    className="mt-1 w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                   />
                 </div>
               </div>
 
-              {/* All day toggle */}
               <label className="flex items-center gap-2.5 cursor-pointer">
                 <input
                   type="checkbox"
@@ -1848,7 +1847,6 @@ export default function PlanningDashboard() {
                 <span className="text-sm text-gray-700 font-medium">{t('blockAllDay')}</span>
               </label>
 
-              {/* Times — hidden when all day */}
               {!blockAllDay && (
                 <div className="flex gap-2">
                   <div className="flex-1">
@@ -1857,7 +1855,7 @@ export default function PlanningDashboard() {
                       type="time"
                       value={blockStartTime}
                       onChange={e => setBlockStartTime(e.target.value)}
-                      className="mt-1 w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+                      className="mt-1 w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                     />
                   </div>
                   <div className="flex-1">
@@ -1866,13 +1864,12 @@ export default function PlanningDashboard() {
                       type="time"
                       value={blockEndTime}
                       onChange={e => setBlockEndTime(e.target.value)}
-                      className="mt-1 w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+                      className="mt-1 w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                     />
                   </div>
                 </div>
               )}
 
-              {/* Reason */}
               <div>
                 <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">{t('blockSlotReason')}</label>
                 <input
@@ -1881,71 +1878,78 @@ export default function PlanningDashboard() {
                   onChange={e => setBlockReason(e.target.value)}
                   placeholder={t('blockSlotReasonPlaceholder')}
                   maxLength={100}
-                  className="mt-1 w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+                  className="mt-1 w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                 />
               </div>
             </div>
-            <div className="flex gap-2 mt-5">
-              <button onClick={() => setShowBlockModal(false)} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-sm font-semibold hover:bg-gray-200 transition-colors">
+            <ModalFooter>
+              <button onClick={() => setShowBlockModal(false)} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200 transition-colors">
                 {t('blockSlotCancel')}
               </button>
               <button
                 onClick={handleBlockSubmit}
                 disabled={savingBlock || !blockDate || (!blockAllDay && blockStartTime >= blockEndTime)}
-                className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {savingBlock ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : t('blockSlotCta')}
               </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </ModalFooter>
+          </PlanningModal>
+        )}
+      </AnimatePresence>
 
       {/* ── CONFIRM: Delete blocked slot ── */}
-      {confirmDeleteBlock && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setConfirmDeleteBlock(null)}>
-          <div className="w-full max-w-xs bg-white rounded-2xl shadow-xl p-5" onClick={e => e.stopPropagation()}>
-            <p className="text-sm font-semibold text-gray-900 text-center mb-1">{t('blockSlotDeleteConfirm')}</p>
-            <p className="text-xs text-gray-400 text-center mb-4">{t('blockSlotDeleteHint')}</p>
-            <div className="flex gap-2">
-              <button onClick={() => setConfirmDeleteBlock(null)} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-sm font-semibold">
+      <AnimatePresence>
+        {confirmDeleteBlock && (
+          <PlanningModal onClose={() => setConfirmDeleteBlock(null)} size="sm">
+            <ModalHeader
+              title={t('blockSlotDeleteConfirm')}
+              subtitle={t('blockSlotDeleteHint')}
+              icon={<AlertTriangle className="w-4 h-4" />}
+              iconTint="red"
+              onClose={() => setConfirmDeleteBlock(null)}
+            />
+            <ModalFooter>
+              <button onClick={() => setConfirmDeleteBlock(null)} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200 transition-colors">
                 {t('blockSlotCancel')}
               </button>
               <button
                 onClick={async () => { await handleDeleteSlot(confirmDeleteBlock); setConfirmDeleteBlock(null); }}
-                className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors"
+                className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors"
               >
                 {t('delete')}
               </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </ModalFooter>
+          </PlanningModal>
+        )}
+      </AnimatePresence>
 
       {/* ── CONFIRM: Mode switch ── */}
-      {modeSwitchTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setModeSwitchTarget(null)}>
-          <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-5" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-4 h-4 text-amber-600" />
-              </div>
-              <h3 className="text-sm font-bold text-gray-900">{t('modeSwitchTitle')}</h3>
+      <AnimatePresence>
+        {modeSwitchTarget && (
+          <PlanningModal onClose={() => setModeSwitchTarget(null)} size="sm">
+            <ModalHeader
+              title={t('modeSwitchTitle')}
+              icon={<AlertTriangle className="w-4 h-4" />}
+              iconTint="amber"
+              onClose={() => setModeSwitchTarget(null)}
+            />
+            <div className="p-4">
+              <p className="text-xs text-gray-600 leading-relaxed">
+                {modeSwitchTarget === 'free' ? t('modeSwitchToFreeWarning') : t('modeSwitchToSlotsWarning')}
+              </p>
             </div>
-            <p className="text-xs text-gray-600 leading-relaxed mb-4">
-              {modeSwitchTarget === 'free' ? t('modeSwitchToFreeWarning') : t('modeSwitchToSlotsWarning')}
-            </p>
-            <div className="flex gap-2">
-              <button onClick={() => setModeSwitchTarget(null)} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-sm font-semibold hover:bg-gray-200 transition-colors">
+            <ModalFooter>
+              <button onClick={() => setModeSwitchTarget(null)} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200 transition-colors">
                 {t('modeSwitchCancel')}
               </button>
-              <button onClick={confirmModeSwitch} className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors">
+              <button onClick={confirmModeSwitch} className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors">
                 {t('modeSwitchConfirm', { mode: modeSwitchTarget === 'free' ? t('bookingModeFree') : t('bookingModeSlots') })}
               </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </ModalFooter>
+          </PlanningModal>
+        )}
+      </AnimatePresence>
 
       {/* ── MODAL: Client select (Modal 1) ── */}
       <AnimatePresence>

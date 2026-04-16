@@ -5,7 +5,7 @@ import { CalendarDays, Clock, ChevronRight, Wallet } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot } from '@/types';
 import { formatTime, toBCP47, formatCurrency } from '@/lib/utils';
-import { getSlotServiceIds, formatDate, colorBorderStyle } from './utils';
+import { getSlotServiceIds, formatDate, colorBorderStyle, endTimeFromStart, formatDateLong } from './utils';
 import type { ServiceWithDuration } from './usePlanningState';
 
 interface ReservationsSectionProps {
@@ -64,14 +64,13 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
       arr.sort((a, b) => a.start_time.localeCompare(b.start_time));
     }
 
-    const bcp47 = toBCP47(locale);
     const upcoming: DayGroup[] = [];
     const past: DayGroup[] = [];
 
     const sortedDates = [...groups.keys()].sort();
     for (const date of sortedDates) {
       const d = new Date(date + 'T12:00:00');
-      const label = d.toLocaleDateString(bcp47, { weekday: 'long', day: 'numeric', month: 'long' });
+      const label = formatDateLong(d, locale);
       const isToday = date === todayStr;
       const isPast = date < todayStr;
       const group: DayGroup = { date, label, isToday, isPast, slots: groups.get(date)! };
@@ -193,9 +192,16 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
               style={colorBorderStyle(slotColors[0])}
             >
               <div className="flex items-center gap-3 min-w-0">
-                <span className={`shrink-0 text-sm font-bold tabular-nums w-14 ${group.isPast ? 'text-gray-400' : 'text-indigo-600'}`}>
-                  {formatTime(slot.start_time, locale)}
-                </span>
+                <div className="shrink-0 w-14 flex flex-col leading-tight tabular-nums">
+                  <span className={`text-sm font-bold ${group.isPast ? 'text-gray-400' : 'text-indigo-600'}`}>
+                    {formatTime(slot.start_time, locale)}
+                  </span>
+                  {duration !== null && duration > 0 && (
+                    <span className={`text-sm font-semibold ${group.isPast ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {formatTime(endTimeFromStart(slot.start_time, duration), locale)}
+                    </span>
+                  )}
+                </div>
                 <div className="min-w-0">
                   <p className={`text-sm font-semibold ${group.isPast ? 'text-gray-500' : 'text-gray-800'}`}>{slot.client_name}</p>
                   {serviceNames && (

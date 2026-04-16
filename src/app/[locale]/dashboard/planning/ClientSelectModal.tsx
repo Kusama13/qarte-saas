@@ -345,7 +345,7 @@ export default function ClientSelectModal({
             <button
               onClick={handleCreateAndProceed}
               disabled={creatingCustomer}
-              className="flex items-center justify-center gap-2 mx-auto px-6 py-2.5 rounded-xl border-2 border-dashed border-emerald-300 text-emerald-600 text-xs font-semibold hover:bg-emerald-50 transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50"
             >
               {creatingCustomer ? (
                 <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {t('creating')}</>
@@ -357,11 +357,11 @@ export default function ClientSelectModal({
         </div>
 
         {/* Footer buttons */}
-        <div className="p-4 border-t border-gray-100 flex justify-center gap-2">
+        <div className="p-4 border-t border-gray-100 flex gap-2">
           {onDelete && (
             <button
               onClick={onDelete}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors"
+              className="flex-1 py-2.5 rounded-xl bg-white border border-red-200 text-red-600 text-xs font-bold hover:bg-red-50 hover:border-red-300 transition-colors"
             >
               {t('deleteSlot')}
             </button>
@@ -369,7 +369,7 @@ export default function ClientSelectModal({
           {!hasClient && draft.clientPhone.trim().length < 6 && (
             <button
               onClick={handleSkip}
-              className="px-5 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
+              className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200 transition-colors"
             >
               {t('skipClient')}
             </button>
@@ -377,7 +377,7 @@ export default function ClientSelectModal({
           {hasClient && (
             <button
               onClick={handleProceedWithClient}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
+              className="flex-[2] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
             >
               {t('nextStep')}
               <ArrowRight className="w-3.5 h-3.5" />

@@ -46,6 +46,16 @@ export function roundUp5(m: number): number {
   return Math.ceil(m / 5) * 5;
 }
 
+/** "HH:MM" start + duration → "HH:MM" end */
+export function endTimeFromStart(start: string, durationMinutes: number): string {
+  return minutesToTime(timeToMinutes(start) + durationMinutes);
+}
+
+/** "lundi 6 janvier" — long weekday + day + long month */
+export function formatDateLong(d: Date, locale: string = 'fr'): string {
+  return d.toLocaleDateString(toBCP47(locale), { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
 /** Format minutes as "Xh Ymin" */
 export function formatDuration(totalMinutes: number): string {
   const h = Math.floor(totalMinutes / 60);
