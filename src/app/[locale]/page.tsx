@@ -13,65 +13,13 @@ import {
 import ClientShell from '@/components/landing/ClientShell';
 import { LazyFideliteSection, LazyFAQSection } from '@/components/landing/LazySections';
 
-const organizationJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: 'Qarte',
-  url: 'https://getqarte.com',
-  logo: 'https://getqarte.com/icons/icon-512x512.png',
-  description: 'Plateforme tout-en-un pour les pros de la beauté : réservation en ligne, fidélité et vitrine SEO.',
-  sameAs: [
-    'https://www.instagram.com/getqarte',
-    'https://www.tiktok.com/@getqarte',
-  ],
-  contactPoint: {
-    '@type': 'ContactPoint',
-    contactType: 'customer service',
-    url: 'https://wa.me/33607447420',
-    availableLanguage: 'French',
-  },
-  address: {
-    '@type': 'PostalAddress',
-    streetAddress: '58 rue de Monceau, CS 48756',
-    addressLocality: 'Paris',
-    postalCode: '75380',
-    addressCountry: 'FR',
-  },
-};
-
-const websiteJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: 'Qarte',
-  url: 'https://getqarte.com',
-};
-
-const softwareJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: 'Qarte',
-  applicationCategory: 'BusinessApplication',
-  operatingSystem: 'Web',
-  url: 'https://getqarte.com',
-  offers: {
-    '@type': 'Offer',
-    price: '24',
-    priceCurrency: 'EUR',
-    priceValidUntil: '2027-12-31',
-    url: 'https://getqarte.com/#pricing',
-  },
-  description: 'Réservation en ligne, programme de fidélité et vitrine SEO pour les salons de beauté.',
-};
+// JSON-LD (Organization, WebSite, SoftwareApplication with AggregateRating + Reviews)
+// is emitted from the root layout (src/app/layout.tsx) as a single @graph.
 
 export default function LandingPageV4() {
   return (
     <>
       <ClientShell />
-
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify([organizationJsonLd, websiteJsonLd, softwareJsonLd]) }}
-      />
 
       <main className="overflow-hidden">
         <HeroSection />

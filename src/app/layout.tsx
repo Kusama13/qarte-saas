@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans, Playfair_Display, Poppins } from 'next/font/google';
-import { getLocale } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import './globals.css';
 import { Analytics } from '@vercel/analytics/react';
 
@@ -10,82 +10,67 @@ const poppins = Poppins({ subsets: ['latin'], weight: ['600', '700', '800', '900
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
 
-export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocale();
+// EN is 301-redirected to FR (middleware.ts) — metadata is FR-only.
+// Short title (<60 chars) for SERP display. Description <160 chars for full snippet.
+const TITLE = 'Qarte — Réservation & fidélité pour salons de beauté';
+const DESCRIPTION = 'Réservation en ligne sans commission, programme de fidélité digital et vitrine SEO pour salons, instituts, ongleries et barbershops. Essai gratuit 7 jours.';
 
-  const isEn = locale === 'en';
-
-  const title = isEn
-    ? 'Qarte — Online booking, loyalty & salon page for beauty pros'
-    : 'Qarte — Réservation en ligne, fidélité et vitrine pour salons de beauté';
-
-  const description = isEn
-    ? 'Online booking with 0% commission, digital loyalty program and SEO salon page. Each client who books gets their loyalty card automatically. Free trial.'
-    : 'Réservation en ligne 0% commission, programme de fidélité et vitrine SEO pour salons de beauté. Chaque cliente qui réserve reçoit sa carte de fidélité. Essai gratuit.';
-
-  const ogDescription = isEn
-    ? 'Online booking with 0% commission, digital loyalty program and SEO salon page. Each client who books gets their loyalty card automatically. Free trial.'
-    : 'Réservation en ligne 0% commission, programme de fidélité et vitrine SEO pour salons de beauté. Chaque cliente qui réserve reçoit sa carte de fidélité. Essai gratuit.';
-
-  const twitterDescription = isEn
-    ? 'Online booking with 0% commission, digital loyalty program and SEO salon page. Each client who books gets their loyalty card automatically. Free trial.'
-    : 'Réservation en ligne 0% commission, programme de fidélité et vitrine SEO pour salons de beauté. Chaque cliente qui réserve reçoit sa carte de fidélité. Essai gratuit.';
-
-  const keywords = isEn
-    ? ['online booking beauty salon', 'beauty salon booking system', 'digital loyalty card', 'loyalty program hair salon', 'beauty client retention', 'QR code loyalty', 'salon page', 'hair salon', 'barber', 'nail studio', 'beauty salon', 'Google reviews salon', 'online scheduling hair salon', 'commission free booking']
-    : ['réservation en ligne salon de beauté', 'planning en ligne coiffeur', 'carte de fidélité digitale', 'programme fidélité coiffeur', 'fidélisation client beauté', 'QR code fidélité', 'vitrine en ligne coiffeur', 'salon de coiffure', 'barbier', 'onglerie', 'institut de beauté', 'avis Google salon', 'réservation sans commission', 'lien en bio salon de beauté'];
-
-  return {
-    metadataBase: new URL(baseUrl),
-    title: {
-      default: title,
-      template: '%s | Qarte',
+export const metadata: Metadata = {
+  metadataBase: new URL(baseUrl),
+  title: {
+    default: TITLE,
+    template: '%s | Qarte',
+  },
+  description: DESCRIPTION,
+  authors: [{ name: 'Qarte' }],
+  creator: 'Qarte',
+  publisher: 'Qarte',
+  icons: {
+    icon: '/icon-192.png',
+    apple: '/icon-192.png',
+  },
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: baseUrl,
+    siteName: 'Qarte',
+    type: 'website',
+    locale: 'fr_FR',
+    images: ['/opengraph-image'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ['/opengraph-image'],
+  },
+  alternates: {
+    canonical: baseUrl,
+    languages: {
+      fr: baseUrl,
+      'x-default': baseUrl,
     },
-    description,
-    keywords,
-    authors: [{ name: 'Qarte' }],
-    creator: 'Qarte',
-    publisher: 'Qarte',
-    icons: {
-      icon: '/icon-192.png',
-      apple: '/icon-192.png',
-    },
-    formatDetection: {
-      email: false,
-      address: false,
-      telephone: false,
-    },
-    openGraph: {
-      title,
-      description: ogDescription,
-      url: baseUrl,
-      siteName: 'Qarte',
-      type: 'website',
-      locale: isEn ? 'en_US' : 'fr_FR',
-      images: ['/opengraph-image'],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description: twitterDescription,
-      images: ['/opengraph-image'],
-    },
-    robots: {
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
       index: true,
       follow: true,
-      googleBot: {
-        index: true,
-        follow: true,
-        'max-video-preview': -1,
-        'max-image-preview': 'large',
-        'max-snippet': -1,
-      },
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
     },
-    verification: {
-      google: '2d98KO9ugpwse3o2e6RoYmVp1SAH9JaqokhbGbLjW3c',
-    },
-  };
-}
+  },
+  verification: {
+    google: '2d98KO9ugpwse3o2e6RoYmVp1SAH9JaqokhbGbLjW3c',
+  },
+};
 
 export default async function RootLayout({
   children,
@@ -93,14 +78,91 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'testimonials' });
 
-  const orgDescription = locale === 'en'
-    ? 'Salon page and loyalty program for beauty pros. Services, photos, schedule, Google reviews and client retention. For hair salons, barbers, nail studios and beauty salons.'
-    : 'Vitrine digitale et programme de fidélité pour salons de beauté. Prestations, photos, planning, avis Google et fidélisation client. Pour coiffeurs, barbiers, ongleries et instituts.';
+  // Build Review array from i18n testimonials (5 reviews)
+  const reviews = [1, 2, 3, 4, 5].map((i) => ({
+    '@type': 'Review',
+    reviewRating: {
+      '@type': 'Rating',
+      ratingValue: t(`t${i}Rating`),
+      bestRating: '5',
+    },
+    author: { '@type': 'Person', name: t(`t${i}Name`) },
+    reviewBody: t(`t${i}Text`),
+  }));
 
-  const appDescription = locale === 'en'
-    ? 'One link to showcase everything (bio, services, schedule, photos) + digital loyalty program (QR code, stamps, cashback, push notifications). No app to download.'
-    : 'Un seul lien pour tout montrer (bio, prestations, planning, photos) + programme de fidélité digital (QR code, tampons, cagnotte, notifications push). Sans application à télécharger.';
+  // Average rating from the 5 testimonials (5.0 + 5.0 + 4.9 + 5.0 + 4.8) / 5 = 4.94
+  const ratingValues = [1, 2, 3, 4, 5].map((i) => parseFloat(t(`t${i}Rating`)));
+  const avgRating = (ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length).toFixed(1);
+
+  // Single @graph JSON-LD — Organization + WebSite + SoftwareApplication with aggregateRating + reviews
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': `${baseUrl}/#organization`,
+        name: 'Qarte',
+        url: baseUrl,
+        logo: `${baseUrl}/icon-512.png`,
+        description: 'Plateforme tout-en-un pour les professionnels de la beauté : réservation en ligne, fidélité et vitrine SEO.',
+        contactPoint: {
+          '@type': 'ContactPoint',
+          contactType: 'customer service',
+          url: 'https://wa.me/33607447420',
+          availableLanguage: ['French'],
+        },
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: '58 rue de Monceau, CS 48756',
+          addressLocality: 'Paris',
+          postalCode: '75380',
+          addressCountry: 'FR',
+        },
+        sameAs: [
+          'https://www.instagram.com/getqarte',
+          'https://www.facebook.com/getqarte',
+          'https://www.tiktok.com/@getqarte',
+        ],
+      },
+      {
+        '@type': 'WebSite',
+        '@id': `${baseUrl}/#website`,
+        url: baseUrl,
+        name: 'Qarte',
+        publisher: { '@id': `${baseUrl}/#organization` },
+        inLanguage: 'fr-FR',
+      },
+      {
+        '@type': 'SoftwareApplication',
+        '@id': `${baseUrl}/#software`,
+        name: 'Qarte',
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Web',
+        url: baseUrl,
+        description: 'Réservation en ligne sans commission, programme de fidélité digital (tampons + cagnotte) et vitrine SEO pour salons de beauté.',
+        offers: {
+          '@type': 'Offer',
+          price: '24',
+          priceCurrency: 'EUR',
+          priceValidUntil: '2026-12-31',
+          url: `${baseUrl}/#pricing`,
+          availability: 'https://schema.org/InStock',
+        },
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: avgRating,
+          bestRating: '5',
+          ratingCount: String(reviews.length),
+          reviewCount: String(reviews.length),
+        },
+        review: reviews,
+        publisher: { '@id': `${baseUrl}/#organization` },
+        availableLanguage: ['French'],
+      },
+    ],
+  };
 
   return (
     <html lang={locale} translate="no" className={`${plusJakarta.variable} ${playfair.variable} ${poppins.variable} notranslate`}>
@@ -129,57 +191,14 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
-        {/* Hreflang alternate links */}
+        {/* Hreflang — FR only (EN redirects to FR via middleware) */}
         <link rel="alternate" hrefLang="fr" href={baseUrl} />
-        <link rel="alternate" hrefLang="en" href={`${baseUrl}/en`} />
         <link rel="alternate" hrefLang="x-default" href={baseUrl} />
 
-        {/* Structured Data — Organization */}
+        {/* Structured data — single @graph */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Organization',
-            name: 'Qarte',
-            url: baseUrl,
-            logo: `${baseUrl}/icon-512.png`,
-            description: orgDescription,
-            contactPoint: {
-              '@type': 'ContactPoint',
-              contactType: 'customer service',
-              url: 'https://wa.me/33607447420',
-              availableLanguage: ['French', 'English'],
-            },
-            sameAs: [
-              'https://www.instagram.com/getqarte',
-              'https://www.facebook.com/getqarte',
-            ],
-          }) }}
-        />
-
-        {/* Structured Data — SoftwareApplication (Product) */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'SoftwareApplication',
-            name: 'Qarte',
-            applicationCategory: 'BusinessApplication',
-            operatingSystem: 'Web',
-            url: baseUrl,
-            description: appDescription,
-            offers: [
-              {
-                '@type': 'Offer',
-                price: '24',
-                priceCurrency: locale === 'en' ? 'USD' : 'EUR',
-                priceValidUntil: '2026-12-31',
-                url: `${baseUrl}/#pricing`,
-                availability: 'https://schema.org/InStock',
-              },
-            ],
-            availableLanguage: ['French', 'English'],
-          }) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
       <body className="font-sans">

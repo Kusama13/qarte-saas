@@ -36,8 +36,8 @@
     "cta": "Voir le comparatif"
   },
   "hero": {
-    "titlePart1": "Remplis ton planning et fid\u00e9lise tes clientes",
-    "titlePart2": "— sans g\u00e9rer les DM.",
+    "titlePart1": "Le logiciel qui remplit ton salon de beauté",
+    "titlePart2": "et fidélise tes clientes.",
     "subtitle": "Vitrine visible sur Google, r\u00e9servation en ligne, carte de fid\u00e9lit\u00e9 automatique. Tout est connect\u00e9, tout est inclus.",
     "subtitleTarget": "Pensé pour les instituts, ongleries et salons qui veulent se remplir sans se compliquer la vie.",
     "ctaPrimary": "Essai gratuit en 2 min",
@@ -230,7 +230,7 @@
     "seoMockupDesc": "Bio, horaires, prestations, programme fidélité. Prothésiste ongulaire à Paris 11e.",
     "seoMockupReviews": "4.9 (127 avis)",
     "seoBadge": "Page 1",
-    "planningTitle": "Réservation en ligne,",
+    "planningTitle": "Réservation en ligne sans commission,",
     "planningTitleBold": "sans lever le petit doigt.",
     "planningDesc": "Définis tes horaires d'ouverture ou crée tes créneaux manuellement — tes clientes réservent directement. Durée calculée, créneaux bloqués automatiquement, acompte sécurisé.",
     "planningBadge": "Réservé !",
@@ -311,7 +311,7 @@
   "featuresGrid": {
     "title": "Tout ce qu'il te faut pour",
     "titleHighlight": "remplir ton salon.",
-    "subtitle": "Une seule plateforme pour ta vitrine, tes réservations et ton programme de fidélité.",
+    "subtitle": "Qarte est un logiciel tout-en-un pour salons de beauté, instituts, ongleries et barbershops. Il combine réservation en ligne sans commission, programme de fidélité digital (tampons + cagnotte) et vitrine SEO. Chaque cliente qui réserve reçoit automatiquement sa carte de fidélité.",
     "bookingTitle": "Réservations 24/7.",
     "bookingDesc": "Mode libre ou créneaux — tes clientes réservent 24/7 depuis ta vitrine.",
     "profileTitle": "Une page à ton image.",

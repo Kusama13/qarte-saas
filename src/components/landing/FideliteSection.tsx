@@ -571,9 +571,7 @@ export function FideliteSection() {
           transition={{ duration: 0.5, ease: EASE }}
           className="mt-16"
         >
-          <div
-            className="bg-gradient-to-r from-indigo-50 via-violet-50 to-pink-50 border border-indigo-100/60 rounded-2xl md:rounded-3xl p-6 md:p-8"
-          >
+          <div className="bg-gradient-to-r from-indigo-50 via-violet-50 to-pink-50 border border-indigo-100/60 rounded-2xl md:rounded-3xl p-6 md:p-8">
             <div className="flex flex-col md:flex-row items-center gap-5 md:gap-8">
               <div className="flex items-center gap-3 shrink-0">
                 <span className="text-2xl">{'\uD83D\uDCC5'}</span>
@@ -584,9 +582,34 @@ export function FideliteSection() {
                 <p className="text-base md:text-lg font-semibold text-gray-900 mb-1">
                   {t('planityTitle')}
                 </p>
-                <p className="text-sm md:text-base text-gray-600">
+                <p className="text-sm md:text-base text-gray-600 mb-3">
                   {t('planityDesc')}
                 </p>
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-sm font-semibold">
+                  <Link
+                    href="/compare/planity"
+                    className="inline-flex items-center gap-1 text-indigo-700 hover:text-indigo-900 transition-colors"
+                  >
+                    Qarte vs Planity
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                  <span className="text-gray-300">·</span>
+                  <Link
+                    href="/compare/booksy"
+                    className="inline-flex items-center gap-1 text-indigo-700 hover:text-indigo-900 transition-colors"
+                  >
+                    Qarte vs Booksy
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                  <span className="text-gray-300">·</span>
+                  <Link
+                    href="/compare/bookinbeautiful"
+                    className="inline-flex items-center gap-1 text-indigo-700 hover:text-indigo-900 transition-colors"
+                  >
+                    Qarte vs Book in Beautiful
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

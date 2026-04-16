@@ -16,8 +16,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // --- Static pages ---
   const staticPages: MetadataRoute.Sitemap = [
-    entry('', { priority: 1, changeFrequency: 'weekly', lastModified: new Date('2026-04-14') }),
+    entry('', { priority: 1, changeFrequency: 'weekly', lastModified: new Date('2026-04-16') }),
     entry('/pricing', { priority: 0.9, changeFrequency: 'weekly', lastModified: new Date('2026-03-15') }),
+    entry('/ambassadeur', { priority: 0.6, changeFrequency: 'monthly', lastModified: new Date('2026-04-12') }),
     entry('/contact', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-03-01') }),
     entry('/pros', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-03-15') }),
     entry('/boutique', { priority: 0.7, lastModified: new Date('2026-03-01') }),
@@ -48,6 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const comparePages: MetadataRoute.Sitemap = [
     entry('/compare/planity', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-04-12') }),
     entry('/compare/booksy', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-04-12') }),
+    entry('/compare/bookinbeautiful', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-04-12') }),
   ];
 
   // Merchant pages (/p/slug) are NOT included in the sitemap.
