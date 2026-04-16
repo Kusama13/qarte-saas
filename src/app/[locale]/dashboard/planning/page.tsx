@@ -618,7 +618,14 @@ export default function PlanningDashboard() {
                 {/* Week range nav (discrete, ambiguity-free) */}
                 <div className="flex items-center justify-center gap-3 mb-3">
                   <button
-                    onClick={() => setWeekOffset(o => o - 1)}
+                    onClick={() => {
+                      // Shift selectedDay along with the week to keep it inside the new range
+                      // (otherwise the sync effect bounces weekOffset back immediately)
+                      const d = new Date(selectedDay);
+                      d.setDate(d.getDate() - 7);
+                      setSelectedDay(d);
+                      setWeekOffset(o => o - 1);
+                    }}
                     disabled={weekOffset <= -1}
                     className="p-1.5 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     aria-label={t('previousWeek')}
@@ -629,7 +636,12 @@ export default function PlanningDashboard() {
                     {t('weekOf', { range: `${weekStart.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })} — ${weekEnd.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })}` })}
                   </span>
                   <button
-                    onClick={() => setWeekOffset(o => o + 1)}
+                    onClick={() => {
+                      const d = new Date(selectedDay);
+                      d.setDate(d.getDate() + 7);
+                      setSelectedDay(d);
+                      setWeekOffset(o => o + 1);
+                    }}
                     className="p-1.5 rounded-lg hover:bg-gray-50 transition-colors"
                     aria-label={t('nextWeek')}
                   >
