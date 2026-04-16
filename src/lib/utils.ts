@@ -55,15 +55,16 @@ export function getCurrencySymbol(country?: string): string {
 }
 
 /** Format a monetary amount with the correct currency symbol and locale.
- *  Returns e.g. "19,00 €" (FR), "$19.00" (US), "£19.00" (GB). */
-export function formatCurrency(amount: number, country?: string, locale: string = 'fr'): string {
+ *  Returns e.g. "19,00 €" (FR), "$19.00" (US), "£19.00" (GB).
+ *  Pass `decimals: 0` for compact totals (e.g. dashboard cumul → "15 000 €" instead of "15 000,00 €"). */
+export function formatCurrency(amount: number, country?: string, locale: string = 'fr', decimals: number = 2): string {
   const currency = getCurrencyForCountry(country);
   const bcp47 = locale === 'en' ? 'en-US' : 'fr-FR';
   return new Intl.NumberFormat(bcp47, {
     style: 'currency',
     currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   }).format(amount);
 }
 

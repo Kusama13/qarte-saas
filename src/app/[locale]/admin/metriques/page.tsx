@@ -1067,30 +1067,30 @@ export default function MetriquesPage() {
       <section className="p-6 bg-gradient-to-r from-[#5167fc] to-[#7c3aed] rounded-xl shadow-md text-white">
         <h2 className="mb-4 text-lg font-semibold">Résumé financier</h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <p className="text-white/70 text-sm">ARPU</p>
-            <p className="text-2xl font-bold">{arpu}€/mois</p>
+          <div className="min-w-0">
+            <p className="text-white/70 text-sm truncate">ARPU</p>
+            <p className="text-xl md:text-2xl font-bold truncate tabular-nums">{arpu}€/mois</p>
           </div>
-          <div>
-            <p className="text-white/70 text-sm">LTV estimée</p>
-            <p className="text-2xl font-bold">
+          <div className="min-w-0">
+            <p className="text-white/70 text-sm truncate">LTV estimée</p>
+            <p className="text-xl md:text-2xl font-bold truncate tabular-nums">
               {revenue.churnRate > 0
                 ? formatCurrency(Math.round(arpu / (revenue.churnRate / 100)))
                 : formatCurrency(arpu * 12)}
             </p>
-            <p className="text-white/50 text-xs mt-0.5">
+            <p className="text-white/50 text-xs mt-0.5 truncate">
               {revenue.churnRate > 0
                 ? `ARPU / ${revenue.churnRate}% churn`
                 : 'Estimation 12 mois'}
             </p>
           </div>
-          <div>
-            <p className="text-white/70 text-sm">Revenus potentiels (essais)</p>
-            <p className="text-2xl font-bold">{formatCurrency(revenue.trialUsers * 24)}</p>
+          <div className="min-w-0">
+            <p className="text-white/70 text-sm truncate">Revenus potentiels (essais)</p>
+            <p className="text-xl md:text-2xl font-bold truncate tabular-nums">{formatCurrency(revenue.trialUsers * 24)}</p>
           </div>
-          <div>
-            <p className="text-white/70 text-sm">Perte mensuelle (annulés)</p>
-            <p className="text-2xl font-bold">{formatCurrency(revenue.churned * arpu)}</p>
+          <div className="min-w-0">
+            <p className="text-white/70 text-sm truncate">Perte mensuelle (annulés)</p>
+            <p className="text-xl md:text-2xl font-bold truncate tabular-nums">{formatCurrency(revenue.churned * arpu)}</p>
           </div>
         </div>
       </section>
@@ -1125,13 +1125,13 @@ function MetricCard({
   return (
     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
       <div className="flex items-center gap-3">
-        <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', colorMap[color])}>
+        <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0', colorMap[color])}>
           <Icon className="w-5 h-5" />
         </div>
-        <div>
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</p>
-          <p className="text-xl font-bold text-gray-900">{value}</p>
-          {sub && <p className="text-xs text-gray-400">{sub}</p>}
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">{label}</p>
+          <p className="text-lg md:text-xl font-bold text-gray-900 truncate tabular-nums">{value}</p>
+          {sub && <p className="text-xs text-gray-400 truncate">{sub}</p>}
         </div>
       </div>
     </div>

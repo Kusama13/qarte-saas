@@ -832,13 +832,13 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-3">
           <StatsCard
             title={t('cumulClients')}
-            value={formatCurrency(cagnotteStats.totalCumul, merchant?.country)}
+            value={formatCurrency(cagnotteStats.totalCumul, merchant?.country, locale, 0)}
             icon={Coins}
             color="#059669"
           />
           <StatsCard
             title={t('cashbackOngoing')}
-            value={formatCurrency(cagnotteStats.totalCashback, merchant?.country)}
+            value={formatCurrency(cagnotteStats.totalCashback, merchant?.country, locale, 0)}
             icon={Gift}
             color="#D97706"
           />

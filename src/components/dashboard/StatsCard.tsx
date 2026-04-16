@@ -17,13 +17,13 @@ const StatsCard = memo(function StatsCard({ title, value, icon: Icon, trend, col
       {/* Premium Gradient Border Effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-      <div className="relative flex items-center justify-between">
-        <div className="flex flex-col">
-          <p className="text-[10px] font-black text-slate-400/80 uppercase tracking-[0.2em] mb-1">{title}</p>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-[-0.03em] tabular-nums">{value}</h3>
+      <div className="relative flex items-center justify-between gap-3">
+        <div className="flex flex-col min-w-0 flex-1">
+          <p className="text-[10px] font-black text-slate-400/80 uppercase tracking-[0.2em] mb-1 truncate">{title}</p>
+          <div className="flex items-baseline gap-2 min-w-0">
+            <h3 className="text-xl md:text-3xl font-bold text-slate-900 tracking-[-0.03em] tabular-nums truncate">{value}</h3>
             {trend && (
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50/80 text-emerald-600 border border-emerald-100/50 shadow-sm">
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50/80 text-emerald-600 border border-emerald-100/50 shadow-sm flex-shrink-0">
                 <TrendingUp className="w-3 h-3 stroke-[3]" />
                 <span className="text-[10px] font-black">{trend}</span>
               </div>
@@ -31,7 +31,7 @@ const StatsCard = memo(function StatsCard({ title, value, icon: Icon, trend, col
           </div>
         </div>
 
-        <div className="relative group/icon">
+        <div className="relative group/icon flex-shrink-0">
           <div
             className="absolute inset-0 rounded-2xl blur-xl opacity-20 group-hover/icon:opacity-40 transition-all duration-500 scale-75 group-hover/icon:scale-110"
             style={{ backgroundColor: color }}
