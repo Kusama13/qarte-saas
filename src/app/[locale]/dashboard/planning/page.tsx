@@ -577,21 +577,50 @@ export default function PlanningDashboard() {
             <>
               {/* ── Navigation + actions ── */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 mb-4">
-                {/* Header — clickable date opens picker */}
-                <div className="flex items-center justify-center mb-2 relative">
+                {/* Week range nav (flèches + range + date picker icon) */}
+                <div className="flex items-center justify-center gap-3 mb-3 relative">
+                  <button
+                    onClick={() => {
+                      // Shift selectedDay along with the week to keep it inside the new range
+                      // (otherwise the sync effect bounces weekOffset back immediately)
+                      const d = new Date(selectedDay);
+                      d.setDate(d.getDate() - 7);
+                      setSelectedDay(d);
+                      setWeekOffset(o => o - 1);
+                    }}
+                    disabled={weekOffset <= -1}
+                    className="p-1.5 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label={t('previousWeek')}
+                  >
+                    <ChevronLeft className="w-4 h-4 text-gray-400" />
+                  </button>
+                  <span className="text-sm font-semibold text-gray-900">
+                    {t('weekOf', { range: `${weekStart.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })} — ${weekEnd.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })}` })}
+                  </span>
+                  <button
+                    onClick={() => {
+                      const d = new Date(selectedDay);
+                      d.setDate(d.getDate() + 7);
+                      setSelectedDay(d);
+                      setWeekOffset(o => o + 1);
+                    }}
+                    className="p-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                    aria-label={t('nextWeek')}
+                  >
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                  </button>
+                  {/* Jump-to-date icon button */}
                   <button
                     onClick={() => setShowDatePicker(v => !v)}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md hover:bg-gray-50 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-indigo-50 transition-colors"
+                    aria-label={t('backToToday')}
                   >
-                    <span className="text-sm font-semibold text-gray-900 capitalize">
-                      {selectedDay.toLocaleDateString(toBCP47(locale), { weekday: 'long', day: 'numeric', month: 'long' })}
-                    </span>
-                    <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${showDatePicker ? 'rotate-180' : ''}`} />
+                    <Calendar className={`w-4 h-4 ${showDatePicker ? 'text-indigo-600' : 'text-gray-400'}`} />
                   </button>
                   {showDatePicker && (
                     <>
                       <div className="fixed inset-0 z-10" onClick={() => setShowDatePicker(false)} />
-                      <div className="absolute top-full mt-2 z-20 bg-white rounded-xl shadow-xl border border-gray-200 p-3">
+                      <div className="absolute right-0 top-full mt-2 z-20 bg-white rounded-xl shadow-xl border border-gray-200 p-3">
                         <input
                           type="date"
                           value={selectedDayStr}
@@ -613,40 +642,6 @@ export default function PlanningDashboard() {
                       </div>
                     </>
                   )}
-                </div>
-
-                {/* Week range nav (discrete, ambiguity-free) */}
-                <div className="flex items-center justify-center gap-3 mb-3">
-                  <button
-                    onClick={() => {
-                      // Shift selectedDay along with the week to keep it inside the new range
-                      // (otherwise the sync effect bounces weekOffset back immediately)
-                      const d = new Date(selectedDay);
-                      d.setDate(d.getDate() - 7);
-                      setSelectedDay(d);
-                      setWeekOffset(o => o - 1);
-                    }}
-                    disabled={weekOffset <= -1}
-                    className="p-1.5 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                    aria-label={t('previousWeek')}
-                  >
-                    <ChevronLeft className="w-4 h-4 text-gray-400" />
-                  </button>
-                  <span className="text-xs font-medium text-gray-500">
-                    {t('weekOf', { range: `${weekStart.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })} — ${weekEnd.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })}` })}
-                  </span>
-                  <button
-                    onClick={() => {
-                      const d = new Date(selectedDay);
-                      d.setDate(d.getDate() + 7);
-                      setSelectedDay(d);
-                      setWeekOffset(o => o + 1);
-                    }}
-                    className="p-1.5 rounded-lg hover:bg-gray-50 transition-colors"
-                    aria-label={t('nextWeek')}
-                  >
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                  </button>
                 </div>
 
                 {/* Day pills strip */}
