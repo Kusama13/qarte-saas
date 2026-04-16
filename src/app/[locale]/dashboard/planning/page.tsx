@@ -134,6 +134,7 @@ export default function PlanningDashboard() {
   const [manualError, setManualError] = useState<string | null>(null);
   const [manualConflict, setManualConflict] = useState<{ client_name: string; start_time: string; end_time: string } | null>(null);
   const [manualSendSms, setManualSendSms] = useState(false);
+  const [manualStep, setManualStep] = useState<1 | 2>(1);
 
   const manualDuration = useMemo(() => manualServiceIds.reduce((sum, id) => {
     return sum + (serviceMap.get(id)?.duration ?? 30);
@@ -160,6 +161,7 @@ export default function PlanningDashboard() {
     setManualError(null);
     setManualConflict(null);
     setManualSendSms(false);
+    setManualStep(1);
     updateDraft({ clientName: '', clientPhone: '', customerId: null, phoneCountry: merchant?.country as MerchantCountry || 'FR', instagramHandle: '', tiktokHandle: '', facebookUrl: '' });
     // Fetch active offers for grant options
     if (merchant?.id) {
@@ -199,6 +201,7 @@ export default function PlanningDashboard() {
         const data = await res.json().catch(() => ({}));
         if (res.status === 409 && data.conflict) {
           setManualConflict(data.conflict);
+          setManualStep(1); // Conflit de créneau → retour à l'étape 1 pour ajuster l'horaire
         }
         setManualError(data.error || t('saveError'));
         setSavingManual(false);
@@ -1355,16 +1358,31 @@ export default function PlanningDashboard() {
               >
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-900">{t('addManualBookingTitle')}</h3>
-                    <p className="text-xs text-gray-400">{manualDate || t('blockSlotDate')}</p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-gray-900">{t('addManualBookingTitle')}</h3>
+                      <span className="shrink-0 text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md tabular-nums">
+                        {manualStep}/2
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400 truncate">{manualDate || t('blockSlotDate')}</p>
                   </div>
-                  <button onClick={() => setShowManualBookingModal(false)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                  <button onClick={() => setShowManualBookingModal(false)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors shrink-0">
                     <X className="w-5 h-5 text-gray-400" />
                   </button>
                 </div>
 
+                {/* Progress bar */}
+                <div className="h-0.5 bg-gray-100">
+                  <div
+                    className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-300"
+                    style={{ width: manualStep === 1 ? '50%' : '100%' }}
+                  />
+                </div>
+
                 <div className="p-4 space-y-4">
+                  {/* ═══════ ÉTAPE 1 : PRESTATIONS + CRÉNEAU ═══════ */}
+                  {manualStep === 1 && <>
                   {/* ───── 1. PRESTATIONS ───── */}
                   {services.length > 0 && (
                     <div>
@@ -1444,7 +1462,8 @@ export default function PlanningDashboard() {
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5 block">2. {t('blockSlotDate')}</label>
                     {/* Date pleine largeur */}
-                    <input type="date" value={manualDate} min={todayStr} onChange={e => setManualDate(e.target.value)}
+                    <input type="date" value={manualDate} min={todayStr}
+                      onChange={e => { setManualDate(e.target.value); setManualConflict(null); }}
                       className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400" />
                     {/* D\u00e9but → Fin sur une ligne */}
                     <div className="flex items-center gap-2 mt-2">
@@ -1452,7 +1471,7 @@ export default function PlanningDashboard() {
                         <input
                           type="time"
                           value={manualStartTime}
-                          onChange={e => setManualStartTime(e.target.value)}
+                          onChange={e => { setManualStartTime(e.target.value); setManualConflict(null); }}
                           aria-label={t('blockSlotFrom')}
                           className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 tabular-nums"
                         />
@@ -1466,6 +1485,31 @@ export default function PlanningDashboard() {
                     </div>
                   </div>
 
+                  {/* Conflit de créneau (409) — affiché sur l'étape 1 pour que le merchant ajuste l'horaire */}
+                  {manualConflict && (
+                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-xs font-semibold text-amber-800">{t('conflictTitle')}</p>
+                          <p className="text-xs text-amber-700 mt-0.5">
+                            {manualConflict.client_name} — {manualConflict.start_time} {t('conflictTo')} {manualConflict.end_time}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleManualBookingSubmit(true)}
+                        disabled={savingManual}
+                        className="w-full py-2 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {savingManual ? <Loader2 className="w-3.5 h-3.5 animate-spin mx-auto" /> : t('conflictForce')}
+                      </button>
+                    </div>
+                  )}
+                  </>}
+
+                  {/* ═══════ ÉTAPE 2 : CLIENT + NOTES ═══════ */}
+                  {manualStep === 2 && <>
                   {/* ───── 3. CLIENT ───── */}
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5 block">3. {t('clientName')}</label>
@@ -1663,39 +1707,44 @@ export default function PlanningDashboard() {
                   {createError && (
                     <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{createError}</p>
                   )}
-                  {manualConflict && (
-                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
-                      <div className="flex items-start gap-2">
-                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-xs font-semibold text-amber-800">{t('conflictTitle')}</p>
-                          <p className="text-xs text-amber-700 mt-0.5">
-                            {manualConflict.client_name} — {manualConflict.start_time} {t('conflictTo')} {manualConflict.end_time}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleManualBookingSubmit(true)}
-                        disabled={savingManual}
-                        className="w-full py-2 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {savingManual ? <Loader2 className="w-3.5 h-3.5 animate-spin mx-auto" /> : t('conflictForce')}
-                      </button>
-                    </div>
-                  )}
                   {manualError && !manualConflict && <p className="text-xs text-red-500 font-medium">{manualError}</p>}
+                  </>}
                 </div>
 
-                {/* Footer */}
+                {/* Footer — dynamique selon l'étape */}
                 <div className="p-4 border-t border-gray-100 flex gap-2">
-                  <button onClick={() => setShowManualBookingModal(false)}
-                    className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-sm font-semibold hover:bg-gray-200 transition-colors">
-                    {t('blockSlotCancel')}
-                  </button>
-                  <button onClick={() => handleManualBookingSubmit()} disabled={savingManual || !manualDate || !draft.clientName.trim()}
-                    className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                    {savingManual ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : t('confirmBooking')}
-                  </button>
+                  {manualStep === 1 ? (
+                    <>
+                      <button onClick={() => setShowManualBookingModal(false)}
+                        className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-sm font-semibold hover:bg-gray-200 transition-colors">
+                        {t('blockSlotCancel')}
+                      </button>
+                      <button
+                        onClick={() => setManualStep(2)}
+                        disabled={!manualDate || !manualStartTime || manualServiceIds.length === 0 || !!manualConflict}
+                        className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {t('next')}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setManualStep(1)}
+                        disabled={savingManual}
+                        className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-sm font-semibold hover:bg-gray-200 transition-colors"
+                      >
+                        {t('back')}
+                      </button>
+                      <button
+                        onClick={() => handleManualBookingSubmit()}
+                        disabled={savingManual || !manualDate || !draft.clientName.trim()}
+                        className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {savingManual ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : t('confirmBooking')}
+                      </button>
+                    </>
+                  )}
                 </div>
               </motion.div>
             </motion.div>

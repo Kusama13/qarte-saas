@@ -1905,7 +1905,9 @@
     "manualServices": "Services",
     "clientNamePlaceholder": "First Last",
     "clientPhone": "Phone",
-    "blockAllDay": "Full day"
+    "blockAllDay": "Full day",
+    "next": "Next",
+    "back": "Back"
   },
   "qrDownload": {
     "title": "My QR Code & Promo Kit",
