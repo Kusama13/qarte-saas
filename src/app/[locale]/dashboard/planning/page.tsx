@@ -1,17 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, DragEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
-import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown } from 'lucide-react';
+import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical } from 'lucide-react';
 import type { BookingMode, MerchantCountry } from '@/types';
 import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
-import { PHONE_CONFIG, formatTime, toBCP47, getCurrencySymbol, formatCurrency, formatPhoneLabel } from '@/lib/utils';
-import { formatDate, formatDateFr, getServiceColorMap, getSlotColor, colorBorderStyle, getWeekStart, getSlotServiceIds, timeToMinutes, minutesToTime } from './utils';
+import { PHONE_CONFIG, toBCP47, getCurrencySymbol, formatCurrency, formatPhoneLabel } from '@/lib/utils';
+import { formatDate, getServiceColorMap, colorBorderStyle, getWeekStart, timeToMinutes, minutesToTime, formatDuration } from './utils';
 import { handleDownloadStory } from './StoryExport';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
@@ -33,10 +33,10 @@ export default function PlanningDashboard() {
   const {
     merchant, merchantLoading, refetch,
     tab, setTab,
-    viewMode, setViewMode, selectedDay, setSelectedDay,
+    selectedDay, setSelectedDay,
     weekOffset, setWeekOffset, weekStart, weekDays, weekEnd,
     slots, loadingSlots, slotsByDate, fetchSlots, invalidateUpcoming, upcomingSlots,
-    todayStr, totalSlots, takenSlots, freeSlots, isToday, isPast,
+    todayStr, freeSlots, isToday, isPast,
     message, setMessage, messageEnabled, setMessageEnabled,
     messageExpires, setMessageExpires, bookingMessage, setBookingMessage,
     autoBookingEnabled, setAutoBookingEnabled,
@@ -71,24 +71,14 @@ export default function PlanningDashboard() {
     return map;
   }, [services]);
 
-  // Helper: get service names and end time for a slot
-  const getSlotDetails = useCallback((slot: PlanningSlot) => {
-    const svcIds = getSlotServiceIds(slot);
-    const names: string[] = [];
-    let totalDuration = 0;
-    for (const id of svcIds) {
-      const svc = serviceMap.get(id);
-      if (svc?.name) names.push(svc.name);
-      if (svc?.duration) totalDuration += svc.duration;
-    }
-    if (!totalDuration) totalDuration = 30;
-    const endTime = minutesToTime(timeToMinutes(slot.start_time) + totalDuration);
-    return { names, totalDuration, endTime };
-  }, [serviceMap]);
-
   const openBlockModal = useCallback((date: string) => {
     setBlockDate(date); setBlockEndDate(''); setBlockAllDay(false); setBlockReason(''); setShowBlockModal(true);
   }, []);
+
+  // Date picker dropdown (header)
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  // Kebab menu (week-scoped actions)
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
 
   // Handle ?slot= deep link from dashboard
   const searchParams = useSearchParams();
@@ -145,9 +135,17 @@ export default function PlanningDashboard() {
   const [manualConflict, setManualConflict] = useState<{ client_name: string; start_time: string; end_time: string } | null>(null);
 
   const manualDuration = useMemo(() => manualServiceIds.reduce((sum, id) => {
-    const svc = services.find(s => s.id === id);
-    return sum + (svc?.duration ?? 30);
-  }, 0) || 30, [manualServiceIds, services]);
+    return sum + (serviceMap.get(id)?.duration ?? 30);
+  }, 0) || 30, [manualServiceIds, serviceMap]);
+
+  const manualEndTime = useMemo(() => {
+    if (!manualStartTime) return '';
+    return minutesToTime(timeToMinutes(manualStartTime) + manualDuration);
+  }, [manualStartTime, manualDuration]);
+
+  const manualTotalPrice = useMemo(() => manualServiceIds.reduce((sum, id) => {
+    return sum + (serviceMap.get(id)?.price || 0);
+  }, 0), [manualServiceIds, serviceMap]);
 
   const openManualBookingModal = (date: string) => {
     setManualDate(date);
@@ -278,49 +276,6 @@ export default function PlanningDashboard() {
     isStandalone,
   } = useMerchantPushNotifications();
 
-  // Drag & drop state
-  const [dragSlotId, setDragSlotId] = useState<string | null>(null);
-  const [dragOverDate, setDragOverDate] = useState<string | null>(null);
-
-  const handleDragStart = (e: DragEvent, slotId: string) => {
-    setDragSlotId(slotId);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', slotId);
-  };
-
-  const handleDragOver = (e: DragEvent, dateStr: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverDate(dateStr);
-  };
-
-  const handleDragLeave = () => {
-    setDragOverDate(null);
-  };
-
-  const handleDrop = async (e: DragEvent, targetDate: string) => {
-    e.preventDefault();
-    setDragOverDate(null);
-    const slotId = e.dataTransfer.getData('text/plain');
-    if (!slotId || !dragSlotId) return;
-
-    // Find the source slot
-    const sourceSlot = slots.find(s => s.id === slotId);
-    if (!sourceSlot || sourceSlot.slot_date === targetDate) {
-      setDragSlotId(null);
-      return;
-    }
-
-    // Move to same time on new date
-    await handleMoveSlot(slotId, sourceSlot.start_time, targetDate);
-    setDragSlotId(null);
-  };
-
-  const handleDragEnd = () => {
-    setDragSlotId(null);
-    setDragOverDate(null);
-  };
-
   const handleConfirmDeposit = async (slot: PlanningSlot, sendSms = false) => {
     if (!merchant) return;
     try {
@@ -414,24 +369,7 @@ export default function PlanningDashboard() {
     await handleDownloadStory({ merchant, slots, slotsByDate, weekStart, weekEnd, locale });
   }, [merchant, slots, slotsByDate, weekStart, weekEnd, locale]);
 
-  // Day view navigation
-  const handlePrevDay = () => {
-    const d = new Date(selectedDay);
-    d.setDate(d.getDate() - 1);
-    setSelectedDay(d);
-  };
-  const handleNextDay = () => {
-    const d = new Date(selectedDay);
-    d.setDate(d.getDate() + 1);
-    setSelectedDay(d);
-  };
   const handleGoToToday = () => setSelectedDay(new Date());
-
-  // Sync day view when clicking a day in week view
-  const switchToDayView = (day: Date) => {
-    setSelectedDay(day);
-    setViewMode('day');
-  };
 
   // Selected day data
   const selectedDayStr = formatDate(selectedDay);
@@ -631,226 +569,198 @@ export default function PlanningDashboard() {
             </div>
           ) : (
             <>
-              {/* ── Mode libre bandeau ── */}
-              {isFreeMod && (
-                <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-violet-50 rounded-xl border border-violet-100 text-xs text-violet-700">
-                  <Lock className="w-3.5 h-3.5 shrink-0" />
-                  <span className="font-semibold">{t('freeModeActiveBanner')}</span>
-                  {bufferMinutes > 0 && <span className="text-violet-500">· {bufferMinutes} min {t('bufferLabel')}</span>}
-                  <button onClick={() => setTab('settings')} className="ml-auto text-violet-600 underline underline-offset-2 shrink-0 hover:text-violet-800">
-                    {t('freeModeEditSettings')}
-                  </button>
-                </div>
-              )}
-
-              {/* ── Navigation + stats ── */}
+              {/* ── Navigation + actions ── */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 mb-4">
-                {/* View mode toggle + navigation */}
-                <div className="flex items-center justify-between mb-3">
-                  {viewMode === 'week' ? (
+                {/* Header — clickable date opens picker */}
+                <div className="flex items-center justify-center mb-2 relative">
+                  <button
+                    onClick={() => setShowDatePicker(v => !v)}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="text-sm font-semibold text-gray-900 capitalize">
+                      {selectedDay.toLocaleDateString(toBCP47(locale), { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </span>
+                    <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${showDatePicker ? 'rotate-180' : ''}`} />
+                  </button>
+                  {showDatePicker && (
                     <>
-                      <button
-                        onClick={() => setWeekOffset(o => o - 1)}
-                        disabled={weekOffset <= -1}
-                        className="p-2.5 sm:p-2 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                        aria-label={t('previousWeek')}
-                      >
-                        <ChevronLeft className="w-5 h-5 text-gray-500" />
-                      </button>
-
-                      <div className="flex flex-col items-center">
-                        <span className="text-sm font-bold text-gray-900">
-                          {weekStart.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'long' })} — {weekEnd.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'long' })}
-                        </span>
-                        {weekOffset !== 0 && (
-                          <button
-                            onClick={() => setWeekOffset(0)}
-                            className="text-[11px] text-indigo-600 font-medium mt-0.5 hover:underline"
-                          >
-                            {t('backToToday')}
-                          </button>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={() => setWeekOffset(o => o + 1)}
-                        className="p-2.5 sm:p-2 rounded-xl hover:bg-gray-50 transition-colors"
-                        aria-label={t('nextWeek')}
-                      >
-                        <ChevronRight className="w-5 h-5 text-gray-500" />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={handlePrevDay}
-                        className="p-2.5 sm:p-2 rounded-xl hover:bg-gray-50 transition-colors"
-                        aria-label={t('previousDay')}
-                      >
-                        <ChevronLeft className="w-5 h-5 text-gray-500" />
-                      </button>
-
-                      <div className="flex flex-col items-center">
-                        <span className="text-sm font-bold text-gray-900 capitalize">
-                          {selectedDay.toLocaleDateString(toBCP47(locale), { weekday: 'long', day: 'numeric', month: 'long' })}
-                        </span>
+                      <div className="fixed inset-0 z-10" onClick={() => setShowDatePicker(false)} />
+                      <div className="absolute top-full mt-2 z-20 bg-white rounded-xl shadow-xl border border-gray-200 p-3">
+                        <input
+                          type="date"
+                          value={selectedDayStr}
+                          onChange={(e) => {
+                            if (!e.target.value) return;
+                            setSelectedDay(new Date(e.target.value + 'T12:00:00'));
+                            setShowDatePicker(false);
+                          }}
+                          className="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                        />
                         {!selectedDayIsToday && (
                           <button
-                            onClick={handleGoToToday}
-                            className="text-[11px] text-indigo-600 font-medium mt-0.5 hover:underline"
+                            onClick={() => { handleGoToToday(); setShowDatePicker(false); }}
+                            className="block w-full mt-2 px-3 py-2 rounded-lg text-xs font-semibold text-indigo-600 hover:bg-indigo-50 transition-colors"
                           >
                             {t('backToToday')}
                           </button>
                         )}
                       </div>
-
-                      <button
-                        onClick={handleNextDay}
-                        className="p-2.5 sm:p-2 rounded-xl hover:bg-gray-50 transition-colors"
-                        aria-label={t('nextDay')}
-                      >
-                        <ChevronRight className="w-5 h-5 text-gray-500" />
-                      </button>
                     </>
                   )}
                 </div>
 
-                {/* Stats (week view only) */}
-                {viewMode === 'week' && (isFreeMod || totalSlots > 0) && (
-                  <div className="flex items-center justify-center gap-4 text-xs mb-3 pb-3 border-b border-gray-100">
-                    {isFreeMod ? (
-                      <span className={takenSlots > 0 ? 'text-indigo-600 font-semibold' : 'text-gray-400'}>
-                        {t('takenCount', { count: takenSlots })}
-                      </span>
-                    ) : (
-                      <>
-                        <span className="text-gray-500">{totalSlots > 1 ? t('slotCountPlural', { count: totalSlots }) : t('slotCount', { count: totalSlots })}</span>
-                        <span className="text-emerald-600 font-semibold">{freeSlots > 1 ? t('freeCountPlural', { count: freeSlots }) : t('freeCount', { count: freeSlots })}</span>
-                        {takenSlots > 0 && <span className="text-indigo-600 font-semibold">{t('takenCount', { count: takenSlots })}</span>}
-                      </>
-                    )}
-                  </div>
-                )}
+                {/* Week range nav (discrete, ambiguity-free) */}
+                <div className="flex items-center justify-center gap-3 mb-3">
+                  <button
+                    onClick={() => setWeekOffset(o => o - 1)}
+                    disabled={weekOffset <= -1}
+                    className="p-1.5 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label={t('previousWeek')}
+                  >
+                    <ChevronLeft className="w-4 h-4 text-gray-400" />
+                  </button>
+                  <span className="text-xs font-medium text-gray-500">
+                    {t('weekOf', { range: `${weekStart.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })} — ${weekEnd.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })}` })}
+                  </span>
+                  <button
+                    onClick={() => setWeekOffset(o => o + 1)}
+                    className="p-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                    aria-label={t('nextWeek')}
+                  >
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                  </button>
+                </div>
 
-                {/* Actions row */}
-                <div className="flex gap-2">
-                  {/* View mode toggle */}
-                  <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
-                    <button
-                      onClick={() => setViewMode('week')}
-                      className={`p-1.5 rounded-md transition-colors ${viewMode === 'week' ? 'bg-white shadow-sm text-gray-700' : 'text-gray-400 hover:text-gray-600'}`}
-                      title={t('viewWeek')}
-                    >
-                      <LayoutGrid className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => { setViewMode('day'); setSelectedDay(new Date()); }}
-                      className={`p-1.5 rounded-md transition-colors ${viewMode === 'day' ? 'bg-white shadow-sm text-gray-700' : 'text-gray-400 hover:text-gray-600'}`}
-                      title={t('viewDay')}
-                    >
-                      <Calendar className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {viewMode === 'week' && (
-                    <>
-                      {isFreeMod ? (
-                        <div className="flex-1 flex gap-2">
-                          <button
-                            onClick={() => openManualBookingModal(todayStr)}
-                            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 transition-all"
-                            title={t('addManualBooking')}
-                          >
-                            <Plus className="w-3.5 h-3.5 shrink-0" />
-                            <span className="hidden sm:inline">{t('addManualBooking')}</span>
-                          </button>
-                          <button
-                            onClick={() => openBlockModal(todayStr >= formatDate(weekStart) ? todayStr : formatDate(weekStart))}
-                            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
-                            title={t('blockSlot')}
-                          >
-                            <Lock className="w-3.5 h-3.5 shrink-0" />
-                            <span className="hidden sm:inline">{t('blockSlot')}</span>
-                          </button>
-                        </div>
-                      ) : (
+                {/* Day pills strip */}
+                <div className="grid grid-cols-7 gap-1 mb-3">
+                  {weekDays.map(day => {
+                    const dayStr = formatDate(day);
+                    const past = isPast(day);
+                    const today = isToday(day);
+                    const isSelected = dayStr === selectedDayStr;
+                    const daySlotsList = slotsByDate.get(dayStr) || [];
+                    const bookingsCount = daySlotsList.filter(s => s.client_name && s.client_name !== '__blocked__').length;
+                    // Dot count: max 3 visual dots, scales from 0 to N
+                    const dotCount = bookingsCount === 0 ? 0 : bookingsCount <= 2 ? 1 : bookingsCount <= 4 ? 2 : 3;
+                    return (
                       <button
-                        onClick={onDownloadStory}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold text-xs hover:from-indigo-700 hover:to-violet-700 transition-all shadow-sm shadow-indigo-200"
+                        key={dayStr}
+                        onClick={() => setSelectedDay(day)}
+                        className={`relative flex flex-col items-center gap-1 py-2 rounded-lg transition-all ${
+                          isSelected
+                            ? 'bg-gradient-to-br from-indigo-600 to-violet-600 shadow-md shadow-indigo-200'
+                            : today
+                              ? 'bg-indigo-50 ring-1 ring-indigo-200 hover:bg-indigo-100'
+                              : 'hover:bg-gray-50'
+                        }`}
                       >
-                        <Download className="w-4 h-4" />
-                        {t('downloadStory')}
+                        <span className={`text-[9px] font-semibold uppercase tracking-wide leading-none ${
+                          isSelected ? 'text-white/80' : today ? 'text-indigo-600' : past ? 'text-gray-300' : 'text-gray-400'
+                        }`}>
+                          {day.toLocaleDateString(toBCP47(locale), { weekday: 'short' }).replace('.', '')}
+                        </span>
+                        <span className={`text-sm font-bold leading-none ${
+                          isSelected ? 'text-white' : today ? 'text-indigo-700' : past ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          {day.getDate()}
+                        </span>
+                        {dotCount > 0 && !isSelected && (
+                          <span className="absolute bottom-1 flex gap-0.5">
+                            {Array.from({ length: dotCount }).map((_, i) => (
+                              <span key={i} className={`w-1 h-1 rounded-full ${today ? 'bg-indigo-500' : past ? 'bg-gray-300' : 'bg-indigo-400'}`} />
+                            ))}
+                          </span>
+                        )}
                       </button>
-                      )}
-                      {!isFreeMod && (
+                    );
+                  })}
+                </div>
+
+                {/* Actions row — day-scoped + kebab menu for week-scoped */}
+                {!selectedDayIsPast && (
+                  <div className="flex gap-2 items-center">
+                    {isFreeMod ? (
+                      <button
+                        onClick={() => openManualBookingModal(selectedDayStr)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 transition-all"
+                      >
+                        <Plus className="w-3.5 h-3.5 shrink-0" />
+                        {t('addManualBooking')}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => openAddSlotsModal(selectedDayStr)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 transition-all"
+                      >
+                        <Plus className="w-3.5 h-3.5 shrink-0" />
+                        {t('addSlotsTitle')}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => openBlockModal(selectedDayStr)}
+                      className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
+                      title={t('blockSlot')}
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">{t('blockSlot')}</span>
+                    </button>
+
+                    {/* Kebab menu — week-scoped actions */}
+                    <div className="relative">
+                      <button
+                        onClick={() => setShowActionsMenu(v => !v)}
+                        className="flex items-center justify-center p-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-500 hover:bg-gray-100 transition-colors"
+                        aria-label={t('moreActions')}
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                      {showActionsMenu && (
                         <>
-                          <button
-                            onClick={() => setModalState({ type: 'copy-week' })}
-                            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 font-semibold text-xs hover:bg-gray-100 transition-colors"
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">{t('copy')}</span>
-                          </button>
-                          {freeSlots > 0 && (
-                            <button
-                              onClick={() => openBulkDelete('week')}
-                              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl bg-red-50 border border-red-100 text-red-600 font-semibold text-xs hover:bg-red-100 transition-colors"
-                              title={t('deleteAll')}
-                              aria-label={t('deleteAll')}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span className="hidden sm:inline">{t('deleteAll')}</span>
-                            </button>
-                          )}
+                          <div className="fixed inset-0 z-10" onClick={() => setShowActionsMenu(false)} />
+                          <div className="absolute right-0 top-full mt-2 z-20 w-56 bg-white rounded-xl shadow-xl border border-gray-200 p-1.5">
+                            {!isFreeMod && (
+                              <button
+                                onClick={() => { onDownloadStory(); setShowActionsMenu(false); }}
+                                disabled={slots.length === 0}
+                                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              >
+                                <Download className="w-4 h-4" />
+                                <span className="font-medium">{t('downloadStoryWeek')}</span>
+                              </button>
+                            )}
+                            {!isFreeMod && (
+                              <button
+                                onClick={() => { setModalState({ type: 'copy-week' }); setShowActionsMenu(false); }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                              >
+                                <Copy className="w-4 h-4" />
+                                <span className="font-medium">{t('copyWeek')}</span>
+                              </button>
+                            )}
+                            {selectedDayFreeCount > 0 && (
+                              <button
+                                onClick={() => { openBulkDelete('day'); setShowActionsMenu(false); }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                <span className="font-medium">{t('deleteFreeDay')}</span>
+                              </button>
+                            )}
+                            {freeSlots > 0 && (
+                              <button
+                                onClick={() => { openBulkDelete('week'); setShowActionsMenu(false); }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                <span className="font-medium">{t('deleteFreeWeek')}</span>
+                              </button>
+                            )}
+                          </div>
                         </>
                       )}
-                    </>
-                  )}
-                  {viewMode === 'day' && !selectedDayIsPast && (
-                    <>
-                      {isFreeMod ? (
-                        <div className="flex-1 flex gap-2">
-                          <button
-                            onClick={() => openManualBookingModal(selectedDayStr)}
-                            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 transition-all"
-                            title={t('addManualBooking')}
-                          >
-                            <Plus className="w-3.5 h-3.5 shrink-0" />
-                            <span className="hidden sm:inline">{t('addManualBooking')}</span>
-                          </button>
-                          <button
-                            onClick={() => openBlockModal(selectedDayStr)}
-                            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
-                            title={t('blockSlot')}
-                          >
-                            <Lock className="w-3.5 h-3.5 shrink-0" />
-                            <span className="hidden sm:inline">{t('blockSlot')}</span>
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => openBlockModal(selectedDayStr)}
-                          className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
-                          title={t('blockSlot')}
-                        >
-                          <Lock className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">{t('blockSlot')}</span>
-                        </button>
-                      )}
-                      {selectedDayFreeCount > 0 && (
-                        <button
-                          onClick={() => openBulkDelete('day')}
-                          className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl bg-red-50 border border-red-100 text-red-600 font-semibold text-xs hover:bg-red-100 transition-colors"
-                          title={t('deleteAll')}
-                          aria-label={t('deleteAll')}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">{t('deleteAll')}</span>
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Copy week picker */}
@@ -882,196 +792,24 @@ export default function PlanningDashboard() {
                 </div>
               )}
 
-              {/* ── Mode libre: empty state hint ── */}
-              {isFreeMod && !loadingSlots && slots.length === 0 && (
-                <div className="bg-violet-50 rounded-2xl border border-violet-100 p-5 text-center mb-4">
-                  <p className="text-xs text-violet-700 leading-relaxed">{t('freeModeEmptyHint')}</p>
-                </div>
-              )}
-
-              {/* ── WEEK VIEW ── */}
-              {viewMode === 'week' && (
-                <>
-                  {loadingSlots ? (
-                    <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
-                  ) : (
-                    <>
-                    {/* Desktop: 7 columns */}
-                    <div className="hidden sm:grid sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2">
-                      {weekDays.map(day => {
-                        const dateStr = formatDate(day);
-                        const daySlots = slotsByDate.get(dateStr) || [];
-                        const past = isPast(day);
-                        const today = isToday(day);
-                        const isDragOver = dragOverDate === dateStr;
-                        return (
-                          <div
-                            key={dateStr}
-                            className={`bg-white rounded-xl border p-2.5 min-h-[100px] transition-colors ${
-                              isDragOver ? 'border-indigo-400 ring-2 ring-indigo-200 bg-indigo-50/30' :
-                              today ? 'border-indigo-300 ring-1 ring-indigo-100' :
-                              past ? 'border-gray-100 opacity-50' : 'border-gray-100'
-                            }`}
-                            onDragOver={(e) => !past && handleDragOver(e, dateStr)}
-                            onDragLeave={handleDragLeave}
-                            onDrop={(e) => !past && handleDrop(e, dateStr)}
-                          >
-                            <button
-                              onClick={() => switchToDayView(day)}
-                              className={`text-[11px] font-bold mb-2 capitalize block hover:text-indigo-600 transition-colors ${today ? 'text-indigo-600' : 'text-gray-400'}`}
-                            >
-                              {formatDateFr(day, locale)}
-                            </button>
-                            <div className="space-y-1">
-                              {daySlots.map(slot => {
-                                const isBlocked = slot.client_name === '__blocked__';
-                                if (isBlocked) return (
-                                  <button
-                                    key={slot.id}
-                                    onClick={() => setConfirmDeleteBlock(slot.id)}
-                                    className="w-full text-left px-2 py-1 rounded-lg text-[11px] font-medium bg-gray-100 text-gray-400 border border-dashed border-gray-300 hover:bg-red-50 hover:border-red-200 hover:text-red-500 transition-colors"
-                                  >
-                                    <Lock className="w-2.5 h-2.5 inline mr-1 opacity-60" />
-                                    <span className="font-bold">{formatTime(slot.start_time, locale)}</span>
-                                    {slot.notes && <span className="ml-1 truncate opacity-60"> — {slot.notes}</span>}
-                                  </button>
-                                );
-                                const slotColor = getSlotColor(slot, serviceColorMap);
-                                const details = slot.client_name ? getSlotDetails(slot) : null;
-                                return (
-                                  <button
-                                    key={slot.id}
-                                    onClick={() => openEditSlot(slot)}
-                                    draggable={!past}
-                                    onDragStart={(e) => handleDragStart(e, slot.id)}
-                                    onDragEnd={handleDragEnd}
-                                    className={`w-full text-left px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden cursor-grab active:cursor-grabbing ${
-                                      dragSlotId === slot.id ? 'opacity-40' : ''
-                                    } ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
-                                    style={colorBorderStyle(slotColor)}
-                                  >
-                                    <div className="flex items-center gap-1 flex-wrap">
-                                      <span className="font-bold">{formatTime(slot.start_time, locale)}</span>
-                                      {details && <span className="opacity-50 hidden lg:inline">→ {formatTime(details.endTime, locale)}</span>}
-                                    </div>
-                                    {slot.client_name && <p className="truncate opacity-70 mt-0.5">— {slot.client_name.length > 10 ? slot.client_name.slice(0, 10) + '…' : slot.client_name}</p>}
-                                    {details && details.names.length > 0 && (
-                                      <p className="truncate text-[10px] opacity-50 mt-0.5 hidden xl:block">{details.names.join(', ')}</p>
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                            {!past && !isFreeMod && (
-                              <button
-                                onClick={() => openAddSlotsModal(dateStr)}
-                                className="mt-1.5 w-full flex items-center justify-center py-1 rounded-lg border border-dashed border-gray-200 text-gray-300 text-[11px] hover:border-indigo-300 hover:text-indigo-500 transition-colors"
-                              >
-                                <Plus className="w-3 h-3" />
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Mobile: clean vertical list */}
-                    <div className="sm:hidden space-y-2">
-                      {weekDays.map(day => {
-                        const dateStr = formatDate(day);
-                        const daySlots = slotsByDate.get(dateStr) || [];
-                        const past = isPast(day);
-                        const today = isToday(day);
-                        if (past && daySlots.length === 0) return null;
-                        return (
-                          <div
-                            key={dateStr}
-                            className={`bg-white rounded-xl border p-3 transition-colors ${today ? 'border-indigo-300 ring-1 ring-indigo-100' : past ? 'border-gray-100 opacity-40' : 'border-gray-100'}`}
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <button
-                                onClick={() => switchToDayView(day)}
-                                className={`text-xs font-bold capitalize hover:text-indigo-600 transition-colors ${today ? 'text-indigo-600' : 'text-gray-500'}`}
-                              >
-                                {formatDateFr(day, locale)}
-                              </button>
-                              {!past && !isFreeMod && (
-                                <button
-                                  onClick={() => openAddSlotsModal(dateStr)}
-                                  className="p-1 rounded-lg hover:bg-indigo-50 text-gray-300 hover:text-indigo-500 transition-colors"
-                                >
-                                  <Plus className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                            </div>
-                            {daySlots.length > 0 ? (
-                              <div className="space-y-1.5">
-                                {daySlots.map(slot => {
-                                  const isBlocked = slot.client_name === '__blocked__';
-                                  if (isBlocked) return (
-                                    <button
-                                      key={slot.id}
-                                      onClick={() => setConfirmDeleteBlock(slot.id)}
-                                      className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-400 border border-dashed border-gray-300 hover:bg-red-50 hover:text-red-500 transition-colors"
-                                    >
-                                      <Lock className="w-2.5 h-2.5 inline mr-0.5 opacity-60" />
-                                      {formatTime(slot.start_time, locale)}
-                                    </button>
-                                  );
-                                  const slotColor = getSlotColor(slot, serviceColorMap);
-                                  const details = slot.client_name ? getSlotDetails(slot) : null;
-                                  return (
-                                    <button
-                                      key={slot.id}
-                                      onClick={() => openEditSlot(slot)}
-                                      className={`w-full text-left px-2.5 py-2 rounded-lg text-xs font-medium transition-all active:scale-95 ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
-                                      style={{
-                                        borderLeftWidth: slotColor ? '3px' : undefined,
-                                        borderLeftColor: slotColor || undefined,
-                                      }}
-                                    >
-                                      <div className="flex items-center gap-1">
-                                        <span className="font-bold">{formatTime(slot.start_time, locale)}</span>
-                                        {details && <span className="opacity-50 text-[11px]">→ {formatTime(details.endTime, locale)}</span>}
-                                        {slot.client_name && <span className="ml-1 opacity-70">— {slot.client_name}</span>}
-                                      </div>
-                                      {details && details.names.length > 0 && (
-                                        <p className="truncate text-[10px] opacity-50 mt-0.5">{details.names.join(', ')}</p>
-                                      )}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            ) : !isFreeMod ? (
-                              <p className="text-[11px] text-gray-300">{t('noSlots')}</p>
-                            ) : null}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    </>
-                  )}
-                </>
-              )}
-
               {/* ── DAY VIEW ── */}
-              {viewMode === 'day' && (
-                loadingSlots ? (
-                  <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
-                ) : (
-                  <DayView
-                    day={selectedDay}
-                    daySlots={selectedDaySlots}
-                    services={services}
-                    serviceColorMap={serviceColorMap}
-                    locale={locale}
-                    isPast={selectedDayIsPast}
-                    isToday={selectedDayIsToday}
-                    isFreeMod={isFreeMod}
-                    onSlotClick={openEditSlot}
-                    onAddSlots={openAddSlotsModal}
-                  />
-                )
+              {loadingSlots ? (
+                <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+              ) : (
+                <DayView
+                  day={selectedDay}
+                  daySlots={selectedDaySlots}
+                  services={services}
+                  serviceColorMap={serviceColorMap}
+                  locale={locale}
+                  isPast={selectedDayIsPast}
+                  isToday={selectedDayIsToday}
+                  isFreeMod={isFreeMod}
+                  openingHours={merchant?.opening_hours || null}
+                  onSlotClick={openEditSlot}
+                  onBlockedSlotClick={setConfirmDeleteBlock}
+                  onAddSlots={openAddSlotsModal}
+                />
               )}
             </>
           )}
@@ -1103,258 +841,144 @@ export default function PlanningDashboard() {
 
       {/* ── TAB: PARAMETRES ── */}
       {planningEnabled && tab === 'settings' && (
-        <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0">
+        <div className="space-y-6">
 
-          {/* Card: Resa en ligne */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:col-span-2">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-                  <Globe className="w-3.5 h-3.5 text-emerald-600" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-gray-800">{t('autoBookingTitle')}</h2>
-                  <p className="text-[11px] text-gray-400 mt-0.5">{autoBookingEnabled ? t('autoBookingHint') : t('autoBookingOffHint')}</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={autoBookingEnabled}
-                onClick={() => setAutoBookingEnabled(!autoBookingEnabled)}
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 ${autoBookingEnabled ? 'bg-emerald-500' : 'bg-gray-200'}`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${autoBookingEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-            </div>
-          </div>
+          {/* ═══════ SECTION 1: MON AGENDA ═══════ */}
+          <section>
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 mb-2 px-1">{t('sectionAgenda')}</h3>
+            <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0">
 
-          {/* Card: Mode de planning */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:col-span-2">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
-                <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-              </div>
-              <h2 className="text-sm font-bold text-gray-800">{t('bookingModeTitle')}</h2>
-            </div>
-            <div className="ml-9 grid grid-cols-2 gap-2 mt-2">
-              {(['slots', 'free'] as const).map(mode => {
-                const isActive = bookingMode === mode;
-                return (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => handleBookingModeChange(mode)}
-                    className={`text-left rounded-xl border-2 p-3 transition-all ${isActive ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'}`}
-                  >
-                    <div className="flex items-center justify-between gap-1 mb-1">
-                      <p className={`text-xs font-bold ${isActive ? 'text-indigo-700' : 'text-gray-700'}`}>
-                        {mode === 'slots' ? t('bookingModeSlots') : t('bookingModeFree')}
-                      </p>
-                      {isActive && (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-indigo-600 text-white text-[9px] font-bold shrink-0">
-                          <Check className="w-2.5 h-2.5" />
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[10px] text-gray-400 leading-relaxed">
-                      {mode === 'slots' ? t('bookingModeSlotHint') : t('bookingModeFreeHint')}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Card: Tampon entre les RDV (mode libre uniquement) */}
-          {bookingMode === 'free' && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
-                  <Clock className="w-3.5 h-3.5 text-violet-600" />
-                </div>
-                <h2 className="text-sm font-bold text-gray-800">{t('bufferTitle')}</h2>
-              </div>
-              <p className="text-[11px] text-gray-400 mb-3 ml-9">{t('bufferHint')}</p>
-              <div className="flex gap-2 ml-9 flex-wrap">
-                {([0, 10, 15, 30] as const).map(val => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => setBufferMinutes(val)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${bufferMinutes === val ? 'bg-violet-600 text-white border-violet-600' : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'}`}
-                  >
-                    {val === 0 ? t('bufferNone') : `${val} min`}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Hint: horaires depuis la vitrine (mode libre uniquement) */}
-          {bookingMode === 'free' && (
-            <div className="bg-indigo-50 rounded-2xl border border-indigo-100 p-4">
-              <p className="text-[11px] text-indigo-700 leading-relaxed">
-                {t('bookingModeFreeHoursHint')}{' '}
-                <a href="/dashboard/public-page" className="font-semibold underline underline-offset-2 hover:text-indigo-900">
-                  {t('bookingModeFreeHoursLink')}
-                </a>
-              </p>
-            </div>
-          )}
-
-          {/* Card: Notifications push */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:col-span-2">
-            <div className="flex items-center justify-between gap-3 mb-1">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
-                  <Bell className="w-3.5 h-3.5 text-indigo-600" />
-                </div>
-                <h2 className="text-sm font-bold text-gray-800 truncate">{t('pushNotifTitle')}</h2>
-              </div>
-              {pushSubscribed ? (
-                <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
-                  <Check className="w-3 h-3" />
-                  {t('pushNotifActive')}
-                </span>
-              ) : pushSupported ? (
-                <button
-                  type="button"
-                  onClick={subscribePush}
-                  disabled={pushSubscribing || pushPermission === 'denied'}
-                  className="shrink-0 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-xs font-bold disabled:opacity-50 hover:shadow-md transition-all"
-                >
-                  {pushSubscribing ? '...' : t('pushNotifEnable')}
-                </button>
-              ) : null}
-            </div>
-            <p className="text-[11px] text-gray-500 ml-9 leading-relaxed">
-              {pushSubscribed
-                ? t('pushNotifActiveHint')
-                : !pushSupported
-                  ? (isIOS && !isStandalone ? t('pushNotifIosPwa') : t('pushNotifUnsupported'))
-                  : pushPermission === 'denied'
-                    ? t('pushNotifDenied')
-                    : t('pushNotifHint')}
-            </p>
-            {pushError && (
-              <p className="text-[11px] text-red-500 font-medium ml-9 mt-1.5">{pushError}</p>
-            )}
-          </div>
-
-          {/* Card: Message public */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
-                  <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />
-                </div>
-                <h2 className="text-sm font-bold text-gray-800">{t('publicMessageTitle')}</h2>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={messageEnabled}
-                onClick={() => setMessageEnabled(!messageEnabled)}
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 ${messageEnabled ? 'bg-indigo-600' : 'bg-gray-200'}`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${messageEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-            </div>
-            <p className="text-[11px] text-gray-400 mb-3 ml-9">{t('publicMessageHint')}</p>
-
-            {messageEnabled && (
-              <div className="space-y-2.5 ml-9">
-                <input
-                  type="text"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder={t('publicMessagePlaceholder')}
-                  maxLength={200}
-                  className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
-                />
-                <div className="flex items-center gap-2 flex-wrap">
-                  <label className="text-[11px] text-gray-400 shrink-0">{t('expiresOn')}</label>
-                  <input
-                    type="date"
-                    value={messageExpires}
-                    onChange={(e) => setMessageExpires(e.target.value)}
-                    min={formatDate(new Date())}
-                    className="px-2 py-1 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                  />
-                  {messageExpires ? (
-                    <button onClick={() => setMessageExpires('')} className="text-[11px] text-red-400 hover:text-red-500 transition-colors">
-                      {t('remove')}
-                    </button>
-                  ) : (
-                    <span className="text-[11px] text-gray-300">{t('permanent')}</span>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Card: Conditions de reservation */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center">
-                <Phone className="w-3.5 h-3.5 text-violet-600" />
-              </div>
-              <h2 className="text-sm font-bold text-gray-800">{t('bookingTitle')}</h2>
-            </div>
-            <p className="text-[11px] text-gray-400 mb-3 ml-9">{t('bookingHint')}</p>
-
-            <div className="ml-9">
-              <textarea
-                value={bookingMessage}
-                onChange={(e) => setBookingMessage(e.target.value)}
-                placeholder={t('bookingPlaceholder')}
-                maxLength={500}
-                rows={4}
-                className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none"
-              />
-              <p className="text-[10px] text-gray-300 text-right mt-1">{bookingMessage.length}/500</p>
-            </div>
-          </div>
-
-          {/* Card: SMS Notifications */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:col-span-2">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
-                <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
-              </div>
-              <h2 className="text-sm font-bold text-gray-800">{t('smsTitle')}</h2>
-            </div>
-            {merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling' || merchant?.subscription_status === 'past_due' ? (
-              <div className="ml-9">
-                <p className="text-[11px] text-gray-500 leading-relaxed">{t('smsActiveInfo')}</p>
-                {smsUsage && (
-                  <div className="mt-2">
-                    <div className="flex items-center justify-between text-[11px] mb-1">
-                      <span className="text-gray-500">{t('smsQuotaLabel')}</span>
-                      <span className="font-bold text-gray-700">{smsUsage.sent} {t('smsQuotaOf')} 100</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${smsUsage.sent >= 100 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                        style={{ width: `${Math.min(100, smsUsage.sent)}%` }}
-                      />
-                    </div>
-                    <p className="text-[10px] text-gray-400 mt-1">{t('smsOverageInfo')}</p>
+              {/* Card: Mode de planning */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:col-span-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                    <Calendar className="w-3.5 h-3.5 text-indigo-600" />
                   </div>
-                )}
+                  <h2 className="text-sm font-bold text-gray-800">{t('bookingModeTitle')}</h2>
+                </div>
+                <div className="ml-9 grid grid-cols-2 gap-2 mt-2">
+                  {(['slots', 'free'] as const).map(mode => {
+                    const isActive = bookingMode === mode;
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => handleBookingModeChange(mode)}
+                        className={`text-left rounded-xl border-2 p-3 transition-all ${isActive ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'}`}
+                      >
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <p className={`text-xs font-bold ${isActive ? 'text-indigo-700' : 'text-gray-700'}`}>
+                            {mode === 'slots' ? t('bookingModeSlots') : t('bookingModeFree')}
+                          </p>
+                          {isActive && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-indigo-600 text-white text-[9px] font-bold shrink-0">
+                              <Check className="w-2.5 h-2.5" />
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-gray-400 leading-relaxed">
+                          {mode === 'slots' ? t('bookingModeSlotHint') : t('bookingModeFreeHint')}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            ) : (
-              <div className="ml-9 flex items-center justify-between gap-3">
-                <p className="text-[11px] text-gray-500">{t('smsTrialMessage')}</p>
-                <a href="/dashboard/subscription" className="shrink-0 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-[11px] font-bold hover:shadow-md transition-all">
-                  {t('smsTrialCta')}
-                </a>
-              </div>
-            )}
-          </div>
 
-          {/* ── Online booking settings (visible when auto-booking enabled) ── */}
+              {/* Card: Tampon entre les RDV (mode libre uniquement) */}
+              {bookingMode === 'free' && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
+                      <Clock className="w-3.5 h-3.5 text-violet-600" />
+                    </div>
+                    <h2 className="text-sm font-bold text-gray-800">{t('bufferTitle')}</h2>
+                  </div>
+                  <p className="text-[11px] text-gray-400 mb-3 ml-9">{t('bufferHint')}</p>
+                  <div className="flex gap-2 ml-9 flex-wrap">
+                    {([0, 10, 15, 30] as const).map(val => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setBufferMinutes(val)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${bufferMinutes === val ? 'bg-violet-600 text-white border-violet-600' : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'}`}
+                      >
+                        {val === 0 ? t('bufferNone') : `${val} min`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Hint: horaires depuis la vitrine (mode libre uniquement) */}
+              {bookingMode === 'free' && (
+                <div className="bg-indigo-50 rounded-2xl border border-indigo-100 p-4">
+                  <p className="text-[11px] text-indigo-700 leading-relaxed">
+                    {t('bookingModeFreeHoursHint')}{' '}
+                    <a href="/dashboard/public-page" className="font-semibold underline underline-offset-2 hover:text-indigo-900">
+                      {t('bookingModeFreeHoursLink')}
+                    </a>
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* ═══════ SECTION 2: RÉSA EN LIGNE ═══════ */}
+          <section>
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 mb-2 px-1">{t('sectionOnlineBooking')}</h3>
+            <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0">
+
+              {/* Card: Resa en ligne — toggle */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:col-span-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+                      <Globe className="w-3.5 h-3.5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-bold text-gray-800">{t('autoBookingTitle')}</h2>
+                      <p className="text-[11px] text-gray-400 mt-0.5">{autoBookingEnabled ? t('autoBookingHint') : t('autoBookingOffHint')}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={autoBookingEnabled}
+                    onClick={() => setAutoBookingEnabled(!autoBookingEnabled)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 ${autoBookingEnabled ? 'bg-emerald-500' : 'bg-gray-200'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${autoBookingEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Card: Conditions de reservation (only when online booking enabled) */}
+              {autoBookingEnabled && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:col-span-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center">
+                      <Phone className="w-3.5 h-3.5 text-violet-600" />
+                    </div>
+                    <h2 className="text-sm font-bold text-gray-800">{t('bookingTitle')}</h2>
+                  </div>
+                  <p className="text-[11px] text-gray-400 mb-3 ml-9">{t('bookingHint')}</p>
+
+                  <div className="ml-9">
+                    <textarea
+                      value={bookingMessage}
+                      onChange={(e) => setBookingMessage(e.target.value)}
+                      placeholder={t('bookingPlaceholder')}
+                      maxLength={500}
+                      rows={4}
+                      className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none"
+                    />
+                    <p className="text-[10px] text-gray-300 text-right mt-1">{bookingMessage.length}/500</p>
+                  </div>
+                </div>
+              )}
+
+          {/* ── Online booking advanced settings (visible when auto-booking enabled) ── */}
           {autoBookingEnabled && (
             <>
               {/* Warning if external booking URL is configured */}
@@ -1526,21 +1150,160 @@ export default function PlanningDashboard() {
               </div>
             </>
           )}
+            </div>
+          </section>
 
-          {/* Save button */}
-          <button
-            onClick={handleSaveSettings}
-            disabled={savingSettings}
-            className={`w-full py-3 rounded-2xl font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md sm:col-span-2 sm:max-w-xs sm:mx-auto ${savedSettings ? 'bg-emerald-500 text-white shadow-emerald-200/50' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200/50'}`}
-          >
-            {savedSettings ? (
-              <span className="flex items-center justify-center gap-2"><Check className="w-4 h-4" /> {t('saved')}</span>
-            ) : savingSettings ? (
-              <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-            ) : (
-              t('save')
-            )}
-          </button>
+          {/* ═══════ SECTION 3: COMMUNICATION ═══════ */}
+          <section>
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-violet-600 mb-2 px-1">{t('sectionCommunication')}</h3>
+            <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0">
+
+              {/* Card: Notifications push */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:col-span-2">
+                <div className="flex items-center justify-between gap-3 mb-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                      <Bell className="w-3.5 h-3.5 text-indigo-600" />
+                    </div>
+                    <h2 className="text-sm font-bold text-gray-800 truncate">{t('pushNotifTitle')}</h2>
+                  </div>
+                  {pushSubscribed ? (
+                    <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
+                      <Check className="w-3 h-3" />
+                      {t('pushNotifActive')}
+                    </span>
+                  ) : pushSupported ? (
+                    <button
+                      type="button"
+                      onClick={subscribePush}
+                      disabled={pushSubscribing || pushPermission === 'denied'}
+                      className="shrink-0 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-xs font-bold disabled:opacity-50 hover:shadow-md transition-all"
+                    >
+                      {pushSubscribing ? '...' : t('pushNotifEnable')}
+                    </button>
+                  ) : null}
+                </div>
+                <p className="text-[11px] text-gray-500 ml-9 leading-relaxed">
+                  {pushSubscribed
+                    ? t('pushNotifActiveHint')
+                    : !pushSupported
+                      ? (isIOS && !isStandalone ? t('pushNotifIosPwa') : t('pushNotifUnsupported'))
+                      : pushPermission === 'denied'
+                        ? t('pushNotifDenied')
+                        : t('pushNotifHint')}
+                </p>
+                {pushError && (
+                  <p className="text-[11px] text-red-500 font-medium ml-9 mt-1.5">{pushError}</p>
+                )}
+              </div>
+
+              {/* Card: Message public */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
+                      <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />
+                    </div>
+                    <h2 className="text-sm font-bold text-gray-800">{t('publicMessageTitle')}</h2>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={messageEnabled}
+                    onClick={() => setMessageEnabled(!messageEnabled)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 ${messageEnabled ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${messageEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+                <p className="text-[11px] text-gray-400 mb-3 ml-9">{t('publicMessageHint')}</p>
+
+                {messageEnabled && (
+                  <div className="space-y-2.5 ml-9">
+                    <input
+                      type="text"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder={t('publicMessagePlaceholder')}
+                      maxLength={200}
+                      className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                    />
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <label className="text-[11px] text-gray-400 shrink-0">{t('expiresOn')}</label>
+                      <input
+                        type="date"
+                        value={messageExpires}
+                        onChange={(e) => setMessageExpires(e.target.value)}
+                        min={formatDate(new Date())}
+                        className="px-2 py-1 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                      />
+                      {messageExpires ? (
+                        <button onClick={() => setMessageExpires('')} className="text-[11px] text-red-400 hover:text-red-500 transition-colors">
+                          {t('remove')}
+                        </button>
+                      ) : (
+                        <span className="text-[11px] text-gray-300">{t('permanent')}</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Card: SMS Notifications */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                  </div>
+                  <h2 className="text-sm font-bold text-gray-800">{t('smsTitle')}</h2>
+                </div>
+                {merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling' || merchant?.subscription_status === 'past_due' ? (
+                  <div className="ml-9">
+                    <p className="text-[11px] text-gray-500 leading-relaxed">{t('smsActiveInfo')}</p>
+                    {smsUsage && (
+                      <div className="mt-2">
+                        <div className="flex items-center justify-between text-[11px] mb-1">
+                          <span className="text-gray-500">{t('smsQuotaLabel')}</span>
+                          <span className="font-bold text-gray-700">{smsUsage.sent} {t('smsQuotaOf')} 100</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${smsUsage.sent >= 100 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                            style={{ width: `${Math.min(100, smsUsage.sent)}%` }}
+                          />
+                        </div>
+                        <p className="text-[10px] text-gray-400 mt-1">{t('smsOverageInfo')}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="ml-9 flex items-center justify-between gap-3">
+                    <p className="text-[11px] text-gray-500">{t('smsTrialMessage')}</p>
+                    <a href="/dashboard/subscription" className="shrink-0 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-[11px] font-bold hover:shadow-md transition-all">
+                      {t('smsTrialCta')}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* Save button — sticky at bottom on mobile/desktop so the merchant never loses it */}
+          <div className="sticky bottom-4 flex justify-center pt-2 z-10 pointer-events-none">
+            <button
+              onClick={handleSaveSettings}
+              disabled={savingSettings}
+              className={`pointer-events-auto w-full sm:w-auto sm:min-w-[220px] px-6 py-3 rounded-2xl font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ${savedSettings ? 'bg-emerald-500 text-white shadow-emerald-300/60' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-300/60'}`}
+            >
+              {savedSettings ? (
+                <span className="flex items-center justify-center gap-2"><Check className="w-4 h-4" /> {t('saved')}</span>
+              ) : savingSettings ? (
+                <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+              ) : (
+                t('save')
+              )}
+            </button>
+          </div>
         </div>
       )}
 
@@ -1599,24 +1362,18 @@ export default function PlanningDashboard() {
                 </div>
 
                 <div className="p-4 space-y-4">
-                  {/* Date + time */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-xs font-semibold text-gray-600 mb-1 block">{t('blockSlotDate')}</label>
-                      <input type="date" value={manualDate} min={todayStr} onChange={e => setManualDate(e.target.value)}
-                        className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-gray-600 mb-1 block">{t('blockSlotFrom')}</label>
-                      <input type="time" value={manualStartTime} onChange={e => setManualStartTime(e.target.value)}
-                        className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400" />
-                    </div>
-                  </div>
-
-                  {/* Services */}
+                  {/* ───── 1. PRESTATIONS ───── */}
                   {services.length > 0 && (
                     <div>
-                      <label className="text-xs font-semibold text-gray-600 mb-1.5 block">{t('manualServices')}</label>
+                      <div className="flex items-baseline justify-between mb-1.5">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400">1. {t('manualServices')}</label>
+                        {manualServiceIds.length > 0 && (
+                          <span className="text-[11px] font-semibold text-indigo-600">
+                            {t('totalDuration', { duration: formatDuration(manualDuration) })}
+                            {manualTotalPrice > 0 && ` · ${formatCurrency(manualTotalPrice, merchant?.country, locale)}`}
+                          </span>
+                        )}
+                      </div>
                       {manualSelected.length > 0 && (
                         <div className="space-y-1 mb-2">
                           {manualSelected.map(svc => {
@@ -1677,15 +1434,41 @@ export default function PlanningDashboard() {
                           )}
                         </div>
                       )}
-                      {manualServiceIds.length > 0 && (
-                        <p className="text-[11px] text-indigo-600 font-medium mt-2">{t('totalDuration', { duration: manualDuration })}</p>
-                      )}
                     </div>
                   )}
 
+                  {/* ───── 2. CRÉNEAU ───── */}
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5 block">2. {t('blockSlotDate')}</label>
+                    {/* Date pleine largeur */}
+                    <input type="date" value={manualDate} min={todayStr} onChange={e => setManualDate(e.target.value)}
+                      className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400" />
+                    {/* D\u00e9but → Fin sur une ligne */}
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="flex-1">
+                        <input
+                          type="time"
+                          value={manualStartTime}
+                          onChange={e => setManualStartTime(e.target.value)}
+                          aria-label={t('blockSlotFrom')}
+                          className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 tabular-nums"
+                        />
+                      </div>
+                      <span className="text-gray-400 text-xs shrink-0">→</span>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-center px-3 py-2 text-base sm:text-sm border border-gray-100 bg-gray-50 rounded-xl text-gray-600 font-medium tabular-nums">
+                          {manualEndTime || '—'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ───── 3. CLIENT ───── */}
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5 block">3. {t('clientName')}</label>
+
                   {/* Client name with search */}
                   <div className="relative">
-                    <label className="text-xs font-semibold text-gray-600 mb-1 block">{t('clientName')} *</label>
                     <div className="relative">
                       <input
                         type="text"
@@ -1828,10 +1611,11 @@ export default function PlanningDashboard() {
                       }
                     </button>
                   )}
+                  </div>
 
-                  {/* Notes */}
+                  {/* ───── 4. NOTES ───── */}
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-1 block">{t('notesLabel')} ({t('optional')})</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5 block">4. {t('notesLabel')} <span className="font-normal normal-case tracking-normal text-gray-300">({t('optional')})</span></label>
                     <textarea value={manualNotes} onChange={e => setManualNotes(e.target.value)} rows={2} maxLength={500}
                       className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none" />
                   </div>
@@ -1881,7 +1665,7 @@ export default function PlanningDashboard() {
 
       {/* ── MODAL: Block slot/period (unified) ── */}
       {showBlockModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowBlockModal(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowBlockModal(false)}>
           <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-5" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
@@ -1980,7 +1764,7 @@ export default function PlanningDashboard() {
 
       {/* ── CONFIRM: Delete blocked slot ── */}
       {confirmDeleteBlock && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setConfirmDeleteBlock(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setConfirmDeleteBlock(null)}>
           <div className="w-full max-w-xs bg-white rounded-2xl shadow-xl p-5" onClick={e => e.stopPropagation()}>
             <p className="text-sm font-semibold text-gray-900 text-center mb-1">{t('blockSlotDeleteConfirm')}</p>
             <p className="text-xs text-gray-400 text-center mb-4">{t('blockSlotDeleteHint')}</p>
@@ -2001,7 +1785,7 @@ export default function PlanningDashboard() {
 
       {/* ── CONFIRM: Mode switch ── */}
       {modeSwitchTarget && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setModeSwitchTarget(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setModeSwitchTarget(null)}>
           <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-5" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">

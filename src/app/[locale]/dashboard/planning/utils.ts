@@ -56,18 +56,18 @@ export function formatDuration(totalMinutes: number): string {
   return parts.join('') || '0min';
 }
 
-/** Fixed palette for service colors (10 distinct colors) */
+/** Fixed palette for service colors — vivid Booksy-style (saturated 500-600 range) */
 export const SERVICE_COLORS = [
-  '#6366f1', // indigo
-  '#ec4899', // pink
-  '#f59e0b', // amber
-  '#10b981', // emerald
-  '#8b5cf6', // violet
-  '#ef4444', // red
-  '#06b6d4', // cyan
-  '#f97316', // orange
-  '#84cc16', // lime
-  '#a855f7', // purple
+  '#4f46e5', // indigo-600 (deep)
+  '#db2777', // pink-600
+  '#d97706', // amber-600
+  '#059669', // emerald-600
+  '#7c3aed', // violet-600
+  '#dc2626', // red-600
+  '#0891b2', // cyan-600
+  '#ea580c', // orange-600
+  '#65a30d', // lime-600
+  '#9333ea', // purple-600
 ];
 
 /** Build a map of service ID → color based on service position */

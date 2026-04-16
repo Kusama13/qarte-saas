@@ -52,7 +52,6 @@ export function usePlanningState() {
   const supabase = getSupabase();
 
   const [tab, setTab] = useState<'slots' | 'reservations' | 'settings'>('slots');
-  const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
   const [weekOffset, setWeekOffset] = useState(0);
   const [slots, setSlots] = useState<PlanningSlot[]>([]);
@@ -211,20 +210,18 @@ export function usePlanningState() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slots]);
 
-  // Sync weekOffset when day view navigates outside loaded week
+  // Sync weekOffset when selectedDay falls outside the currently loaded week
   useEffect(() => {
-    if (viewMode !== 'day') return;
     const dayStr = formatDate(selectedDay);
     const startStr = formatDate(weekStart);
     const endStr = formatDate(weekEnd);
     if (dayStr < startStr || dayStr > endStr) {
-      // Compute new offset: difference in weeks from current week
       const now = getWeekStart(0);
       const diffMs = selectedDay.getTime() - now.getTime();
       const diffWeeks = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
       setWeekOffset(diffWeeks);
     }
-  }, [viewMode, selectedDay, weekStart, weekEnd]);
+  }, [selectedDay, weekStart, weekEnd]);
 
   // ── Actions ──
 
@@ -550,11 +547,12 @@ export function usePlanningState() {
     if (!merchant || upcomingFetched) return;
     setLoadingUpcoming(true);
     try {
+      // Fenêtre : 30 jours passés → 90 jours futurs (couvre mode libre 3 mois + marge mode créneaux 60j)
       const pastDate = new Date();
       pastDate.setDate(pastDate.getDate() - 30);
       const fromStr = formatDate(pastDate);
       const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 30);
+      futureDate.setDate(futureDate.getDate() + 90);
       const toStr = formatDate(futureDate);
       const res = await fetch(`/api/planning?merchantId=${merchant.id}&from=${fromStr}&to=${toStr}&booked=true`);
       const data = await res.json();
@@ -576,8 +574,8 @@ export function usePlanningState() {
     merchant, merchantLoading, refetch,
     // Tab
     tab, setTab,
-    // View mode
-    viewMode, setViewMode, selectedDay, setSelectedDay,
+    // Selected day
+    selectedDay, setSelectedDay,
     // Week navigation
     weekOffset, setWeekOffset, weekStart, weekDays, weekEnd,
     // Slots

@@ -46,14 +46,15 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
 
   const isPaid = subscriptionStatus === 'active' || subscriptionStatus === 'canceling' || subscriptionStatus === 'past_due';
 
-  // Sync viewingSlot with updated slots data (e.g. after deposit confirm/cancel)
+  // Sync viewingSlot with updated slots data (e.g. after deposit confirm/cancel).
+  // Omit viewingSlot from deps: setViewingSlot creates a new ref and would re-run uselessly.
   useEffect(() => {
-    if (viewingSlot) {
-      const updated = slots.find(s => s.id === viewingSlot.id);
-      if (updated && updated !== viewingSlot) setViewingSlot(updated);
-      else if (!updated) setViewingSlot(null);
-    }
-  }, [slots, viewingSlot]);
+    if (!viewingSlot) return;
+    const updated = slots.find(s => s.id === viewingSlot.id);
+    if (!updated) setViewingSlot(null);
+    else if (updated !== viewingSlot) setViewingSlot(updated);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slots]);
 
   // Reset SMS toggle when viewing a different slot
   useEffect(() => { setDepositSendSms(false); }, [viewingSlot?.id]);
@@ -134,14 +135,24 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
 
   const totalReservations = upcomingGroups.reduce((n, g) => n + g.slots.length, 0) + pastGroups.reduce((n, g) => n + g.slots.length, 0);
 
-  if (totalReservations === 0) {
-    return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 text-center max-w-md mx-auto">
-        <CalendarDays className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-        <p className="text-sm font-semibold text-gray-700 mb-1">{t('noReservations')}</p>
-        <p className="text-xs text-gray-400">{t('noReservationsHint')}</p>
+  // Keep computed counts accessible to the empty state AND the main render
+  const upcomingCountInline = upcomingGroups.reduce((n, g) => n + g.slots.length, 0);
+  const pastCountInline = pastGroups.reduce((n, g) => n + g.slots.length, 0);
+  const hasOnlyPast = upcomingCountInline === 0 && pastCountInline > 0;
+  const isFullyEmpty = totalReservations === 0;
+
+  const EmptyStateBlock = (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 text-center">
+      <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-50 mb-3">
+        <CalendarDays className="w-6 h-6 text-indigo-600" />
       </div>
-    );
+      <p className="text-base font-bold text-gray-900 mb-1">{t('noReservations')}</p>
+      <p className="text-xs text-gray-500 max-w-xs mx-auto">{t('noReservationsHint')}</p>
+    </div>
+  );
+
+  if (isFullyEmpty) {
+    return <div className="max-w-lg mx-auto">{EmptyStateBlock}</div>;
   }
 
   const photos = viewingSlot?.planning_slot_photos || [];
@@ -256,25 +267,49 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
   return (
     <>
       <div className="space-y-3">
-        {/* Summary bar */}
-        <div className="flex items-center justify-between px-1">
-          <p className="text-sm font-bold text-gray-900">
-            {upcomingCount > 0
-              ? t('upcomingCount', { count: upcomingCount })
-              : t('noUpcoming')}
-          </p>
-          {pastCount > 0 && (
-            <button
-              onClick={() => setShowPast(!showPast)}
-              className="text-xs font-medium text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              {showPast ? t('hidePast') : t('showPast', { count: pastCount })}
-            </button>
-          )}
-        </div>
+        {/* Si seulement des r\u00e9sas pass\u00e9es : afficher l'empty state enrichi en haut */}
+        {hasOnlyPast && (
+          <div className="max-w-lg mx-auto">
+            {EmptyStateBlock}
+          </div>
+        )}
+
+        {/* Summary bar (masqu\u00e9 si seulement des pass\u00e9es — on a d\u00e9j\u00e0 l'empty state) */}
+        {!hasOnlyPast && (
+          <div className="flex items-center justify-between px-1">
+            <p className="text-sm font-bold text-gray-900">
+              {upcomingCount > 0
+                ? t('upcomingCount', { count: upcomingCount })
+                : t('noUpcoming')}
+            </p>
+            {pastCount > 0 && (
+              <button
+                onClick={() => setShowPast(!showPast)}
+                className="text-xs font-medium text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                {showPast ? t('hidePast') : t('showPast', { count: pastCount })}
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Upcoming */}
         {upcomingGroups.map(renderDayGroup)}
+
+        {/* Historique toggle — quand il n'y a que des pass\u00e9es, section dissociable en bas */}
+        {hasOnlyPast && (
+          <div className="flex items-center justify-between px-1 pt-2 mt-3 border-t border-gray-100">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+              {t('past')}
+            </p>
+            <button
+              onClick={() => setShowPast(!showPast)}
+              className="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
+            >
+              {showPast ? t('hidePast') : t('showPast', { count: pastCount })}
+            </button>
+          </div>
+        )}
 
         {/* Past */}
         {showPast && pastGroups.map(renderDayGroup)}

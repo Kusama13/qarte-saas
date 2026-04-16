@@ -40,8 +40,8 @@ export async function GET(request: NextRequest) {
         .single();
       const today = getTodayForCountry(merchantRow?.country);
       const todayDate = new Date(today);
-      todayDate.setDate(todayDate.getDate() + 30);
-      const thirtyDaysLater = todayDate.toISOString().split('T')[0];
+      todayDate.setDate(todayDate.getDate() + 60);
+      const sixtyDaysLater = todayDate.toISOString().split('T')[0];
 
       const { data, error } = await supabaseAdmin
         .from('merchant_planning_slots')
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
         .eq('merchant_id', merchantId)
         .is('client_name', null)
         .gte('slot_date', today)
-        .lte('slot_date', thirtyDaysLater)
+        .lte('slot_date', sixtyDaysLater)
         .order('slot_date')
         .order('start_time');
 
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     const supabaseAdmin = getSupabaseAdmin();
     let query = supabaseAdmin
       .from('merchant_planning_slots')
-      .select('id, slot_date, start_time, client_name, client_phone, customer_id, service_id, notes, deposit_confirmed, deposit_deadline_at, primary_slot_id, created_at, planning_slot_services(service_id, service:merchant_services!service_id(name)), planning_slot_photos(id, url, position), planning_slot_result_photos(id, url, position), customer:customers!customer_id(instagram_handle, tiktok_handle, facebook_url)')
+      .select('id, slot_date, start_time, client_name, client_phone, customer_id, service_id, notes, deposit_confirmed, deposit_deadline_at, primary_slot_id, total_duration_minutes, created_at, planning_slot_services(service_id, service:merchant_services!service_id(name)), planning_slot_photos(id, url, position), planning_slot_result_photos(id, url, position), customer:customers!customer_id(instagram_handle, tiktok_handle, facebook_url)')
       .eq('merchant_id', merchantId)
       .order('slot_date')
       .order('start_time');
@@ -229,9 +229,15 @@ export async function PATCH(request: NextRequest) {
     const updateData: Record<string, unknown> = {
       client_name: trimmedName,
     };
-    // Set booked_at when assigning a client to a slot (manual booking)
     if (trimmedName) {
+      // Manual booking: mark booked_at; booked_online left as-is (true if from /book, false otherwise)
       updateData.booked_at = new Date().toISOString();
+    } else {
+      // Clearing the slot: also reset booking metadata so the slot is truly available again
+      updateData.booked_online = false;
+      updateData.booked_at = null;
+      updateData.deposit_confirmed = null;
+      updateData.deposit_deadline_at = null;
     }
     if (client_phone !== undefined) {
       if (client_phone) {
@@ -361,7 +367,7 @@ export async function PATCH(request: NextRequest) {
     const clearFillersPromise = (client_name === null || client_name === '')
       ? supabaseAdmin
           .from('merchant_planning_slots')
-          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null })
+          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null, booked_online: false, booked_at: null })
           .eq('primary_slot_id', slotId)
           .eq('merchant_id', merchantId)
       : Promise.resolve({ error: null });
