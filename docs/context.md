@@ -343,6 +343,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Design dashboard : violet/indigo (coherent avec le reste, plus d'amber)
 - Tables `member_programs` + `member_cards`
 - Dashboard `/dashboard/members` accessible via bouton "Clients fideles" dans `/dashboard/customers`
+- **Page `/dashboard/customers`** : header purple-tint avec titre + compteur total, CTA primaire `Nouveau` sur sa propre ligne, liens secondaires `Clients fideles` + `Jeu concours` (amber outline) sur la ligne suivante. Barre de recherche (bg-blanc, bouton X pour clear) + **bouton Filtrer** aux couleurs brand `#4b0082` (violet soft inactif, solide actif avec badge compteur). Modal filtres groupes (`PlanningModal`-style mais inline) : **Statut** (Nouveaux 7j / Actifs 30j / Inactifs 60j+ / Proche recompense / Recompense prete / Anniv. ce mois — exclusif) + **Communication** (Notifiables) + **Avantages actifs** (Bienvenue / Promo). Filtre `Anniv. ce mois` utilise `customer.birth_month === new Date().getMonth() + 1` (plus actionable que l'ancien filtre "voucher anniversaire recu")
 
 ### Churn Retention Survey (mig 106)
 - **Trigger** : merchants fully expired (> J+3) et `churn_survey_seen_at IS NULL` sont rediriges par le dashboard layout vers `/dashboard/survey` au lieu de `/dashboard/subscription`

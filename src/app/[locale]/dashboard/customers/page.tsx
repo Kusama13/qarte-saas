@@ -23,7 +23,9 @@ import {
   Target,
   Sparkles,
   Ticket,
+  X,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Modal } from '@/components/ui';
 import { CustomerManagementModal } from '@/components/dashboard/CustomerManagementModal';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -77,13 +79,12 @@ export default function CustomersPage() {
   const [filterPushOnly, setFilterPushOnly] = useState(false);
   const [filterWelcome, setFilterWelcome] = useState(false);
   const [filterPromo, setFilterPromo] = useState(false);
-  const [filterBirthday, setFilterBirthday] = useState(false);
   const [welcomeVoucherCustomerIds, setWelcomeVoucherCustomerIds] = useState<Set<string>>(new Set());
   const [offerVoucherCustomerIds, setOfferVoucherCustomerIds] = useState<Set<string>>(new Set());
-  const [birthdayVoucherCustomerIds, setBirthdayVoucherCustomerIds] = useState<Set<string>>(new Set());
   const [tier1RedeemedCards, setTier1RedeemedCards] = useState<Set<string>>(new Set());
   const [displayCount, setDisplayCount] = useState(50);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'inactive' | 'close' | 'reward'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'new7' | 'active30' | 'inactive60' | 'close' | 'reward' | 'birthday_month'>('all');
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
   // Create customer modal
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -123,22 +124,19 @@ export default function CustomersPage() {
         .select('customer_id, source')
         .eq('merchant_id', merchant.id)
         .eq('is_used', false)
-        .in('source', ['welcome', 'offer', 'birthday']),
+        .in('source', ['welcome', 'offer']),
     ]);
 
     // Build voucher sets
     const welcomeSet = new Set<string>();
     const offerSet = new Set<string>();
-    const birthdaySet = new Set<string>();
     for (const v of vouchersResult.data || []) {
       const vr = v as { customer_id: string; source: string };
       if (vr.source === 'welcome') welcomeSet.add(vr.customer_id);
       if (vr.source === 'offer') offerSet.add(vr.customer_id);
-      if (vr.source === 'birthday') birthdaySet.add(vr.customer_id);
     }
     setWelcomeVoucherCustomerIds(welcomeSet);
     setOfferVoucherCustomerIds(offerSet);
-    setBirthdayVoucherCustomerIds(birthdaySet);
 
     const cardsData = cardsResult.data;
 
@@ -270,10 +268,27 @@ export default function CustomersPage() {
     }
   }, [merchant, merchantLoading, fetchData]);
 
-  const inactiveCount = useMemo(() => {
+  const new7Count = useMemo(() => {
     const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 21);
+    cutoff.setDate(cutoff.getDate() - 7);
+    return customers.filter(c => c.created_at && new Date(c.created_at) >= cutoff).length;
+  }, [customers]);
+
+  const active30Count = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    return customers.filter(c => c.last_visit_date && new Date(c.last_visit_date) >= cutoff).length;
+  }, [customers]);
+
+  const inactive60Count = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 60);
     return customers.filter(c => !c.last_visit_date || new Date(c.last_visit_date) < cutoff).length;
+  }, [customers]);
+
+  const birthdayMonthCount = useMemo(() => {
+    const month = new Date().getMonth() + 1;
+    return customers.filter(c => c.customer?.birth_month === month).length;
   }, [customers]);
 
   const closeCount = useMemo(() => {
@@ -297,9 +312,18 @@ export default function CustomersPage() {
     return customers.filter(c => offerVoucherCustomerIds.has(c.customer_id)).length;
   }, [customers, offerVoucherCustomerIds]);
 
-  const birthdayCount = useMemo(() => {
-    return customers.filter(c => birthdayVoucherCustomerIds.has(c.customer_id)).length;
-  }, [customers, birthdayVoucherCustomerIds]);
+  const activeFilterCount =
+    (filterPushOnly ? 1 : 0) +
+    (filterWelcome ? 1 : 0) +
+    (filterPromo ? 1 : 0) +
+    (activeFilter !== 'all' ? 1 : 0);
+
+  const resetFilters = () => {
+    setFilterPushOnly(false);
+    setFilterWelcome(false);
+    setFilterPromo(false);
+    setActiveFilter('all');
+  };
 
   useEffect(() => {
     let filtered = customers;
@@ -314,14 +338,19 @@ export default function CustomersPage() {
     if (filterPromo) {
       filtered = filtered.filter((card) => offerVoucherCustomerIds.has(card.customer_id));
     }
-    if (filterBirthday) {
-      filtered = filtered.filter((card) => birthdayVoucherCustomerIds.has(card.customer_id));
-    }
 
     // Apply status filter
-    if (activeFilter === 'inactive') {
+    if (activeFilter === 'new7') {
       const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 21);
+      cutoff.setDate(cutoff.getDate() - 7);
+      filtered = filtered.filter((card) => card.created_at && new Date(card.created_at) >= cutoff);
+    } else if (activeFilter === 'active30') {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 30);
+      filtered = filtered.filter((card) => card.last_visit_date && new Date(card.last_visit_date) >= cutoff);
+    } else if (activeFilter === 'inactive60') {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 60);
       filtered = filtered.filter((card) => {
         if (!card.last_visit_date) return true;
         return new Date(card.last_visit_date) < cutoff;
@@ -336,6 +365,9 @@ export default function CustomersPage() {
       filtered = filtered.filter((card) => {
         return card.current_stamps >= (merchant?.stamps_required || 10);
       });
+    } else if (activeFilter === 'birthday_month') {
+      const month = new Date().getMonth() + 1;
+      filtered = filtered.filter((card) => card.customer?.birth_month === month);
     }
 
     // Apply search filter
@@ -354,7 +386,7 @@ export default function CustomersPage() {
 
     setFilteredCustomers(filtered);
     setDisplayCount(50); // Reset pagination on filter change
-  }, [searchQuery, customers, filterPushOnly, filterWelcome, filterPromo, filterBirthday, subscriberIds, welcomeVoucherCustomerIds, offerVoucherCustomerIds, birthdayVoucherCustomerIds, activeFilter, merchant]);
+  }, [searchQuery, customers, filterPushOnly, filterWelcome, filterPromo, subscriberIds, welcomeVoucherCustomerIds, offerVoucherCustomerIds, activeFilter, merchant]);
 
   if (loading || merchantLoading) {
     return (
@@ -368,7 +400,8 @@ export default function CustomersPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
+      {/* Header : titre + compteur + boutons d'actions en dessous */}
+      <div className="flex flex-col gap-4 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <div>
           <h1 className="text-xl md:text-3xl font-extrabold tracking-tight text-gray-900">
             {t('title')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4b0082] to-violet-600">{t('titleHighlight')}</span>
@@ -380,14 +413,14 @@ export default function CustomersPage() {
             {customers.length > 1 ? t('subtotalPlural') : t('subtotalSingular')}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            onClick={() => setCreateModalOpen(true)}
-            className="h-9 px-3 text-sm bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-lg transition-all duration-200 shadow-md shadow-indigo-200"
-          >
-            <UserPlus className="w-3.5 h-3.5 mr-1.5" />
-            {t('newButton')}
-          </Button>
+        <Button
+          onClick={() => setCreateModalOpen(true)}
+          className="h-9 px-3 text-sm bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-lg transition-all duration-200 shadow-md shadow-indigo-200 w-fit"
+        >
+          <UserPlus className="w-3.5 h-3.5 mr-1.5" />
+          {t('newButton')}
+        </Button>
+        <div className="flex flex-wrap items-center gap-2">
           <Link href="/dashboard/members">
             <Button
               variant="outline"
@@ -415,138 +448,51 @@ export default function CustomersPage() {
         <div className="flex flex-col sm:flex-row gap-3 mb-6 md:mb-8">
           <div className="relative flex-1 max-w-md group">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-              <Search className="w-5 h-5 text-gray-400 transition-all duration-300 group-focus-within:text-indigo-600 group-focus-within:scale-110" />
+              <Search className="w-4 h-4 text-gray-400 transition-colors group-focus-within:text-indigo-600" />
             </div>
             <Input
               type="text"
               placeholder={t('searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-12 bg-white/50 border-gray-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-300 placeholder:text-gray-400"
+              className="pl-11 pr-10 h-11 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors placeholder:text-gray-400 text-sm"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+                aria-label="Clear search"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
-        </div>
-
-        {/* Status filters */}
-        <div className="flex flex-wrap gap-2 mb-6 md:mb-8">
-          <button
-            onClick={() => setFilterPushOnly(!filterPushOnly)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
-              filterPushOnly
-                ? 'bg-violet-500 text-white border-violet-500 shadow-md shadow-violet-200'
-                : 'bg-white/50 text-gray-600 border-gray-200 hover:border-violet-300 hover:bg-violet-50'
-            }`}
-          >
-            <Bell className={`w-3.5 h-3.5 ${filterPushOnly ? 'text-white' : 'text-violet-500'}`} />
-            <span>{t('filterNotifiable')}</span>
-            <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
-              filterPushOnly ? 'bg-white/20 text-white' : 'bg-violet-100 text-violet-700'
-            }`}>
-              {subscriberIds.length}
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveFilter(activeFilter === 'inactive' ? 'all' : 'inactive')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
-              activeFilter === 'inactive'
-                ? 'bg-rose-500 text-white border-rose-500 shadow-md shadow-rose-200'
-                : 'bg-white/50 text-gray-600 border-gray-200 hover:border-rose-300 hover:bg-rose-50'
-            }`}
-          >
-            <Clock className={`w-3.5 h-3.5 ${activeFilter === 'inactive' ? 'text-white' : 'text-rose-500'}`} />
-            <span>{t('filterInactive')}</span>
-            <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
-              activeFilter === 'inactive' ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-700'
-            }`}>
-              {inactiveCount}
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveFilter(activeFilter === 'close' ? 'all' : 'close')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
-              activeFilter === 'close'
-                ? 'bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-200'
-                : 'bg-white/50 text-gray-600 border-gray-200 hover:border-amber-300 hover:bg-amber-50'
-            }`}
-          >
-            <Target className={`w-3.5 h-3.5 ${activeFilter === 'close' ? 'text-white' : 'text-amber-500'}`} />
-            <span>{t('filterClose')}</span>
-            <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
-              activeFilter === 'close' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
-            }`}>
-              {closeCount}
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveFilter(activeFilter === 'reward' ? 'all' : 'reward')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
-              activeFilter === 'reward'
-                ? 'bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-200'
-                : 'bg-white/50 text-gray-600 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50'
-            }`}
-          >
-            <Gift className={`w-3.5 h-3.5 ${activeFilter === 'reward' ? 'text-white' : 'text-emerald-500'}`} />
-            <span>{t('filterReward')}</span>
-            <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
-              activeFilter === 'reward' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-700'
-            }`}>
-              {rewardCount}
-            </span>
-          </button>
-          {merchant?.welcome_offer_enabled && welcomeCount > 0 && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setFilterWelcome(!filterWelcome)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
-                filterWelcome
-                  ? 'bg-sky-500 text-white border-sky-500 shadow-md shadow-sky-200'
-                  : 'bg-white/50 text-gray-600 border-gray-200 hover:border-sky-300 hover:bg-sky-50'
+              onClick={() => setShowFilterModal(true)}
+              className={`inline-flex items-center gap-2 px-4 h-11 rounded-xl border text-sm font-bold transition-all ${
+                activeFilterCount > 0
+                  ? 'bg-[#4b0082] text-white border-[#4b0082] shadow-md shadow-[#4b0082]/20'
+                  : 'bg-[#4b0082]/5 text-[#4b0082] border-[#4b0082]/20 hover:bg-[#4b0082]/10 hover:border-[#4b0082]/30'
               }`}
             >
-              <Sparkles className={`w-3.5 h-3.5 ${filterWelcome ? 'text-white' : 'text-sky-500'}`} />
-              <span>{t('filterWelcome')}</span>
-              <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
-                filterWelcome ? 'bg-white/20 text-white' : 'bg-sky-100 text-sky-700'
-              }`}>
-                {welcomeCount}
-              </span>
+              <SlidersHorizontal className="w-4 h-4" />
+              <span>{t('filters')}</span>
+              {activeFilterCount > 0 && (
+                <span className="px-1.5 py-0.5 text-[11px] font-bold rounded-full bg-white/20 text-white tabular-nums">
+                  {activeFilterCount}
+                </span>
+              )}
             </button>
-          )}
-          {promoCount > 0 && (
-            <button
-              onClick={() => setFilterPromo(!filterPromo)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
-                filterPromo
-                  ? 'bg-pink-500 text-white border-pink-500 shadow-md shadow-pink-200'
-                  : 'bg-white/50 text-gray-600 border-gray-200 hover:border-pink-300 hover:bg-pink-50'
-              }`}
-            >
-              <Ticket className={`w-3.5 h-3.5 ${filterPromo ? 'text-white' : 'text-pink-500'}`} />
-              <span>{t('filterPromo')}</span>
-              <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
-                filterPromo ? 'bg-white/20 text-white' : 'bg-pink-100 text-pink-700'
-              }`}>
-                {promoCount}
-              </span>
-            </button>
-          )}
-          {birthdayCount > 0 && (
-            <button
-              onClick={() => setFilterBirthday(!filterBirthday)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
-                filterBirthday
-                  ? 'bg-fuchsia-500 text-white border-fuchsia-500 shadow-md shadow-fuchsia-200'
-                  : 'bg-white/50 text-gray-600 border-gray-200 hover:border-fuchsia-300 hover:bg-fuchsia-50'
-              }`}
-            >
-              <Cake className={`w-3.5 h-3.5 ${filterBirthday ? 'text-white' : 'text-fuchsia-500'}`} />
-              <span>{t('filterBirthday')}</span>
-              <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
-                filterBirthday ? 'bg-white/20 text-white' : 'bg-fuchsia-100 text-fuchsia-700'
-              }`}>
-                {birthdayCount}
-              </span>
-            </button>
-          )}
+            {activeFilterCount > 0 && (
+              <button
+                onClick={resetFilters}
+                className="text-xs font-semibold text-gray-500 hover:text-gray-700 px-2"
+              >
+                {t('filtersReset')}
+              </button>
+            )}
+          </div>
         </div>
 
 
@@ -838,6 +784,160 @@ export default function CustomersPage() {
           </div>
         )}
       </div>
+
+      {/* ── Filter modal ── */}
+      <AnimatePresence>
+        {showFilterModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            onClick={(e) => { if (e.target === e.currentTarget) setShowFilterModal(false); }}
+          >
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              className="relative bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-xl"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
+                  <h3 className="text-sm font-bold text-gray-900">{t('filtersTitle')}</h3>
+                  {activeFilterCount > 0 && (
+                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md tabular-nums">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </div>
+                <button onClick={() => setShowFilterModal(false)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                  <X className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+
+              <div className="p-4 space-y-5">
+                {/* Statut */}
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">{t('filterGroupStatus')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setActiveFilter(activeFilter === 'new7' ? 'all' : 'new7')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'new7' ? 'bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-200' : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50'}`}
+                    >
+                      <Sparkles className={`w-3.5 h-3.5 ${activeFilter === 'new7' ? 'text-white' : 'text-emerald-500'}`} />
+                      <span>{t('filterNew7')}</span>
+                      <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${activeFilter === 'new7' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-700'}`}>{new7Count}</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveFilter(activeFilter === 'active30' ? 'all' : 'active30')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'active30' ? 'bg-indigo-500 text-white border-indigo-500 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50'}`}
+                    >
+                      <Users className={`w-3.5 h-3.5 ${activeFilter === 'active30' ? 'text-white' : 'text-indigo-500'}`} />
+                      <span>{t('filterActive30')}</span>
+                      <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${activeFilter === 'active30' ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-700'}`}>{active30Count}</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveFilter(activeFilter === 'inactive60' ? 'all' : 'inactive60')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'inactive60' ? 'bg-rose-500 text-white border-rose-500 shadow-md shadow-rose-200' : 'bg-white text-gray-600 border-gray-200 hover:border-rose-300 hover:bg-rose-50'}`}
+                    >
+                      <Clock className={`w-3.5 h-3.5 ${activeFilter === 'inactive60' ? 'text-white' : 'text-rose-500'}`} />
+                      <span>{t('filterInactive60')}</span>
+                      <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${activeFilter === 'inactive60' ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-700'}`}>{inactive60Count}</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveFilter(activeFilter === 'close' ? 'all' : 'close')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'close' ? 'bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-200' : 'bg-white text-gray-600 border-gray-200 hover:border-amber-300 hover:bg-amber-50'}`}
+                    >
+                      <Target className={`w-3.5 h-3.5 ${activeFilter === 'close' ? 'text-white' : 'text-amber-500'}`} />
+                      <span>{t('filterClose')}</span>
+                      <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${activeFilter === 'close' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'}`}>{closeCount}</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveFilter(activeFilter === 'reward' ? 'all' : 'reward')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'reward' ? 'bg-green-500 text-white border-green-500 shadow-md shadow-green-200' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300 hover:bg-green-50'}`}
+                    >
+                      <Gift className={`w-3.5 h-3.5 ${activeFilter === 'reward' ? 'text-white' : 'text-green-500'}`} />
+                      <span>{t('filterReward')}</span>
+                      <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${activeFilter === 'reward' ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'}`}>{rewardCount}</span>
+                    </button>
+                    {birthdayMonthCount > 0 && (
+                      <button
+                        onClick={() => setActiveFilter(activeFilter === 'birthday_month' ? 'all' : 'birthday_month')}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'birthday_month' ? 'bg-fuchsia-500 text-white border-fuchsia-500 shadow-md shadow-fuchsia-200' : 'bg-white text-gray-600 border-gray-200 hover:border-fuchsia-300 hover:bg-fuchsia-50'}`}
+                      >
+                        <Cake className={`w-3.5 h-3.5 ${activeFilter === 'birthday_month' ? 'text-white' : 'text-fuchsia-500'}`} />
+                        <span>{t('filterBirthdayMonth')}</span>
+                        <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${activeFilter === 'birthday_month' ? 'bg-white/20 text-white' : 'bg-fuchsia-100 text-fuchsia-700'}`}>{birthdayMonthCount}</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Communication */}
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">{t('filterGroupCommunication')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setFilterPushOnly(!filterPushOnly)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${filterPushOnly ? 'bg-violet-500 text-white border-violet-500 shadow-md shadow-violet-200' : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300 hover:bg-violet-50'}`}
+                    >
+                      <Bell className={`w-3.5 h-3.5 ${filterPushOnly ? 'text-white' : 'text-violet-500'}`} />
+                      <span>{t('filterNotifiable')}</span>
+                      <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${filterPushOnly ? 'bg-white/20 text-white' : 'bg-violet-100 text-violet-700'}`}>{subscriberIds.length}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Avantages actifs */}
+                {((merchant?.welcome_offer_enabled && welcomeCount > 0) || promoCount > 0) && (
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">{t('filterGroupVouchers')}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {merchant?.welcome_offer_enabled && welcomeCount > 0 && (
+                        <button
+                          onClick={() => setFilterWelcome(!filterWelcome)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${filterWelcome ? 'bg-sky-500 text-white border-sky-500 shadow-md shadow-sky-200' : 'bg-white text-gray-600 border-gray-200 hover:border-sky-300 hover:bg-sky-50'}`}
+                        >
+                          <Sparkles className={`w-3.5 h-3.5 ${filterWelcome ? 'text-white' : 'text-sky-500'}`} />
+                          <span>{t('filterWelcome')}</span>
+                          <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${filterWelcome ? 'bg-white/20 text-white' : 'bg-sky-100 text-sky-700'}`}>{welcomeCount}</span>
+                        </button>
+                      )}
+                      {promoCount > 0 && (
+                        <button
+                          onClick={() => setFilterPromo(!filterPromo)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${filterPromo ? 'bg-pink-500 text-white border-pink-500 shadow-md shadow-pink-200' : 'bg-white text-gray-600 border-gray-200 hover:border-pink-300 hover:bg-pink-50'}`}
+                        >
+                          <Ticket className={`w-3.5 h-3.5 ${filterPromo ? 'text-white' : 'text-pink-500'}`} />
+                          <span>{t('filterPromo')}</span>
+                          <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${filterPromo ? 'bg-white/20 text-white' : 'bg-pink-100 text-pink-700'}`}>{promoCount}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 border-t border-gray-100 flex gap-2">
+                <button
+                  onClick={resetFilters}
+                  disabled={activeFilterCount === 0}
+                  className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200 transition-colors disabled:opacity-40"
+                >
+                  {t('filtersReset')}
+                </button>
+                <button
+                  onClick={() => setShowFilterModal(false)}
+                  className="flex-[2] py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
+                >
+                  {t('filtersApply', { count: filteredCustomers.length })}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {selectedCustomer && merchant && (
         <CustomerManagementModal
