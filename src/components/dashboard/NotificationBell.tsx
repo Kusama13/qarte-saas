@@ -68,13 +68,15 @@ export default function NotificationBell() {
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e: MouseEvent) => {
+    // pointerdown covers mouse + touch in one listener (reliable on iOS PWA where
+    // mousedown synthesis from touch is inconsistent)
+    const handler = (e: PointerEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
   }, [open]);
 
   const handleMarkAllRead = async () => {
@@ -143,9 +145,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="fixed right-3 top-14 z-50 w-[calc(100vw-1.5rem)] max-w-80 lg:absolute lg:left-0 lg:right-auto lg:top-full lg:mt-2 lg:w-80 bg-white rounded-2xl border border-gray-100 shadow-xl overflow-hidden">
+        <div className="fixed right-3 top-14 z-50 w-[calc(100vw-1.5rem)] max-w-80 lg:absolute lg:left-0 lg:right-auto lg:top-full lg:mt-2 lg:w-80 bg-white rounded-2xl border border-gray-100 shadow-xl overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
               <span className="text-sm font-semibold text-gray-900">{t('title')}</span>
               {unreadCount > 0 && (
@@ -201,8 +201,7 @@ export default function NotificationBell() {
                 </button>
               </div>
             )}
-          </div>
-        </>
+        </div>
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { getSupabase } from '@/lib/supabase';
 import type { Merchant } from '@/types';
@@ -38,8 +38,12 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
     return null;
   });
   const [loading, setLoading] = useState(!merchant); // Skip loading if we have cached data
+  // Track merchant presence via ref so fetchMerchant stays stable (removing `merchant`
+  // from the dep array avoids recreating the callback on every merchant update, which
+  // otherwise cascades re-renders through every consumer of the context).
+  const hasMerchantRef = useRef(!!merchant);
 
-  const fetchMerchant = useCallback(async (skipCache = false) => {
+  const fetchMerchant = useCallback(async () => {
     try {
       // Use getUser() to validate JWT and trigger token refresh if needed
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -77,6 +81,7 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
       }
 
       setMerchant(data);
+      hasMerchantRef.current = true;
 
       // Track last_seen_at (fire-and-forget, non-blocking)
       supabase
@@ -88,39 +93,42 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
       console.error('MerchantContext error:', err);
       // Failsafe: si l'exception happen avant tout setMerchant et qu'on n'a pas
       // de cache, on bounce vers auth pour eviter un spinner infini
-      if (!merchant) {
+      if (!hasMerchantRef.current) {
         localStorage.removeItem(CACHE_KEY);
         router.push('/auth/merchant');
       }
     } finally {
       setLoading(false);
     }
-  }, [supabase, router, merchant]);
+  }, [supabase, router]);
 
   useEffect(() => {
-    // If we have cached data, still fetch fresh data in background
-    if (merchant) {
-      fetchMerchant(true);
-    } else {
-      fetchMerchant();
-    }
+    fetchMerchant();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string) => {
       if (event === 'SIGNED_OUT') {
         localStorage.removeItem(CACHE_KEY);
         setMerchant(null);
+        hasMerchantRef.current = false;
         router.push('/auth/merchant');
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        fetchMerchant(true);
+        fetchMerchant();
       }
     });
 
     return () => subscription.unsubscribe();
+    // fetchMerchant is stable (only depends on supabase/router, both stable)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const value = useMemo(
+    () => ({ merchant, loading, refetch: fetchMerchant }),
+    [merchant, loading, fetchMerchant]
+  );
+
   return (
-    <MerchantContext.Provider value={{ merchant, loading, refetch: fetchMerchant }}>
+    <MerchantContext.Provider value={value}>
       {children}
     </MerchantContext.Provider>
   );

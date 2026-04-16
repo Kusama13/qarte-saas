@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient, getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import { formatPhoneNumber } from '@/lib/utils';
+import { sendBookingSms } from '@/lib/sms';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 
@@ -17,6 +18,7 @@ const schema = z.object({
   service_ids: z.array(z.string().uuid()).optional(),
   notes: z.string().max(500).optional(),
   force: z.boolean().optional(),
+  send_sms: z.boolean().optional(),
 });
 
 function timeToMinutes(t: string): number {
@@ -39,9 +41,9 @@ export async function POST(request: NextRequest) {
     const parsed = schema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
 
-    const { merchantId, date, start_time, total_duration_minutes, client_name, client_phone, phone_country, customer_id, service_ids, notes, force } = parsed.data;
+    const { merchantId, date, start_time, total_duration_minutes, client_name, client_phone, phone_country, customer_id, service_ids, notes, force, send_sms } = parsed.data;
 
-    const { data: m } = await supabase.from('merchants').select('id, booking_mode, buffer_minutes, country').eq('id', merchantId).eq('user_id', user.id).single();
+    const { data: m } = await supabase.from('merchants').select('id, booking_mode, buffer_minutes, country, shop_name, locale, subscription_status').eq('id', merchantId).eq('user_id', user.id).single();
     if (!m) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     if (m.booking_mode !== 'free') return NextResponse.json({ error: 'Mode non applicable' }, { status: 400 });
 
@@ -111,6 +113,21 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin.from('planning_slot_services').insert(
         service_ids.map(service_id => ({ slot_id: slot.id, service_id }))
       );
+    }
+
+    // SMS confirmation (opt-in, fire-and-forget)
+    if (send_sms && formattedPhone) {
+      sendBookingSms(supabaseAdmin, {
+        merchantId,
+        slotId: slot.id,
+        phone: formattedPhone,
+        shopName: m.shop_name,
+        date,
+        time: start_time,
+        smsType: 'confirmation_no_deposit',
+        locale: m.locale || 'fr',
+        subscriptionStatus: m.subscription_status,
+      }).catch(() => {});
     }
 
     return NextResponse.json({ success: true, slotId: slot.id, customer_id: customer_id || null });

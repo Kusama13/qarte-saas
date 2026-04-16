@@ -133,6 +133,7 @@ export default function PlanningDashboard() {
   const [savingManual, setSavingManual] = useState(false);
   const [manualError, setManualError] = useState<string | null>(null);
   const [manualConflict, setManualConflict] = useState<{ client_name: string; start_time: string; end_time: string } | null>(null);
+  const [manualSendSms, setManualSendSms] = useState(false);
 
   const manualDuration = useMemo(() => manualServiceIds.reduce((sum, id) => {
     return sum + (serviceMap.get(id)?.duration ?? 30);
@@ -158,6 +159,7 @@ export default function PlanningDashboard() {
     setManualGrantOfferId(null);
     setManualError(null);
     setManualConflict(null);
+    setManualSendSms(false);
     updateDraft({ clientName: '', clientPhone: '', customerId: null, phoneCountry: merchant?.country as MerchantCountry || 'FR', instagramHandle: '', tiktokHandle: '', facebookUrl: '' });
     // Fetch active offers for grant options
     if (merchant?.id) {
@@ -190,6 +192,7 @@ export default function PlanningDashboard() {
           service_ids: manualServiceIds.length ? manualServiceIds : undefined,
           notes: manualNotes.trim() || undefined,
           ...(force && { force: true }),
+          ...(manualSendSms && { send_sms: true }),
         }),
       });
       if (!res.ok) {
@@ -1619,6 +1622,43 @@ export default function PlanningDashboard() {
                     <textarea value={manualNotes} onChange={e => setManualNotes(e.target.value)} rows={2} maxLength={500}
                       className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none" />
                   </div>
+
+                  {/* SMS confirmation toggle (opt-in) */}
+                  {draft.clientPhone.trim() && (() => {
+                    const isPaid = merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling' || merchant?.subscription_status === 'past_due';
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => isPaid && setManualSendSms(s => !s)}
+                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${
+                          !isPaid
+                            ? 'border-gray-100 bg-gray-50 cursor-not-allowed'
+                            : manualSendSms
+                              ? 'border-indigo-200 bg-indigo-50'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${manualSendSms ? 'bg-indigo-100' : 'bg-gray-100'}`}>
+                          <MessageSquare className={`w-4 h-4 ${manualSendSms ? 'text-indigo-600' : 'text-gray-400'}`} />
+                        </div>
+                        <div className="flex-1 text-left min-w-0">
+                          <p className={`text-xs font-semibold ${manualSendSms ? 'text-indigo-700' : 'text-gray-700'}`}>
+                            {t('sendSmsConfirmation')}
+                          </p>
+                          {!isPaid && (
+                            <p className="text-[10px] text-gray-400 mt-0.5">{t('sendSmsTrialHint')}</p>
+                          )}
+                        </div>
+                        {isPaid ? (
+                          <div className={`shrink-0 w-9 h-5 rounded-full transition-colors relative ${manualSendSms ? 'bg-indigo-600' : 'bg-gray-300'}`}>
+                            <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${manualSendSms ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                          </div>
+                        ) : (
+                          <span className="shrink-0 text-[9px] font-bold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-md uppercase tracking-wide">Pro</span>
+                        )}
+                      </button>
+                    );
+                  })()}
 
                   {createError && (
                     <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{createError}</p>

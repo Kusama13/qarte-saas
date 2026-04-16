@@ -829,7 +829,7 @@ export default function DashboardPage() {
       </div>
 
       {merchant?.loyalty_mode === 'cagnotte' && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <StatsCard
             title={t('cumulClients')}
             value={formatCurrency(cagnotteStats.totalCumul, merchant?.country, locale, 0)}
