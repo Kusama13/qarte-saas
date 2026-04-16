@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: user.email,
+        name: merchant.shop_name || undefined,
         metadata: {
           merchant_id: merchant.id,
           user_id: user.id,
@@ -95,6 +96,11 @@ export async function POST(request: NextRequest) {
           stripe_subscription_id: null,
         })
         .eq('id', merchant.id);
+    } else if (merchant.shop_name) {
+      // Backfill name on existing customers (no-op if already set to the same value)
+      stripe.customers.update(customerId, { name: merchant.shop_name }).catch(err =>
+        logger.error('Failed to update Stripe customer name:', err)
+      );
     }
 
     // Create checkout session — charge immediately (no trial deferral)
