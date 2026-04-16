@@ -616,8 +616,9 @@ Tous les codes promo emails ont ete supprimes (QARTE50, QARTEBOOST, QARTELAST, Q
 |------|---------|-------------|
 | `/api/cron/morning` | 09:00 UTC | Emails : essai, onboarding, milestones, inactifs, reactivation, lifecycle, pending. Prefetch unique merchants/emails/tracking — filtres JS par section |
 | `/api/cron/morning-jobs` | 09:15 UTC | Vouchers anniversaire (timezone-aware) + SMS anniversaire + auto-liberation acomptes expires |
-| `/api/cron/morning-push` | 09:30 UTC | Push 10h (scheduled), push automations (inactifs/recompense/events), push trial reminders |
+| `/api/cron/morning-push` | 05:00 UTC (~7h Paris) | Push 10h (scheduled), push automations (inactifs/recompense/events), push trial reminders, **daily digest merchant** (X RDV aujourd'hui), **birthday push merchant** + SMS anniversaire client |
 | `/api/cron/evening` | 17:00 UTC | Push 19h (timezone-aware) + check acomptes expires + SMS rappel J-1 |
+| `/api/cron/weekly-recap` | 17:00 UTC dimanche | Push recap semaine a venir aux merchants (X RDV, ~Y€ prevus, 7 jours glissants) |
 | `/api/cron/monthly-contest` | 08:00 UTC, 1er du mois | Tirage au sort mensuel : pick random parmi clients ayant reserve le mois precedent, insert merchant_contests, push + email merchant |
 | `/api/cron/reactivation` | — | Deprecie (integre dans morning, section 7) |
 
