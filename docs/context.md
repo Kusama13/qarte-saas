@@ -725,10 +725,20 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 
 ### SEO
 - Title: "Qarte - Carte de fidelite digitale pour salons de beaute"
-- JSON-LD: Organization + SoftwareApplication (landing), LocalBusiness (page /p/[slug])
-- Sitemap: pages statiques + blog + demos (pages merchant exclues — decouverte organique)
+- JSON-LD: Organization + SoftwareApplication (landing), LocalBusiness (page /p/[slug]), Article + BreadcrumbList + FAQPage (blog)
+- Sitemap: pages statiques + blog + demos + compare (pages merchant exclues — decouverte organique)
 - Pages merchant indexables mais PAS dans le sitemap (evite les sitelinks Google sous getqarte.com)
 - `/scan/` et `/customer/` : noindex + robots disallow
+
+### Blog (3 articles SEO/AEO — refresh avril 2026)
+- **Strategie funnel** : TOFU (acquisition) + MOFU (pain point) + BOFU (commercial intent)
+- **Optimisation AEO** : answer-first paragraphs 40-60 mots, tables comparatives, statistiques sourcees (Square, BrightLocal, Bain, Beauty Business France), FAQPage schema reutilise dans le contenu visible
+- **Articles actifs** :
+  - `/blog/comment-attirer-clientes-salon-beaute` — TOFU, 12 strategies acquisition (10 min)
+  - `/blog/eviter-no-show-salon-rendez-vous` — MOFU, methode 6 etapes anti-no-show + modele CGV (8 min)
+  - `/blog/logiciel-reservation-en-ligne-salon-beaute` — BOFU, comparatif Planity/Treatwell/Booksy/Qarte (9 min)
+- **Structure** : `src/app/[locale]/blog/<slug>/{page.tsx, layout.tsx}` — page client avec JSON-LD inline, layout server avec `generateMetadata` locale-aware
+- **Email update** (`ProductUpdateEmail.tsx`) : lien pointe sur article comparatif logiciels (BOFU intent)
 
 ---
 

@@ -23,34 +23,34 @@ interface Article {
 
 const articles: Article[] = [
   {
-    slug: 'fideliser-clientes-salon-coiffure',
-    title: 'Comment fidéliser ses clientes en salon de coiffure : le guide complet',
+    slug: 'comment-attirer-clientes-salon-beaute',
+    title: 'Comment attirer plus de clientes dans son salon de beauté : 12 stratégies qui marchent en 2026',
     description:
-      'Découvrez les stratégies qui fonctionnent vraiment pour faire revenir vos clientes régulièrement. Du programme de fidélité aux petites attentions, tout ce qui marche en 2025.',
+      '70 % des nouvelles clientes ne reviennent pas. Google Business, réservation en ligne, Instagram, parrainage, fidélité : les 12 leviers concrets pour remplir ton agenda salon, institut ou onglerie.',
+    readTime: '10 min',
+    category: 'Acquisition',
+    date: '2026-04-16',
+    image: 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    slug: 'eviter-no-show-salon-rendez-vous',
+    title: 'No-show en salon de beauté : comment éviter les rendez-vous manqués en 2026',
+    description:
+      'Un no-show coûte entre 35 et 80 € à un salon. La méthode complète en 6 étapes pour diviser par 4 les rendez-vous manqués : acompte, SMS de rappel, politique d\'annulation, liste d\'attente.',
     readTime: '8 min',
-    category: 'Coiffure',
-    date: '2025-02-10',
-    image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80',
+    category: 'Gestion',
+    date: '2026-04-16',
+    image: 'https://images.unsplash.com/photo-1582095133179-bfd08e2fc6b3?auto=format&fit=crop&w=800&q=80',
   },
   {
-    slug: 'programme-fidelite-onglerie-guide',
-    title: 'Programme fidélité onglerie : le guide complet pour fidéliser vos clientes',
+    slug: 'logiciel-reservation-en-ligne-salon-beaute',
+    title: 'Logiciel de réservation en ligne pour salon de beauté : le comparatif 2026',
     description:
-      'Remplissage, semi-permanent, gel... vos clientes reviennent toutes les 3 semaines. Voici comment transformer cette récurrence naturelle en programme de fidélité rentable.',
-    readTime: '7 min',
-    category: 'Onglerie',
-    date: '2025-02-10',
-    image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    slug: 'augmenter-recurrence-client-institut-beaute',
-    title: 'Comment augmenter la récurrence client en institut de beauté',
-    description:
-      'Vos clientes viennent une fois puis disparaissent ? Voici les techniques concrètes pour transformer un passage unique en rendez-vous régulier.',
-    readTime: '7 min',
-    category: 'Institut',
-    date: '2025-02-10',
-    image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=800&q=80',
+      'Planity, Treatwell, Booksy, Qarte : comparatif honnête des 4 logiciels qui dominent le marché. Tarifs, commissions cachées, fonctionnalités, pour quel type de salon.',
+    readTime: '9 min',
+    category: 'Outils',
+    date: '2026-04-16',
+    image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
   },
 ];
 

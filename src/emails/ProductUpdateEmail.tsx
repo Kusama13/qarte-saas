@@ -83,7 +83,7 @@ export function ProductUpdateEmail({ shopName, merchantId, referralCode, locale 
         <Text style={blogText}>
           {t('productUpdate.blogDesc')}
         </Text>
-        <Link href="https://getqarte.com/blog/programme-fidelite-onglerie-guide" style={blogLink}>
+        <Link href="https://getqarte.com/blog/logiciel-reservation-en-ligne-salon-beaute" style={blogLink}>
           {t('productUpdate.blogLink')}
         </Link>
       </Section>

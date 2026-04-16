@@ -28,10 +28,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // --- Blog pages ---
   const blogPages: MetadataRoute.Sitemap = [
-    entry('/blog', { priority: 0.8, changeFrequency: 'weekly', lastModified: new Date('2026-03-20') }),
-    entry('/blog/fideliser-clientes-salon-coiffure', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-02-15') }),
-    entry('/blog/programme-fidelite-onglerie-guide', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-02-20') }),
-    entry('/blog/augmenter-recurrence-client-institut-beaute', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-03-01') }),
+    entry('/blog', { priority: 0.8, changeFrequency: 'weekly', lastModified: new Date('2026-04-16') }),
+    entry('/blog/comment-attirer-clientes-salon-beaute', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-04-16') }),
+    entry('/blog/eviter-no-show-salon-rendez-vous', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-04-16') }),
+    entry('/blog/logiciel-reservation-en-ligne-salon-beaute', { priority: 0.9, changeFrequency: 'monthly', lastModified: new Date('2026-04-16') }),
   ];
 
   // --- Demo pages (8 types x 2 modes = 16 pages) ---
