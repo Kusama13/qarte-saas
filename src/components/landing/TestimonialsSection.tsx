@@ -112,7 +112,7 @@ export function TestimonialsSection() {
   };
 
   return (
-    <section className="relative py-24 md:py-32 overflow-hidden bg-gray-50/80">
+    <section className="relative py-16 md:py-20 overflow-hidden bg-gray-50/80">
       <div ref={ref} className="relative max-w-6xl mx-auto px-6">
         {/* Header */}
         <div className={`text-center mb-14 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>

@@ -9,19 +9,16 @@ export function FeaturesGridSection() {
   const t = useTranslations('featuresGrid');
 
   const features = [
-    { emoji: '\u{1F4C5}', titleKey: 'bookingTitle', descKey: 'bookingDesc' },
-    { emoji: '\u{1F514}', titleKey: 'remindersTitle', descKey: 'remindersDesc' },
-    { emoji: '\u{1F4F1}', titleKey: 'dashboardTitle', descKey: 'dashboardDesc' },
-    { emoji: '\u{1F3A8}', titleKey: 'profileTitle', descKey: 'profileDesc' },
-    { emoji: '\u{1F451}', titleKey: 'policyTitle', descKey: 'policyDesc' },
-    { emoji: '\u{1F49C}', titleKey: 'loyaltyTitle', descKey: 'loyaltyDesc' },
-    { emoji: '\u{1F3C6}', titleKey: 'contestTitle', descKey: 'contestDesc' },
-    { emoji: '\u{1F680}', titleKey: 'automationTitle', descKey: 'automationDesc' },
-    { emoji: '\u2B50', titleKey: 'reviewsTitle', descKey: 'reviewsDesc' },
+    { emoji: '\u{1F517}', titleKey: 'bookingTitle', descKey: 'bookingDesc' },
+    { emoji: '\u{1F4B8}', titleKey: 'remindersTitle', descKey: 'remindersDesc' },
+    { emoji: '\u{1F49C}', titleKey: 'dashboardTitle', descKey: 'dashboardDesc' },
+    { emoji: '\u{1F514}', titleKey: 'policyTitle', descKey: 'policyDesc' },
+    { emoji: '\u2B50', titleKey: 'contestTitle', descKey: 'contestDesc' },
+    { emoji: '\u{1F4F1}', titleKey: 'reviewsTitle', descKey: 'reviewsDesc' },
   ] as const;
 
   return (
-    <section className="relative py-20 md:py-28 bg-white overflow-hidden">
+    <section className="relative py-14 md:py-20 bg-white overflow-hidden">
       {/* Ambient glow — same as FideliteSection */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-indigo-100/40 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 left-1/3 w-96 h-96 bg-violet-100/30 rounded-full blur-[120px] pointer-events-none" />
@@ -62,7 +59,7 @@ export function FeaturesGridSection() {
                 <h3 className="text-lg sm:text-[22px] font-semibold text-gray-900 mb-1 sm:mb-1.5 leading-snug line-clamp-1">
                   {t(titleKey)}
                 </h3>
-                <p className="text-sm sm:text-[18px] text-gray-500 leading-relaxed line-clamp-2">
+                <p className="text-sm sm:text-[18px] text-gray-500 leading-relaxed line-clamp-3">
                   {t(descKey)}
                 </p>
               </div>

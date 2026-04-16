@@ -101,7 +101,7 @@ export function FAQSection() {
   };
 
   return (
-    <section id="faq" className="relative py-16 md:py-24 overflow-hidden bg-white">
+    <section id="faq" className="relative py-14 md:py-20 overflow-hidden bg-white">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}

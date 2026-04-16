@@ -10,7 +10,7 @@ export function CaseStudySection() {
   const t = useTranslations('caseStudy');
 
   return (
-    <section className="py-20 bg-gradient-to-b from-white to-gray-50">
+    <section id="case-study" className="py-14 bg-gradient-to-b from-white to-gray-50">
       <div ref={ref} className="max-w-5xl mx-auto px-6">
         <div className={`text-center mb-12 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <span className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-full text-amber-700 text-sm font-semibold mb-4">
@@ -48,28 +48,15 @@ export function CaseStudySection() {
                 </div>
               </div>
 
-              <blockquote className="text-lg text-gray-700 leading-relaxed mb-6 italic border-l-4 border-rose-200 pl-4">
+              <blockquote className="text-lg text-gray-700 leading-relaxed mb-8 italic border-l-4 border-rose-200 pl-4">
                 &quot;{t('quote')}&quot;
               </blockquote>
-
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-12 h-12 rounded-full overflow-hidden">
-                  <img
-                    src="/images/testimonial-nail-salon.png"
-                    alt="Elodie H."
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">Elodie H.</p>
-                </div>
-              </div>
 
               <div className="space-y-3">
                 <h4 className="font-semibold text-gray-900 text-sm uppercase tracking-wider">{t('whatChanged')}</h4>
                 {[t('change1'), t('change2'), t('change3'), t('change4')].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="w-3 h-3 text-emerald-600" />
                     </div>
                     <span className="text-gray-600 text-sm">{item}</span>
@@ -78,46 +65,35 @@ export function CaseStudySection() {
               </div>
             </div>
 
-            {/* Right: Results */}
-            <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-8 md:p-10 text-white">
+            {/* Right: Results — 1 hero metric + 2 small */}
+            <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-8 md:p-10 text-white flex flex-col justify-center">
               <h4 className="text-sm font-bold uppercase tracking-wider text-indigo-200 mb-8">
                 {t('resultsTitle')}
               </h4>
 
-              <div className="space-y-8">
-                <div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-black">+45%</span>
-                    <TrendingUp className="w-6 h-6 text-emerald-300" />
-                  </div>
-                  <p className="text-indigo-200 mt-1">{t('regularClients')}</p>
+              {/* Hero metric */}
+              <div className="mb-10">
+                <div className="flex items-baseline gap-3">
+                  <span className="text-7xl md:text-8xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-indigo-200">
+                    +45%
+                  </span>
+                  <TrendingUp className="w-8 h-8 text-emerald-300" />
                 </div>
+                <p className="text-indigo-200 text-lg mt-2">{t('regularClients')}</p>
+              </div>
 
+              {/* 2 small metrics */}
+              <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/20">
                 <div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-black">83</span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-3xl font-bold">4.8</span>
+                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
                   </div>
-                  <p className="text-indigo-200 mt-1">{t('loyaltyCards')}</p>
+                  <p className="text-indigo-200 text-xs mt-1">{t('googleRating')}</p>
                 </div>
-
                 <div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-black">4.8</span>
-                    <div className="flex">
-                      {[1,2,3,4,5].map(i => (
-                        <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-indigo-200 mt-1">{t('googleRating')}</p>
-                </div>
-
-                <div className="pt-6 border-t border-white/20">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold">{t('revenueAmount')}</span>
-                    <span className="text-indigo-200">{t('revenuePerMonth')}</span>
-                  </div>
-                  <p className="text-indigo-200 text-sm mt-1">{t('revenue')}</p>
+                  <span className="text-3xl font-bold">83</span>
+                  <p className="text-indigo-200 text-xs mt-1">{t('loyaltyCards')}</p>
                 </div>
               </div>
             </div>

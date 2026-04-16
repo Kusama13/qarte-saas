@@ -13,7 +13,7 @@ export function PricingSection() {
   const t = useTranslations('pricing');
 
   return (
-    <section id="pricing" className="relative py-24 md:py-32 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
+    <section id="pricing" className="relative py-16 md:py-20 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
       <div ref={ref} className="relative max-w-6xl mx-auto px-6">
         <div className={`text-center mb-12 md:mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
