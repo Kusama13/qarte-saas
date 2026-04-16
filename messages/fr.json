@@ -1907,7 +1907,12 @@
     "clientPhone": "Téléphone",
     "blockAllDay": "Journée entière",
     "next": "Suivant",
-    "back": "Retour"
+    "back": "Retour",
+    "statsBookings": "RDV",
+    "statsRevenue": "Total estimé",
+    "viewDay": "Jour",
+    "viewWeek": "Semaine",
+    "loading": "Chargement..."
   },
   "qrDownload": {
     "title": "Mon QR code & Kit promo",

@@ -137,7 +137,7 @@ export function formatDateTime(date: string | Date, locale: string = 'fr'): stri
 
 /**
  * Format a "HH:mm" time string for display.
- * FR: "14:00" → "14h", "14:30" → "14h30"
+ * FR: "14:00" → "14h00", "09:30" → "09h30" (always zero-padded HH + minutes)
  * EN: "14:00" → "2:00 PM", "14:30" → "2:30 PM"
  */
 export function formatTime(time: string, locale: string = 'fr'): string {
@@ -149,7 +149,7 @@ export function formatTime(time: string, locale: string = 'fr'): string {
     const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
     return min === '00' ? `${h12}:00 ${period}` : `${h12}:${min} ${period}`;
   }
-  return min === '00' ? `${hour}h` : `${hour}h${min}`;
+  return `${String(hour).padStart(2, '0')}h${min}`;
 }
 
 /** @deprecated Use formatCurrency(amount, country, locale) for country-aware formatting. */

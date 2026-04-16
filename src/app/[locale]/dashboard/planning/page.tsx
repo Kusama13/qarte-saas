@@ -23,6 +23,9 @@ import ClientSelectModal from './ClientSelectModal';
 import BookingDetailsModal from './BookingDetailsModal';
 import ReservationsSection from './ReservationsSection';
 import DayView from './DayView';
+import WeekView from './WeekView';
+
+const VIEW_MODE_KEY = 'qarte_planning_view';
 
 export default function PlanningDashboard() {
   const t = useTranslations('planning');
@@ -79,6 +82,19 @@ export default function PlanningDashboard() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   // Kebab menu (week-scoped actions)
   const [showActionsMenu, setShowActionsMenu] = useState(false);
+
+  // Agenda view mode — stays on 'day' during SSR/initial render, then the effect
+  // hydrates from localStorage (user pref) or viewport width (>=1024px → week).
+  const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
+  useEffect(() => {
+    const saved = localStorage.getItem(VIEW_MODE_KEY);
+    if (saved === 'day' || saved === 'week') { setViewMode(saved); return; }
+    if (window.matchMedia('(min-width: 1024px)').matches) setViewMode('week');
+  }, []);
+  const handleSetViewMode = (mode: 'day' | 'week') => {
+    setViewMode(mode);
+    try { localStorage.setItem(VIEW_MODE_KEY, mode); } catch { /* storage disabled */ }
+  };
 
   // Handle ?slot= deep link from dashboard
   const searchParams = useSearchParams();
@@ -609,6 +625,21 @@ export default function PlanningDashboard() {
                   >
                     <ChevronRight className="w-4 h-4 text-gray-400" />
                   </button>
+                  {/* View mode toggle (day / week) — tablette et + uniquement */}
+                  <div className="hidden md:inline-flex items-center bg-gray-100 p-0.5 rounded-lg ml-1">
+                    <button
+                      onClick={() => handleSetViewMode('day')}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors ${viewMode === 'day' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                      {t('viewDay')}
+                    </button>
+                    <button
+                      onClick={() => handleSetViewMode('week')}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors ${viewMode === 'week' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                      {t('viewWeek')}
+                    </button>
+                  </div>
                   {/* Jump-to-date icon button */}
                   <button
                     onClick={() => setShowDatePicker(v => !v)}
@@ -644,8 +675,7 @@ export default function PlanningDashboard() {
                   )}
                 </div>
 
-                {/* Day pills strip */}
-                <div className="grid grid-cols-7 gap-1 mb-3">
+                <div className="grid grid-cols-7 gap-1.5 mb-3">
                   {weekDays.map(day => {
                     const dayStr = formatDate(day);
                     const past = isPast(day);
@@ -653,35 +683,39 @@ export default function PlanningDashboard() {
                     const isSelected = dayStr === selectedDayStr;
                     const daySlotsList = slotsByDate.get(dayStr) || [];
                     const bookingsCount = daySlotsList.filter(s => s.client_name && s.client_name !== '__blocked__').length;
-                    // Dot count: max 3 visual dots, scales from 0 to N
-                    const dotCount = bookingsCount === 0 ? 0 : bookingsCount <= 2 ? 1 : bookingsCount <= 4 ? 2 : 3;
                     return (
                       <button
                         key={dayStr}
                         onClick={() => setSelectedDay(day)}
-                        className={`relative flex flex-col items-center gap-1 py-2 rounded-lg transition-all ${
+                        className={`relative flex flex-col items-center justify-center py-2 px-0.5 rounded-xl border transition-all ${
                           isSelected
-                            ? 'bg-gradient-to-br from-indigo-600 to-violet-600 shadow-md shadow-indigo-200'
+                            ? 'bg-indigo-600 border-indigo-600 shadow-md shadow-indigo-200'
                             : today
-                              ? 'bg-indigo-50 ring-1 ring-indigo-200 hover:bg-indigo-100'
-                              : 'hover:bg-gray-50'
+                              ? 'bg-indigo-50 border-indigo-300 hover:bg-indigo-100'
+                              : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                         }`}
                       >
-                        <span className={`text-[9px] font-semibold uppercase tracking-wide leading-none ${
-                          isSelected ? 'text-white/80' : today ? 'text-indigo-600' : past ? 'text-gray-300' : 'text-gray-400'
+                        <span className={`text-[10px] font-semibold capitalize leading-none mb-1 ${
+                          isSelected ? 'text-white/90' : today ? 'text-indigo-600' : past ? 'text-gray-300' : 'text-gray-500'
                         }`}>
                           {day.toLocaleDateString(toBCP47(locale), { weekday: 'short' }).replace('.', '')}
                         </span>
-                        <span className={`text-sm font-bold leading-none ${
-                          isSelected ? 'text-white' : today ? 'text-indigo-700' : past ? 'text-gray-300' : 'text-gray-700'
+                        <span className={`text-lg font-bold leading-none tabular-nums ${
+                          isSelected ? 'text-white' : today ? 'text-indigo-700' : past ? 'text-gray-300' : 'text-gray-900'
                         }`}>
                           {day.getDate()}
                         </span>
-                        {dotCount > 0 && !isSelected && (
-                          <span className="absolute bottom-1 flex gap-0.5">
-                            {Array.from({ length: dotCount }).map((_, i) => (
-                              <span key={i} className={`w-1 h-1 rounded-full ${today ? 'bg-indigo-500' : past ? 'bg-gray-300' : 'bg-indigo-400'}`} />
-                            ))}
+                        {bookingsCount > 0 && (
+                          <span className={`mt-1 min-w-[18px] h-[14px] px-1 inline-flex items-center justify-center rounded-full text-[9px] font-bold tabular-nums ${
+                            isSelected
+                              ? 'bg-white text-indigo-700'
+                              : today
+                                ? 'bg-indigo-600 text-white'
+                                : past
+                                  ? 'bg-gray-200 text-gray-400'
+                                  : 'bg-indigo-100 text-indigo-700'
+                          }`}>
+                            {bookingsCount}
                           </span>
                         )}
                       </button>
@@ -805,9 +839,25 @@ export default function PlanningDashboard() {
                 </div>
               )}
 
-              {/* ── DAY VIEW ── */}
+              {/* ── TIMELINE : DayView (par défaut) ou WeekView (tablette/desktop, ou override) ── */}
               {loadingSlots ? (
                 <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+              ) : viewMode === 'week' ? (
+                <WeekView
+                  weekDays={weekDays}
+                  slotsByDate={slotsByDate}
+                  services={services}
+                  serviceColorMap={serviceColorMap}
+                  locale={locale}
+                  selectedDay={selectedDay}
+                  isFreeMod={isFreeMod}
+                  openingHours={merchant?.opening_hours || null}
+                  onSlotClick={openEditSlot}
+                  onBlockedSlotClick={setConfirmDeleteBlock}
+                  onDayClick={setSelectedDay}
+                  isToday={isToday}
+                  isPast={isPast}
+                />
               ) : (
                 <DayView
                   day={selectedDay}
@@ -837,14 +887,7 @@ export default function PlanningDashboard() {
           serviceColorMap={serviceColorMap}
           locale={locale}
           merchantCountry={merchant?.country || 'FR'}
-          merchantName={merchant?.shop_name}
-          merchantAddress={merchant?.shop_address}
-          depositPercent={merchant?.deposit_percent}
-          depositAmount={merchant?.deposit_amount}
           onEditSlot={openEditSlot}
-          onConfirmDeposit={handleConfirmDeposit}
-          onCancelDeposit={handleCancelDeposit}
-          subscriptionStatus={merchant?.subscription_status}
           deepLinkSlotId={deepLinkSlotId}
           onDeepLinkHandled={() => setDeepLinkSlotId(null)}
         />
@@ -877,19 +920,19 @@ export default function PlanningDashboard() {
                         key={mode}
                         type="button"
                         onClick={() => handleBookingModeChange(mode)}
-                        className={`text-left rounded-xl border-2 p-3 transition-all ${isActive ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'}`}
+                        className={`text-left rounded-xl border p-3 transition-all ${isActive ? 'bg-indigo-600 border-indigo-600 shadow-md shadow-indigo-200' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'}`}
                       >
                         <div className="flex items-center justify-between gap-1 mb-1">
-                          <p className={`text-xs font-bold ${isActive ? 'text-indigo-700' : 'text-gray-700'}`}>
+                          <p className={`text-xs font-bold ${isActive ? 'text-white' : 'text-gray-700'}`}>
                             {mode === 'slots' ? t('bookingModeSlots') : t('bookingModeFree')}
                           </p>
                           {isActive && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-indigo-600 text-white text-[9px] font-bold shrink-0">
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-white text-indigo-700 text-[9px] font-bold shrink-0">
                               <Check className="w-2.5 h-2.5" />
                             </span>
                           )}
                         </div>
-                        <p className="text-[10px] text-gray-400 leading-relaxed">
+                        <p className={`text-[10px] leading-relaxed ${isActive ? 'text-white/80' : 'text-gray-400'}`}>
                           {mode === 'slots' ? t('bookingModeSlotHint') : t('bookingModeFreeHint')}
                         </p>
                       </button>
@@ -914,7 +957,7 @@ export default function PlanningDashboard() {
                         key={val}
                         type="button"
                         onClick={() => setBufferMinutes(val)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${bufferMinutes === val ? 'bg-violet-600 text-white border-violet-600' : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'}`}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${bufferMinutes === val ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
                       >
                         {val === 0 ? t('bufferNone') : `${val} min`}
                       </button>
@@ -1048,7 +1091,7 @@ export default function PlanningDashboard() {
                           <div className="flex flex-wrap gap-1.5 mb-3">
                             {['10', '15', '20', '25', '30'].map(v => (
                               <button key={`p${v}`} type="button" onClick={() => { setDepositPercent(v); setDepositAmount(''); }}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositPercent === v ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{v}%</button>
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositPercent === v ? 'bg-indigo-600 text-white border border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{v}%</button>
                             ))}
                             <input type="number" value={!['10', '15', '20', '25', '30'].includes(depositPercent) ? depositPercent : ''} onChange={(e) => { setDepositPercent(e.target.value); if (e.target.value) setDepositAmount(''); }} placeholder={t('customPercent')} min={1} max={100}
                               className={`w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`} />
@@ -1060,7 +1103,7 @@ export default function PlanningDashboard() {
                           <div className="flex flex-wrap gap-1.5">
                             {['10', '15', '20', '25', '30'].map(v => (
                               <button key={`a${v}`} type="button" onClick={() => { setDepositAmount(v); setDepositPercent(''); }}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositAmount === v ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{v}{getCurrencySymbol(merchant?.country)}</button>
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositAmount === v ? 'bg-indigo-600 text-white border border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{v}{getCurrencySymbol(merchant?.country)}</button>
                             ))}
                             <input type="number" value={!['10', '15', '20', '25', '30'].includes(depositAmount) ? depositAmount : ''} onChange={(e) => { setDepositAmount(e.target.value); if (e.target.value) setDepositPercent(''); }} placeholder={t('customAmount')} min={1}
                               className={`w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`} />
@@ -1072,9 +1115,9 @@ export default function PlanningDashboard() {
                       <div>
                         <label className="text-xs font-semibold text-gray-600 mb-2 block">{t('depositDeadlineLabel')}</label>
                         <div className="flex flex-wrap gap-1.5">
-                          <button type="button" onClick={() => setDepositDeadlineHours('')} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${!depositDeadlineHours ? 'bg-gray-700 text-white shadow-sm' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{t('depositDeadlineFree')}</button>
+                          <button type="button" onClick={() => setDepositDeadlineHours('')} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${!depositDeadlineHours ? 'bg-gray-900 text-white border border-gray-900 shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{t('depositDeadlineFree')}</button>
                           {['1', '2', '3', '4'].map(v => (
-                            <button key={`d${v}`} type="button" onClick={() => setDepositDeadlineHours(v)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositDeadlineHours === v ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{v}h</button>
+                            <button key={`d${v}`} type="button" onClick={() => setDepositDeadlineHours(v)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositDeadlineHours === v ? 'bg-indigo-600 text-white border border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{v}h</button>
                           ))}
                           <input type="number" value={!['', '1', '2', '3', '4'].includes(depositDeadlineHours) ? depositDeadlineHours : ''} onChange={(e) => setDepositDeadlineHours(e.target.value)} placeholder={t('customHours')} min={1}
                             className="w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 border-gray-200" />
@@ -1129,7 +1172,7 @@ export default function PlanningDashboard() {
                         <div className="flex flex-wrap gap-1.5">
                           {[{ value: '1', label: t('deadlineDay1') }, { value: '2', label: t('deadlineDay2') }, { value: '3', label: t('deadlineDay3') }, { value: '7', label: t('deadlineDay7') }].map(opt => (
                             <button key={opt.value} type="button" onClick={() => setCancelDeadlineDays(opt.value)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${cancelDeadlineDays === opt.value ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{opt.label}</button>
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${cancelDeadlineDays === opt.value ? 'bg-indigo-600 text-white border border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{opt.label}</button>
                           ))}
                         </div>
                       </div>
@@ -1153,7 +1196,7 @@ export default function PlanningDashboard() {
                         <div className="flex flex-wrap gap-1.5">
                           {[{ value: '1', label: t('deadlineDay1') }, { value: '2', label: t('deadlineDay2') }, { value: '3', label: t('deadlineDay3') }, { value: '7', label: t('deadlineDay7') }].map(opt => (
                             <button key={opt.value} type="button" onClick={() => setRescheduleDeadlineDays(opt.value)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${rescheduleDeadlineDays === opt.value ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{opt.label}</button>
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${rescheduleDeadlineDays === opt.value ? 'bg-indigo-600 text-white border border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{opt.label}</button>
                           ))}
                         </div>
                       </div>
@@ -1669,7 +1712,7 @@ export default function PlanningDashboard() {
 
                   {/* ───── 4. NOTES ───── */}
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5 block">4. {t('notesLabel')} <span className="font-normal normal-case tracking-normal text-gray-300">({t('optional')})</span></label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5 block">4. {t('notesLabel')}</label>
                     <textarea value={manualNotes} onChange={e => setManualNotes(e.target.value)} rows={2} maxLength={500}
                       className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none" />
                   </div>
@@ -1942,6 +1985,9 @@ export default function PlanningDashboard() {
             slotsByDate={slotsByDate}
             merchantId={merchant.id}
             merchantCountry={merchant.country || 'FR'}
+            merchantName={merchant.shop_name}
+            merchantAddress={merchant.shop_address}
+            bookingMode={bookingMode}
             saving={saving}
             locale={locale}
             depositPercent={merchant.deposit_percent}

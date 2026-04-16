@@ -86,7 +86,7 @@ export default function AddSlotsModal({
                 key={time}
                 onClick={() => { if (!disabled) toggleTime(time); }}
                 disabled={disabled}
-                className={`py-2 rounded-xl text-xs font-semibold transition-all ${disabled && !selected ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : selected ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+                className={`py-2 rounded-xl text-xs font-semibold border transition-all ${disabled && !selected ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' : selected ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
               >
                 {formatTime(time, locale)}
               </button>
@@ -112,7 +112,7 @@ export default function AddSlotsModal({
         {selectedTimes.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-4">
             {selectedTimes.sort().map(time => (
-              <span key={time} className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full">
+              <span key={time} className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-medium rounded-full">
                 {formatTime(time, locale)}
                 <button onClick={() => setSelectedTimes(prev => prev.filter(t => t !== time))}><X className="w-3 h-3" /></button>
               </span>

@@ -1,14 +1,18 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Plus, Clock, Lock } from 'lucide-react';
+import { Plus, Lock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot } from '@/types';
 import { formatTime } from '@/lib/utils';
-import { formatDate, getSlotServiceIds, timeToMinutes, getSlotColor } from './utils';
+import { formatDate, timeToMinutes, minutesToTime } from './utils';
 import type { ServiceWithDuration } from './usePlanningState';
-
-type DayOpeningHours = { open: string; close: string; break_start?: string; break_end?: string } | null;
+import {
+  HOUR_HEIGHT, START_HOUR, END_HOUR, HOURS, TOTAL_HEIGHT, QUARTERS,
+  STRIPED_BG, STRIPED_PILL_CLASS,
+  computeOverlays, computeSlotCards,
+  type DayOpeningHours,
+} from './timelineShared';
 
 interface DayViewProps {
   day: Date;
@@ -24,21 +28,6 @@ interface DayViewProps {
   onBlockedSlotClick?: (slotId: string) => void;
   onAddSlots: (day: string) => void;
 }
-
-// merchant.opening_hours uses ISO weekday keys ('1' = Monday … '7' = Sunday).
-// JS Date.getDay() returns 0 (Sunday) … 6 (Saturday) → convert with this map.
-const ISO_WEEKDAY_KEYS = ['7', '1', '2', '3', '4', '5', '6'];
-
-const HOUR_HEIGHT = 64; // px per hour
-const START_HOUR = 8;
-const END_HOUR = 21;
-const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i);
-const TOTAL_HEIGHT = (END_HOUR - START_HOUR + 1) * HOUR_HEIGHT;
-const QUARTERS = [15, 30, 45];
-
-// Shared unavailable-band styling (CLOSED / BREAK / BLOCKED slots)
-const STRIPED_BG = 'repeating-linear-gradient(135deg, #f3f4f6, #f3f4f6 6px, #d1d5db 6px, #d1d5db 7px)';
-const STRIPED_PILL_CLASS = 'inline-flex items-center gap-1 bg-white px-2 py-0.5 rounded-full shadow-sm border border-gray-200';
 
 export default function DayView({
   day,
@@ -62,88 +51,17 @@ export default function DayView({
     return map;
   }, [services]);
 
-  // Mode libre only: grey out closed zones + break from merchant opening hours.
-  const overlays = useMemo(() => {
-    if (!isFreeMod || !openingHours) return [];
-    const hasAnyValue = Object.values(openingHours).some(v => v != null);
-    if (!hasAnyValue) return [];
+  const overlays = useMemo(
+    () => computeOverlays(day, openingHours, isFreeMod, { closed: t('closed'), break: t('break') }),
+    // t is not referentially stable in next-intl; intentionally omitted from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [openingHours, day, isFreeMod, locale]
+  );
 
-    const closedLabel = t('closed');
-    const breakLabel = t('break');
-    const dayKey = ISO_WEEKDAY_KEYS[day.getDay()];
-    const hours = openingHours[dayKey];
-    const minutesToTop = (m: number) => ((m / 60) - START_HOUR) * HOUR_HEIGHT;
-    const result: { type: 'closed' | 'break'; top: number; height: number; label: string }[] = [];
-
-    if (hours === undefined || hours === null) {
-      result.push({ type: 'closed', top: 0, height: TOTAL_HEIGHT, label: closedLabel });
-      return result;
-    }
-
-    if (!hours.open || !hours.close) return [];
-
-    const openMin = timeToMinutes(hours.open);
-    const closeMin = timeToMinutes(hours.close);
-    const startMin = START_HOUR * 60;
-    const endMin = (END_HOUR + 1) * 60;
-
-    if (openMin > startMin) {
-      result.push({ type: 'closed', top: 0, height: minutesToTop(openMin), label: closedLabel });
-    }
-    if (closeMin < endMin) {
-      const top = minutesToTop(closeMin);
-      const height = TOTAL_HEIGHT - top;
-      if (height > 0) result.push({ type: 'closed', top, height, label: closedLabel });
-    }
-    if (hours.break_start && hours.break_end) {
-      const breakStart = timeToMinutes(hours.break_start);
-      const breakEnd = timeToMinutes(hours.break_end);
-      if (breakEnd > breakStart && breakStart >= openMin && breakEnd <= closeMin) {
-        result.push({
-          type: 'break',
-          top: minutesToTop(breakStart),
-          height: ((breakEnd - breakStart) / 60) * HOUR_HEIGHT,
-          label: breakLabel,
-        });
-      }
-    }
-    return result;
-  // t is not referentially stable in next-intl; intentionally omitted from deps
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openingHours, day, isFreeMod, locale]);
-
-  // Compute slot positions and heights (filler slots already filtered in slotsByDate).
-  // The +12px offset matches the timeline's pt-3 padding (gives air for the first hour label).
-  const slotCards = useMemo(() => {
-    return daySlots.map(slot => {
-      const mins = timeToMinutes(slot.start_time);
-      const top = ((mins / 60) - START_HOUR) * HOUR_HEIGHT + 12;
-
-      // Priority for duration:
-      // 1) total_duration_minutes persisted on the slot (blocked slots, free-mode bookings)
-      // 2) sum of associated services' duration (standard bookings)
-      // 3) 30 min default
-      const svcIds = getSlotServiceIds(slot);
-      let durationMins = 30;
-      if (slot.total_duration_minutes && slot.total_duration_minutes > 0) {
-        durationMins = slot.total_duration_minutes;
-      } else if (svcIds.length > 0) {
-        let total = 0;
-        let hasAny = false;
-        for (const sid of svcIds) {
-          const svc = serviceMap.get(sid);
-          if (svc?.duration) { total += svc.duration; hasAny = true; }
-        }
-        if (hasAny) durationMins = total;
-      }
-
-      const height = Math.max((durationMins / 60) * HOUR_HEIGHT, 28);
-      const color = getSlotColor(slot, serviceColorMap);
-      const serviceNames = svcIds.map(id => serviceMap.get(id)?.name).filter(Boolean).join(', ');
-
-      return { slot, top, height, color, serviceNames, durationMins };
-    });
-  }, [daySlots, serviceMap, serviceColorMap]);
+  const slotCards = useMemo(
+    () => computeSlotCards(daySlots, serviceMap, serviceColorMap),
+    [daySlots, serviceMap, serviceColorMap]
+  );
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -239,6 +157,7 @@ export default function DayView({
           const textColor = slot.client_name ? '#ffffff' : '#065f46';
           const subTextColor = slot.client_name ? 'rgba(255,255,255,0.85)' : '#10b981';
 
+          const endTime = minutesToTime(timeToMinutes(slot.start_time) + durationMins);
           return (
             <button
               key={slot.id}
@@ -252,22 +171,18 @@ export default function DayView({
                 color: textColor,
               }}
             >
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold tabular-nums" style={{ color: textColor }}>
-                  {formatTime(slot.start_time, locale)}
-                </span>
-                {slot.client_name && (
-                  <span className="text-xs font-semibold truncate" style={{ color: textColor }}>{slot.client_name}</span>
-                )}
+              <div className="text-xs font-bold tabular-nums leading-tight" style={{ color: textColor }}>
+                {formatTime(slot.start_time, locale)} — {formatTime(endTime, locale)}
               </div>
               {serviceNames && height >= 40 && (
-                <p className="text-[10px] truncate mt-0.5" style={{ color: subTextColor }}>{serviceNames}</p>
+                <p className="text-sm font-bold leading-tight mt-0.5 line-clamp-2" style={{ color: textColor }}>
+                  {serviceNames}
+                </p>
               )}
-              {durationMins > 0 && height >= 52 && (
-                <div className="flex items-center gap-1 mt-0.5 text-[10px]" style={{ color: subTextColor }}>
-                  <Clock className="w-2.5 h-2.5" />
-                  <span>{durationMins}min</span>
-                </div>
+              {slot.client_name && height >= 64 && (
+                <p className="text-[11px] font-medium truncate leading-tight mt-0.5 opacity-90" style={{ color: textColor }}>
+                  {slot.client_name}
+                </p>
               )}
             </button>
           );

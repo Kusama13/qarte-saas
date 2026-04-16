@@ -25,7 +25,7 @@ export default function CopyWeekModal({ weekOffset, saving, onCopyWeek, onClose 
               key={offset}
               onClick={() => onCopyWeek(weekOffset + offset)}
               disabled={saving}
-              className="px-3 py-1.5 text-xs font-medium bg-white border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-bold bg-white border border-indigo-200 text-indigo-700 rounded-xl hover:bg-indigo-100 hover:border-indigo-300 transition-colors disabled:opacity-50"
             >
               {getWeekStart(weekOffset + offset).toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })}
             </button>

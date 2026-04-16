@@ -2,12 +2,13 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, History, BookOpen, ChevronDown, Camera, StickyNote, CalendarClock, MessageSquare } from 'lucide-react';
+import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, History, BookOpen, ChevronDown, Camera, StickyNote, CalendarClock, CalendarPlus, MessageSquare } from 'lucide-react';
 import { getTypeStyle } from '@/lib/note-styles';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
 import { useTranslations } from 'next-intl';
-import type { PlanningSlot, CustomerSearchResult } from '@/types';
-import { formatTime, formatCurrency, toBCP47 } from '@/lib/utils';
+import type { PlanningSlot, CustomerSearchResult, BookingMode } from '@/types';
+import { formatTime, formatCurrency, toBCP47, getTimezoneForCountry, displayPhoneNumber, detectPhoneCountry } from '@/lib/utils';
+import { downloadIcs } from '@/lib/ics';
 import { compressOfferImage } from '@/lib/image-compression';
 import { timeToMinutes, minutesToTime, roundUp5, formatDuration, getSlotServiceIds, colorBorderStyle, computeDepositAmount } from './utils';
 import type { BookingDraft, ServiceWithDuration } from './usePlanningState';
@@ -21,6 +22,9 @@ interface BookingDetailsModalProps {
   slotsByDate: Map<string, PlanningSlot[]>;
   merchantId: string;
   merchantCountry: string;
+  merchantName?: string | null;
+  merchantAddress?: string | null;
+  bookingMode?: BookingMode;
   saving: boolean;
   locale: string;
   depositPercent?: number | null;
@@ -55,6 +59,9 @@ export default function BookingDetailsModal({
   slotsByDate,
   merchantId,
   merchantCountry,
+  merchantName,
+  merchantAddress,
+  bookingMode = 'slots',
   saving,
   locale,
   depositPercent,
@@ -79,25 +86,51 @@ export default function BookingDetailsModal({
   const [photoSuccess, setPhotoSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Result photos state
   const [localResultPhotos, setLocalResultPhotos] = useState(slot.planning_slot_result_photos || []);
   const [uploadingResultPhoto, setUploadingResultPhoto] = useState(false);
   const [resultPhotoSuccess, setResultPhotoSuccess] = useState(false);
   const resultFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Client history
   const [clientHistory, setClientHistory] = useState<PlanningSlot[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const historyFetchedFor = useRef<string | null>(null);
 
-  // Client memo (pinned notes)
   const [pinnedNotes, setPinnedNotes] = useState<Array<{ id: string; content: string; note_type: string }>>([]);
   const pinnedFetchedFor = useRef<string | null>(null);
 
   const isPaid = subscriptionStatus === 'active' || subscriptionStatus === 'canceling' || subscriptionStatus === 'past_due';
   const [sendSms, setSendSms] = useState(false);
   const [depositSendSms, setDepositSendSms] = useState(false);
+
+  const handleAddToCalendar = () => {
+    const slotServices = services.filter(s => draft.serviceIds.includes(s.id));
+    const duration = slotServices.reduce((sum, s) => sum + (s.duration || 30), 0) || 60;
+    const serviceNames = slotServices.map(s => s.name).join(', ');
+    const title = serviceNames
+      ? `${slot.client_name} — ${serviceNames}`
+      : (slot.client_name || t('addToCalendar'));
+    const descLines: string[] = [];
+    if (serviceNames) descLines.push(serviceNames);
+    const total = slotServices.reduce((sum, s) => sum + (s.price || 0), 0);
+    if (total > 0) descLines.push(formatCurrency(total, merchantCountry, locale));
+    if (slot.client_phone) descLines.push(displayPhoneNumber(slot.client_phone, detectPhoneCountry(slot.client_phone)));
+    if (slot.notes) descLines.push(slot.notes);
+    if (merchantName) descLines.push(`— ${merchantName}`);
+    const startTime = slot.start_time.length === 5 ? slot.start_time : slot.start_time.slice(0, 5);
+    downloadIcs(
+      {
+        uid: `qarte-slot-${slot.id}@getqarte.com`,
+        title,
+        description: descLines.join('\n') || undefined,
+        location: merchantAddress || undefined,
+        startLocal: `${slot.slot_date}T${startTime}`,
+        durationMinutes: duration,
+        timezone: getTimezoneForCountry(merchantCountry),
+      },
+      `reservation-${slot.slot_date}-${(slot.client_name || 'client').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.ics`
+    );
+  };
 
   const [showAllServices, setShowAllServices] = useState(false);
   const [moveSendSms, setMoveSendSms] = useState(false);
@@ -108,8 +141,9 @@ export default function BookingDetailsModal({
   const [moveTime, setMoveTime] = useState('');
   const [moveError, setMoveError] = useState<string | null>(null);
   const [moving, setMoving] = useState(false);
+  const [freeModeSlots, setFreeModeSlots] = useState<string[]>([]);
+  const [freeModeLoading, setFreeModeLoading] = useState(false);
 
-  // Fetch client history when toggled
   useEffect(() => {
     if (showHistory && draft.customerId && historyFetchedFor.current !== draft.customerId) {
       historyFetchedFor.current = draft.customerId;
@@ -122,7 +156,6 @@ export default function BookingDetailsModal({
     }
   }, [showHistory, draft.customerId, slot.id, onFetchClientHistory]);
 
-  // Fetch pinned notes for client memo
   useEffect(() => {
     if (draft.customerId && pinnedFetchedFor.current !== draft.customerId) {
       pinnedFetchedFor.current = draft.customerId;
@@ -133,14 +166,12 @@ export default function BookingDetailsModal({
     }
   }, [draft.customerId, merchantId]);
 
-  // Service map for history display
   const serviceMap = useMemo(() => {
     const map = new Map<string, ServiceWithDuration>();
     for (const s of services) map.set(s.id, s);
     return map;
   }, [services]);
 
-  // Compute total duration + price in a single pass using serviceMap (O(1) lookups)
   const { totalMinutes, totalPrice } = useMemo(() => {
     let durationTotal = 0;
     let hasUnknown = false;
@@ -157,7 +188,6 @@ export default function BookingDetailsModal({
     };
   }, [draft.serviceIds, serviceMap]);
 
-  // Format duration
   const durationLabel = useMemo(() => {
     if (draft.serviceIds.length === 0) return null;
     if (totalMinutes.total === 0 && totalMinutes.hasUnknown) return t('durationUnknown');
@@ -224,13 +254,59 @@ export default function BookingDetailsModal({
     });
   };
 
+  // Duration of the booking being moved — used to filter candidate start times so the
+  // booking actually fits (multi-slot bookings in créneaux mode + arbitrary duration in free mode)
+  const bookingDuration = useMemo(() => {
+    if (slot.total_duration_minutes && slot.total_duration_minutes > 0) return slot.total_duration_minutes;
+    let total = 0;
+    let hasAny = false;
+    for (const sid of draft.serviceIds) {
+      const svc = serviceMap.get(sid);
+      if (svc?.duration) { total += svc.duration; hasAny = true; }
+    }
+    return hasAny ? total : 30;
+  }, [slot.total_duration_minutes, draft.serviceIds, serviceMap]);
+
+  // Mode créneaux : only show starts where the booking's full duration fits in consecutive empty slots
   const moveDateFreeSlots = useMemo(() => {
-    if (!moveMode) return [];
-    const daySlots = slotsByDate.get(moveDate) || [];
-    return daySlots
-      .filter(s => s.id !== slot.id && !s.client_name && !s.primary_slot_id)
+    if (!moveMode || bookingMode !== 'slots') return [];
+    const daySlots = (slotsByDate.get(moveDate) || [])
+      .filter(s => !s.primary_slot_id)
       .sort((a, b) => a.start_time.localeCompare(b.start_time));
-  }, [moveMode, moveDate, slotsByDate, slot.id]);
+    const empty = daySlots.filter(s => s.id !== slot.id && !s.client_name);
+    // Each slot is implicitly 30 min in créneaux mode. Number of consecutive slots needed:
+    const needed = Math.max(1, Math.ceil(bookingDuration / 30));
+    if (needed === 1) return empty;
+    const timeSet = new Set(empty.map(s => s.start_time));
+    return empty.filter(s => {
+      const startMins = timeToMinutes(s.start_time);
+      for (let i = 1; i < needed; i++) {
+        const next = minutesToTime(startMins + i * 30);
+        if (!timeSet.has(next)) return false;
+      }
+      return true;
+    });
+  }, [moveMode, bookingMode, moveDate, slotsByDate, slot.id, bookingDuration]);
+
+  // Mode libre : fetch free windows from server when the target date changes
+  useEffect(() => {
+    if (!moveMode || bookingMode !== 'free') { setFreeModeSlots([]); return; }
+    const controller = new AbortController();
+    setFreeModeLoading(true);
+    fetch(`/api/planning/free-slots?merchantId=${merchantId}&date=${moveDate}&totalDuration=${bookingDuration}`, { signal: controller.signal })
+      .then(r => r.ok ? r.json() : { slots: [] })
+      .then(data => {
+        if (controller.signal.aborted) return;
+        setFreeModeSlots((data.slots || []).map((s: { start_time: string }) => s.start_time));
+        setFreeModeLoading(false);
+      })
+      .catch(() => {
+        if (controller.signal.aborted) return;
+        setFreeModeSlots([]);
+        setFreeModeLoading(false);
+      });
+    return () => controller.abort();
+  }, [moveMode, bookingMode, moveDate, merchantId, bookingDuration]);
 
   const handleMoveConfirm = async () => {
     if (!moveTime) {
@@ -290,7 +366,6 @@ export default function BookingDetailsModal({
     } catch { /* */ }
   };
 
-  // Result photo handlers
   const handleResultPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -369,9 +444,20 @@ export default function BookingDetailsModal({
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-            <X className="w-5 h-5 text-gray-400" />
-          </button>
+          <div className="flex items-center gap-1">
+            {slot.client_name && (
+              <button
+                onClick={handleAddToCalendar}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                title={t('addToCalendar')}
+              >
+                <CalendarPlus className="w-4 h-4 text-gray-400" />
+              </button>
+            )}
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+              <X className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
         </div>
 
         <div className="p-4 space-y-3">
@@ -501,7 +587,7 @@ export default function BookingDetailsModal({
                         </p>
                         {slot.deposit_confirmed === false && (
                           <div className="flex flex-wrap items-center gap-1 mt-0.5">
-                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{t('depositPending')}</span>
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">{t('depositPending')}</span>
                             {slot.deposit_deadline_at && (
                               <span className="text-[10px] text-gray-400">
                                 {t('depositDeadlineBefore', { date: new Date(slot.deposit_deadline_at).toLocaleString(toBCP47(locale), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) })}
@@ -509,7 +595,7 @@ export default function BookingDetailsModal({
                             )}
                           </div>
                         )}
-                        {slot.deposit_confirmed === true && <span className="inline-block mt-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">{t('depositConfirmed')}</span>}
+                        {slot.deposit_confirmed === true && <span className="inline-block mt-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">{t('depositConfirmed')}</span>}
                       </div>
                     ) : null;
                   })()}
@@ -797,43 +883,53 @@ export default function BookingDetailsModal({
               </button>
             </div>
           )}
-          <div className="flex justify-center gap-2">
-            {slot.deposit_confirmed !== false && (
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50"
-              >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                {t('save')}
-              </button>
-            )}
-            {slot.client_name && (
-              <button
-                onClick={() => { setMoveDate(slot.slot_date); setMoveTime(''); setMoveError(null); setMoveMode(true); }}
-                disabled={saving}
-                className="p-2.5 rounded-xl bg-violet-50 text-violet-700 hover:bg-violet-100 transition-colors disabled:opacity-50"
-                title={t('moveBooking')}
-              >
-                <CalendarClock className="w-4 h-4" />
-              </button>
-            )}
-            <button
-              onClick={() => slot.client_name ? setCancelMode(true) : onDelete(slot.id)}
-              disabled={saving}
-              className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-          {slot.client_name && (
-            <button
-              onClick={() => setCancelMode(true)}
-              disabled={saving}
-              className="w-full py-2 text-xs text-gray-400 font-medium hover:text-gray-600 transition-colors"
-            >
-              {t('clearSlot')}
-            </button>
+          {slot.deposit_confirmed !== false && (
+            slot.client_name ? (
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                >
+                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  {t('save')}
+                </button>
+                <button
+                  onClick={() => { setMoveDate(slot.slot_date); setMoveTime(''); setMoveError(null); setMoveMode(true); }}
+                  disabled={saving}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-white text-gray-700 border border-gray-200 text-xs font-bold hover:border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  <CalendarClock className="w-3.5 h-3.5" />
+                  {t('moveBooking')}
+                </button>
+                <button
+                  onClick={() => setCancelMode(true)}
+                  disabled={saving}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-white text-red-600 border border-red-200 text-xs font-bold hover:bg-red-50 hover:border-red-300 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  {t('cancel')}
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                >
+                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  {t('save')}
+                </button>
+                <button
+                  onClick={() => onDelete(slot.id)}
+                  disabled={saving}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white text-red-600 border border-red-200 text-xs font-bold hover:bg-red-50 hover:border-red-300 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )
           )}
         </div>
 
@@ -865,36 +961,51 @@ export default function BookingDetailsModal({
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t('moveBookingTime')}</label>
-                {moveDateFreeSlots.length > 0 && (
-                  <>
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('moveBookingFreeSlots')}</p>
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {moveDateFreeSlots.map(s => (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => { setMoveTime(s.start_time); setMoveError(null); }}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${moveTime === s.start_time ? 'bg-violet-600 text-white shadow-sm shadow-violet-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                        >
-                          {formatTime(s.start_time, locale)}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('moveBookingCustomTime')}</p>
-                <input
-                  type="time"
-                  value={moveTime}
-                  onChange={(e) => { setMoveTime(e.target.value); setMoveError(null); }}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400"
-                />
-                {moveDateFreeSlots.length === 0 && (
-                  <p className="text-[11px] text-gray-400 mt-1.5">{t('moveBookingNoFreeSlot')}</p>
-                )}
-              </div>
+              {(() => {
+                const moveFreeTimes = bookingMode === 'free'
+                  ? freeModeSlots
+                  : moveDateFreeSlots.map(s => s.start_time);
+                const moveLoading = bookingMode === 'free' && freeModeLoading;
+                return (
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t('moveBookingTime')}</label>
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                      {t('moveBookingFreeSlots')}
+                      <span className="ml-1 font-normal normal-case tracking-normal text-gray-300">— {formatDuration(bookingDuration)}</span>
+                    </p>
+                    {moveLoading ? (
+                      <div className="flex items-center gap-2 py-2 text-[11px] text-gray-400">
+                        <Loader2 className="w-3 h-3 animate-spin" /> {t('loading')}
+                      </div>
+                    ) : moveFreeTimes.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {moveFreeTimes.map(startTime => (
+                          <button
+                            key={startTime}
+                            type="button"
+                            onClick={() => { setMoveTime(startTime); setMoveError(null); }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${moveTime === startTime ? 'bg-indigo-600 text-white border border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}
+                          >
+                            {formatTime(startTime, locale)}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-100 mb-3">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                        <p className="text-[11px] text-amber-700">{t('moveBookingNoFreeSlot')}</p>
+                      </div>
+                    )}
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('moveBookingCustomTime')}</p>
+                    <input
+                      type="time"
+                      value={moveTime}
+                      onChange={(e) => { setMoveTime(e.target.value); setMoveError(null); }}
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400"
+                    />
+                  </div>
+                );
+              })()}
 
               {moveError && (
                 <div className="flex items-start gap-2 px-3 py-2 rounded-xl bg-red-50 border border-red-100">
