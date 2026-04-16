@@ -33,6 +33,12 @@ interface PaymentMethod {
   exp_year: number;
 }
 
+interface SubscriptionInfo {
+  unit_amount: number; // cents
+  currency: string;
+  interval: 'month' | 'year';
+}
+
 const PLANS_FR = {
   monthly: { price: 24, priceDisplay: '24,00', sep: ',', daily: '0,80', label: '24 €/mois' },
   annual: { price: 240, priceDisplay: '20,00', sep: ',', daily: '0,66', label: '240 €/an', originalPrice: '288 €', savings: '-17%' },
@@ -42,6 +48,25 @@ const PLANS_EN = {
   monthly: { price: 24, priceDisplay: '24.00', sep: '.', daily: '0.80', label: '$24/mo' },
   annual: { price: 240, priceDisplay: '20.00', sep: '.', daily: '0.66', label: '$240/yr', originalPrice: '$288', savings: '-17%' },
 };
+
+// Build the displayed price values from the merchant's actual Stripe subscription
+// (handles grandfathered prices: 19€/mois, 180€/an, or any custom-negotiated rate).
+function buildPlanFromSubscription(sub: SubscriptionInfo, locale: string) {
+  const amount = sub.unit_amount / 100;
+  const isAnnual = sub.interval === 'year';
+  const sep = locale === 'en' ? '.' : ',';
+  const isUSD = sub.currency.toUpperCase() === 'USD';
+  const fmt = (n: number) => n.toFixed(2).replace('.', sep);
+  const monthlyEquivalent = isAnnual ? amount / 12 : amount;
+  const intervalSuffix = isAnnual ? (locale === 'en' ? '/yr' : '/an') : (locale === 'en' ? '/mo' : '/mois');
+  const label = isUSD ? `$${fmt(amount)}${intervalSuffix}` : `${fmt(amount)} €${intervalSuffix}`;
+  return {
+    priceDisplay: fmt(monthlyEquivalent),
+    sep,
+    daily: fmt(monthlyEquivalent / 30),
+    label,
+  };
+}
 
 export default function SubscriptionPage() {
   const router = useRouter();
@@ -55,6 +80,7 @@ export default function SubscriptionPage() {
   const [subscribing, setSubscribing] = useState(false);
   const [billingPlan, setBillingPlan] = useState<'monthly' | 'annual'>('monthly');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [loadingPayment, setLoadingPayment] = useState(false);
   const [loadingPortal, setLoadingPortal] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -231,9 +257,8 @@ export default function SubscriptionPage() {
     try {
       const res = await fetch('/api/stripe/payment-method');
       const data = await res.json();
-      if (data.paymentMethod) {
-        setPaymentMethod(data.paymentMethod);
-      }
+      if (data.paymentMethod) setPaymentMethod(data.paymentMethod);
+      if (data.subscription) setSubscriptionInfo(data.subscription);
     } catch (error) {
       console.error('Error fetching payment method:', error);
     } finally {
@@ -314,6 +339,15 @@ export default function SubscriptionPage() {
   const isPastDue = subscriptionStatus === 'past_due';
   const hasStripe = !!merchant?.stripe_subscription_id;
   const showSubscribeCTA = !isPaid && !isCanceling && !hasStripe && !polling;
+
+  // Display the merchant's actual Stripe subscription price (handles grandfathered 19€/180€
+  // and custom-negotiated rates). Only override for paying merchants — trial/canceled users
+  // see the new public pricing since that's what they would pay if they (re)subscribe.
+  const isPayingMerchant = isPaid || isCanceling || isPastDue;
+  const displayPlan = isPayingMerchant && subscriptionInfo
+    ? buildPlanFromSubscription(subscriptionInfo, locale)
+    : PLANS[billingPlan];
+  const hasActualAnnualPrice = isPayingMerchant && subscriptionInfo?.interval === 'year';
 
   return (
     <div className="max-w-5xl mx-auto stagger-fade-in">
@@ -406,22 +440,26 @@ export default function SubscriptionPage() {
             <div className="text-center py-4 sm:py-6">
               <div className="flex items-baseline justify-center gap-1">
                 <span className="text-5xl sm:text-6xl font-black text-gray-900 tabular-nums">
-                  {PLANS[billingPlan].priceDisplay.split(PLANS[billingPlan].sep)[0]}
+                  {displayPlan.priceDisplay.split(displayPlan.sep)[0]}
                 </span>
                 <span className="text-2xl sm:text-3xl font-black text-gray-900">
-                  {PLANS[billingPlan].sep}{PLANS[billingPlan].priceDisplay.split(PLANS[billingPlan].sep)[1]}
+                  {displayPlan.sep}{displayPlan.priceDisplay.split(displayPlan.sep)[1]}
                 </span>
                 <span className="text-lg text-gray-400 font-medium ml-1">{t('perMonth')}</span>
               </div>
               <p className="text-sm text-gray-400 mt-1.5">
                 {t.rich('dailyCost', {
-                  daily: PLANS[billingPlan].daily,
+                  daily: displayPlan.daily,
                   bold: (chunks) => <span className="font-bold text-gray-600">{chunks}</span>,
                 })}
               </p>
               {billingPlan === 'annual' && (
                 <>
-                  <p className="text-sm text-gray-400 mt-1"><span className="line-through">{PLANS.annual.originalPrice}</span> → <span className="font-bold text-emerald-600">{PLANS.annual.label}</span></p>
+                  {hasActualAnnualPrice ? (
+                    <p className="text-sm text-gray-400 mt-1"><span className="font-bold text-gray-600">{displayPlan.label}</span></p>
+                  ) : (
+                    <p className="text-sm text-gray-400 mt-1"><span className="line-through">{PLANS.annual.originalPrice}</span> → <span className="font-bold text-emerald-600">{PLANS.annual.label}</span></p>
+                  )}
                   <button onClick={() => setShowNfcModal(true)} className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 hover:from-indigo-100 hover:to-violet-100 transition-colors cursor-pointer underline-offset-2 hover:underline">
                     <CreditCard className="w-3.5 h-3.5 text-indigo-600" />
                     <span className="text-xs font-bold text-indigo-700">{t('nfcIncluded')}</span>

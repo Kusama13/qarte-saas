@@ -451,7 +451,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `POST /api/stripe/checkout` — Session paiement (verifie customer Stripe)
 - `POST /api/stripe/webhook` — 5 events (checkout.completed, sub.updated, sub.deleted, invoice.failed, invoice.succeeded)
 - `POST /api/stripe/portal` — Portail client Stripe
-- `GET /api/stripe/payment-method` — Methode de paiement active
+- `GET /api/stripe/payment-method` — Methode de paiement active + **subscription price** (`unit_amount`, `currency`, `interval`) pour afficher le vrai tarif du merchant (gere grandfathered + tarifs negocies). Fetch parallele customer + subscriptions (limit:3 pour gerer churn-resub-churn), filtre statuses `active`/`trialing`/`past_due`
 
 ### Photos merchant
 - `POST /api/photos` — Upload photo realisation (auth, magic bytes, max 6, compress client via `compressOfferImage`)
@@ -573,6 +573,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Textes explicatifs sous CTAs canceled ("Tes clients ne peuvent plus tamponner") et past_due
 - Countdown trial, syncing indicator, billing card avec methode paiement
 - **Bouton "Gerer mon abonnement"** (etat `active`) → ouvre directement le **portail Stripe** (`handleOpenPortal`) pour gerer carte bancaire, factures, abonnement. Sous-texte "Carte bancaire, factures, abonnement". Lien discret en dessous "Annuler mon abonnement" (underline gris) → declenche le save-offer modal (`handleOpenCancelFlow`). Anciennement le bouton "Gerer" ouvrait directement le flow d'annulation, ce qui empechait les pros de changer leur carte.
+- **Prix affiche = vrai prix Stripe** (pour merchants payants `active` / `canceling` / `past_due`) : la page lit `unit_amount` de la subscription via `/api/stripe/payment-method` (etendu pour retourner aussi `subscription: { unit_amount, currency, interval }`). Helper `buildPlanFromSubscription()` derive les valeurs d'affichage. Couvre 3 cas sans aucune migration DB : (1) anciens grandfathered (19€/mois ou 180€/an avant le 2026-04-05) — voient leur tarif d'epoque, (2) nouveaux (24€/240€) — voient le tarif public, (3) tarifs negocies (modifier le Price dans Stripe → s'affiche automatiquement). Les coupons Stripe ne sont **pas** appliques (ils s'ajoutent au niveau facture, pas sur `unit_amount`). Trial / canceled / no-sub voient le prix public PLANS (24€/240€) car ils paieront ce prix en (re)souscrivant. Pour annuel grandfathered, masque la ligne "288€ → 240€/an -17%" (ne s'applique pas).
 
 ---
 
