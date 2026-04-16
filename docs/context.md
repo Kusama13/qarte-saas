@@ -823,3 +823,27 @@ Le scan est reserve au merchant (affiche en boutique). Exposer le lien permettra
 | Clients/marchand | ~2,000 |
 
 *Details dans `docs/AUDIT-SCALABILITE.md`*
+
+---
+
+## 18. Marketing Skills (ressource externe)
+
+**Path :** `/Users/judicaelahmedtraore/Documents/SAAS/marketing skills for ai agent/skills/`
+
+34 skills marketing (Corey Haines, Agent Skills spec) — chaque dossier contient un `SKILL.md` a lire avant la tache correspondante. A utiliser pour toute tache marketing/SEO/copy sur Qarte (audit SEO, redaction blog, landing copy, comparatifs, CRO, etc.).
+
+### Principaux skills
+- **SEO / AEO** : `seo-audit`, `ai-seo`, `schema-markup`, `programmatic-seo`, `site-architecture`
+- **Content / Copy** : `content-strategy`, `copywriting`, `copy-editing`, `social-content`
+- **CRO** : `page-cro`, `signup-flow-cro`, `onboarding-cro`, `form-cro`, `popup-cro`, `paywall-upgrade-cro`, `ab-test-setup`
+- **Acquisition** : `paid-ads`, `ad-creative`, `cold-email`, `email-sequence`, `referral-program`, `competitor-alternatives`, `lead-magnets`, `free-tool-strategy`, `community-marketing`, `launch-strategy`, `marketing-ideas`
+- **Retention / Revenue** : `churn-prevention`, `pricing-strategy`, `customer-research`, `marketing-psychology`, `analytics-tracking`, `revops`, `sales-enablement`, `product-marketing-context`
+
+### Methodologie
+1. Identifier les 2-4 skills pertinents pour la tache
+2. Read les `SKILL.md` en parallele
+3. Appliquer la methode (ne pas improviser)
+
+### Historique
+- Blog refresh avril 2026 : `ai-seo` + `content-strategy` + `copywriting` + `schema-markup` → 3 articles funnel TOFU/MOFU/BOFU
+- Audit SEO landing avril 2026 : `seo-audit` + `ai-seo` + `schema-markup` + `copywriting` → 27 findings, 3 critiques corrigees (JSON-LD dedupe, hreflang EN, canonical)
