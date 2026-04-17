@@ -179,6 +179,26 @@ export function formatRelativeTime(date: string | Date, locale: string = 'fr'): 
   return formatDistanceToNow(d, { addSuffix: true, locale: locale === 'en' ? enUS : fr });
 }
 
+/** Compact relative time: "1min", "5h", "3j", "2sem", "1mo", "1a" (FR) / "1m", "5h", "3d", "2w", "1mo", "1y" (EN). */
+export function formatRelativeTimeShort(date: string | Date, locale: string = 'fr'): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const diffSec = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
+  const isEN = locale === 'en';
+  if (diffSec < 60) return isEN ? 'now' : 'à l\u2019instant';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}${isEN ? 'm' : 'min'}`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `${diffH}h`;
+  const diffD = Math.floor(diffH / 24);
+  if (diffD < 7) return `${diffD}${isEN ? 'd' : 'j'}`;
+  const diffW = Math.floor(diffD / 7);
+  if (diffW < 4) return `${diffW}${isEN ? 'w' : 'sem'}`;
+  const diffMo = Math.floor(diffD / 30);
+  if (diffMo < 12) return `${diffMo}mo`;
+  const diffY = Math.floor(diffD / 365);
+  return `${diffY}${isEN ? 'y' : 'a'}`;
+}
+
 /** Get today's date (YYYY-MM-DD) in the merchant's country timezone. */
 export function getTodayForCountry(country?: string): string {
   const tz = getTimezoneForCountry(country);

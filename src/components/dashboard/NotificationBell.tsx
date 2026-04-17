@@ -1,11 +1,24 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Bell } from 'lucide-react';
+import {
+  Bell,
+  Calendar,
+  CalendarX,
+  CalendarClock,
+  Clock,
+  AlertTriangle,
+  Cake,
+  Trophy,
+  Sparkles,
+  CalendarDays,
+  CalendarRange,
+  type LucideIcon,
+} from 'lucide-react';
 import { useRouter } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useMerchant } from '@/contexts/MerchantContext';
-import { formatRelativeTime } from '@/lib/utils';
+import { formatRelativeTimeShort } from '@/lib/utils';
 
 interface Notification {
   id: string;
@@ -17,22 +30,25 @@ interface Notification {
   sent_at: string;
 }
 
-const EMOJI_MAP: Record<string, string> = {
-  booking: '\uD83D\uDCC5',
-  booking_cancelled: '\u274C',
-  booking_rescheduled: '\uD83D\uDD04',
-  deposit_expired: '\u23F0',
-  deposit_expiring: '\u26A0\uFE0F',
-  birthday_digest: '\uD83C\uDF82',
-  contest_winner: '\uD83C\uDF89',
-  onboarding_planning: '\uD83D\uDC4B',
-  onboarding_first_scan: '\uD83D\uDC4B',
-  onboarding_qr: '\uD83D\uDC4B',
-};
-const DEFAULT_EMOJI = '\uD83D\uDD14';
+type IconTint = { icon: LucideIcon; bg: string; fg: string };
 
-function getEmoji(type: string): string {
-  return EMOJI_MAP[type] || (type.startsWith('onboarding') ? '\uD83D\uDC4B' : DEFAULT_EMOJI);
+const ICON_MAP: Record<string, IconTint> = {
+  booking: { icon: Calendar, bg: 'bg-indigo-50', fg: 'text-indigo-600' },
+  booking_cancelled: { icon: CalendarX, bg: 'bg-red-50', fg: 'text-red-600' },
+  booking_rescheduled: { icon: CalendarClock, bg: 'bg-amber-50', fg: 'text-amber-600' },
+  deposit_expired: { icon: Clock, bg: 'bg-red-50', fg: 'text-red-600' },
+  deposit_expiring: { icon: AlertTriangle, bg: 'bg-amber-50', fg: 'text-amber-600' },
+  birthday_digest: { icon: Cake, bg: 'bg-pink-50', fg: 'text-pink-600' },
+  contest_winner: { icon: Trophy, bg: 'bg-emerald-50', fg: 'text-emerald-600' },
+  daily_digest: { icon: CalendarDays, bg: 'bg-indigo-50', fg: 'text-indigo-600' },
+  weekly_recap: { icon: CalendarRange, bg: 'bg-violet-50', fg: 'text-violet-600' },
+  trial_reminder: { icon: AlertTriangle, bg: 'bg-amber-50', fg: 'text-amber-600' },
+};
+const ONBOARDING_ICON: IconTint = { icon: Sparkles, bg: 'bg-violet-50', fg: 'text-violet-600' };
+const DEFAULT_ICON: IconTint = { icon: Bell, bg: 'bg-gray-100', fg: 'text-gray-500' };
+
+function getIcon(type: string): IconTint {
+  return ICON_MAP[type] || (type.startsWith('onboarding') ? ONBOARDING_ICON : DEFAULT_ICON);
 }
 
 export default function NotificationBell() {
@@ -166,28 +182,35 @@ export default function NotificationBell() {
                   <span className="text-sm">{t('empty')}</span>
                 </div>
               ) : (
-                notifications.map(notif => (
+                notifications.map(notif => {
+                  const { icon: Icon, bg, fg } = getIcon(notif.notification_type);
+                  return (
                   <button
                     key={notif.id}
                     onClick={() => handleClick(notif)}
                     className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-start gap-3 border-b border-gray-50 last:border-b-0"
                   >
-                    <div className="w-2 flex-shrink-0 mt-1.5">
-                      {!notif.read && <div className="w-2 h-2 rounded-full bg-indigo-500" />}
+                    <div className="relative flex-shrink-0">
+                      <div className={`w-8 h-8 rounded-full ${bg} ${fg} flex items-center justify-center`}>
+                        <Icon className="w-4 h-4" strokeWidth={2} />
+                      </div>
+                      {!notif.read && (
+                        <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-indigo-500 ring-2 ring-white" />
+                      )}
                     </div>
-
-                    <span className="text-lg flex-shrink-0 mt-0.5">{getEmoji(notif.notification_type)}</span>
 
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm leading-snug line-clamp-1 ${notif.read ? 'text-gray-600' : 'text-gray-900 font-semibold'}`}>
-                        {notif.title}
-                      </p>
-                      <p className="text-xs text-gray-400 line-clamp-1 mt-0.5">{notif.body}</p>
+                      <div className="flex items-start gap-2">
+                        <p className={`flex-1 text-sm leading-snug truncate ${notif.read ? 'text-gray-600' : 'text-gray-900 font-semibold'}`}>
+                          {notif.title}
+                        </p>
+                        <span className="text-[11px] text-gray-400 flex-shrink-0 tabular-nums mt-0.5">{formatRelativeTimeShort(notif.sent_at, locale)}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 line-clamp-2 break-words mt-0.5">{notif.body}</p>
                     </div>
-
-                    <span className="text-[11px] text-gray-400 flex-shrink-0">{formatRelativeTime(notif.sent_at, locale)}</span>
                   </button>
-                ))
+                  );
+                })
               )}
             </div>
             {notifications.length > 0 && (
