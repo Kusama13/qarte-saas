@@ -53,6 +53,48 @@ export async function POST(request: Request) {
         break;
       }
 
+      // SMS pack purchase — separate flow, not a subscription
+      if (session.metadata?.type === 'sms_pack') {
+        const purchaseId = session.metadata?.purchase_id;
+        const packSize = parseInt(session.metadata?.pack_size || '0', 10);
+        if (!purchaseId || !packSize) {
+          logger.error('SMS pack webhook missing purchase_id or pack_size', { sessionId: session.id });
+          break;
+        }
+
+        // Idempotency: only credit if purchase is still pending
+        const { data: purchase } = await supabase
+          .from('sms_pack_purchases')
+          .update({
+            status: 'paid',
+            paid_at: new Date().toISOString(),
+            stripe_invoice_id: session.invoice as string | null,
+          })
+          .eq('id', purchaseId)
+          .eq('status', 'pending')
+          .select('id, merchant_id, pack_size')
+          .single();
+
+        if (!purchase) {
+          logger.debug('SMS pack already paid or not found:', purchaseId);
+          break;
+        }
+
+        const { data: current } = await supabase
+          .from('merchants')
+          .select('sms_pack_balance')
+          .eq('id', purchase.merchant_id)
+          .single();
+        const currentBalance = Number((current as { sms_pack_balance?: number } | null)?.sms_pack_balance || 0);
+        await supabase
+          .from('merchants')
+          .update({ sms_pack_balance: currentBalance + purchase.pack_size })
+          .eq('id', purchase.merchant_id);
+
+        logger.debug('SMS pack credited', { merchantId: purchase.merchant_id, packSize: purchase.pack_size });
+        break;
+      }
+
       logger.debug('Activating subscription for merchant:', merchantId);
 
       // Idempotent: only update if not already active (H11)

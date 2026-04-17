@@ -7,7 +7,6 @@ import type {
   PushHistoryItem,
   ScheduledPush,
   SendResult,
-  BirthdaySaveResult,
   NotificationTemplate,
 } from './types';
 import {
@@ -18,12 +17,9 @@ import {
 interface MerchantData {
   id: string;
   shop_name?: string;
-  birthday_gift_enabled?: boolean | null;
-  birthday_gift_description?: string | null;
 }
 
 export function useMarketingData(merchant: MerchantData | null) {
-  const tMarketing = useTranslations('marketing');
   // Subscribers
   const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
@@ -43,12 +39,6 @@ export function useMarketingData(merchant: MerchantData | null) {
   const [currentOfferTitle, setCurrentOfferTitle] = useState('');
   const [currentOfferDescription, setCurrentOfferDescription] = useState('');
   const [currentOfferImageUrl, setCurrentOfferImageUrl] = useState<string | null>(null);
-
-  // Birthday config
-  const [birthdayGiftEnabled, setBirthdayGiftEnabled] = useState(false);
-  const [birthdayGiftDescription, setBirthdayGiftDescription] = useState('');
-  const [savingBirthday, setSavingBirthday] = useState(false);
-  const [birthdaySaveResult, setBirthdaySaveResult] = useState<BirthdaySaveResult | null>(null);
 
   // Fetch subscribers
   useEffect(() => {
@@ -126,40 +116,6 @@ export function useMarketingData(merchant: MerchantData | null) {
     fetchOffer();
   }, [merchant?.id]);
 
-  // Init birthday config
-  useEffect(() => {
-    if (!merchant) return;
-    setBirthdayGiftEnabled(merchant.birthday_gift_enabled || false);
-    setBirthdayGiftDescription(merchant.birthday_gift_description || '');
-  }, [merchant]);
-
-  const handleSaveBirthdayConfig = async () => {
-    if (!merchant?.id) return;
-    setSavingBirthday(true);
-    setBirthdaySaveResult(null);
-    try {
-      const res = await fetch('/api/merchants/birthday-config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          merchant_id: merchant.id,
-          birthday_gift_enabled: birthdayGiftEnabled,
-          birthday_gift_description: birthdayGiftDescription.trim(),
-        }),
-      });
-      if (res.ok) {
-        setBirthdaySaveResult({ success: true, message: tMarketing('automations.saved') });
-      } else {
-        setBirthdaySaveResult({ success: false, message: 'Erreur' });
-      }
-    } catch {
-      setBirthdaySaveResult({ success: false, message: 'Erreur de connexion' });
-    } finally {
-      setSavingBirthday(false);
-      setTimeout(() => setBirthdaySaveResult(null), 3000);
-    }
-  };
-
   const handleCancelScheduled = async (id: string) => {
     try {
       const response = await fetch(`/api/push/schedule?id=${id}`, { method: 'DELETE' });
@@ -183,21 +139,6 @@ export function useMarketingData(merchant: MerchantData | null) {
     }
   };
 
-  const handleToggleBirthday = () => {
-    const newValue = !birthdayGiftEnabled;
-    setBirthdayGiftEnabled(newValue);
-    setSavingBirthday(true);
-    fetch('/api/merchants/birthday-config', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        merchant_id: merchant?.id,
-        birthday_gift_enabled: newValue,
-        birthday_gift_description: birthdayGiftDescription,
-      }),
-    }).then(() => setSavingBirthday(false)).catch(() => setSavingBirthday(false));
-  };
-
   return {
     subscriberCount,
     subscribers,
@@ -217,15 +158,8 @@ export function useMarketingData(merchant: MerchantData | null) {
     setCurrentOfferDescription,
     currentOfferImageUrl,
     setCurrentOfferImageUrl,
-    birthdayGiftEnabled,
-    birthdayGiftDescription,
-    setBirthdayGiftDescription,
-    savingBirthday,
-    birthdaySaveResult,
-    handleSaveBirthdayConfig,
     handleCancelScheduled,
     handleDeactivateOffer,
-    handleToggleBirthday,
   };
 }
 

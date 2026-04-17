@@ -216,8 +216,9 @@ export async function GET(request: NextRequest) {
       if (globalSmsConfig.reminder_enabled) {
         const { data: smsMerchants } = await supabase
           .from('merchants')
-          .select('id, shop_name, country, locale, subscription_status')
-          .in('subscription_status', ['active', 'canceling', 'past_due']);
+          .select('id, shop_name, country, locale, subscription_status, reminder_j1_enabled')
+          .in('subscription_status', ['active', 'canceling', 'past_due'])
+          .eq('reminder_j1_enabled', true);
 
         const activeMerchants = smsMerchants || [];
 

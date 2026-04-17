@@ -36,6 +36,7 @@ import {
   AnnouncementMaPageEmail,
   WinBackEmail,
   BookingNotificationEmail,
+  SmsQuotaEmail,
   VitrineReminderEmail,
   PlanningReminderEmail,
   ChurnSurveyReminderEmail,
@@ -829,6 +830,23 @@ export async function sendSocialProofEmail(
   return sendEmail(to, subj(locale, 'socialProof', { shopName }), SocialProofEmail, { shopName, locale }, {
     logLabel: 'Social proof email',
   });
+}
+
+export async function sendSmsQuotaEmail(
+  to: string,
+  shopName: string,
+  level: '80' | '100',
+  locale: EmailLocale = 'fr',
+): Promise<SendEmailResult> {
+  const subjectKey = level === '100' ? 'smsQuotaReached' : 'smsQuotaWarning';
+  const ctaUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com'}/dashboard/marketing?tab=sms&buy=1`;
+  return sendEmail(
+    to,
+    subj(locale, subjectKey, { shopName }),
+    SmsQuotaEmail,
+    { shopName, level, ctaUrl, locale },
+    { logLabel: `SMS quota ${level}% email` },
+  );
 }
 
 export async function sendAmbassadorWelcomeEmail(

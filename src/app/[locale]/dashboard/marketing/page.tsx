@@ -4,18 +4,18 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Send,
-  Megaphone,
+  MessageSquareText,
   Zap,
-  Lock,
   HelpCircle,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMerchant } from '@/contexts/MerchantContext';
-import { AUTOMATION_UNLOCK_THRESHOLD } from './types';
 import { useMarketingData, useNotificationComposer } from './hooks';
-import SubscriberRing from './SubscriberRing';
-import SendTab from './SendTab';
+import PushTab from './PushTab';
+import SmsTab from './SmsTab';
 import AutomationsTab from './AutomationsTab';
+import SmsBalancePanel from './SmsBalancePanel';
+import BuyPackModal from './BuyPackModal';
 import { HowItWorksModal, OfferModal } from './Modals';
 
 export default function MarketingPushPage() {
@@ -23,11 +23,16 @@ export default function MarketingPushPage() {
   const { merchant } = useMerchant();
   const searchParams = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState<'send' | 'automations'>(
-    searchParams.get('tab') === 'automations' ? 'automations' : 'send'
-  );
+  const initialTab = ((): 'push' | 'sms' | 'automations' => {
+    const t = searchParams.get('tab');
+    if (t === 'automations') return 'automations';
+    if (t === 'sms') return 'sms';
+    return 'push';
+  })();
+  const [activeTab, setActiveTab] = useState<'push' | 'sms' | 'automations'>(initialTab);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showOfferModal, setShowOfferModal] = useState(false);
+  const [showBuyPack, setShowBuyPack] = useState(searchParams.get('pack') === 'success' ? false : false);
 
   const data = useMarketingData(merchant);
   const composer = useNotificationComposer(merchant, {
@@ -39,8 +44,6 @@ export default function MarketingPushPage() {
     setCurrentOfferDescription: data.setCurrentOfferDescription,
     setCurrentOfferImageUrl: data.setCurrentOfferImageUrl,
   });
-
-  const automationsUnlocked = (data.subscriberCount ?? 0) >= AUTOMATION_UNLOCK_THRESHOLD;
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -63,43 +66,52 @@ export default function MarketingPushPage() {
         </button>
       </div>
 
-      {/* Subscriber Ring */}
-      <SubscriberRing
-        subscriberCount={data.subscriberCount}
-        subscribers={data.subscribers}
-        loadingCount={data.loadingCount}
+      {/* SMS Balance Panel */}
+      <SmsBalancePanel
+        merchantId={merchant?.id}
+        onBuyPack={() => setShowBuyPack(true)}
       />
 
       {/* Tab Bar */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-1.5 sm:gap-2 mb-4">
         <button
-          onClick={() => setActiveTab('send')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all ${
-            activeTab === 'send'
+          onClick={() => setActiveTab('push')}
+          className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-2 rounded-xl font-bold text-[13px] sm:text-sm transition-all ${
+            activeTab === 'push'
               ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-200'
               : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
           }`}
         >
-          <Send className="w-4 h-4" />
-          {t('tabSend')}
+          <Send className="w-4 h-4 shrink-0" />
+          <span className="truncate">{t('tabPush')}</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('sms')}
+          className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-2 rounded-xl font-bold text-[13px] sm:text-sm transition-all ${
+            activeTab === 'sms'
+              ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-200'
+              : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
+          }`}
+        >
+          <MessageSquareText className="w-4 h-4 shrink-0" />
+          <span className="truncate">{t('tabSms')}</span>
         </button>
         <button
           onClick={() => setActiveTab('automations')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all ${
+          className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-2 rounded-xl font-bold text-[13px] sm:text-sm transition-all ${
             activeTab === 'automations'
               ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-200'
               : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
           }`}
         >
-          <Zap className="w-4 h-4" />
-          {t('tabAutomations')}
-          {!automationsUnlocked && <Lock className="w-3 h-3 opacity-60" />}
+          <Zap className="w-4 h-4 shrink-0" />
+          <span className="truncate"><span className="sm:hidden">Auto SMS</span><span className="hidden sm:inline">{t('tabAutomations')}</span></span>
         </button>
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'send' && (
-        <SendTab
+      {activeTab === 'push' && (
+        <PushTab
           merchantShopName={merchant?.shop_name}
           title={composer.title}
           body={composer.body}
@@ -142,24 +154,23 @@ export default function MarketingPushPage() {
           onCancelScheduled={data.handleCancelScheduled}
           pushHistory={data.pushHistory}
           loadingHistory={data.loadingHistory}
+          subscriberCount={data.subscriberCount}
+          subscribers={data.subscribers}
+          loadingCount={data.loadingCount}
+          merchantId={merchant?.id}
         />
       )}
+
+      {activeTab === 'sms' && <SmsTab />}
 
       {activeTab === 'automations' && (
         <AutomationsTab
           merchantId={merchant?.id}
-          subscriberCount={data.subscriberCount}
-          birthdayGiftEnabled={data.birthdayGiftEnabled}
-          birthdayGiftDescription={data.birthdayGiftDescription}
-          setBirthdayGiftDescription={data.setBirthdayGiftDescription}
-          savingBirthday={data.savingBirthday}
-          birthdaySaveResult={data.birthdaySaveResult}
-          onSaveBirthdayConfig={data.handleSaveBirthdayConfig}
-          onToggleBirthday={data.handleToggleBirthday}
         />
       )}
 
       {/* Modals */}
+      <BuyPackModal open={showBuyPack} onClose={() => setShowBuyPack(false)} />
       <HowItWorksModal show={showHowItWorks} onClose={() => setShowHowItWorks(false)} />
       <OfferModal
         show={showOfferModal}

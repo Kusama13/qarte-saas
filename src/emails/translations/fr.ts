@@ -60,6 +60,8 @@ export const fr = {
     referralPromo: 'Gagne 10 € pour chaque pro que tu recommandes',
     referralReminder: '{shopName}, 10 \u20AC t\'attendent',
     socialProof: '{shopName}, comment Elodie a doubl\u00e9 ses clientes r\u00e9guli\u00e8res',
+    smsQuotaWarning: '{shopName}, tu approches de ta limite SMS ce mois',
+    smsQuotaReached: '{shopName}, quota SMS atteint — envois suspendus',
   },
 
   baseLayout: {
@@ -927,6 +929,30 @@ export const fr = {
     testimonial2Author: 'Elodie H. — Institut de beaut\u00e9',
     closing: 'Vitrine, r\u00e9servation, fid\u00e9lit\u00e9 — tout est d\u00e9j\u00e0 pr\u00eat pour toi. Il ne manque plus que tes clientes.',
     cta: 'Continuer ma configuration',
+    signature: 'L\'\u00e9quipe Qarte',
+  },
+
+  smsQuotaWarning: {
+    preview: '{shopName}, tu approches de ta limite SMS ce mois',
+    heading: 'Tu approches de ta limite SMS',
+    greeting: 'Bonjour <strong>{shopName}</strong>,',
+    intro: 'Tu as d\u00e9j\u00e0 envoy\u00e9 80 SMS sur les 100 inclus dans ton abonnement ce mois.',
+    statusTitle: 'Ce qui peut arriver',
+    statusBody: 'Si tu atteins 100 SMS sans pack, tous tes envois seront suspendus (rappels RDV, confirmations, marketing). Anticipe avec un pack — crédits valables tout au long de ton abonnement.',
+    cta: 'Acheter un pack SMS',
+    footer: 'Packs d\u00e8s 5,70€ TTC (50 SMS). Pas d\'engagement.',
+    signature: 'L\'\u00e9quipe Qarte',
+  },
+
+  smsQuotaReached: {
+    preview: '{shopName}, quota SMS atteint — envois suspendus',
+    heading: 'Quota SMS atteint — envois suspendus',
+    greeting: 'Bonjour <strong>{shopName}</strong>,',
+    intro: 'Tu as atteint la limite des 100 SMS inclus ce mois. Tous tes envois (rappels, confirmations, marketing) sont temporairement suspendus.',
+    statusTitle: 'Comment d\u00e9bloquer ?',
+    statusBody: 'Ach\u00e8te un pack SMS : les cr\u00e9dits sont valables tout au long de ton abonnement et d\u00e9bloquent imm\u00e9diatement tes envois.',
+    cta: 'D\u00e9bloquer mes envois',
+    footer: 'Packs d\u00e8s 5,70€ TTC (50 SMS). Activation imm\u00e9diate.',
     signature: 'L\'\u00e9quipe Qarte',
   },
 } as const;

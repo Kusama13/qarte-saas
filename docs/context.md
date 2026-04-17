@@ -65,6 +65,8 @@ src/
 docs/
 ├── context.md            # Ce fichier
 ├── supabase-context.md   # Schema DB complet (source unique)
+├── sms-system.md         # Architecture SMS (marketing + transactionnel + packs)
+├── email-matrix.md       # Matrice des emails merchant (3 crons emails)
 ├── AUDIT-MARKETING.md    # Score 67/100
 ├── AUDIT-SECURITE.md     # Score 92/100
 └── AUDIT-SCALABILITE.md  # Score 88/100
@@ -432,17 +434,23 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Pas de toggles** : toutes les notifs actives par defaut pour tout merchant abonne au push
 
 ### SMS (OVH Cloud)
+> **Pour l'architecture complete (marketing + packs + automatisations) voir `docs/sms-system.md`.**
+
 - **Client API** : `src/lib/ovh-sms.ts` — signature HMAC-SHA1 custom, fire-and-forget, pas de npm package
-- **Service** : `src/lib/sms.ts` — dedup via `sms_logs`, quota 100 SMS/mois inclus (0,075€ au-dela), templates FR/EN < 160 chars
+- **Service** : `src/lib/sms.ts` — dedup via `sms_logs`, quota 100 SMS/cycle + pack (pas d'overage, blocage a 0), templates FR/EN < 160 chars
 - **Reserve aux abonnes actifs** (pas trial) — message CTA dans dashboard + planning settings
-- **7 types de SMS** :
-  - `reminder_j1` — rappel la veille a 19h (cron evening)
+- **11 types de SMS** (migrations 092 → 114) :
+  - `reminder_j1` — rappel la veille a 19h (cron evening, toggle `reminder_j1_enabled` default true)
+  - `reminder_j0` — rappel le matin meme H-3, plancher 7h local (cron sms-hourly, toggle `reminder_j0_enabled`)
   - `confirmation_no_deposit` — confirmation manuelle par le merchant (toggle opt-in dans BookingDetailsModal)
   - `confirmation_deposit` — validation acompte par le merchant avec toggle opt-in (BookingDetailsModal + ReservationsSection)
   - `booking_moved` — notification client quand le merchant deplace un RDV (toggle opt-in dans move overlay)
   - `booking_cancelled` — notification client quand le merchant annule un RDV (toggle opt-in dans cancel overlay)
-  - `birthday` — voeux + cadeau anniversaire, personnalise avec le prenom du client (cron morning-jobs)
+  - `birthday` — voeux + cadeau anniversaire (cron morning-jobs)
   - `referral_reward` — notification parrain quand le filleul utilise sa recompense (`POST /api/vouchers/use`)
+  - `campaign` — campagne SMS marketing manuelle (cron sms-campaigns-dispatch */15min, modere cote admin)
+  - `welcome` — SMS bienvenue nouveau client H+1 apres 1er scan (toggle `welcome_sms_enabled`)
+  - `review_request` — merci + avis Google H+2 apres visite (toggle `post_visit_review_enabled`)
 - **Toggles SMS merchant** : 4 toggles opt-in dans les modaux planning (confirmation nouveau RDV, validation acompte, deplacement, annulation). Design harmonise : bandeau cliquable + toggle switch. Desactive par defaut. En trial : grise + badge "Pro". Visible uniquement si le slot a un numero de telephone. Aucun auto-envoi — toujours opt-in.
 - **Compteur SMS** : visible dans dashboard principal + planning parametres (barre de progression), cycle aligne sur la date d'abonnement Stripe (`billing_period_start`)
 - **Booking modal client** : pas de SMS a la reservation sans acompte (rappel J-1 suffit). Hint "un SMS de rappel vous sera envoye la veille".
@@ -451,7 +459,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Admin activite** : badges "Acompte en attente" / "Acompte OK" sur les reservations
 - **Env vars** : `OVH_APP_KEY`, `OVH_APP_SECRET`, `OVH_CONSUMER_KEY`, `OVH_SMS_SERVICE`, `OVH_SMS_SENDER`
 - **Sender** : "Qarte" (en attente validation OVH, fallback numero court via `senderForResponse`)
-- **Migrations** : 092 (sms_logs + app_config), 093 (birthday + referral types), 094 (booking_moved + booking_cancelled types)
+- **Migrations** : 092 (sms_logs + app_config), 093 (birthday + referral types), 094 (booking_moved + booking_cancelled types), **112-115 (SMS marketing + packs + events)**
 
 ### Stripe
 - `POST /api/stripe/checkout` — Session paiement (verifie customer Stripe)

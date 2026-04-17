@@ -60,6 +60,8 @@ export const en = {
     referralPromo: 'Earn €10 for every pro you refer',
     referralReminder: '{shopName}, you haven\'t shared your link yet',
     socialProof: '{shopName}, how Elodie doubled her regular clients',
+    smsQuotaWarning: '{shopName}, you\'re close to your SMS limit',
+    smsQuotaReached: '{shopName}, SMS quota reached — sends paused',
   },
 
   baseLayout: {
@@ -927,6 +929,30 @@ export const en = {
     testimonial2Author: 'Elodie H. — Beauty institute',
     closing: 'Online page, booking, loyalty — everything is already set up for you. All that\'s missing is your clients.',
     cta: 'Continue my setup',
+    signature: 'The Qarte Team',
+  },
+
+  smsQuotaWarning: {
+    preview: '{shopName}, you\'re close to your SMS limit this cycle',
+    heading: 'You\'re close to your SMS limit',
+    greeting: 'Hi <strong>{shopName}</strong>,',
+    intro: 'You\'ve sent 80 of your 100 included SMS this cycle.',
+    statusTitle: 'What can happen',
+    statusBody: 'If you hit 100 without a pack, all sends (appointment reminders, confirmations, marketing) will be suspended. Get a pack now — credits last your whole subscription.',
+    cta: 'Buy an SMS pack',
+    footer: 'Packs from €5.70 incl. VAT (50 SMS). No commitment.',
+    signature: 'The Qarte Team',
+  },
+
+  smsQuotaReached: {
+    preview: '{shopName}, SMS quota reached — sends paused',
+    heading: 'SMS quota reached — sends paused',
+    greeting: 'Hi <strong>{shopName}</strong>,',
+    intro: 'You\'ve reached the limit of 100 included SMS this cycle. All sends (reminders, confirmations, marketing) are temporarily paused.',
+    statusTitle: 'How to unblock?',
+    statusBody: 'Buy an SMS pack: credits stay valid for your whole subscription and unblock your sends immediately.',
+    cta: 'Unblock my sends',
+    footer: 'Packs from €5.70 incl. VAT (50 SMS). Instant activation.',
     signature: 'The Qarte Team',
   },
 } as const;

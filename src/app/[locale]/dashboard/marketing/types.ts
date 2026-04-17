@@ -60,8 +60,6 @@ export interface BirthdaySaveResult {
   message: string;
 }
 
-export const AUTOMATION_UNLOCK_THRESHOLD = 20;
-
 // Re-export from shared module (used by both client and server)
 export { FORBIDDEN_WORDS } from '@/lib/content-moderation';
 

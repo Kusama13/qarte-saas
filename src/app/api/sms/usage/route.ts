@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   // Verify merchant ownership
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('id, billing_period_start')
+    .select('id, billing_period_start, sms_pack_balance')
     .eq('id', merchantId)
     .eq('user_id', user.id)
     .single();
@@ -30,5 +30,6 @@ export async function GET(request: NextRequest) {
   }
 
   const usage = await getSmsUsageThisMonth(supabase, merchantId, merchant.billing_period_start);
-  return NextResponse.json(usage);
+  const packBalance = Number((merchant as { sms_pack_balance?: number }).sms_pack_balance || 0);
+  return NextResponse.json({ ...usage, packBalance });
 }

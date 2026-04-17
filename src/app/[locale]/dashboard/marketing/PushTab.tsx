@@ -20,6 +20,7 @@ import {
   EyeOff,
   Upload,
   CalendarDays,
+  Sparkles,
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,9 +36,12 @@ import type {
   ScheduledPush,
   SendResult,
   NotificationTemplate,
+  Subscriber,
 } from './types';
+import SubscriberRing from './SubscriberRing';
+import PushAutomations from './PushAutomations';
 
-interface SendTabProps {
+interface PushTabProps {
   merchantShopName?: string;
   // Composer
   title: string;
@@ -86,9 +90,14 @@ interface SendTabProps {
   // History
   pushHistory: PushHistoryItem[];
   loadingHistory: boolean;
+  // Subscribers
+  subscriberCount: number | null;
+  subscribers: Subscriber[];
+  loadingCount: boolean;
+  merchantId?: string;
 }
 
-export default function SendTab(props: SendTabProps) {
+export default function PushTab(props: PushTabProps) {
   const {
     merchantShopName,
     title, body, sending, sendResult, setSendResult,
@@ -102,16 +111,30 @@ export default function SendTab(props: SendTabProps) {
     scheduleTime, setScheduleTime, scheduling, onSchedule,
     scheduledPushes, loadingScheduled, onCancelScheduled,
     pushHistory, loadingHistory,
+    subscriberCount, subscribers, loadingCount, merchantId,
   } = props;
 
   const locale = useLocale();
   const t = useTranslations('marketing.send');
   const tTemplates = useTranslations('marketing.templates');
   const [showHistory, setShowHistory] = React.useState(false);
+  const [showTemplates, setShowTemplates] = React.useState(false);
   const templates = React.useMemo(() => getPushTemplates((key) => tTemplates(key)), [tTemplates]);
+
+  const applyTemplateAndClose = (tpl: NotificationTemplate) => {
+    onApplyTemplate(tpl);
+    setShowTemplates(false);
+  };
 
   return (
     <>
+      {/* Subscriber Ring */}
+      <SubscriberRing
+        subscriberCount={subscriberCount}
+        subscribers={subscribers}
+        loadingCount={loadingCount}
+      />
+
       {/* Scheduled Pushes */}
       {!loadingScheduled && scheduledPushes.length > 0 && (
         <div className="bg-blue-50 rounded-xl border border-blue-100 p-3 mb-4">
@@ -142,21 +165,40 @@ export default function SendTab(props: SendTabProps) {
 
       {/* Composer */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
-        {/* Templates Grid */}
+        {/* Templates dropdown */}
         <div className="mb-4">
-          <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">{t('quickTemplates')}</p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {templates.map((template) => (
-              <button
-                key={template.id}
-                onClick={() => onApplyTemplate(template)}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all hover:scale-[1.02] active:scale-[0.98] ${TEMPLATE_COLOR_MAP[template.color] || TEMPLATE_COLOR_MAP.blue}`}
-              >
-                <template.icon className="w-4 h-4 flex-shrink-0" />
-                <span className="text-xs font-semibold truncate">{template.title}</span>
-              </button>
-            ))}
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowTemplates(!showTemplates)}
+            className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-colors ${
+              showTemplates
+                ? 'border-indigo-300 bg-indigo-50/40'
+                : 'border-gray-200 bg-white hover:bg-gray-50'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-indigo-500 shrink-0" />
+            <span className="flex-1 text-left text-xs font-semibold text-gray-700">{t('quickTemplates')}</span>
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${showTemplates ? 'rotate-180' : ''}`} />
+          </button>
+          {showTemplates && (
+            <div className="mt-2 rounded-xl border border-gray-200 bg-white shadow-sm divide-y divide-gray-100 overflow-hidden">
+              {templates.map((template) => (
+                <button
+                  key={template.id}
+                  onClick={() => applyTemplateAndClose(template)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-indigo-50/40 transition-colors"
+                >
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center border shrink-0 ${TEMPLATE_COLOR_MAP[template.color] || TEMPLATE_COLOR_MAP.blue}`}>
+                    <template.icon className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-gray-900 truncate">{template.title}</p>
+                    <p className="text-[11px] text-gray-500 line-clamp-1">{template.body}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Composer Form */}
@@ -165,6 +207,7 @@ export default function SendTab(props: SendTabProps) {
           <div className="flex-1 space-y-3">
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1">{t('notificationTitle')}</label>
+              <p className="text-[10px] text-gray-500 mb-1.5">{t('notificationTitleHelp')}</p>
               <input
                 type="text"
                 value={title}
@@ -180,6 +223,7 @@ export default function SendTab(props: SendTabProps) {
 
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1">{t('shortMessage')}</label>
+              <p className="text-[10px] text-gray-500 mb-1.5">{t('shortMessageHelp')}</p>
               <textarea
                 value={body}
                 onChange={(e) => onBodyChange(e.target.value)}
@@ -198,11 +242,20 @@ export default function SendTab(props: SendTabProps) {
               <button
                 type="button"
                 onClick={() => setShowOfferDetails(!showOfferDetails)}
-                className="flex items-center gap-2 w-full text-left group"
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${
+                  showOfferDetails
+                    ? 'border-pink-300 bg-pink-50'
+                    : 'border-pink-200 bg-pink-50/50 hover:bg-pink-50 hover:border-pink-300'
+                }`}
               >
-                <Gift className="w-4 h-4 text-pink-500" />
-                <span className="text-xs font-bold text-gray-700 flex-1">{t('addOffer')}</span>
-                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showOfferDetails ? 'rotate-180' : ''}`} />
+                <div className="w-9 h-9 rounded-lg bg-pink-500 flex items-center justify-center shadow-sm shadow-pink-200 flex-shrink-0">
+                  <Gift className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-pink-900">{t('addOffer')}</p>
+                  <p className="text-[11px] text-pink-700/80 mt-0.5">{t('addOfferSubtitle')}</p>
+                </div>
+                <ChevronDown className={`w-5 h-5 text-pink-400 transition-transform flex-shrink-0 ${showOfferDetails ? 'rotate-180' : ''}`} />
               </button>
 
               <AnimatePresence>
@@ -214,7 +267,7 @@ export default function SendTab(props: SendTabProps) {
                     className="overflow-hidden"
                   >
                     <div className="mt-3 space-y-3">
-                      <p className="text-[10px] text-gray-500">{t('offerVisibleOnCard')}</p>
+                      <p className="text-[11px] text-gray-600 leading-relaxed">{t('addOfferHelp')}</p>
 
                       {/* Warning if offer already active */}
                       {offerActive && offerExpiresAt && (
@@ -229,17 +282,21 @@ export default function SendTab(props: SendTabProps) {
                         </div>
                       )}
 
-                      <textarea
-                        value={offerDescription}
-                        onChange={(e) => setOfferDescription(e.target.value)}
-                        placeholder={t('describeOffer')}
-                        maxLength={300}
-                        rows={2}
-                        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all outline-none resize-none text-sm"
-                      />
-                      <p className={`text-[10px] text-right ${offerDescription.length > 250 ? 'text-pink-600' : 'text-gray-400'}`}>
-                        {offerDescription.length}/300
-                      </p>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">{t('offerDescriptionLabel')}</label>
+                        <p className="text-[10px] text-gray-500 mb-1.5">{t('offerDescriptionHelp')}</p>
+                        <textarea
+                          value={offerDescription}
+                          onChange={(e) => setOfferDescription(e.target.value)}
+                          placeholder={t('describeOffer')}
+                          maxLength={300}
+                          rows={2}
+                          className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all outline-none resize-none text-sm"
+                        />
+                        <p className={`text-[10px] text-right ${offerDescription.length > 250 ? 'text-pink-600' : 'text-gray-400'}`}>
+                          {offerDescription.length}/300
+                        </p>
+                      </div>
 
                       {/* Image Upload */}
                       <div>
@@ -300,7 +357,8 @@ export default function SendTab(props: SendTabProps) {
 
                       {/* Duration Selection */}
                       <div>
-                        <label className="block text-[10px] font-medium text-gray-500 mb-1.5">{t('offerDuration')}</label>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">{t('offerDuration')}</label>
+                        <p className="text-[10px] text-gray-500 mb-1.5">{t('offerDurationHelp')}</p>
                         <div className="flex gap-1.5">
                           {(['today', 'tomorrow', 'custom'] as const).map((type) => (
                             <button
@@ -611,6 +669,9 @@ export default function SendTab(props: SendTabProps) {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Push automations */}
+      <PushAutomations merchantId={merchantId} />
     </>
   );
 }
