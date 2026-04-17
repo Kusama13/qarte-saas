@@ -11,7 +11,7 @@ import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotificatio
 import { AnimatePresence, motion } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
 import { PHONE_CONFIG, toBCP47, getCurrencySymbol, formatCurrency, formatPhoneLabel } from '@/lib/utils';
-import { formatDate, getServiceColorMap, colorBorderStyle, getWeekStart, timeToMinutes, minutesToTime, formatDuration } from './utils';
+import { formatDate, getServiceColorMap, colorBorderStyle, getWeekStart, timeToMinutes, minutesToTime, formatDuration, getISOWeekNumber } from './utils';
 import { handleDownloadStory } from './StoryExport';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
@@ -27,6 +27,8 @@ import WeekView from './WeekView';
 import PlanningModal, { ModalHeader, ModalFooter } from './PlanningModal';
 
 const VIEW_MODE_KEY = 'qarte_planning_view';
+const VIEW_MODES = ['day', '2day', 'week'] as const;
+type ViewMode = (typeof VIEW_MODES)[number];
 
 export default function PlanningDashboard() {
   const t = useTranslations('planning');
@@ -86,13 +88,13 @@ export default function PlanningDashboard() {
 
   // Agenda view mode — stays on 'day' during SSR/initial render, then the effect
   // hydrates from localStorage (user pref) or viewport width (>=1024px → week).
-  const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
+  const [viewMode, setViewMode] = useState<ViewMode>('day');
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_MODE_KEY);
-    if (saved === 'day' || saved === 'week') { setViewMode(saved); return; }
+    if ((VIEW_MODES as readonly string[]).includes(saved ?? '')) { setViewMode(saved as ViewMode); return; }
     if (window.matchMedia('(min-width: 1024px)').matches) setViewMode('week');
   }, []);
-  const handleSetViewMode = (mode: 'day' | 'week') => {
+  const handleSetViewMode = (mode: ViewMode) => {
     setViewMode(mode);
     try { localStorage.setItem(VIEW_MODE_KEY, mode); } catch { /* storage disabled */ }
   };
@@ -401,6 +403,12 @@ export default function PlanningDashboard() {
   const selectedDayIsToday = isToday(selectedDay);
   const selectedDayFreeCount = selectedDaySlots.filter(s => !s.client_name).length;
 
+  const twoDaysRange = useMemo(() => {
+    const next = new Date(selectedDay);
+    next.setDate(next.getDate() + 1);
+    return [selectedDay, next];
+  }, [selectedDay]);
+
   // Open bulk delete confirmation for a given day or the whole week
   const openBulkDelete = (scope: 'day' | 'week') => {
     const targetSlots = scope === 'day'
@@ -486,7 +494,7 @@ export default function PlanningDashboard() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-5xl md:max-w-none mx-auto">
       {/* ── HEADER ── */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
@@ -596,6 +604,41 @@ export default function PlanningDashboard() {
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 mb-4">
                 {/* Week range nav (flèches + range + date picker icon) */}
                 <div className="flex items-center justify-center gap-3 mb-3 relative">
+                  {/* Jump-to-date icon button (left) */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowDatePicker(v => !v)}
+                      className="p-1.5 rounded-lg hover:bg-indigo-50 transition-colors"
+                      aria-label={t('backToToday')}
+                    >
+                      <Calendar className={`w-4 h-4 ${showDatePicker ? 'text-indigo-600' : 'text-gray-400'}`} />
+                    </button>
+                    {showDatePicker && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setShowDatePicker(false)} />
+                        <div className="absolute left-0 top-full mt-2 z-20 bg-white rounded-xl shadow-xl border border-gray-200 p-3">
+                          <input
+                            type="date"
+                            value={selectedDayStr}
+                            onChange={(e) => {
+                              if (!e.target.value) return;
+                              setSelectedDay(new Date(e.target.value + 'T12:00:00'));
+                              setShowDatePicker(false);
+                            }}
+                            className="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                          />
+                          {!selectedDayIsToday && (
+                            <button
+                              onClick={() => { handleGoToToday(); setShowDatePicker(false); }}
+                              className="block w-full mt-2 px-3 py-2 rounded-lg text-xs font-semibold text-indigo-600 hover:bg-indigo-50 transition-colors"
+                            >
+                              {t('backToToday')}
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
                   <button
                     onClick={() => {
                       // Shift selectedDay along with the week to keep it inside the new range
@@ -611,9 +654,14 @@ export default function PlanningDashboard() {
                   >
                     <ChevronLeft className="w-4 h-4 text-gray-400" />
                   </button>
-                  <span className="text-sm font-semibold text-gray-900">
-                    {t('weekOf', { range: `${weekStart.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })} — ${weekEnd.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })}` })}
-                  </span>
+                  <div className="flex flex-col items-center leading-tight">
+                    <span className="text-xs md:text-sm font-semibold text-gray-900">
+                      {t('weekNumber', { n: getISOWeekNumber(weekStart) })}
+                    </span>
+                    <span className="text-[10px] md:text-xs text-gray-500 tabular-nums">
+                      {weekStart.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })} — {weekEnd.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })}
+                    </span>
+                  </div>
                   <button
                     onClick={() => {
                       const d = new Date(selectedDay);
@@ -626,7 +674,21 @@ export default function PlanningDashboard() {
                   >
                     <ChevronRight className="w-4 h-4 text-gray-400" />
                   </button>
-                  {/* View mode toggle (day / week) — tablette et + uniquement */}
+                  {/* View mode toggle — mobile: 1j / 2j | tablette+: jour / semaine */}
+                  <div className="md:hidden inline-flex items-center bg-gray-100 p-0.5 rounded-lg ml-1">
+                    <button
+                      onClick={() => handleSetViewMode('day')}
+                      className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-colors ${viewMode === 'day' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}
+                    >
+                      {t('viewDay')}
+                    </button>
+                    <button
+                      onClick={() => handleSetViewMode('2day')}
+                      className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-colors ${viewMode === '2day' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}
+                    >
+                      {t('view2Day')}
+                    </button>
+                  </div>
                   <div className="hidden md:inline-flex items-center bg-gray-100 p-0.5 rounded-lg ml-1">
                     <button
                       onClick={() => handleSetViewMode('day')}
@@ -641,39 +703,6 @@ export default function PlanningDashboard() {
                       {t('viewWeek')}
                     </button>
                   </div>
-                  {/* Jump-to-date icon button */}
-                  <button
-                    onClick={() => setShowDatePicker(v => !v)}
-                    className="p-1.5 rounded-lg hover:bg-indigo-50 transition-colors"
-                    aria-label={t('backToToday')}
-                  >
-                    <Calendar className={`w-4 h-4 ${showDatePicker ? 'text-indigo-600' : 'text-gray-400'}`} />
-                  </button>
-                  {showDatePicker && (
-                    <>
-                      <div className="fixed inset-0 z-10" onClick={() => setShowDatePicker(false)} />
-                      <div className="absolute right-0 top-full mt-2 z-20 bg-white rounded-xl shadow-xl border border-gray-200 p-3">
-                        <input
-                          type="date"
-                          value={selectedDayStr}
-                          onChange={(e) => {
-                            if (!e.target.value) return;
-                            setSelectedDay(new Date(e.target.value + 'T12:00:00'));
-                            setShowDatePicker(false);
-                          }}
-                          className="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                        />
-                        {!selectedDayIsToday && (
-                          <button
-                            onClick={() => { handleGoToToday(); setShowDatePicker(false); }}
-                            className="block w-full mt-2 px-3 py-2 rounded-lg text-xs font-semibold text-indigo-600 hover:bg-indigo-50 transition-colors"
-                          >
-                            {t('backToToday')}
-                          </button>
-                        )}
-                      </div>
-                    </>
-                  )}
                 </div>
 
                 <div className="grid grid-cols-7 gap-1.5 mb-3">
@@ -853,6 +882,25 @@ export default function PlanningDashboard() {
                   selectedDay={selectedDay}
                   isFreeMod={isFreeMod}
                   openingHours={merchant?.opening_hours || null}
+                  country={merchant?.country || null}
+                  onSlotClick={openEditSlot}
+                  onBlockedSlotClick={setConfirmDeleteBlock}
+                  onDayClick={setSelectedDay}
+                  isToday={isToday}
+                  isPast={isPast}
+                />
+              ) : viewMode === '2day' ? (
+                <WeekView
+                  weekDays={twoDaysRange}
+                  slotsByDate={slotsByDate}
+                  services={services}
+                  serviceColorMap={serviceColorMap}
+                  locale={locale}
+                  selectedDay={selectedDay}
+                  secondarySelectedStr={formatDate(twoDaysRange[1])}
+                  isFreeMod={isFreeMod}
+                  openingHours={merchant?.opening_hours || null}
+                  country={merchant?.country || null}
                   onSlotClick={openEditSlot}
                   onBlockedSlotClick={setConfirmDeleteBlock}
                   onDayClick={setSelectedDay}
@@ -870,6 +918,7 @@ export default function PlanningDashboard() {
                   isToday={selectedDayIsToday}
                   isFreeMod={isFreeMod}
                   openingHours={merchant?.opening_hours || null}
+                  country={merchant?.country || null}
                   onSlotClick={openEditSlot}
                   onBlockedSlotClick={setConfirmDeleteBlock}
                   onAddSlots={openAddSlotsModal}

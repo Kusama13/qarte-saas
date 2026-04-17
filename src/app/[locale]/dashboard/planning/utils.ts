@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { toBCP47 } from '@/lib/utils';
+import type { PlanningSlot } from '@/types';
 
 export function getWeekStart(offset: number): Date {
   const d = new Date();
@@ -19,6 +20,16 @@ export function formatDate(d: Date): string {
 
 export function formatDateFr(d: Date, locale: string = 'fr'): string {
   return d.toLocaleDateString(toBCP47(locale), { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+/** ISO 8601 week number (1..53) — week starts Monday, week 1 contains first Thursday of the year. */
+export function getISOWeekNumber(d: Date): number {
+  const target = new Date(d);
+  target.setHours(0, 0, 0, 0);
+  target.setDate(target.getDate() + 3 - ((target.getDay() + 6) % 7));
+  const firstThursday = new Date(target.getFullYear(), 0, 4);
+  const diff = target.getTime() - firstThursday.getTime();
+  return 1 + Math.round((diff / 86400000 - 3 + ((firstThursday.getDay() + 6) % 7)) / 7);
 }
 
 export const QUICK_TIMES = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'];
@@ -106,4 +117,20 @@ export function getSlotColor(
 ): string | undefined {
   const ids = getSlotServiceIds(slot);
   return ids.length > 0 ? colorMap.get(ids[0]) : undefined;
+}
+
+/** Sum of service prices for confirmed bookings (ignores blocked + available slots). */
+export function computeDayRevenue(
+  daySlots: PlanningSlot[],
+  serviceMap: Map<string, { price: number }>,
+): number {
+  let total = 0;
+  for (const slot of daySlots) {
+    if (!slot.client_name || slot.client_name === '__blocked__') continue;
+    for (const id of getSlotServiceIds(slot)) {
+      const svc = serviceMap.get(id);
+      if (svc?.price) total += svc.price;
+    }
+  }
+  return total;
 }

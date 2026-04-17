@@ -3,9 +3,9 @@
 import { useMemo } from 'react';
 import { Lock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { PlanningSlot } from '@/types';
-import { formatTime, toBCP47 } from '@/lib/utils';
-import { formatDate, timeToMinutes, minutesToTime } from './utils';
+import type { PlanningSlot, MerchantCountry } from '@/types';
+import { formatTime, formatCurrency, toBCP47 } from '@/lib/utils';
+import { formatDate, timeToMinutes, minutesToTime, computeDayRevenue } from './utils';
 import type { ServiceWithDuration } from './usePlanningState';
 import {
   HOUR_HEIGHT, START_HOUR, END_HOUR, HOURS, TOTAL_HEIGHT, QUARTERS,
@@ -21,8 +21,10 @@ interface WeekViewProps {
   serviceColorMap: Map<string, string>;
   locale: string;
   selectedDay: Date;
+  secondarySelectedStr?: string;
   isFreeMod?: boolean;
   openingHours?: Record<string, DayOpeningHours> | null;
+  country?: MerchantCountry | null;
   onSlotClick: (slot: PlanningSlot) => void;
   onBlockedSlotClick?: (slotId: string) => void;
   onDayClick: (day: Date) => void;
@@ -32,7 +34,7 @@ interface WeekViewProps {
 
 export default function WeekView({
   weekDays, slotsByDate, services, serviceColorMap, locale,
-  selectedDay, isFreeMod = false, openingHours,
+  selectedDay, secondarySelectedStr, isFreeMod = false, openingHours, country,
   onSlotClick, onBlockedSlotClick, onDayClick, isToday, isPast,
 }: WeekViewProps) {
   const t = useTranslations('planning');
@@ -56,51 +58,77 @@ export default function WeekView({
         past: isPast(day),
         overlays: computeOverlays(day, openingHours, isFreeMod, labels),
         slotCards: computeSlotCards(daySlots, serviceMap, serviceColorMap),
+        revenue: computeDayRevenue(daySlots, serviceMap),
       };
     });
   // t not stable in next-intl; intentionally omitted
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekDays, slotsByDate, serviceMap, serviceColorMap, openingHours, isFreeMod, isPast, locale]);
 
+  const gridCols = `48px repeat(${weekDays.length}, minmax(0, 1fr))`;
+  const isCompact = weekDays.length <= 2;
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       {/* Header row : mini day headers (spans aligned with the grid) */}
-      <div className="grid border-b border-gray-100" style={{ gridTemplateColumns: '48px repeat(7, minmax(0, 1fr))' }}>
+      <div className="grid border-b border-gray-100" style={{ gridTemplateColumns: gridCols }}>
         <div className="bg-gray-50" />
-        {weekDays.map(day => {
-          const dayStr = formatDate(day);
-          const past = isPast(day);
+        {columnData.map(({ day, dayStr, past, revenue }) => {
           const today = isToday(day);
           const selected = dayStr === selectedStr;
+          const secondary = !selected && dayStr === secondarySelectedStr;
+          const revenueColor = selected ? 'text-white/90' : secondary ? 'text-indigo-700' : past ? 'text-gray-300' : 'text-emerald-600';
           return (
             <button
               key={dayStr}
               onClick={() => onDayClick(day)}
-              className={`px-2 py-2 text-center transition-colors border-l border-gray-100 first:border-l-0 ${
+              className={`px-2 py-2 transition-colors border-l border-gray-100 first:border-l-0 ${isCompact ? 'text-left' : 'text-center'} ${
                 selected
                   ? 'bg-indigo-600 text-white'
-                  : today
-                    ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                    : past
-                      ? 'bg-gray-50 text-gray-400'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  : secondary
+                    ? 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200'
+                    : today
+                      ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                      : past
+                        ? 'bg-gray-50 text-gray-400'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
-              <p className={`text-[9px] font-semibold uppercase tracking-wide leading-none ${selected ? 'text-white/80' : ''}`}>
-                {day.toLocaleDateString(toBCP47(locale), { weekday: 'short' }).replace('.', '')}
-              </p>
-              <p className={`text-sm font-bold tabular-nums leading-none mt-1 ${past && !selected ? 'text-gray-300' : ''}`}>
-                {day.getDate()}
-              </p>
+              {isCompact ? (
+                <div className="flex items-center justify-between gap-2">
+                  <p className={`text-xs font-bold capitalize leading-none ${selected ? 'text-white' : past && !secondary ? 'text-gray-400' : ''}`}>
+                    {day.toLocaleDateString(toBCP47(locale), { weekday: 'short', day: 'numeric' }).replace('.', '')}
+                  </p>
+                  {revenue > 0 && (
+                    <span className={`text-[10px] font-bold tabular-nums leading-none truncate ${revenueColor}`}>
+                      {formatCurrency(revenue, country ?? undefined, locale)}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <p className={`text-[9px] font-semibold uppercase tracking-wide leading-none ${selected ? 'text-white/80' : ''}`}>
+                    {day.toLocaleDateString(toBCP47(locale), { weekday: 'short' }).replace('.', '')}
+                  </p>
+                  <p className={`text-sm font-bold tabular-nums leading-none mt-1 ${past && !selected && !secondary ? 'text-gray-300' : ''}`}>
+                    {day.getDate()}
+                  </p>
+                  {revenue > 0 && (
+                    <p className={`text-[9px] font-bold tabular-nums leading-none mt-1 truncate ${revenueColor}`}>
+                      {formatCurrency(revenue, country ?? undefined, locale)}
+                    </p>
+                  )}
+                </>
+              )}
             </button>
           );
         })}
       </div>
 
-      {/* Timeline grid : 1 hour gutter + 7 day columns */}
+      {/* Timeline grid : 1 hour gutter + N day columns */}
       <div
         className="relative pt-3 pb-2 overflow-x-hidden"
-        style={{ height: TOTAL_HEIGHT + 20, display: 'grid', gridTemplateColumns: '48px repeat(7, minmax(0, 1fr))' }}
+        style={{ height: TOTAL_HEIGHT + 20, display: 'grid', gridTemplateColumns: gridCols }}
       >
         {/* Hour gutter (shared) */}
         <div className="relative">

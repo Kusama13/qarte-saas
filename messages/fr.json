@@ -1855,6 +1855,7 @@
     "hidePast": "Masquer les passés",
     "totalPrice": "Total estimé : {price}",
     "weekOf": "Semaine du {range}",
+    "weekNumber": "Semaine {n}",
     "moreActions": "Plus d'actions",
     "downloadStoryWeek": "Story de la semaine",
     "copyWeek": "Copier la semaine",
@@ -1929,7 +1930,8 @@
     "back": "Retour",
     "statsBookings": "RDV",
     "statsRevenue": "Total estimé",
-    "viewDay": "Jour",
+    "viewDay": "1 jour",
+    "view2Day": "2 jours",
     "viewWeek": "Semaine",
     "loading": "Chargement..."
   },

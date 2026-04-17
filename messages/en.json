@@ -1855,6 +1855,7 @@
     "hidePast": "Hide past",
     "totalPrice": "Estimated total: {price}",
     "weekOf": "Week of {range}",
+    "weekNumber": "Week {n}",
     "moreActions": "More actions",
     "downloadStoryWeek": "Week story",
     "copyWeek": "Copy week",
@@ -1929,7 +1930,8 @@
     "back": "Back",
     "statsBookings": "Bookings",
     "statsRevenue": "Estimated total",
-    "viewDay": "Day",
+    "viewDay": "1 day",
+    "view2Day": "2 days",
     "viewWeek": "Week",
     "loading": "Loading..."
   },

@@ -3,9 +3,9 @@
 import { useMemo } from 'react';
 import { Plus, Lock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { PlanningSlot } from '@/types';
-import { formatTime } from '@/lib/utils';
-import { formatDate, timeToMinutes, minutesToTime } from './utils';
+import type { PlanningSlot, MerchantCountry } from '@/types';
+import { formatTime, formatCurrency } from '@/lib/utils';
+import { formatDate, timeToMinutes, minutesToTime, computeDayRevenue } from './utils';
 import type { ServiceWithDuration } from './usePlanningState';
 import {
   HOUR_HEIGHT, START_HOUR, END_HOUR, HOURS, TOTAL_HEIGHT, QUARTERS,
@@ -24,6 +24,7 @@ interface DayViewProps {
   isToday: boolean;
   isFreeMod?: boolean;
   openingHours?: Record<string, DayOpeningHours> | null;
+  country?: MerchantCountry | null;
   onSlotClick: (slot: PlanningSlot) => void;
   onBlockedSlotClick?: (slotId: string) => void;
   onAddSlots: (day: string) => void;
@@ -39,6 +40,7 @@ export default function DayView({
   isToday,
   isFreeMod = false,
   openingHours,
+  country,
   onSlotClick,
   onBlockedSlotClick,
   onAddSlots,
@@ -63,17 +65,29 @@ export default function DayView({
     [daySlots, serviceMap, serviceColorMap]
   );
 
+  const dayRevenue = useMemo(
+    () => computeDayRevenue(daySlots, serviceMap),
+    [daySlots, serviceMap]
+  );
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       {/* Day header */}
-      <div className={`px-4 py-3 border-b flex items-center justify-between ${isToday ? 'bg-indigo-50/50 border-indigo-100' : 'bg-gray-50 border-gray-100'}`}>
-        <p className={`text-sm font-bold capitalize ${isToday ? 'text-indigo-600' : 'text-gray-700'}`}>
-          {day.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-        </p>
+      <div className={`px-4 py-3 border-b flex items-center justify-between gap-2 ${isToday ? 'bg-indigo-50/50 border-indigo-100' : 'bg-gray-50 border-gray-100'}`}>
+        <div className="flex items-center gap-2 min-w-0">
+          <p className={`text-sm font-bold capitalize truncate ${isToday ? 'text-indigo-600' : 'text-gray-700'}`}>
+            {day.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </p>
+          {dayRevenue > 0 && (
+            <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-[10px] font-bold tabular-nums">
+              {formatCurrency(dayRevenue, country ?? undefined, locale)}
+            </span>
+          )}
+        </div>
         {!isPast && !isFreeMod && (
           <button
             onClick={() => onAddSlots(formatDate(day))}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-semibold hover:bg-indigo-100 transition-colors"
+            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-semibold hover:bg-indigo-100 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             {t('addSlotsTitle')}
