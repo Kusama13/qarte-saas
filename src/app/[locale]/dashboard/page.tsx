@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from '@/i18n/navigation';
-import { Users, UserCheck, UserPlus, Calendar, CalendarDays, Clock, Gift, Sparkles, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, QrCode, CreditCard, Coins, Globe, Heart, Cake, Eye, MessageSquare } from 'lucide-react';
+import { Users, UserCheck, UserPlus, Calendar, CalendarDays, CalendarClock, CalendarCheck, Clock, Gift, Sparkles, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Coins, Banknote, Wallet, Globe, Heart, Cake, Eye, MessageSquare } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime, getTodayForCountry, formatCurrency, unwrapJoin } from '@/lib/utils';
+import { endTimeFromStart } from '@/app/[locale]/dashboard/planning/utils';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import PendingPointsWidget from '@/components/dashboard/PendingPointsWidget';
@@ -48,6 +49,14 @@ function setCachedStats(merchantId: string, data: { stats: typeof initialStats; 
   }
 }
 
+// Semantic palette tokens
+const TOKENS = {
+  brand: '#4b0082',
+  planning: '#10B981',
+  loyalty: '#e11d48',
+  alert: '#D97706',
+} as const;
+
 const initialStats = {
   totalCustomers: 0,
   activeCustomers: 0,
@@ -66,10 +75,10 @@ interface ActivityEvent {
 }
 
 const EVENT_CONFIG: Record<ActivityEvent['type'], { icon: React.ElementType; color: string; bg: string; href: string }> = {
-  scan:     { icon: Eye,          color: 'text-emerald-600', bg: 'bg-emerald-50', href: '/dashboard/customers' },
-  reward:   { icon: Gift,         color: 'text-pink-600',    bg: 'bg-pink-50',    href: '/dashboard/customers' },
-  referral: { icon: UserPlus,     color: 'text-violet-600',  bg: 'bg-violet-50',  href: '/dashboard/referrals' },
-  welcome:  { icon: Sparkles,     color: 'text-orange-600',  bg: 'bg-orange-50',  href: '/dashboard/customers' },
+  scan:     { icon: Eye,      color: 'text-emerald-600', bg: 'bg-emerald-50', href: '/dashboard/customers' },
+  reward:   { icon: Gift,     color: 'text-rose-600',    bg: 'bg-rose-50',    href: '/dashboard/customers' },
+  referral: { icon: UserPlus, color: 'text-[#4b0082]',   bg: 'bg-violet-50',  href: '/dashboard/referrals' },
+  welcome:  { icon: Sparkles, color: 'text-rose-600',    bg: 'bg-rose-50',    href: '/dashboard/customers' },
 };
 
 export default function DashboardPage() {
@@ -100,6 +109,8 @@ export default function DashboardPage() {
   const [welcomeVouchers, setWelcomeVouchers] = useState(0);
   const [upcomingBookings, setUpcomingBookings] = useState<Array<{
     id: string; slot_date: string; start_time: string; client_name: string; deposit_confirmed: boolean | null;
+    total_duration_minutes: number | null;
+    services: Array<{ name: string; duration: number | null; price: number | null }>;
   }>>([]);
   const [upcomingBirthdays, setUpcomingBirthdays] = useState<Array<{
     firstName: string; lastName: string; birthMonth: number; birthDay: number;
@@ -196,6 +207,7 @@ export default function DashboardPage() {
         thirtyDaysAgo.setDate(todayBase.getDate() - 30);
 
         const firstDayOfMonth = new Date(todayBase.getFullYear(), todayBase.getMonth(), 1);
+        const firstDayOfNextMonth = new Date(todayBase.getFullYear(), todayBase.getMonth() + 1, 1);
 
         // Week comparison date ranges
         const sevenDaysAgo = new Date(todayBase);
@@ -213,7 +225,6 @@ export default function DashboardPage() {
         }
         birthdayDatesRef.current = birthdayDates;
 
-        // Execute ALL queries in parallel for maximum speed
         const [
           totalCustomersResult,
           activeCustomersResult,
@@ -234,7 +245,6 @@ export default function DashboardPage() {
           feedReferralsResult,
           feedWelcomeResult,
         ] = await Promise.all([
-          // Stats queries
           supabase
             .from('loyalty_cards')
             .select('*', { count: 'exact', head: true })
@@ -248,13 +258,14 @@ export default function DashboardPage() {
             .from('visits')
             .select('*', { count: 'exact', head: true })
             .eq('merchant_id', merchant.id)
-            .gte('visited_at', firstDayOfMonth.toISOString()),
+            .gte('visited_at', firstDayOfMonth.toISOString())
+            .lt('visited_at', firstDayOfNextMonth.toISOString()),
           supabase
             .from('redemptions')
             .select('*', { count: 'exact', head: true })
             .eq('merchant_id', merchant.id)
-            .gte('redeemed_at', firstDayOfMonth.toISOString()),
-          // Recent visits for activity feed
+            .gte('redeemed_at', firstDayOfMonth.toISOString())
+            .lt('redeemed_at', firstDayOfNextMonth.toISOString()),
           supabase
             .from('visits')
             .select('visited_at, points_earned, loyalty_card:loyalty_cards!inner(customer_id, customer:customers(first_name, last_name))')
@@ -263,47 +274,30 @@ export default function DashboardPage() {
             .eq('status', 'confirmed')
             .order('visited_at', { ascending: false })
             .limit(8),
-          // This week visits (last 7 days)
           supabase
             .from('visits')
             .select('*', { count: 'exact', head: true })
             .eq('merchant_id', merchant.id)
             .gte('visited_at', sevenDaysAgo.toISOString()),
-          // Previous week visits (7-14 days ago)
           supabase
             .from('visits')
             .select('*', { count: 'exact', head: true })
             .eq('merchant_id', merchant.id)
             .gte('visited_at', fourteenDaysAgo.toISOString())
             .lt('visited_at', sevenDaysAgo.toISOString()),
-          // Cagnotte: fetch all current_amount values
           merchant.loyalty_mode === 'cagnotte'
-            ? supabase
-                .from('loyalty_cards')
-                .select('current_amount')
-                .eq('merchant_id', merchant.id)
+            ? supabase.from('loyalty_cards').select('current_amount').eq('merchant_id', merchant.id)
             : Promise.resolve({ data: null }),
-          // Pending referrals
           merchant.referral_program_enabled
-            ? supabase
-                .from('referrals')
-                .select('*', { count: 'exact', head: true })
-                .eq('merchant_id', merchant.id)
-                .eq('status', 'pending')
+            ? supabase.from('referrals').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id).eq('status', 'pending')
             : Promise.resolve({ count: 0 }),
-          // Welcome offer voucher signups
           merchant.welcome_offer_enabled
-            ? supabase
-                .from('vouchers')
-                .select('*', { count: 'exact', head: true })
-                .eq('merchant_id', merchant.id)
-                .eq('source', 'welcome')
+            ? supabase.from('vouchers').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id).eq('source', 'welcome')
             : Promise.resolve({ count: 0 }),
-          // Upcoming booked planning slots (primary slots only)
           merchant.planning_enabled
             ? supabase
                 .from('merchant_planning_slots')
-                .select('id, slot_date, start_time, client_name, deposit_confirmed')
+                .select('id, slot_date, start_time, client_name, deposit_confirmed, total_duration_minutes, planning_slot_services(service:merchant_services!service_id(name, duration, price))')
                 .eq('merchant_id', merchant.id)
                 .not('client_name', 'is', null)
                 .neq('client_name', '__blocked__')
@@ -313,7 +307,6 @@ export default function DashboardPage() {
                 .order('start_time', { ascending: true })
                 .limit(5)
             : Promise.resolve({ data: [] }),
-          // Recent redemptions for activity feed
           supabase
             .from('redemptions')
             .select('redeemed_at, tier, loyalty_card:loyalty_cards!inner(customer_id, customer:customers(first_name))')
@@ -321,7 +314,6 @@ export default function DashboardPage() {
             .gte('redeemed_at', thirtyDaysAgo.toISOString())
             .order('redeemed_at', { ascending: false })
             .limit(8),
-          // Upcoming birthdays (next 3 days)
           merchant.birthday_gift_enabled
             ? supabase
                 .from('loyalty_cards')
@@ -330,51 +322,43 @@ export default function DashboardPage() {
                 .not('customer.birth_month', 'is', null)
                 .in('customer.birth_month', [...new Set(birthdayDates.map(d => d.month))])
             : Promise.resolve({ data: [] }),
-          // Milestone queries (trial only)
           merchant.subscription_status === 'trial'
-            ? supabase
-                .from('merchant_services')
-                .select('*', { count: 'exact', head: true })
-                .eq('merchant_id', merchant.id)
+            ? supabase.from('merchant_services').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id)
             : Promise.resolve({ count: 0 }),
           merchant.subscription_status === 'trial'
-            ? supabase
-                .from('redemptions')
-                .select('*', { count: 'exact', head: true })
-                .eq('merchant_id', merchant.id)
+            ? supabase.from('redemptions').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id)
             : Promise.resolve({ count: 0 }),
           merchant.subscription_status === 'trial' && merchant.planning_enabled
-            ? supabase
-                .from('merchant_planning_slots')
-                .select('*', { count: 'exact', head: true })
-                .eq('merchant_id', merchant.id)
-                .not('client_name', 'is', null)
-                .neq('client_name', '__blocked__')
+            ? supabase.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id).not('client_name', 'is', null).neq('client_name', '__blocked__')
             : Promise.resolve({ count: 0 }),
-          // Activity feed: referrals, welcome
-          supabase
-            .from('referrals')
-            .select('created_at, status')
-            .eq('merchant_id', merchant.id)
-            .order('created_at', { ascending: false })
-            .limit(8),
+          supabase.from('referrals').select('created_at, status').eq('merchant_id', merchant.id).order('created_at', { ascending: false }).limit(8),
           merchant.welcome_offer_enabled
-            ? supabase
-                .from('vouchers')
-                .select('created_at, customer_id, customer:customers(first_name)')
-                .eq('merchant_id', merchant.id)
-                .eq('source', 'welcome')
-                .order('created_at', { ascending: false })
-                .limit(8)
+            ? supabase.from('vouchers').select('created_at, customer_id, customer:customers(first_name)').eq('merchant_id', merchant.id).eq('source', 'welcome').order('created_at', { ascending: false }).limit(8)
             : Promise.resolve({ data: [] }),
         ]);
 
-        // Set pending referrals + welcome vouchers
         setPendingReferrals(pendingReferralsResult.count || 0);
         setWelcomeVouchers(welcomeVouchersResult.count || 0);
 
         if (upcomingBookingsResult.data) {
-          setUpcomingBookings(upcomingBookingsResult.data as typeof upcomingBookings);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const mapped = (upcomingBookingsResult.data as any[]).map((b) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const services = (b.planning_slot_services || []).map((ps: any) => {
+              const s = unwrapJoin(ps.service);
+              return s ? { name: s.name, duration: s.duration ?? null, price: s.price != null ? Number(s.price) : null } : null;
+            }).filter(Boolean);
+            return {
+              id: b.id,
+              slot_date: b.slot_date,
+              start_time: b.start_time,
+              client_name: b.client_name,
+              deposit_confirmed: b.deposit_confirmed,
+              total_duration_minutes: b.total_duration_minutes ?? null,
+              services,
+            };
+          });
+          setUpcomingBookings(mapped);
         }
 
         // Set upcoming birthdays
@@ -386,7 +370,7 @@ export default function DashboardPage() {
           setUpcomingBirthdays(birthdays);
         }
 
-        // Compute cagnotte stats
+        // Cagnotte stats
         if (merchant.loyalty_mode === 'cagnotte' && cagnotteCardsResult.data) {
           const amounts = cagnotteCardsResult.data as { current_amount: number }[];
           const totalCumul = amounts.reduce((sum, c) => sum + Number(c.current_amount || 0), 0);
@@ -410,7 +394,6 @@ export default function DashboardPage() {
 
         // Build activity feed
         const feed: ActivityEvent[] = [];
-
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         for (const v of (feedVisitsResult.data || []) as any[]) {
           const card = unwrapJoin(v.loyalty_card);
@@ -433,22 +416,16 @@ export default function DashboardPage() {
           const cust = unwrapJoin(w.customer);
           feed.push({ type: 'welcome', timestamp: w.created_at, title: cust?.first_name || t('defaultClient'), subtitle: t('activityWelcome'), customerId: w.customer_id });
         }
-
-        // Sort by timestamp DESC and take 8
         feed.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-        setActivityFeed(feed.slice(0, 8));
+        setActivityFeed(feed.slice(0, 5));
 
-        // Process weekly comparison
         const newWeeklyData = {
           thisWeek: thisWeekVisitsResult.count || 0,
           lastWeek: lastWeekVisitsResult.count || 0,
         };
         setWeeklyData(newWeeklyData);
 
-        setCachedStats(merchant.id, {
-          stats: newStats,
-          weeklyData: newWeeklyData,
-        });
+        setCachedStats(merchant.id, { stats: newStats, weeklyData: newWeeklyData });
 
       } catch (err) {
         console.error('Dashboard error:', err);
@@ -572,20 +549,22 @@ export default function DashboardPage() {
 
   return (
       <div className="space-y-8">
-        <div className="p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
-          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight text-gray-900">
-          {t('greeting')} <span className="bg-gradient-to-r from-[#4b0082] to-violet-600 bg-clip-text text-transparent">
-            {merchant?.shop_name}
-          </span>
-        </h1>
-        <p className="mt-1 text-sm md:text-base font-medium text-gray-500">
-          {stats.totalCustomers === 0
-            ? t('subtitleNoClients')
-            : stats.activeCustomers > 0
-              ? t('subtitleActive', { count: stats.activeCustomers })
-              : t('subtitleInactive')}
-        </p>
-      </div>
+        {(() => {
+          const MOTIVATION_KEYS = ['motivationSunday', 'motivationMonday', 'motivationTuesday', 'motivationWednesday', 'motivationThursday', 'motivationFriday', 'motivationSaturday'] as const;
+          const motivationKey = MOTIVATION_KEYS[new Date().getDay()];
+          return (
+            <div>
+              <h1 className="text-xl md:text-3xl font-extrabold tracking-tight text-gray-900">
+                {t('greeting')} <span className="bg-gradient-to-r from-[#4b0082] to-violet-600 bg-clip-text text-transparent">
+                  {merchant?.shop_name}
+                </span>
+              </h1>
+              <p className="mt-1.5 text-xs md:text-sm text-gray-500">
+                {t(motivationKey)}
+              </p>
+            </div>
+          );
+        })()}
 
       {/* Onboarding Checklist */}
       <OnboardingChecklist />
@@ -595,30 +574,53 @@ export default function DashboardPage() {
         <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 px-1">{t('shortcuts')}</p>
         <div className="grid grid-cols-3 gap-2.5">
           {[
-            { href: '/dashboard/public-page', icon: Globe, label: t('shortcutPage'), color: 'text-white', bg: 'bg-white/25', gradient: true, gradientColors: 'from-indigo-500 to-violet-600 border-indigo-400/30 shadow-indigo-500/20' },
-            { href: '/dashboard/program', icon: Heart, label: t('shortcutLoyalty'), color: 'text-white', bg: 'bg-white/25', gradient: true, gradientColors: 'from-pink-500 to-rose-600 border-pink-400/30 shadow-pink-500/20' },
-            { href: '/dashboard/planning', icon: CalendarDays, label: t('shortcutPlanning'), color: 'text-white', bg: 'bg-white/25', gradient: true, gradientColors: 'from-cyan-500 to-blue-600 border-cyan-400/30 shadow-cyan-500/20' },
-            { href: '/dashboard/customers', icon: Users, label: t('shortcutClients'), color: 'text-gray-500', bg: 'bg-gray-50' },
-            { href: '/dashboard/qr-download', icon: QrCode, label: t('shortcutQr'), color: 'text-gray-500', bg: 'bg-gray-50' },
-            { href: '/dashboard/subscription', icon: CreditCard, label: t('shortcutSubscription'), color: 'text-gray-500', bg: 'bg-gray-50' },
-          ].map(({ href, icon: Icon, label, color, bg, gradient, gradientColors }: { href: string; icon: React.ElementType; label: string; color: string; bg: string; gradient?: boolean; gradientColors?: string }) => (
+            { href: '/dashboard/public-page', icon: Globe, label: t('shortcutPage'), iconGradient: 'from-[#4b0082] via-violet-600 to-fuchsia-500 shadow-violet-500/30' },
+            { href: '/dashboard/program', icon: Heart, label: t('shortcutLoyalty'), iconGradient: 'from-rose-400 via-pink-500 to-rose-500 shadow-rose-400/30' },
+            { href: '/dashboard/planning', icon: CalendarClock, label: t('shortcutPlanning'), iconGradient: 'from-teal-500 via-emerald-500 to-teal-600 shadow-emerald-500/30' },
+          ].map(({ href, icon: Icon, label, iconGradient }) => (
             <Link
               key={href}
               href={href}
-              className={`flex flex-col items-center gap-2 p-3 rounded-2xl active:scale-95 transition-transform ${
-                gradient
-                  ? `bg-gradient-to-br ${gradientColors || 'from-indigo-600 to-violet-600 border-indigo-500/20'} border shadow-md`
-                  : 'bg-white border border-gray-100 shadow-sm'
-              }`}
+              className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-gray-100 active:scale-95 transition-transform"
             >
-              <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center`}>
-                <Icon className={`w-5 h-5 ${color}`} />
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${iconGradient} flex items-center justify-center shadow-md`}>
+                <Icon className="w-5 h-5 text-white" />
               </div>
-              <span className={`text-[11px] font-semibold text-center leading-tight ${gradient ? 'text-white' : 'text-gray-600'}`}>{label}</span>
+              <span className="text-[11px] font-semibold text-center leading-tight text-gray-700">{label}</span>
             </Link>
           ))}
         </div>
       </div>
+
+      {/* Today KPIs */}
+      {merchant.planning_enabled && (() => {
+        const todayStrK = getTodayForCountry(merchant.country);
+        const todayB = upcomingBookings.filter(b => b.slot_date === todayStrK);
+        const todayCount = todayB.length;
+        const todayRev = todayB.reduce((sum, b) => sum + b.services.reduce((s, sv) => s + (sv.price || 0), 0), 0);
+        return (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm p-4 md:p-5">
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                  <CalendarCheck className="w-4 h-4 text-gray-600" />
+                </div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 leading-tight line-clamp-2">{t('todayBookingsCount')}</p>
+              </div>
+              <p className="text-2xl md:text-3xl font-bold text-gray-900 tracking-[-0.03em] tabular-nums text-center">{todayCount}</p>
+            </div>
+            <div className="bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm p-4 md:p-5">
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                  <Banknote className="w-4 h-4 text-gray-600" />
+                </div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 leading-tight line-clamp-2">{t('todayRevenue')}</p>
+              </div>
+              <p className="text-2xl md:text-3xl font-bold text-gray-900 tracking-[-0.03em] tabular-nums text-center">{formatCurrency(todayRev, merchant.country, locale, 0)}</p>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Upcoming Bookings Widget */}
       {merchant.planning_enabled && upcomingBookings.length > 0 && (() => {
@@ -631,15 +633,16 @@ export default function DashboardPage() {
         const laterBookings = upcomingBookings.filter(b => b.slot_date !== todayStr2);
 
         return (
-          <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-cyan-400 to-blue-400" />
+          <div className="bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden">
             <div className="p-4 md:p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-cyan-500" />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <CalendarDays className="w-4 h-4 text-emerald-600" />
+                  </div>
                   <h2 className="text-sm md:text-base font-bold text-gray-900">{t('upcomingBookings')}</h2>
                 </div>
-                <Link href="/dashboard/planning" className="flex items-center gap-1 text-xs font-semibold text-cyan-600 hover:text-cyan-700">
+                <Link href="/dashboard/planning" className="hidden md:flex items-center gap-1 text-xs font-semibold text-gray-400 hover:text-gray-600">
                   {t('viewPlanning')}
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
@@ -647,21 +650,42 @@ export default function DashboardPage() {
 
               {/* Today section */}
               {todayBookings.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.15em] text-cyan-500 mb-2">{t('today')}</p>
-                  <div className="space-y-1.5">
-                    {todayBookings.map((b) => (
-                      <Link key={b.id} href={`/dashboard/planning?slot=${b.id}`} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-cyan-50/60 border border-cyan-100 hover:bg-cyan-50 transition-colors cursor-pointer active:scale-[0.99]">
-                        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-cyan-500 text-white shrink-0">
-                          <Clock className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">{b.client_name}</p>
-                          {renderDepositBadge(b.deposit_confirmed)}
-                        </div>
-                        <span className="text-sm font-bold text-cyan-700 shrink-0">{b.start_time}</span>
-                      </Link>
-                    ))}
+                <div className="mb-5">
+                  <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#4b0082] mb-2">{t('today')}</p>
+                  <div className="space-y-2">
+                    {todayBookings.map((b) => {
+                      const duration = b.total_duration_minutes ?? b.services.reduce((sum, s) => sum + (s.duration || 0), 0);
+                      const endTime = duration > 0 ? endTimeFromStart(b.start_time, duration) : null;
+                      const totalPrice = b.services.reduce((sum, s) => sum + (s.price || 0), 0);
+                      const servicesLabel = b.services.map(s => s.name).join(' · ');
+
+                      return (
+                        <Link
+                          key={b.id}
+                          href={`/dashboard/planning?slot=${b.id}`}
+                          className="block relative pl-4 pr-3 py-3 rounded-xl bg-violet-50/50 hover:bg-violet-50 transition-colors cursor-pointer active:scale-[0.99] border border-violet-100/60"
+                        >
+                          <span className="absolute left-0 top-3 bottom-3 w-1 rounded-r bg-gradient-to-b from-[#4b0082] to-violet-600" />
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-900 truncate">{b.client_name}</p>
+                              {servicesLabel && (
+                                <p className="text-[11px] text-gray-500 truncate mt-0.5">{servicesLabel}</p>
+                              )}
+                              <div className="flex items-center gap-2 mt-1.5 text-[11px] font-medium text-gray-500">
+                                <span className="tabular-nums">{b.start_time}{endTime && ` – ${endTime}`}</span>
+                                {renderDepositBadge(b.deposit_confirmed)}
+                              </div>
+                            </div>
+                            {totalPrice > 0 && (
+                              <span className="text-sm font-bold text-gray-900 shrink-0 tabular-nums">
+                                {formatCurrency(totalPrice, merchant?.country, locale, 0)}
+                              </span>
+                            )}
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -670,7 +694,11 @@ export default function DashboardPage() {
               {laterBookings.length > 0 && (
                 <div>
                   {todayBookings.length > 0 && (
-                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 mb-2">{t('upcoming')}</p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="h-px flex-1 bg-gray-100" />
+                      <p className="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">{t('upcoming')}</p>
+                      <span className="h-px flex-1 bg-gray-100" />
+                    </div>
                   )}
                   <div className="space-y-1.5">
                     {laterBookings.map((b) => {
@@ -704,7 +732,7 @@ export default function DashboardPage() {
         );
       })()}
 
-      {/* Upcoming Birthdays — near bookings for urgency */}
+      {/* Upcoming Birthdays */}
       {merchant?.birthday_gift_enabled && upcomingBirthdays.length > 0 && (
         <div className="bg-pink-50/50 border border-pink-100 rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-3">
@@ -803,7 +831,7 @@ export default function DashboardPage() {
             title={t('totalClients')}
             value={stats.totalCustomers}
             icon={Users}
-            color="#654EDA"
+            color="#64748b"
           />
         </Link>
         <Link href="/dashboard/customers" className="block">
@@ -811,20 +839,20 @@ export default function DashboardPage() {
             title={t('activeClients')}
             value={stats.activeCustomers}
             icon={UserCheck}
-            color="#10B981"
+            color={TOKENS.planning}
           />
         </Link>
         <StatsCard
           title={t('visitsMonth')}
           value={stats.visitsThisMonth}
           icon={Calendar}
-          color="#F59E0B"
+          color={TOKENS.planning}
         />
         <StatsCard
           title={t('rewardsMonth')}
           value={stats.redemptionsThisMonth}
           icon={Gift}
-          color="#EC4899"
+          color={TOKENS.loyalty}
         />
       </div>
 
@@ -834,13 +862,13 @@ export default function DashboardPage() {
             title={t('cumulClients')}
             value={formatCurrency(cagnotteStats.totalCumul, merchant?.country, locale, 0)}
             icon={Coins}
-            color="#059669"
+            color={TOKENS.planning}
           />
           <StatsCard
             title={t('cashbackOngoing')}
             value={formatCurrency(cagnotteStats.totalCashback, merchant?.country, locale, 0)}
-            icon={Gift}
-            color="#D97706"
+            icon={Wallet}
+            color={TOKENS.loyalty}
           />
         </div>
       )}
@@ -854,7 +882,7 @@ export default function DashboardPage() {
                 title={t('pendingReferrals')}
                 value={pendingReferrals}
                 icon={UserPlus}
-                color="#3B82F6"
+                color={TOKENS.brand}
               />
             </Link>
           )}
@@ -863,8 +891,8 @@ export default function DashboardPage() {
               <StatsCard
                 title={t('welcomeOffer')}
                 value={welcomeVouchers}
-                icon={Gift}
-                color="#8B5CF6"
+                icon={Sparkles}
+                color={TOKENS.loyalty}
               />
             </Link>
           )}
@@ -879,64 +907,9 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* SMS Quota Widget */}
-      {smsUsage && (() => {
-        const isPaid = merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling' || merchant?.subscription_status === 'past_due';
-        const pct = Math.min(100, Math.round((smsUsage.sent / 100) * 100));
-        const isOverage = smsUsage.sent > 100;
-        const periodStartDate = new Date(smsUsage.periodStart);
-        const periodEndDate = new Date(periodStartDate);
-        periodEndDate.setMonth(periodEndDate.getMonth() + 1);
-        const fmtDate = (d: Date) => d.toLocaleDateString(locale === 'en' ? 'en-GB' : 'fr-FR', { day: 'numeric', month: 'short' });
-        return (
-          <div className={`backdrop-blur-xl border rounded-2xl md:rounded-3xl shadow-sm p-4 md:p-6 ${isPaid ? 'bg-white/80 border-white/20' : 'bg-amber-50/80 border-amber-200/40'}`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className={`p-1.5 rounded-lg ${isOverage ? 'bg-amber-50' : 'bg-emerald-50'}`}>
-                  <MessageSquare className={`w-4 h-4 ${isOverage ? 'text-amber-600' : 'text-emerald-600'}`} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-gray-900">{t('smsQuotaTitle')}</h3>
-                  <p className="text-[10px] text-gray-400">{t('smsQuotaDesc')}</p>
-                </div>
-              </div>
-              {isPaid && (
-                <div className="text-right">
-                  <span className="text-xs font-bold text-gray-700">{t('smsQuotaUsed', { sent: smsUsage.sent })}</span>
-                  <p className="text-[9px] text-gray-400">{fmtDate(periodStartDate)} — {fmtDate(periodEndDate)}</p>
-                </div>
-              )}
-            </div>
-            {isPaid ? (
-              <div className="mt-2">
-                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${isOverage ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-                {isOverage && (
-                  <p className="text-[11px] font-semibold text-amber-600 mt-1.5">
-                    {t('smsOverage', { count: smsUsage.overageCount, cost: smsUsage.overageCost.toFixed(2) })}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <p className="text-[11px] text-gray-500">{t('smsQuotaTrialHint')}</p>
-                <Link href="/dashboard/subscription" className="shrink-0 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-[11px] font-bold hover:shadow-md transition-all">
-                  {t('smsQuotaTrialCta')}
-                </Link>
-              </div>
-            )}
-          </div>
-        );
-      })()}
-
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         {/* Weekly Comparison Card */}
-        <div className="group relative overflow-hidden bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl md:rounded-3xl shadow-xl shadow-indigo-100/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50">
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-600 to-violet-600" />
+        <div className="bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden">
           <div className="p-5 md:p-8">
             <p className="text-[10px] font-black text-slate-400/80 uppercase tracking-[0.2em] mb-4 md:mb-6">
               {t('last7Days')}
@@ -986,8 +959,11 @@ export default function DashboardPage() {
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider w-20 shrink-0">{t('thisWeek')}</span>
                     <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-700"
-                        style={{ width: `${Math.min((weeklyData.thisWeek / Math.max(weeklyData.thisWeek, weeklyData.lastWeek, 1)) * 100, 100)}%` }}
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{
+                          width: `${Math.min((weeklyData.thisWeek / Math.max(weeklyData.thisWeek, weeklyData.lastWeek, 1)) * 100, 100)}%`,
+                          backgroundColor: TOKENS.brand,
+                        }}
                       />
                     </div>
                     <span className="text-sm font-bold text-slate-700 w-8 text-right tabular-nums">{weeklyData.thisWeek}</span>
@@ -1004,7 +980,6 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* Trend message */}
                 {weeklyData.lastWeek > 0 && (() => {
                   const change = Math.round(((weeklyData.thisWeek - weeklyData.lastWeek) / weeklyData.lastWeek) * 100);
                   if (change > 0) return <p className="text-xs text-emerald-600 font-medium mt-4">{t('trendUp', { percent: change })}</p>;
@@ -1025,7 +1000,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Activity Card */}
-        <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl md:rounded-3xl shadow-xl shadow-indigo-100/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50">
+        <div className="bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden">
           <div className="p-4 md:p-6">
             <h2 className="text-base md:text-xl font-bold tracking-tight text-gray-900 mb-3">
               {t('recentActivity')}
@@ -1074,6 +1049,42 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* SMS Quota */}
+      {smsUsage && (() => {
+        const isPaid = merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling' || merchant?.subscription_status === 'past_due';
+        const pct = Math.min(100, Math.round((smsUsage.sent / 100) * 100));
+        const isOverage = smsUsage.sent > 100;
+        return (
+          <div className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border ${isPaid ? 'bg-gray-50/80 border-gray-100' : 'bg-amber-50/60 border-amber-100'}`}>
+            <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isOverage ? 'text-amber-600' : 'text-gray-400'}`} />
+            <span className="text-[11px] font-semibold text-gray-600 shrink-0">{t('smsQuotaTitle')}</span>
+            {isPaid ? (
+              <>
+                <div className="flex-1 h-1 bg-gray-200/70 rounded-full overflow-hidden min-w-[40px]">
+                  <div
+                    className={`h-full rounded-full transition-all ${isOverage ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="text-[11px] font-bold text-gray-700 tabular-nums shrink-0">{t('smsQuotaUsed', { sent: smsUsage.sent })}</span>
+                {isOverage && (
+                  <span className="text-[10px] font-semibold text-amber-600 shrink-0">
+                    {t('smsOverage', { count: smsUsage.overageCount, cost: smsUsage.overageCost.toFixed(2) })}
+                  </span>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="flex-1 text-[11px] text-gray-500 truncate">{t('smsQuotaTrialHint')}</span>
+                <Link href="/dashboard/subscription" className="shrink-0 px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold hover:shadow-md transition-all">
+                  {t('smsQuotaTrialCta')}
+                </Link>
+              </>
+            )}
+          </div>
+        );
+      })()}
 
       {activeMilestone && (
         <MilestoneModal type={activeMilestone} onClose={() => setActiveMilestone(null)} />

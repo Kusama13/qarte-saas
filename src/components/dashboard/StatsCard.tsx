@@ -1,7 +1,7 @@
 'use client';
 
 import { memo } from 'react';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 
 interface StatsCardProps {
   title: string;
@@ -12,44 +12,30 @@ interface StatsCardProps {
 }
 
 const StatsCard = memo(function StatsCard({ title, value, icon: Icon, trend, color }: StatsCardProps) {
+  const isNegative = typeof trend === 'string' && trend.trim().startsWith('-');
+  const TrendIcon = isNegative ? TrendingDown : TrendingUp;
+  const trendClasses = isNegative
+    ? 'bg-red-50 text-red-600 border-red-100'
+    : 'bg-emerald-50 text-emerald-600 border-emerald-100';
   return (
-    <div className="group relative p-4 md:p-6 bg-white/70 backdrop-blur-2xl border border-white/50 rounded-2xl md:rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 hover:shadow-[0_20px_50px_rgba(79,70,229,0.1)] hover:-translate-y-1.5 overflow-hidden">
-      {/* Premium Gradient Border Effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-      <div className="relative flex items-center justify-between gap-3">
-        <div className="flex flex-col min-w-0 flex-1">
-          <p className="text-[10px] font-black text-slate-400/80 uppercase tracking-[0.2em] mb-1 truncate">{title}</p>
-          <div className="flex items-baseline gap-2 min-w-0">
-            <h3 className="text-xl md:text-3xl font-bold text-slate-900 tracking-[-0.03em] tabular-nums truncate">{value}</h3>
+    <div className="p-3 md:p-6 bg-white border border-gray-100 rounded-xl md:rounded-3xl shadow-sm transition-shadow hover:shadow-md">
+      <div className="flex items-center gap-2.5 md:items-start md:gap-3">
+        <div
+          className="flex items-center justify-center w-8 h-8 md:w-14 md:h-14 rounded-lg md:rounded-2xl shrink-0 md:order-2"
+          style={{ background: `${color}14` }}
+        >
+          <Icon className="w-4 h-4 md:w-7 md:h-7" style={{ color }} />
+        </div>
+        <div className="flex flex-col min-w-0 flex-1 md:order-1">
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider md:tracking-[0.2em] mb-0.5 md:mb-1.5 leading-tight line-clamp-2">{title}</p>
+          <div className="flex items-baseline flex-wrap gap-x-1.5 gap-y-0.5">
+            <h3 className="text-xl md:text-3xl font-bold text-slate-900 tracking-[-0.03em] tabular-nums leading-none">{value}</h3>
             {trend && (
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50/80 text-emerald-600 border border-emerald-100/50 shadow-sm flex-shrink-0">
-                <TrendingUp className="w-3 h-3 stroke-[3]" />
-                <span className="text-[10px] font-black">{trend}</span>
+              <div className={`flex items-center gap-0.5 px-1.5 py-0 rounded-full border flex-shrink-0 ${trendClasses}`}>
+                <TrendIcon className="w-2.5 h-2.5 stroke-[3]" />
+                <span className="text-[9px] md:text-[10px] font-black">{trend}</span>
               </div>
             )}
-          </div>
-        </div>
-
-        <div className="relative group/icon flex-shrink-0">
-          <div
-            className="absolute inset-0 rounded-2xl blur-xl opacity-20 group-hover/icon:opacity-40 transition-all duration-500 scale-75 group-hover/icon:scale-110"
-            style={{ backgroundColor: color }}
-          />
-          <div
-            className="relative flex items-center justify-center w-11 h-11 md:w-14 md:h-14 rounded-2xl transition-all duration-500 ease-out border border-white/50 shadow-inner group-hover:shadow-lg"
-            style={{
-              background: `linear-gradient(145deg, ${color}10, ${color}25)`
-            }}
-          >
-            <Icon
-              className="w-5 h-5 md:w-7 md:h-7 transition-all duration-500 ease-out group-hover:-rotate-12 group-hover:scale-110"
-              style={{ color }}
-            />
-            {/* Animated Highlight */}
-            <div className="absolute top-0 left-0 w-full h-full rounded-2xl overflow-hidden pointer-events-none">
-              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
-            </div>
           </div>
         </div>
       </div>
