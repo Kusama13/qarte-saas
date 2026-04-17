@@ -1594,6 +1594,8 @@
     "titleHighlight": "Management",
     "subtotalSingular": "Client registered on the platform",
     "subtotalPlural": "Clients registered on the platform",
+    "statVisits": "Check-ins",
+    "statRewards": "Rewards unlocked",
     "total": "total",
     "newButton": "New",
     "vipPrograms": "Loyal Customers",

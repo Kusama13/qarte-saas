@@ -23,11 +23,13 @@ import {
   Target,
   Sparkles,
   Ticket,
+  UserCheck,
   X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Modal } from '@/components/ui';
 import { CustomerManagementModal } from '@/components/dashboard/CustomerManagementModal';
+import StatsCard from '@/components/dashboard/StatsCard';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
 import { formatDate, formatPhoneNumber, formatPhoneLabel, formatCurrency, PHONE_CONFIG } from '@/lib/utils';
@@ -99,13 +101,17 @@ export default function CustomersPage() {
   const [creatingCustomer, setCreatingCustomer] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
+  // Loyalty stats — total visits + redemptions across the merchant
+  const [statVisits, setStatVisits] = useState<number | null>(null);
+  const [statRewards, setStatRewards] = useState<number | null>(null);
+
   const monthNames = t('monthNames').split(',');
 
   const fetchData = useCallback(async () => {
     if (!merchant) return;
 
-    // Parallel fetch: cards + push subscribers + vouchers
-    const [cardsResult, pushResult, vouchersResult] = await Promise.all([
+    // Parallel fetch: cards + push subscribers + vouchers + loyalty counts
+    const [cardsResult, pushResult, vouchersResult, visitsCount, rewardsCount] = await Promise.all([
       supabase
         .from('loyalty_cards')
         .select(`
@@ -125,7 +131,13 @@ export default function CustomersPage() {
         .eq('merchant_id', merchant.id)
         .eq('is_used', false)
         .in('source', ['welcome', 'offer']),
+
+      supabase.from('visits').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
+      supabase.from('redemptions').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
     ]);
+
+    setStatVisits(visitsCount.count ?? 0);
+    setStatRewards(rewardsCount.count ?? 0);
 
     // Build voucher sets
     const welcomeSet = new Set<string>();
@@ -413,13 +425,6 @@ export default function CustomersPage() {
             {customers.length > 1 ? t('subtotalPlural') : t('subtotalSingular')}
           </p>
         </div>
-        <Button
-          onClick={() => setCreateModalOpen(true)}
-          className="h-9 px-3 text-sm bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-lg transition-all duration-200 shadow-md shadow-indigo-200 w-fit"
-        >
-          <UserPlus className="w-3.5 h-3.5 mr-1.5" />
-          {t('newButton')}
-        </Button>
         <div className="flex flex-wrap items-center gap-2">
           <Link href="/dashboard/members">
             <Button
@@ -440,6 +445,22 @@ export default function CustomersPage() {
             </Button>
           </Link>
         </div>
+      </div>
+
+      {/* Loyalty stats (fidélité-only) */}
+      <div className="grid grid-cols-2 gap-3">
+        <StatsCard
+          title={t('statVisits')}
+          value={statVisits ?? '—'}
+          icon={UserCheck}
+          color="#10B981"
+        />
+        <StatsCard
+          title={t('statRewards')}
+          value={statRewards ?? '—'}
+          icon={Gift}
+          color="#e11d48"
+        />
       </div>
 
       <div className="p-4 md:p-8 bg-white/80 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/20 shadow-xl shadow-indigo-100/50 relative overflow-hidden">
@@ -483,6 +504,13 @@ export default function CustomersPage() {
                   {activeFilterCount}
                 </span>
               )}
+            </button>
+            <button
+              onClick={() => setCreateModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 h-11 rounded-xl text-sm font-bold transition-all bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-md shadow-indigo-200"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>{t('newButton')}</span>
             </button>
             {activeFilterCount > 0 && (
               <button

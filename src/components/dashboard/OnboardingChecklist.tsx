@@ -4,10 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import {
-  Check, Sparkles, X, Globe, CalendarDays,
+  Check, Sparkles, X, CalendarDays,
   Gift, ImageIcon, Share2, MapPin, Camera, QrCode,
   Users, UserPlus, Cake, Calendar, ChevronDown, ArrowRight,
-  Scissors, FileText, CreditCard,
+  Scissors, FileText, CreditCard, Rocket,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -27,9 +27,7 @@ interface Step {
 interface Group {
   id: string;
   name: string;
-  icon?: React.ElementType;
-  emoji?: string;
-  gradient: string;
+  icon: React.ElementType;
   sparkleColors: string[];
   steps: Step[];
 }
@@ -150,9 +148,8 @@ export default function OnboardingChecklist() {
           {
             id: 'essential',
             name: t('groupEssential'),
-            emoji: '\uD83D\uDC9C',
-            gradient: 'from-indigo-500 to-violet-600',
-            sparkleColors: ['#6366F1', '#7C3AED', '#A78BFA', '#FFD700'],
+            icon: Rocket,
+            sparkleColors: ['#4b0082', '#7C3AED', '#A78BFA', '#FFD700'],
             steps: [
               { id: 'program', label: t('stepProgram'), done: !!merchant.reward_description, href: '/dashboard/program', icon: Gift },
               { id: 'logo', label: t('stepLogo'), done: !!merchant.logo_url, href: '/dashboard/personalize', icon: ImageIcon },
@@ -166,9 +163,8 @@ export default function OnboardingChecklist() {
           {
             id: 'advanced',
             name: t('groupAdvanced'),
-            emoji: '\u2728',
-            gradient: 'from-violet-500 to-pink-500',
-            sparkleColors: ['#7C3AED', '#EC4899', '#F9A8D4', '#FFD700'],
+            icon: Sparkles,
+            sparkleColors: ['#4b0082', '#7C3AED', '#A78BFA', '#FFD700'],
             steps: [
               { id: 'address', label: t('stepAddress'), done: !!merchant.shop_address, href: '/dashboard/public-page', icon: MapPin },
               { id: 'photos', label: t('stepPhotos'), done: photosCount >= 1, href: '/dashboard/public-page', icon: Camera },
@@ -275,15 +271,12 @@ export default function OnboardingChecklist() {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="relative bg-white/70 backdrop-blur-2xl rounded-2xl md:rounded-3xl border border-white/50 shadow-sm overflow-hidden"
+      className="relative bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden"
     >
-      {/* Gradient stripe */}
-      <div className="h-1 bg-gradient-to-r from-violet-500 via-indigo-500 to-cyan-400" />
-
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4 md:px-6 md:pt-5">
-        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-[#4b0082] to-violet-500 shadow-lg shadow-[#4b0082]/20 shrink-0">
-          <Sparkles className="w-5 h-5 text-white" />
+        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#4b0082]/10 shrink-0">
+          <Sparkles className="w-5 h-5 text-[#4b0082]" />
         </div>
         {confirmingDismiss && !allDone ? (
           <div className="flex-1 flex items-center gap-2 min-w-0">
@@ -337,7 +330,7 @@ export default function OnboardingChecklist() {
       {/* Global progress bar */}
       <div className="mx-4 md:mx-6 mt-3 mb-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-violet-500 via-indigo-500 to-cyan-400 transition-all duration-700 ease-out"
+          className="h-full rounded-full bg-[#4b0082] transition-all duration-700 ease-out"
           style={{ width: `${globalProgress}%` }}
         />
       </div>
@@ -369,9 +362,6 @@ export default function OnboardingChecklist() {
           const nextStep = trackableSteps.find(s => !s.done);
           const progress = trackableSteps.length > 0 ? doneCount / trackableSteps.length : 0;
 
-          // Color map for progress ring
-          const ringColor = group.id === 'essential' ? '#6366F1' : '#7C3AED';
-
           return (
             <div key={group.id}>
               {/* Group header */}
@@ -379,25 +369,23 @@ export default function OnboardingChecklist() {
                 onClick={() => toggleGroup(group.id)}
                 className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${
                   isComplete
-                    ? 'bg-gray-50/80'
+                    ? 'bg-gray-50'
                     : isExpanded
-                      ? 'bg-gray-50/80 border border-gray-200/50'
-                      : 'bg-gray-50/60 hover:bg-gray-100/60'
+                      ? 'bg-gray-50 border border-gray-100'
+                      : 'bg-gray-50 hover:bg-gray-100'
                 }`}
               >
                 {/* Group icon */}
                 <div className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-all ${
                   isComplete
-                    ? 'bg-emerald-100 text-emerald-600'
-                    : `bg-gradient-to-br ${group.gradient} text-white shadow-sm`
+                    ? 'bg-emerald-50 text-emerald-600'
+                    : 'bg-[#4b0082]/10 text-[#4b0082]'
                 }`}>
                   {isComplete ? (
                     <Check className="w-4 h-4 stroke-[3]" />
-                  ) : group.emoji ? (
-                    <span className="text-base leading-none">{group.emoji}</span>
-                  ) : group.icon ? (
+                  ) : (
                     <group.icon className="w-4 h-4" />
-                  ) : null}
+                  )}
                 </div>
 
                 {/* Group name */}
@@ -413,7 +401,7 @@ export default function OnboardingChecklist() {
                 ) : (
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs font-bold text-gray-500 tabular-nums">{doneCount}/{trackableSteps.length}</span>
-                    <CircularProgressRing size={24} progress={progress} color={ringColor} />
+                    <CircularProgressRing size={24} progress={progress} color="#4b0082" />
                   </div>
                 )}
 
@@ -454,7 +442,7 @@ export default function OnboardingChecklist() {
                               step.done
                                 ? 'bg-emerald-500 text-white'
                                 : isNext
-                                  ? `bg-gradient-to-br ${group.gradient} text-white`
+                                  ? 'bg-[#4b0082] text-white'
                                   : 'border-2 border-gray-200'
                             }`}>
                               {step.done ? (
