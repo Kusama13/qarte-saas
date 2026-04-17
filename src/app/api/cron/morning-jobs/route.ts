@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 import { getTodayInParis, getTodayForCountry } from '@/lib/utils';
-import { sendBirthdayNotificationEmail, sendSlotReleasedEmail } from '@/lib/email';
+import { sendBirthdayNotificationEmail } from '@/lib/email';
 import type { EmailLocale } from '@/emails/translations';
 import { sendMerchantPush } from '@/lib/merchant-push';
 import { sendBookingSms } from '@/lib/sms';
@@ -298,77 +298,14 @@ export async function GET(request: NextRequest) {
     sectionStatuses.push({ name: 'birthdayVouchers', status: 'error', error: String(error) });
   }
 
-  // ==================== DEPOSIT DEADLINE CHECK ====================
+  // ==================== DEPOSIT DEADLINE — WARNING ONLY ====================
+  // Actual release is handled by the hourly /api/cron/deposit-expiration cron.
   if (isTimedOut()) { sectionStatuses.push({ name: 'depositDeadline', status: 'error', error: 'Skipped: cron timeout' }); }
   else try {
     const nowIso = new Date().toISOString();
     const fourHoursFromNow = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
 
-    // 14A. Auto-release expired deposits
-    const { data: expiredSlots } = await supabase
-      .from('merchant_planning_slots')
-      .select('id, merchant_id, client_name, slot_date, start_time, primary_slot_id')
-      .eq('deposit_confirmed', false)
-      .not('deposit_deadline_at', 'is', null)
-      .lt('deposit_deadline_at', nowIso)
-      .is('primary_slot_id', null)
-      .limit(200);
-
-    for (const slot of expiredSlots || []) {
-      const { data: fillerSlots } = await supabase
-        .from('merchant_planning_slots')
-        .select('id')
-        .eq('primary_slot_id', slot.id);
-
-      const allSlotIds = [slot.id, ...(fillerSlots || []).map(f => f.id)];
-
-      await supabase.from('planning_slot_services').delete().in('slot_id', allSlotIds);
-
-      if (fillerSlots && fillerSlots.length > 0) {
-        await supabase
-          .from('merchant_planning_slots')
-          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null })
-          .in('id', fillerSlots.map(f => f.id));
-      }
-
-      await supabase
-        .from('merchant_planning_slots')
-        .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null })
-        .eq('id', slot.id);
-
-      const bm = allMerchantsMap.get(slot.merchant_id);
-      if (bm) {
-        const isEN = bm.locale === 'en';
-        pushPromises.push(sendMerchantPush({
-          supabase, merchantId: slot.merchant_id, notificationType: 'deposit_expired', referenceId: slot.id,
-          title: isEN ? 'Slot released — deposit not received' : 'Créneau libéré — acompte non reçu',
-          body: isEN
-            ? `${slot.client_name} — ${slot.slot_date} at ${slot.start_time}`
-            : `${slot.client_name} — ${slot.slot_date} à ${slot.start_time}`,
-          url: `/dashboard/planning?date=${slot.slot_date}`, tag: 'qarte-merchant-deposit',
-        }));
-
-        // Email notification
-        (async () => {
-          try {
-            const { data: authUser } = await supabase.auth.admin.getUserById(bm.user_id);
-            if (authUser?.user?.email) {
-              sendSlotReleasedEmail(authUser.user.email, {
-                shopName: bm.shop_name,
-                clientName: slot.client_name,
-                date: slot.slot_date,
-                time: slot.start_time,
-                locale: (bm.locale || 'fr') as 'fr' | 'en',
-              }).catch(() => {});
-            }
-          } catch { /* silent */ }
-        })();
-      }
-
-      results.depositDeadline.released++;
-    }
-
-    // 14B. Warn merchants about deposits expiring soon (within 4h)
+    // Warn merchants about deposits expiring soon (within 4h)
     const { data: expiringSlots } = await supabase
       .from('merchant_planning_slots')
       .select('id, merchant_id, client_name, slot_date, start_time')

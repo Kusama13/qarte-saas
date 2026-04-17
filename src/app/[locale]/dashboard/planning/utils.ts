@@ -103,12 +103,7 @@ export function colorBorderStyle(color?: string): CSSProperties | undefined {
   return color ? { borderLeftWidth: '3px', borderLeftColor: color } : undefined;
 }
 
-/** Compute deposit amount from fixed or percentage (capped at total price) */
-export function computeDepositAmount(totalPrice: number, depositFixed?: number | null, depositPercent?: number | null): number | null {
-  if (depositFixed) return Math.min(depositFixed, totalPrice);
-  if (depositPercent) return Math.min(Math.round(totalPrice * depositPercent / 100), totalPrice);
-  return null;
-}
+export { computeDepositAmount } from '@/lib/deposit';
 
 /** Get the dominant color for a slot (first service's color) */
 export function getSlotColor(

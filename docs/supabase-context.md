@@ -856,6 +856,31 @@ Single-row table : id, content (TEXT, default ''), updated_at
 **Index** : `idx_ambassador_app_status (status, created_at DESC)` + `idx_ambassador_app_email_pending (email) WHERE status='pending'` (UNIQUE partiel anti-spam)
 **Flow** : candidature pending → admin approve → insert `affiliate_links` + set `affiliate_id` + email bienvenue
 
+### 2.41 booking_deposit_failures (mig 111)
+
+Archive des resas liberees pour acompte non recu. Le cron horaire `/api/cron/deposit-expiration` snapshote la resa ici **avant** de wiper le slot. Le merchant la voit dans l'onglet Reservations (section amber) et peut la ramener ou la supprimer.
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| merchant_id | UUID FK → merchants | NOT NULL | ON DELETE CASCADE |
+| customer_id | UUID FK → customers | NULL | ON DELETE SET NULL |
+| client_name | TEXT | NOT NULL | |
+| client_phone | TEXT | NULL | E.164 sans + |
+| service_ids | UUID[] | `ARRAY[]::UUID[]` | NOT NULL |
+| original_slot_date | DATE | NOT NULL | |
+| original_start_time | TIME | NOT NULL | |
+| total_duration_minutes | INTEGER | NULL | |
+| notes | TEXT | NULL | |
+| deposit_amount | NUMERIC(10,2) | NULL | Montant attendu snapshot (mig 111) |
+| expired_at | TIMESTAMPTZ | NOT NULL | Deadline qui a ete depassee |
+| created_at | TIMESTAMPTZ | `NOW()` | |
+
+**RLS** : merchant SELECT + DELETE own (via `merchants.user_id = auth.uid()`), INSERT service_role only (cron)
+**Index** : `idx_booking_deposit_failures_merchant_expired (merchant_id, expired_at DESC)`
+**GET limit** : 100 items (pas de pagination pour v1)
+**Pas d'auto-purge v1** : les rows persistent jusqu'a delete manuel merchant (a surveiller si abus)
+
 ---
 
 ## 3. Colonnes date — Regles imperatives
@@ -1123,6 +1148,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 107 | email_deliverability | Colonnes `email_bounced_at` + `email_unsubscribed_at` TIMESTAMPTZ sur `merchants`. Index partiels. Fonction RPC `get_user_id_by_email(target_email)` pour lookup auth.users par email (utilise par webhook Resend) |
 | 109 | member_program_benefits | `member_programs` : +`discount_percent` INTEGER NULL CHECK(5,10,15,20), +`skip_deposit` BOOLEAN DEFAULT false |
 | 110 | ambassador_applications | Table `ambassador_applications` (candidatures ambassadeur : first/last name, email, phone, profile_type, message, requested_slug, status pending/approved/rejected, affiliate_id FK, reviewed_at). Index status+date, UNIQUE partiel email pending. RLS sans policy (service_role) |
+| 111 | booking_deposit_failures | Table archive `booking_deposit_failures` : snapshot des resas liberees pour acompte non recu (merchant_id, customer_id, client_name/phone, service_ids UUID[], original_slot_date/time, total_duration_minutes, notes, deposit_amount, expired_at). Index `(merchant_id, expired_at DESC)`. RLS SELECT+DELETE pour merchants (via `merchants.user_id = auth.uid()`), INSERT service_role only. Alimentee par le cron horaire `/api/cron/deposit-expiration` (helper `src/lib/deposit-release.ts`) |
 
 ---
 

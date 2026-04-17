@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
 import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical } from 'lucide-react';
-import type { BookingMode, MerchantCountry } from '@/types';
+import type { BookingMode, MerchantCountry, BookingDepositFailure } from '@/types';
 import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
@@ -21,6 +21,7 @@ import CopyWeekModal from './CopyWeekModal';
 import ConfirmDeleteSlotsModal from './ConfirmDeleteSlotsModal';
 import ClientSelectModal from './ClientSelectModal';
 import BookingDetailsModal from './BookingDetailsModal';
+import BringBackBookingModal from './BringBackBookingModal';
 import ReservationsSection from './ReservationsSection';
 import DayView from './DayView';
 import WeekView from './WeekView';
@@ -42,6 +43,7 @@ export default function PlanningDashboard() {
     selectedDay, setSelectedDay,
     weekOffset, setWeekOffset, weekStart, weekDays, weekEnd,
     slots, loadingSlots, slotsByDate, fetchSlots, invalidateUpcoming, upcomingSlots,
+    depositFailures, deleteDepositFailure, bringBackDepositFailure,
     todayStr, freeSlots, isToday, isPast,
     message, setMessage, messageEnabled, setMessageEnabled,
     messageExpires, setMessageExpires, bookingMessage, setBookingMessage,
@@ -85,6 +87,9 @@ export default function PlanningDashboard() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   // Kebab menu (week-scoped actions)
   const [showActionsMenu, setShowActionsMenu] = useState(false);
+
+  // Deposit failure being brought back (modal)
+  const [bringBackFailure, setBringBackFailure] = useState<BookingDepositFailure | null>(null);
 
   // Agenda view mode — stays on 'day' during SSR/initial render, then the effect
   // hydrates from localStorage (user pref) or viewport width (>=1024px → week).
@@ -940,6 +945,9 @@ export default function PlanningDashboard() {
           onEditSlot={openEditSlot}
           deepLinkSlotId={deepLinkSlotId}
           onDeepLinkHandled={() => setDeepLinkSlotId(null)}
+          depositFailures={depositFailures}
+          onBringBackFailure={setBringBackFailure}
+          onDeleteFailure={deleteDepositFailure}
         />
       )}
 
@@ -2022,6 +2030,21 @@ export default function PlanningDashboard() {
             onShowCustomerSearch={setShowCustomerSearch}
             onDelete={() => handleDeleteSlot(modalState.slot.id)}
             onClose={closeModal}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ── MODAL: Bring back failed deposit ── */}
+      <AnimatePresence>
+        {bringBackFailure && (
+          <BringBackBookingModal
+            failure={bringBackFailure}
+            services={services}
+            merchantCountry={merchant?.country || 'FR'}
+            locale={locale}
+            saving={saving}
+            onBringBack={bringBackDepositFailure}
+            onClose={() => { setBringBackFailure(null); fetchSlots(); invalidateUpcoming(); }}
           />
         )}
       </AnimatePresence>

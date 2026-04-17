@@ -7,7 +7,6 @@ import { getTodayForCountry } from '@/lib/utils';
 import { sendMerchantPush } from '@/lib/merchant-push';
 import { sendBookingSms, getGlobalSmsConfig } from '@/lib/sms';
 import { resend, EMAIL_FROM, EMAIL_HEADERS } from '@/lib/resend';
-import { sendSlotReleasedEmail } from '@/lib/email';
 import { verifyCronAuth, rateLimitDelay } from '@/lib/cron-helpers';
 import logger from '@/lib/logger';
 
@@ -169,98 +168,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // ── DEPOSIT DEADLINE CHECK ──
+    // ── DEPOSIT DEADLINE — WARNING ONLY ──
+    // Actual release is handled by the hourly /api/cron/deposit-expiration cron.
     const nowIso = new Date().toISOString();
     const fourHoursFromNow = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
 
-    // A. Auto-release expired deposits
-    const { data: expiredSlots } = await supabase
-      .from('merchant_planning_slots')
-      .select('id, merchant_id, client_name, slot_date, start_time')
-      .eq('deposit_confirmed', false)
-      .not('deposit_deadline_at', 'is', null)
-      .lt('deposit_deadline_at', nowIso)
-      .is('primary_slot_id', null)
-      .limit(200);
-
-    // Fetch merchants for locale-aware notifications
-    const depositMerchantIds = [...new Set((expiredSlots || []).map(s => s.merchant_id))];
-    const { data: depositMerchants } = depositMerchantIds.length > 0
-      ? await supabase.from('merchants').select('id, locale, booking_mode, user_id, shop_name').in('id', depositMerchantIds)
-      : { data: [] };
-    const depositMerchantMap = new Map((depositMerchants || []).map(m => [m.id, m]));
-
-    const depositPushes: Promise<boolean>[] = [];
-    let depositReleased = 0;
-
-    for (const slot of expiredSlots || []) {
-      try {
-        const { data: fillerSlots } = await supabase
-          .from('merchant_planning_slots')
-          .select('id')
-          .eq('primary_slot_id', slot.id);
-
-        const allSlotIds = [slot.id, ...(fillerSlots || []).map(f => f.id)];
-
-        const [deleteResult, updateResult] = await Promise.all([
-          supabase.from('planning_slot_services').delete().in('slot_id', allSlotIds),
-          fillerSlots && fillerSlots.length > 0
-            ? supabase.from('merchant_planning_slots')
-                .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null })
-                .in('id', fillerSlots.map(f => f.id))
-            : Promise.resolve({ error: null }),
-        ]);
-
-        if (deleteResult.error || updateResult.error) {
-          logger.error(`Deposit release partial failure for slot ${slot.id}`, { deleteErr: deleteResult.error, updateErr: updateResult.error });
-        }
-
-        const isLibre = depositMerchantMap.get(slot.merchant_id)?.booking_mode === 'free';
-        if (isLibre) {
-          await supabase.from('merchant_planning_slots').delete().eq('id', slot.id);
-        } else {
-          await supabase
-            .from('merchant_planning_slots')
-            .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null })
-            .eq('id', slot.id);
-        }
-
-        const depositMerchant = depositMerchantMap.get(slot.merchant_id);
-        const isEN = depositMerchant?.locale === 'en';
-        depositPushes.push(sendMerchantPush({
-          supabase, merchantId: slot.merchant_id, notificationType: 'deposit_expired', referenceId: slot.id,
-          title: isEN ? 'Slot released — deposit not received' : 'Créneau libéré — acompte non reçu',
-          body: isEN
-            ? `${slot.client_name} — ${slot.slot_date} at ${slot.start_time}`
-            : `${slot.client_name} — ${slot.slot_date} à ${slot.start_time}`,
-          url: `/dashboard/planning?date=${slot.slot_date}`, tag: 'qarte-merchant-deposit',
-        }));
-
-        // Email notification
-        if (depositMerchant?.user_id) {
-          (async () => {
-            try {
-              const { data: authUser } = await supabase.auth.admin.getUserById(depositMerchant.user_id);
-              if (authUser?.user?.email) {
-                sendSlotReleasedEmail(authUser.user.email, {
-                  shopName: depositMerchant.shop_name,
-                  clientName: slot.client_name,
-                  date: slot.slot_date,
-                  time: slot.start_time,
-                  locale: (depositMerchant.locale || 'fr') as 'fr' | 'en',
-                }).catch(() => {});
-              }
-            } catch { /* silent */ }
-          })();
-        }
-
-        depositReleased++;
-      } catch (slotErr) {
-        logger.error(`Deposit release failed for slot ${slot.id}`, slotErr);
-      }
-    }
-
-    // B. Warn merchants about deposits expiring soon (within 4h)
     const { data: expiringSlots } = await supabase
       .from('merchant_planning_slots')
       .select('id, merchant_id, client_name, slot_date, start_time')
@@ -271,16 +183,16 @@ export async function GET(request: NextRequest) {
       .is('primary_slot_id', null)
       .limit(200);
 
-    // Fetch merchants for warning locale (reuse map if overlap)
-    const warningMerchantIds = [...new Set((expiringSlots || []).map(s => s.merchant_id))].filter(id => !depositMerchantMap.has(id));
-    if (warningMerchantIds.length > 0) {
-      const { data: warnMerchants } = await supabase.from('merchants').select('id, locale, booking_mode, user_id, shop_name').in('id', warningMerchantIds);
-      for (const m of warnMerchants || []) depositMerchantMap.set(m.id, m);
-    }
+    const warningMerchantIds = [...new Set((expiringSlots || []).map(s => s.merchant_id))];
+    const { data: warnMerchants } = warningMerchantIds.length > 0
+      ? await supabase.from('merchants').select('id, locale').in('id', warningMerchantIds)
+      : { data: [] };
+    const warnMerchantMap = new Map((warnMerchants || []).map(m => [m.id, m]));
 
+    const depositPushes: Promise<boolean>[] = [];
     let depositWarned = 0;
     for (const slot of expiringSlots || []) {
-      const isEN = depositMerchantMap.get(slot.merchant_id)?.locale === 'en';
+      const isEN = warnMerchantMap.get(slot.merchant_id)?.locale === 'en';
       depositPushes.push(sendMerchantPush({
         supabase, merchantId: slot.merchant_id, notificationType: 'deposit_expiring', referenceId: slot.id,
         title: isEN ? 'Deposit expiring soon' : 'Acompte bientôt expiré',
@@ -356,8 +268,8 @@ export async function GET(request: NextRequest) {
       logger.error('SMS reminders error:', smsError);
     }
 
-    logger.info('Evening cron completed', { ...results, depositReleased, depositWarned, smsReminders: smsResults });
-    return NextResponse.json({ success: true, ...results, depositReleased, depositWarned, smsReminders: smsResults });
+    logger.info('Evening cron completed', { ...results, depositWarned, smsReminders: smsResults });
+    return NextResponse.json({ success: true, ...results, depositWarned, smsReminders: smsResults });
   } catch (error) {
     logger.error('Evening cron error', error);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });

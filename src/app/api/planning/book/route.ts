@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import { formatPhoneNumber, validatePhone, getTrialStatus, getTimezoneForCountry, getAllPhoneFormats } from '@/lib/utils';
-import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+import { computeDepositDeadline } from '@/lib/deposit';
+import { fromZonedTime } from 'date-fns-tz';
 import { setPhoneCookie } from '@/lib/customer-auth';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { sendBookingNotificationEmail } from '@/lib/email';
@@ -27,36 +28,6 @@ const bookSchema = z.object({
 function timeToMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);
   return h * 60 + m;
-}
-
-/**
- * Calcule la deadline d'acompte avec grace nuit silencieuse.
- * Si la deadline brute (now + deadlineHours) tombe entre 22h et 9h heure merchant,
- * elle est repoussee a 9h du matin pour ne pas forcer le merchant a confirmer en pleine nuit.
- * Cap absolu : RDV - 4h.
- */
-function computeDepositDeadline(
-  deadlineHours: number,
-  rdvDateTime: Date,
-  timezone: string
-): Date | null {
-  const now = new Date();
-
-  let deadline = new Date(now.getTime() + deadlineHours * 3600_000);
-
-  const deadlineInTz = toZonedTime(deadline, timezone);
-  const hourInTz = deadlineInTz.getHours();
-  if (hourInTz >= 22 || hourInTz < 9) {
-    const next9am = new Date(deadlineInTz);
-    if (hourInTz >= 22) next9am.setDate(next9am.getDate() + 1);
-    next9am.setHours(9, 0, 0, 0);
-    deadline = fromZonedTime(next9am, timezone);
-  }
-
-  const rdvMinus4h = new Date(rdvDateTime.getTime() - 4 * 3600_000);
-  if (rdvMinus4h.getTime() <= now.getTime()) return null;
-
-  return new Date(Math.min(deadline.getTime(), rdvMinus4h.getTime()));
 }
 
 export async function POST(request: NextRequest) {

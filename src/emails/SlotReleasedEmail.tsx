@@ -22,7 +22,7 @@ export function SlotReleasedEmail({
   clientName,
   date,
   time,
-  dashboardUrl = 'https://getqarte.com/dashboard/planning',
+  dashboardUrl = 'https://getqarte.com/dashboard/planning?tab=reservations',
   locale = 'fr',
 }: SlotReleasedEmailProps) {
   const isEn = locale === 'en';
@@ -39,8 +39,8 @@ export function SlotReleasedEmail({
 
       <Text style={paragraph}>
         {isEn
-          ? `Hi ${shopName}, the deposit for ${clientName} was not received in time. The slot has been automatically released.`
-          : `Hello ${shopName}, l'acompte de ${clientName} n'a pas été reçu à temps. Le créneau a été automatiquement libéré.`}
+          ? `Hi ${shopName}, the deposit for ${clientName} was not received in time. The slot has been automatically released so another client can book it.`
+          : `Bonjour ${shopName}, l'acompte de ${clientName} n'a pas été reçu à temps. Le créneau a été automatiquement libéré pour qu'une autre cliente puisse le réserver.`}
       </Text>
 
       <Section style={detailBox}>
@@ -58,9 +58,15 @@ export function SlotReleasedEmail({
         </Text>
       </Section>
 
+      <Text style={paragraph}>
+        {isEn
+          ? 'Need to rebook her? You can bring this reservation back from your dashboard — either on the original slot if it is still free, or on a new one. A confirmation SMS can be sent in the same flow.'
+          : 'Tu veux la ramener ? Tu peux récupérer cette réservation depuis ton dashboard — soit sur le créneau d\'origine s\'il est encore libre, soit sur un nouveau créneau. Un SMS de confirmation peut être envoyé dans la foulée.'}
+      </Text>
+
       <Section style={buttonContainer}>
         <Button style={button} href={dashboardUrl}>
-          {isEn ? 'View planning' : 'Voir le planning'}
+          {isEn ? 'Manage failed deposits' : 'Gérer les acomptes échoués'}
         </Button>
       </Section>
 

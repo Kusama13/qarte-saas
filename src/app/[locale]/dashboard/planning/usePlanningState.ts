@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
-import type { PlanningSlot, CustomerSearchResult, MerchantCountry, BookingMode } from '@/types';
+import type { PlanningSlot, CustomerSearchResult, MerchantCountry, BookingMode, BookingDepositFailure } from '@/types';
 import { getWeekStart, formatDate, getSlotServiceIds } from './utils';
 import { toLocalPhone } from '@/lib/utils';
 
@@ -59,6 +59,8 @@ export function usePlanningState() {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [loadingUpcoming, setLoadingUpcoming] = useState(false);
   const [upcomingFetched, setUpcomingFetched] = useState(false);
+  const [depositFailures, setDepositFailures] = useState<BookingDepositFailure[]>([]);
+  const [failuresFetched, setFailuresFetched] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -178,8 +180,57 @@ export function usePlanningState() {
     return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current); };
   }, []);
 
-  // Invalidate upcoming cache — will refetch via effect if on upcoming tab
+  // Invalidate upcoming cache — will refetch via effect if on upcoming tab.
+  // Failures are independent (cron-only writes) — mutated locally by bring-back/delete.
   const invalidateUpcoming = useCallback(() => { setUpcomingFetched(false); }, []);
+
+  const fetchDepositFailures = useCallback(async () => {
+    if (!merchant) return;
+    try {
+      const res = await fetch(`/api/planning/deposit-failures?merchantId=${merchant.id}`);
+      const data = await res.json();
+      setDepositFailures(data.failures || []);
+      setFailuresFetched(true);
+    } catch {
+      setDepositFailures([]);
+      setFailuresFetched(true);
+    }
+  }, [merchant]);
+
+  const deleteDepositFailure = useCallback(async (failureId: string) => {
+    if (!merchant) return;
+    try {
+      await fetch('/api/planning/deposit-failures', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: failureId, merchantId: merchant.id }),
+      });
+      setDepositFailures(prev => prev.filter(f => f.id !== failureId));
+    } catch { /* */ }
+  }, [merchant]);
+
+  const bringBackDepositFailure = useCallback(async (
+    failureId: string,
+    opts: { markDepositConfirmed: boolean; sendSms: boolean },
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (!merchant) return { success: false, error: 'Merchant non chargé' };
+    try {
+      const res = await fetch('/api/planning/deposit-failures/bring-back', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchantId: merchant.id, failureId, ...opts }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        return { success: false, error: data.error || 'Erreur' };
+      }
+      setDepositFailures(prev => prev.filter(f => f.id !== failureId));
+      setUpcomingFetched(false);
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Erreur réseau' };
+    }
+  }, [merchant]);
 
   // Fetch slots
   const fetchSlots = useCallback(async () => {
@@ -569,6 +620,12 @@ export function usePlanningState() {
     }
   }, [tab, upcomingFetched, merchant, fetchReservations]);
 
+  useEffect(() => {
+    if (tab === 'reservations' && !failuresFetched && merchant?.planning_enabled) {
+      fetchDepositFailures();
+    }
+  }, [tab, failuresFetched, merchant, fetchDepositFailures]);
+
   return {
     // Merchant
     merchant, merchantLoading, refetch,
@@ -580,6 +637,8 @@ export function usePlanningState() {
     weekOffset, setWeekOffset, weekStart, weekDays, weekEnd,
     // Slots
     slots, loadingSlots, slotsByDate, fetchSlots, fetchReservations, invalidateUpcoming, upcomingSlots, loadingUpcoming,
+    // Deposit failures archive
+    depositFailures, fetchDepositFailures, deleteDepositFailure, bringBackDepositFailure,
     // Stats
     todayStr, totalSlots, takenSlots, freeSlots, isToday, isPast,
     // Settings

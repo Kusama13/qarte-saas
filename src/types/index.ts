@@ -204,6 +204,22 @@ export interface PlanningSlot {
   customer?: { instagram_handle: string | null; tiktok_handle: string | null; facebook_url: string | null } | null;
 }
 
+export interface BookingDepositFailure {
+  id: string;
+  merchant_id: string;
+  customer_id: string | null;
+  client_name: string;
+  client_phone: string | null;
+  service_ids: string[];
+  original_slot_date: string;
+  original_start_time: string;
+  total_duration_minutes: number | null;
+  notes: string | null;
+  deposit_amount: number | null;
+  expired_at: string;
+  created_at: string;
+}
+
 export interface MerchantOffer {
   id: string;
   merchant_id: string;

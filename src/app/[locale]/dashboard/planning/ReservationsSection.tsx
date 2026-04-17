@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Clock, ChevronRight, Wallet } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { CalendarDays, Clock, ChevronRight, Wallet, AlertTriangle, Trash2, Undo2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { PlanningSlot } from '@/types';
-import { formatTime, toBCP47, formatCurrency } from '@/lib/utils';
+import type { PlanningSlot, BookingDepositFailure } from '@/types';
+import { formatTime, toBCP47, formatCurrency, formatPhoneLabel } from '@/lib/utils';
 import { getSlotServiceIds, formatDate, colorBorderStyle, endTimeFromStart, formatDateLong } from './utils';
 import type { ServiceWithDuration } from './usePlanningState';
 
@@ -17,6 +17,9 @@ interface ReservationsSectionProps {
   onEditSlot: (slot: PlanningSlot) => void;
   deepLinkSlotId?: string | null;
   onDeepLinkHandled?: () => void;
+  depositFailures: BookingDepositFailure[];
+  onBringBackFailure: (failure: BookingDepositFailure) => void;
+  onDeleteFailure: (failureId: string) => Promise<void> | void;
 }
 
 interface DayGroup {
@@ -27,9 +30,19 @@ interface DayGroup {
   slots: PlanningSlot[];
 }
 
-export default function ReservationsSection({ slots, services, serviceColorMap, locale, merchantCountry, onEditSlot, deepLinkSlotId, onDeepLinkHandled }: ReservationsSectionProps) {
+export default function ReservationsSection({ slots, services, serviceColorMap, locale, merchantCountry, onEditSlot, deepLinkSlotId, onDeepLinkHandled, depositFailures, onBringBackFailure, onDeleteFailure }: ReservationsSectionProps) {
   const t = useTranslations('planning');
   const [showPast, setShowPast] = useState(false);
+  const [showFailures, setShowFailures] = useState(true);
+  const [confirmDeleteFailureId, setConfirmDeleteFailureId] = useState<string | null>(null);
+  const failuresRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollToFailures = () => {
+    setShowFailures(true);
+    requestAnimationFrame(() => {
+      failuresRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
 
   // Handle deep link: route to unified BookingDetailsModal via onEditSlot
   useEffect(() => {
@@ -237,6 +250,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
 
   const upcomingCount = upcomingGroups.reduce((n, g) => n + g.slots.length, 0);
   const pastCount = pastGroups.reduce((n, g) => n + g.slots.length, 0);
+  const failuresCount = depositFailures.length;
 
   return (
     <div className="space-y-3">
@@ -249,20 +263,31 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
 
         {/* Summary bar (masqu\u00e9 si seulement des pass\u00e9es — on a d\u00e9j\u00e0 l'empty state) */}
         {!hasOnlyPast && (
-          <div className="flex items-center justify-between px-1">
+          <div className="flex items-center justify-between gap-2 px-1 flex-wrap">
             <p className="text-sm font-bold text-gray-900">
               {upcomingCount > 0
                 ? t('upcomingCount', { count: upcomingCount })
                 : t('noUpcoming')}
             </p>
-            {pastCount > 0 && (
-              <button
-                onClick={() => setShowPast(!showPast)}
-                className="text-xs font-medium text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                {showPast ? t('hidePast') : t('showPast', { count: pastCount })}
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {failuresCount > 0 && (
+                <button
+                  onClick={scrollToFailures}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 transition-colors"
+                >
+                  <AlertTriangle className="w-3 h-3" />
+                  {t('depositFailuresBadge', { count: failuresCount })}
+                </button>
+              )}
+              {pastCount > 0 && (
+                <button
+                  onClick={() => setShowPast(!showPast)}
+                  className="text-xs font-medium text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPast ? t('hidePast') : t('showPast', { count: pastCount })}
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -286,6 +311,110 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
 
         {/* Past */}
         {showPast && pastGroups.map(renderDayGroup)}
+
+        {/* Acomptes échoués */}
+        {failuresCount > 0 && (
+          <div ref={failuresRef} className="pt-2 mt-3 border-t border-amber-100">
+            <div className="flex items-center justify-between px-1 mb-2">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700">
+                  {t('depositFailuresTitle')} ({failuresCount})
+                </p>
+              </div>
+              <button
+                onClick={() => setShowFailures(!showFailures)}
+                className="text-xs font-medium text-amber-700 hover:text-amber-800 transition-colors"
+              >
+                {showFailures ? t('hidePast') : t('showDepositFailures')}
+              </button>
+            </div>
+
+            {showFailures && (
+              <div className="space-y-2">
+                {depositFailures.map(failure => {
+                  const svcNames = failure.service_ids
+                    .map(id => serviceMap.get(id)?.name)
+                    .filter(Boolean) as string[];
+                  const slotDate = new Date(failure.original_slot_date + 'T12:00:00');
+                  const expiredDate = new Date(failure.expired_at);
+                  return (
+                    <div
+                      key={failure.id}
+                      className="bg-amber-50/40 border border-amber-100 rounded-2xl px-4 py-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-bold text-gray-800 truncate">{failure.client_name}</p>
+                          {failure.client_phone && (
+                            <p className="text-xs text-gray-500 tabular-nums">
+                              {formatPhoneLabel(failure.client_phone)}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-600 mt-1 capitalize">
+                            {formatDateLong(slotDate, locale)} · {formatTime(failure.original_start_time.slice(0, 5), locale)}
+                          </p>
+                          {svcNames.length > 0 && (
+                            <p className="text-xs text-gray-500 mt-0.5 truncate">{svcNames.join(', ')}</p>
+                          )}
+                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                            {failure.deposit_amount != null && failure.deposit_amount > 0 && (
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-white border border-amber-200 text-amber-700">
+                                {t('depositExpected')} : {formatCurrency(failure.deposit_amount, merchantCountry, locale)}
+                              </span>
+                            )}
+                            <span className="text-[10px] text-gray-400">
+                              {t('expiredOn', { date: expiredDate.toLocaleString(toBCP47(locale), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) })}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {confirmDeleteFailureId === failure.id ? (
+                            <>
+                              <button
+                                onClick={() => setConfirmDeleteFailureId(null)}
+                                className="text-[11px] font-medium text-gray-500 hover:text-gray-700 px-2 py-1"
+                              >
+                                {t('cancel')}
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  await onDeleteFailure(failure.id);
+                                  setConfirmDeleteFailureId(null);
+                                }}
+                                className="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-rose-600 hover:bg-rose-700 px-2 py-1 rounded-lg"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                {t('confirmDelete')}
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => setConfirmDeleteFailureId(failure.id)}
+                                aria-label={t('delete')}
+                                className="w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-rose-600 hover:border-rose-200 flex items-center justify-center transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => onBringBackFailure(failure)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#4b0082] hover:bg-violet-800 text-white transition-colors"
+                              >
+                                <Undo2 className="w-3.5 h-3.5" />
+                                {t('bringBack')}
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
   );
 }
