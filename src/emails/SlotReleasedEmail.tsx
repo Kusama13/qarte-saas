@@ -60,8 +60,8 @@ export function SlotReleasedEmail({
 
       <Text style={paragraph}>
         {isEn
-          ? 'Need to rebook her? You can bring this reservation back from your dashboard — either on the original slot if it is still free, or on a new one. A confirmation SMS can be sent in the same flow.'
-          : 'Tu veux la ramener ? Tu peux récupérer cette réservation depuis ton dashboard — soit sur le créneau d\'origine s\'il est encore libre, soit sur un nouveau créneau. Un SMS de confirmation peut être envoyé dans la foulée.'}
+          ? 'Need to rebook her? You can bring this reservation back from the Reservations tab — either on the original slot if it is still free, or on a new one. A confirmation SMS can be sent in the same flow.'
+          : 'Tu veux la ramener ? Tu peux récupérer cette réservation depuis l\'onglet Réservations — soit sur le créneau d\'origine s\'il est encore libre, soit sur un nouveau créneau. Un SMS de confirmation peut être envoyé dans la foulée.'}
       </Text>
 
       <Section style={buttonContainer}>

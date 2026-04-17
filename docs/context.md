@@ -252,7 +252,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `getTodayStartForCountry(country?)` : ISO UTC timestamp de minuit dans le fuseau du merchant (pour filtres `gte` DB)
 - **Toutes les APIs** utilisent ces fonctions (checkin, cagnotte, stats, planning, offers, push, visits, vouchers)
 - `getTodayInParis()` et `getCurrentDateTimeInParis()` marques `@deprecated` — wrappers retrocompatibles
-- **Crons** (morning/morning-jobs/morning-push/evening) : utilisent `getTodayInParis()` intentionnellement (batch FR, pas per-merchant)
+- **Crons** (morning/morning-jobs/morning-push/email-onboarding/email-engagement/evening) : utilisent `getTodayInParis()` intentionnellement (batch FR, pas per-merchant)
 - `last_visit_date` : toujours set dans le fuseau du merchant via `getTodayForCountry(merchant.country)`
 - `verifyMerchantOwnership()` dans push/schedule et offers retourne `country` pour eviter requete DB supplementaire
 
@@ -615,7 +615,9 @@ Tous les codes promo emails ont ete supprimes (QARTE50, QARTEBOOST, QARTELAST, Q
 ### Cron Jobs
 | Cron | Horaire | Description |
 |------|---------|-------------|
-| `/api/cron/morning` | 09:00 UTC | Emails : essai, onboarding, milestones, inactifs, reactivation, lifecycle, pending. Prefetch unique merchants/emails/tracking — filtres JS par section |
+| `/api/cron/morning` | 08:00 UTC | **Emails billing-critical** : trial (J-2/J+1/churn), post-survey, reactivation, dunning, incomplete signup T+24h, grace period setup + cleanup tracking |
+| `/api/cron/email-onboarding` | 10:00 UTC | **Emails setup progressif** : program reminder J+1, social proof J+3, vitrine J+3, planning J+4, QR code, first client script |
+| `/api/cron/email-engagement` | 13:00 UTC | **Emails engagement** : first scan/booking/reward, tier 2 upsell, inactifs J+7/14/30, referral promo J+2, referral reminders J+14/30, pending points |
 | `/api/cron/morning-jobs` | 09:15 UTC | Vouchers anniversaire (timezone-aware) + SMS anniversaire + **warning acomptes expirant dans 4h** (push merchant only) |
 | `/api/cron/morning-push` | 05:00 UTC (~7h Paris) | Push 10h (scheduled), push automations (inactifs/recompense/events), push trial reminders, **daily digest merchant** (X RDV aujourd'hui), **birthday push merchant** + SMS anniversaire client |
 | `/api/cron/evening` | 17:00 UTC | Push 19h (timezone-aware) + warning acomptes expirant dans 4h + SMS rappel J-1 |

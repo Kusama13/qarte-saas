@@ -7,6 +7,10 @@ export type SectionStats = { processed: number; sent: number; skipped: number; e
 export const RESEND_RATE_LIMIT_MS = 600;
 export const rateLimitDelay = () => new Promise(resolve => setTimeout(resolve, RESEND_RATE_LIMIT_MS));
 
+// Predicate: merchant can receive automated emails
+export const canEmail = (m: { no_contact?: boolean | null; email_bounced_at?: string | null; email_unsubscribed_at?: string | null }) =>
+  !m.no_contact && !m.email_bounced_at && !m.email_unsubscribed_at;
+
 // Helper: batch fetch user emails by user_id
 export async function batchGetUserEmails(supabase: SupabaseClient, userIds: string[]): Promise<Map<string, string>> {
   const emailMap = new Map<string, string>();

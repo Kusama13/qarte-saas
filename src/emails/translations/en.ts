@@ -670,7 +670,7 @@ export const en = {
     greeting: 'Hi <strong>{shopName}</strong>,',
     introSingle: 'One of your clients has a birthday today:',
     introPlural: '{count} of your clients have birthdays today:',
-    giftLabel: 'Gift to offer: {giftDescription}',
+    giftLabel: 'Gift to offer',
     reminderText: 'Don\'t forget to wish them a happy birthday on their next visit!',
     smsConfirmTitle: 'An SMS was sent to your client:',
     smsPreview: '{clientName}, happy birthday! {shopName} offers you: {giftDescription}. Visit us to claim it!',

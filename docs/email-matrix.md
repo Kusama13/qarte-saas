@@ -1,7 +1,19 @@
 # Matrice des emails Qarte
 
-> Derniere mise a jour : 14 avril 2026
-> Source : `src/lib/email.ts`, `src/app/api/cron/morning/route.ts`, `src/emails/translations/fr.ts`
+> Derniere mise a jour : 17 avril 2026
+> Source : `src/lib/email.ts`, `src/app/api/cron/{morning,email-onboarding,email-engagement}/route.ts`, `src/emails/translations/fr.ts`
+
+## Repartition par cron (split avril 2026)
+
+Les emails automatiques sont repartis sur **3 crons horaires** pour eviter la rafale (~20 emails simultanes a 10h FR) :
+
+| Cron | Horaire UTC | Contenu |
+|------|-------------|---------|
+| `morning` | 08:00 | Billing-critical : trial (J-2/J+1/churn), post-survey, reactivation, dunning, incomplete signup T+24h, grace period setup |
+| `email-onboarding` | 10:00 | Setup progressif : program reminder J+1, social proof J+3, vitrine J+3, planning J+4, QR code, first client script |
+| `email-engagement` | 13:00 | Engagement : first scan/booking/reward, tier 2 upsell, inactifs J+7/14/30, referral promo/reminders, pending points |
+
+Chaque cron prefetche merchants/emails/tracking independamment. Idempotence preservee via `pending_email_tracking` (codes uniques).
 
 ---
 
@@ -74,7 +86,7 @@ T+15-25h    ┌─────────────────────�
 
 ## 2. Onboarding actif (J+1 a J+4)
 
-Envoyes uniquement via le **cron morning** aux merchants actifs (trial/active).
+Envoyes via le **cron `email-onboarding`** (10:00 UTC) aux merchants actifs (trial/active).
 
 ```
 J+1         ┌─────────────────────────────────────┐

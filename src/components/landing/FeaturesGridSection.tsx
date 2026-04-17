@@ -56,7 +56,7 @@ export function FeaturesGridSection() {
                 {emoji}
               </div>
               <div className="min-w-0">
-                <h3 className="text-lg sm:text-[22px] font-semibold text-gray-900 mb-1 sm:mb-1.5 leading-snug line-clamp-1">
+                <h3 className="text-lg sm:text-[22px] font-semibold text-gray-900 mb-1 sm:mb-1.5 leading-snug">
                   {t(titleKey)}
                 </h3>
                 <p className="text-sm sm:text-[18px] text-gray-500 leading-relaxed line-clamp-3">

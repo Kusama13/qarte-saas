@@ -41,7 +41,7 @@ export function BirthdayNotificationEmail({ shopName, clientNames, giftDescripti
       </Text>
 
       <Section style={giftBox}>
-        <Text style={giftLabel}>{t('birthdayNotification.giftLabel', { giftDescription })}</Text>
+        <Text style={giftLabel}>{t('birthdayNotification.giftLabel')}</Text>
         <Text style={giftText}>{giftDescription}</Text>
       </Section>
 

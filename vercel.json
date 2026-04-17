@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/morning",
-      "schedule": "0 9 * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/cron/morning-jobs",
@@ -11,6 +11,14 @@
     {
       "path": "/api/cron/morning-push",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/email-onboarding",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/email-engagement",
+      "schedule": "0 13 * * *"
     },
     {
       "path": "/api/cron/evening",
