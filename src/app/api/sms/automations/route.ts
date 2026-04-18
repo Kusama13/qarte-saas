@@ -11,6 +11,11 @@ const ALLOWED_SMS_TOGGLES = [
   'post_visit_review_enabled',
   'review_sms_include_link',
   'events_sms_enabled',
+  'referral_reward_sms_enabled',
+  'voucher_expiry_sms_enabled',
+  'referral_invite_sms_enabled',
+  'inactive_sms_enabled',
+  'near_reward_sms_enabled',
 ] as const;
 
 const ALLOWED_SMS_TEXT_FIELDS = ['events_sms_offer_text'] as const;
@@ -29,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, reminder_j1_enabled, reminder_j0_enabled, welcome_sms_enabled, post_visit_review_enabled, review_sms_include_link, google_review_url, events_sms_enabled, events_sms_offer_text')
+      .select('id, reminder_j1_enabled, reminder_j0_enabled, welcome_sms_enabled, post_visit_review_enabled, review_sms_include_link, review_link, events_sms_enabled, events_sms_offer_text, referral_reward_sms_enabled, voucher_expiry_sms_enabled, referral_invite_sms_enabled, inactive_sms_enabled, near_reward_sms_enabled, referral_program_enabled, referral_reward_referrer, referral_reward_referred, planning_enabled, reward_description, tier2_enabled, tier2_reward_description')
       .eq('id', merchantId)
       .eq('user_id', user.id)
       .single();
@@ -78,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     const { data: settings } = await supabaseAdmin
       .from('merchants')
-      .select('id, reminder_j1_enabled, reminder_j0_enabled, welcome_sms_enabled, post_visit_review_enabled, review_sms_include_link, google_review_url, events_sms_enabled, events_sms_offer_text')
+      .select('id, reminder_j1_enabled, reminder_j0_enabled, welcome_sms_enabled, post_visit_review_enabled, review_sms_include_link, review_link, events_sms_enabled, events_sms_offer_text, referral_reward_sms_enabled, voucher_expiry_sms_enabled, referral_invite_sms_enabled, inactive_sms_enabled, near_reward_sms_enabled, referral_program_enabled, referral_reward_referrer, referral_reward_referred, planning_enabled, reward_description, tier2_enabled, tier2_reward_description')
       .eq('id', merchantId)
       .single();
 

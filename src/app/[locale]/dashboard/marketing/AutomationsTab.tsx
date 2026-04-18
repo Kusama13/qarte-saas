@@ -6,51 +6,103 @@ import {
   CheckCircle2,
   Clock,
   Sunrise,
-  HandHeart,
   Star,
   CalendarDays,
   MessageSquareText,
+  Gift,
+  Hourglass,
+  UserPlus,
+  HeartHandshake,
+  Award,
+  type LucideIcon,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { AnimatePresence, motion } from 'framer-motion';
 
 interface AutomationsTabProps {
   merchantId?: string;
+  shopName?: string;
 }
 
 interface SmsSettings {
   reminder_j1_enabled: boolean;
   reminder_j0_enabled: boolean;
-  welcome_sms_enabled: boolean;
   post_visit_review_enabled: boolean;
   events_sms_enabled: boolean;
   events_sms_offer_text: string | null;
+  referral_reward_sms_enabled: boolean;
+  voucher_expiry_sms_enabled: boolean;
+  referral_invite_sms_enabled: boolean;
+  inactive_sms_enabled: boolean;
+  near_reward_sms_enabled: boolean;
+  reward_description: string | null;
+  referral_program_enabled: boolean;
+  referral_reward_referrer: string | null;
+  referral_reward_referred: string | null;
+  planning_enabled: boolean;
+  review_link: string | null;
 }
 
-type SmsToggleField = 'reminder_j1_enabled' | 'reminder_j0_enabled' | 'welcome_sms_enabled' | 'post_visit_review_enabled' | 'events_sms_enabled';
+type SmsToggleField =
+  | 'reminder_j1_enabled'
+  | 'reminder_j0_enabled'
+  | 'post_visit_review_enabled'
+  | 'events_sms_enabled'
+  | 'referral_reward_sms_enabled'
+  | 'voucher_expiry_sms_enabled'
+  | 'referral_invite_sms_enabled'
+  | 'inactive_sms_enabled'
+  | 'near_reward_sms_enabled';
 
 type SmsCardCategory = 'transactional' | 'marketing';
+
+function mapSettings(data: Record<string, unknown>): SmsSettings {
+  return {
+    reminder_j1_enabled: data.reminder_j1_enabled !== false,
+    reminder_j0_enabled: !!data.reminder_j0_enabled,
+    post_visit_review_enabled: !!data.post_visit_review_enabled,
+    events_sms_enabled: !!data.events_sms_enabled,
+    events_sms_offer_text: (data.events_sms_offer_text as string | null) || null,
+    referral_reward_sms_enabled: data.referral_reward_sms_enabled !== false,
+    voucher_expiry_sms_enabled: !!data.voucher_expiry_sms_enabled,
+    referral_invite_sms_enabled: !!data.referral_invite_sms_enabled,
+    inactive_sms_enabled: !!data.inactive_sms_enabled,
+    near_reward_sms_enabled: !!data.near_reward_sms_enabled,
+    reward_description: (data.reward_description as string | null) || null,
+    referral_program_enabled: !!data.referral_program_enabled,
+    referral_reward_referrer: (data.referral_reward_referrer as string | null) || null,
+    referral_reward_referred: (data.referral_reward_referred as string | null) || null,
+    planning_enabled: !!data.planning_enabled,
+    review_link: (data.review_link as string | null) || null,
+  };
+}
 
 function SmsAutomationCard({
   title,
   desc,
+  template,
   icon: Icon,
   category,
   field,
   enabled,
   loading,
   updating,
+  disabled,
+  disabledHint,
   onToggle,
   t,
 }: {
   title: string;
   desc: string;
-  icon: typeof Clock;
+  template: string;
+  icon: LucideIcon;
   category: SmsCardCategory;
   field: SmsToggleField;
   enabled: boolean;
   loading: boolean;
   updating: string | null;
+  disabled?: boolean;
+  disabledHint?: string;
   onToggle: (field: SmsToggleField, current: boolean) => void;
   t: (key: string) => string;
 }) {
@@ -84,10 +136,10 @@ function SmsAutomationCard({
           aria-checked={enabled}
           aria-label={title}
           onClick={() => onToggle(field, enabled)}
-          disabled={loading || updating === field}
+          disabled={loading || updating === field || disabled}
           className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
             enabled ? toggleBg : 'bg-gray-200'
-          } ${loading || updating === field ? 'opacity-50' : ''}`}
+          } ${loading || updating === field || disabled ? 'opacity-50' : ''}`}
         >
           <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform flex items-center justify-center ${
             enabled ? 'translate-x-5' : ''
@@ -96,11 +148,26 @@ function SmsAutomationCard({
           </div>
         </button>
       </div>
+      <div className="mt-2.5 pl-[52px] pr-1">
+        <p className="text-[11px] italic text-gray-400 leading-snug line-clamp-2">&ldquo;{template}&rdquo;</p>
+        {disabled && disabledHint && (
+          <p className="text-[10px] text-amber-600 mt-1">{disabledHint}</p>
+        )}
+      </div>
     </div>
   );
 }
 
-export default function AutomationsTab({ merchantId }: AutomationsTabProps) {
+function GroupLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 px-1 pt-2">
+      <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{children}</h3>
+      <div className="flex-1 h-px bg-gray-100" />
+    </div>
+  );
+}
+
+export default function AutomationsTab({ merchantId, shopName }: AutomationsTabProps) {
   const t = useTranslations('marketing.automations');
   const [smsSettings, setSmsSettings] = useState<SmsSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -117,14 +184,7 @@ export default function AutomationsTab({ merchantId }: AutomationsTabProps) {
         const res = await fetch(`/api/sms/automations?merchantId=${merchantId}`);
         const data = await res.json();
         if (res.ok && data.settings) {
-          setSmsSettings({
-            reminder_j1_enabled: !!data.settings.reminder_j1_enabled,
-            reminder_j0_enabled: !!data.settings.reminder_j0_enabled,
-            welcome_sms_enabled: !!data.settings.welcome_sms_enabled,
-            post_visit_review_enabled: !!data.settings.post_visit_review_enabled,
-            events_sms_enabled: !!data.settings.events_sms_enabled,
-            events_sms_offer_text: data.settings.events_sms_offer_text || null,
-          });
+          setSmsSettings(mapSettings(data.settings));
           setEventsSmsOfferText(data.settings.events_sms_offer_text || '');
         }
       } catch {
@@ -146,14 +206,7 @@ export default function AutomationsTab({ merchantId }: AutomationsTabProps) {
       });
       const data = await res.json();
       if (res.ok && data.settings) {
-        setSmsSettings({
-          reminder_j1_enabled: !!data.settings.reminder_j1_enabled,
-          reminder_j0_enabled: !!data.settings.reminder_j0_enabled,
-          welcome_sms_enabled: !!data.settings.welcome_sms_enabled,
-          post_visit_review_enabled: !!data.settings.post_visit_review_enabled,
-          events_sms_enabled: !!data.settings.events_sms_enabled,
-          events_sms_offer_text: data.settings.events_sms_offer_text || null,
-        });
+        setSmsSettings(mapSettings(data.settings));
       }
     } catch {
       // silent
@@ -185,6 +238,15 @@ export default function AutomationsTab({ merchantId }: AutomationsTabProps) {
     setTimeout(() => setEventsSmsSaveResult(null), 3000);
   }, [merchantId, eventsSmsOfferText, t]);
 
+  const shop = shopName || 'Ton Salon';
+  const rewardReferred = smsSettings?.referral_reward_referred || t('rewardNotSet');
+  const rewardReferrer = smsSettings?.referral_reward_referrer || t('rewardNotSet');
+  const rewardMain = smsSettings?.reward_description || t('rewardNotSet');
+  const referralDisabled = !smsSettings?.referral_program_enabled;
+  const planningDisabled = smsSettings ? !smsSettings.planning_enabled : false;
+  const googleReviewMissing = smsSettings ? !smsSettings.review_link?.trim() : false;
+  const rewardMissing = smsSettings ? !smsSettings.reward_description?.trim() : false;
+
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 px-1">
@@ -192,15 +254,20 @@ export default function AutomationsTab({ merchantId }: AutomationsTabProps) {
         <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t('smsAutomationsHeader')}</h2>
       </div>
 
+      <GroupLabel>{t('groupBookings')}</GroupLabel>
+
       <SmsAutomationCard
         title={t('reminderJ1')}
         desc={t('reminderJ1Desc')}
+        template={t('reminderJ1Template', { shop })}
         icon={Clock}
         category="transactional"
         field="reminder_j1_enabled"
-        enabled={smsSettings?.reminder_j1_enabled ?? false}
+        enabled={(smsSettings?.reminder_j1_enabled ?? true) && !planningDisabled}
         loading={loading}
         updating={updating}
+        disabled={planningDisabled}
+        disabledHint={planningDisabled ? t('planningDisabledHint') : undefined}
         onToggle={toggleSmsAutomation}
         t={t}
       />
@@ -208,36 +275,111 @@ export default function AutomationsTab({ merchantId }: AutomationsTabProps) {
       <SmsAutomationCard
         title={t('reminderJ0')}
         desc={t('reminderJ0Desc')}
+        template={t('reminderJ0Template', { shop })}
         icon={Sunrise}
         category="transactional"
         field="reminder_j0_enabled"
-        enabled={smsSettings?.reminder_j0_enabled ?? false}
+        enabled={(smsSettings?.reminder_j0_enabled ?? false) && !planningDisabled}
         loading={loading}
         updating={updating}
+        disabled={planningDisabled}
+        disabledHint={planningDisabled ? t('planningDisabledHint') : undefined}
+        onToggle={toggleSmsAutomation}
+        t={t}
+      />
+
+      <GroupLabel>{t('groupReferral')}</GroupLabel>
+
+      <SmsAutomationCard
+        title={t('referralReward')}
+        desc={t('referralRewardDesc')}
+        template={t('referralRewardTemplate', { shop, reward: rewardReferrer })}
+        icon={Gift}
+        category="transactional"
+        field="referral_reward_sms_enabled"
+        enabled={smsSettings?.referral_reward_sms_enabled ?? true}
+        loading={loading}
+        updating={updating}
+        disabled={referralDisabled}
+        disabledHint={referralDisabled ? t('referralDisabledHint') : undefined}
         onToggle={toggleSmsAutomation}
         t={t}
       />
 
       <SmsAutomationCard
-        title={t('welcomeSms')}
-        desc={t('welcomeSmsDesc')}
-        icon={HandHeart}
+        title={t('referralInvite')}
+        desc={t('referralInviteDesc')}
+        template={t('referralInviteTemplate', { shop, rewardReferred, rewardReferrer })}
+        icon={UserPlus}
         category="marketing"
-        field="welcome_sms_enabled"
-        enabled={smsSettings?.welcome_sms_enabled ?? false}
+        field="referral_invite_sms_enabled"
+        enabled={smsSettings?.referral_invite_sms_enabled ?? false}
         loading={loading}
         updating={updating}
+        disabled={referralDisabled}
+        disabledHint={referralDisabled ? t('referralDisabledHint') : undefined}
         onToggle={toggleSmsAutomation}
         t={t}
       />
+
+      <GroupLabel>{t('groupLoyalty')}</GroupLabel>
 
       <SmsAutomationCard
         title={t('reviewSms')}
         desc={t('reviewSmsDesc')}
+        template={t('reviewSmsTemplate', { shop, link: smsSettings?.review_link || 'lien-google' })}
         icon={Star}
         category="marketing"
         field="post_visit_review_enabled"
-        enabled={smsSettings?.post_visit_review_enabled ?? false}
+        enabled={(smsSettings?.post_visit_review_enabled ?? false) && !googleReviewMissing}
+        loading={loading}
+        updating={updating}
+        disabled={googleReviewMissing}
+        disabledHint={googleReviewMissing ? t('googleReviewMissingHint') : undefined}
+        onToggle={toggleSmsAutomation}
+        t={t}
+      />
+
+      <SmsAutomationCard
+        title={t('voucherExpiry')}
+        desc={t('voucherExpiryDesc')}
+        template={t('voucherExpiryTemplate', { shop })}
+        icon={Hourglass}
+        category="marketing"
+        field="voucher_expiry_sms_enabled"
+        enabled={smsSettings?.voucher_expiry_sms_enabled ?? false}
+        loading={loading}
+        updating={updating}
+        onToggle={toggleSmsAutomation}
+        t={t}
+      />
+
+      <SmsAutomationCard
+        title={t('nearReward')}
+        desc={t('nearRewardDesc')}
+        template={t('nearRewardTemplate', { shop, reward: rewardMain })}
+        icon={Award}
+        category="marketing"
+        field="near_reward_sms_enabled"
+        enabled={(smsSettings?.near_reward_sms_enabled ?? false) && !rewardMissing}
+        loading={loading}
+        updating={updating}
+        disabled={rewardMissing}
+        disabledHint={rewardMissing ? t('rewardMissingHint') : undefined}
+        onToggle={toggleSmsAutomation}
+        t={t}
+      />
+
+      <GroupLabel>{t('groupReactivation')}</GroupLabel>
+
+      <SmsAutomationCard
+        title={t('inactiveSms')}
+        desc={t('inactiveSmsDesc')}
+        template={t('inactiveSmsTemplate', { shop })}
+        icon={HeartHandshake}
+        category="marketing"
+        field="inactive_sms_enabled"
+        enabled={smsSettings?.inactive_sms_enabled ?? false}
         loading={loading}
         updating={updating}
         onToggle={toggleSmsAutomation}
@@ -277,6 +419,9 @@ export default function AutomationsTab({ merchantId }: AutomationsTabProps) {
               {updating === 'events_sms_enabled' && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
             </div>
           </button>
+        </div>
+        <div className="pl-[52px] pr-1">
+          <p className="text-[11px] italic text-gray-400 leading-snug line-clamp-2">&ldquo;{t('eventsSmsTemplate', { shop })}&rdquo;</p>
         </div>
 
         <AnimatePresence>

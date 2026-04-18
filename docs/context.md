@@ -439,27 +439,28 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Client API** : `src/lib/ovh-sms.ts` — signature HMAC-SHA1 custom, fire-and-forget, pas de npm package
 - **Service** : `src/lib/sms.ts` — dedup via `sms_logs`, quota 100 SMS/cycle + pack (pas d'overage, blocage a 0), templates FR/EN < 160 chars
 - **Reserve aux abonnes actifs** (pas trial) — message CTA dans dashboard + planning settings
-- **11 types de SMS** (migrations 092 → 114) :
-  - `reminder_j1` — rappel la veille a 19h (cron evening, toggle `reminder_j1_enabled` default true)
-  - `reminder_j0` — rappel le matin meme H-3, plancher 7h local (cron sms-hourly, toggle `reminder_j0_enabled`)
-  - `confirmation_no_deposit` — confirmation manuelle par le merchant (toggle opt-in dans BookingDetailsModal)
-  - `confirmation_deposit` — validation acompte par le merchant avec toggle opt-in (BookingDetailsModal + ReservationsSection)
-  - `booking_moved` — notification client quand le merchant deplace un RDV (toggle opt-in dans move overlay)
-  - `booking_cancelled` — notification client quand le merchant annule un RDV (toggle opt-in dans cancel overlay)
+- **15 types de SMS** (migrations 092, 112, 113) :
+  - `reminder_j1` — rappel la veille a 19h (cron evening, toggle `reminder_j1_enabled` default true, gate `planning_enabled`)
+  - `reminder_j0` — rappel le matin meme H-3, plancher 7h local (cron sms-hourly, toggle `reminder_j0_enabled`, gate `planning_enabled`)
+  - `confirmation_no_deposit` / `confirmation_deposit` / `booking_moved` / `booking_cancelled` — opt-in dans modaux planning
   - `birthday` — voeux + cadeau anniversaire (cron morning-jobs)
-  - `referral_reward` — notification parrain quand le filleul utilise sa recompense (`POST /api/vouchers/use`)
-  - `campaign` — campagne SMS marketing manuelle (cron sms-campaigns-dispatch */15min, modere cote admin)
-  - `welcome` — SMS bienvenue nouveau client H+1 apres 1er scan (toggle `welcome_sms_enabled`)
-  - `review_request` — merci + avis Google H+2 apres visite (toggle `post_visit_review_enabled`)
+  - `referral_reward` — notification parrain quand le filleul utilise sa recompense (toggle `referral_reward_sms_enabled` default ON, gate `referral_program_enabled`, opt-out respecte)
+  - `campaign` — campagne SMS marketing manuelle (cron sms-campaigns-dispatch */15min, moderation admin)
+  - `welcome` — SMS bienvenue H+1 apres 1er scan (toggle `welcome_sms_enabled`)
+  - `review_request` — merci + avis Google H+2 (toggle `post_visit_review_enabled`, gate `review_link` defini)
+  - `voucher_expiry` — cadeau expire J-7 (toggle `voucher_expiry_sms_enabled`)
+  - `referral_invite` — invitation parrainage apres 5 visites (toggle `referral_invite_sms_enabled`, gate `referral_program_enabled`)
+  - `inactive_reminder` — relance client inactif 30-45j, dedup 60j (toggle `inactive_sms_enabled`)
+  - `near_reward` — plus qu'un tampon avant la recompense (palier 1 ou 2), dedup 90j, derniere visite ≥15j (toggle `near_reward_sms_enabled`, gate `reward_description`)
 - **Toggles SMS merchant** : 4 toggles opt-in dans les modaux planning (confirmation nouveau RDV, validation acompte, deplacement, annulation). Design harmonise : bandeau cliquable + toggle switch. Desactive par defaut. En trial : grise + badge "Pro". Visible uniquement si le slot a un numero de telephone. Aucun auto-envoi — toujours opt-in.
 - **Compteur SMS** : visible dans dashboard principal + planning parametres (barre de progression), cycle aligne sur la date d'abonnement Stripe (`billing_period_start`)
 - **Booking modal client** : pas de SMS a la reservation sans acompte (rappel J-1 suffit). Hint "un SMS de rappel vous sera envoye la veille".
 - **Landing** : SMS mis en avant dans Hero (badge), FeaturesGrid, PageProSection (bloc dedie avec visual 2 SMS), Pricing, FAQ (Q4+Q12)
-- **Admin** : `/admin/sms` — metriques uniquement (total, ce mois, echecs, cout) + breakdown par merchant avec plage de dates du cycle de facturation. Les toggles globaux ont ete supprimes — le merchant controle par action.
+- **Admin** : `/admin/sms` unifie avec 2 onglets (Apercu : metriques + breakdown par merchant cycle ; Moderation : liste campagnes pending + approve/reject avec badge count). Fusion des anciennes pages `/admin/sms` + `/admin/sms-review`.
 - **Admin activite** : badges "Acompte en attente" / "Acompte OK" sur les reservations
 - **Env vars** : `OVH_APP_KEY`, `OVH_APP_SECRET`, `OVH_CONSUMER_KEY`, `OVH_SMS_SERVICE`, `OVH_SMS_SENDER`
 - **Sender** : "Qarte" (en attente validation OVH, fallback numero court via `senderForResponse`)
-- **Migrations** : 092 (sms_logs + app_config), 093 (birthday + referral types), 094 (booking_moved + booking_cancelled types), **112-115 (SMS marketing + packs + events)**
+- **Migrations** : 092 (sms_logs + app_config), 093 (birthday + referral types), 094 (booking_moved + booking_cancelled), **112 (chantier SMS marketing complet — packs, campagnes, opt-outs, 14 types, RPC `credit_sms_pack`)**, **113 (near_reward)**
 
 ### Stripe
 - `POST /api/stripe/checkout` — Session paiement (verifie customer Stripe)

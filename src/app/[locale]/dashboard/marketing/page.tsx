@@ -166,6 +166,7 @@ export default function MarketingPushPage() {
       {activeTab === 'automations' && (
         <AutomationsTab
           merchantId={merchant?.id}
+          shopName={merchant?.shop_name || 'Ton Salon'}
         />
       )}
 

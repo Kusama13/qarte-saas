@@ -80,16 +80,14 @@ export async function POST(request: Request) {
           break;
         }
 
-        const { data: current } = await supabase
-          .from('merchants')
-          .select('sms_pack_balance')
-          .eq('id', purchase.merchant_id)
-          .single();
-        const currentBalance = Number((current as { sms_pack_balance?: number } | null)?.sms_pack_balance || 0);
-        await supabase
-          .from('merchants')
-          .update({ sms_pack_balance: currentBalance + purchase.pack_size })
-          .eq('id', purchase.merchant_id);
+        // Atomic credit via RPC (évite la race avec un sendSms concurrent).
+        const { error: creditError } = await supabase.rpc('credit_sms_pack', {
+          p_merchant_id: purchase.merchant_id,
+          p_amount: purchase.pack_size,
+        });
+        if (creditError) {
+          logger.error('credit_sms_pack RPC failed', { purchaseId, error: creditError });
+        }
 
         logger.debug('SMS pack credited', { merchantId: purchase.merchant_id, packSize: purchase.pack_size });
         break;

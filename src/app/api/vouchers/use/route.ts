@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
       // Récupérer le merchant pour la description de la récompense parrain
       const { data: merchant } = await supabaseAdmin
         .from('merchants')
-        .select('referral_reward_referrer, shop_name, locale, subscription_status')
+        .select('referral_reward_referrer, shop_name, locale, subscription_status, referral_reward_sms_enabled')
         .eq('id', referral.merchant_id)
         .single();
 
@@ -288,7 +288,18 @@ export async function POST(request: NextRequest) {
             .eq('id', referral.referrer_customer_id)
             .single();
 
-          if (referrerForSms?.phone_number && merchant) {
+          const referralSmsEnabled = (merchant as { referral_reward_sms_enabled?: boolean | null })?.referral_reward_sms_enabled !== false;
+          let optedOut = false;
+          if (referrerForSms?.phone_number && referralSmsEnabled) {
+            const { data: optOut } = await supabaseAdmin
+              .from('sms_opt_outs')
+              .select('phone_number')
+              .eq('merchant_id', referral.merchant_id)
+              .eq('phone_number', referrerForSms.phone_number)
+              .maybeSingle();
+            optedOut = !!optOut;
+          }
+          if (referrerForSms?.phone_number && merchant && referralSmsEnabled && !optedOut) {
             sendBookingSms(supabaseAdmin, {
               merchantId: referral.merchant_id,
               phone: referrerForSms.phone_number,

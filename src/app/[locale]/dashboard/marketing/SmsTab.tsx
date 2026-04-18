@@ -17,6 +17,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { SMS_SUGGESTIONS } from '@/lib/sms-templates';
+import { SMS_UNIT_COST_CENTS } from '@/lib/sms-constants';
 import {
   SMS_LIMIT_SINGLE,
   SMS_LIMIT_DOUBLE,
@@ -80,7 +81,7 @@ export default function SmsTab() {
   const { merchant } = useMerchant();
 
   const [body, setBody] = useState('');
-  const [audienceValue, setAudienceValue] = useState<string>('all');
+  const [audienceValues, setAudienceValues] = useState<string[]>(['all']);
   const [scheduleMode, setScheduleMode] = useState<'now' | 'later'>('now');
   const [scheduleDate, setScheduleDate] = useState<string>('');
   const [scheduleTime, setScheduleTime] = useState<string>('10:00');
@@ -95,10 +96,20 @@ export default function SmsTab() {
   const [loadingCampaigns, setLoadingCampaigns] = useState(true);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const selectedFilter = useMemo(
-    () => AUDIENCE_OPTIONS.find((o) => o.value === audienceValue)?.filter || { type: 'all' as const },
-    [audienceValue]
-  );
+  const selectedFilters = useMemo<AudienceFilter[]>(() => {
+    if (audienceValues.length === 0 || audienceValues.includes('all')) return [{ type: 'all' }];
+    return audienceValues
+      .map((v) => AUDIENCE_OPTIONS.find((o) => o.value === v)?.filter)
+      .filter((f): f is AudienceFilter => !!f);
+  }, [audienceValues]);
+
+  const toggleAudience = (value: string) => {
+    setAudienceValues((prev) => {
+      if (value === 'all') return ['all'];
+      const without = prev.filter((v) => v !== 'all' && v !== value);
+      return prev.includes(value) ? (without.length === 0 ? ['all'] : without) : [...without, value];
+    });
+  };
 
   const previewBody = useMemo(() => {
     const withStop = appendStopIfMissing(body || '');
@@ -115,7 +126,7 @@ export default function SmsTab() {
   const costEstimate = useMemo(() => {
     if (audienceCount == null) return null;
     const count = audienceCount * (smsCount === 3 ? 3 : smsCount);
-    return Math.round(count * 7.5);
+    return Math.round(count * SMS_UNIT_COST_CENTS);
   }, [audienceCount, smsCount]);
 
   useEffect(() => {
@@ -127,7 +138,7 @@ export default function SmsTab() {
         const res = await fetch('/api/sms/campaign/preview', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ merchantId: merchant.id, filter: selectedFilter }),
+          body: JSON.stringify({ merchantId: merchant.id, filters: selectedFilters }),
         });
         if (res.ok) {
           const data = await res.json();
@@ -140,7 +151,7 @@ export default function SmsTab() {
       }
     })();
     return () => { cancelled = true; };
-  }, [merchant?.id, selectedFilter]);
+  }, [merchant?.id, selectedFilters]);
 
   const fetchCampaigns = async () => {
     if (!merchant?.id) return;
@@ -189,7 +200,7 @@ export default function SmsTab() {
         body: JSON.stringify({
           merchantId: merchant.id,
           body,
-          filter: selectedFilter,
+          filters: selectedFilters,
           scheduledAt,
         }),
       });
@@ -286,7 +297,7 @@ export default function SmsTab() {
             ))}
           </div>
           <div className={`text-xs font-bold ${charColor}`}>
-            {charCount} / {smsCount === 2 ? SMS_LIMIT_DOUBLE : SMS_LIMIT_SINGLE} — {smsCountLabel}
+            {charCount} / {smsCount >= 2 ? SMS_LIMIT_DOUBLE : SMS_LIMIT_SINGLE} — {smsCountLabel}
           </div>
         </div>
 
@@ -326,15 +337,25 @@ export default function SmsTab() {
             <Users className="w-3.5 h-3.5" />
             {t('audienceLabel')}
           </label>
-          <select
-            value={audienceValue}
-            onChange={(e) => setAudienceValue(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-[#4b0082]/20 focus:border-[#4b0082]"
-          >
-            {AUDIENCE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+          <div className="flex flex-wrap gap-1.5">
+            {AUDIENCE_OPTIONS.map((o) => {
+              const active = audienceValues.includes(o.value);
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => toggleAudience(o.value)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                    active
+                      ? 'bg-[#4b0082] text-white border-[#4b0082]'
+                      : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  {o.label}
+                </button>
+              );
+            })}
+          </div>
           <p className="mt-1.5 text-xs text-gray-500">
             {loadingCount ? t('audienceLoading') : t('audienceCount', { count: audienceCount ?? 0 })}
           </p>

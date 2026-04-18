@@ -2,17 +2,16 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { sendSms } from './ovh-sms';
 import { notifyMerchantQuotaAlert } from './sms-alerts';
 
-export const SMS_FREE_QUOTA = 100;
-export const SMS_OVERAGE_COST = 0.075;
-export const SMS_UNIT_COST = 0.075; // HT — used for pack pricing & dispatcher cost tracking
+export { SMS_FREE_QUOTA, SMS_OVERAGE_COST, SMS_UNIT_COST, SMS_UNIT_COST_CENTS } from './sms-constants';
+import { SMS_FREE_QUOTA, SMS_OVERAGE_COST } from './sms-constants';
 
-const PAID_STATUSES = ['active', 'canceling', 'past_due'];
+export const PAID_STATUSES = ['active', 'canceling', 'past_due'] as const;
 
 // ── Templates SMS (< 160 chars, vouvoiement client-facing) ──
 
 export type SmsType = 'reminder_j1' | 'reminder_j0' | 'confirmation_no_deposit' | 'confirmation_deposit' | 'birthday' | 'referral_reward' | 'booking_moved' | 'booking_cancelled';
 
-export type MarketingSmsType = 'campaign' | 'welcome' | 'review_request';
+export type MarketingSmsType = 'campaign' | 'welcome' | 'review_request' | 'voucher_expiry' | 'referral_invite' | 'inactive_reminder' | 'near_reward';
 
 const SMS_TEMPLATES: Record<string, Record<SmsType, (...args: string[]) => string>> = {
   fr: {
@@ -133,16 +132,8 @@ export async function getSmsQuotaStatus(
  * Uses a conditional update to avoid race conditions (only succeeds if balance > 0).
  */
 async function refundPackOne(supabase: SupabaseClient, merchantId: string): Promise<void> {
-  const { data } = await supabase
-    .from('merchants')
-    .select('sms_pack_balance')
-    .eq('id', merchantId)
-    .maybeSingle();
-  const balance = Number((data as { sms_pack_balance?: number } | null)?.sms_pack_balance || 0);
-  await supabase
-    .from('merchants')
-    .update({ sms_pack_balance: balance + 1 })
-    .eq('id', merchantId);
+  // Atomic via RPC (évite la race read-then-write avec consumePackOne concurrent).
+  await supabase.rpc('credit_sms_pack', { p_merchant_id: merchantId, p_amount: 1 });
 }
 
 async function consumePackOne(supabase: SupabaseClient, merchantId: string): Promise<boolean> {
@@ -231,7 +222,7 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
   if (!phone) return false;
 
   try {
-    if (!PAID_STATUSES.includes(subscriptionStatus)) {
+    if (!(PAID_STATUSES as readonly string[]).includes(subscriptionStatus)) {
       return false;
     }
 
@@ -388,25 +379,18 @@ export async function sendMarketingSms(
   if (!phone || !body) return { success: false, error: 'invalid_input' };
 
   try {
-    // 1. Gate: quota + pack
-    let bps = billingPeriodStart;
-    let packBalance: number;
-    if (bps === undefined) {
-      const { data } = await supabase
-        .from('merchants')
-        .select('billing_period_start, sms_pack_balance')
-        .eq('id', merchantId)
-        .maybeSingle();
-      bps = (data as { billing_period_start?: string | null } | null)?.billing_period_start || null;
-      packBalance = Number((data as { sms_pack_balance?: number } | null)?.sms_pack_balance || 0);
-    } else {
-      const { data } = await supabase
-        .from('merchants')
-        .select('sms_pack_balance')
-        .eq('id', merchantId)
-        .maybeSingle();
-      packBalance = Number((data as { sms_pack_balance?: number } | null)?.sms_pack_balance || 0);
+    // 1. Gate: paid subscription + quota + pack
+    const { data: merchant } = await supabase
+      .from('merchants')
+      .select('billing_period_start, sms_pack_balance, subscription_status')
+      .eq('id', merchantId)
+      .maybeSingle();
+    const merchantRow = merchant as { billing_period_start?: string | null; sms_pack_balance?: number; subscription_status?: string } | null;
+    if (!merchantRow || !(PAID_STATUSES as readonly string[]).includes(merchantRow.subscription_status || '')) {
+      return { success: false, error: 'subscription_inactive' };
     }
+    const bps = billingPeriodStart !== undefined ? billingPeriodStart : (merchantRow.billing_period_start || null);
+    const packBalance = Number(merchantRow.sms_pack_balance || 0);
     const usage = await getSmsUsageThisMonth(supabase, merchantId, bps);
     const quotaLeft = Math.max(0, SMS_FREE_QUOTA - usage.sent);
 
@@ -428,8 +412,8 @@ export async function sendMarketingSms(
       consumedFromPack = true;
     }
 
-    // 2. Insert log
-    const { data: logRow } = await supabase.from('sms_logs').insert({
+    // 2. Insert log (refund pack si échec d'insertion pour préserver la cohérence)
+    const { data: logRow, error: logError } = await supabase.from('sms_logs').insert({
       merchant_id: merchantId,
       slot_id: null,
       phone_to: phone,
@@ -438,6 +422,10 @@ export async function sendMarketingSms(
       status: 'sent',
       cost_euro: 0,
     }).select('id').maybeSingle();
+    if (logError) {
+      if (consumedFromPack) await refundPackOne(supabase, merchantId);
+      return { success: false, error: 'log_insert_failed' };
+    }
 
     // 3. Send via OVH
     const result = await sendSms(phone, body);

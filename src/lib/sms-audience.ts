@@ -27,7 +27,31 @@ export async function resolveAudience(
   return { count: final.length, phones: final };
 }
 
-async function fetchOptedOutPhones(
+export async function resolveAudienceUnion(
+  supabase: SupabaseClient,
+  merchantId: string,
+  filters: AudienceFilter[]
+): Promise<AudienceResolution> {
+  if (filters.length === 0) return { count: 0, phones: [] };
+  // Short-circuit if 'all' is present — it supersedes any narrower filter.
+  if (filters.some((f) => f.type === 'all')) {
+    return resolveAudience(supabase, merchantId, { type: 'all' });
+  }
+  const phoneLists = await Promise.all(
+    filters.map((f) => fetchCandidatePhones(supabase, merchantId, f))
+  );
+  const optedOut = await fetchOptedOutPhones(supabase, merchantId);
+  const union = Array.from(new Set(phoneLists.flat())).filter((p) => !!p && !optedOut.has(p));
+  return { count: union.length, phones: union };
+}
+
+export type CustomerEmbed = {
+  first_name?: string | null;
+  phone_number?: string | null;
+  no_contact?: boolean | null;
+};
+
+export async function fetchOptedOutPhones(
   supabase: SupabaseClient,
   merchantId: string
 ): Promise<Set<string>> {
@@ -36,6 +60,24 @@ async function fetchOptedOutPhones(
     .select('phone_number')
     .eq('merchant_id', merchantId);
   return new Set((data || []).map((r: { phone_number: string }) => r.phone_number));
+}
+
+export async function hasSmsLog(
+  supabase: SupabaseClient,
+  merchantId: string,
+  smsType: string,
+  phone: string,
+  since?: string
+): Promise<boolean> {
+  let q = supabase
+    .from('sms_logs')
+    .select('id')
+    .eq('merchant_id', merchantId)
+    .eq('sms_type', smsType)
+    .eq('phone_to', phone);
+  if (since) q = q.gte('created_at', since);
+  const { data } = await q.maybeSingle();
+  return !!data;
 }
 
 async function fetchCandidatePhones(

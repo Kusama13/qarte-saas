@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { MessageSquareText, ShoppingCart, AlertTriangle } from 'lucide-react';
-
-const SMS_FREE_QUOTA = 100;
+import { SMS_FREE_QUOTA } from '@/lib/sms-constants';
 
 interface SmsUsage {
   sent: number;

@@ -1,18 +1,31 @@
--- 112_sms_marketing_phase_a.sql
--- Phase A du chantier SMS marketing : solde packs, achats, campagnes, opt-outs clients,
--- dedup des alertes quota. Aucune donnée existante touchée.
+-- 112_sms_marketing.sql
+-- Chantier SMS marketing complet : packs prépayés, campagnes modérées, opt-outs,
+-- toggles par automatisation, types SMS étendus. Aucune donnée existante touchée.
 
 -- ─── Colonnes merchants ──────────────────────────────────────────────
 ALTER TABLE merchants
+  -- Quota & alertes
   ADD COLUMN IF NOT EXISTS sms_pack_balance INTEGER NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS sms_alert_80_sent_cycle DATE,
   ADD COLUMN IF NOT EXISTS sms_alert_100_sent_cycle DATE,
+  -- Rappels RDV (transactionnel, dépend de planning_enabled côté UI)
   ADD COLUMN IF NOT EXISTS reminder_j1_enabled BOOLEAN NOT NULL DEFAULT true,
   ADD COLUMN IF NOT EXISTS reminder_j0_enabled BOOLEAN NOT NULL DEFAULT false,
+  -- Parrainage
+  ADD COLUMN IF NOT EXISTS referral_reward_sms_enabled BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS referral_invite_sms_enabled BOOLEAN NOT NULL DEFAULT false,
+  -- Fidélisation & avis
   ADD COLUMN IF NOT EXISTS welcome_sms_enabled BOOLEAN NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS post_visit_review_enabled BOOLEAN NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS review_sms_include_link BOOLEAN NOT NULL DEFAULT false,
-  ADD COLUMN IF NOT EXISTS google_review_url TEXT;
+  ADD COLUMN IF NOT EXISTS google_review_url TEXT,
+  ADD COLUMN IF NOT EXISTS voucher_expiry_sms_enabled BOOLEAN NOT NULL DEFAULT false,
+  -- Relance
+  ADD COLUMN IF NOT EXISTS inactive_sms_enabled BOOLEAN NOT NULL DEFAULT false,
+  -- Événements saisonniers
+  ADD COLUMN IF NOT EXISTS events_sms_enabled BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS events_sms_offer_text TEXT,
+  ADD COLUMN IF NOT EXISTS events_sms_last_event_id TEXT;
 
 -- ─── Table : achats de packs SMS (audit + facturation) ──────────────
 CREATE TABLE IF NOT EXISTS sms_pack_purchases (
@@ -71,17 +84,38 @@ CREATE TABLE IF NOT EXISTS sms_opt_outs (
 
 CREATE INDEX IF NOT EXISTS idx_sms_opt_outs_phone ON sms_opt_outs (phone_number);
 
+-- ─── CHECK étendu sur sms_logs.sms_type ─────────────────────────────
+-- Types : 8 existants (reminder_j1, confirmations, birthday, referral_reward,
+-- booking_moved/cancelled) + 6 nouveaux pour marketing & automations.
+ALTER TABLE sms_logs DROP CONSTRAINT IF EXISTS sms_logs_sms_type_check;
+ALTER TABLE sms_logs ADD CONSTRAINT sms_logs_sms_type_check CHECK (
+  sms_type IN (
+    'reminder_j1',
+    'reminder_j0',
+    'confirmation_no_deposit',
+    'confirmation_deposit',
+    'birthday',
+    'referral_reward',
+    'booking_moved',
+    'booking_cancelled',
+    'campaign',
+    'welcome',
+    'review_request',
+    'voucher_expiry',
+    'referral_invite',
+    'inactive_reminder'
+  )
+);
+
 -- ─── RLS ────────────────────────────────────────────────────────────
 ALTER TABLE sms_pack_purchases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sms_campaigns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sms_opt_outs ENABLE ROW LEVEL SECURITY;
 
--- Merchants : lecture seule sur leurs propres achats
 DROP POLICY IF EXISTS "merchant_read_own_purchases" ON sms_pack_purchases;
 CREATE POLICY "merchant_read_own_purchases" ON sms_pack_purchases
   FOR SELECT USING (merchant_id IN (SELECT id FROM merchants WHERE user_id = auth.uid()));
 
--- Merchants : CRUD sur leurs propres campagnes
 DROP POLICY IF EXISTS "merchant_read_own_campaigns" ON sms_campaigns;
 CREATE POLICY "merchant_read_own_campaigns" ON sms_campaigns
   FOR SELECT USING (merchant_id IN (SELECT id FROM merchants WHERE user_id = auth.uid()));
@@ -90,7 +124,25 @@ DROP POLICY IF EXISTS "merchant_insert_own_campaigns" ON sms_campaigns;
 CREATE POLICY "merchant_insert_own_campaigns" ON sms_campaigns
   FOR INSERT WITH CHECK (merchant_id IN (SELECT id FROM merchants WHERE user_id = auth.uid()));
 
--- Merchants : lecture de leurs propres opt-outs (pour affichage)
 DROP POLICY IF EXISTS "merchant_read_own_optouts" ON sms_opt_outs;
 CREATE POLICY "merchant_read_own_optouts" ON sms_opt_outs
   FOR SELECT USING (merchant_id IN (SELECT id FROM merchants WHERE user_id = auth.uid()));
+
+-- ─── RPC : credit atomique d'un pack SMS ────────────────────────────
+-- Appelé depuis le webhook Stripe pour éviter une race (read-then-write)
+-- avec un sendSms concurrent qui décrémente sms_pack_balance.
+CREATE OR REPLACE FUNCTION credit_sms_pack(p_merchant_id UUID, p_amount INTEGER)
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  new_balance INTEGER;
+BEGIN
+  UPDATE merchants
+  SET sms_pack_balance = sms_pack_balance + p_amount
+  WHERE id = p_merchant_id
+  RETURNING sms_pack_balance INTO new_balance;
+  RETURN new_balance;
+END;
+$$;

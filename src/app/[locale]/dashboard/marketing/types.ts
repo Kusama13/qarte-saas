@@ -70,7 +70,7 @@ const TEMPLATE_DEFS = [
   { id: 'new_service', titleKey: 'newServiceTitle', bodyKey: 'newServiceBody', offerDescriptionKey: 'newServiceOffer', icon: Sparkles, color: 'violet' },
   { id: 'promo_beaute', titleKey: 'promoTitle', bodyKey: 'promoBody', offerDescriptionKey: 'promoOffer', icon: Megaphone, color: 'pink' },
   { id: 'duo', titleKey: 'duoTitle', bodyKey: 'duoBody', offerDescriptionKey: 'duoOffer', icon: PartyPopper, color: 'yellow' },
-  { id: 'calme', titleKey: 'quietTitle', bodyKey: 'quietBody', offerDescriptionKey: 'quietOffer', icon: Crown, color: 'amber' },
+  { id: 'dernieres_dispos', titleKey: 'lastAvailTitle', bodyKey: 'lastAvailBody', offerDescriptionKey: 'lastAvailOffer', icon: Crown, color: 'amber' },
 ] as const;
 
 export function getPushTemplates(t: TranslateFunction): NotificationTemplate[] {

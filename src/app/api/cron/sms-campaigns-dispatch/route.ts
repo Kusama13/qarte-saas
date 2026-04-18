@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { verifyCronAuth } from '@/lib/cron-helpers';
-import { sendMarketingSms } from '@/lib/sms';
+import { sendMarketingSms, PAID_STATUSES, SMS_UNIT_COST_CENTS } from '@/lib/sms';
 import { isLegalSendTime, nextLegalSlot } from '@/lib/sms-compliance';
-import { resolveAudience } from '@/lib/sms-audience';
+import { resolveAudienceUnion } from '@/lib/sms-audience';
 import type { AudienceFilter } from '@/lib/sms-audience';
 import { resolveVariables, appendStopIfMissing, countSms } from '@/lib/sms-validator';
 import logger from '@/lib/logger';
@@ -62,13 +62,21 @@ export async function GET(request: NextRequest) {
 
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, shop_name, country, slug, billing_period_start')
+      .select('id, shop_name, country, slug, billing_period_start, subscription_status')
       .eq('id', campaign.merchant_id)
-      .single<MerchantRow>();
+      .single<MerchantRow & { subscription_status: string }>();
     if (!merchant) {
       await supabaseAdmin
         .from('sms_campaigns')
         .update({ status: 'failed', review_note: 'Merchant not found at dispatch time.' })
+        .eq('id', campaign.id);
+      results.failed++;
+      continue;
+    }
+    if (!(PAID_STATUSES as readonly string[]).includes(merchant.subscription_status)) {
+      await supabaseAdmin
+        .from('sms_campaigns')
+        .update({ status: 'failed', review_note: 'Abonnement inactif au moment du dispatch.' })
         .eq('id', campaign.id);
       results.failed++;
       continue;
@@ -92,12 +100,10 @@ export async function GET(request: NextRequest) {
       .update({ status: 'sending' })
       .eq('id', campaign.id);
 
-    // Re-resolve audience at send time (opt-outs may have been added since submit)
-    const audience = await resolveAudience(
-      supabaseAdmin,
-      campaign.merchant_id,
-      campaign.audience_filter as AudienceFilter
-    );
+    // Re-resolve audience at send time (opt-outs may have been added since submit).
+    const rawFilter = campaign.audience_filter as { filters?: AudienceFilter[] };
+    const filters: AudienceFilter[] = rawFilter?.filters || [];
+    const audience = await resolveAudienceUnion(supabaseAdmin, campaign.merchant_id, filters);
 
     if (audience.count === 0) {
       await supabaseAdmin
@@ -142,20 +148,31 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const finalStatus = blockedHit
-      ? (sentCount > 0 ? 'done' : 'failed')
-      : (sentCount > 0 ? 'done' : 'failed');
-    const costCentsActual = sentCount * smsPerRecipient * 7.5;
-    await supabaseAdmin
-      .from('sms_campaigns')
-      .update({
-        status: finalStatus,
-        sent_at: new Date().toISOString(),
-        recipient_count: sentCount,
-        cost_cents: Math.round(costCentsActual),
-        review_note: blockedHit ? 'Quota SMS atteint pendant l\'envoi. Reprendre après achat d\'un pack.' : null,
-      })
-      .eq('id', campaign.id);
+    // Si bloqué par quota en cours de route et rien d'envoyé → re-scheduler dans 1h.
+    // Sinon done/failed selon qu'au moins un SMS a été envoyé.
+    const costCentsActual = sentCount * smsPerRecipient * SMS_UNIT_COST_CENTS;
+    if (blockedHit && sentCount === 0) {
+      await supabaseAdmin
+        .from('sms_campaigns')
+        .update({
+          status: 'scheduled',
+          scheduled_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          review_note: 'Quota SMS épuisé — retenté dans 1h (achetez un pack pour débloquer).',
+        })
+        .eq('id', campaign.id);
+      results.rescheduled++;
+    } else {
+      await supabaseAdmin
+        .from('sms_campaigns')
+        .update({
+          status: sentCount > 0 ? 'done' : 'failed',
+          sent_at: new Date().toISOString(),
+          recipient_count: sentCount,
+          cost_cents: Math.round(costCentsActual),
+          review_note: blockedHit ? 'Quota SMS atteint pendant l\'envoi.' : null,
+        })
+        .eq('id', campaign.id);
+    }
   }
 
   return NextResponse.json({ ok: true, ...results });

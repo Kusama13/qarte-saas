@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
-import { resolveAudience } from '@/lib/sms-audience';
+import { resolveAudienceUnion } from '@/lib/sms-audience';
 import type { AudienceFilter } from '@/lib/sms-audience';
 import logger from '@/lib/logger';
 
@@ -18,7 +18,7 @@ const FilterSchema = z.discriminatedUnion('type', [
 
 const BodySchema = z.object({
   merchantId: z.string().uuid(),
-  filter: FilterSchema,
+  filters: z.array(FilterSchema).min(1).max(10),
 });
 
 export async function POST(request: NextRequest) {
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Paramètres invalides' }, { status: 400 });
     }
-    const { merchantId, filter } = parsed.data;
+    const { merchantId, filters } = parsed.data;
 
     const supabase = await createRouteHandlerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       .single();
     if (!merchant) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 
-    const { count } = await resolveAudience(supabaseAdmin, merchantId, filter as AudienceFilter);
+    const { count } = await resolveAudienceUnion(supabaseAdmin, merchantId, filters as AudienceFilter[]);
     return NextResponse.json({ count });
   } catch (error) {
     logger.error('SMS campaign preview error:', error);

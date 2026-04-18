@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
-import { resolveAudience } from '@/lib/sms-audience';
+import { resolveAudienceUnion } from '@/lib/sms-audience';
 import type { AudienceFilter } from '@/lib/sms-audience';
 import { countSms, validateMarketingSms } from '@/lib/sms-validator';
+import { SMS_UNIT_COST_CENTS } from '@/lib/sms';
 import { isLegalSendTime, nextLegalSlot } from '@/lib/sms-compliance';
 import logger from '@/lib/logger';
 
@@ -21,7 +22,7 @@ const FilterSchema = z.discriminatedUnion('type', [
 const BodySchema = z.object({
   merchantId: z.string().uuid(),
   body: z.string().min(1).max(500),
-  filter: FilterSchema,
+  filters: z.array(FilterSchema).min(1).max(10),
   scheduledAt: z.string().datetime().optional(),
 });
 
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Paramètres invalides', details: parsed.error.flatten() }, { status: 400 });
     }
-    const { merchantId, body, filter, scheduledAt } = parsed.data;
+    const { merchantId, body, filters, scheduledAt } = parsed.data;
 
     const supabase = await createRouteHandlerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -51,8 +52,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Contenu invalide', errors: validation.errors }, { status: 400 });
     }
 
-    // Resolve audience snapshot
-    const resolved = await resolveAudience(supabaseAdmin, merchantId, filter as AudienceFilter);
+    // Resolve audience snapshot (union of selected filters)
+    const resolved = await resolveAudienceUnion(supabaseAdmin, merchantId, filters as AudienceFilter[]);
     if (resolved.count === 0) {
       return NextResponse.json({ error: 'Audience vide — aucun destinataire éligible.' }, { status: 400 });
     }
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
     const effectiveAt = compliance.ok ? requestedAt : nextLegalSlot(requestedAt, merchant.country || 'FR');
 
     const smsCount = countSms(validation.finalBody);
-    const costCentsInt = Math.round(resolved.count * smsCount * 7.5); // 0.075€ HT = 7.5c/SMS
+    const costCentsInt = Math.round(resolved.count * smsCount * SMS_UNIT_COST_CENTS);
 
     const { data: campaign, error: insertError } = await supabaseAdmin
       .from('sms_campaigns')
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
         merchant_id: merchantId,
         kind: 'custom',
         body: validation.finalBody,
-        audience_filter: filter,
+        audience_filter: { filters },
         recipient_count: resolved.count,
         status: 'pending_review',
         scheduled_at: effectiveAt.toISOString(),

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeAdmin } from '@/lib/api-helpers';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { SMS_FREE_QUOTA, SMS_OVERAGE_COST } from '@/lib/sms';
+import { SMS_FREE_QUOTA, SMS_OVERAGE_COST, PAID_STATUSES } from '@/lib/sms';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
   const { data: allMerchantData } = await supabaseAdmin
     .from('merchants')
     .select('id, shop_name, billing_period_start')
-    .in('subscription_status', ['active', 'canceling', 'past_due']);
+    .in('subscription_status', PAID_STATUSES as readonly string[]);
 
   // Compute each merchant's current billing cycle start
   function getBillingCycleStart(billingPeriodStart: string | null): Date {
@@ -46,12 +46,15 @@ export async function GET(request: NextRequest) {
       : thisMonth;
   }
 
-  // For each merchant, count SMS in their billing cycle
-  // Get all SMS logs (non-failed) to count per merchant per cycle
+  // Fetch SMS logs limited to the earliest cycle start (any merchant's cycle started at
+  // most 31 days ago) to avoid unbounded scans. Safe because per-merchant filter happens
+  // after in JS on a bounded window.
+  const earliestCycleStart = new Date(now.getTime() - 32 * 24 * 60 * 60 * 1000).toISOString();
   const { data: allLogs } = await supabaseAdmin
     .from('sms_logs')
     .select('merchant_id, created_at')
-    .neq('status', 'failed');
+    .neq('status', 'failed')
+    .gte('created_at', earliestCycleStart);
 
   const merchants = (allMerchantData || []).map(m => {
     const cycleStart = getBillingCycleStart(m.billing_period_start);
