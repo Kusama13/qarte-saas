@@ -173,6 +173,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Quarantaine visites inhabituelles (2+ scans/jour meme client)
 - Detection IP duplicates, moderation manuelle (valider/refuser), bannissement numeros
 - `shield_enabled` (BOOL, defaut true), wording : "verification automatique"
+- Toggle on/off : `PendingPointsWidget` (accueil dashboard, visible uniquement si clients > 0) + `/dashboard/settings` (carte dediee en haut, toujours accessible)
 
 ### Offre Duo (mig 082)
 - `duo_offer_enabled` (BOOL, defaut false) + `duo_offer_description` (TEXT) sur table `merchants`
@@ -745,6 +746,7 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 - **Landing emotion:** Rose/Pink (blobs hero, reward card)
 - **PWA Icon:** Gradient indigo → rose
 - **PWA Manifests:** 2 manifests distincts — `/manifest.webmanifest` (Next.js, `name: 'Qarte'`, `scope: '/customer'`) pour la carte client, `/api/manifest/pro` (API route, `name: 'Qarte Pro'`, `scope: '/dashboard'`) pour le dashboard merchant. Le hook `useInstallPrompt` injecte dynamiquement le manifest Pro via `<link rel="manifest">` sur le dashboard
+- **Viewport PWA** (fix avril 2026) : `export const viewport` dans `src/app/layout.tsx` — `initial-scale=1`, `maximum-scale=1`, `viewport-fit=cover`, `theme-color=#4b0082`. Meta Apple : `apple-mobile-web-app-capable`, `-status-bar-style=default`, `-title=Qarte`, `mobile-web-app-capable`, `format-detection=telephone=no`. Corrige les bugs de clics figes en PWA iOS (tap delay 300ms, hit-test decale, safe-area home indicator). Fix s'applique aux PWA deja installees automatiquement (SW sans fetch handler = pas de cache HTML)
 
 ### Style
 - Glassmorphism auth pages (`backdrop-blur-xl`, `bg-white/80`), fond lavande `#f7f6fb` avec 3 blobs animes (drift 10-14s) + 4 cartes de fidelite flottantes (Framer Motion) — meme background que `/customer`

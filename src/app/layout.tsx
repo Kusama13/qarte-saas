@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Plus_Jakarta_Sans, Playfair_Display, Poppins } from 'next/font/google';
 import { getLocale, getTranslations } from 'next-intl/server';
 import './globals.css';
@@ -14,6 +14,15 @@ const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
 // Short title (<60 chars) for SERP display. Description <160 chars for full snippet.
 const TITLE = 'Qarte — Réservation & fidélité pour salons de beauté';
 const DESCRIPTION = 'Réservation en ligne sans commission, programme de fidélité digital et vitrine SEO pour salons, instituts, ongleries et barbershops. Essai gratuit 7 jours.';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: '#4b0082',
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -169,6 +178,13 @@ export default async function RootLayout({
       <head>
         {/* Disable auto-translate (Google Translate sur Chrome Android cause crash React #310 sur mobile) */}
         <meta name="google" content="notranslate" />
+
+        {/* PWA iOS standalone — évite tap delay 300ms + hit-test décalé + safe-area */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Qarte" />
+        <meta name="format-detection" content="telephone=no" />
 
         {/* Defense-in-depth : patch Node.removeChild/insertBefore pour eviter crash React #310
             si une extension (Google Translate, 1Password, Grammarly, ad blockers, iOS content
