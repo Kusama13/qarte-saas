@@ -116,7 +116,7 @@ Cron /api/cron/sms-campaigns-dispatch (*/15min)
 ```
 
 ### Automatisations
-[`/api/cron/sms-hourly`](../src/app/api/cron/sms-hourly/route.ts) — 8 sections, chacune avec compliance check (`isLegalSendTime`) pour le marketing :
+[`/api/cron/sms-hourly`](../src/app/api/cron/sms-hourly/route.ts) — 9 sections, chacune avec compliance check (`isLegalSendTime`) pour le marketing :
 1. **J-0 reminder** — H-3 avant RDV, plancher 7h local, gaté sur `planning_enabled`
 2. **Welcome** — clients créés 60-120min avant
 3. **Review Google** — visites 120-180min avant, inclut `review_link` dans le SMS
@@ -125,6 +125,7 @@ Cron /api/cron/sms-campaigns-dispatch (*/15min)
 6. **Referral invite** — ≥5 visites (batch GROUP BY, pas de N+1), 10h local
 7. **Inactive reminder** — dernière visite [30, 45j], 10h local, dédup 60j
 8. **Near reward** — `current_stamps = required - 1` (palier 1 ou 2), dernière visite ≥15j, dédup 90j, 10h local
+9. **Birthday SMS** — fallback à 10h local pour les SMS anniversaire skippés par `morning-jobs` (7h UTC = hors plage légale FR). Voucher + push + email gérés par `morning-jobs`. Dédup via `sms_logs` same-day
 
 Opt-outs batch-fetched une fois par merchant via `fetchOptedOutPhones()`. Dedup via `hasSmsLog()`.
 

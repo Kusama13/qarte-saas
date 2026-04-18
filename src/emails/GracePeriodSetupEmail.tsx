@@ -20,9 +20,9 @@ export function GracePeriodSetupEmail({ shopName, daysUntilDeletion, locale = 'f
   const daysPlural = daysUntilDeletion > 1 ? 's' : '';
 
   return (
-    <BaseLayout preview={t('gracePeriodSetup.preview', { shopName })} locale={locale}>
+    <BaseLayout preview={t('gracePeriodSetup.preview', { shopName, daysUntilDeletion: String(daysUntilDeletion) })} locale={locale}>
       <Heading style={heading}>
-        {t('gracePeriodSetup.heading')}
+        {t('gracePeriodSetup.heading', { daysUntilDeletion: String(daysUntilDeletion) })}
       </Heading>
 
       <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('gracePeriodSetup.greeting', { shopName }) }} />

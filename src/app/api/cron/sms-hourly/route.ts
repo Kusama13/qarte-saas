@@ -44,6 +44,8 @@ interface MerchantRow {
   tier2_enabled: boolean | null;
   tier2_stamps_required: number | null;
   tier2_reward_description: string | null;
+  birthday_gift_enabled: boolean | null;
+  birthday_gift_description: string | null;
 }
 
 const NEAR_REWARD_MIN_DAYS_SINCE_VISIT = 15;
@@ -90,13 +92,14 @@ export async function GET(request: NextRequest) {
     referralInviteSent: 0,
     inactiveSent: 0,
     nearRewardSent: 0,
+    birthdaySent: 0,
     skipped: 0,
     errors: 0,
   };
 
   const { data: merchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, country, locale, subscription_status, billing_period_start, reminder_j0_enabled, welcome_sms_enabled, post_visit_review_enabled, events_sms_enabled, events_sms_offer_text, events_sms_last_event_id, voucher_expiry_sms_enabled, referral_invite_sms_enabled, inactive_sms_enabled, near_reward_sms_enabled, referral_program_enabled, planning_enabled, review_link, stamps_required, reward_description, tier2_enabled, tier2_stamps_required, tier2_reward_description')
+    .select('id, shop_name, country, locale, subscription_status, billing_period_start, reminder_j0_enabled, welcome_sms_enabled, post_visit_review_enabled, events_sms_enabled, events_sms_offer_text, events_sms_last_event_id, voucher_expiry_sms_enabled, referral_invite_sms_enabled, inactive_sms_enabled, near_reward_sms_enabled, referral_program_enabled, planning_enabled, review_link, stamps_required, reward_description, tier2_enabled, tier2_stamps_required, tier2_reward_description, birthday_gift_enabled, birthday_gift_description')
     .in('subscription_status', PAID_STATUSES);
 
   const activeMerchants = (merchants || []) as MerchantRow[];
@@ -602,6 +605,50 @@ export async function GET(request: NextRequest) {
       });
       if (result.success) results.nearRewardSent++;
       else if (result.blocked) { results.errors++; break; }
+      else results.skipped++;
+    }
+  }
+
+  // ── 9. BIRTHDAY SMS (transactional) — fallback à 10h local ──
+  // Dedup via sms_logs (sendBookingSms check phone+type+merchant même jour).
+  // Le voucher + email + push sont créés par /api/cron/morning-jobs à 7h UTC ; ici on ne gère que le SMS.
+  for (const m of activeMerchants) {
+    if (Date.now() - startedAt > 295_000) break;
+    if (!m.birthday_gift_enabled) continue;
+
+    const tz = getTimezoneForCountry(m.country || 'FR');
+    const localHour = localHourFor(now, tz);
+    if (localHour !== 10) continue;
+    if (!isLegalSendTime(now, m.country || 'FR').ok) continue;
+
+    const todayLocal = localDateFor(now, tz);
+    const [, monthStr, dayStr] = todayLocal.split('-');
+    const targetMonth = parseInt(monthStr, 10);
+    const targetDay = parseInt(dayStr, 10);
+
+    const { data: bdayCustomers } = await supabase
+      .from('customers')
+      .select('first_name, phone_number, no_contact')
+      .eq('merchant_id', m.id)
+      .eq('birth_month', targetMonth)
+      .eq('birth_day', targetDay)
+      .not('phone_number', 'is', null);
+
+    if (!bdayCustomers || bdayCustomers.length === 0) continue;
+
+    for (const customer of bdayCustomers) {
+      if (!customer.phone_number || customer.no_contact) continue;
+      const sent = await sendBookingSms(supabase, {
+        merchantId: m.id,
+        phone: customer.phone_number,
+        shopName: m.shop_name,
+        smsType: 'birthday',
+        locale: m.locale || 'fr',
+        subscriptionStatus: m.subscription_status,
+        gift: m.birthday_gift_description || (m.locale === 'en' ? 'a gift' : 'un cadeau'),
+        clientName: customer.first_name || '',
+      });
+      if (sent) results.birthdaySent++;
       else results.skipped++;
     }
   }

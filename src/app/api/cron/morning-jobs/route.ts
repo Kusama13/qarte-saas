@@ -8,6 +8,7 @@ import { sendBirthdayNotificationEmail } from '@/lib/email';
 import type { EmailLocale } from '@/emails/translations';
 import { sendMerchantPush } from '@/lib/merchant-push';
 import { sendBookingSms } from '@/lib/sms';
+import { isLegalSendTime } from '@/lib/sms-compliance';
 import { resend, EMAIL_FROM, EMAIL_HEADERS } from '@/lib/resend';
 import { verifyCronAuth, batchGetUserEmails, rateLimitDelay } from '@/lib/cron-helpers';
 import logger from '@/lib/logger';
@@ -227,8 +228,8 @@ export async function GET(request: NextRequest) {
               }
             }
 
-            // SMS birthday to customer
-            if (customer.phone_number) {
+            // SMS birthday — respecte la plage légale FR (10h-20h). Fallback via sms-hourly à 10h local si skip ici.
+            if (customer.phone_number && isLegalSendTime(now, bMerchant.country || 'FR').ok) {
               sendBookingSms(supabase, {
                 merchantId: customer.merchant_id,
                 phone: customer.phone_number,

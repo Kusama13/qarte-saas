@@ -6,11 +6,11 @@
     },
     {
       "path": "/api/cron/morning-jobs",
-      "schedule": "15 9 * * *"
+      "schedule": "0 7 * * *"
     },
     {
       "path": "/api/cron/morning-push",
-      "schedule": "0 5 * * *"
+      "schedule": "0 7 * * *"
     },
     {
       "path": "/api/cron/email-onboarding",

@@ -213,7 +213,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 ### Birthday Gift
 - `birth_month` / `birth_day` sur customers, voucher source='birthday'
-- Cron morning genere les vouchers anniversaire
+- Cron `morning-jobs` (7h UTC) genere vouchers + push client + email merchant + push merchant. SMS envoye par `sms-hourly` a 10h local (plage legale FR). Dedup via `sms_logs` same-day
 - Dashboard accueil : section "Anniversaires a venir" (3 jours, aujourd'hui inclus) si `birthday_gift_enabled`
 
 ### Avis Google
@@ -627,8 +627,8 @@ Tous les codes promo emails ont ete supprimes (QARTE50, QARTEBOOST, QARTELAST, Q
 | `/api/cron/morning` | 08:00 UTC | **Emails billing-critical** : trial (J-2/J+1/churn), post-survey, reactivation, dunning, incomplete signup T+24h, grace period setup + cleanup tracking |
 | `/api/cron/email-onboarding` | 10:00 UTC | **Emails setup progressif** : program reminder J+1, social proof J+3, vitrine J+3, planning J+4, QR code, first client script |
 | `/api/cron/email-engagement` | 13:00 UTC | **Emails engagement** : first scan/booking/reward, tier 2 upsell, inactifs J+7/14/30, referral promo J+2, referral reminders J+14/30, pending points |
-| `/api/cron/morning-jobs` | 09:15 UTC | Vouchers anniversaire (timezone-aware) + SMS anniversaire + **warning acomptes expirant dans 4h** (push merchant only) |
-| `/api/cron/morning-push` | 05:00 UTC (~7h Paris) | Push 10h (scheduled), push automations (inactifs/recompense/events), push trial reminders, **daily digest merchant** (X RDV aujourd'hui), **birthday push merchant** + SMS anniversaire client |
+| `/api/cron/morning-jobs` | 07:00 UTC (9h Paris ete / 8h hiver) | Vouchers anniversaire + push client + email merchant + push merchant + **warning acomptes expirant dans 4h**. SMS anniversaire skip ici (hors plage legale < 10h local) — fallback via `sms-hourly` |
+| `/api/cron/morning-push` | 07:00 UTC (9h Paris ete / 8h hiver) | Push 10h (scheduled), push automations (inactifs/recompense/events), push trial reminders, **daily digest merchant** (X RDV aujourd'hui) |
 | `/api/cron/evening` | 17:00 UTC | Push 19h (timezone-aware) + warning acomptes expirant dans 4h + SMS rappel J-1 |
 | `/api/cron/deposit-expiration` | toutes les heures | **Auto-liberation acomptes expires** (unique source de verite) : snapshot resa dans `booking_deposit_failures` puis wipe du slot + push + email merchant. Lag max 1h. Batch fillers + `batchGetUserEmails` |
 | `/api/cron/weekly-recap` | 17:00 UTC dimanche | Push recap semaine a venir aux merchants (X RDV, ~Y€ prevus, 7 jours glissants) |

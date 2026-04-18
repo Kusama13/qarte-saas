@@ -6,7 +6,6 @@ import webpush from 'web-push';
 import { getTrialStatus, getTodayInParis, getTodayForCountry } from '@/lib/utils';
 import { sendAutomationPush, getUpcomingEvent } from '@/lib/push-automation';
 import { sendMerchantPush } from '@/lib/merchant-push';
-import { sendBookingSms } from '@/lib/sms';
 import { verifyCronAuth } from '@/lib/cron-helpers';
 import logger from '@/lib/logger';
 
@@ -41,7 +40,6 @@ export async function GET(request: NextRequest) {
     },
     trialPush: { sent: 0 },
     dailyDigest: { sent: 0 },
-    birthdayPush: { smsSent: 0, pushSent: 0 },
   };
 
   const sectionStatuses: Array<{ name: string; status: 'ok' | 'error'; error?: string }> = [];
@@ -50,7 +48,7 @@ export async function GET(request: NextRequest) {
   // ==================== PREFETCH ====================
   const { data: allMerchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, shop_type, slug, user_id, locale, country, trial_ends_at, subscription_status, created_at, no_contact, offer_active, offer_title, offer_expires_at, pwa_installed_at, planning_enabled, birthday_gift_enabled, birthday_gift_description, billing_period_start');
+    .select('id, shop_name, shop_type, slug, user_id, locale, country, trial_ends_at, subscription_status, created_at, no_contact, offer_active, offer_title, offer_expires_at, pwa_installed_at, planning_enabled, billing_period_start');
 
   const allMerchantsList = allMerchants || [];
   const allMerchantsMap = new Map(allMerchantsList.map(m => [m.id, m]));
@@ -511,89 +509,8 @@ export async function GET(request: NextRequest) {
     sectionStatuses.push({ name: 'dailyDigest', status: 'error', error: String(error) });
   }
 
-  // ==================== BIRTHDAY (SMS client + push merchant "on lui a envoyé un SMS") ====================
-  // For each merchant with birthday_gift_enabled: send SMS to today's birthday clients (dedupe via sms_logs)
-  // + group by merchant and send one push "Anniversaire de X — on lui a envoyé un SMS de ta part"
-  if (isTimedOut()) { sectionStatuses.push({ name: 'birthdayPush', status: 'error', error: 'Skipped: cron timeout' }); }
-  else try {
-    // Only paid merchants — trial users can't send SMS, and the push claims we did
-    const bdayMerchants = allMerchantsList.filter(m =>
-      m.birthday_gift_enabled === true && !m.no_contact &&
-      ['active', 'canceling', 'past_due'].includes(m.subscription_status)
-    );
-
-    if (bdayMerchants.length > 0) {
-      // Use Paris-anchored "today" (all supported countries FR/BE/CH are in Europe/Paris-adjacent zones)
-      const todayParis = getTodayInParis();
-      const [, monthStr, dayStr] = todayParis.split('-');
-      const targetMonth = parseInt(monthStr, 10);
-      const targetDay = parseInt(dayStr, 10);
-
-      const merchantIds = bdayMerchants.map(m => m.id);
-      const merchantMap = new Map(bdayMerchants.map(m => [m.id, m]));
-
-      const { data: bdayCustomers } = await supabase
-        .from('customers')
-        .select('id, merchant_id, first_name, phone_number')
-        .in('merchant_id', merchantIds)
-        .eq('birth_month', targetMonth)
-        .eq('birth_day', targetDay);
-
-      if (bdayCustomers && bdayCustomers.length > 0) {
-        const byMerchant = new Map<string, string[]>();
-        for (const c of bdayCustomers) {
-          // Send SMS (sendBookingSms handles dedup via sms_logs — safe if morning-jobs also runs today)
-          if (c.phone_number) {
-            const m = merchantMap.get(c.merchant_id);
-            if (!m) continue;
-            const smsSent = await sendBookingSms(supabase, {
-              merchantId: m.id,
-              phone: c.phone_number,
-              shopName: m.shop_name,
-              smsType: 'birthday',
-              locale: m.locale || 'fr',
-              subscriptionStatus: m.subscription_status,
-              gift: m.birthday_gift_description || (m.locale === 'en' ? 'a gift' : 'un cadeau'),
-              clientName: c.first_name || '',
-            });
-            if (smsSent) results.birthdayPush.smsSent++;
-          }
-          if (!byMerchant.has(c.merchant_id)) byMerchant.set(c.merchant_id, []);
-          byMerchant.get(c.merchant_id)!.push(c.first_name || (merchantMap.get(c.merchant_id)?.locale === 'en' ? 'a client' : 'un(e) client(e)'));
-        }
-
-        // One grouped push per merchant
-        for (const [merchantId, names] of byMerchant) {
-          const m = merchantMap.get(merchantId);
-          if (!m) continue;
-          const isEN = m.locale === 'en';
-          const list = names.slice(0, 3).join(', ');
-          const extra = names.length > 3 ? (isEN ? ` +${names.length - 3}` : ` +${names.length - 3}`) : '';
-          const title = isEN
-            ? (names.length > 1 ? `${names.length} birthdays today 🎂` : 'Birthday today 🎂')
-            : (names.length > 1 ? `${names.length} anniversaires aujourd'hui 🎂` : `Anniversaire aujourd'hui 🎂`);
-          const body = isEN
-            ? `We sent ${names.length > 1 ? 'them' : list} an SMS on your behalf — ${list}${extra}`
-            : `On ${names.length > 1 ? 'leur' : 'lui'} a envoyé un SMS de ta part — ${list}${extra}`;
-
-          const sent = await sendMerchantPush({
-            supabase,
-            merchantId,
-            notificationType: 'birthday_digest',
-            referenceId: `${merchantId}-${todayParis}`,
-            title,
-            body,
-            url: '/dashboard/customers',
-            tag: 'qarte-merchant-birthday',
-          });
-          if (sent) results.birthdayPush.pushSent++;
-        }
-      }
-    }
-    sectionStatuses.push({ name: 'birthdayPush', status: 'ok' });
-  } catch (error) {
-    sectionStatuses.push({ name: 'birthdayPush', status: 'error', error: String(error) });
-  }
+  // Birthday SMS + push merchant + email handled exclusively by /api/cron/morning-jobs (9h15 UTC).
+  // Running birthday from here at 5h UTC would send SMS hors plage légale FR (< 10h local).
 
   // ==================== RESPONSE ====================
   const elapsedMs = Date.now() - cronStartTime;
