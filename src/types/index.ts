@@ -163,6 +163,9 @@ export interface Merchant {
   // Email deliverability
   email_bounced_at: string | null;
   email_unsubscribed_at: string | null;
+  // Trial marketing SMS (mig 115)
+  celebration_sms_sent_at: string | null;
+  marketing_sms_opted_out: boolean;
 }
 
 export type BookingMode = 'slots' | 'free';
