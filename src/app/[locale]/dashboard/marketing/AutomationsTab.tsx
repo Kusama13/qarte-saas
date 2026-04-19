@@ -22,7 +22,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 interface AutomationsTabProps {
   merchantId?: string;
   shopName?: string;
+  planTier?: 'fidelity' | 'all_in';
 }
+
+// Fidélité : seules anniversaire (cron auto, sans toggle merchant) + récompense parrainage
+// sont incluses. Tout le reste demande Tout-en-un. Source : plan-tiers.ts +
+// FIDELITY_FREE_SMS_TYPES dans sms.ts.
+const FIDELITY_AVAILABLE_FIELDS = new Set<SmsToggleField>(['referral_reward_sms_enabled']);
 
 interface SmsSettings {
   reminder_j1_enabled: boolean;
@@ -167,8 +173,14 @@ function GroupLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function AutomationsTab({ merchantId, shopName }: AutomationsTabProps) {
+export default function AutomationsTab({ merchantId, shopName, planTier = 'all_in' }: AutomationsTabProps) {
   const t = useTranslations('marketing.automations');
+  const isFidelity = planTier === 'fidelity';
+  const upgradeHint = isFidelity ? t('tierUpgradeHint') : undefined;
+  const gateByTier = (field: SmsToggleField): { disabled: boolean; hint: string | undefined } =>
+    isFidelity && !FIDELITY_AVAILABLE_FIELDS.has(field)
+      ? { disabled: true, hint: upgradeHint }
+      : { disabled: false, hint: undefined };
   const [smsSettings, setSmsSettings] = useState<SmsSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
@@ -247,12 +259,29 @@ export default function AutomationsTab({ merchantId, shopName }: AutomationsTabP
   const googleReviewMissing = smsSettings ? !smsSettings.review_link?.trim() : false;
   const rewardMissing = smsSettings ? !smsSettings.reward_description?.trim() : false;
 
+  // Combine tier gate + autres raisons de désactivation (tier a priorité sur le hint).
+  const gateCard = (field: SmsToggleField, otherDisabled: boolean, otherHint: string | undefined) => {
+    const tier = gateByTier(field);
+    if (tier.disabled) return { disabled: true, disabledHint: tier.hint };
+    return { disabled: otherDisabled, disabledHint: otherDisabled ? otherHint : undefined };
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 px-1">
         <MessageSquareText className="w-4 h-4 text-gray-400" />
         <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t('smsAutomationsHeader')}</h2>
       </div>
+
+      {isFidelity && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+          <Gift className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-amber-900">{t('fidelityBannerTitle')}</p>
+            <p className="text-xs text-amber-800 mt-0.5 leading-snug">{t('fidelityBannerDesc')}</p>
+          </div>
+        </div>
+      )}
 
       <GroupLabel>{t('groupBookings')}</GroupLabel>
 
@@ -266,8 +295,7 @@ export default function AutomationsTab({ merchantId, shopName }: AutomationsTabP
         enabled={(smsSettings?.reminder_j1_enabled ?? true) && !planningDisabled}
         loading={loading}
         updating={updating}
-        disabled={planningDisabled}
-        disabledHint={planningDisabled ? t('planningDisabledHint') : undefined}
+        {...gateCard('reminder_j1_enabled', planningDisabled, t('planningDisabledHint'))}
         onToggle={toggleSmsAutomation}
         t={t}
       />
@@ -282,8 +310,7 @@ export default function AutomationsTab({ merchantId, shopName }: AutomationsTabP
         enabled={(smsSettings?.reminder_j0_enabled ?? false) && !planningDisabled}
         loading={loading}
         updating={updating}
-        disabled={planningDisabled}
-        disabledHint={planningDisabled ? t('planningDisabledHint') : undefined}
+        {...gateCard('reminder_j0_enabled', planningDisabled, t('planningDisabledHint'))}
         onToggle={toggleSmsAutomation}
         t={t}
       />
@@ -300,8 +327,7 @@ export default function AutomationsTab({ merchantId, shopName }: AutomationsTabP
         enabled={smsSettings?.referral_reward_sms_enabled ?? true}
         loading={loading}
         updating={updating}
-        disabled={referralDisabled}
-        disabledHint={referralDisabled ? t('referralDisabledHint') : undefined}
+        {...gateCard('referral_reward_sms_enabled', referralDisabled, t('referralDisabledHint'))}
         onToggle={toggleSmsAutomation}
         t={t}
       />
@@ -316,8 +342,7 @@ export default function AutomationsTab({ merchantId, shopName }: AutomationsTabP
         enabled={smsSettings?.referral_invite_sms_enabled ?? false}
         loading={loading}
         updating={updating}
-        disabled={referralDisabled}
-        disabledHint={referralDisabled ? t('referralDisabledHint') : undefined}
+        {...gateCard('referral_invite_sms_enabled', referralDisabled, t('referralDisabledHint'))}
         onToggle={toggleSmsAutomation}
         t={t}
       />
@@ -334,8 +359,7 @@ export default function AutomationsTab({ merchantId, shopName }: AutomationsTabP
         enabled={(smsSettings?.post_visit_review_enabled ?? false) && !googleReviewMissing}
         loading={loading}
         updating={updating}
-        disabled={googleReviewMissing}
-        disabledHint={googleReviewMissing ? t('googleReviewMissingHint') : undefined}
+        {...gateCard('post_visit_review_enabled', googleReviewMissing, t('googleReviewMissingHint'))}
         onToggle={toggleSmsAutomation}
         t={t}
       />
@@ -350,6 +374,7 @@ export default function AutomationsTab({ merchantId, shopName }: AutomationsTabP
         enabled={smsSettings?.voucher_expiry_sms_enabled ?? false}
         loading={loading}
         updating={updating}
+        {...gateCard('voucher_expiry_sms_enabled', false, undefined)}
         onToggle={toggleSmsAutomation}
         t={t}
       />
@@ -364,8 +389,7 @@ export default function AutomationsTab({ merchantId, shopName }: AutomationsTabP
         enabled={(smsSettings?.near_reward_sms_enabled ?? false) && !rewardMissing}
         loading={loading}
         updating={updating}
-        disabled={rewardMissing}
-        disabledHint={rewardMissing ? t('rewardMissingHint') : undefined}
+        {...gateCard('near_reward_sms_enabled', rewardMissing, t('rewardMissingHint'))}
         onToggle={toggleSmsAutomation}
         t={t}
       />
@@ -382,6 +406,7 @@ export default function AutomationsTab({ merchantId, shopName }: AutomationsTabP
         enabled={smsSettings?.inactive_sms_enabled ?? false}
         loading={loading}
         updating={updating}
+        {...gateCard('inactive_sms_enabled', false, undefined)}
         onToggle={toggleSmsAutomation}
         t={t}
       />
@@ -408,10 +433,10 @@ export default function AutomationsTab({ merchantId, shopName }: AutomationsTabP
             aria-checked={smsSettings?.events_sms_enabled ?? false}
             aria-label={t('eventsSms')}
             onClick={() => toggleSmsAutomation('events_sms_enabled', smsSettings?.events_sms_enabled ?? false)}
-            disabled={loading || updating === 'events_sms_enabled'}
+            disabled={loading || updating === 'events_sms_enabled' || isFidelity}
             className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
               smsSettings?.events_sms_enabled ? 'bg-[#4b0082]' : 'bg-gray-200'
-            } ${loading || updating === 'events_sms_enabled' ? 'opacity-50' : ''}`}
+            } ${loading || updating === 'events_sms_enabled' || isFidelity ? 'opacity-50' : ''}`}
           >
             <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform flex items-center justify-center ${
               smsSettings?.events_sms_enabled ? 'translate-x-5' : ''
@@ -422,10 +447,13 @@ export default function AutomationsTab({ merchantId, shopName }: AutomationsTabP
         </div>
         <div className="pl-[52px] pr-1">
           <p className="text-[11px] italic text-gray-400 leading-snug line-clamp-2">&ldquo;{t('eventsSmsTemplate', { shop })}&rdquo;</p>
+          {isFidelity && (
+            <p className="text-[10px] text-amber-600 mt-1">{upgradeHint}</p>
+          )}
         </div>
 
         <AnimatePresence>
-          {smsSettings?.events_sms_enabled && (
+          {smsSettings?.events_sms_enabled && !isFidelity && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}

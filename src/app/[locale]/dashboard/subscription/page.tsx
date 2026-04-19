@@ -506,26 +506,26 @@ export default function SubscriptionPage() {
 
           {/* Price hero card */}
           <div className="bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl rounded-3xl p-5 sm:p-8">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200">
+            <div className="flex items-center justify-between mb-6 gap-2">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200 shrink-0">
                   <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <div>
-                  <p className="text-lg sm:text-xl font-black text-gray-900">
+                <div className="min-w-0 flex-1">
+                  <p className="text-base sm:text-xl font-black text-gray-900 truncate">
                     Qarte {tierDisplayName} · {billingPlan === 'annual' ? t('annual') : t('monthly')}
                   </p>
-                  <p className="text-xs text-gray-400 font-medium">
+                  <p className="text-xs text-gray-400 font-medium line-clamp-1 sm:line-clamp-none">
                     {planTier === 'fidelity' ? t('tierFidelityHint') : t('tierAllInHint')}
                   </p>
                 </div>
               </div>
-              {polling && <span className="px-3 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 rounded-full border border-indigo-100 flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin" />{t('syncing')}</span>}
-              {!polling && isPaid && <span className="px-3 py-1 text-xs font-bold text-green-700 bg-green-50 rounded-full border border-green-100">{t('statusActive')}</span>}
-              {!polling && isCanceling && <span className="px-3 py-1 text-xs font-bold text-orange-700 bg-orange-50 rounded-full border border-orange-100">{t('statusCanceling')}</span>}
-              {!polling && trialStatus.isActive && !isCanceled && <span className="px-3 py-1 text-xs font-bold text-primary bg-primary-50 rounded-full border border-primary-100">{t('statusTrial')}</span>}
-              {!polling && isCanceled && <span className="px-3 py-1 text-xs font-bold text-red-700 bg-red-50 rounded-full border border-red-100">{t('statusCanceled')}</span>}
-              {!polling && isPastDue && <span className="px-3 py-1 text-xs font-bold text-red-700 bg-red-50 rounded-full border border-red-100">{t('statusPastDue')}</span>}
+              {polling && <span className="shrink-0 px-3 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 rounded-full border border-indigo-100 flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin" />{t('syncing')}</span>}
+              {!polling && isPaid && <span className="shrink-0 px-3 py-1 text-xs font-bold text-green-700 bg-green-50 rounded-full border border-green-100">{t('statusActive')}</span>}
+              {!polling && isCanceling && <span className="shrink-0 px-3 py-1 text-xs font-bold text-orange-700 bg-orange-50 rounded-full border border-orange-100">{t('statusCanceling')}</span>}
+              {!polling && trialStatus.isActive && !isCanceled && <span className="shrink-0 px-3 py-1 text-xs font-bold text-primary bg-primary-50 rounded-full border border-primary-100">{t('statusTrial')}</span>}
+              {!polling && isCanceled && <span className="shrink-0 px-3 py-1 text-xs font-bold text-red-700 bg-red-50 rounded-full border border-red-100">{t('statusCanceled')}</span>}
+              {!polling && isPastDue && <span className="shrink-0 px-3 py-1 text-xs font-bold text-red-700 bg-red-50 rounded-full border border-red-100">{t('statusPastDue')}</span>}
             </div>
 
             {/* Price */}
@@ -565,7 +565,7 @@ export default function SubscriptionPage() {
               <div className="grid grid-cols-2 gap-2 mb-3">
                 <button
                   onClick={() => setPlanTier('fidelity')}
-                  className={`rounded-xl border-2 px-3 py-3 text-left transition-all ${
+                  className={`rounded-xl border-2 px-3 py-3 text-left transition-all min-h-[76px] ${
                     planTier === 'fidelity'
                       ? 'border-[#4b0082] bg-[#4b0082]/5'
                       : 'border-gray-200 bg-white hover:border-gray-300'
@@ -579,7 +579,7 @@ export default function SubscriptionPage() {
                 </button>
                 <button
                   onClick={() => setPlanTier('all_in')}
-                  className={`rounded-xl border-2 px-3 py-3 text-left transition-all relative ${
+                  className={`rounded-xl border-2 px-3 py-3 text-left transition-all relative min-h-[76px] ${
                     planTier === 'all_in'
                       ? 'border-[#4b0082] bg-[#4b0082]/5'
                       : 'border-gray-200 bg-white hover:border-gray-300'

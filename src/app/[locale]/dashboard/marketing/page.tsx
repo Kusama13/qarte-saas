@@ -170,6 +170,7 @@ export default function MarketingPushPage() {
         <AutomationsTab
           merchantId={merchant?.id}
           shopName={merchant?.shop_name || 'Ton Salon'}
+          planTier={merchant ? (getPlanFeatures(merchant).marketingSms ? 'all_in' : 'fidelity') : 'all_in'}
         />
       )}
 
