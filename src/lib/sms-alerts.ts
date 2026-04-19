@@ -44,9 +44,7 @@ export async function notifyMerchantQuotaAlert(
 
   const shopName = (row.shop_name as string) || 'Qarte';
   const locale = ((row.locale as string) || 'fr') as EmailLocale;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
 
-  // Push (merchant's PWA if installed)
   let pushTitle: string;
   let pushBody: string;
   if (level === '100') {
@@ -74,26 +72,21 @@ export async function notifyMerchantQuotaAlert(
     return false;
   });
 
-  // Email : uniquement pour le niveau 90% (demande user — pas 80%, pas 100%).
-  // Le 90% est le seuil clé : envoyé "plus tôt" que le blocage, actionable (achète un pack).
+  // Email uniquement à 90% — seuil actionnable avant blocage (voir sms-alerts docstring).
   let emailPromise: Promise<unknown> = Promise.resolve();
-  if (level === '90') {
-    const canSendEmail = canEmail({
-      no_contact: row.no_contact as boolean | null,
-      email_bounced_at: row.email_bounced_at as string | null,
-      email_unsubscribed_at: row.email_unsubscribed_at as string | null,
-    });
-    if (canSendEmail) {
-      const { data: userData } = await supabase.auth.admin.getUserById(row.user_id as string);
-      const email = userData?.user?.email;
-      if (email) {
-        emailPromise = sendSmsQuotaEmail(email, shopName, level, locale).catch((err) => {
-          logger.error('notifyMerchantQuotaAlert email error', err);
-        });
-      }
+  if (level === '90' && canEmail({
+    no_contact: row.no_contact as boolean | null,
+    email_bounced_at: row.email_bounced_at as string | null,
+    email_unsubscribed_at: row.email_unsubscribed_at as string | null,
+  })) {
+    const { data: userData } = await supabase.auth.admin.getUserById(row.user_id as string);
+    const email = userData?.user?.email;
+    if (email) {
+      emailPromise = sendSmsQuotaEmail(email, shopName, '90', locale).catch((err) => {
+        logger.error('notifyMerchantQuotaAlert email error', err);
+      });
     }
   }
-  void appUrl; // keep reference; used indirectly via sendSmsQuotaEmail
 
   await Promise.allSettled([pushPromise, emailPromise]);
 }

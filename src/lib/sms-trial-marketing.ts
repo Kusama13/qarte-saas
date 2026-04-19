@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { sendSms } from './ovh-sms';
 import { isLegalSendTime } from './sms-compliance';
+import { SMS_UNIT_COST } from './sms-constants';
 import logger from './logger';
 import type { Pillar } from './activation-score';
 
@@ -103,7 +104,7 @@ export async function sendTrialMarketingSms(params: {
     ovh_job_id: result.jobId ?? null,
     status: result.success ? 'sent' : 'failed',
     error_message: result.error ?? null,
-    cost_euro: result.success ? 0.075 : null,
+    cost_euro: result.success ? SMS_UNIT_COST : null,
   };
 
   const { data: logData, error: logError } = await supabase

@@ -22,6 +22,7 @@ import {
 import { Button, Modal } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { getTrialStatus, formatDate } from '@/lib/utils';
+import { isLegacyMerchant } from '@/lib/plan-tiers';
 import type { Merchant } from '@/types';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
@@ -384,14 +385,8 @@ export default function SubscriptionPage() {
   // and custom-negotiated rates). Only override for paying merchants — trial/canceled users
   // see the new public pricing since that's what they would pay if they (re)subscribe.
   const isPayingMerchant = isPaid || isCanceling || isPastDue;
-  // Legacy merchants: créés avant le pricing split 2026-04-05 (2 tiers).
-  // Ils sont grandfathered (full features Tout-en-un), pas de changement de plan
-  // possible (sauf super_admin qui peut override pour support).
-  const PRICING_SPLIT_DATE = '2026-04-05';
-  const isLegacyMerchant = isPayingMerchant && merchant?.created_at
-    ? new Date(merchant.created_at) < new Date(PRICING_SPLIT_DATE)
-    : false;
-  const canChangeTier = isPayingMerchant && (!isLegacyMerchant || isSuperAdmin);
+  const isLegacy = isPayingMerchant && isLegacyMerchant(merchant);
+  const canChangeTier = isPayingMerchant && (!isLegacy || isSuperAdmin);
   const displayPlan = isPayingMerchant && subscriptionInfo
     ? buildPlanFromSubscription(subscriptionInfo, locale)
     : PLANS[billingPlan];
@@ -645,8 +640,8 @@ export default function SubscriptionPage() {
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">{t('currentTierLabel')}</p>
                   <p className="text-sm font-bold text-gray-900">
-                    {isLegacyMerchant ? t('tierAllInName') : (merchant.plan_tier === 'fidelity' ? t('tierFidelityName') : t('tierAllInName'))}
-                    {isLegacyMerchant && (
+                    {isLegacy ? t('tierAllInName') : (merchant.plan_tier === 'fidelity' ? t('tierFidelityName') : t('tierAllInName'))}
+                    {isLegacy && (
                       <span className="ml-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-600">
                         {t('legacyBadge')}
                       </span>

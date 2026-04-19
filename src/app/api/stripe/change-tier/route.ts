@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createRouteHandlerSupabaseClient, getSupabaseAdmin } from '@/lib/supabase';
 import { stripe, PLAN, PLAN_ANNUAL, PLAN_FIDELITY, PLAN_FIDELITY_ANNUAL } from '@/lib/stripe';
+import { isLegacyMerchant } from '@/lib/plan-tiers';
 import type { PlanTier } from '@/types';
 import logger from '@/lib/logger';
 
@@ -43,12 +44,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Déjà sur ce tier' }, { status: 400 });
     }
 
-    // Legacy merchants (before 2026-04-05 pricing split) sont grandfathered
-    // sur leur tarif actuel. Pas de changement de plan côté self-service.
-    // Seul un super_admin peut forcer un changement via /admin (route séparée).
-    const PRICING_SPLIT_DATE = '2026-04-05';
-    const isLegacy = merchant.created_at && new Date(merchant.created_at) < new Date(PRICING_SPLIT_DATE);
-    if (isLegacy) {
+    // Grandfathered : seul super_admin peut changer un tier legacy (support).
+    if (isLegacyMerchant(merchant)) {
       const { data: adminRow } = await admin
         .from('super_admins')
         .select('user_id')
@@ -83,21 +80,18 @@ export async function POST(request: NextRequest) {
       metadata: { merchant_id: merchant.id, tier: newTier },
     });
 
-    // Prorata quota SMS : si upgrade Fidélité → Tout-en-un mid-cycle, donner
-    // prorata (100 × jours_restants / jours_cycle) arrondi. Exclure Fidélité-free
-    // déjà fait côté getSmsUsageThisMonth via filter sms_type.
+    // Prorata quota SMS sur upgrade Fidélité → Tout-en-un : donne quota × jours_restants / jours_cycle.
     const updatePayload: Record<string, unknown> = { plan_tier: newTier, updated_at: new Date().toISOString() };
     if (merchant.plan_tier === 'fidelity' && newTier === 'all_in') {
-      const currentPeriodStart = (subscription as unknown as { current_period_start?: number }).current_period_start;
-      const currentPeriodEnd = (subscription as unknown as { current_period_end?: number }).current_period_end;
-      if (currentPeriodStart && currentPeriodEnd) {
+      const item = subscription.items.data[0];
+      if (item?.current_period_start && item.current_period_end) {
         const nowSec = Math.floor(Date.now() / 1000);
-        const cycleSec = currentPeriodEnd - currentPeriodStart;
-        const remainingSec = Math.max(0, currentPeriodEnd - nowSec);
+        const cycleSec = item.current_period_end - item.current_period_start;
+        const remainingSec = Math.max(0, item.current_period_end - nowSec);
         const prorata = Math.max(1, Math.round(100 * remainingSec / cycleSec));
         updatePayload.sms_quota_override = prorata;
-        updatePayload.sms_quota_override_cycle_anchor = new Date(currentPeriodStart * 1000).toISOString();
-        logger.info('sms_quota_prorata_set', { merchantId: merchant.id, prorata, cycleStart: new Date(currentPeriodStart * 1000).toISOString() });
+        updatePayload.sms_quota_override_cycle_anchor = new Date(item.current_period_start * 1000).toISOString();
+        logger.info('sms_quota_prorata_set', { merchantId: merchant.id, prorata });
       }
     }
     // Si downgrade Tout-en-un → Fidélité : clear override (Fidélité quota = 0 de toute façon)

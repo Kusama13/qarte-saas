@@ -65,6 +65,22 @@ export function getPlanTier(merchant: MerchantLike | null | undefined): PlanTier
   return merchant.plan_tier === 'fidelity' ? 'fidelity' : 'all_in';
 }
 
+/**
+ * Date du split pricing 2 tiers (Fidélité / Tout-en-un).
+ * Merchants créés avant cette date sont grandfathered : tarif historique conservé,
+ * accès full Tout-en-un, bouton changer de plan masqué (sauf super_admin).
+ */
+export const PRICING_SPLIT_DATE = '2026-04-05';
+
+/**
+ * True si le merchant a été créé avant le split pricing — tarif historique
+ * conservé, pas de self-service change-tier.
+ */
+export function isLegacyMerchant(merchant: { created_at?: string | null } | null | undefined): boolean {
+  if (!merchant?.created_at) return false;
+  return new Date(merchant.created_at) < new Date(PRICING_SPLIT_DATE);
+}
+
 /** Convenience checks (UI gating). */
 export function hasPlanning(merchant: MerchantLike | null | undefined) {
   return getPlanFeatures(merchant).planning;

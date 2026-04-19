@@ -923,7 +923,7 @@ export async function sendSocialProofEmail(
 export async function sendSmsQuotaEmail(
   to: string,
   shopName: string,
-  level: '80' | '90' | '100',
+  level: '90' | '100',
   locale: EmailLocale = 'fr',
 ): Promise<SendEmailResult> {
   const subjectKey = level === '100' ? 'smsQuotaReached' : 'smsQuotaWarning';

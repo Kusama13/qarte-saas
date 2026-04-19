@@ -12,6 +12,7 @@ import {
   sendActivationStalledEmail,
 } from '@/lib/email';
 import { computeActivationScore } from '@/lib/activation-score';
+import { TRACKING_CODES } from '@/lib/email-tracking-codes';
 import type { EmailLocale } from '@/emails/translations';
 import { getTrialStatus } from '@/lib/utils';
 import { sendMerchantPush } from '@/lib/merchant-push';
@@ -199,7 +200,7 @@ export async function GET(request: NextRequest) {
   else try {
     const seventyThreeHoursAgo = new Date(now.getTime() - 73 * 60 * 60 * 1000);
     const seventyTwoHoursAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
-    const TRACK_ACTIVATION_STALLED = -320;
+    const TRACK_ACTIVATION_STALLED = TRACKING_CODES.ACTIVATION_STALLED;
 
     const stalledCandidates = configuredActiveMerchants.filter(m =>
       m.subscription_status === 'trial' &&

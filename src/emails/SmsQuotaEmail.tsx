@@ -5,17 +5,15 @@ import { getEmailT, type EmailLocale } from './translations';
 
 interface SmsQuotaEmailProps {
   shopName: string;
-  level: '80' | '90' | '100';
+  level: '90' | '100';
   ctaUrl: string;
   locale?: EmailLocale;
 }
 
 export function SmsQuotaEmail({ shopName, level, ctaUrl, locale = 'fr' }: SmsQuotaEmailProps) {
   const t = getEmailT(locale);
-  // Email principal = 90% (actionable, avec lien achat pack)
-  // 80% = push seulement (pas d'email), 100% = push seulement (bloc hard déjà en place)
-  const prefix = level === '100' ? 'smsQuotaReached' : level === '90' ? 'smsQuotaWarning' : 'smsQuotaWarning';
   const isBlocked = level === '100';
+  const prefix = isBlocked ? 'smsQuotaReached' : 'smsQuotaWarning';
 
   return (
     <BaseLayout preview={t(`${prefix}.preview`, { shopName })} locale={locale}>

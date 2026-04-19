@@ -1,21 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { sendUpgradeAllInEmail } from './email';
+import { canEmail } from './cron-helpers';
+import { TRACKING_CODES } from './email-tracking-codes';
 import type { UpgradeTrigger } from '@/emails';
 import type { EmailLocale } from '@/emails/translations';
 import logger from './logger';
 
-/**
- * Helpers pour déclencher UpgradeAllInEmail (plan v2 §4).
- * Paywall Fidélité → Tout-en-un avec dedup 14 jours glissants.
- *
- * Tracking codes :
- * - -330 : SMS campaign blocked
- * - -331 : Booking request manual
- */
-
-const TRACKING_CODES: Record<UpgradeTrigger, number> = {
-  sms_campaign_blocked: -330,
-  booking_request_manual: -331,
+const TRIGGER_TO_TRACKING_CODE: Record<UpgradeTrigger, number> = {
+  sms_campaign_blocked: TRACKING_CODES.UPGRADE_SMS_CAMPAIGN_BLOCKED,
+  booking_request_manual: TRACKING_CODES.UPGRADE_BOOKING_REQUEST_MANUAL,
 };
 
 const COOLDOWN_DAYS = 14;
@@ -26,32 +19,29 @@ export async function triggerUpgradeAllInEmail(
   trigger: UpgradeTrigger,
   triggerContext?: string,
 ): Promise<{ sent: boolean; reason?: string }> {
-  const trackingCode = TRACKING_CODES[trigger];
+  const trackingCode = TRIGGER_TO_TRACKING_CODE[trigger];
   const cooldownStart = new Date(Date.now() - COOLDOWN_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
-  // Dedup 14j : pas d'envoi si tracking code récent trouvé
-  const { data: recentTracking } = await supabase
-    .from('pending_email_tracking')
-    .select('id')
-    .eq('merchant_id', merchantId)
-    .eq('reminder_day', trackingCode)
-    .gte('created_at', cooldownStart)
-    .limit(1);
+  const [trackingRes, merchantRes] = await Promise.all([
+    supabase
+      .from('pending_email_tracking')
+      .select('id')
+      .eq('merchant_id', merchantId)
+      .eq('reminder_day', trackingCode)
+      .gte('created_at', cooldownStart)
+      .limit(1),
+    supabase
+      .from('merchants')
+      .select('id, shop_name, user_id, locale, no_contact, email_bounced_at, email_unsubscribed_at, subscription_status, plan_tier, created_at')
+      .eq('id', merchantId)
+      .single(),
+  ]);
 
-  if ((recentTracking?.length ?? 0) > 0) {
-    return { sent: false, reason: 'cooldown_14d' };
-  }
+  if ((trackingRes.data?.length ?? 0) > 0) return { sent: false, reason: 'cooldown_14d' };
 
-  const { data: merchant } = await supabase
-    .from('merchants')
-    .select('id, shop_name, user_id, locale, no_contact, email_bounced_at, email_unsubscribed_at, subscription_status, plan_tier, created_at')
-    .eq('id', merchantId)
-    .single();
-
+  const merchant = merchantRes.data;
   if (!merchant) return { sent: false, reason: 'merchant_not_found' };
-  if (merchant.no_contact || merchant.email_bounced_at || merchant.email_unsubscribed_at) {
-    return { sent: false, reason: 'contact_blocked' };
-  }
+  if (!canEmail(merchant)) return { sent: false, reason: 'contact_blocked' };
   if (merchant.plan_tier !== 'fidelity') return { sent: false, reason: 'not_fidelity_tier' };
   if (!['active', 'trial'].includes(merchant.subscription_status)) {
     return { sent: false, reason: 'inactive_subscription' };

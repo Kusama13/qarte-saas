@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { authorizeAdmin } from '@/lib/api-helpers';
 import logger from '@/lib/logger';
-
-/**
- * Admin communications timeline unifiée (plan v2 §6).
- * Merge 3 sources : emails (pending_email_tracking) + SMS marketing merchant
- * (merchant_marketing_sms_logs) + push merchant (merchant_push_logs).
- *
- * Retourne timeline triée ts desc, limite 100 entrées (suffisant pour 10 jours trial).
- */
 
 type ChannelType = 'email' | 'sms' | 'push';
 
@@ -21,15 +14,15 @@ interface TimelineEntry {
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = await authorizeAdmin(request, 'admin-communications');
+  if (auth.response) return auth.response;
+
   try {
     const { id: merchantId } = await params;
     const supabaseAdmin = getSupabaseAdmin();
-
-    // TODO (Phase ultérieure) : vérifier super_admin auth
-    // Pour l'instant on suppose que /admin/* est déjà gated par middleware
 
     const [emailsRes, smsRes, pushRes] = await Promise.all([
       supabaseAdmin

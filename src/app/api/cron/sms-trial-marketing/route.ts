@@ -152,25 +152,21 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
-        const activation = await computeActivationScore(supabase, {
-          id: merchant.id,
-          bio: merchant.bio,
-          shop_address: merchant.shop_address,
-        });
+        const [activation, recommendedTier, customersRes, bookingsRes] = await Promise.all([
+          computeActivationScore(supabase, {
+            id: merchant.id,
+            bio: merchant.bio,
+            shop_address: merchant.shop_address,
+          }),
+          recommendTierForMerchant(supabase, merchant.id) as Promise<TierRecommended>,
+          supabase.from('customers').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
+          supabase.from('merchant_planning_slots').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id).eq('booked_online', true),
+        ]);
 
-        // Gating ≥S1
         if (activation.score < 1) {
           results.preLoss.skipped++;
           continue;
         }
-
-        const recommendedTier = (await recommendTierForMerchant(supabase, merchant.id)) as TierRecommended;
-
-        // Stats merchant pour copy
-        const [customersRes, bookingsRes] = await Promise.all([
-          supabase.from('customers').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
-          supabase.from('merchant_planning_slots').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id).eq('booked_online', true),
-        ]);
 
         const body = preLossSmsBody(merchant.shop_name, recommendedTier, {
           customerCount: customersRes.count ?? 0,
