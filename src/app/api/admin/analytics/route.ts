@@ -32,13 +32,6 @@ interface MerchantRow {
   booking_mode: string | null;
 }
 
-interface Snapshot {
-  snapshot_date: string;
-  mrr: number;
-  active_subscribers: number;
-  trial_users: number;
-}
-
 export async function GET(request: NextRequest) {
   const auth = await authorizeAdmin(request, 'admin-analytics');
   if (auth.response) return auth.response;
@@ -68,7 +61,6 @@ export async function GET(request: NextRequest) {
       vouchersRes,
       servicesRes,
       photosRes,
-      snapshotsRes,
       firstVisitsRes,
       tenthCardsRes,
     ] = await Promise.all([
@@ -89,7 +81,6 @@ export async function GET(request: NextRequest) {
       supabaseAdmin.from('vouchers').select('source'),
       supabaseAdmin.from('merchant_services').select('merchant_id'),
       supabaseAdmin.from('merchant_photos').select('merchant_id'),
-      supabaseAdmin.from('revenue_snapshots').select('*').order('snapshot_date', { ascending: true }).limit(12),
       supabaseAdmin.rpc('get_first_visit_per_merchant'),
       supabaseAdmin.rpc('get_tenth_card_date_per_merchant'),
     ]);
@@ -121,7 +112,7 @@ export async function GET(request: NextRequest) {
     const merchantsWithServices = new Set((servicesRes.data || []).map((s: { merchant_id: string }) => s.merchant_id));
     const merchantsWithPhotos = new Set((photosRes.data || []).map((p: { merchant_id: string }) => p.merchant_id));
 
-    let trialActive = 0, converted = 0, canceled = 0, expired = 0;
+    let trialActive = 0, paid = 0, canceled = 0, expired = 0;
     let mrrCents = 0, monthlyMrrCents = 0, annualMrrCents = 0;
     let monthlyCount = 0, annualCount = 0;
 
@@ -132,7 +123,7 @@ export async function GET(request: NextRequest) {
 
       const s = m.subscription_status;
       if (isPaid(s)) {
-        if (s === 'active') converted++;
+        paid++;
         const tier = m.plan_tier === 'fidelity' ? 'fidelity' : 'all_in';
         tierBreakdown[tier]++;
         const priceCents = Math.round(priceFor(m) * 100);
@@ -165,7 +156,7 @@ export async function GET(request: NextRequest) {
       if (merchantsWithPhotos.has(m.id)) fc_counts.photos++;
     }
 
-    const churnRate = (converted + canceled) > 0 ? Math.round((canceled / (converted + canceled)) * 100) : 0;
+    const churnRate = (paid + canceled) > 0 ? Math.round((canceled / (paid + canceled)) * 100) : 0;
 
     // ── Trial-to-paid rate (last 30 days) + avg time to convert ──
     const oneMonthAgo = new Date(now.getTime() - 30 * 86400000);
@@ -296,12 +287,28 @@ export async function GET(request: NextRequest) {
       vouchersBySource[src] = (vouchersBySource[src] || 0) + 1;
     }
 
-    // ── MRR history (from snapshots) ──
-    const snapshots = (snapshotsRes.data || []) as Snapshot[];
-    const mrrHistory = snapshots.map((s) => ({
-      month: new Date(s.snapshot_date).toLocaleDateString('fr-FR', { month: 'short' }),
-      mrr: s.mrr,
-    }));
+    // ── Nouveaux abonnés payants par mois (12 derniers mois) ──
+    // Proxy date conversion = trial_ends_at (trial 7j → ≈ date 1ère facture).
+    // Inclut les canceled (ils ont payé à un moment donné).
+    const newPaidByMonth: { month: string; count: number; monthKey: string }[] = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      newPaidByMonth.push({
+        monthKey: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+        month: d.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }),
+        count: 0,
+      });
+    }
+    const keyIndex = new Map(newPaidByMonth.map((m, i) => [m.monthKey, i]));
+    for (const m of merchants) {
+      if (!m.trial_ends_at) continue;
+      const s = m.subscription_status;
+      if (s !== 'active' && s !== 'canceling' && s !== 'past_due' && s !== 'canceled') continue;
+      const d = new Date(m.trial_ends_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const idx = keyIndex.get(key);
+      if (idx !== undefined) newPaidByMonth[idx].count++;
+    }
 
     // ── Helpers ──
     const toTrend = (rec: Record<string, number>) =>
@@ -316,19 +323,17 @@ export async function GET(request: NextRequest) {
         annualMrr: Math.round(annualMrrCents / 100),
         monthlyCount,
         annualCount,
-        activeSubscribers: converted + canceled === 0 ? 0 : (converted + tierBreakdown.fidelity + tierBreakdown.all_in - converted),
+        paid,
         churnRate,
         churned: canceled,
-        mrrHistory,
+        newPaidByMonth: newPaidByMonth.map(({ month, count }) => ({ month, count })),
         tierMix: tierBreakdown,
-        arpu: (tierBreakdown.fidelity + tierBreakdown.all_in) > 0
-          ? Math.round((mrrCents / 100) / (tierBreakdown.fidelity + tierBreakdown.all_in))
-          : 0,
+        arpu: paid > 0 ? Math.round((mrrCents / 100) / paid) : 0,
       },
       funnel: {
         total: merchants.length,
         trialActive,
-        converted,
+        paid,
         canceled,
         expired,
         trialToPaidRate,

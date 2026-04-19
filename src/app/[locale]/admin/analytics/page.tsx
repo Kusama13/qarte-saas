@@ -38,16 +38,17 @@ interface AnalyticsData {
     annualMrr: number;
     monthlyCount: number;
     annualCount: number;
+    paid: number;
     churnRate: number;
     churned: number;
-    mrrHistory: { month: string; mrr: number }[];
+    newPaidByMonth: { month: string; count: number }[];
     tierMix: { fidelity: number; all_in: number };
     arpu: number;
   };
   funnel: {
     total: number;
     trialActive: number;
-    converted: number;
+    paid: number;
     canceled: number;
     expired: number;
     trialToPaidRate: number;
@@ -234,82 +235,59 @@ export default function AnalyticsPage() {
 
 /* ─── Revenue ─── */
 
+function SplitBar({ label, count, amount, pct, color }: { label: string; count: number; amount?: string; pct: number; color: string }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between text-sm mb-1">
+        <span className="font-medium text-gray-700">{label}</span>
+        <span className="text-gray-500">
+          {count} {amount ? `· ${amount}` : `(${pct}%)`}
+        </span>
+      </div>
+      <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
 function RevenueTab({ data }: { data: AnalyticsData['revenue'] }) {
-  const totalPaid = data.tierMix.fidelity + data.tierMix.all_in;
-  const fidelityPct = totalPaid > 0 ? Math.round((data.tierMix.fidelity / totalPaid) * 100) : 0;
-  const allInPct = totalPaid > 0 ? 100 - fidelityPct : 0;
+  const paid = data.paid;
+  const pct = (n: number) => paid > 0 ? Math.round((n / paid) * 100) : 0;
 
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="MRR" value={formatEur(data.mrr)} accent="text-[#4b0082]" sub={`${totalPaid} abonnés payants`} />
+        <KpiCard label="MRR actuel" value={formatEur(data.mrr)} accent="text-[#4b0082]" sub={`${paid} abonnés payants`} />
         <KpiCard label="Mensuel / Annuel" value={`${data.monthlyCount} / ${data.annualCount}`} sub={`${formatEur(data.monthlyMrr)} · ${formatEur(data.annualMrr)}`} />
         <KpiCard label="ARPU" value={formatEur(data.arpu)} sub="Revenu moyen / merchant" />
-        <KpiCard label="Churn rate" value={`${data.churnRate.toFixed(1)}%`} sub={`${data.churned} churned`} accent={data.churnRate > 5 ? 'text-red-600' : 'text-gray-900'} />
+        <KpiCard label="Churn rate" value={`${data.churnRate}%`} sub={`${data.churned} churned`} accent={data.churnRate > 5 ? 'text-red-600' : 'text-gray-900'} />
       </div>
 
-      <ChartCard title="MRR — 12 derniers mois">
-        <ResponsiveContainer width="100%" height={260}>
-          <AreaChart data={data.mrrHistory}>
-            <defs>
-              <linearGradient id="gradMrr" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={BRAND} stopOpacity={0.3} />
-                <stop offset="100%" stopColor={BRAND} stopOpacity={0} />
-              </linearGradient>
-            </defs>
+      <ChartCard title="Nouveaux abonnés payants par mois">
+        <ResponsiveContainer width="100%" height={240}>
+          <BarChart data={data.newPaidByMonth}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
             <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip formatter={(v: number) => formatEur(v)} />
-            <Area type="monotone" dataKey="mrr" stroke={BRAND} fill="url(#gradMrr)" strokeWidth={2} />
-          </AreaChart>
+            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+            <Tooltip />
+            <Bar dataKey="count" fill={BRAND} radius={[4, 4, 0, 0]} />
+          </BarChart>
         </ResponsiveContainer>
       </ChartCard>
 
       <div className="grid md:grid-cols-2 gap-4">
         <ChartCard title="Répartition billing">
           <div className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between text-sm mb-1">
-                <span className="font-medium text-gray-700">Mensuel</span>
-                <span className="text-gray-500">{data.monthlyCount} · {formatEur(data.monthlyMrr)}</span>
-              </div>
-              <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-[#4b0082]" style={{ width: `${totalPaid > 0 ? (data.monthlyCount / totalPaid) * 100 : 0}%` }} />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between text-sm mb-1">
-                <span className="font-medium text-gray-700">Annuel</span>
-                <span className="text-gray-500">{data.annualCount} · {formatEur(data.annualMrr)}</span>
-              </div>
-              <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-violet-400" style={{ width: `${totalPaid > 0 ? (data.annualCount / totalPaid) * 100 : 0}%` }} />
-              </div>
-            </div>
+            <SplitBar label="Mensuel" count={data.monthlyCount} amount={formatEur(data.monthlyMrr)} pct={pct(data.monthlyCount)} color="bg-[#4b0082]" />
+            <SplitBar label="Annuel" count={data.annualCount} amount={formatEur(data.annualMrr)} pct={pct(data.annualCount)} color="bg-violet-400" />
           </div>
         </ChartCard>
 
         <ChartCard title="Mix tier">
           <div className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between text-sm mb-1">
-                <span className="font-medium text-gray-700">Fidélité</span>
-                <span className="text-gray-500">{data.tierMix.fidelity} ({fidelityPct}%)</span>
-              </div>
-              <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-indigo-500" style={{ width: `${fidelityPct}%` }} />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between text-sm mb-1">
-                <span className="font-medium text-gray-700">Tout-en-un</span>
-                <span className="text-gray-500">{data.tierMix.all_in} ({allInPct}%)</span>
-              </div>
-              <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-emerald-500" style={{ width: `${allInPct}%` }} />
-              </div>
-            </div>
+            <SplitBar label="Fidélité 19€" count={data.tierMix.fidelity} pct={pct(data.tierMix.fidelity)} color="bg-indigo-500" />
+            <SplitBar label="Tout-en-un 24€" count={data.tierMix.all_in} pct={pct(data.tierMix.all_in)} color="bg-emerald-500" />
           </div>
         </ChartCard>
       </div>
@@ -325,14 +303,14 @@ function FunnelTab({ data }: { data: AnalyticsData['funnel'] }) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard label="Total inscrits" value={formatNum(data.total)} />
         <KpiCard label="Essais actifs" value={formatNum(data.trialActive)} accent="text-amber-600" />
-        <KpiCard label="Convertis" value={formatNum(data.converted)} accent="text-emerald-600" />
+        <KpiCard label="Payants" value={formatNum(data.paid)} accent="text-emerald-600" />
         <KpiCard label="Expirés" value={formatNum(data.expired)} sub={`${data.canceled} annulés`} />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <KpiCard label="Trial → Paid (30j)" value={`${data.trialToPaidRate.toFixed(1)}%`} sub={`${data.trialConverted30d} / ${data.trialEnded30d}`} accent="text-[#4b0082]" />
+        <KpiCard label="Trial → Paid (30j)" value={`${data.trialToPaidRate}%`} sub={`${data.trialConverted30d} / ${data.trialEnded30d}`} accent="text-[#4b0082]" />
         <KpiCard label="Temps conv. moyen" value={`${data.avgTimeToConvert.toFixed(1)} j`} sub="Signup → paid" />
-        <KpiCard label="Taux conversion total" value={`${data.total > 0 ? ((data.converted / data.total) * 100).toFixed(1) : '0'}%`} />
+        <KpiCard label="Taux conversion total" value={`${data.total > 0 ? ((data.paid / data.total) * 100).toFixed(1) : '0'}%`} />
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
@@ -378,7 +356,7 @@ function ActivationTab({ data }: { data: AnalyticsData['activation'] }) {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="Taux activation 30j" value={`${data.activationRate.toFixed(1)}%`} sub={`${data.recentActivatedCount} / ${data.recentMerchantCount}`} accent="text-[#4b0082]" />
+        <KpiCard label="Taux activation 30j" value={`${data.activationRate}%`} sub={`${data.recentActivatedCount} / ${data.recentMerchantCount}`} accent="text-[#4b0082]" />
         <KpiCard label="Avg → 1er scan" value={`${data.avgTimeToFirstScan.toFixed(1)} j`} />
         <KpiCard label="Avg → 10e client" value={`${data.avgTimeTo10Customers.toFixed(1)} j`} />
         <KpiCard label="Merchants récents" value={formatNum(data.recentMerchantCount)} sub="30 derniers jours" />
@@ -481,7 +459,7 @@ function AutomationsTab({ data }: { data: AnalyticsData['automations'] }) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard label="Push manuels" value={formatNum(data.manualPushSent)} accent="text-[#4b0082]" />
         <KpiCard label="Push automatiques" value={formatNum(totalAuto)} sub="Sur la période" />
-        <KpiCard label="Conv. réservation" value={`${data.bookingSlots.conversionRate.toFixed(1)}%`} sub={`${data.bookingSlots.booked} / ${data.bookingSlots.created}`} accent="text-emerald-600" />
+        <KpiCard label="Conv. réservation" value={`${data.bookingSlots.conversionRate}%`} sub={`${data.bookingSlots.booked} / ${data.bookingSlots.created}`} accent="text-emerald-600" />
         <KpiCard label="Offres actives" value={formatNum(data.offers.active)} sub={`${data.offers.totalClaims} claims`} />
       </div>
 
