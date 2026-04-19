@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
-import { getSmsUsageThisMonth, getQuotaFor } from '@/lib/sms';
+import { getSmsUsageThisMonth, getEffectiveQuota } from '@/lib/sms';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   // Verify merchant ownership
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('id, billing_period_start, sms_pack_balance, plan_tier, subscription_status')
+    .select('id, billing_period_start, sms_pack_balance, plan_tier, subscription_status, sms_quota_override, sms_quota_override_cycle_anchor')
     .eq('id', merchantId)
     .eq('user_id', user.id)
     .single();
@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
-  const quota = getQuotaFor(merchant);
-  const usage = await getSmsUsageThisMonth(supabase, merchantId, merchant.billing_period_start, quota);
+  const usage = await getSmsUsageThisMonth(supabase, merchantId, merchant.billing_period_start, 100);
+  const quota = getEffectiveQuota(merchant, usage.periodStart);
   const packBalance = Number((merchant as { sms_pack_balance?: number }).sms_pack_balance || 0);
   return NextResponse.json({ ...usage, packBalance, quota });
 }
