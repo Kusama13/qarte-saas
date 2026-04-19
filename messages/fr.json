@@ -1661,6 +1661,7 @@
     "tierAllInHint": "Fidélité + planning + résa en ligne + 100 SMS + campagnes.",
     "currentTierLabel": "Plan actuel",
     "changeTierCta": "Changer de plan",
+    "legacyBadge": "Tarif historique",
     "changeTierTitle": "Choisis ton plan",
     "changeTierDesc": "Changement immédiat avec calcul au prorata.",
     "changeTierCurrent": "Plan actuel",

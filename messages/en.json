@@ -1661,6 +1661,7 @@
     "tierAllInHint": "Loyalty + scheduling + online booking + 100 SMS + campaigns.",
     "currentTierLabel": "Current plan",
     "changeTierCta": "Change plan",
+    "legacyBadge": "Grandfathered rate",
     "changeTierTitle": "Choose your plan",
     "changeTierDesc": "Immediate change with prorated billing.",
     "changeTierCurrent": "Current",

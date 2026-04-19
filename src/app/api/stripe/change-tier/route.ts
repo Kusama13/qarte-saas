@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     const admin = getSupabaseAdmin();
     const { data: merchant } = await admin
       .from('merchants')
-      .select('id, stripe_subscription_id, billing_interval, plan_tier, subscription_status')
+      .select('id, stripe_subscription_id, billing_interval, plan_tier, subscription_status, created_at')
       .eq('user_id', user.id)
       .single();
 
@@ -41,6 +41,25 @@ export async function POST(request: NextRequest) {
     }
     if (merchant.plan_tier === newTier) {
       return NextResponse.json({ error: 'Déjà sur ce tier' }, { status: 400 });
+    }
+
+    // Legacy merchants (before 2026-04-05 pricing split) sont grandfathered
+    // sur leur tarif actuel. Pas de changement de plan côté self-service.
+    // Seul un super_admin peut forcer un changement via /admin (route séparée).
+    const PRICING_SPLIT_DATE = '2026-04-05';
+    const isLegacy = merchant.created_at && new Date(merchant.created_at) < new Date(PRICING_SPLIT_DATE);
+    if (isLegacy) {
+      const { data: adminRow } = await admin
+        .from('super_admins')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!adminRow) {
+        return NextResponse.json(
+          { error: 'legacy_grandfathered', message: 'Ton tarif historique est conservé — contacte le support pour changer de plan.' },
+          { status: 403 },
+        );
+      }
     }
 
     const interval: 'monthly' | 'annual' = merchant.billing_interval === 'annual' ? 'annual' : 'monthly';
