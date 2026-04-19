@@ -14,8 +14,8 @@ type Billing = 'monthly' | 'annual';
 const PLANS = {
   fidelity: {
     monthly: 19,
-    annual: 180,
-    monthlyEquiv: 15,
+    annual: 190,
+    monthlyEquiv: 16,
     featureKeys: ['fidelityFeature1', 'fidelityFeature2', 'fidelityFeature3', 'fidelityFeature4', 'fidelityFeature5', 'fidelityFeature6', 'fidelityFeature7'] as const,
   },
   all_in: {

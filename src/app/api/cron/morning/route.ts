@@ -24,6 +24,7 @@ import {
   canEmail,
 } from '@/lib/cron-helpers';
 import { CHURN_BONUS_DAYS_BY_CONVINCE } from '@/lib/churn-survey-config';
+import { recommendTierForMerchant } from '@/lib/trial-tier-reco';
 import logger from '@/lib/logger';
 
 const supabase = createClient(
@@ -96,7 +97,8 @@ export async function GET(request: NextRequest) {
           if (trialStatus.isActive && trialStatus.daysRemaining === 2) {
             const trackCode = -201;
             if (globalTrackingSet.has(`${merchant.id}:${trackCode}`)) continue;
-            await sendTrialEndingEmail(email, merchant.shop_name, trialStatus.daysRemaining, (merchant.locale as EmailLocale) || 'fr');
+            const recommendedTier = await recommendTierForMerchant(supabase, merchant.id);
+            await sendTrialEndingEmail(email, merchant.shop_name, trialStatus.daysRemaining, (merchant.locale as EmailLocale) || 'fr', recommendedTier);
             await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
             results.trialEmails.ending++;
             await rateLimitDelay();

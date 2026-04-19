@@ -60,6 +60,7 @@ interface TrackingData {
     signupTrend: TrendPoint[];
     funnel: { total: number; trialActive: number; converted: number; canceled: number; expired: number };
   };
+  tierMix: { fidelity: number; all_in: number; mrrEstimateEur: number };
   engagement: {
     active7d: number;
     active30d: number;
@@ -119,8 +120,11 @@ export default function TrackingPage() {
     return <p className="text-center text-gray-500 mt-20">Erreur de chargement</p>;
   }
 
-  const { signupFunnel, engagement, featureAdoption, pushEmail, bookingOffers, customerGrowth } = data;
+  const { signupFunnel, tierMix, engagement, featureAdoption, pushEmail, bookingOffers, customerGrowth } = data;
   const f = signupFunnel.funnel;
+  const totalPaid = tierMix.fidelity + tierMix.all_in;
+  const fidelityPct = totalPaid > 0 ? Math.round((tierMix.fidelity / totalPaid) * 100) : 0;
+  const allInPct = totalPaid > 0 ? 100 - fidelityPct : 0;
 
   return (
     <div className="max-w-6xl mx-auto px-4 pb-20">
@@ -142,6 +146,14 @@ export default function TrackingPage() {
         <MetricCard label="Convertis" value={f.converted} />
         <MetricCard label="Annules" value={f.canceled} />
         <MetricCard label="Expires" value={f.expired} />
+      </div>
+
+      {/* Tier mix (paying merchants only) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <MetricCard label="Tier Fidélité" value={`${tierMix.fidelity}`} />
+        <MetricCard label="Tier Tout-en-un" value={`${tierMix.all_in}`} />
+        <MetricCard label="Mix Fidélité" value={`${fidelityPct}%`} />
+        <MetricCard label="MRR estimé" value={`${tierMix.mrrEstimateEur}€`} />
       </div>
 
       <div className="grid md:grid-cols-2 gap-4 mb-6">

@@ -34,6 +34,7 @@ import {
   GracePeriodSetupEmail,
   BirthdayNotificationEmail,
   AnnouncementMaPageEmail,
+  PlansLaunchEmail,
   WinBackEmail,
   BookingNotificationEmail,
   SmsQuotaEmail,
@@ -210,14 +211,15 @@ export async function sendTrialEndingEmail(
   to: string,
   shopName: string,
   daysRemaining: number,
-  locale: EmailLocale = 'fr'
+  locale: EmailLocale = 'fr',
+  recommendedTier: 'fidelity' | 'all_in' | null = null,
 ): Promise<SendEmailResult> {
   const subject = daysRemaining <= 1
     ? subj(locale, 'trialEndingLastDay', { shopName })
     : subj(locale, 'trialEndingDays', { shopName, daysRemaining });
 
-  return sendEmail(to, subject, TrialEndingEmail, { shopName, daysRemaining, locale }, {
-    logLabel: `Trial ending email (${daysRemaining} days)`,
+  return sendEmail(to, subject, TrialEndingEmail, { shopName, daysRemaining, recommendedTier, locale }, {
+    logLabel: `Trial ending email (${daysRemaining} days, reco: ${recommendedTier ?? 'none'})`,
   });
 }
 
@@ -742,6 +744,17 @@ export async function sendAnnouncementMaPageEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'announcementMaPage', { shopName }), AnnouncementMaPageEmail, { shopName, slug, isSubscribed, locale }, {
     logLabel: 'Announcement Ma Page email',
+  });
+}
+
+export async function sendPlansLaunchEmail(
+  to: string,
+  shopName: string,
+  currentPrice: string,
+  locale: EmailLocale = 'fr'
+): Promise<SendEmailResult> {
+  return sendEmail(to, subj(locale, 'plansLaunch', { shopName }), PlansLaunchEmail, { shopName, currentPrice, locale }, {
+    logLabel: 'Plans launch email',
   });
 }
 

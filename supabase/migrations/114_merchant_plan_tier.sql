@@ -13,4 +13,4 @@ CREATE INDEX IF NOT EXISTS idx_merchants_plan_tier
   WHERE subscription_status IN ('active', 'canceling', 'past_due');
 
 COMMENT ON COLUMN merchants.plan_tier IS
-  'Tier produit : fidelity (19€/180€, fidélité seule) ou all_in (24€/240€, planning + résa + marketing). Trials = all_in via getPlanFeatures().';
+  'Tier produit : fidelity (19€/190€, fidélité seule) ou all_in (24€/240€, planning + résa + marketing). Trials = all_in via getPlanFeatures().';

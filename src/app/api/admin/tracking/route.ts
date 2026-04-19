@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       supabaseAdmin
         .from('merchants')
-        .select('id, signup_source, first_feature_choice, created_at, subscription_status, trial_ends_at, user_id, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, planning_enabled, auto_booking_enabled, shield_enabled, tier2_enabled, pwa_installed_at, logo_url, review_link, booking_url, shop_name, loyalty_mode, booking_mode'),
+        .select('id, signup_source, first_feature_choice, created_at, subscription_status, plan_tier, billing_interval, trial_ends_at, user_id, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, planning_enabled, auto_booking_enabled, shield_enabled, tier2_enabled, pwa_installed_at, logo_url, review_link, booking_url, shop_name, loyalty_mode, booking_mode'),
       supabaseAdmin.from('super_admins').select('user_id'),
       supabaseAdmin
         .from('visits')
@@ -112,6 +112,9 @@ export async function GET(request: NextRequest) {
 
     const fc_counts = { logo: 0, referral: 0, birthday: 0, welcome: 0, doubleDays: 0, planning: 0, autoBooking: 0, shield: 0, tier2: 0, pwa: 0, review: 0, booking: 0, services: 0, photos: 0, cagnotte: 0, modeSlots: 0, modeFree: 0 };
 
+    const tierBreakdown = { fidelity: 0, all_in: 0 };
+    let mrrCents = 0;
+
     for (const m of merchants) {
       const src = m.signup_source || 'direct';
       bySource[src] = (bySource[src] || 0) + 1;
@@ -123,7 +126,16 @@ export async function GET(request: NextRequest) {
       if (date) signupByDate[date] = (signupByDate[date] || 0) + 1;
 
       const s = m.subscription_status;
-      if (s === 'active') converted++;
+      if (s === 'active' || s === 'canceling') {
+        if (s === 'active') converted++;
+        const tier = m.plan_tier === 'fidelity' ? 'fidelity' : 'all_in';
+        tierBreakdown[tier]++;
+        // MRR estimate from public pricing (grandfathered prices not reflected here — for true MRR query Stripe).
+        const monthlyEur = tier === 'fidelity'
+          ? (m.billing_interval === 'annual' ? 190 / 12 : 19)
+          : (m.billing_interval === 'annual' ? 240 / 12 : 24);
+        mrrCents += Math.round(monthlyEur * 100);
+      }
       else if (s === 'canceled') canceled++;
       else if (s === 'trial') {
         const end = m.trial_ends_at ? new Date(m.trial_ends_at) : null;
@@ -260,6 +272,11 @@ export async function GET(request: NextRequest) {
         byFeatureChoice: toArray(byFeatureChoice, 'choice'),
         signupTrend: toTrend(signupByDate),
         funnel: { total: merchants.length, trialActive, converted, canceled, expired },
+      },
+      tierMix: {
+        fidelity: tierBreakdown.fidelity,
+        all_in: tierBreakdown.all_in,
+        mrrEstimateEur: Math.round(mrrCents / 100),
       },
       engagement: {
         active7d: active7dSet.size,

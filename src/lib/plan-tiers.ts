@@ -2,7 +2,7 @@ import type { Merchant, PlanTier, SubscriptionStatus } from '@/types';
 
 /**
  * Plan tiers Qarte (avril 2026).
- * - fidelity (19€/180€) : fidélité seule, pas de planning ni résa en ligne, pas de SMS marketing manuel
+ * - fidelity (19€/190€) : fidélité seule, pas de planning ni résa en ligne, pas de SMS marketing manuel
  * - all_in (24€/240€) : full features
  *
  * Pendant le trial, tous les merchants ont accès all_in (sauf SMS sortants déjà gated par PAID_STATUSES).

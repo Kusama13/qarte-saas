@@ -15,6 +15,8 @@ import {
 interface MerchantSms {
   merchant_id: string;
   shop_name: string;
+  plan_tier?: 'fidelity' | 'all_in';
+  quota?: number;
   sent_this_month: number;
   free_remaining: number;
   overage_cost: number;
@@ -220,8 +222,9 @@ export default function AdminSmsPage() {
                     <thead>
                       <tr className="text-[11px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50">
                         <th className="px-4 py-2">Merchant</th>
+                        <th className="px-4 py-2">Tier</th>
                         <th className="px-4 py-2">Cycle</th>
-                        <th className="px-4 py-2 text-right">Envoyés</th>
+                        <th className="px-4 py-2 text-right">Envoyés / Quota</th>
                         <th className="px-4 py-2 text-right">Restant gratuit</th>
                         <th className="px-4 py-2 text-right">Dépassement</th>
                       </tr>
@@ -230,12 +233,21 @@ export default function AdminSmsPage() {
                       {data.merchants.map((m) => (
                         <tr key={m.merchant_id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
                           <td className="px-4 py-2.5 text-sm font-medium text-gray-700">{m.shop_name}</td>
+                          <td className="px-4 py-2.5 text-xs">
+                            <span className={`inline-flex px-2 py-0.5 rounded-md font-semibold ${
+                              m.plan_tier === 'fidelity'
+                                ? 'bg-slate-100 text-slate-700'
+                                : 'bg-violet-100 text-violet-700'
+                            }`}>
+                              {m.plan_tier === 'fidelity' ? 'Fidélité' : 'Tout-en-un'}
+                            </span>
+                          </td>
                           <td className="px-4 py-2.5 text-xs text-gray-400">
                             {new Date(m.period_start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                             {' — '}
                             {new Date(m.period_end).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                           </td>
-                          <td className="px-4 py-2.5 text-sm text-right text-gray-600">{m.sent_this_month}</td>
+                          <td className="px-4 py-2.5 text-sm text-right text-gray-600">{m.sent_this_month} / {m.quota || 100}</td>
                           <td className="px-4 py-2.5 text-sm text-right">
                             <span className={`font-medium ${m.free_remaining === 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
                               {m.free_remaining}

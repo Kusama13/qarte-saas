@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { stripe } from '@/lib/stripe';
+import { stripe, PLAN, PLAN_ANNUAL, PLAN_FIDELITY, PLAN_FIDELITY_ANNUAL, PLAN_LEGACY_PRICE_IDS } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 import logger from '@/lib/logger';
@@ -7,7 +7,18 @@ import { sendSubscriptionConfirmedEmail, sendPaymentFailedEmail, sendSubscriptio
 import type { EmailLocale } from '@/emails/translations';
 import { sendCapiPurchaseEvent } from '@/lib/facebook-capi';
 import { toBCP47, getCurrencyForCountry } from '@/lib/utils';
-import type { SubscriptionStatus } from '@/types';
+import type { SubscriptionStatus, PlanTier } from '@/types';
+
+/** Map a Stripe price ID to our internal tier. Returns null if unknown
+ *  (e.g. very old grandfathered prices, EN-only prices, custom-negotiated rates). */
+function tierFromPriceId(priceId: string | null | undefined): PlanTier | null {
+  if (!priceId) return null;
+  if (priceId === PLAN_FIDELITY.priceId || priceId === PLAN_FIDELITY_ANNUAL.priceId) return 'fidelity';
+  if (priceId === PLAN.priceId || priceId === PLAN_ANNUAL.priceId) return 'all_in';
+  // Legacy Tout-en-un prices — existing subscribers stay on these
+  if (priceId === PLAN_LEGACY_PRICE_IDS.monthly || priceId === PLAN_LEGACY_PRICE_IDS.annual) return 'all_in';
+  return null;
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -296,12 +307,19 @@ export async function POST(request: Request) {
         }
       }
 
+      // Sync tier if Stripe portal swapped the price (e.g. via portal config).
+      // Unknown prices (grandfathered, custom) leave plan_tier untouched.
+      const currentPriceId = subscription.items.data[0]?.price?.id;
+      const detectedTier = tierFromPriceId(currentPriceId);
+      const updatePayload: Record<string, unknown> = {
+        subscription_status: newStatus,
+        updated_at: new Date().toISOString(),
+      };
+      if (detectedTier) updatePayload.plan_tier = detectedTier;
+
       const { data: updatedMerchant } = await supabase
         .from('merchants')
-        .update({
-          subscription_status: newStatus,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updatePayload)
         .eq('stripe_subscription_id', subscription.id)
         .select('id, shop_name, user_id, locale')
         .single();

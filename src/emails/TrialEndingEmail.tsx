@@ -11,10 +11,12 @@ import { getEmailT, type EmailLocale } from './translations';
 interface TrialEndingEmailProps {
   shopName: string;
   daysRemaining: number;
+  /** Recommended tier based on activation usage. When set, shows a 2-card chooser instead of the legacy price block. */
+  recommendedTier?: 'fidelity' | 'all_in' | null;
   locale?: EmailLocale;
 }
 
-export function TrialEndingEmail({ shopName, daysRemaining, locale = 'fr' }: TrialEndingEmailProps) {
+export function TrialEndingEmail({ shopName, daysRemaining, recommendedTier = null, locale = 'fr' }: TrialEndingEmailProps) {
   const t = getEmailT(locale);
   const isUrgent = daysRemaining <= 1;
   const daysPlural = daysRemaining > 1 ? 's' : '';
@@ -45,17 +47,41 @@ export function TrialEndingEmail({ shopName, daysRemaining, locale = 'fr' }: Tri
         </Text>
       </Section>
 
-      <Section style={priceSection}>
-        <Text style={priceLabel}>{t('trialEnding.subscriptionLabel')}</Text>
-        <Text style={price}>{t('trialEnding.priceFull')}<span style={priceMonth}>{t('trialEnding.priceFullSuffix')}</span></Text>
-        <Text style={priceNoteStyle}>{t('trialEnding.priceNote')}</Text>
-      </Section>
-
-      <Section style={buttonContainer}>
-        <Button style={button} href="https://getqarte.com/dashboard/subscription">
-          {t('trialEnding.ctaNoPromo')}
-        </Button>
-      </Section>
+      {recommendedTier ? (
+        <>
+          <Text style={paragraph}>{t('trialEnding.tierIntro')}</Text>
+          <Section style={recommendedTier === 'all_in' ? tierBoxRecommended : tierBox}>
+            {recommendedTier === 'all_in' && <Text style={tierBadge}>{t('trialEnding.tierRecommendedBadge')}</Text>}
+            <Text style={tierName}>{t('trialEnding.tierAllInName')}</Text>
+            <Text style={tierPrice}>{t('trialEnding.tierAllInPrice')}</Text>
+            <Text style={tierDesc}>{t('trialEnding.tierAllInDesc')}</Text>
+          </Section>
+          <Section style={recommendedTier === 'fidelity' ? tierBoxRecommended : tierBox}>
+            {recommendedTier === 'fidelity' && <Text style={tierBadge}>{t('trialEnding.tierRecommendedBadge')}</Text>}
+            <Text style={tierName}>{t('trialEnding.tierFidelityName')}</Text>
+            <Text style={tierPrice}>{t('trialEnding.tierFidelityPrice')}</Text>
+            <Text style={tierDesc}>{t('trialEnding.tierFidelityDesc')}</Text>
+          </Section>
+          <Section style={buttonContainer}>
+            <Button style={button} href="https://getqarte.com/dashboard/subscription">
+              {t('trialEnding.tierCta')}
+            </Button>
+          </Section>
+        </>
+      ) : (
+        <>
+          <Section style={priceSection}>
+            <Text style={priceLabel}>{t('trialEnding.subscriptionLabel')}</Text>
+            <Text style={price}>{t('trialEnding.priceFull')}<span style={priceMonth}>{t('trialEnding.priceFullSuffix')}</span></Text>
+            <Text style={priceNoteStyle}>{t('trialEnding.priceNote')}</Text>
+          </Section>
+          <Section style={buttonContainer}>
+            <Button style={button} href="https://getqarte.com/dashboard/subscription">
+              {t('trialEnding.ctaNoPromo')}
+            </Button>
+          </Section>
+        </>
+      )}
 
       <Section style={socialProofBox}>
         <Text style={socialProofText}>
@@ -191,6 +217,13 @@ const socialProofLinkStyle = {
   fontWeight: '600' as const,
   textDecoration: 'underline',
 };
+
+const tierBox = { backgroundColor: '#f8f9fa', borderRadius: '12px', padding: '20px 24px', margin: '0 0 12px 0', borderLeft: '4px solid #94a3b8' };
+const tierBoxRecommended = { backgroundColor: '#faf5ff', borderRadius: '12px', padding: '20px 24px', margin: '0 0 12px 0', borderLeft: '4px solid #7c3aed', position: 'relative' as const };
+const tierBadge = { display: 'inline-block', backgroundColor: '#7c3aed', color: '#ffffff', fontSize: '10px', fontWeight: '700' as const, textTransform: 'uppercase' as const, letterSpacing: '0.05em', padding: '3px 8px', borderRadius: '4px', margin: '0 0 8px 0' };
+const tierName = { color: '#1a1a1a', fontSize: '17px', fontWeight: '700' as const, margin: '0 0 4px 0' };
+const tierPrice = { color: '#7c3aed', fontSize: '20px', fontWeight: '800' as const, margin: '0 0 8px 0' };
+const tierDesc = { color: '#4a5568', fontSize: '14px', lineHeight: '1.6', margin: '0' };
 
 const signature = {
   color: '#4a5568',

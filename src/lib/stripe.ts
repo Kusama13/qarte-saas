@@ -39,10 +39,17 @@ export const PLAN_FIDELITY = {
 export const PLAN_FIDELITY_ANNUAL = {
   name: 'Fidélité Annuel',
   tier: 'fidelity' as const,
-  price: 180,
-  monthlyEquivalent: 15,
+  price: 190,
+  monthlyEquivalent: 16,
   priceId: (process.env.STRIPE_PRICE_FIDELITY_ANNUAL || '').trim(),
   interval: 'year' as const,
+};
+
+// Legacy Tout-en-un prices — kept so existing subscribers who still pay against
+// these IDs are still mapped to 'all_in' by the webhook. Not used for new checkouts.
+export const PLAN_LEGACY_PRICE_IDS = {
+  monthly: (process.env.STRIPE_PRICE_ID_LEGACY || '').trim(),
+  annual: (process.env.STRIPE_PRICE_ID_ANNUAL_LEGACY || '').trim(),
 };
 
 // USD plans for EN merchants

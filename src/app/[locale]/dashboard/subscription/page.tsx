@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Gift,
   Copy,
+  ArrowUpDown,
 } from 'lucide-react';
 import { Button, Modal } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -80,6 +81,8 @@ export default function SubscriptionPage() {
   const [subscribing, setSubscribing] = useState(false);
   const [billingPlan, setBillingPlan] = useState<'monthly' | 'annual'>('monthly');
   const [planTier, setPlanTier] = useState<'fidelity' | 'all_in'>('all_in');
+  const [showChangeTierModal, setShowChangeTierModal] = useState(false);
+  const [changingTier, setChangingTier] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [loadingPayment, setLoadingPayment] = useState(false);
@@ -299,6 +302,33 @@ export default function SubscriptionPage() {
     }
   };
 
+  const handleChangeTier = async (newTier: 'fidelity' | 'all_in') => {
+    if (!merchant || merchant.plan_tier === newTier) return;
+    setChangingTier(true);
+    try {
+      const res = await fetch('/api/stripe/change-tier', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier: newTier }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setToast({ type: 'error', message: data.error || t('paymentError') });
+        return;
+      }
+      setToast({ type: 'success', message: newTier === 'all_in' ? t('upgradeSuccess') : t('downgradeSuccess') });
+      setShowChangeTierModal(false);
+      // Refresh merchant data so the new tier appears immediately
+      const { data: refreshed } = await supabase.from('merchants').select('*').eq('user_id', (await supabase.auth.getUser()).data.user?.id || '').single();
+      if (refreshed) setMerchant(refreshed);
+    } catch (error) {
+      console.error('Change tier error:', error);
+      setToast({ type: 'error', message: t('paymentError') });
+    } finally {
+      setChangingTier(false);
+    }
+  };
+
   const handleSubscribe = async () => {
     setSubscribing(true);
     try {
@@ -482,7 +512,7 @@ export default function SubscriptionPage() {
                 >
                   <div className="flex items-baseline justify-between mb-0.5">
                     <span className="text-sm font-bold text-gray-900">{t('tierFidelityName')}</span>
-                    <span className="text-sm font-extrabold text-gray-900">{billingPlan === 'annual' ? '180€' : '19€'}</span>
+                    <span className="text-sm font-extrabold text-gray-900">{billingPlan === 'annual' ? '190€' : '19€'}</span>
                   </div>
                   <p className="text-[11px] text-gray-500 leading-tight">{t('tierFidelityHint')}</p>
                 </button>
@@ -589,6 +619,25 @@ export default function SubscriptionPage() {
                   <CreditCard className="w-3 h-3" />
                   {t('stripeSecure')}
                 </span>
+              </div>
+            )}
+
+            {/* Tier badge + change plan (paid merchants only) */}
+            {isPayingMerchant && merchant && (
+              <div className="mt-5 pt-5 border-t border-gray-100 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">{t('currentTierLabel')}</p>
+                  <p className="text-sm font-bold text-gray-900">
+                    {merchant.plan_tier === 'fidelity' ? t('tierFidelityName') : t('tierAllInName')}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowChangeTierModal(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                >
+                  <ArrowUpDown className="w-3.5 h-3.5" />
+                  {t('changeTierCta')}
+                </button>
               </div>
             )}
           </div>
@@ -756,6 +805,54 @@ export default function SubscriptionPage() {
           )}
         </div>
       </div>
+
+      {/* Change tier modal */}
+      <Modal isOpen={showChangeTierModal} onClose={() => !changingTier && setShowChangeTierModal(false)} size="sm">
+        <div className="space-y-4">
+          <h3 className="text-lg font-bold text-gray-900">{t('changeTierTitle')}</h3>
+          <p className="text-sm text-gray-500">{t('changeTierDesc')}</p>
+
+          {(['fidelity', 'all_in'] as const).map(tier => {
+            const isCurrent = merchant?.plan_tier === tier;
+            const isDowngrade = merchant?.plan_tier === 'all_in' && tier === 'fidelity';
+            const interval = merchant?.billing_interval === 'annual' ? 'annual' : 'monthly';
+            const price = tier === 'fidelity'
+              ? (interval === 'annual' ? '190€/an' : '19€/mois')
+              : (interval === 'annual' ? '240€/an' : '24€/mois');
+            return (
+              <button
+                key={tier}
+                disabled={isCurrent || changingTier}
+                onClick={() => handleChangeTier(tier)}
+                className={`w-full text-left rounded-xl border-2 px-4 py-3 transition-all ${
+                  isCurrent
+                    ? 'border-emerald-300 bg-emerald-50 cursor-default'
+                    : 'border-gray-200 bg-white hover:border-[#4b0082] hover:bg-[#4b0082]/5'
+                } ${changingTier ? 'opacity-60 cursor-wait' : ''}`}
+              >
+                <div className="flex items-baseline justify-between mb-1">
+                  <span className="text-sm font-bold text-gray-900">
+                    {tier === 'fidelity' ? t('tierFidelityName') : t('tierAllInName')}
+                    {isCurrent && <span className="ml-2 text-[10px] font-bold uppercase text-emerald-700">· {t('changeTierCurrent')}</span>}
+                  </span>
+                  <span className="text-sm font-extrabold text-gray-900">{price}</span>
+                </div>
+                <p className="text-xs text-gray-500 leading-snug">
+                  {tier === 'fidelity' ? t('tierFidelityHint') : t('tierAllInHint')}
+                </p>
+                {isDowngrade && !isCurrent && (
+                  <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-amber-50 p-2 text-[11px] text-amber-800">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <span>{t('changeTierDowngradeWarning')}</span>
+                  </div>
+                )}
+              </button>
+            );
+          })}
+
+          <p className="text-[11px] text-gray-400 text-center">{t('changeTierProrationNote')}</p>
+        </div>
+      </Modal>
 
       {/* NFC explanation modal */}
       <Modal isOpen={showNfcModal} onClose={() => setShowNfcModal(false)} size="sm">
