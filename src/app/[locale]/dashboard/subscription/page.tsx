@@ -144,14 +144,15 @@ export default function SubscriptionPage() {
     t('featureUnlimitedClients'),
     t('featureProPage'),
     t('featureReferral'),
+    t('featureDuoOffer'),
     t('featureNotifications'),
     t('featureQrNfc'),
   ];
   const allInExtrasFeatures = [
     t('featurePlanning'),
     t('featureSms'),
-    t('featureDuoOffer'),
-    t('featureNoCommission'),
+    t('featureContest'),
+    t('featureMemberPrograms'),
   ];
   // Liste complète des features actives du tier courant (pour le mode payant summary).
   const activeFeaturesByTier: Record<PlanTier, string[]> = {
