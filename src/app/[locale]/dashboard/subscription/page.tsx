@@ -41,15 +41,45 @@ interface SubscriptionInfo {
   interval: 'month' | 'year';
 }
 
-const PLANS_FR = {
-  monthly: { price: 24, priceDisplay: '24,00', sep: ',', daily: '0,80', label: '24 €/mois' },
-  annual: { price: 240, priceDisplay: '20,00', sep: ',', daily: '0,66', label: '240 €/an', originalPrice: '288 €', savings: '-17%' },
+type PlanTier = 'fidelity' | 'all_in';
+type BillingInterval = 'monthly' | 'annual';
+
+// Prix par tier × billing.
+// priceMonthlyEquivalent = ce qu'on affiche en big number (équivalent mensuel pour l'annuel).
+// label = affiché en petit sous le prix annuel.
+const TIER_PRICES: Record<PlanTier, Record<BillingInterval, { monthlyEquivalent: number; total: number }>> = {
+  fidelity: {
+    monthly: { monthlyEquivalent: 19, total: 19 },
+    annual: { monthlyEquivalent: 190 / 12, total: 190 },
+  },
+  all_in: {
+    monthly: { monthlyEquivalent: 24, total: 24 },
+    annual: { monthlyEquivalent: 240 / 12, total: 240 },
+  },
 };
 
-const PLANS_EN = {
-  monthly: { price: 24, priceDisplay: '24.00', sep: '.', daily: '0.80', label: '$24/mo' },
-  annual: { price: 240, priceDisplay: '20.00', sep: '.', daily: '0.66', label: '$240/yr', originalPrice: '$288', savings: '-17%' },
-};
+// Retourne l'affichage formaté du prix (priceDisplay, sep, daily, label, annualOriginal)
+function buildPlan(tier: PlanTier, interval: BillingInterval, locale: string) {
+  const { monthlyEquivalent, total } = TIER_PRICES[tier][interval];
+  const sep = locale === 'en' ? '.' : ',';
+  const fmt = (n: number) => n.toFixed(2).replace('.', sep);
+  const currency = '€';
+  const intervalSuffix = interval === 'annual' ? (locale === 'en' ? '/yr' : '/an') : (locale === 'en' ? '/mo' : '/mois');
+  // Prix "original" pour mettre en valeur l'économie annuelle (équivalent mensuel × 12)
+  const monthlyRate = TIER_PRICES[tier].monthly.total;
+  const annualOriginal = `${monthlyRate * 12} ${currency}`;
+  const savingsPct = interval === 'annual'
+    ? `-${Math.round((1 - total / (monthlyRate * 12)) * 100)}%`
+    : '0%';
+  return {
+    priceDisplay: fmt(monthlyEquivalent),
+    sep,
+    daily: fmt(monthlyEquivalent / 30),
+    label: `${total} ${currency}${intervalSuffix}`,
+    annualOriginal,
+    savingsPct,
+  };
+}
 
 // Build the displayed price values from the merchant's actual Stripe subscription
 // (handles grandfathered prices: 19€/mois, 180€/an, or any custom-negotiated rate).
@@ -75,7 +105,6 @@ export default function SubscriptionPage() {
   const searchParams = useSearchParams();
   const t = useTranslations('subscription');
   const locale = useLocale();
-  const PLANS = locale === 'en' ? PLANS_EN : PLANS_FR;
   const { refetch: refetchContext } = useMerchant();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,18 +136,32 @@ export default function SubscriptionPage() {
     }
     return false;
   });
-  const features = [
-    t('featurePlanning'),
-    t('featureSms'),
-    t('featureUnlimitedClients'),
-    t('featureStampsCashback'),
-    t('featureProPage'),
-    t('featureQrNfc'),
-    t('featureReferral'),
-    t('featureDuoOffer'),
-    t('featureNotifications'),
-    t('featureNoCommission'),
-  ];
+  // Features par tier — les deux premières highlight = features mises en avant
+  // (grosses promesses). Fidélité retire planning/résa/SMS/duo qui sont all_in only.
+  const featuresByTier: Record<PlanTier, string[]> = {
+    fidelity: [
+      t('featureStampsCashback'),
+      t('featureGoogleReviews'),
+      t('featureUnlimitedClients'),
+      t('featureProPage'),
+      t('featureQrNfc'),
+      t('featureReferral'),
+      t('featureNotifications'),
+      t('featureNoCommission'),
+    ],
+    all_in: [
+      t('featurePlanning'),
+      t('featureSms'),
+      t('featureStampsCashback'),
+      t('featureUnlimitedClients'),
+      t('featureProPage'),
+      t('featureQrNfc'),
+      t('featureReferral'),
+      t('featureDuoOffer'),
+      t('featureNotifications'),
+      t('featureNoCommission'),
+    ],
+  };
 
   useEffect(() => {
     if (searchParams.get('success') === 'true') {
@@ -383,14 +426,16 @@ export default function SubscriptionPage() {
 
   // Display the merchant's actual Stripe subscription price (handles grandfathered 19€/180€
   // and custom-negotiated rates). Only override for paying merchants — trial/canceled users
-  // see the new public pricing since that's what they would pay if they (re)subscribe.
+  // see the public pricing of the tier they currently have selected.
   const isPayingMerchant = isPaid || isCanceling || isPastDue;
   const isLegacy = isPayingMerchant && isLegacyMerchant(merchant);
   const canChangeTier = isPayingMerchant && (!isLegacy || isSuperAdmin);
   const displayPlan = isPayingMerchant && subscriptionInfo
     ? buildPlanFromSubscription(subscriptionInfo, locale)
-    : PLANS[billingPlan];
+    : buildPlan(planTier, billingPlan, locale);
   const hasActualAnnualPrice = isPayingMerchant && subscriptionInfo?.interval === 'year';
+  const activeFeatures = featuresByTier[planTier];
+  const tierDisplayName = planTier === 'fidelity' ? t('tierFidelityName') : t('tierAllInName');
 
   return (
     <div className="max-w-5xl mx-auto stagger-fade-in">
@@ -467,8 +512,12 @@ export default function SubscriptionPage() {
                   <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-lg sm:text-xl font-black text-gray-900">{billingPlan === 'annual' ? t('planProAnnual') : t('planProMonthly')}</p>
-                  <p className="text-xs text-gray-400 font-medium">{t('allIncluded')}</p>
+                  <p className="text-lg sm:text-xl font-black text-gray-900">
+                    Qarte {tierDisplayName} · {billingPlan === 'annual' ? t('annual') : t('monthly')}
+                  </p>
+                  <p className="text-xs text-gray-400 font-medium">
+                    {planTier === 'fidelity' ? t('tierFidelityHint') : t('tierAllInHint')}
+                  </p>
                 </div>
               </div>
               {polling && <span className="px-3 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 rounded-full border border-indigo-100 flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin" />{t('syncing')}</span>}
@@ -501,7 +550,7 @@ export default function SubscriptionPage() {
                   {hasActualAnnualPrice ? (
                     <p className="text-sm text-gray-400 mt-1"><span className="font-bold text-gray-600">{displayPlan.label}</span></p>
                   ) : (
-                    <p className="text-sm text-gray-400 mt-1"><span className="line-through">{PLANS.annual.originalPrice}</span> → <span className="font-bold text-emerald-600">{PLANS.annual.label}</span></p>
+                    <p className="text-sm text-gray-400 mt-1"><span className="line-through">{buildPlan(planTier, 'annual', locale).annualOriginal}</span> → <span className="font-bold text-emerald-600">{buildPlan(planTier, 'annual', locale).label}</span></p>
                   )}
                   <button onClick={() => setShowNfcModal(true)} className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 hover:from-indigo-100 hover:to-violet-100 transition-colors cursor-pointer underline-offset-2 hover:underline">
                     <CreditCard className="w-3.5 h-3.5 text-indigo-600" />
@@ -568,14 +617,14 @@ export default function SubscriptionPage() {
                   }`}
                 >
                   {t('annual')}
-                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">{PLANS.annual.savings}</span>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">{buildPlan(planTier, 'annual', locale).savingsPct}</span>
                 </button>
               </div>
             )}
 
             {/* Features — mobile: compact list / desktop: grid */}
             <div className="hidden sm:grid sm:grid-cols-2 gap-2 mb-6">
-              {features.map((feature, i) => (
+              {activeFeatures.map((feature, i) => (
                 <div key={i} className="flex items-center gap-2 py-1.5">
                   <Check className={`w-4 h-4 shrink-0 ${i < 2 ? 'text-indigo-500' : 'text-emerald-500'}`} />
                   <span className={`text-sm ${i < 2 ? 'font-bold text-gray-900' : 'text-gray-600'}`}>{feature}</span>
@@ -590,7 +639,7 @@ export default function SubscriptionPage() {
             </div>
             <div className="sm:hidden mb-6">
               <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-                {features.map((feature, i) => (
+                {activeFeatures.map((feature, i) => (
                   <div key={i} className="flex items-center gap-1.5">
                     <Check className={`w-3 h-3 shrink-0 ${i < 2 ? 'text-indigo-500' : 'text-emerald-500'}`} />
                     <span className={`text-[11px] leading-tight ${i < 2 ? 'font-bold text-gray-800' : 'text-gray-500'}`}>{feature}</span>
@@ -767,7 +816,7 @@ export default function SubscriptionPage() {
                           : 'text-gray-500'
                       }`}
                     >
-                      {t('annual')} <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1 py-0.5 rounded-full">{t('recommended')}</span> <span className="text-emerald-600">{PLANS.annual.savings}</span>
+                      {t('annual')} <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1 py-0.5 rounded-full">{t('recommended')}</span> <span className="text-emerald-600">{buildPlan(planTier, 'annual', locale).savingsPct}</span>
                     </button>
                   </div>
                   <Button

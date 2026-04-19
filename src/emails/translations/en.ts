@@ -165,10 +165,11 @@ export const en = {
   },
 
   subscriptionConfirmed: {
-    preview: 'Your Qarte subscription is active — SMS and bookings at full power!',
+    preview: 'Your Qarte subscription is active',
     heading: 'Your subscription is active!',
     greeting: 'Hi <strong>{shopName}</strong>,',
-    intro: 'Thank you for your trust! Your subscription is active, your <strong>100 SMS/month are unlocked</strong> — reminders, confirmations and birthday messages are sent automatically.',
+    introAllIn: 'Thank you for your trust! Your All-in-one subscription is active, your <strong>100 SMS/month are unlocked</strong> — reminders, confirmations and birthday messages are sent automatically. Planning and online booking enabled.',
+    introFidelity: 'Thank you for your trust! Your Loyalty subscription is active. Loyalty program, online page, referral and Google reviews are running for you. Birthday and referral SMS are sent automatically, no counter.',
     confirmTitle: '✓ Subscription confirmed',
     tierAllInName: '✓ Qarte All-in-one activated',
     tierFidelityName: '✓ Qarte Loyalty activated',

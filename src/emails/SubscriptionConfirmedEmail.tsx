@@ -32,7 +32,7 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingI
 
       <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('subscriptionConfirmed.greeting', { shopName }) }} />
 
-      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('subscriptionConfirmed.intro') }} />
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: planTier === 'fidelity' ? t('subscriptionConfirmed.introFidelity') : t('subscriptionConfirmed.introAllIn') }} />
 
       <Section style={confirmBox}>
         <Text style={confirmTitle}>{tierName}</Text>
