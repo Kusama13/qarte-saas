@@ -32,8 +32,8 @@ test.describe('Pricing page — 2 tiers', () => {
   });
 
   test('both CTAs link to the merchant signup page', async ({ page }) => {
-    const fidelityCta = page.getByRole('link', { name: /Démarrer Fidélité/i });
-    const allInCta = page.getByRole('link', { name: /Démarrer Tout-en-un/i });
+    const fidelityCta = page.getByRole('link', { name: /Essayer Fidélité/i });
+    const allInCta = page.getByRole('link', { name: /Essayer Tout-en-un/i });
     await expect(fidelityCta).toHaveAttribute('href', /\/auth\/merchant\/signup/);
     await expect(allInCta).toHaveAttribute('href', /\/auth\/merchant\/signup/);
   });

@@ -26,3 +26,4 @@ src/app/v4/
 /test-results/
 /playwright-report/
 /playwright/.cache/
+audit-screenshots/

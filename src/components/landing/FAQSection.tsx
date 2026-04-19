@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, MessageCircle } from 'lucide-react';
+import { ChevronDown, MessageCircle, Plus } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 import { useTranslations } from 'next-intl';
+
+const INITIAL_VISIBLE_FAQS = 4;
 
 function AccordionItem({
   faq,
@@ -80,12 +82,14 @@ function AccordionItem({
 export function FAQSection() {
   const { ref, isInView } = useInView();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [showAll, setShowAll] = useState(false);
   const t = useTranslations('faq');
 
   const faqItems = [13, 1, 2, 4, 5, 6, 9, 10, 11, 12].map((i) => ({
     question: t(`q${i}`),
     answer: t(`a${i}`),
   }));
+  const visibleItems = showAll ? faqItems : faqItems.slice(0, INITIAL_VISIBLE_FAQS);
 
   const faqJsonLd = {
     '@context': 'https://schema.org',
@@ -123,7 +127,7 @@ export function FAQSection() {
         </div>
 
         <div className="flex flex-col gap-2.5">
-          {faqItems.map((faq, index) => (
+          {visibleItems.map((faq, index) => (
             <AccordionItem
               key={index}
               faq={faq}
@@ -133,6 +137,20 @@ export function FAQSection() {
             />
           ))}
         </div>
+
+        {/* Show-more toggle (Pareto: top objections by default, rest on demand) */}
+        {!showAll && faqItems.length > INITIAL_VISIBLE_FAQS && (
+          <div className="flex justify-center mt-5">
+            <button
+              type="button"
+              onClick={() => setShowAll(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-indigo-600 bg-white border border-indigo-100 rounded-full hover:bg-indigo-50 hover:border-indigo-200 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              {t('showMore', { count: faqItems.length - INITIAL_VISIBLE_FAQS })}
+            </button>
+          </div>
+        )}
 
         {/* WhatsApp compact */}
         <motion.div

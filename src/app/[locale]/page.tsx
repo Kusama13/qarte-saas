@@ -3,12 +3,11 @@ import {
   SocialProofSection,
   FeaturesGridSection,
   PageProSection,
-  TestimonialsSection,
-  PricingSection,
+  SocialProofMergedSection,
+  PricingSectionCondensed,
   FooterSection,
   ScrollToTopButton,
   MobileStickyCta,
-  CaseStudySection,
 } from '@/components/landing';
 import ClientShell from '@/components/landing/ClientShell';
 import { LazyFideliteSection, LazyFAQSection } from '@/components/landing/LazySections';
@@ -27,9 +26,8 @@ export default function LandingPageV4() {
         <FeaturesGridSection />
         <LazyFideliteSection />
         <PageProSection />
-        <TestimonialsSection />
-        <CaseStudySection />
-        <PricingSection />
+        <SocialProofMergedSection />
+        <PricingSectionCondensed />
         <LazyFAQSection />
         <FooterSection />
       </main>

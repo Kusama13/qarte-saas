@@ -154,7 +154,7 @@ export function PricingSection() {
             <Link
               href="/auth/merchant/signup"
               onClick={() => { trackCtaClick('pricing_fidelity', 'pricing_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-              className="block w-full py-4 border-2 border-gray-900 text-gray-900 font-bold rounded-2xl hover:bg-gray-900 hover:text-white transition-colors duration-300 text-center text-sm uppercase tracking-wider"
+              className="block w-full py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-black transition-colors duration-300 text-center text-sm uppercase tracking-wider shadow-md shadow-gray-900/15"
             >
               {t('ctaTrialFidelity')}
             </Link>
