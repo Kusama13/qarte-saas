@@ -840,10 +840,10 @@ export const fr = {
     heading: 'Par où commencer chez {shopName} ?',
     greeting: 'Bonjour <strong>{shopName}</strong>,',
     intro: 'Ça fait quelques jours que ton essai a démarré. Si tu n\'as pas encore eu le temps de tester, on comprend — on reçoit tous des semaines chargées. Voilà 3 merchants qui ont testé en moins d\'une semaine :',
-    caseStudyTitle: 'Ils ont démarré comme toi',
-    caseStudy1: 'Sarah (institut, Paris) — 1re cliente fidélisée en 20 min, 8 en 1 semaine',
-    caseStudy2: 'Élodie (onglerie, Lyon) — 12 résas en ligne dès le 3e jour',
-    caseStudy3: 'Mélissa (coiffure, Toulouse) — vitrine publiée en 15 min, 4 nouvelles clientes en 1 mois',
+    caseStudyTitle: 'Ce qu\'on voit chez les pros qui démarrent',
+    caseStudy1: 'Configurer ton programme fidélité prend 3 minutes',
+    caseStudy2: 'Activer la résa en ligne se fait en 5 minutes',
+    caseStudy3: 'Publier ta vitrine Google prend 10 minutes avec photos',
     pathIntro: 'Le chemin le plus rapide pour toi, selon ton commerce :',
     path: {
       fidelity: {

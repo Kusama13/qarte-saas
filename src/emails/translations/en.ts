@@ -840,10 +840,10 @@ export const en = {
     heading: 'Where to start at {shopName}?',
     greeting: 'Hi <strong>{shopName}</strong>,',
     intro: 'A few days into your trial. If you haven\'t had time to test yet, we get it — we all have busy weeks. Here are 3 merchants who tested in under a week:',
-    caseStudyTitle: 'They started like you',
-    caseStudy1: 'Sarah (salon, Paris) — 1st client retained in 20 min, 8 in a week',
-    caseStudy2: 'Élodie (nails, Lyon) — 12 online bookings by day 3',
-    caseStudy3: 'Mélissa (hair, Toulouse) — storefront published in 15 min, 4 new clients in a month',
+    caseStudyTitle: 'What we see with pros who start',
+    caseStudy1: 'Configuring your loyalty program takes 3 minutes',
+    caseStudy2: 'Activating online booking takes 5 minutes',
+    caseStudy3: 'Publishing your Google storefront takes 10 minutes with photos',
     pathIntro: 'The fastest path for your shop type:',
     path: {
       fidelity: {
