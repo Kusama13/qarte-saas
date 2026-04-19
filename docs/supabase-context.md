@@ -917,6 +917,33 @@ RLS :
 
 Utilisé par le cron [/api/cron/sms-trial-marketing](../src/app/api/cron/sms-trial-marketing/route.ts) (1×/jour 11h UTC) et le helper [src/lib/sms-trial-marketing.ts](../src/lib/sms-trial-marketing.ts).
 
+### 2.44 merchants — trigger tier guards (mig 117)
+
+Trigger PL/pgSQL `enforce_fidelity_tier_feature_guards` BEFORE INSERT OR UPDATE sur `merchants`.
+
+Si `plan_tier = 'fidelity'`, force à FALSE :
+- `planning_enabled`
+- `auto_booking_enabled`
+- `contest_enabled`
+
+Pourquoi : les toggles UI passent par `supabase.from('merchants').update()` direct côté client. Le trigger garantit qu'un Fidélité ne peut activer ces features même en bypass UI/Postman. Backfill inclus (reset des merchants Fidélité avec flags activés).
+
+Les 2 autres features gated (`marketingSms`, `memberPrograms`) sont bloquées au niveau API routes (pas de flag merchants direct).
+
+### 2.45 merchants — colonnes prorata quota SMS (mig 118)
+
+| Colonne | Type | Default | Usage |
+|---------|------|---------|-------|
+| sms_quota_override | INT | NULL | Quota prorata pour le cycle en cours (set on upgrade Fidélité → Tout-en-un mid-cycle). NULL = quota par défaut du tier. |
+| sms_quota_override_cycle_anchor | TIMESTAMPTZ | NULL | Date du cycle facturation pour lequel `sms_quota_override` s'applique. Si ne matche plus le cycle courant, override ignoré (auto-expire). |
+| sms_alert_90_sent_cycle | DATE | NULL | Date du cycle où l'alerte email 90% a été envoyée. Dedup par cycle. |
+
+Helper [`getEffectiveQuota()`](../src/lib/sms.ts) retourne override si `sms_quota_override_cycle_anchor` matche le `periodStart` calculé. Sinon retombe sur `getQuotaFor()`.
+
+Calcul prorata dans [`/api/stripe/change-tier`](../src/app/api/stripe/change-tier/route.ts) : `Math.max(1, Math.round(100 * remaining_seconds / cycle_seconds))`.
+
+Aussi : SMS Fidélité-free (`birthday`, `referral_reward`) exclus du compteur quota dans `getSmsUsageThisMonth()` via `.not('sms_type', 'in', ...)`.
+
 
 **RLS** : merchant SELECT + DELETE own (via `merchants.user_id = auth.uid()`), INSERT service_role only (cron)
 **Index** : `idx_booking_deposit_failures_merchant_expired (merchant_id, expired_at DESC)`
