@@ -17,6 +17,7 @@ import AutomationsTab from './AutomationsTab';
 import SmsBalancePanel from './SmsBalancePanel';
 import BuyPackModal from './BuyPackModal';
 import { HowItWorksModal, OfferModal } from './Modals';
+import { getPlanFeatures } from '@/lib/plan-tiers';
 
 export default function MarketingPushPage() {
   const t = useTranslations('marketing');
@@ -66,11 +67,13 @@ export default function MarketingPushPage() {
         </button>
       </div>
 
-      {/* SMS Balance Panel */}
-      <SmsBalancePanel
-        merchantId={merchant?.id}
-        onBuyPack={() => setShowBuyPack(true)}
-      />
+      {/* SMS Balance Panel — masqué pour Fidélité (pas de quota marketing) */}
+      {getPlanFeatures(merchant).marketingSms && (
+        <SmsBalancePanel
+          merchantId={merchant?.id}
+          onBuyPack={() => setShowBuyPack(true)}
+        />
+      )}
 
       {/* Tab Bar */}
       <div className="flex gap-1.5 sm:gap-2 mb-4">

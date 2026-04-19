@@ -7,9 +7,17 @@ import type { PlanTier, SubscriptionStatus } from '@/types';
 export { SMS_FREE_QUOTA, SMS_OVERAGE_COST, SMS_UNIT_COST, SMS_UNIT_COST_CENTS } from './sms-constants';
 import { SMS_FREE_QUOTA, SMS_OVERAGE_COST } from './sms-constants';
 
-/** Quota mensuel selon tier merchant (50 Fidélité / 100 Tout-en-un, full pour trials). */
+/** Quota mensuel selon tier merchant (0 Fidélité / 100 Tout-en-un, 100 pour trials). */
 export function getQuotaFor(merchant: { subscription_status?: string | null; plan_tier?: string | null } | null): number {
   return getPlanFeatures(merchant as { subscription_status: SubscriptionStatus; plan_tier?: PlanTier } | null).smsQuota;
+}
+
+/** SMS types envoyés gratuitement aux merchants Fidélité (pas de quota, pas de pack consommé).
+ *  Le coût OVH est absorbé par Qarte — usage attendu marginal (anniversaires + récompenses parrainage). */
+const FIDELITY_FREE_SMS_TYPES: SmsType[] = ['birthday', 'referral_reward'];
+
+function isFidelityFreeSms(merchant: { plan_tier?: string | null } | null, smsType: SmsType): boolean {
+  return merchant?.plan_tier === 'fidelity' && FIDELITY_FREE_SMS_TYPES.includes(smsType);
 }
 
 export const PAID_STATUSES = ['active', 'canceling', 'past_due'] as const;
@@ -293,6 +301,7 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
     }
 
     // 5. Gate: enforce quota selon tier + pack. No overage — block if both exhausted.
+    // Fidélité bypass : birthday + referral_reward envoyés sans quota ni pack (coût absorbé).
     const { data: merchantRow } = await supabase
       .from('merchants')
       .select('billing_period_start, sms_pack_balance, plan_tier, subscription_status')
@@ -301,28 +310,33 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
     const mRow = merchantRow as { billing_period_start?: string | null; sms_pack_balance?: number; plan_tier?: string; subscription_status?: string } | null;
     const bps = mRow?.billing_period_start || null;
     const packBalance = Number(mRow?.sms_pack_balance || 0);
-    const freeQuota = getQuotaFor(mRow);
-    const usage = await getSmsUsageThisMonth(supabase, merchantId, bps, freeQuota);
-    const quotaLeft = Math.max(0, freeQuota - usage.sent);
-
-    // Alerts at 80% / 100% thresholds (fire-and-forget, deduped per cycle)
-    const alert80 = Math.floor(freeQuota * 0.8);
-    const cycleStart = usage.periodStart.slice(0, 10);
-    if (usage.sent + 1 >= alert80 && usage.sent + 1 < freeQuota) {
-      void notifyMerchantQuotaAlert(supabase, merchantId, '80', cycleStart);
-    } else if (usage.sent + 1 >= freeQuota) {
-      void notifyMerchantQuotaAlert(supabase, merchantId, '100', cycleStart);
-    }
-
-    if (quotaLeft === 0 && packBalance === 0) {
-      return false; // blocked — merchant must buy a pack
-    }
+    const fidelityFree = isFidelityFreeSms(mRow, smsType);
 
     let consumedFromPack = false;
-    if (quotaLeft === 0) {
-      const ok = await consumePackOne(supabase, merchantId);
-      if (!ok) return false; // race: pack emptied concurrently
-      consumedFromPack = true;
+
+    if (!fidelityFree) {
+      const freeQuota = getQuotaFor(mRow);
+      const usage = await getSmsUsageThisMonth(supabase, merchantId, bps, freeQuota);
+      const quotaLeft = Math.max(0, freeQuota - usage.sent);
+
+      // Alerts at 80% / 100% thresholds (fire-and-forget, deduped per cycle)
+      const alert80 = Math.floor(freeQuota * 0.8);
+      const cycleStart = usage.periodStart.slice(0, 10);
+      if (usage.sent + 1 >= alert80 && usage.sent + 1 < freeQuota) {
+        void notifyMerchantQuotaAlert(supabase, merchantId, '80', cycleStart);
+      } else if (usage.sent + 1 >= freeQuota) {
+        void notifyMerchantQuotaAlert(supabase, merchantId, '100', cycleStart);
+      }
+
+      if (quotaLeft === 0 && packBalance === 0) {
+        return false; // blocked — merchant must buy a pack
+      }
+
+      if (quotaLeft === 0) {
+        const ok = await consumePackOne(supabase, merchantId);
+        if (!ok) return false; // race: pack emptied concurrently
+        consumedFromPack = true;
+      }
     }
 
     // 6. Insert log FIRST (prevents concurrent duplicate sends via unique constraint)

@@ -7,22 +7,41 @@ import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { Check, Star } from 'lucide-react';
+import { Check, Sparkles, Star } from 'lucide-react';
 
 type Billing = 'monthly' | 'annual';
+
+interface Feature {
+  key: string;
+  highlighted?: boolean;
+}
 
 const PLANS = {
   fidelity: {
     monthly: 19,
     annual: 190,
     monthlyEquiv: 16,
-    featureKeys: ['fidelityFeature1', 'fidelityFeature2', 'fidelityFeature3', 'fidelityFeature4', 'fidelityFeature5', 'fidelityFeature6', 'fidelityFeature7'] as const,
+    features: [
+      { key: 'fidelityFeature1', highlighted: true },
+      { key: 'fidelityFeature2', highlighted: true },
+      { key: 'fidelityFeature3' },
+      { key: 'fidelityFeature4' },
+      { key: 'fidelityFeature5' },
+      { key: 'fidelityFeature6' },
+    ] as Feature[],
   },
   all_in: {
     monthly: 24,
     annual: 240,
     monthlyEquiv: 20,
-    featureKeys: ['allInFeature1', 'allInFeature2', 'allInFeature3', 'allInFeature4', 'allInFeature5', 'allInFeature6'] as const,
+    features: [
+      { key: 'allInFeature1', highlighted: true },
+      { key: 'allInFeature2', highlighted: true },
+      { key: 'allInFeature3' },
+      { key: 'allInFeature4' },
+      { key: 'allInFeature5' },
+      { key: 'allInFeature6' },
+    ] as Feature[],
   },
 } as const;
 
@@ -34,10 +53,32 @@ export function PricingSection() {
   const fidelityPrice = billing === 'monthly' ? PLANS.fidelity.monthly : PLANS.fidelity.monthlyEquiv;
   const allInPrice = billing === 'monthly' ? PLANS.all_in.monthly : PLANS.all_in.monthlyEquiv;
 
+  const renderFeatures = (features: Feature[], accentClass: string) => (
+    <ul className="space-y-2 mb-8 flex-1">
+      {features.map((f) => (
+        <li
+          key={f.key}
+          className={`flex items-start gap-2.5 rounded-lg ${
+            f.highlighted ? 'px-2.5 py-2 -mx-2.5 bg-indigo-50/60 border border-indigo-100/60' : 'px-2.5 py-1 -mx-2.5'
+          }`}
+        >
+          {f.highlighted ? (
+            <Sparkles className={`w-4 h-4 ${accentClass} shrink-0 mt-0.5 fill-current`} />
+          ) : (
+            <Check className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+          )}
+          <span className={`text-sm leading-snug ${f.highlighted ? 'font-semibold text-gray-900' : 'text-gray-600'}`}>
+            {t(f.key)}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
     <section id="pricing" className="relative py-16 md:py-24 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
       <div ref={ref} className="relative max-w-6xl mx-auto px-6">
-        {/* Header — outcome-focused (skill copywriting) */}
+        {/* Header */}
         <div className={`text-center mb-10 md:mb-12 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
             {t('title')}{' '}
@@ -77,23 +118,26 @@ export function PricingSection() {
 
         {/* 2 pricing cards */}
         <div className={`grid md:grid-cols-2 gap-5 md:gap-6 max-w-5xl mx-auto ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.2s' }}>
+
           {/* ── Fidélité card ── */}
           <div className="relative bg-white border border-gray-200 rounded-3xl shadow-sm hover:shadow-md transition-shadow duration-300 p-8 md:p-10 flex flex-col">
-            <div className="mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-1">{t('fidelityName')}</h3>
-              <p className="text-sm text-gray-500">{t('fidelityTagline')}</p>
+            <div className="mb-5">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('fidelityName')}</h3>
+              <p className="text-[15px] text-gray-600 leading-snug">
+                {t.rich('fidelityTagline', {
+                  em: (chunks) => <em className="font-[family-name:var(--font-playfair)] italic text-gray-900">{chunks}</em>,
+                })}
+              </p>
             </div>
 
-            <div className="mb-2">
+            <div className="mb-5">
               <div className="flex items-baseline gap-1.5">
                 <span className="text-5xl md:text-6xl font-extrabold tracking-tighter text-gray-900">{fidelityPrice}€</span>
                 <span className="text-base font-semibold text-gray-400">{t('perMonth')}</span>
               </div>
-              {/* Mental accounting (skill marketing-psychology) */}
               <p className="text-xs text-gray-500 mt-1">
                 {billing === 'annual' ? t('monthlyEquivAnnual', { amount: PLANS.fidelity.monthlyEquiv }) : t('perDayFidelity')}
               </p>
-              {/* Annual saving in € (skill pricing-strategy) */}
               {billing === 'annual' && (
                 <span className="inline-block mt-2 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">
                   {t('annualSavingFidelity')}
@@ -101,18 +145,12 @@ export function PricingSection() {
               )}
             </div>
 
-            <p className="text-xs text-gray-500 mb-6 mt-3 leading-relaxed">{t('fidelityFor')}</p>
+            <p className="text-xs text-gray-500 mb-5 leading-relaxed border-l-2 border-gray-200 pl-3">
+              {t('fidelityFor')}
+            </p>
 
-            <ul className="space-y-2.5 mb-8 flex-1">
-              {PLANS.fidelity.featureKeys.map((key) => (
-                <li key={key} className="flex items-start gap-2.5">
-                  <Check className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">{t(key)}</span>
-                </li>
-              ))}
-            </ul>
+            {renderFeatures(PLANS.fidelity.features, 'text-indigo-500')}
 
-            {/* CTA différencié (skill copywriting : Action + Outcome) */}
             <Link
               href="/auth/merchant/signup"
               onClick={() => { trackCtaClick('pricing_fidelity', 'pricing_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
@@ -120,7 +158,6 @@ export function PricingSection() {
             >
               {t('ctaTrialFidelity')}
             </Link>
-            {/* Trust line near CTA (skill page-cro) */}
             <p className="text-[11px] text-center text-gray-400 mt-3">{t('trustLine')}</p>
           </div>
 
@@ -133,17 +170,20 @@ export function PricingSection() {
               </div>
             </div>
 
-            <div className="mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-1">{t('allInName')}</h3>
-              <p className="text-sm text-gray-500">{t('allInTagline')}</p>
+            <div className="mb-5">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('allInName')}</h3>
+              <p className="text-[15px] text-gray-600 leading-snug">
+                {t.rich('allInTagline', {
+                  em: (chunks) => <em className="font-[family-name:var(--font-playfair)] italic text-indigo-600">{chunks}</em>,
+                })}
+              </p>
             </div>
 
-            <div className="mb-2">
+            <div className="mb-5">
               <div className="flex items-baseline gap-1.5">
                 <span className="text-5xl md:text-6xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-indigo-600 to-violet-600">{allInPrice}€</span>
                 <span className="text-base font-semibold text-gray-400">{t('perMonth')}</span>
               </div>
-              {/* Mental accounting + anchor vs Booksy */}
               <p className="text-xs text-gray-500 mt-1">
                 {billing === 'annual' ? t('monthlyEquivAnnual', { amount: PLANS.all_in.monthlyEquiv }) : t('perDayAllIn')}
               </p>
@@ -155,17 +195,15 @@ export function PricingSection() {
               )}
             </div>
 
-            <p className="text-xs text-gray-500 mb-3 mt-3 leading-relaxed">{t('allInFor')}</p>
+            <p className="text-xs text-gray-500 mb-5 leading-relaxed border-l-2 border-indigo-200 pl-3">
+              {t('allInFor')}
+            </p>
 
-            <p className="text-xs font-semibold text-indigo-600 mb-3 uppercase tracking-wider">{t('allInIncludesPrefix')}</p>
-            <ul className="space-y-2.5 mb-8 flex-1">
-              {PLANS.all_in.featureKeys.map((key) => (
-                <li key={key} className="flex items-start gap-2.5">
-                  <Check className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">{t(key)}</span>
-                </li>
-              ))}
-            </ul>
+            <p className="text-[11px] font-bold text-indigo-600 mb-3 uppercase tracking-widest flex items-center gap-1.5">
+              <span className="h-px w-4 bg-indigo-300" />
+              {t('allInIncludesPrefix')}
+            </p>
+            {renderFeatures(PLANS.all_in.features, 'text-violet-500')}
 
             <Link
               href="/auth/merchant/signup"

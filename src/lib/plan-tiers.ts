@@ -2,14 +2,18 @@ import type { Merchant, PlanTier, SubscriptionStatus } from '@/types';
 
 /**
  * Plan tiers Qarte (avril 2026).
- * - fidelity (19€/190€) : fidélité seule, pas de planning ni résa en ligne, pas de SMS marketing manuel
- * - all_in (24€/240€) : full features
+ * - fidelity (19€/190€) : fidélité seule. Pas de planning, résa, ni campagnes SMS manuelles.
+ *   SMS auto (anniversaire, parrainage récompense) envoyés sans quota — coût absorbé.
+ * - all_in (24€/240€) : full features. 100 SMS marketing/mois (compteur unique pour
+ *   anniversaire + parrainage + auto + campagnes manuelles).
  *
  * Pendant le trial, tous les merchants ont accès all_in (sauf SMS sortants déjà gated par PAID_STATUSES).
  * Le tier choisi au checkout détermine ce qui reste accessible une fois abonné.
  */
 
 export interface PlanFeatures {
+  /** Quota mensuel pour SMS marketing comptabilisés. 0 pour Fidélité (les SMS auto inclus
+   *  ne comptent pas — voir FIDELITY_FREE_SMS_TYPES dans sms.ts). */
   smsQuota: number;
   planning: boolean;
   bookingOnline: boolean;
@@ -20,7 +24,7 @@ export interface PlanFeatures {
 
 export const PLAN_TIERS: Record<PlanTier, PlanFeatures> = {
   fidelity: {
-    smsQuota: 50,
+    smsQuota: 0,
     planning: false,
     bookingOnline: false,
     marketingSms: false,
