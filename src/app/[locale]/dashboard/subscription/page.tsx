@@ -397,6 +397,19 @@ export default function SubscriptionPage() {
     }
   };
 
+  const subscriptionStatus = merchant?.subscription_status;
+  const isPaid = subscriptionStatus === 'active';
+  const isCanceling = subscriptionStatus === 'canceling';
+  const isPastDue = subscriptionStatus === 'past_due';
+  const isPayingMerchant = isPaid || isCanceling || isPastDue;
+  const displayPlan = useMemo(
+    () => isPayingMerchant && subscriptionInfo
+      ? buildPlanFromSubscription(subscriptionInfo, locale)
+      : buildPlan(planTier, billingPlan, locale),
+    [isPayingMerchant, subscriptionInfo, planTier, billingPlan, locale]
+  );
+  const annualPreview = useMemo(() => buildPlan(planTier, 'annual', locale), [planTier, locale]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -409,27 +422,12 @@ export default function SubscriptionPage() {
     merchant?.trial_ends_at || null,
     merchant?.subscription_status || 'trial'
   );
-  const subscriptionStatus = merchant?.subscription_status;
-  const isPaid = subscriptionStatus === 'active';
-  const isCanceling = subscriptionStatus === 'canceling';
   const isCanceled = subscriptionStatus === 'canceled';
-  const isPastDue = subscriptionStatus === 'past_due';
   const hasStripe = !!merchant?.stripe_subscription_id;
   const showSubscribeCTA = !isPaid && !isCanceling && !hasStripe && !polling;
 
-  // Display the merchant's actual Stripe subscription price (handles grandfathered 19€/180€
-  // and custom-negotiated rates). Only override for paying merchants — trial/canceled users
-  // see the public pricing of the tier they currently have selected.
-  const isPayingMerchant = isPaid || isCanceling || isPastDue;
   const isLegacy = isPayingMerchant && isLegacyMerchant(merchant);
   const canChangeTier = isPayingMerchant && (!isLegacy || isSuperAdmin);
-  const displayPlan = useMemo(
-    () => isPayingMerchant && subscriptionInfo
-      ? buildPlanFromSubscription(subscriptionInfo, locale)
-      : buildPlan(planTier, billingPlan, locale),
-    [isPayingMerchant, subscriptionInfo, planTier, billingPlan, locale]
-  );
-  const annualPreview = useMemo(() => buildPlan(planTier, 'annual', locale), [planTier, locale]);
   const hasActualAnnualPrice = isPayingMerchant && subscriptionInfo?.interval === 'year';
   const activeFeatures = featuresByTier[planTier];
   const tierDisplayName = planTier === 'fidelity' ? t('tierFidelityName') : t('tierAllInName');
