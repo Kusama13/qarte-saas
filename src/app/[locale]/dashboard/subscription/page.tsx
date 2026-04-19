@@ -9,7 +9,6 @@ import {
   Check,
   AlertTriangle,
   Calendar,
-  Zap,
   Loader2,
   CheckCircle2,
   XCircle,
@@ -17,8 +16,10 @@ import {
   ShieldCheck,
   Gift,
   Copy,
-  ArrowUpDown,
 } from 'lucide-react';
+import BillingToggle from './_components/BillingToggle';
+import PlanCard from './_components/PlanCard';
+import PaidStatusCard from './_components/PaidStatusCard';
 import { Button, Modal } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { getTrialStatus, formatDate } from '@/lib/utils';
@@ -109,7 +110,7 @@ export default function SubscriptionPage() {
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState(false);
-  const [billingPlan, setBillingPlan] = useState<'monthly' | 'annual'>('monthly');
+  const [billingPlan, setBillingPlan] = useState<'monthly' | 'annual'>('annual');
   const [planTier, setPlanTier] = useState<'fidelity' | 'all_in'>('all_in');
   const [showChangeTierModal, setShowChangeTierModal] = useState(false);
   const [changingTier, setChangingTier] = useState(false);
@@ -136,31 +137,26 @@ export default function SubscriptionPage() {
     }
     return false;
   });
-  // Features par tier — les deux premières highlight = features mises en avant
-  // (grosses promesses). Fidélité retire planning/résa/SMS/duo qui sont all_in only.
-  const featuresByTier: Record<PlanTier, string[]> = {
-    fidelity: [
-      t('featureStampsCashback'),
-      t('featureGoogleReviews'),
-      t('featureUnlimitedClients'),
-      t('featureProPage'),
-      t('featureQrNfc'),
-      t('featureReferral'),
-      t('featureNotifications'),
-      t('featureNoCommission'),
-    ],
-    all_in: [
-      t('featurePlanning'),
-      t('featureSms'),
-      t('featureStampsCashback'),
-      t('featureUnlimitedClients'),
-      t('featureProPage'),
-      t('featureQrNfc'),
-      t('featureReferral'),
-      t('featureDuoOffer'),
-      t('featureNotifications'),
-      t('featureNoCommission'),
-    ],
+  // Features par tier. `all_in` utilise "inheritsFromFidelity" + liste des extras uniquement.
+  const fidelityFeatures = [
+    t('featureStampsCashback'),
+    t('featureGoogleReviews'),
+    t('featureUnlimitedClients'),
+    t('featureProPage'),
+    t('featureReferral'),
+    t('featureNotifications'),
+    t('featureQrNfc'),
+  ];
+  const allInExtrasFeatures = [
+    t('featurePlanning'),
+    t('featureSms'),
+    t('featureDuoOffer'),
+    t('featureNoCommission'),
+  ];
+  // Liste complète des features actives du tier courant (pour le mode payant summary).
+  const activeFeaturesByTier: Record<PlanTier, string[]> = {
+    fidelity: fidelityFeatures,
+    all_in: [...fidelityFeatures, ...allInExtrasFeatures],
   };
 
   useEffect(() => {
@@ -375,13 +371,14 @@ export default function SubscriptionPage() {
     }
   };
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (tier: PlanTier = planTier) => {
     setSubscribing(true);
+    setPlanTier(tier);
     try {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: billingPlan, tier: planTier }),
+        body: JSON.stringify({ plan: billingPlan, tier }),
       });
       const data = await res.json();
       if (data.error) {
@@ -428,9 +425,21 @@ export default function SubscriptionPage() {
 
   const isLegacy = isPayingMerchant && isLegacyMerchant(merchant);
   const canChangeTier = isPayingMerchant && (!isLegacy || isSuperAdmin);
-  const hasActualAnnualPrice = isPayingMerchant && subscriptionInfo?.interval === 'year';
-  const activeFeatures = featuresByTier[planTier];
-  const tierDisplayName = planTier === 'fidelity' ? t('tierFidelityName') : t('tierAllInName');
+  const effectiveTier: PlanTier = isPayingMerchant
+    ? (isLegacy ? 'all_in' : ((merchant?.plan_tier as PlanTier) || 'all_in'))
+    : planTier;
+  const tierDisplayName = effectiveTier === 'fidelity' ? t('tierFidelityName') : t('tierAllInName');
+  const fidelityPlan = buildPlan('fidelity', billingPlan, locale);
+  const allInPlan = buildPlan('all_in', billingPlan, locale);
+  const fidelityAnnual = buildPlan('fidelity', 'annual', locale);
+  const allInAnnual = buildPlan('all_in', 'annual', locale);
+  // Next billing date computed from subscription period end (if provided via Stripe info).
+  // Pour les merchants payants : intervalle réel depuis Stripe (fallback sur billing_interval DB).
+  const paidInterval: 'monthly' | 'annual' = subscriptionInfo?.interval === 'year'
+    ? 'annual'
+    : merchant?.billing_interval === 'annual' ? 'annual' : 'monthly';
+  const statusTone: 'active' | 'canceling' | 'past_due' = isCanceling ? 'canceling' : isPastDue ? 'past_due' : 'active';
+  const statusLabel = isCanceling ? t('statusCanceling') : isPastDue ? t('statusPastDue') : t('statusActive');
 
   return (
     <div className="max-w-5xl mx-auto stagger-fade-in">
@@ -496,214 +505,100 @@ export default function SubscriptionPage() {
       )}
 
       <div className="grid gap-6 lg:grid-cols-5">
-        {/* ===== LEFT COLUMN — Pricing ===== */}
+        {/* ===== LEFT COLUMN — Pricing or Status ===== */}
         <div className="lg:col-span-3 space-y-5">
 
-          {/* Price hero card */}
-          <div className="bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl rounded-3xl p-5 sm:p-8">
-            <div className="flex items-center justify-between mb-6 gap-2">
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200 shrink-0">
-                  <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          {isPayingMerchant && merchant ? (
+            /* ─── Paying merchant : status card only ─── */
+            <PaidStatusCard
+              tierDisplayName={tierDisplayName}
+              intervalDisplayName={paidInterval === 'annual' ? t('annual') : t('monthly')}
+              priceLabel={subscriptionInfo ? buildPlanFromSubscription(subscriptionInfo, locale).label : buildPlan(effectiveTier, paidInterval, locale).label}
+              statusLabel={statusLabel}
+              statusTone={statusTone}
+              nextBillingDate={null}
+              includedFeatures={activeFeaturesByTier[effectiveTier]}
+              canChangeTier={canChangeTier}
+              isLegacy={isLegacy}
+              onChangeTier={() => setShowChangeTierModal(true)}
+            />
+          ) : !polling ? (
+            /* ─── Trial / canceled / no-sub : dual-card pricing ─── */
+            <div className="space-y-6">
+              {/* Intro + billing toggle */}
+              <div className="text-center space-y-4">
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-black tracking-tight text-gray-900">
+                    {t('pageChooseTitle')}
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-2">{t('pageChooseSubtitle')}</p>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-base sm:text-xl font-black text-gray-900 truncate">
-                    Qarte {tierDisplayName} · {billingPlan === 'annual' ? t('annual') : t('monthly')}
-                  </p>
-                  <p className="text-xs text-gray-400 font-medium line-clamp-1 sm:line-clamp-none">
-                    {planTier === 'fidelity' ? t('tierFidelityHint') : t('tierAllInHint')}
-                  </p>
+                <BillingToggle
+                  value={billingPlan}
+                  onChange={setBillingPlan}
+                  annualSavingsPct={allInAnnual.savingsPct}
+                />
+              </div>
+
+              {/* Dual cards grid — mobile: stack with all_in first for CRO */}
+              <div className="grid gap-5 md:grid-cols-2 items-stretch">
+                <div className="order-2 md:order-1">
+                  <PlanCard
+                    tier="fidelity"
+                    interval={billingPlan}
+                    priceDisplay={fidelityPlan.priceDisplay}
+                    priceSep={fidelityPlan.sep}
+                    totalLabel={fidelityPlan.label}
+                    annualOriginal={billingPlan === 'annual' ? fidelityAnnual.annualOriginal : undefined}
+                    persona={t('tierFidelityPersona')}
+                    features={fidelityFeatures}
+                    nfcIncluded
+                    onClickNfc={() => setShowNfcModal(true)}
+                    ctaLabel={t('chooseFidelityCta')}
+                    onSelect={() => handleSubscribe('fidelity')}
+                    loading={subscribing && planTier === 'fidelity'}
+                    disabled={subscribing}
+                  />
+                </div>
+                <div className="order-1 md:order-2">
+                  <PlanCard
+                    tier="all_in"
+                    interval={billingPlan}
+                    priceDisplay={allInPlan.priceDisplay}
+                    priceSep={allInPlan.sep}
+                    totalLabel={allInPlan.label}
+                    annualOriginal={billingPlan === 'annual' ? allInAnnual.annualOriginal : undefined}
+                    persona={t('tierAllInPersona')}
+                    features={allInExtrasFeatures}
+                    inheritsFromFidelity
+                    recommended
+                    nfcIncluded
+                    onClickNfc={() => setShowNfcModal(true)}
+                    ctaLabel={t('startAllInCta')}
+                    onSelect={() => handleSubscribe('all_in')}
+                    loading={subscribing && planTier === 'all_in'}
+                    disabled={subscribing}
+                  />
                 </div>
               </div>
-              {polling && <span className="shrink-0 px-3 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 rounded-full border border-indigo-100 flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin" />{t('syncing')}</span>}
-              {!polling && isPaid && <span className="shrink-0 px-3 py-1 text-xs font-bold text-green-700 bg-green-50 rounded-full border border-green-100">{t('statusActive')}</span>}
-              {!polling && isCanceling && <span className="shrink-0 px-3 py-1 text-xs font-bold text-orange-700 bg-orange-50 rounded-full border border-orange-100">{t('statusCanceling')}</span>}
-              {!polling && trialStatus.isActive && !isCanceled && <span className="shrink-0 px-3 py-1 text-xs font-bold text-primary bg-primary-50 rounded-full border border-primary-100">{t('statusTrial')}</span>}
-              {!polling && isCanceled && <span className="shrink-0 px-3 py-1 text-xs font-bold text-red-700 bg-red-50 rounded-full border border-red-100">{t('statusCanceled')}</span>}
-              {!polling && isPastDue && <span className="shrink-0 px-3 py-1 text-xs font-bold text-red-700 bg-red-50 rounded-full border border-red-100">{t('statusPastDue')}</span>}
-            </div>
 
-            {/* Price */}
-            <div className="text-center py-4 sm:py-6">
-              <div className="flex items-baseline justify-center gap-1">
-                <span className="text-5xl sm:text-6xl font-black text-gray-900 tabular-nums">
-                  {displayPlan.priceDisplay.split(displayPlan.sep)[0]}
-                </span>
-                <span className="text-2xl sm:text-3xl font-black text-gray-900">
-                  {displayPlan.sep}{displayPlan.priceDisplay.split(displayPlan.sep)[1]}
-                </span>
-                <span className="text-lg text-gray-400 font-medium ml-1">{t('perMonth')}</span>
-              </div>
-              <p className="text-sm text-gray-400 mt-1.5">
-                {t.rich('dailyCost', {
-                  daily: displayPlan.daily,
-                  bold: (chunks) => <span className="font-bold text-gray-600">{chunks}</span>,
-                })}
-              </p>
-              {billingPlan === 'annual' && (
-                <>
-                  {hasActualAnnualPrice ? (
-                    <p className="text-sm text-gray-400 mt-1"><span className="font-bold text-gray-600">{displayPlan.label}</span></p>
-                  ) : (
-                    <p className="text-sm text-gray-400 mt-1"><span className="line-through">{annualPreview.annualOriginal}</span> → <span className="font-bold text-emerald-600">{annualPreview.label}</span></p>
-                  )}
-                  <button onClick={() => setShowNfcModal(true)} className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 hover:from-indigo-100 hover:to-violet-100 transition-colors cursor-pointer underline-offset-2 hover:underline">
-                    <CreditCard className="w-3.5 h-3.5 text-indigo-600" />
-                    <span className="text-xs font-bold text-indigo-700">{t('nfcIncluded')}</span>
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Sélecteur tier */}
-            {showSubscribeCTA && (
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                <button
-                  onClick={() => setPlanTier('fidelity')}
-                  className={`rounded-xl border-2 px-3 py-3 text-left transition-all min-h-[76px] ${
-                    planTier === 'fidelity'
-                      ? 'border-[#4b0082] bg-[#4b0082]/5'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-baseline justify-between mb-0.5">
-                    <span className="text-sm font-bold text-gray-900">{t('tierFidelityName')}</span>
-                    <span className="text-sm font-extrabold text-gray-900">{billingPlan === 'annual' ? '190€' : '19€'}</span>
-                  </div>
-                  <p className="text-[11px] text-gray-500 leading-tight">{t('tierFidelityHint')}</p>
-                </button>
-                <button
-                  onClick={() => setPlanTier('all_in')}
-                  className={`rounded-xl border-2 px-3 py-3 text-left transition-all relative min-h-[76px] ${
-                    planTier === 'all_in'
-                      ? 'border-[#4b0082] bg-[#4b0082]/5'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
-                >
-                  <span className="absolute -top-2 left-3 text-[9px] font-black tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white uppercase">{t('recommended')}</span>
-                  <div className="flex items-baseline justify-between mb-0.5">
-                    <span className="text-sm font-bold text-gray-900">{t('tierAllInName')}</span>
-                    <span className="text-sm font-extrabold text-gray-900">{billingPlan === 'annual' ? '240€' : '24€'}</span>
-                  </div>
-                  <p className="text-[11px] text-gray-500 leading-tight">{t('tierAllInHint')}</p>
-                </button>
-              </div>
-            )}
-
-            {/* Toggle mensuel/annuel */}
-            {showSubscribeCTA && (
-              <div className="flex items-center justify-center gap-1 p-1 rounded-xl bg-gray-100 mb-6">
-                <button
-                  onClick={() => setBillingPlan('monthly')}
-                  className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                    billingPlan === 'monthly'
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-500'
-                  }`}
-                >
-                  {t('monthly')}
-                </button>
-                <button
-                  onClick={() => setBillingPlan('annual')}
-                  className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
-                    billingPlan === 'annual'
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-500'
-                  }`}
-                >
-                  {t('annual')}
-                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">{annualPreview.savingsPct}</span>
-                </button>
-              </div>
-            )}
-
-            {/* Features — mobile: compact list / desktop: grid */}
-            <div className="hidden sm:grid sm:grid-cols-2 gap-2 mb-6">
-              {activeFeatures.map((feature, i) => (
-                <div key={i} className="flex items-center gap-2 py-1.5">
-                  <Check className={`w-4 h-4 shrink-0 ${i < 2 ? 'text-indigo-500' : 'text-emerald-500'}`} />
-                  <span className={`text-sm ${i < 2 ? 'font-bold text-gray-900' : 'text-gray-600'}`}>{feature}</span>
-                </div>
-              ))}
-              {billingPlan === 'annual' && (
-                <div className="flex items-center gap-2 py-1.5 col-span-2 bg-indigo-50/60 rounded-lg px-2 -mx-2">
-                  <CreditCard className="w-4 h-4 text-indigo-600 shrink-0" />
-                  <span className="text-sm font-bold text-indigo-700">{t('nfcFeature')}</span>
-                </div>
-              )}
-            </div>
-            <div className="sm:hidden mb-6">
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-                {activeFeatures.map((feature, i) => (
-                  <div key={i} className="flex items-center gap-1.5">
-                    <Check className={`w-3 h-3 shrink-0 ${i < 2 ? 'text-indigo-500' : 'text-emerald-500'}`} />
-                    <span className={`text-[11px] leading-tight ${i < 2 ? 'font-bold text-gray-800' : 'text-gray-500'}`}>{feature}</span>
-                  </div>
-                ))}
-              </div>
-              {billingPlan === 'annual' && (
-                <div className="flex items-center gap-1.5 mt-2 bg-indigo-50/60 rounded-lg px-2 py-1.5">
-                  <CreditCard className="w-3 h-3 text-indigo-600 shrink-0" />
-                  <span className="text-[11px] font-bold text-indigo-700">{t('nfcFeature')}</span>
-                </div>
-              )}
-            </div>
-
-            {/* CTA */}
-            {showSubscribeCTA && (
-              <Button
-                className="w-full h-14 rounded-2xl font-bold text-base shadow-lg shadow-primary/20 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
-                onClick={handleSubscribe}
-                loading={subscribing}
-              >
-                {t('subscribeCta', { plan: billingPlan === 'annual' ? t('annual').toLowerCase() : t('monthly').toLowerCase() })}
-              </Button>
-            )}
-
-            {/* Reassurance under CTA */}
-            {showSubscribeCTA && (
-              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mt-3">
-                <span className="flex items-center gap-1 text-[11px] text-gray-400">
-                  <ShieldCheck className="w-3 h-3" />
+              {/* Reassurance */}
+              <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+                <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <ShieldCheck className="w-3.5 h-3.5" />
                   {t('noCommitment')}
                 </span>
-                <span className="flex items-center gap-1 text-[11px] text-gray-400">
-                  <Check className="w-3 h-3" />
+                <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <Check className="w-3.5 h-3.5" />
                   {t('cancelAnytime')}
                 </span>
-                <span className="flex items-center gap-1 text-[11px] text-gray-400">
-                  <CreditCard className="w-3 h-3" />
+                <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <CreditCard className="w-3.5 h-3.5" />
                   {t('stripeSecure')}
                 </span>
               </div>
-            )}
-
-            {/* Tier badge + change plan (paid merchants only) */}
-            {isPayingMerchant && merchant && (
-              <div className="mt-5 pt-5 border-t border-gray-100 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">{t('currentTierLabel')}</p>
-                  <p className="text-sm font-bold text-gray-900">
-                    {isLegacy ? t('tierAllInName') : (merchant.plan_tier === 'fidelity' ? t('tierFidelityName') : t('tierAllInName'))}
-                    {isLegacy && (
-                      <span className="ml-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-600">
-                        {t('legacyBadge')}
-                      </span>
-                    )}
-                  </p>
-                </div>
-                {canChangeTier && (
-                  <button
-                    onClick={() => setShowChangeTierModal(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
-                  >
-                    <ArrowUpDown className="w-3.5 h-3.5" />
-                    {t('changeTierCta')}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+            </div>
+          ) : null}
 
           {/* Syncing indicator */}
           {polling && (
@@ -816,7 +711,7 @@ export default function SubscriptionPage() {
                   </div>
                   <Button
                     className="w-full h-11 rounded-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
-                    onClick={handleSubscribe}
+                    onClick={() => handleSubscribe()}
                     loading={subscribing}
                   >
                     {t('subscribeCta', { plan: billingPlan === 'annual' ? t('annual').toLowerCase() : t('monthly').toLowerCase() })}
@@ -824,7 +719,7 @@ export default function SubscriptionPage() {
                 </div>
               ) : isCanceled ? (
                 <>
-                  <Button className="w-full h-11 rounded-2xl font-bold" onClick={handleSubscribe} loading={subscribing}>
+                  <Button className="w-full h-11 rounded-2xl font-bold" onClick={() => handleSubscribe()} loading={subscribing}>
                     {t('reactivate')}
                   </Button>
                   <p className="text-xs text-gray-500 text-center mt-2">{t('canceledCtaHint')}</p>
