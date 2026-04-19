@@ -52,9 +52,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry('/compare/bookinbeautiful', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-04-12') }),
   ];
 
+  // --- Alternative pages (switch intent) ---
+  const alternativePages: MetadataRoute.Sitemap = [
+    entry('/alternatives/planity', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-04-18') }),
+    entry('/alternatives/booksy', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-04-18') }),
+    entry('/alternatives/bookinbeautiful', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-04-18') }),
+  ];
+
+  // --- Tools / calculators ---
+  const toolPages: MetadataRoute.Sitemap = [
+    entry('/combien-coute-booksy', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-04-18') }),
+  ];
+
   // Merchant pages (/p/slug) are NOT included in the sitemap.
   // Each merchant page has its own SEO identity via JSON-LD LocalBusiness
   // and should be discovered organically, not listed under getqarte.com.
 
-  return [...staticPages, ...blogPages, ...demoPages, ...comparePages];
+  return [...staticPages, ...blogPages, ...demoPages, ...comparePages, ...alternativePages, ...toolPages];
 }

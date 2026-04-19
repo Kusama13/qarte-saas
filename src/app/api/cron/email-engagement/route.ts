@@ -425,6 +425,7 @@ export async function GET(request: NextRequest) {
       const referralReminderWindows = [
         { minDays: 13, maxDays: 15, trackingCode: -316 },
         { minDays: 29, maxDays: 31, trackingCode: -317 },
+        { minDays: 59, maxDays: 61, trackingCode: -318 },
       ];
 
       for (const window of referralReminderWindows) {

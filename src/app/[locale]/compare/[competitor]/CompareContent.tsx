@@ -10,6 +10,7 @@ type Competitor = 'planity' | 'booksy' | 'bookinbeautiful';
 
 interface CompareContentProps {
   competitor: Competitor;
+  variant?: 'compare' | 'alternative';
 }
 
 type FeatureKey = 'booking' | 'loyalty' | 'storefront' | 'sms' | 'google_reviews' | 'referral' | 'welcome_offer' | 'birthday' | 'push' | 'commission' | 'app_download' | 'inactive_reminders' | 'qr_nfc' | 'interconnection';
@@ -40,8 +41,9 @@ const REASONS = [
   { emoji: '\uD83D\uDCF1', key: 'reason4' },
 ] as const;
 
-export default function CompareContent({ competitor }: CompareContentProps) {
+export default function CompareContent({ competitor, variant = 'compare' }: CompareContentProps) {
   const t = useTranslations('compare');
+  const isAlt = variant === 'alternative';
   const { ref: heroRef, isInView: heroInView } = useInView();
   const { ref: tableRef, isInView: tableInView } = useInView();
   const { ref: whyRef, isInView: whyInView } = useInView();
@@ -76,13 +78,13 @@ export default function CompareContent({ competitor }: CompareContentProps) {
         <div ref={heroRef} className="relative max-w-5xl mx-auto px-6 text-center">
           <div className={`${heroInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-semibold tracking-wide uppercase mb-6">
-              {t('badge')}
+              {isAlt ? t('altBadge', { competitor: competitorName }) : t('badge')}
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-4">
-              {t('heroTitle', { competitor: competitorName })}
+              {isAlt ? t('altHeroTitle', { competitor: competitorName }) : t('heroTitle', { competitor: competitorName })}
             </h1>
             <p className="text-[1.05rem] md:text-lg lg:text-xl text-gray-800 max-w-2xl mx-auto mb-8 leading-relaxed">
-              {t('heroSubtitle', { competitor: competitorName, price: '24\u20AC' })}
+              {isAlt ? t('altHeroSubtitle', { competitor: competitorName }) : t('heroSubtitle', { competitor: competitorName, price: '24\u20AC' })}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
@@ -292,11 +294,12 @@ export default function CompareContent({ competitor }: CompareContentProps) {
             <div className="relative group">
               <div className="absolute -inset-4 bg-gradient-to-br from-indigo-200/40 via-violet-200/30 to-pink-200/40 rounded-[3rem] blur-2xl opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
               <div className="relative bg-white/70 backdrop-blur-xl border border-white/80 rounded-3xl shadow-xl shadow-indigo-100/30 p-8 md:p-12 text-center">
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('pricingFromLabel')}</p>
                 <div className="inline-flex items-baseline justify-center gap-1.5 mb-2">
-                  <span className="text-6xl md:text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-gray-900 to-gray-600">24</span>
+                  <span className="text-6xl md:text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-gray-900 to-gray-600">19</span>
                   <span className="text-xl font-semibold text-gray-400">&euro;/mois</span>
                 </div>
-                <p className="text-xs font-medium text-indigo-600 mb-6">Moins de 1 &euro; par jour</p>
+                <p className="text-xs font-medium text-indigo-600 mb-6">{t('pricingTwoPlans')}</p>
 
                 <Link
                   href="/auth/merchant/signup"
@@ -307,11 +310,46 @@ export default function CompareContent({ competitor }: CompareContentProps) {
                 </Link>
 
                 <p className="text-gray-400 text-sm mt-4">{t('ctaSecondary')}</p>
+
+                <Link href="/pricing" className="inline-block mt-4 text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline underline-offset-2">
+                  {t('pricingSeePlans')}
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* ── MIGRATION (alternative variant only) ── */}
+      {isAlt && (
+        <section className="relative py-16 md:py-24 bg-white">
+          <div className="max-w-3xl mx-auto px-6">
+            <div className="text-center mb-10">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
+                {t('altMigrationTitle', { competitor: competitorName })}{' '}
+                <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+                  {t('altMigrationTitleBold')}
+                  <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
+                </span>
+              </h2>
+              <p className="text-gray-500 mt-2">{t('altMigrationDesc', { competitor: competitorName })}</p>
+            </div>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-start gap-4 p-5 bg-gradient-to-br from-indigo-50/50 to-violet-50/50 border border-indigo-100 rounded-2xl">
+                  <div className="shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-sm font-bold flex items-center justify-center">
+                    {i}
+                  </div>
+                  <div>
+                    <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-1">{t(`altMigrationStep${i}Title`)}</h3>
+                    <p className="text-sm md:text-base text-gray-600 leading-relaxed">{t(`altMigrationStep${i}Desc`, { competitor: competitorName })}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── FAQ ── */}
       <section className="relative py-16 md:py-24 bg-white">

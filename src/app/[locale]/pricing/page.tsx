@@ -1,246 +1,124 @@
-'use client';
-
-import { useState } from 'react';
+import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
-import { Button } from '@/components/ui';
-import { Check, CreditCard, ArrowRight, Sparkles } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import LandingNav from '@/components/landing/LandingNav';
+import { PricingSection } from '@/components/landing/PricingSection';
+import { ScrollToTopButton } from '@/components/landing';
+import { ArrowRight, ShieldCheck, CreditCard, Check } from 'lucide-react';
 
-export default function PricingPage() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const t = useTranslations('pricingPage');
-
-  const handleSubscribe = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      const data = await res.json();
-
-      if (data.error) {
-        setError(data.error);
-        return;
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      setError(t('redirectError'));
-    } finally {
-      setLoading(false);
-    }
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'pricingPage' });
+  return {
+    title: t('metaTitle'),
+    description: t('metaDesc'),
+    alternates: {
+      canonical: 'https://getqarte.com/pricing',
+    },
+    openGraph: {
+      title: t('metaTitle'),
+      description: t('metaDesc'),
+      url: 'https://getqarte.com/pricing',
+    },
   };
+}
+
+export default async function PricingPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'pricingPage' });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-purple-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
-        <div className="flex items-center justify-between px-4 py-4 mx-auto max-w-7xl">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
-              <CreditCard className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">Qarte</span>
-          </Link>
+    <>
+      <LandingNav />
+      <main className="overflow-hidden">
+        {/* ── HERO ── */}
+        <section className="relative bg-gradient-to-b from-white to-gray-50 pt-28 lg:pt-36 pb-8 md:pb-12 overflow-hidden">
+          <div className="relative max-w-4xl mx-auto px-6 text-center">
+            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-semibold tracking-wide uppercase mb-6">
+              {t('heroBadge')}
+            </span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-4">
+              {t('heroTitle')}{' '}
+              <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+                {t('heroTitleHighlight')}
+                <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
+              </span>
+            </h1>
+            <p className="text-[1.05rem] md:text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed">
+              {t('heroSubtitle')}
+            </p>
+          </div>
+        </section>
 
-          <div className="flex items-center gap-4">
-            <Link href="/auth/merchant">
-              <Button variant="outline">{t('login')}</Button>
+        {/* ── PRICING (réutilise composant landing) ── */}
+        <PricingSection />
+
+        {/* ── TRUST SIGNALS ── */}
+        <section className="relative pb-12 md:pb-16 bg-white">
+          <div className="max-w-4xl mx-auto px-6">
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-gray-600">
+              <span className="inline-flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-emerald-500" /> {t('trustSecure')}</span>
+              <span className="inline-flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> {t('trustGdpr')}</span>
+              <span className="inline-flex items-center gap-2"><CreditCard className="w-4 h-4 text-emerald-500" /> {t('trustNoCommitment')}</span>
+            </div>
+          </div>
+        </section>
+
+        {/* ── FAQ ── */}
+        <section className="relative py-16 md:py-24 bg-gradient-to-b from-gray-50 to-white">
+          <div className="max-w-3xl mx-auto px-6">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-10 text-center">
+              {t('faqTitle')}{' '}
+              <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+                {t('faqTitleHighlight')}
+                <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
+              </span>
+            </h2>
+
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <details key={i} className="group rounded-2xl border bg-white shadow-md shadow-gray-200/60 border-gray-100 p-6 open:shadow-lg transition-shadow">
+                  <summary className="flex items-center justify-between cursor-pointer list-none">
+                    <h3 className="text-base md:text-lg font-semibold text-gray-900">{t(`faq.q${i}`)}</h3>
+                    <span className="text-indigo-600 text-xl group-open:rotate-45 transition-transform">+</span>
+                  </summary>
+                  <p className="text-sm md:text-base text-gray-600 leading-relaxed mt-3">{t(`faq.a${i}`)}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── FINAL CTA ── */}
+        <section className="relative py-16 md:py-24 bg-white">
+          <div className="relative max-w-3xl mx-auto px-6 text-center">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">{t('finalCtaTitle')}</h2>
+            <p className="text-[1.05rem] md:text-lg text-gray-800 mb-8">{t('finalCtaSub')}</p>
+            <Link
+              href="/auth/merchant/signup"
+              className="group relative inline-flex items-center justify-center gap-2 px-10 py-5 bg-gradient-to-r from-indigo-600/90 to-violet-600/90 backdrop-blur-md text-white font-bold text-base sm:text-lg rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] border border-white/20"
+            >
+              <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              {t('finalCtaBtn')}
+              <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
-        </div>
-      </header>
+        </section>
 
-      {/* Hero Section */}
-      <main className="px-4 py-20 mx-auto max-w-6xl">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full bg-primary/10 text-primary font-medium">
-            <Sparkles className="w-4 h-4" />
-            <span>{t('launchBadge')}</span>
-          </div>
-
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-            {t('titleLine1')}<br />
-            <span className="text-primary">{t('titleLine2')}</span>
-          </h1>
-
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            {t('subtitle')}
-          </p>
-        </div>
-
-        {/* Pricing Card */}
-        <div className="max-w-lg mx-auto mb-20">
-          <div className="relative">
-            {/* Badge "Populaire" */}
-            <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-10">
-              <div className="px-6 py-2 rounded-full bg-gradient-to-r from-primary to-purple-600 text-white font-semibold shadow-lg">
-                {t('popular')}
+        {/* ── FOOTER ── */}
+        <footer className="py-8 bg-gray-50 border-t border-gray-100">
+          <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center">
+                <span className="text-xs font-black text-white">Q</span>
               </div>
+              <span className="text-sm font-bold text-gray-700">Qarte</span>
             </div>
-
-            <div className="bg-white rounded-3xl shadow-2xl p-10 border-2 border-primary/20">
-              {/* Prix */}
-              <div className="text-center mb-10">
-                <div className="flex items-end justify-center gap-2 mb-2">
-                  <span className="text-6xl font-bold text-gray-900">{t('price')}</span>
-                  <span className="text-2xl text-gray-500 mb-3">{t('perMonth')}</span>
-                </div>
-                <p className="text-gray-600">{t('noCommitment')}</p>
-              </div>
-
-              {/* Error message */}
-              {error && (
-                <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 font-medium text-center">
-                  {error}
-                </div>
-              )}
-
-              {/* CTA Button */}
-              <Button
-                onClick={handleSubscribe}
-                loading={loading}
-                disabled={loading}
-                className="w-full h-14 text-lg mb-8 bg-gradient-to-r from-primary to-purple-600 hover:shadow-xl transition-all"
-              >
-                {t('cta')}
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-
-              {/* Features */}
-              <div className="mb-8">
-                <p className="font-semibold text-gray-900 text-center mb-4">
-                  {t('everythingYouNeed')}
-                </p>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {[t('f1'), t('f2'), t('f3'), t('f4'), t('f5'), t('f6'), t('f7'), t('f8')].map((feature, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Check className="w-3 h-3 text-primary" />
-                      </div>
-                      <span className="text-gray-700 text-sm">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Trust badges */}
-              <div className="pt-8 border-t border-gray-100">
-                <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-500" />
-                    <span>{t('securePayment')}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-500" />
-                    <span>{t('gdpr')}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <p className="text-xs text-gray-400">&copy; {new Date().getFullYear()} Qarte. Tous droits r&eacute;serv&eacute;s.</p>
           </div>
-        </div>
-
-        {/* Social Proof */}
-        <div className="text-center mb-20">
-          <p className="text-gray-600 mb-6">{t('trustTitle')}</p>
-          <div className="flex items-center justify-center gap-12 flex-wrap opacity-60">
-            <div className="text-2xl font-bold text-gray-400">Cafe du Coin</div>
-            <div className="text-2xl font-bold text-gray-400">Boulangerie Paul</div>
-            <div className="text-2xl font-bold text-gray-400">Salon de the</div>
-          </div>
-        </div>
-
-        {/* FAQ */}
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">
-            {t('faqTitle')}
-          </h2>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-3">
-                {t('faqQ1')}
-              </h3>
-              <p className="text-gray-600">
-                {t('faqA1')}
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-3">
-                {t('faqQ2')}
-              </h3>
-              <p className="text-gray-600">
-                {t('faqA2')}
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-3">
-                {t('faqQ3')}
-              </h3>
-              <p className="text-gray-600">
-                {t('faqA3')}
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-3">
-                {t('faqQ4')}
-              </h3>
-              <p className="text-gray-600">
-                {t('faqA4')}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Final CTA */}
-        <div className="mt-20 text-center bg-gradient-to-r from-primary to-purple-600 rounded-3xl p-12 text-white">
-          <h2 className="text-3xl font-bold mb-4">
-            {t('finalCtaTitle')}
-          </h2>
-          <p className="text-xl mb-8 text-white/90">
-            {t('finalCtaSub')}
-          </p>
-          <Button
-            onClick={handleSubscribe}
-            loading={loading}
-            className="bg-white text-primary hover:bg-gray-50 h-14 px-8 text-lg"
-          >
-            {t('finalCtaBtn')}
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
-        </div>
+        </footer>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white/50 backdrop-blur-md py-8">
-        <div className="max-w-7xl mx-auto px-4 text-center text-gray-600">
-          <p>{t('copyright')}</p>
-          <div className="flex items-center justify-center gap-6 mt-4">
-            <Link href="/mentions-legales" className="hover:text-primary transition">
-              {t('legalNotices')}
-            </Link>
-            <Link href="/politique-confidentialite" className="hover:text-primary transition">
-              {t('privacy')}
-            </Link>
-            <Link href="/contact" className="hover:text-primary transition">
-              {t('contact')}
-            </Link>
-          </div>
-        </div>
-      </footer>
-    </div>
+      <ScrollToTopButton />
+    </>
   );
 }

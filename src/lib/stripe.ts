@@ -9,26 +9,39 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   typescript: true,
 });
 
+// ── Tier Tout-en-un (anciennement "Pro") ──
 export const PLAN = {
-  name: 'Pro',
+  name: 'Tout-en-un',
+  tier: 'all_in' as const,
   price: 24,
   priceId: (process.env.STRIPE_PRICE_ID || '').trim(),
   interval: 'month' as const,
-  features: [
-    'Clients illimites',
-    'Cartes de fidelite digitales',
-    'QR codes personnalises',
-    'Statistiques en temps reel',
-    'Support prioritaire par email',
-    'Mises a jour gratuites',
-  ],
 };
 
 export const PLAN_ANNUAL = {
-  name: 'Pro Annuel',
+  name: 'Tout-en-un Annuel',
+  tier: 'all_in' as const,
   price: 240,
   monthlyEquivalent: 20,
   priceId: (process.env.STRIPE_PRICE_ID_ANNUAL || '').trim(),
+  interval: 'year' as const,
+};
+
+// ── Tier Fidélité (réutilise les anciens Price IDs validés) ──
+export const PLAN_FIDELITY = {
+  name: 'Fidélité',
+  tier: 'fidelity' as const,
+  price: 19,
+  priceId: (process.env.STRIPE_PRICE_FIDELITY || '').trim(),
+  interval: 'month' as const,
+};
+
+export const PLAN_FIDELITY_ANNUAL = {
+  name: 'Fidélité Annuel',
+  tier: 'fidelity' as const,
+  price: 180,
+  monthlyEquivalent: 15,
+  priceId: (process.env.STRIPE_PRICE_FIDELITY_ANNUAL || '').trim(),
   interval: 'year' as const,
 };
 
