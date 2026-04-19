@@ -505,9 +505,9 @@ export default function SubscriptionPage() {
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-5">
+      <div className={merchant?.stripe_subscription_id ? 'grid gap-6 lg:grid-cols-5' : 'space-y-6'}>
         {/* ===== LEFT COLUMN — Pricing or Status ===== */}
-        <div className="lg:col-span-3 space-y-5">
+        <div className={merchant?.stripe_subscription_id ? 'lg:col-span-3 space-y-5' : 'space-y-5'}>
 
           {isPayingMerchant && merchant ? (
             /* ─── Paying merchant : status card only ─── */
@@ -651,9 +651,9 @@ export default function SubscriptionPage() {
           )}
         </div>
 
-        {/* ===== RIGHT COLUMN — Billing (desktop) ===== */}
-        <div className="lg:col-span-2">
-          {merchant?.stripe_subscription_id ? (
+        {/* ===== RIGHT COLUMN — Billing (only when Stripe customer exists) ===== */}
+        {merchant?.stripe_subscription_id && (
+          <div className="lg:col-span-2">
             <div className="bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl rounded-3xl p-5 sm:p-8">
               <h2 className="text-lg font-extrabold text-gray-900 mb-6">{t('billing')}</h2>
 
@@ -752,17 +752,8 @@ export default function SubscriptionPage() {
                 </>
               )}
             </div>
-          ) : (
-            /* No Stripe customer — desktop reassurance block */
-            <div className="hidden lg:flex flex-col items-center justify-center bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl rounded-3xl p-8 text-center h-full">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 flex items-center justify-center mb-4">
-                <CreditCard className="w-7 h-7 text-primary" />
-              </div>
-              <p className="font-bold text-gray-900 mb-1">{t('securePayment')}</p>
-              <p className="text-sm text-gray-400">{t('securePaymentDesc')}</p>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Change tier modal */}
