@@ -5,35 +5,54 @@
 
 ---
 
-## Plan v2 trial emails+SMS — résumé impact
+## Plan v2 trial emails+SMS — STATUT 2026-04-19
 
-> Refonte planifiée 2026-04-19. Voir [`docs/email-sms-trial-plan.md`](./email-sms-trial-plan.md) pour le plan complet (segmentation 2 tiers + 3 SMS + 9 emails tier-aware).
+> **Implémentation livrée** (non commit poussé). Voir [`docs/email-sms-trial-plan.md`](./email-sms-trial-plan.md) pour détails.
 
-### Changements à venir sur les emails ci-dessous
+### ✅ Livré
 
-**À supprimer (5)** : `ProgramReminderEmail`, `ProgramReminderDay2Email`, `ProgramReminderDay3Email`, `SocialProofEmail`, `VitrineReminderEmail`, `PlanningReminderEmail`, `Day5CheckinEmail` *(remplacés par triggers événementiels Email 5/6/7 + email contextuel ActivationStalled)*
+**Nouveaux emails** :
+- `ActivationStalledEmail` ([src/emails/ActivationStalledEmail.tsx](../src/emails/ActivationStalledEmail.tsx)) — S0 J+3 case studies + path tier-aware (tracking code -320)
+- `UpgradeAllInEmail` ([src/emails/UpgradeAllInEmail.tsx](../src/emails/UpgradeAllInEmail.tsx)) — paywall Fidélité→Tout-en-un, subject-by-signal (codes -330/-331)
 
-**À fusionner** : `FirstClientScriptEmail` → fusionne dans nouveau `ActivationStalledEmail` (S0 J+3)
+**Emails refactorés** :
+- `TrialEndingEmail` — 4 variantes state-aware (S0/S1/S2/S3) + stats box (endowment) + reco tier intégrée
+- `ChurnSurveyReminderEmail` — subject pratfall "On rouvre ton compte {shop} contre 2 min de feedback" + offre honnête (compte rouvert 7j + promo -25% x3 mois si prix)
+- `InactiveMerchantDay14Email` — subject factuel sans blame
+- `InactiveMerchantDay30Email` — 3 options concrètes tier-aware (pause 2 mois / switch tier / call founder 30 min)
+- `SubscriptionConfirmedEmail` — variantes titre par tier
+- `IncompleteSignupReminder2Email` — vouvoiement → tutoiement
+- `FirstScanEmail` / `FirstBookingEmail` / `FirstRewardEmail` — retirées exclamations
 
-**À renommer** : `FirstScanEmail` → `FirstScanCelebrationEmail`, `FirstBookingEmail` → `FirstBookingCelebrationEmail`
+**Nouveau canal SMS — 3 SMS marketing trial** via [/api/cron/sms-trial-marketing](../src/app/api/cron/sms-trial-marketing/route.ts) (1×/jour 11h UTC) :
+1. `celebration_{fidelity|planning|vitrine}` — 1er aha event, dedup global via `merchants.celebration_sms_sent_at`
+2. `trial_pre_loss` — J-1 trial, ≥S1, copy tier-aware via `recommendTierForMerchant()`
+3. `churn_survey` — J+5 fully expired, copy variant A pratfall + reciprocity
 
-**À refactor avec variantes par state (4)** : `TrialEndingEmail` (4 variantes par activation_score + reco tier), `TrialExpiredEmail` (2 variantes S0/S1 vs S2/S3), `GracePeriodSetupEmail`, `ChurnSurveyReminderEmail` (nouveau subject pratfall)
+**Infrastructure** :
+- Mig 115 : `merchants.celebration_sms_sent_at` + `merchants.marketing_sms_opted_out`
+- Mig 116 : table `merchant_marketing_sms_logs` (5 sms_type CHECK, RLS, index dedup)
+- Helper `src/lib/activation-score.ts` — computeActivationScore() (S0-S3 on-the-fly)
+- Helper `src/lib/sms-trial-marketing.ts` — sendTrialMarketingSms() + gating + log
+- Helper `src/lib/trial-sms-copy.ts` — copy centralisée (sans emoji, sans firstName)
+- Helper `src/lib/upgrade-triggers.ts` — triggerUpgradeAllInEmail() dedup 14j
+- Toggle UI `/dashboard/settings` — `marketing_sms_opted_out`
+- API admin `/api/admin/merchants/[id]/communications` — timeline unifiée 3 canaux
 
-**À refactor avec variantes par tier (9 emails post-checkout)** :
-- `SubscriptionConfirmedEmail` — Fidélité retention focus / Tout-en-un 3 piliers
-- `InactiveMerchantDay7/14/30Email` — ton + features pushées par tier
-- `WeeklyDigestEmail` — skip sections résa/vitrine si Fidélité
-- `ProductUpdateEmail` — filtre features par tier
-- `AnnouncementMaPageEmail` — accent diff par tier
+### ⏸ Reporté v3 (low impact)
 
-**Nouveau email** : `UpgradeAllInEmail` (paywall Fidélité → Tout-en-un, triggers : campagne SMS marketing bloquée + demande client manuelle)
+- `GraceEnding` split 2 emails (copy actuel déjà OK pause vs deletion)
+- `WeeklyDigest` sections par tier (cosmétique)
+- UI admin communications timeline (l'API suffit pour debug)
+- Trigger `booking_request_manual` (nécessite form client-side, v2)
 
-**Nouveau canal SMS — 3 SMS marketing trial** :
-1. `celebration_*` — 1er aha event (visit OU booking_online OU vitrine), dedup global
-2. `trial_pre_loss` — J-1 trial, ≥S1, copy tier-aware via `recommendTierForMerchant`
-3. `churn_survey` — J+5 fully expired, copy pratfall + reciprocity
+### Bilan chiffré final
 
-**Bilan** : 48 emails → 44 emails (-5 +1) + 3 SMS marketing.
+- **Avant** : 48 emails, 0 SMS marketing trial
+- **Après** : 50 emails (+2 nouveaux : ActivationStalled, UpgradeAllIn) + 3 SMS marketing
+- **9 emails refactorés** avec variantes state-aware ou tier-aware
+
+**Emails redondants NON supprimés** (ProgramReminderDay2/3, SocialProof, VitrineReminder, PlanningReminder, Day5Checkin) — ActivationStalled les remplace fonctionnellement pour S0 J+3, mais les triggers redondants tournent encore. À cleanup en Phase finale v3.
 
 ---
 

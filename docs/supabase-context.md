@@ -876,6 +876,48 @@ Archive des resas liberees pour acompte non recu. Le cron horaire `/api/cron/dep
 | expired_at | TIMESTAMPTZ | NOT NULL | Deadline qui a ete depassee |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
+### 2.42 merchants — colonnes trial SMS marketing (mig 115)
+
+Nouvelles colonnes ajoutées sur `merchants` pour le système SMS marketing trial (plan v2).
+
+| Colonne | Type | Default | Usage |
+|---------|------|---------|-------|
+| celebration_sms_sent_at | TIMESTAMPTZ | NULL | Dedup global SMS célébration (1 max sur la vie merchant, peu importe le pilier) |
+| marketing_sms_opted_out | BOOLEAN | FALSE (NOT NULL) | Opt-out merchant pour SMS marketing trial. Togglable via /dashboard/settings |
+
+Index partiel : `idx_merchants_sms_marketing_eligible ON (subscription_status, marketing_sms_opted_out) WHERE marketing_sms_opted_out = FALSE` (filtre cron rapide).
+
+### 2.43 merchant_marketing_sms_logs (mig 116)
+
+SMS marketing trial envoyés au merchant (Qarte → merchant). **Distinct de `sms_logs`** qui tracke merchant → clients.
+
+Voir [docs/email-sms-trial-plan.md](./email-sms-trial-plan.md) §5 pour la stratégie.
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| merchant_id | UUID FK → merchants | NOT NULL | ON DELETE CASCADE |
+| sms_type | TEXT | NOT NULL | CHECK IN (`celebration_fidelity`, `celebration_planning`, `celebration_vitrine`, `trial_pre_loss`, `churn_survey`) |
+| state_snapshot | INT | NULL | activation_score (0-3) au moment d'envoi |
+| tier_recommended | TEXT | NULL | CHECK IN (`fidelity`, `all_in`) — uniquement pour trial_pre_loss |
+| body | TEXT | NOT NULL | Texte du SMS envoyé |
+| ovh_job_id | TEXT | NULL | Id job OVH (pour debugging) |
+| status | TEXT | `sent` | CHECK IN (`sent`, `failed`, `skipped`) |
+| error_message | TEXT | NULL | Raison de l'échec OVH |
+| cost_euro | NUMERIC(6,4) | NULL | Coût SMS (0.075€ si sent, NULL si failed) |
+| sent_at | TIMESTAMPTZ | `NOW()` | NOT NULL |
+
+Indexes :
+- `idx_marketing_sms_merchant ON (merchant_id, sent_at DESC)` — timeline merchant
+- `idx_marketing_sms_type_dedup ON (merchant_id, sms_type)` — dedup par type
+
+RLS :
+- `Merchants read own marketing sms logs` : SELECT si `merchant_id` appartient à `auth.uid()`
+- `Service role full access marketing sms logs` : ALL si `auth.role() = 'service_role'`
+
+Utilisé par le cron [/api/cron/sms-trial-marketing](../src/app/api/cron/sms-trial-marketing/route.ts) (1×/jour 11h UTC) et le helper [src/lib/sms-trial-marketing.ts](../src/lib/sms-trial-marketing.ts).
+
+
 **RLS** : merchant SELECT + DELETE own (via `merchants.user_id = auth.uid()`), INSERT service_role only (cron)
 **Index** : `idx_booking_deposit_failures_merchant_expired (merchant_id, expired_at DESC)`
 **GET limit** : 100 items (pas de pagination pour v1)

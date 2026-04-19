@@ -21,8 +21,8 @@ interface InactiveMerchantDay30EmailProps {
  */
 export function InactiveMerchantDay30Email({ shopName, planTier = 'all_in', locale = 'fr' }: InactiveMerchantDay30EmailProps) {
   const t = getEmailT(locale);
-  const option2Title = planTier === 'all_in' ? t('inactiveDay30.option2TitleAllIn') : t('inactiveDay30.option2TitleFidelity');
-  const option2Desc = planTier === 'all_in' ? t('inactiveDay30.option2DescAllIn') : t('inactiveDay30.option2DescFidelity');
+  const option1Title = planTier === 'all_in' ? t('inactiveDay30.option1TitleAllIn') : t('inactiveDay30.option1TitleFidelity');
+  const option1Desc = planTier === 'all_in' ? t('inactiveDay30.option1DescAllIn') : t('inactiveDay30.option1DescFidelity');
 
   return (
     <BaseLayout preview={t('inactiveDay30.preview')} locale={locale}>
@@ -41,18 +41,13 @@ export function InactiveMerchantDay30Email({ shopName, planTier = 'all_in', loca
       </Section>
 
       <Section style={optionBox}>
-        <Text style={optionTitle}>{t('inactiveDay30.option1Title')}</Text>
-        <Text style={optionDesc}>{t('inactiveDay30.option1Desc')}</Text>
+        <Text style={optionTitle}>{option1Title}</Text>
+        <Text style={optionDesc}>{option1Desc}</Text>
       </Section>
 
       <Section style={optionBox}>
-        <Text style={optionTitle}>{option2Title}</Text>
-        <Text style={optionDesc}>{option2Desc}</Text>
-      </Section>
-
-      <Section style={optionBox}>
-        <Text style={optionTitle}>{t('inactiveDay30.option3Title')}</Text>
-        <Text style={optionDesc}>{t('inactiveDay30.option3Desc')}</Text>
+        <Text style={optionTitle}>{t('inactiveDay30.option2Title')}</Text>
+        <Text style={optionDesc}>{t('inactiveDay30.option2Desc')}</Text>
       </Section>
 
       <Section style={buttonContainer}>

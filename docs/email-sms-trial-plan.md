@@ -1,8 +1,34 @@
 # Plan refonte emails + SMS trial — segmentation onboarding (v2)
 
-> Dernière MAJ : 2026-04-19. Mode plan, pas d'implémentation.
+> Dernière MAJ : 2026-04-19. **Implémentation livrée Phases A-H** (19 avril 2026).
 > Skills appliqués : `onboarding-cro`, `email-sequence`, `copywriting`, `marketing-psychology`, `paywall-upgrade-cro`, `churn-prevention`, `customer-research`.
 > Audit complet 49 templates : voir [docs/email-audit-v2.md](./email-audit-v2.md)
+
+## STATUT IMPLÉMENTATION (2026-04-19)
+
+| Phase | Livrable | Statut |
+|---|---|---|
+| A | Migration 115 (`celebration_sms_sent_at`, `marketing_sms_opted_out`) + helper `activation-score.ts` | ✅ Livré |
+| B | Migration 116 (`merchant_marketing_sms_logs`) + helpers `sms-trial-marketing.ts` + `trial-sms-copy.ts` | ✅ Livré |
+| C | Cron `/api/cron/sms-trial-marketing` (3 sections célébration / pre-loss / churn) | ✅ Livré |
+| D | Toggle `marketing_sms_opted_out` dans `/dashboard/settings` | ✅ Livré |
+| E | API `/api/admin/merchants/[id]/communications` (timeline unifiée 3 canaux) | ✅ Livré (API, UI différée) |
+| F1 | TrialEnding 4 variantes state-aware + stats box + 5 nouveaux subjects | ✅ Livré |
+| F2 | ActivationStalledEmail (NEW) + ChurnSurveyReminder refonte pratfall | ✅ Livré |
+| F3 | GraceEnding split 2 emails | ⏸ Reporté v3 (low impact, copy actuel OK) |
+| G | UpgradeAllInEmail (NEW) + trigger SMS campaign blocked | ✅ Livré (trigger `booking_request_manual` différé) |
+| H1 | Inactive14 + Inactive30 tier-aware + offre concrète (pause/switch/call) | ✅ Livré |
+| H2 | SubscriptionConfirmed tier-aware (variantes titre Fidélité/Tout-en-un) | ✅ Livré |
+| H3 | WeeklyDigest sections par tier | ⏸ Reporté v3 (cosmétique low-impact) |
+| Finale | Cleanup linguistique (!, vouvoiement, blame retirés) | ✅ Livré |
+
+**Commits** : f530d4e (A) · 8bee16b (B) · 38fcaf0 (C) · 9ea70d1 (D) · b3106f5 (E) · ebe4808 (F1) · 0dbe726 (F2) · c9bcce5 (G) · a12ad6a (H1+H2) · 10169ac (finale).
+
+**Migrations à appliquer dans Supabase SQL Editor** :
+1. `supabase/migrations/115_trial_marketing_columns.sql`
+2. `supabase/migrations/116_merchant_marketing_sms_logs.sql`
+
+---
 >
 > **Changements v2** : intégration des 2 tiers (Fidélité 19€ vs Tout-en-un 24€), passage de 2 à 3 SMS (ajout célébration + survey, drop J+2 grace), copy SMS sans firstName (le merchant n'a que `shop_name`), copy SMS C en pratfall + reciprocity.
 >
