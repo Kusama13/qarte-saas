@@ -151,7 +151,7 @@ export function HeroSection() {
         <div className="absolute bottom-1/4 left-1/2 w-1 h-1 bg-rose-400 rounded-full animate-pulse delay-1000 shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
       </div>
 
-      <div ref={ref} className="relative z-10 max-w-7xl mx-auto px-6 pt-28 lg:pt-36 pb-6 lg:pb-20 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+      <div ref={ref} className="relative z-10 max-w-7xl mx-auto px-6 pt-28 lg:pt-36 pb-14 lg:pb-20 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
         {/* Text Content */}
         <div className={`space-y-6 lg:space-y-8 text-center lg:text-left ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <div className="relative">
@@ -164,7 +164,7 @@ export function HeroSection() {
             </h1>
           </div>
 
-          <p className="text-[1.05rem] md:text-lg lg:text-xl text-gray-800 max-w-lg mx-auto lg:mx-0 leading-relaxed">
+          <p className="text-lg md:text-lg lg:text-xl text-gray-700 max-w-lg mx-auto lg:mx-0 leading-relaxed">
             {t('subtitle')}
           </p>
           <div className="flex flex-col items-center lg:items-start gap-3 w-full sm:w-auto">
@@ -180,10 +180,10 @@ export function HeroSection() {
           </div>
 
           {/* Included features badges */}
-          <div className="grid grid-cols-2 lg:flex lg:flex-wrap justify-center lg:justify-start gap-2">
+          <div className="grid grid-cols-2 lg:flex lg:flex-wrap justify-center lg:justify-start gap-2.5">
             {(['feature1', 'feature2', 'feature3', 'feature4'] as const).map((key) => (
-              <span key={key} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/70 backdrop-blur-sm border border-gray-200/60 shadow-sm text-xs">
-                <svg className="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <span key={key} className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/70 backdrop-blur-sm border border-gray-200/60 shadow-sm text-[13px] md:text-sm">
+                <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                 </svg>
                 <span className="text-gray-600 font-medium">{t(key)}</span>

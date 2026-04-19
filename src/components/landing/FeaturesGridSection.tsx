@@ -18,7 +18,7 @@ export function FeaturesGridSection() {
   ] as const;
 
   return (
-    <section className="relative py-10 md:py-20 bg-white overflow-hidden">
+    <section className="relative py-14 md:py-20 bg-white overflow-hidden">
       {/* Ambient glow — same as FideliteSection */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-indigo-100/40 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 left-1/3 w-96 h-96 bg-violet-100/30 rounded-full blur-[120px] pointer-events-none" />
@@ -31,15 +31,15 @@ export function FeaturesGridSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: EASE }}
-          className="text-center mb-8 md:mb-16"
+          className="text-center mb-10 md:mb-16"
         >
-          <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-2 md:mb-4">
+          <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-3 md:mb-4">
             {t('title')}{' '}
             <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
               {t('titleHighlight')}
             </span>
           </h2>
-          <p className="text-sm md:text-lg text-gray-500">{t('subtitle')}</p>
+          <p className="text-base md:text-lg text-gray-500 leading-relaxed max-w-xl mx-auto">{t('subtitle')}</p>
         </motion.div>
 
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
@@ -56,10 +56,10 @@ export function FeaturesGridSection() {
                 {emoji}
               </div>
               <div className="min-w-0">
-                <h3 className="text-sm sm:text-[22px] font-semibold text-gray-900 mb-0.5 sm:mb-1.5 leading-snug">
+                <h3 className="text-base sm:text-[22px] font-semibold text-gray-900 mb-1 sm:mb-1.5 leading-snug">
                   {t(titleKey)}
                 </h3>
-                <p className="text-[12px] sm:text-[18px] text-gray-500 leading-snug sm:leading-relaxed line-clamp-3">
+                <p className="text-[13px] sm:text-[18px] text-gray-500 leading-snug sm:leading-relaxed line-clamp-3">
                   {t(descKey)}
                 </p>
               </div>

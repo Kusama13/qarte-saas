@@ -41,8 +41,8 @@ export function PricingSectionCondensed() {
 
           {/* Fidélité card */}
           <div className="relative bg-white border border-gray-200 rounded-3xl p-6 md:p-7 flex flex-col shadow-sm">
-            <div className="mb-3">
-              <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-0.5">
+            <div className="mb-4">
+              <h3 className="text-2xl md:text-2xl font-bold text-gray-900 mb-1">
                 <span className="font-[family-name:var(--font-playfair)] italic font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
                   {t('fidelityName')}
                 </span>
@@ -85,8 +85,8 @@ export function PricingSectionCondensed() {
               </span>
             </div>
 
-            <div className="mb-3">
-              <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-0.5">
+            <div className="mb-4">
+              <h3 className="text-2xl md:text-2xl font-bold text-gray-900 mb-1">
                 <span className="font-[family-name:var(--font-playfair)] italic font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
                   {t('allInName')}
                 </span>

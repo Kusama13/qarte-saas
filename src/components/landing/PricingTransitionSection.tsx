@@ -16,7 +16,7 @@ export function PricingTransitionSection() {
   const t = useTranslations('fidelite');
 
   return (
-    <section className="relative py-10 md:py-14 bg-white overflow-hidden">
+    <section className="relative py-12 md:py-14 bg-white overflow-hidden">
       <div className="relative max-w-5xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -26,8 +26,8 @@ export function PricingTransitionSection() {
         >
           <div className="bg-gradient-to-r from-indigo-50 via-violet-50 to-pink-50 border border-indigo-100/60 rounded-2xl md:rounded-3xl p-5 md:p-7">
             <div className="text-center mb-5 md:mb-6">
-              <p className="text-base md:text-lg font-bold text-gray-900">{t('planityTitle')}</p>
-              <p className="text-sm text-gray-600 mt-1">{t('planityDesc')}</p>
+              <p className="text-lg md:text-lg font-bold text-gray-900">{t('planityTitle')}</p>
+              <p className="text-sm md:text-base text-gray-600 mt-1.5">{t('planityDesc')}</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-3 mb-5">

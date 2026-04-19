@@ -125,7 +125,7 @@ export async function SocialProofSection() {
   const allItems = [...merchantsWithLabels, ...merchantsWithLabels];
 
   return (
-    <section className="py-8 sm:py-10 bg-gray-50/50 overflow-hidden">
+    <section className="py-12 sm:py-14 bg-gray-50/50 overflow-hidden">
       <div className="flex items-center justify-center gap-3 mb-8 px-4">
         <div className="h-px w-8 sm:w-12 bg-gray-200" />
         <p className="text-base sm:text-xl font-bold text-gray-700 text-center">

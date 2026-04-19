@@ -29,7 +29,7 @@ function FeatureBlock({
   delay?: number;
 }) {
   return (
-    <div className={`flex flex-col ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-3 md:gap-10 lg:gap-24`}>
+    <div className={`flex flex-col ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-6 md:gap-10 lg:gap-24`}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -37,13 +37,13 @@ function FeatureBlock({
         transition={{ duration: 0.7, delay, ease: EASE }}
         className="flex-1 text-center lg:text-left"
       >
-        <h3 className="text-xl md:text-5xl font-bold text-white leading-tight mb-2 md:mb-5">
+        <h3 className="text-2xl md:text-5xl font-bold text-white leading-tight mb-3 md:mb-5">
           {title}{' '}
           <span className="font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400 font-extrabold">
             {titleBold}
           </span>
         </h3>
-        <p className="text-sm md:text-xl text-gray-400 leading-relaxed max-w-md mx-auto lg:mx-0">
+        <p className="text-base md:text-xl text-gray-400 leading-relaxed max-w-md mx-auto lg:mx-0">
           {description}
         </p>
       </motion.div>
@@ -191,7 +191,7 @@ export function PageProSection() {
   const locale = useLocale();
 
   return (
-    <section className="relative py-10 md:py-20 bg-gray-950 overflow-hidden">
+    <section className="relative py-14 md:py-20 bg-gray-950 overflow-hidden">
       {/* Ambient glow */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-indigo-600/15 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-violet-600/10 rounded-full blur-[120px] pointer-events-none" />
@@ -210,7 +210,7 @@ export function PageProSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: EASE }}
-          className="text-center mb-8 md:mb-16"
+          className="text-center mb-10 md:mb-16"
         >
           {t('badge') && <p className="text-xs md:text-sm font-bold text-indigo-400 uppercase tracking-wider mb-2 md:mb-4">
             {t('badge')}
@@ -221,12 +221,12 @@ export function PageProSection() {
               {t('titleBold')}
             </span>
           </h2>
-          <p className="mt-2 md:mt-3 text-gray-400 text-sm md:text-lg">
+          <p className="mt-3 md:mt-3 text-gray-400 text-base md:text-lg leading-relaxed max-w-xl mx-auto">
             {t('subtitle')}
           </p>
         </motion.div>
 
-        <div className="flex flex-col gap-3 md:gap-10 lg:gap-12">
+        <div className="flex flex-col gap-10 md:gap-10 lg:gap-12">
           <FeatureBlock
             title={t('planningTitle')}
             titleBold={t('planningTitleBold')}
@@ -252,7 +252,7 @@ export function PageProSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, ease: EASE }}
-          className="mt-10 md:mt-20 text-center"
+          className="mt-14 md:mt-20 text-center"
         >
           <Link
             href="/auth/merchant/signup"
