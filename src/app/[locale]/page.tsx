@@ -4,6 +4,7 @@ import {
   FeaturesGridSection,
   PageProSection,
   SocialProofMergedSection,
+  PricingTransitionSection,
   PricingSectionCondensed,
   FooterSection,
   ScrollToTopButton,
@@ -27,6 +28,7 @@ export default function LandingPageV4() {
         <LazyFideliteSection />
         <PageProSection />
         <SocialProofMergedSection />
+        <PricingTransitionSection />
         <PricingSectionCondensed />
         <LazyFAQSection />
         <FooterSection />

@@ -7,11 +7,13 @@ import {
   Check, Sparkles, X, CalendarDays,
   Gift, ImageIcon, Share2, MapPin, Camera, QrCode,
   Users, UserPlus, Cake, Calendar, ChevronDown, ArrowRight,
-  Scissors, FileText, CreditCard, Rocket,
+  Scissors, FileText, CreditCard, MessageSquare,
+  Heart, Store, EyeOff,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
+import { isPlanningHidden } from '@/lib/plan-tiers';
 import { sparkleGrand, sparkleMedium, sparkleSubtle } from '@/lib/sparkles';
 
 
@@ -30,6 +32,7 @@ interface Group {
   icon: React.ElementType;
   sparkleColors: string[];
   steps: Step[];
+  hideable?: boolean;
 }
 
 
@@ -59,7 +62,7 @@ function CircularProgressRing({ size = 24, progress, color }: { size?: number; p
 
 
 export default function OnboardingChecklist() {
-  const { merchant } = useMerchant();
+  const { merchant, updateMerchant } = useMerchant();
   const t = useTranslations('onboarding');
 
   const [groups, setGroups] = useState<Group[]>([]);
@@ -67,6 +70,8 @@ export default function OnboardingChecklist() {
   const [dismissed, setDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [confirmingDismiss, setConfirmingDismiss] = useState(false);
+  const [confirmingHidePlanning, setConfirmingHidePlanning] = useState(false);
+  const [hidingPlanning, setHidingPlanning] = useState(false);
 
   const prevCompletedRef = useRef<Set<string>>(new Set());
   const celebratedRef = useRef<Set<string>>(new Set());
@@ -97,8 +102,15 @@ export default function OnboardingChecklist() {
   useEffect(() => {
     if (!merchant) return;
     if (dismissed) return;
+    // Skip the (expensive) onboarding queries entirely once the merchant is paying —
+    // the checklist UI is gated on `subscription_status === 'trial'` further down.
+    if (merchant.subscription_status !== 'trial') {
+      setLoading(false);
+      return;
+    }
 
     const supabase = getSupabase();
+    const planningHidden = isPlanningHidden(merchant);
 
     const fetchData = async () => {
       try {
@@ -109,30 +121,17 @@ export default function OnboardingChecklist() {
           servicesResult,
           slotsResult,
           bookedResult,
+          smsCampaignsResult,
         ] = await Promise.all([
           fetch('/api/onboarding/status').then(r => r.json()).catch(() => ({})),
-          supabase
-            .from('visits')
-            .select('*', { count: 'exact', head: true })
-            .eq('merchant_id', merchant.id)
-            .eq('status', 'confirmed'),
-          supabase
-            .from('merchant_photos')
-            .select('*', { count: 'exact', head: true })
-            .eq('merchant_id', merchant.id),
-          supabase
-            .from('merchant_services')
-            .select('*', { count: 'exact', head: true })
-            .eq('merchant_id', merchant.id),
-          supabase
-            .from('merchant_planning_slots')
-            .select('*', { count: 'exact', head: true })
-            .eq('merchant_id', merchant.id),
-          supabase
-            .from('merchant_planning_slots')
-            .select('*', { count: 'exact', head: true })
-            .eq('merchant_id', merchant.id)
-            .not('client_name', 'is', null),
+          supabase.from('visits').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id).eq('status', 'confirmed'),
+          supabase.from('merchant_photos').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
+          supabase.from('merchant_services').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
+          supabase.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
+          supabase.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id).not('client_name', 'is', null),
+          planningHidden
+            ? Promise.resolve({ count: 0 })
+            : supabase.from('sms_campaigns').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
         ]);
 
         const qrDownloaded = onboardingRes.qrDownloaded === true;
@@ -141,42 +140,56 @@ export default function OnboardingChecklist() {
         const servicesCount = servicesResult.count || 0;
         const slotsCount = slotsResult.count || 0;
         const bookedCount = bookedResult.count || 0;
+        const smsCampaignsCount = smsCampaignsResult.count || 0;
 
         const hasSocial = !!(merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.snapchat_url);
 
-        const newGroups: Group[] = [
+        const baseGroups: Group[] = [
           {
-            id: 'essential',
-            name: t('groupEssential'),
-            icon: Rocket,
-            sparkleColors: ['#4b0082', '#7C3AED', '#A78BFA', '#FFD700'],
+            id: 'loyalty',
+            name: t('groupLoyalty'),
+            icon: Heart,
+            sparkleColors: ['#EC4899', '#F472B6', '#FB7185', '#FFD700'],
             steps: [
               { id: 'program', label: t('stepProgram'), done: !!merchant.reward_description, href: '/dashboard/program', icon: Gift },
               { id: 'logo', label: t('stepLogo'), done: !!merchant.logo_url, href: '/dashboard/personalize', icon: ImageIcon },
-              { id: 'bio', label: t('stepBio'), done: !!merchant.bio, href: '/dashboard/public-page', icon: FileText },
-              { id: 'services', label: t('stepServices'), done: servicesCount >= 1, href: '/dashboard/public-page', icon: Scissors },
-              { id: 'planning', label: t('stepPlanning'), done: merchant.planning_enabled === true, href: '/dashboard/planning', icon: CalendarDays },
-              { id: 'booking', label: t('stepBooking'), done: merchant.auto_booking_enabled === true, href: '/dashboard/planning', icon: Calendar },
               { id: 'qr', label: t('stepQr'), done: qrDownloaded, href: '/dashboard/qr-download', icon: QrCode },
+              { id: 'referral', label: t('stepReferral'), done: merchant.referral_program_enabled === true, href: '/dashboard/referrals', icon: UserPlus },
+              { id: 'birthday', label: t('stepBirthday'), done: merchant.birthday_gift_enabled === true, href: '/dashboard/program', icon: Cake },
+              { id: 'first_client', label: t('stepFirstClient'), done: visitsCount >= 1, href: '/dashboard/qr-download', icon: Users },
             ],
           },
           {
-            id: 'advanced',
-            name: t('groupAdvanced'),
-            icon: Sparkles,
-            sparkleColors: ['#4b0082', '#7C3AED', '#A78BFA', '#FFD700'],
+            id: 'showcase',
+            name: t('groupVitrine'),
+            icon: Store,
+            sparkleColors: ['#6366F1', '#8B5CF6', '#A78BFA', '#FFD700'],
             steps: [
+              { id: 'bio', label: t('stepBio'), done: !!merchant.bio, href: '/dashboard/public-page', icon: FileText },
+              { id: 'services', label: t('stepServices'), done: servicesCount >= 1, href: '/dashboard/public-page', icon: Scissors },
               { id: 'address', label: t('stepAddress'), done: !!merchant.shop_address, href: '/dashboard/public-page', icon: MapPin },
               { id: 'photos', label: t('stepPhotos'), done: photosCount >= 1, href: '/dashboard/public-page', icon: Camera },
-              { id: 'slots', label: t('stepSlots'), done: slotsCount >= 1, href: '/dashboard/planning', icon: Calendar },
-              { id: 'referral', label: t('stepReferral'), done: merchant.referral_program_enabled === true, href: '/dashboard/referrals', icon: UserPlus },
-              { id: 'birthday', label: t('stepBirthday'), done: merchant.birthday_gift_enabled === true, href: '/dashboard/program', icon: Cake },
               { id: 'social', label: t('stepSocial'), done: hasSocial, href: '/dashboard/public-page', icon: Share2 },
-              { id: 'first_client', label: t('stepFirstClient'), done: visitsCount >= 1, href: '/dashboard/qr-download', icon: Users },
-              { id: 'first_booking', label: t('stepFirstBooking'), done: bookedCount >= 1, href: '/dashboard/planning', icon: Users },
             ],
           },
         ];
+
+        const planningGroup: Group = {
+          id: 'planning',
+          name: t('groupPlanning'),
+          icon: CalendarDays,
+          sparkleColors: ['#10B981', '#34D399', '#6EE7B7', '#FFD700'],
+          hideable: true,
+          steps: [
+            { id: 'planning', label: t('stepPlanning'), done: merchant.planning_enabled === true, href: '/dashboard/planning', icon: CalendarDays },
+            { id: 'booking', label: t('stepBooking'), done: merchant.auto_booking_enabled === true, href: '/dashboard/planning', icon: Calendar },
+            { id: 'slots', label: t('stepSlots'), done: slotsCount >= 1, href: '/dashboard/planning', icon: Calendar },
+            { id: 'first_booking', label: t('stepFirstBooking'), done: bookedCount >= 1, href: '/dashboard/planning', icon: Users },
+            { id: 'sms', label: t('stepSms'), done: smsCampaignsCount >= 1, href: '/dashboard/marketing', icon: MessageSquare },
+          ],
+        };
+
+        const newGroups: Group[] = planningHidden ? baseGroups : [...baseGroups, planningGroup];
 
         setGroups(newGroups);
 
@@ -251,6 +264,29 @@ export default function OnboardingChecklist() {
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroup(prev => prev === groupId ? null : groupId);
+  };
+
+  const handleHidePlanning = async () => {
+    if (!merchant) return;
+    setHidingPlanning(true);
+    try {
+      const supabase = getSupabase();
+      const { error } = await supabase
+        .from('merchants')
+        .update({ planning_intent: 'no' })
+        .eq('id', merchant.id);
+      if (!error) {
+        setConfirmingHidePlanning(false);
+        setExpandedGroup(prev => prev === 'planning' ? null : prev);
+        // Defer the actual group removal so AnimatePresence can finish its exit
+        // animation cleanly before the planning <div> is unmounted from the parent.
+        setTimeout(() => updateMerchant({ planning_intent: 'no' }), 350);
+      }
+    } catch (err) {
+      console.error('Hide planning error:', err);
+    } finally {
+      setHidingPlanning(false);
+    }
   };
 
 
@@ -362,54 +398,78 @@ export default function OnboardingChecklist() {
           const nextStep = trackableSteps.find(s => !s.done);
           const progress = trackableSteps.length > 0 ? doneCount / trackableSteps.length : 0;
 
+          const showHideConfirm = confirmingHidePlanning && group.id === 'planning';
+
           return (
             <div key={group.id}>
-              {/* Group header */}
-              <button
-                onClick={() => toggleGroup(group.id)}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${
-                  isComplete
-                    ? 'bg-gray-50'
-                    : isExpanded
-                      ? 'bg-gray-50 border border-gray-100'
-                      : 'bg-gray-50 hover:bg-gray-100'
-                }`}
-              >
-                {/* Group icon */}
-                <div className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-all ${
-                  isComplete
-                    ? 'bg-emerald-50 text-emerald-600'
-                    : 'bg-[#4b0082]/10 text-[#4b0082]'
-                }`}>
-                  {isComplete ? (
-                    <Check className="w-4 h-4 stroke-[3]" />
-                  ) : (
-                    <group.icon className="w-4 h-4" />
-                  )}
+              {showHideConfirm ? (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200">
+                  <p className="flex-1 text-xs font-semibold text-amber-900 leading-tight">
+                    {t('hidePlanningConfirm')}
+                  </p>
+                  <button
+                    onClick={() => setConfirmingHidePlanning(false)}
+                    disabled={hidingPlanning}
+                    className="shrink-0 px-2.5 py-1 text-xs font-semibold rounded-lg bg-white hover:bg-gray-50 text-gray-700 transition-colors border border-gray-200"
+                  >
+                    {t('hidePlanningCancel')}
+                  </button>
+                  <button
+                    onClick={handleHidePlanning}
+                    disabled={hidingPlanning}
+                    className="shrink-0 px-2.5 py-1 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors"
+                  >
+                    {hidingPlanning ? '…' : t('hidePlanningConfirmYes')}
+                  </button>
                 </div>
-
-                {/* Group name */}
-                <span className={`flex-1 text-left text-sm font-semibold truncate ${
-                  isComplete ? 'text-gray-400' : 'text-gray-900'
-                }`}>
-                  {group.name}
-                </span>
-
-                {/* Progress ring + fraction */}
-                {isComplete ? (
-                  <span className="text-xs font-bold text-emerald-500 shrink-0">{doneCount}/{trackableSteps.length}</span>
-                ) : (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs font-bold text-gray-500 tabular-nums">{doneCount}/{trackableSteps.length}</span>
-                    <CircularProgressRing size={24} progress={progress} color="#4b0082" />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.id)}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${
+                    isComplete
+                      ? 'bg-gray-50'
+                      : isExpanded
+                        ? 'bg-gray-50 border border-gray-100'
+                        : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  {/* Group icon */}
+                  <div className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-all ${
+                    isComplete
+                      ? 'bg-emerald-50 text-emerald-600'
+                      : 'bg-[#4b0082]/10 text-[#4b0082]'
+                  }`}>
+                    {isComplete ? (
+                      <Check className="w-4 h-4 stroke-[3]" />
+                    ) : (
+                      <group.icon className="w-4 h-4" />
+                    )}
                   </div>
-                )}
 
-                {/* Chevron */}
-                <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                  <ChevronDown className={`w-4 h-4 shrink-0 ${isComplete ? 'text-gray-300' : 'text-gray-400'}`} />
-                </motion.div>
-              </button>
+                  {/* Group name */}
+                  <span className={`flex-1 text-left text-sm font-semibold truncate ${
+                    isComplete ? 'text-gray-400' : 'text-gray-900'
+                  }`}>
+                    {group.name}
+                  </span>
+
+                  {/* Progress ring + fraction */}
+                  {isComplete ? (
+                    <span className="text-xs font-bold text-emerald-500 shrink-0">{doneCount}/{trackableSteps.length}</span>
+                  ) : (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs font-bold text-gray-500 tabular-nums">{doneCount}/{trackableSteps.length}</span>
+                      <CircularProgressRing size={24} progress={progress} color="#4b0082" />
+                    </div>
+                  )}
+
+                  {/* Chevron */}
+                  <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                    <ChevronDown className={`w-4 h-4 shrink-0 ${isComplete ? 'text-gray-300' : 'text-gray-400'}`} />
+                  </motion.div>
+                </button>
+              )}
 
               {/* Group body (accordion) */}
               <AnimatePresence initial={false}>
@@ -468,6 +528,17 @@ export default function OnboardingChecklist() {
                           </Link>
                         );
                       })}
+
+                      {group.hideable && (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingHidePlanning(true)}
+                          className="mt-1 ml-2.5 inline-flex items-center gap-1.5 text-[11px] font-medium text-gray-400 hover:text-amber-600 transition-colors"
+                        >
+                          <EyeOff className="w-3 h-3" />
+                          {t('hidePlanningLink')}
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 )}

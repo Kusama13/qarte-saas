@@ -9,12 +9,13 @@ interface MerchantContextType {
   merchant: Merchant | null;
   loading: boolean;
   refetch: () => Promise<void>;
+  updateMerchant: (patch: Partial<Merchant>) => void;
 }
 
 const MerchantContext = createContext<MerchantContextType | undefined>(undefined);
 
 const CACHE_KEY = 'qarte_merchant_cache';
-const CACHE_VERSION = 1; // Increment to bust cache on schema changes
+const CACHE_VERSION = 2; // Increment to bust cache on schema changes
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export function MerchantProvider({ children }: { children: ReactNode }) {
@@ -122,9 +123,26 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const updateMerchant = useCallback((patch: Partial<Merchant>) => {
+    setMerchant(prev => {
+      if (!prev) return prev;
+      const next = { ...prev, ...patch };
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          data: next,
+          timestamp: Date.now(),
+          version: CACHE_VERSION,
+        }));
+      } catch {
+        // Ignore storage errors
+      }
+      return next;
+    });
+  }, []);
+
   const value = useMemo(
-    () => ({ merchant, loading, refetch: fetchMerchant }),
-    [merchant, loading, fetchMerchant]
+    () => ({ merchant, loading, refetch: fetchMerchant, updateMerchant }),
+    [merchant, loading, fetchMerchant, updateMerchant]
   );
 
   return (

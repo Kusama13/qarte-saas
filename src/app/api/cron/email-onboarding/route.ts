@@ -12,6 +12,7 @@ import {
   sendActivationStalledEmail,
 } from '@/lib/email';
 import { computeActivationScore } from '@/lib/activation-score';
+import { isPlanningHidden } from '@/lib/plan-tiers';
 import { TRACKING_CODES } from '@/lib/email-tracking-codes';
 import type { EmailLocale } from '@/emails/translations';
 import { getTrialStatus } from '@/lib/utils';
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
   // ==================== PREFETCH ====================
   const { data: allMerchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, shop_type, slug, user_id, locale, country, trial_ends_at, subscription_status, created_at, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, no_contact, pwa_installed_at, bio, shop_address, planning_enabled, email_bounced_at, email_unsubscribed_at');
+    .select('id, shop_name, shop_type, slug, user_id, locale, country, trial_ends_at, subscription_status, created_at, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, no_contact, pwa_installed_at, bio, shop_address, planning_enabled, planning_intent, email_bounced_at, email_unsubscribed_at');
 
   const allMerchantsList = allMerchants || [];
   const allUserIds = [...new Set(allMerchantsList.map(m => m.user_id))];
@@ -165,9 +166,12 @@ export async function GET(request: NextRequest) {
       const ninetySixHoursAgo = new Date(now.getTime() - 96 * 60 * 60 * 1000);
       const ninetySevenHoursAgo = new Date(now.getTime() - 97 * 60 * 60 * 1000);
 
+      // Skip Planning Reminder for merchants who explicitly opted out of the planning module
+      // (set via "Je n'utilise pas le planning" link in onboarding checklist).
       const planningDay4 = configuredActiveMerchants.filter(m =>
         m.created_at <= ninetySixHoursAgo.toISOString() && m.created_at >= ninetySevenHoursAgo.toISOString()
         && !m.planning_enabled
+        && !isPlanningHidden(m)
       );
 
       await runStandardEmailSection(supabase, {

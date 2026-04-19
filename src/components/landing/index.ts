@@ -7,6 +7,7 @@ export { ReferralSection } from './ReferralSection';
 export { AIReengagementSection } from './AIReengagementSection';
 export { PricingSection } from './PricingSection';
 export { PricingSectionCondensed } from './PricingSectionCondensed';
+export { PricingTransitionSection } from './PricingTransitionSection';
 export { FAQSection } from './FAQSection';
 export { FooterSection, FooterCta, FooterDark } from './FooterSection';
 export { PageProSection } from './PageProSection';

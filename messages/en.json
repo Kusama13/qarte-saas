@@ -36,18 +36,18 @@
     "cta": "See the comparison"
   },
   "hero": {
-    "titlePart1": "Fill your salon, keep clients coming back",
-    "titlePart2": "without drowning in DMs.",
-    "subtitle": "A link for your Insta bio, bookings that roll in by themselves, a loyalty card for every client. All included, no commission on deposits, no SMS surcharge.",
+    "titlePart1": "Fill your calendar, keep clients coming back",
+    "titlePart2": "without the hassle.",
+    "subtitle": "The loyalty card your clients love. Online booking when you need it.",
     "subtitleTarget": "Built for beauty studios, nail salons and hair salons who want to grow without the hassle.",
-    "ctaPrimary": "Free trial in 2 min",
+    "ctaPrimary": "Start my 7 days free",
     "ctaSubtext": "No credit card required, we promise :)",
     "ctaDemo": "See the demo",
     "googleRating": "5.0 on Google",
-    "feature1": "Link in bio",
-    "feature2": "0% commission",
-    "feature3": "SMS included",
-    "feature4": "Auto loyalty",
+    "feature1": "Loyalty card",
+    "feature2": "Your salon page",
+    "feature3": "5-star reviews",
+    "feature4": "Booking optional",
     "badgePointAdded": "Point added!",
     "badgePointAddedSub": "Semi-permanent manicure",
     "badgeGoogleScore": "4.9/5 Google",
@@ -285,10 +285,10 @@
     "ctaSub": "7-day free trial, no credit card"
   },
   "pagePro": {
-    "badge": "",
-    "title": "A link to share,",
-    "titleBold": "and bookings that roll in by themselves.",
-    "subtitle": "Your services, availability, new client offer — on one page built for Instagram, WhatsApp, Google. Shared in one click, set up in 5 minutes.",
+    "badge": "All-in-one plan",
+    "title": "Your bookings online,",
+    "titleBold": "no hidden commission.",
+    "subtitle": "Booking, SMS reminders, deposits straight to your account. It's all here.",
     "planningTitle": "Bookings that roll in by themselves",
     "planningTitleBold": "— with the SMS reminders that go with them.",
     "planningDesc": "Set your hours (or your slots manually), your clients book in 30 seconds. Slot blocked automatically, confirmation sent, reminder SMS the day before. 100 SMS/mo included, zero no-shows.",
@@ -332,7 +332,7 @@
     "welcomeCta": "Claim offer",
     "welcomeNewClient": "Sophie M. — New client",
     "welcomeBadge": "+1 client",
-    "cta": "Attract new clients in 5 min",
+    "cta": "Turn on online booking",
     "ctaSub": "7 days free, no credit card"
   },
   "bento": {
@@ -407,10 +407,10 @@
     "photosDesc": "Post your photos right on your online storefront."
   },
   "fidelite": {
-    "badge": "",
+    "badge": "Loyalty plan",
     "title": "The loyalty program",
     "titleBold": "your clients love.",
-    "subtitle": "Every client who books on your page receives their card automatically. Offers (birthdays, holidays, contests) go out on their own.",
+    "subtitle": "Your salon page, your stamps, your reminders, your reviews. Clients come back without you thinking about it.",
     "scanTitle": "QR code or NFC,",
     "scanTitleBold": "zero hassle.",
     "scanDesc": "QR code ready in 2 minutes on your phone. NFC card optional at the counter. No app to download — not for you, not for your client.",
@@ -421,7 +421,7 @@
     "scanBadge": "+1 point",
     "programTitle": "Your program,",
     "programTitleBold": "your rules.",
-    "programDesc": "Stamps or cashback, tiers, rewards — set up in 2 minutes. Every client who books on your page receives their card automatically. They scan the QR at the counter — no app to download.",
+    "programDesc": "Stamps or cashback, tiers, rewards — set up in 2 minutes. Your clients scan the QR at the counter, their card is created in 3 seconds. No app to download.",
     "programLabel": "Loyalty program",
     "programSalon": "Your Salon",
     "programReward": "Free blowout",
@@ -1430,6 +1430,9 @@
     "marketingSmsDesc": "Receive SMS from Qarte (celebration of your first wins, end of trial, win-back). You can disable them anytime.",
     "marketingSmsOn": "Enabled",
     "marketingSmsOff": "Disabled",
+    "planningHiddenTitle": "Planning hidden",
+    "planningHiddenDesc": "You hid the Planning & Booking section. You can show it again anytime.",
+    "planningReEnableCta": "Show again",
     "dataTitle": "Your data",
     "dataDesc": "Export your client list as a CSV file.",
     "exportCsv": "Export clients (CSV)",
@@ -2301,7 +2304,12 @@
     "stepBooking": "Enable online booking",
     "stepFirstBooking": "Get your first booking",
     "stepSubscribe": "Subscribe to unlock SMS reminders",
-    "stepSubscribeHint": "Your clients will never miss an appointment again"
+    "stepSubscribeHint": "Your clients will never miss an appointment again",
+    "stepSms": "Set up your SMS campaigns",
+    "hidePlanningLink": "I don't use the planning",
+    "hidePlanningConfirm": "You don't use the planning? We'll hide this section.",
+    "hidePlanningCancel": "Keep",
+    "hidePlanningConfirmYes": "Hide"
   },
   "milestones": {
     "vitrine_live": {

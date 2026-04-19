@@ -73,34 +73,6 @@ function Separator() {
 
 /* ── Visuals (dark) ── */
 
-function SeoVisual({ t }: { t: (key: string) => string }) {
-  return (
-    <div className="relative w-full max-w-[380px] mx-auto">
-      <div className="bg-white/[0.06] backdrop-blur-sm rounded-3xl shadow-xl shadow-black/20 border border-white/10 p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center">
-            <span className="text-white text-[9px] font-bold">G</span>
-          </div>
-          <span className="text-[10px] text-white/40">getqarte.com/p/latelier</span>
-        </div>
-        <p className="text-base font-semibold text-blue-400 mb-1">L&apos;Atelier — Onglerie Paris 11e</p>
-        <p className="text-xs text-white/50 leading-relaxed">{t('seoMockupDesc')}</p>
-        <div className="flex items-center gap-1 mt-2">
-          {[...Array(5)].map((_, i) => (
-            <span key={i} className="text-sm">{'\u2B50'}</span>
-          ))}
-          <span className="text-[11px] text-white/40 ml-1">{t('seoMockupReviews')}</span>
-        </div>
-      </div>
-
-      <div className="absolute -top-3 -right-3 flex items-center gap-1.5 bg-blue-500 rounded-full px-3 py-1.5 shadow-lg shadow-blue-500/30 animate-float-subtle">
-        <span className="text-sm">{'\uD83D\uDD0D'}</span>
-        <span className="text-xs font-bold text-white">{t('seoBadge')}</span>
-      </div>
-    </div>
-  );
-}
-
 function PlanningVisual({ t, locale }: { t: (key: string) => string; locale: string }) {
   return (
     <div className="relative w-full max-w-[340px] mx-auto">
@@ -266,21 +238,11 @@ export function PageProSection() {
           <Separator />
 
           <FeatureBlock
-            title={t('seoTitle')}
-            titleBold={t('seoTitleBold')}
-            description={t('seoDesc')}
-            visual={<SeoVisual t={t} />}
-            reverse
-            delay={0.05}
-          />
-
-          <Separator />
-
-          <FeatureBlock
             title={t('acompteTitle')}
             titleBold={t('acompteTitleBold')}
             description={t('acompteDesc')}
             visual={<AcompteVisual t={t} />}
+            reverse
             delay={0.05}
           />
         </div>

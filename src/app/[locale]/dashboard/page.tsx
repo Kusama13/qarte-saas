@@ -9,6 +9,7 @@ import { formatRelativeTime, getTodayForCountry, formatCurrency, unwrapJoin } fr
 import { endTimeFromStart } from '@/app/[locale]/dashboard/planning/utils';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
+import { showPlanningUi } from '@/lib/plan-tiers';
 import PendingPointsWidget from '@/components/dashboard/PendingPointsWidget';
 import OnboardingChecklist from '@/components/dashboard/OnboardingChecklist';
 import ZeroScansCoach from '@/components/dashboard/ZeroScansCoach';
@@ -55,6 +56,11 @@ const TOKENS = {
   planning: '#10B981',
   loyalty: '#e11d48',
   alert: '#D97706',
+  customers: '#6366F1',
+  visits: '#0EA5E9',
+  cumul: '#F59E0B',
+  cashback: '#8B5CF6',
+  welcome: '#EC4899',
 } as const;
 
 const initialStats = {
@@ -825,16 +831,16 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Link href="/dashboard/customers" className="block">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 items-stretch">
+        <Link href="/dashboard/customers" className="block h-full">
           <StatsCard
             title={t('totalClients')}
             value={stats.totalCustomers}
             icon={Users}
-            color="#64748b"
+            color={TOKENS.customers}
           />
         </Link>
-        <Link href="/dashboard/customers" className="block">
+        <Link href="/dashboard/customers" className="block h-full">
           <StatsCard
             title={t('activeClients')}
             value={stats.activeCustomers}
@@ -846,7 +852,7 @@ export default function DashboardPage() {
           title={t('visitsMonth')}
           value={stats.visitsThisMonth}
           icon={Calendar}
-          color={TOKENS.planning}
+          color={TOKENS.visits}
         />
         <StatsCard
           title={t('rewardsMonth')}
@@ -862,13 +868,13 @@ export default function DashboardPage() {
             title={t('cumulClients')}
             value={formatCurrency(cagnotteStats.totalCumul, merchant?.country, locale, 0)}
             icon={Coins}
-            color={TOKENS.planning}
+            color={TOKENS.cumul}
           />
           <StatsCard
             title={t('cashbackOngoing')}
             value={formatCurrency(cagnotteStats.totalCashback, merchant?.country, locale, 0)}
             icon={Wallet}
-            color={TOKENS.loyalty}
+            color={TOKENS.cashback}
           />
         </div>
       )}
@@ -892,7 +898,7 @@ export default function DashboardPage() {
                 title={t('welcomeOffer')}
                 value={welcomeVouchers}
                 icon={Sparkles}
-                color={TOKENS.loyalty}
+                color={TOKENS.welcome}
               />
             </Link>
           )}
@@ -1050,8 +1056,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* SMS Quota */}
-      {smsUsage && (() => {
+      {smsUsage && showPlanningUi(merchant) && (() => {
         const isPaid = merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling' || merchant?.subscription_status === 'past_due';
         const pct = Math.min(100, Math.round((smsUsage.sent / 100) * 100));
         const isOverage = smsUsage.sent > 100;

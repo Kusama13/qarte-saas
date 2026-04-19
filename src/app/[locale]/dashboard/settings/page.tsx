@@ -19,10 +19,12 @@ import {
   Globe,
   ShieldAlert,
   MessageSquareOff,
+  CalendarDays,
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber, validatePhone, formatDate, PHONE_CONFIG, toBCP47 } from '@/lib/utils';
+import { isPlanningHidden } from '@/lib/plan-tiers';
 import { SHOP_TYPES, type ShopType, COUNTRIES } from '@/types';
 import type { Merchant } from '@/types';
 
@@ -51,6 +53,7 @@ export default function SettingsPage() {
   const [shieldSaving, setShieldSaving] = useState(false);
   const [smsOptedOut, setSmsOptedOut] = useState(false);
   const [smsOptOutSaving, setSmsOptOutSaving] = useState(false);
+  const [planningReEnabling, setPlanningReEnabling] = useState(false);
 
   useEffect(() => {
     const fetchMerchant = async () => {
@@ -122,6 +125,19 @@ export default function SettingsPage() {
       .eq('id', merchant.id);
     if (shieldError) setShieldEnabled(prev);
     setShieldSaving(false);
+  };
+
+  const handleReEnablePlanning = async () => {
+    if (!merchant || planningReEnabling) return;
+    setPlanningReEnabling(true);
+    const { error: planningError } = await supabase
+      .from('merchants')
+      .update({ planning_intent: 'unsure' })
+      .eq('id', merchant.id);
+    if (!planningError) {
+      setMerchant({ ...merchant, planning_intent: 'unsure' });
+    }
+    setPlanningReEnabling(false);
   };
 
   const toggleSmsOptOut = async () => {
@@ -354,6 +370,34 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
+
+      {isPlanningHidden(merchant) && (
+        <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white/60 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/30">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="p-2 md:p-2.5 rounded-xl bg-gray-100 text-gray-400 shrink-0">
+                <CalendarDays className="w-4 h-4 md:w-5 md:h-5" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-base md:text-xl font-bold text-gray-900">
+                  {t('planningHiddenTitle')}
+                </h2>
+                <p className="mt-1 text-sm text-gray-600 leading-relaxed">
+                  {t('planningHiddenDesc')}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleReEnablePlanning}
+              disabled={planningReEnabling}
+              className={`shrink-0 px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors ${planningReEnabling ? 'opacity-60 cursor-not-allowed' : ''}`}
+            >
+              {planningReEnabling ? '…' : t('planningReEnableCta')}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/50">
         <div className="flex items-center gap-3 mb-5 md:mb-8">

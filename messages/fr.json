@@ -36,18 +36,18 @@
     "cta": "Voir le comparatif"
   },
   "hero": {
-    "titlePart1": "Remplis ton salon, fidélise tes clientes",
-    "titlePart2": "sans galérer avec les DMs.",
-    "subtitle": "Un lien à mettre en bio Insta, les résas en direct, la carte de fidélité pour chaque cliente. Tout compris, sans commission sur les acomptes, sans supplément SMS.",
+    "titlePart1": "Remplis ton agenda, fidélise tes clientes",
+    "titlePart2": "sans te prendre la tête.",
+    "subtitle": "La carte de fidélité que tes clientes adorent. Et la résa en ligne en option.",
     "subtitleTarget": "Pensé pour les instituts, ongleries et salons qui veulent se remplir sans se compliquer la vie.",
-    "ctaPrimary": "Essai gratuit en 2 min",
+    "ctaPrimary": "Commencer mes 7 jours gratuits",
     "ctaSubtext": "Sans carte bancaire, c'est promis :)",
     "ctaDemo": "Voir la démo",
     "googleRating": "5.0 sur Google",
-    "feature1": "Ton lien en bio",
-    "feature2": "0% commission",
-    "feature3": "SMS inclus",
-    "feature4": "Fidélité auto",
+    "feature1": "Carte de fidélité",
+    "feature2": "Ta page salon",
+    "feature3": "Avis 5 étoiles",
+    "feature4": "Résa en option",
     "badgePointAdded": "Point ajouté !",
     "badgePointAddedSub": "Manucure semi-permanent",
     "badgeGoogleScore": "4.9/5 Google",
@@ -285,10 +285,10 @@
     "ctaSub": "7 jours gratuits, sans carte bancaire"
   },
   "pagePro": {
-    "badge": "",
-    "title": "Un lien à partager,",
-    "titleBold": "et des résas qui tombent toutes seules.",
-    "subtitle": "Tes prestations, tes dispos, ton offre nouveaux clients — sur une page faite pour Instagram, WhatsApp, Google. Partagée en un clic, configurée en 5 minutes.",
+    "badge": "Plan Tout-en-un",
+    "title": "Tes résas en ligne,",
+    "titleBold": "sans commission cachée.",
+    "subtitle": "Planning, rappels SMS, acompte direct sur ton compte. Tout est là.",
     "planningTitle": "Des résas qui tombent toutes seules",
     "planningTitleBold": "— avec les rappels SMS qui vont avec.",
     "planningDesc": "Tu définis tes horaires (ou tes créneaux à la main), tes clientes réservent en 30 secondes. Créneau bloqué automatiquement, confirmation envoyée, rappel SMS la veille. 100 SMS/mois inclus, zéro no-show.",
@@ -332,7 +332,7 @@
     "welcomeCta": "En profiter",
     "welcomeNewClient": "Sophie M. — Nouvelle cliente",
     "welcomeBadge": "+1 cliente",
-    "cta": "Attire de nouvelles clientes en 5 min",
+    "cta": "Activer la résa en ligne",
     "ctaSub": "7 jours gratuits, sans carte bancaire"
   },
   "bento": {
@@ -407,10 +407,10 @@
     "photosDesc": "Poste tes photos directement sur ta vitrine en ligne."
   },
   "fidelite": {
-    "badge": "",
+    "badge": "Plan Fidélité",
     "title": "Le programme de fidélité",
     "titleBold": "que tes clientes adorent.",
-    "subtitle": "Chaque cliente qui réserve sur ta page reçoit sa carte automatiquement. Les offres (anniv, Noël, St-Val, concours) partent toutes seules.",
+    "subtitle": "Ta page salon, tes tampons, tes relances, tes avis. Tes clientes reviennent sans que tu y penses.",
     "scanTitle": "QR code ou NFC,",
     "scanTitleBold": "zéro prise de tête.",
     "scanDesc": "QR code prêt en 2 minutes sur ton téléphone. Carte NFC en option sur le comptoir. Aucune appli à télécharger — ni pour toi, ni pour ta cliente.",
@@ -421,7 +421,7 @@
     "scanBadge": "+1 point",
     "programTitle": "Ton programme,",
     "programTitleBold": "tes règles.",
-    "programDesc": "Tampons ou cagnotte, paliers, récompenses — tu configures en 2 minutes. Chaque cliente qui réserve sur ta page reçoit sa carte automatiquement. Elles scannent le QR au comptoir, c'est tout — pas d'app à télécharger.",
+    "programDesc": "Tampons ou cagnotte, paliers, récompenses — tu configures en 2 minutes. Tes clientes scannent le QR au comptoir, leur carte est créée en 3 secondes. Pas d'app à télécharger.",
     "programLabel": "Programme fidélité",
     "programSalon": "Ton Salon",
     "programReward": "Brushing offert",
@@ -1430,6 +1430,9 @@
     "marketingSmsDesc": "Reçois des SMS de Qarte (célébration de tes premiers succès, fin d'essai, win-back). Tu peux les désactiver à tout moment.",
     "marketingSmsOn": "Activé",
     "marketingSmsOff": "Désactivé",
+    "planningHiddenTitle": "Planning masqué",
+    "planningHiddenDesc": "Tu as masqué la section Planning et Résa. Tu peux la réafficher quand tu veux.",
+    "planningReEnableCta": "Réafficher",
     "dataTitle": "Tes données",
     "dataDesc": "Exporte la liste de tes clients au format CSV.",
     "exportCsv": "Exporter les clients (CSV)",
@@ -2301,7 +2304,12 @@
     "stepBooking": "Active la résa en ligne",
     "stepFirstBooking": "Reçois ta 1ère résa",
     "stepSubscribe": "Abonne-toi pour les rappels SMS",
-    "stepSubscribeHint": "Tes clients ne rateront plus jamais un RDV"
+    "stepSubscribeHint": "Tes clients ne rateront plus jamais un RDV",
+    "stepSms": "Configure tes campagnes SMS",
+    "hidePlanningLink": "Je n'utilise pas le planning",
+    "hidePlanningConfirm": "Tu n'utilises pas le planning ? On masque cette section.",
+    "hidePlanningCancel": "Garder",
+    "hidePlanningConfirmYes": "Masquer"
   },
   "milestones": {
     "vitrine_live": {

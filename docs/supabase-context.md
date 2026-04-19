@@ -91,6 +91,7 @@
 | billing_interval | TEXT | `'monthly'` | mig 051 |
 | billing_period_start | TIMESTAMPTZ | NULL | mig 095, Stripe billing cycle start for SMS quota |
 | planning_enabled | BOOLEAN | `FALSE` | mig 063 |
+| planning_intent | TEXT | `'unsure'` | mig 121, 3-state ('unsure'\|'yes'\|'no') — 'no' masque le groupe Planning de la checklist + skip emails J+4 + masque encart SMS quota |
 | planning_message | TEXT | NULL | mig 063 |
 | booking_message | TEXT | NULL | mig 064 |
 | planning_message_expires | DATE | NULL | mig 064 |
@@ -1218,6 +1219,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 109 | member_program_benefits | `member_programs` : +`discount_percent` INTEGER NULL CHECK(5,10,15,20), +`skip_deposit` BOOLEAN DEFAULT false |
 | 110 | ambassador_applications | Table `ambassador_applications` (candidatures ambassadeur : first/last name, email, phone, profile_type, message, requested_slug, status pending/approved/rejected, affiliate_id FK, reviewed_at). Index status+date, UNIQUE partiel email pending. RLS sans policy (service_role) |
 | 111 | booking_deposit_failures | Table archive `booking_deposit_failures` : snapshot des resas liberees pour acompte non recu (merchant_id, customer_id, client_name/phone, service_ids UUID[], original_slot_date/time, total_duration_minutes, notes, deposit_amount, expired_at). Index `(merchant_id, expired_at DESC)`. RLS SELECT+DELETE pour merchants (via `merchants.user_id = auth.uid()`), INSERT service_role only. Alimentee par le cron horaire `/api/cron/deposit-expiration` (helper `src/lib/deposit-release.ts`) |
+| 121 | planning_intent | merchants.planning_intent TEXT CHECK ('unsure'\|'yes'\|'no') DEFAULT 'unsure'. 'no' = merchant a explicitement masque le module Planning depuis l'onboarding checklist (lien "Je n'utilise pas le planning"). Utilise par helpers `isPlanningHidden()` et `showPlanningUi()` dans `src/lib/plan-tiers.ts` pour gater UI (encart SMS quota dashboard) + cron emails (skip Planning Reminder J+4). Reactivable depuis /dashboard/settings |
 
 ---
 

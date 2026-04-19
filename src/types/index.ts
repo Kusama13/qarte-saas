@@ -43,6 +43,7 @@ export const COUNTRIES_BY_LOCALE: Record<string, MerchantCountry[]> = {
 export type SubscriptionStatus = 'trial' | 'active' | 'canceled' | 'canceling' | 'past_due';
 
 export type PlanTier = 'fidelity' | 'all_in';
+export type PlanningIntent = 'unsure' | 'yes' | 'no';
 
 export type LoyaltyMode = 'visit' | 'cagnotte';
 
@@ -131,6 +132,7 @@ export interface Merchant {
   pwa_installed_at: string | null;
   // Planning module
   planning_enabled: boolean;
+  planning_intent: PlanningIntent | null;
   planning_message: string | null;
   planning_message_expires: string | null;
   booking_message: string | null;

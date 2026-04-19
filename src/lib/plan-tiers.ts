@@ -1,4 +1,4 @@
-import type { Merchant, PlanTier, SubscriptionStatus } from '@/types';
+import type { Merchant, PlanTier, PlanningIntent, SubscriptionStatus } from '@/types';
 
 /**
  * Plan tiers Qarte (avril 2026).
@@ -84,6 +84,24 @@ export function isLegacyMerchant(merchant: { created_at?: string | null } | null
 /** Convenience checks (UI gating). */
 export function hasPlanning(merchant: MerchantLike | null | undefined) {
   return getPlanFeatures(merchant).planning;
+}
+
+/**
+ * Whether the merchant has explicitly opted out of seeing the Planning module
+ * (set via the "Je n'utilise pas le planning" link in the onboarding checklist).
+ */
+export function isPlanningHidden(merchant: { planning_intent?: PlanningIntent | null } | null | undefined): boolean {
+  return merchant?.planning_intent === 'no';
+}
+
+/**
+ * Single source of truth for "should I render any Planning-related UI / send Planning emails".
+ * Combines tier capability AND user intent — both must allow it.
+ */
+export function showPlanningUi(
+  merchant: (MerchantLike & { planning_intent?: PlanningIntent | null }) | null | undefined
+): boolean {
+  return hasPlanning(merchant) && !isPlanningHidden(merchant);
 }
 export function hasBookingOnline(merchant: MerchantLike | null | undefined) {
   return getPlanFeatures(merchant).bookingOnline;
