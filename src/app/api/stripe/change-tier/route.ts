@@ -83,10 +83,33 @@ export async function POST(request: NextRequest) {
       metadata: { merchant_id: merchant.id, tier: newTier },
     });
 
+    // Prorata quota SMS : si upgrade Fidélité → Tout-en-un mid-cycle, donner
+    // prorata (100 × jours_restants / jours_cycle) arrondi. Exclure Fidélité-free
+    // déjà fait côté getSmsUsageThisMonth via filter sms_type.
+    const updatePayload: Record<string, unknown> = { plan_tier: newTier, updated_at: new Date().toISOString() };
+    if (merchant.plan_tier === 'fidelity' && newTier === 'all_in') {
+      const currentPeriodStart = (subscription as unknown as { current_period_start?: number }).current_period_start;
+      const currentPeriodEnd = (subscription as unknown as { current_period_end?: number }).current_period_end;
+      if (currentPeriodStart && currentPeriodEnd) {
+        const nowSec = Math.floor(Date.now() / 1000);
+        const cycleSec = currentPeriodEnd - currentPeriodStart;
+        const remainingSec = Math.max(0, currentPeriodEnd - nowSec);
+        const prorata = Math.max(1, Math.round(100 * remainingSec / cycleSec));
+        updatePayload.sms_quota_override = prorata;
+        updatePayload.sms_quota_override_cycle_anchor = new Date(currentPeriodStart * 1000).toISOString();
+        logger.info('sms_quota_prorata_set', { merchantId: merchant.id, prorata, cycleStart: new Date(currentPeriodStart * 1000).toISOString() });
+      }
+    }
+    // Si downgrade Tout-en-un → Fidélité : clear override (Fidélité quota = 0 de toute façon)
+    if (merchant.plan_tier === 'all_in' && newTier === 'fidelity') {
+      updatePayload.sms_quota_override = null;
+      updatePayload.sms_quota_override_cycle_anchor = null;
+    }
+
     // Persist new tier — webhook will also fire but we update eagerly for the redirect.
     await admin
       .from('merchants')
-      .update({ plan_tier: newTier, updated_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq('id', merchant.id);
 
     return NextResponse.json({ success: true, tier: newTier });

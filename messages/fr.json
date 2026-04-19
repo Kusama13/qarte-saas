@@ -957,7 +957,7 @@
       "packBalance": "+ {balance} dans mon pack",
       "buyPack": "Acheter un pack",
       "warningMessage": "Tu approches de la limite. Anticipe avec un pack pour éviter l'interruption.",
-      "blockedMessage": "Quota atteint. Achète un pack pour continuer à envoyer."
+      "blockedMessage": "Ton quota SMS est terminé. Merci d'acheter un pack pour continuer à envoyer."
     },
     "buyPack": {
       "title": "Acheter un pack SMS",

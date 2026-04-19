@@ -191,12 +191,16 @@ export async function getSmsUsageThisMonth(supabase: SupabaseClient, merchantId:
     periodStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
   }
 
+  // Exclure les SMS Fidélité-free (birthday + referral_reward) du compteur quota :
+  // ils sont envoyés gracieusement par Qarte et ne doivent pas consommer le quota
+  // Tout-en-un (ni impacter un merchant qui vient d'upgrader).
   const { count } = await supabase
     .from('sms_logs')
     .select('id', { count: 'exact', head: true })
     .eq('merchant_id', merchantId)
     .gte('created_at', periodStart)
-    .neq('status', 'failed');
+    .neq('status', 'failed')
+    .not('sms_type', 'in', `(${FIDELITY_FREE_SMS_TYPES.map(t => `"${t}"`).join(',')})`);
 
   const sent = count || 0;
   const overageCount = Math.max(0, sent - freeQuota);
@@ -207,6 +211,37 @@ export async function getSmsUsageThisMonth(supabase: SupabaseClient, merchantId:
     overageCost: parseFloat((overageCount * SMS_OVERAGE_COST).toFixed(2)),
     periodStart,
   };
+}
+
+/**
+ * Calcule le quota effectif d'un merchant pour le cycle en cours.
+ * Utilise `sms_quota_override` si le cycle anchor correspond au cycle actuel,
+ * sinon retombe sur le quota par défaut du plan_tier.
+ *
+ * @param merchant — { plan_tier, subscription_status, sms_quota_override, sms_quota_override_cycle_anchor }
+ * @param currentPeriodStart — ISO string du début du cycle actuel (via getSmsUsageThisMonth.periodStart)
+ */
+export function getEffectiveQuota(
+  merchant: {
+    plan_tier?: string | null;
+    subscription_status?: string | null;
+    sms_quota_override?: number | null;
+    sms_quota_override_cycle_anchor?: string | null;
+  } | null,
+  currentPeriodStart: string,
+): number {
+  if (!merchant) return 0;
+  const override = merchant.sms_quota_override;
+  const anchor = merchant.sms_quota_override_cycle_anchor;
+  if (override != null && anchor) {
+    // Comparaison au niveau date (ignore l'heure) — le cycle est ancré sur un jour du mois
+    const anchorDate = new Date(anchor).toISOString().slice(0, 10);
+    const currentDate = new Date(currentPeriodStart).toISOString().slice(0, 10);
+    if (anchorDate === currentDate) {
+      return override;
+    }
+  }
+  return getQuotaFor(merchant);
 }
 
 // ── Main send function ──
@@ -304,10 +339,10 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
     // Fidélité bypass : birthday + referral_reward envoyés sans quota ni pack (coût absorbé).
     const { data: merchantRow } = await supabase
       .from('merchants')
-      .select('billing_period_start, sms_pack_balance, plan_tier, subscription_status')
+      .select('billing_period_start, sms_pack_balance, plan_tier, subscription_status, sms_quota_override, sms_quota_override_cycle_anchor')
       .eq('id', merchantId)
       .maybeSingle();
-    const mRow = merchantRow as { billing_period_start?: string | null; sms_pack_balance?: number; plan_tier?: string; subscription_status?: string } | null;
+    const mRow = merchantRow as { billing_period_start?: string | null; sms_pack_balance?: number; plan_tier?: string; subscription_status?: string; sms_quota_override?: number | null; sms_quota_override_cycle_anchor?: string | null } | null;
     const bps = mRow?.billing_period_start || null;
     const packBalance = Number(mRow?.sms_pack_balance || 0);
     const fidelityFree = isFidelityFreeSms(mRow, smsType);
@@ -315,17 +350,20 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
     let consumedFromPack = false;
 
     if (!fidelityFree) {
-      const freeQuota = getQuotaFor(mRow);
-      const usage = await getSmsUsageThisMonth(supabase, merchantId, bps, freeQuota);
+      const usage = await getSmsUsageThisMonth(supabase, merchantId, bps, 100);
+      const freeQuota = getEffectiveQuota(mRow, usage.periodStart);
       const quotaLeft = Math.max(0, freeQuota - usage.sent);
 
-      // Alerts at 80% / 100% thresholds (fire-and-forget, deduped per cycle)
+      // Alerts at 80% / 90% / 100% thresholds (fire-and-forget, deduped per cycle)
       const alert80 = Math.floor(freeQuota * 0.8);
+      const alert90 = Math.floor(freeQuota * 0.9);
       const cycleStart = usage.periodStart.slice(0, 10);
-      if (usage.sent + 1 >= alert80 && usage.sent + 1 < freeQuota) {
-        void notifyMerchantQuotaAlert(supabase, merchantId, '80', cycleStart);
-      } else if (usage.sent + 1 >= freeQuota) {
+      if (usage.sent + 1 >= freeQuota) {
         void notifyMerchantQuotaAlert(supabase, merchantId, '100', cycleStart);
+      } else if (usage.sent + 1 >= alert90) {
+        void notifyMerchantQuotaAlert(supabase, merchantId, '90', cycleStart);
+      } else if (usage.sent + 1 >= alert80) {
+        void notifyMerchantQuotaAlert(supabase, merchantId, '80', cycleStart);
       }
 
       if (quotaLeft === 0 && packBalance === 0) {
@@ -410,25 +448,28 @@ export async function sendMarketingSms(
     // 1. Gate: paid subscription + quota selon tier + pack
     const { data: merchant } = await supabase
       .from('merchants')
-      .select('billing_period_start, sms_pack_balance, subscription_status, plan_tier')
+      .select('billing_period_start, sms_pack_balance, subscription_status, plan_tier, sms_quota_override, sms_quota_override_cycle_anchor')
       .eq('id', merchantId)
       .maybeSingle();
-    const merchantRow = merchant as { billing_period_start?: string | null; sms_pack_balance?: number; subscription_status?: string; plan_tier?: string } | null;
+    const merchantRow = merchant as { billing_period_start?: string | null; sms_pack_balance?: number; subscription_status?: string; plan_tier?: string; sms_quota_override?: number | null; sms_quota_override_cycle_anchor?: string | null } | null;
     if (!merchantRow || !(PAID_STATUSES as readonly string[]).includes(merchantRow.subscription_status || '')) {
       return { success: false, error: 'subscription_inactive' };
     }
     const bps = billingPeriodStart !== undefined ? billingPeriodStart : (merchantRow.billing_period_start || null);
     const packBalance = Number(merchantRow.sms_pack_balance || 0);
-    const freeQuota = getQuotaFor(merchantRow);
-    const usage = await getSmsUsageThisMonth(supabase, merchantId, bps, freeQuota);
+    const usage = await getSmsUsageThisMonth(supabase, merchantId, bps, 100);
+    const freeQuota = getEffectiveQuota(merchantRow, usage.periodStart);
     const quotaLeft = Math.max(0, freeQuota - usage.sent);
 
     const alert80 = Math.floor(freeQuota * 0.8);
+    const alert90 = Math.floor(freeQuota * 0.9);
     const cycleStart = usage.periodStart.slice(0, 10);
-    if (usage.sent + 1 >= alert80 && usage.sent + 1 < freeQuota) {
-      void notifyMerchantQuotaAlert(supabase, merchantId, '80', cycleStart);
-    } else if (usage.sent + 1 >= freeQuota) {
+    if (usage.sent + 1 >= freeQuota) {
       void notifyMerchantQuotaAlert(supabase, merchantId, '100', cycleStart);
+    } else if (usage.sent + 1 >= alert90) {
+      void notifyMerchantQuotaAlert(supabase, merchantId, '90', cycleStart);
+    } else if (usage.sent + 1 >= alert80) {
+      void notifyMerchantQuotaAlert(supabase, merchantId, '80', cycleStart);
     }
 
     if (quotaLeft === 0 && packBalance === 0) {

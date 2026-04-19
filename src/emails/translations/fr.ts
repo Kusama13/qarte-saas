@@ -68,8 +68,8 @@ export const fr = {
     referralPromo: 'Gagne 10 € pour chaque pro que tu recommandes',
     referralReminder: '{shopName}, 10 \u20AC t\'attendent',
     socialProof: '{shopName}, comment Elodie a doubl\u00e9 ses clientes r\u00e9guli\u00e8res',
-    smsQuotaWarning: '{shopName}, tu approches de ta limite SMS ce mois',
-    smsQuotaReached: '{shopName}, quota SMS atteint — envois suspendus',
+    smsQuotaWarning: '{shopName}, plus que 10% de SMS — achète un pack',
+    smsQuotaReached: '{shopName}, quota SMS terminé — envois suspendus',
   },
 
   baseLayout: {
@@ -1021,15 +1021,15 @@ export const fr = {
   },
 
   smsQuotaWarning: {
-    preview: '{shopName}, tu approches de ta limite SMS ce mois',
-    heading: 'Tu approches de ta limite SMS',
+    preview: 'Attention {shopName}, il te reste moins de 10% de SMS — achète un pack pour éviter l\'interruption',
+    heading: 'Attention, quota SMS bientôt épuisé',
     greeting: 'Bonjour <strong>{shopName}</strong>,',
-    intro: 'Tu as d\u00e9j\u00e0 envoy\u00e9 80 SMS sur les 100 inclus dans ton abonnement ce mois.',
-    statusTitle: 'Ce qui peut arriver',
-    statusBody: 'Si tu atteins 100 SMS sans pack, tous tes envois seront suspendus (rappels RDV, confirmations, marketing). Anticipe avec un pack — crédits valables tout au long de ton abonnement.',
+    intro: 'Tu as déjà consommé 90% de tes SMS inclus ce mois. Pour éviter une interruption de tes envois (rappels RDV, confirmations, marketing), achète un pack dès maintenant.',
+    statusTitle: 'Anticipe avant blocage',
+    statusBody: 'Si tu atteins 100% sans pack, tous tes envois seront suspendus. Les crédits du pack sont valables tout au long de ton abonnement.',
     cta: 'Acheter un pack SMS',
-    footer: 'Packs d\u00e8s 5,70€ TTC (50 SMS). Pas d\'engagement.',
-    signature: 'L\'\u00e9quipe Qarte',
+    footer: 'Packs dès 5,70€ TTC (50 SMS). Pas d\'engagement.',
+    signature: 'L\'équipe Qarte',
   },
 
   smsQuotaReached: {

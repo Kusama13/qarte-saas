@@ -68,8 +68,8 @@ export const en = {
     referralPromo: 'Earn €10 for every pro you refer',
     referralReminder: '{shopName}, you haven\'t shared your link yet',
     socialProof: '{shopName}, how Elodie doubled her regular clients',
-    smsQuotaWarning: '{shopName}, you\'re close to your SMS limit',
-    smsQuotaReached: '{shopName}, SMS quota reached — sends paused',
+    smsQuotaWarning: '{shopName}, less than 10% SMS left — buy a pack',
+    smsQuotaReached: '{shopName}, SMS quota done — sends suspended',
   },
 
   baseLayout: {
@@ -1021,12 +1021,12 @@ export const en = {
   },
 
   smsQuotaWarning: {
-    preview: '{shopName}, you\'re close to your SMS limit this cycle',
-    heading: 'You\'re close to your SMS limit',
+    preview: 'Warning {shopName}, less than 10% SMS left — buy a pack to avoid interruption',
+    heading: 'Warning, SMS quota almost done',
     greeting: 'Hi <strong>{shopName}</strong>,',
-    intro: 'You\'ve sent 80 of your 100 included SMS this cycle.',
-    statusTitle: 'What can happen',
-    statusBody: 'If you hit 100 without a pack, all sends (appointment reminders, confirmations, marketing) will be suspended. Get a pack now — credits last your whole subscription.',
+    intro: 'You\'ve already used 90% of your included SMS this cycle. To avoid interruption (appointment reminders, confirmations, marketing), buy a pack now.',
+    statusTitle: 'Anticipate before blocking',
+    statusBody: 'If you hit 100% without a pack, all sends will be suspended. Pack credits last your whole subscription.',
     cta: 'Buy an SMS pack',
     footer: 'Packs from €5.70 incl. VAT (50 SMS). No commitment.',
     signature: 'The Qarte Team',

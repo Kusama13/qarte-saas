@@ -5,12 +5,18 @@ import type { EmailLocale } from '@/emails/translations';
 import { canEmail } from './cron-helpers';
 import logger from './logger';
 
-export type SmsQuotaLevel = '80' | '100';
+export type SmsQuotaLevel = '80' | '90' | '100';
 
 /**
- * Notify a merchant they've hit a SMS quota threshold (80% or 100%).
+ * Notify a merchant they've hit a SMS quota threshold (80% / 90% / 100%).
  * Fire-and-forget: sends push + email in parallel, respects canEmail() + dedup per cycle.
- * Dedup is stored in merchants.sms_alert_{80,100}_sent_cycle (DATE of billing cycle start).
+ * Dedup is stored in merchants.sms_alert_{80,90,100}_sent_cycle (DATE of billing cycle start).
+ *
+ * Niveaux :
+ * - 80% : push seulement (early warning léger)
+ * - 90% : email + push avec lien achat pack (alerte principale)
+ * - 100% : push (blocage hard côté sms.ts, pas d'email — évite double-notification
+ *          quand le 90% email vient juste de partir)
  */
 export async function notifyMerchantQuotaAlert(
   supabase: SupabaseClient,
@@ -18,7 +24,9 @@ export async function notifyMerchantQuotaAlert(
   level: SmsQuotaLevel,
   billingCycleStart: string, // YYYY-MM-DD of current cycle
 ): Promise<void> {
-  const flagCol = level === '80' ? 'sms_alert_80_sent_cycle' : 'sms_alert_100_sent_cycle';
+  const flagCol = level === '80' ? 'sms_alert_80_sent_cycle'
+    : level === '90' ? 'sms_alert_90_sent_cycle'
+    : 'sms_alert_100_sent_cycle';
 
   // Dedup: only send once per cycle
   const { data: merchant } = await supabase
@@ -39,12 +47,18 @@ export async function notifyMerchantQuotaAlert(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
 
   // Push (merchant's PWA if installed)
-  const pushTitle = level === '100'
-    ? (locale === 'en' ? 'SMS quota reached — sends paused' : 'Quota SMS atteint — envois suspendus')
-    : (locale === 'en' ? 'You\'re close to your SMS limit' : 'Tu approches de ta limite SMS');
-  const pushBody = level === '100'
-    ? (locale === 'en' ? 'Buy a pack to unblock your sends.' : 'Achète un pack pour débloquer tes envois.')
-    : (locale === 'en' ? 'Anticipate with an SMS pack.' : 'Anticipe avec un pack SMS.');
+  let pushTitle: string;
+  let pushBody: string;
+  if (level === '100') {
+    pushTitle = locale === 'en' ? 'SMS quota done — buy a pack' : 'Ton quota SMS est terminé';
+    pushBody = locale === 'en' ? 'Buy a pack to unblock your sends.' : 'Merci d\'acheter un pack pour continuer à envoyer.';
+  } else if (level === '90') {
+    pushTitle = locale === 'en' ? '90% SMS used — buy a pack' : 'Quota SMS à 90% — achète un pack';
+    pushBody = locale === 'en' ? 'Anticipate now to avoid interruption.' : 'Anticipe maintenant pour éviter l\'interruption.';
+  } else {
+    pushTitle = locale === 'en' ? 'You\'re close to your SMS limit' : 'Tu approches de ta limite SMS';
+    pushBody = locale === 'en' ? 'Anticipate with an SMS pack.' : 'Anticipe avec un pack SMS.';
+  }
 
   const pushPromise = sendMerchantPush({
     supabase,
@@ -60,20 +74,23 @@ export async function notifyMerchantQuotaAlert(
     return false;
   });
 
-  // Email (respect no_contact / bounced / unsubscribed)
+  // Email : uniquement pour le niveau 90% (demande user — pas 80%, pas 100%).
+  // Le 90% est le seuil clé : envoyé "plus tôt" que le blocage, actionable (achète un pack).
   let emailPromise: Promise<unknown> = Promise.resolve();
-  const canSendEmail = canEmail({
-    no_contact: row.no_contact as boolean | null,
-    email_bounced_at: row.email_bounced_at as string | null,
-    email_unsubscribed_at: row.email_unsubscribed_at as string | null,
-  });
-  if (canSendEmail) {
-    const { data: userData } = await supabase.auth.admin.getUserById(row.user_id as string);
-    const email = userData?.user?.email;
-    if (email) {
-      emailPromise = sendSmsQuotaEmail(email, shopName, level, locale).catch((err) => {
-        logger.error('notifyMerchantQuotaAlert email error', err);
-      });
+  if (level === '90') {
+    const canSendEmail = canEmail({
+      no_contact: row.no_contact as boolean | null,
+      email_bounced_at: row.email_bounced_at as string | null,
+      email_unsubscribed_at: row.email_unsubscribed_at as string | null,
+    });
+    if (canSendEmail) {
+      const { data: userData } = await supabase.auth.admin.getUserById(row.user_id as string);
+      const email = userData?.user?.email;
+      if (email) {
+        emailPromise = sendSmsQuotaEmail(email, shopName, level, locale).catch((err) => {
+          logger.error('notifyMerchantQuotaAlert email error', err);
+        });
+      }
     }
   }
   void appUrl; // keep reference; used indirectly via sendSmsQuotaEmail
