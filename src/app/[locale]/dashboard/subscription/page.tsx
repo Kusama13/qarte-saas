@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, Link } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
@@ -214,26 +214,19 @@ export default function SubscriptionPage() {
         return;
       }
 
-      const { data } = await supabase
-        .from('merchants')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      const [merchantRes, adminRes] = await Promise.all([
+        supabase.from('merchants').select('*').eq('user_id', user.id).single(),
+        supabase.from('super_admins').select('user_id').eq('user_id', user.id).maybeSingle(),
+      ]);
 
-      // Detect super_admin for tier change override on legacy merchants
-      const { data: adminRow } = await supabase
-        .from('super_admins')
-        .select('user_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      setIsSuperAdmin(!!adminRow);
+      setIsSuperAdmin(!!adminRes.data);
 
-      if (data) {
-        setMerchant(data);
-        if (data.billing_interval === 'annual') {
+      if (merchantRes.data) {
+        setMerchant(merchantRes.data);
+        if (merchantRes.data.billing_interval === 'annual') {
           setBillingPlan('annual');
         }
-        if (data.stripe_subscription_id) {
+        if (merchantRes.data.stripe_subscription_id) {
           fetchPaymentMethod();
         }
       }
@@ -371,9 +364,9 @@ export default function SubscriptionPage() {
       }
       setToast({ type: 'success', message: newTier === 'all_in' ? t('upgradeSuccess') : t('downgradeSuccess') });
       setShowChangeTierModal(false);
-      // Refresh merchant data so the new tier appears immediately
-      const { data: refreshed } = await supabase.from('merchants').select('*').eq('user_id', (await supabase.auth.getUser()).data.user?.id || '').single();
+      const { data: refreshed } = await supabase.from('merchants').select('*').eq('id', merchant.id).single();
       if (refreshed) setMerchant(refreshed);
+      refetchContext();
     } catch (error) {
       console.error('Change tier error:', error);
       setToast({ type: 'error', message: t('paymentError') });
@@ -430,9 +423,13 @@ export default function SubscriptionPage() {
   const isPayingMerchant = isPaid || isCanceling || isPastDue;
   const isLegacy = isPayingMerchant && isLegacyMerchant(merchant);
   const canChangeTier = isPayingMerchant && (!isLegacy || isSuperAdmin);
-  const displayPlan = isPayingMerchant && subscriptionInfo
-    ? buildPlanFromSubscription(subscriptionInfo, locale)
-    : buildPlan(planTier, billingPlan, locale);
+  const displayPlan = useMemo(
+    () => isPayingMerchant && subscriptionInfo
+      ? buildPlanFromSubscription(subscriptionInfo, locale)
+      : buildPlan(planTier, billingPlan, locale),
+    [isPayingMerchant, subscriptionInfo, planTier, billingPlan, locale]
+  );
+  const annualPreview = useMemo(() => buildPlan(planTier, 'annual', locale), [planTier, locale]);
   const hasActualAnnualPrice = isPayingMerchant && subscriptionInfo?.interval === 'year';
   const activeFeatures = featuresByTier[planTier];
   const tierDisplayName = planTier === 'fidelity' ? t('tierFidelityName') : t('tierAllInName');
@@ -550,7 +547,7 @@ export default function SubscriptionPage() {
                   {hasActualAnnualPrice ? (
                     <p className="text-sm text-gray-400 mt-1"><span className="font-bold text-gray-600">{displayPlan.label}</span></p>
                   ) : (
-                    <p className="text-sm text-gray-400 mt-1"><span className="line-through">{buildPlan(planTier, 'annual', locale).annualOriginal}</span> → <span className="font-bold text-emerald-600">{buildPlan(planTier, 'annual', locale).label}</span></p>
+                    <p className="text-sm text-gray-400 mt-1"><span className="line-through">{annualPreview.annualOriginal}</span> → <span className="font-bold text-emerald-600">{annualPreview.label}</span></p>
                   )}
                   <button onClick={() => setShowNfcModal(true)} className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 hover:from-indigo-100 hover:to-violet-100 transition-colors cursor-pointer underline-offset-2 hover:underline">
                     <CreditCard className="w-3.5 h-3.5 text-indigo-600" />
@@ -617,7 +614,7 @@ export default function SubscriptionPage() {
                   }`}
                 >
                   {t('annual')}
-                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">{buildPlan(planTier, 'annual', locale).savingsPct}</span>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">{annualPreview.savingsPct}</span>
                 </button>
               </div>
             )}
@@ -816,7 +813,7 @@ export default function SubscriptionPage() {
                           : 'text-gray-500'
                       }`}
                     >
-                      {t('annual')} <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1 py-0.5 rounded-full">{t('recommended')}</span> <span className="text-emerald-600">{buildPlan(planTier, 'annual', locale).savingsPct}</span>
+                      {t('annual')} <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1 py-0.5 rounded-full">{t('recommended')}</span> <span className="text-emerald-600">{annualPreview.savingsPct}</span>
                     </button>
                   </div>
                   <Button

@@ -249,13 +249,26 @@ export interface TrialStatus {
 // Pricing history — old price before 2026-04-05, new price after
 const PRICE_CHANGE_DATE = '2026-04-05';
 
-/** Returns the monthly equivalent price for a merchant based on their subscription date */
-export function getMerchantMonthlyPrice(merchant: { billing_interval: string | null; billing_period_start: string | null }): number {
-  const isOldPrice = merchant.billing_period_start && merchant.billing_period_start < PRICE_CHANGE_DATE;
+/**
+ * Monthly equivalent price for a merchant. Handles both the April 2026 pricing split
+ * AND the 2 tiers (Fidélité 19€ / Tout-en-un 24€).
+ * - Legacy merchants (billing_period_start before split) → 19€/190€ (tarif historique)
+ * - Post-split Fidélité → 19€/190€
+ * - Post-split Tout-en-un (default) → 24€/240€
+ */
+export function getMerchantMonthlyPrice(merchant: {
+  billing_interval: string | null;
+  billing_period_start: string | null;
+  plan_tier?: string | null;
+}): number {
+  const isLegacy = merchant.billing_period_start && merchant.billing_period_start < PRICE_CHANGE_DATE;
+  const isFidelity = !isLegacy && merchant.plan_tier === 'fidelity';
+  const annualTotal = isLegacy || isFidelity ? 190 : 240;
+  const monthly = isLegacy || isFidelity ? 19 : 24;
   if (merchant.billing_interval === 'annual') {
-    return Math.round((isOldPrice ? 190 : 240) / 12 * 100) / 100;
+    return Math.round(annualTotal / 12 * 100) / 100;
   }
-  return isOldPrice ? 19 : 24;
+  return monthly;
 }
 
 export function getTrialStatus(trialEndsAt: string | null, subscriptionStatus: string): TrialStatus {

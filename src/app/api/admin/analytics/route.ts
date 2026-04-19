@@ -5,6 +5,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeAdmin } from '@/lib/api-helpers';
+import { getMerchantMonthlyPrice } from '@/lib/utils';
+import { PAID_STATUSES } from '@/lib/sms';
 
 interface MerchantRow {
   id: string;
@@ -15,6 +17,7 @@ interface MerchantRow {
   subscription_status: string;
   plan_tier: string | null;
   billing_interval: string | null;
+  billing_period_start: string | null;
   trial_ends_at: string | null;
   referral_program_enabled: boolean;
   birthday_gift_enabled: boolean;
@@ -31,6 +34,8 @@ interface MerchantRow {
   loyalty_mode: string | null;
   booking_mode: string | null;
 }
+
+const PAID_STATUS_SET: ReadonlySet<string> = new Set(PAID_STATUSES);
 
 export async function GET(request: NextRequest) {
   const auth = await authorizeAdmin(request, 'admin-analytics');
@@ -66,12 +71,12 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       supabaseAdmin
         .from('merchants')
-        .select('id, user_id, shop_name, signup_source, created_at, subscription_status, plan_tier, billing_interval, trial_ends_at, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, planning_enabled, auto_booking_enabled, shield_enabled, tier2_enabled, pwa_installed_at, logo_url, review_link, booking_url, loyalty_mode, booking_mode'),
+        .select('id, user_id, shop_name, signup_source, created_at, subscription_status, plan_tier, billing_interval, billing_period_start, trial_ends_at, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, planning_enabled, auto_booking_enabled, shield_enabled, tier2_enabled, pwa_installed_at, logo_url, review_link, booking_url, loyalty_mode, booking_mode'),
       supabaseAdmin.from('super_admins').select('user_id'),
       supabaseAdmin.from('visits').select('merchant_id, visited_at').gte('visited_at', d90),
       supabaseAdmin.from('loyalty_cards').select('created_at').gte('created_at', d90),
       supabaseAdmin.from('customers').select('*', { count: 'exact', head: true }),
-      supabaseAdmin.from('push_history').select('sent_count, failed_count'),
+      supabaseAdmin.from('push_history').select('sent_count'),
       supabaseAdmin.from('push_automations').select('welcome_sent, close_to_reward_sent, reward_ready_sent, inactive_reminder_sent, reward_reminder_sent, events_sent'),
       supabaseAdmin.from('pending_email_tracking').select('reminder_day'),
       supabaseAdmin.from('reactivation_email_tracking').select('day_sent'),
@@ -95,14 +100,7 @@ export async function GET(request: NextRequest) {
     const visits = visitsRes.data || [];
     const cards = cardsRes.data || [];
 
-    // Pricing helper — aligned with getMerchantMonthlyPrice in lib/utils
-    const priceFor = (m: MerchantRow): number => {
-      const isAnnual = m.billing_interval === 'annual';
-      const tier = m.plan_tier === 'fidelity' ? 'fidelity' : 'all_in';
-      if (tier === 'fidelity') return isAnnual ? 190 / 12 : 19;
-      return isAnnual ? 240 / 12 : 24;
-    };
-    const isPaid = (s: string) => s === 'active' || s === 'canceling' || s === 'past_due';
+    const isPaid = (s: string) => PAID_STATUS_SET.has(s);
 
     // ── Aggregations (single pass over merchants) ──
     const bySource: Record<string, number> = {};
@@ -126,7 +124,7 @@ export async function GET(request: NextRequest) {
         paid++;
         const tier = m.plan_tier === 'fidelity' ? 'fidelity' : 'all_in';
         tierBreakdown[tier]++;
-        const priceCents = Math.round(priceFor(m) * 100);
+        const priceCents = Math.round(getMerchantMonthlyPrice(m) * 100);
         mrrCents += priceCents;
         if (m.billing_interval === 'annual') { annualMrrCents += priceCents; annualCount++; }
         else { monthlyMrrCents += priceCents; monthlyCount++; }
@@ -252,14 +250,22 @@ export async function GET(request: NextRequest) {
 
     // ── Automations ──
     const manualPushSent = (pushHistoryRes.data || []).reduce((s, p) => s + (p.sent_count || 0), 0);
-    const automations = pushAutomationsRes.data || [];
+    const autoTotals = { welcome: 0, closeToReward: 0, rewardReady: 0, inactive: 0, rewardReminder: 0, events: 0 };
+    for (const a of pushAutomationsRes.data || []) {
+      autoTotals.welcome += a.welcome_sent || 0;
+      autoTotals.closeToReward += a.close_to_reward_sent || 0;
+      autoTotals.rewardReady += a.reward_ready_sent || 0;
+      autoTotals.inactive += a.inactive_reminder_sent || 0;
+      autoTotals.rewardReminder += a.reward_reminder_sent || 0;
+      autoTotals.events += a.events_sent || 0;
+    }
     const automationBreakdown = [
-      { type: 'Nouveaux clients', count: automations.reduce((s, a) => s + (a.welcome_sent || 0), 0) },
-      { type: 'Proche récompense', count: automations.reduce((s, a) => s + (a.close_to_reward_sent || 0), 0) },
-      { type: 'Récompense prête', count: automations.reduce((s, a) => s + (a.reward_ready_sent || 0), 0) },
-      { type: 'Relance inactif', count: automations.reduce((s, a) => s + (a.inactive_reminder_sent || 0), 0) },
-      { type: 'Rappel récompense', count: automations.reduce((s, a) => s + (a.reward_reminder_sent || 0), 0) },
-      { type: 'Événements', count: automations.reduce((s, a) => s + (a.events_sent || 0), 0) },
+      { type: 'Nouveaux clients', count: autoTotals.welcome },
+      { type: 'Proche récompense', count: autoTotals.closeToReward },
+      { type: 'Récompense prête', count: autoTotals.rewardReady },
+      { type: 'Relance inactif', count: autoTotals.inactive },
+      { type: 'Rappel récompense', count: autoTotals.rewardReminder },
+      { type: 'Événements', count: autoTotals.events },
     ];
     const pendingEmailsByDay: Record<number, number> = {};
     for (const e of pendingEmailsRes.data || []) pendingEmailsByDay[e.reminder_day] = (pendingEmailsByDay[e.reminder_day] || 0) + 1;

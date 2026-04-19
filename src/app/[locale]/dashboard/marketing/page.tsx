@@ -17,7 +17,7 @@ import AutomationsTab from './AutomationsTab';
 import SmsBalancePanel from './SmsBalancePanel';
 import BuyPackModal from './BuyPackModal';
 import { HowItWorksModal, OfferModal } from './Modals';
-import { getPlanFeatures } from '@/lib/plan-tiers';
+import { getPlanFeatures, getPlanTier } from '@/lib/plan-tiers';
 
 export default function MarketingPushPage() {
   const t = useTranslations('marketing');
@@ -170,7 +170,7 @@ export default function MarketingPushPage() {
         <AutomationsTab
           merchantId={merchant?.id}
           shopName={merchant?.shop_name || 'Ton Salon'}
-          planTier={merchant ? (getPlanFeatures(merchant).marketingSms ? 'all_in' : 'fidelity') : 'all_in'}
+          planTier={getPlanTier(merchant)}
         />
       )}
 

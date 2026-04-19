@@ -55,16 +55,18 @@ interface Stats {
   converted: number;
 }
 
+const LEGACY_TIER = 'legacy';
+
 const TIER_LABELS: Record<string, string> = {
   fidelity: 'Fidélité 19€',
   all_in: 'Tout-en-un 24€',
-  legacy: 'Historique',
+  [LEGACY_TIER]: 'Historique',
 };
 
 const TIER_BADGE_CLASSES: Record<string, string> = {
   fidelity: 'bg-pink-50 text-pink-700 border-pink-200',
   all_in: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  legacy: 'bg-gray-50 text-gray-700 border-gray-200',
+  [LEGACY_TIER]: 'bg-gray-50 text-gray-700 border-gray-200',
 };
 
 const blockerLabel = (k: string) => BLOCKER_LABELS_FR[k as ChurnBlocker] || k;
@@ -76,7 +78,7 @@ const wantedLabel = (k: string) =>
   WANTED_UNAVAILABLE_LABELS_FR[k as keyof typeof WANTED_UNAVAILABLE_LABELS_FR] || k;
 const blockerBadgeClass = (k: string) =>
   BLOCKER_BADGE_CLASSES[k as ChurnBlocker] || BLOCKER_BADGE_CLASSES.other;
-const tierKey = (t: string | null) => t || 'legacy';
+const tierKey = (t: string | null) => t || LEGACY_TIER;
 
 export default function ChurnSurveysAdminPage() {
   const supabase = getSupabase();

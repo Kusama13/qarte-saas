@@ -23,6 +23,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { getSupabase } from '@/lib/supabase';
+import { formatCurrency } from '@/lib/utils';
 
 type TabKey = 'revenue' | 'funnel' | 'activation' | 'engagement' | 'automations' | 'growth';
 
@@ -98,9 +99,7 @@ function formatNum(n: number): string {
   return new Intl.NumberFormat('fr-FR').format(n);
 }
 
-function formatEur(n: number): string {
-  return `${formatNum(Math.round(n))} €`;
-}
+const formatEur = (n: number) => formatCurrency(Math.round(n), 'FR', 'fr', 0);
 
 function KpiCard({
   label,
