@@ -34,7 +34,6 @@ import {
   GracePeriodSetupEmail,
   BirthdayNotificationEmail,
   AnnouncementMaPageEmail,
-  PlansLaunchEmail,
   WinBackEmail,
   BookingNotificationEmail,
   SmsQuotaEmail,
@@ -747,16 +746,6 @@ export async function sendAnnouncementMaPageEmail(
   });
 }
 
-export async function sendPlansLaunchEmail(
-  to: string,
-  shopName: string,
-  currentPrice: string,
-  locale: EmailLocale = 'fr'
-): Promise<SendEmailResult> {
-  return sendEmail(to, subj(locale, 'plansLaunch', { shopName }), PlansLaunchEmail, { shopName, currentPrice, locale }, {
-    logLabel: 'Plans launch email',
-  });
-}
 
 export async function sendWinBackEmail(
   to: string,

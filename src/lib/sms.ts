@@ -14,9 +14,9 @@ export function getQuotaFor(merchant: { subscription_status?: string | null; pla
 
 /** SMS types envoyés gratuitement aux merchants Fidélité (pas de quota, pas de pack consommé).
  *  Le coût OVH est absorbé par Qarte — usage attendu marginal (anniversaires + récompenses parrainage). */
-const FIDELITY_FREE_SMS_TYPES: SmsType[] = ['birthday', 'referral_reward'];
+export const FIDELITY_FREE_SMS_TYPES: SmsType[] = ['birthday', 'referral_reward'];
 
-function isFidelityFreeSms(merchant: { plan_tier?: string | null } | null, smsType: SmsType): boolean {
+export function isFidelityFreeSms(merchant: { plan_tier?: string | null } | null, smsType: SmsType): boolean {
   return merchant?.plan_tier === 'fidelity' && FIDELITY_FREE_SMS_TYPES.includes(smsType);
 }
 

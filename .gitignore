@@ -21,3 +21,8 @@ src/app/v0/
 src/app/v2/
 src/app/v3/
 src/app/v4/
+
+# Playwright artifacts
+/test-results/
+/playwright-report/
+/playwright/.cache/
