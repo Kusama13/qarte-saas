@@ -2,8 +2,20 @@
 
 > Dernière MAJ : 2026-04-19. Mode plan, pas d'implémentation.
 > Skills appliqués : `onboarding-cro`, `email-sequence`, `copywriting`, `marketing-psychology`, `paywall-upgrade-cro`, `churn-prevention`, `customer-research`.
+> Audit complet 49 templates : voir [docs/email-audit-v2.md](./email-audit-v2.md)
 >
 > **Changements v2** : intégration des 2 tiers (Fidélité 19€ vs Tout-en-un 24€), passage de 2 à 3 SMS (ajout célébration + survey, drop J+2 grace), copy SMS sans firstName (le merchant n'a que `shop_name`), copy SMS C en pratfall + reciprocity.
+>
+> **Amendements post-audit skills (2026-04-19)** :
+> 1. **GraceEnding split en 2 emails** — J+10 "compte mis en pause demain" + J+13 "suppression définitive demain" (ne pas confondre les 2 niveaux de gravité — `churn-prevention §"Dunning"`)
+> 2. **TrialEnding subjects raccourcis** à 40-60 chars (`email-sequence §"Subject Line Strategy"`)
+> 3. **Email 9 PartialActivationPush** — fusionne dans Email 2 S1 ou cap J+4 max (risque doublon, `email-sequence §"One Email, One Job"`)
+> 4. **Inactive7/14/30 différencier risk signals** — login signal vs usage signal vs pre-cancel (`churn-prevention §"Risk Signals"`)
+> 5. **Inactive30 doit proposer 3 options concrètes** : pause / switch tier / call founder (skill `churn-prevention §"Save Offer Types"` — 60-80% des pausers réactivent)
+> 6. **UpgradeAllInEmail subject-by-signal** plutôt que générique (variante 1 SMS bloqué, variante 2 demande client)
+> 7. **Cleanup linguistique** : retirer `!`, vouvoiement IncompleteSignupReminder2, blame "tes clientes oublient de revenir", fausse urgence "tout disparaît dans 48h"
+> 8. **Cap soft pré-checkout** : max 1 email cron par 36h hors triggers d'aha (le frequency cap 1+1+1/24h v2 §11.4 ne couvre pas la collision multi-emails même canal/24h)
+> 9. **Renommer Tier2UpsellEmail → LoyaltyTier2UpsellEmail** (éviter confusion `tier 2 cagnotte` vs `tier plan all_in`)
 
 ---
 
@@ -357,25 +369,128 @@ CREATE INDEX idx_marketing_sms_merchant ON merchant_marketing_sms_logs(merchant_
 
 ---
 
-## 7. Comparatif vs existant
+## 7. Matrix complète — 49 templates audités
 
-| Email actuel | Décision | Raison |
+Audit exhaustif de tous les templates `src/emails/*.tsx`. Statut indiqué : **Garde** / **Supprime** / **Fusionne** / **Renomme** / **Tier-aware** (variantes Fidélité vs Tout-en-un) / **NEW**.
+
+### A. Pre-trial / signup incomplet (4)
+| Email | Trigger | Action v2 |
 |---|---|---|
-| WelcomeEmail | **Garde + simplifie** | Bon timing, simplifier choix |
-| ProgramReminder J+1 | **Supprime** | Remplacé par Email 8 contextuel |
-| QRCode | **Garde, déclenche sur Email 5** | Mieux placé après aha |
-| FirstClientScript J+2 | **Fusionne dans Email 8** | Duplique le pain |
-| SocialProof J+3 | **Supprime** | Cas study dans Email 8 |
-| VitrineReminder J+3 | **Supprime** (replace par Email 7 trigger) | Push contextuel |
-| PlanningReminder J+4 | **Supprime** (replace par Email 9) | Idem |
-| TrialEnding J-2 | **Garde + 4 variantes + reco tier** | Loss aversion segmentée |
-| TrialExpired J+1 | **Garde + 2 variantes** | Distingue activés vs pas |
-| GracePeriodSetup | **Devient Email 4** | Plus court, plus urgent |
-| ChurnSurveyReminder J+3 | **Garde + nouveau subject** | Subject pratfall, copy v2 |
-| PostSurveyFollowUp | **Garde tel quel** | Déjà personnalisé |
-| Tier2UpsellEmail | **Garde tel quel** | Cagnotte tier 2, indep du plan_tier |
+| GuidedSignupEmail | Signup étape 1 (no merchant) | **Garde** |
+| IncompleteSignupEmail | J+1 sans merchant | **Garde** |
+| IncompleteSignupReminder2Email | J+3 sans merchant | **Garde** |
+| LastChanceSignupEmail | J+7 sans merchant | **Garde** |
 
-**Bilan** : 13 emails actuels → 9 emails core + 1 nouveau `UpgradeAllInEmail` + 3 SMS.
+### B. Onboarding pré-checkout (10) — gros impact refonte
+| Email | Trigger actuel | Action v2 |
+|---|---|---|
+| WelcomeEmail | Signup complet | **Garde + simplifie** (devient Email 1) |
+| ProgramReminderEmail | J+1 si pas configuré | **Supprime** (remplacé par Email 8 ActivationStalled) |
+| ProgramReminderDay2Email | J+2 | **Supprime** |
+| ProgramReminderDay3Email | J+3 | **Supprime** |
+| FirstClientScriptEmail | J+2 | **Fusionne dans Email 8** |
+| SocialProofEmail | J+3 | **Supprime** (case study déplacé Email 8) |
+| VitrineReminderEmail | J+3 | **Supprime** (remplacé Email 7 trigger) |
+| PlanningReminderEmail | J+4 | **Supprime** (remplacé Email 9 trigger) |
+| QuickCheckEmail | Mid-trial | **Audit usage** : à supprimer si non déclenché |
+| Day5CheckinEmail | J+5 | **Supprime** (redondant avec Email 2 TrialEnding J+5) |
+
+### C. Triggers événementiels aha (4)
+| Email | Trigger | Action v2 |
+|---|---|---|
+| FirstScanEmail | 1ère visite scan | **Renomme** → FirstScanCelebrationEmail (Email 5) |
+| FirstBookingEmail | 1ère résa en ligne | **Renomme** → FirstBookingCelebrationEmail (Email 6) |
+| FirstRewardEmail | 1ère récompense débloquée | **Garde tel quel** |
+| QRCodeEmail | Configuration faite | **Garde, déclenche après FirstScan** au lieu de configuration |
+
+### D. Fin de trial + churn (6)
+| Email | Trigger | Action v2 |
+|---|---|---|
+| TrialEndingEmail | J-2 | **Garde + 4 variantes par state + reco tier** (Email 2) |
+| TrialExpiredEmail | J+1 fin trial | **Garde + 2 variantes S0/S1 vs S2/S3** (Email 3) |
+| GracePeriodSetupEmail | J+10 (12h avant suppression) | **Garde + raccourcit** (Email 4) |
+| ChurnSurveyReminderEmail | J+13 fully expired | **Garde + nouveau subject** (*"On rouvre ton compte {shop}..."*) |
+| PostSurveyFollowUpEmail | Post survey J+1 | **Garde tel quel** |
+| PostSurveyLastChanceEmail | Post survey J+3 | **Garde tel quel** |
+
+### E. Subscription mgmt (4)
+| Email | Trigger | Action v2 |
+|---|---|---|
+| SubscriptionConfirmedEmail | Checkout réussi | **Tier-aware** (Fidélité retention focus / Tout-en-un 3 piliers) |
+| SubscriptionCanceledEmail | Cancel | **Garde tel quel** |
+| SubscriptionReactivatedEmail | Réabo après pause | **Garde tel quel** |
+| PaymentFailedEmail | Paiement échoué | **Garde tel quel** |
+
+### F. Post-checkout actif — re-engagement (5)
+| Email | Trigger | Action v2 |
+|---|---|---|
+| InactiveMerchantDay7Email | Inactif 7j | **Tier-aware** (ton + features pushées) |
+| InactiveMerchantDay14Email | Inactif 14j | **Tier-aware** |
+| InactiveMerchantDay30Email | Inactif 30j | **Tier-aware** + push survey churn |
+| WinBackEmail | Inactif 60j+ | **Garde tel quel** |
+| ReactivationEmail | Trigger custom | **Audit usage** |
+
+### G. Post-checkout actif — périodiques (3)
+| Email | Trigger | Action v2 |
+|---|---|---|
+| WeeklyDigestEmail | Hebdo | **Tier-aware** (skip sections résa/vitrine si Fidélité) |
+| ProductUpdateEmail | Manuel admin | **Tier-aware** (filtre features par tier) |
+| AnnouncementMaPageEmail | Manuel | **Tier-aware** (vitrine = même but, accent diff) |
+
+### H. Upgrade & cross-sell (2)
+| Email | Trigger | Action v2 |
+|---|---|---|
+| Tier2UpsellEmail | Cagnotte tier 2 (~50 fidèles) | **Garde tel quel** (tier de cagnotte ≠ plan_tier) |
+| **UpgradeAllInEmail** | Signal 2/3 (campagne SMS bloquée + demande client manuelle) | **NEW** — paywall Fidélité → Tout-en-un |
+
+### I. Notifications transactionnelles merchant (7)
+| Email | Trigger | Action v2 |
+|---|---|---|
+| BookingNotificationEmail | Nouvelle résa | **Garde** (Tout-en-un only, déjà gated) |
+| BirthdayNotificationEmail | Anniv client | **Garde tel quel** |
+| AutoSuggestRewardEmail | Suggestion récompense | **Garde tel quel** |
+| ChallengeCompletedEmail | Challenge fini | **Garde tel quel** |
+| PendingPointsEmail | Points en attente | **Garde tel quel** |
+| SlotReleasedEmail | Annulation libère slot | **Garde** (Tout-en-un only) |
+| SmsQuotaEmail | Quota SMS atteint | **Garde tel quel** |
+
+### J. Référence / parrainage (2)
+| Email | Trigger | Action v2 |
+|---|---|---|
+| ReferralPromoEmail | Parrainage promo merchant | **Garde tel quel** |
+| ReferralReminderEmail | Reminder parrainage | **Garde tel quel** |
+
+### K. Customer-facing (1)
+| Email | Trigger | Action v2 |
+|---|---|---|
+| AmbassadorWelcomeEmail | Client ambassadeur | **Garde tel quel** |
+
+### L. Setup admin (1)
+| Email | Trigger | Action v2 |
+|---|---|---|
+| SetupForYouEmail | "On configure pour toi" admin manuel | **Garde tel quel** |
+
+---
+
+### Bilan chiffré
+
+| Catégorie | Avant | Après | Tier-aware |
+|---|---|---|---|
+| Pre-trial | 4 | 4 | 0 |
+| Onboarding pré-checkout | 10 | 5 | 0 (segmenté par activation_score) |
+| Triggers aha | 4 | 4 | 0 |
+| Fin trial + churn | 6 | 6 | 1 (TrialEnding via reco tier) |
+| Subscription mgmt | 4 | 4 | 1 |
+| Re-engagement actif | 5 | 5 | 3 |
+| Périodiques actifs | 3 | 3 | 3 |
+| Upgrade & cross-sell | 1 | 2 (+UpgradeAllIn) | 1 |
+| Transactionnels merchant | 7 | 7 | 0 |
+| Référence | 2 | 2 | 0 |
+| Customer-facing | 1 | 1 | 0 |
+| Setup | 1 | 1 | 0 |
+| **TOTAL** | **48** | **44** | **9 tier-aware** |
+
+**Bilan v2** : -5 supprimés (redondants), +1 nouveau (UpgradeAllIn), 9 emails à refactorer pour différencier Fidélité vs Tout-en-un.
 
 ---
 

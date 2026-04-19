@@ -1,7 +1,41 @@
 # Matrice des emails Qarte
 
-> Derniere mise a jour : 17 avril 2026
+> Derniere mise a jour : 19 avril 2026
 > Source : `src/lib/email.ts`, `src/app/api/cron/{morning,email-onboarding,email-engagement}/route.ts`, `src/emails/translations/fr.ts`
+
+---
+
+## Plan v2 trial emails+SMS — résumé impact
+
+> Refonte planifiée 2026-04-19. Voir [`docs/email-sms-trial-plan.md`](./email-sms-trial-plan.md) pour le plan complet (segmentation 2 tiers + 3 SMS + 9 emails tier-aware).
+
+### Changements à venir sur les emails ci-dessous
+
+**À supprimer (5)** : `ProgramReminderEmail`, `ProgramReminderDay2Email`, `ProgramReminderDay3Email`, `SocialProofEmail`, `VitrineReminderEmail`, `PlanningReminderEmail`, `Day5CheckinEmail` *(remplacés par triggers événementiels Email 5/6/7 + email contextuel ActivationStalled)*
+
+**À fusionner** : `FirstClientScriptEmail` → fusionne dans nouveau `ActivationStalledEmail` (S0 J+3)
+
+**À renommer** : `FirstScanEmail` → `FirstScanCelebrationEmail`, `FirstBookingEmail` → `FirstBookingCelebrationEmail`
+
+**À refactor avec variantes par state (4)** : `TrialEndingEmail` (4 variantes par activation_score + reco tier), `TrialExpiredEmail` (2 variantes S0/S1 vs S2/S3), `GracePeriodSetupEmail`, `ChurnSurveyReminderEmail` (nouveau subject pratfall)
+
+**À refactor avec variantes par tier (9 emails post-checkout)** :
+- `SubscriptionConfirmedEmail` — Fidélité retention focus / Tout-en-un 3 piliers
+- `InactiveMerchantDay7/14/30Email` — ton + features pushées par tier
+- `WeeklyDigestEmail` — skip sections résa/vitrine si Fidélité
+- `ProductUpdateEmail` — filtre features par tier
+- `AnnouncementMaPageEmail` — accent diff par tier
+
+**Nouveau email** : `UpgradeAllInEmail` (paywall Fidélité → Tout-en-un, triggers : campagne SMS marketing bloquée + demande client manuelle)
+
+**Nouveau canal SMS — 3 SMS marketing trial** :
+1. `celebration_*` — 1er aha event (visit OU booking_online OU vitrine), dedup global
+2. `trial_pre_loss` — J-1 trial, ≥S1, copy tier-aware via `recommendTierForMerchant`
+3. `churn_survey` — J+5 fully expired, copy pratfall + reciprocity
+
+**Bilan** : 48 emails → 44 emails (-5 +1) + 3 SMS marketing.
+
+---
 
 ## Repartition par cron (split avril 2026)
 
