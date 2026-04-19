@@ -135,7 +135,11 @@
       "Bash(cat /Users/judicaelahmedtraore/Documents/SAAS/qarte-saas/src/app/[locale]/auth/merchant/signup/complete/page.tsx)",
       "Bash(cat /Users/judicaelahmedtraore/Documents/SAAS/qarte-saas/src/app/[locale]/pricing/page.tsx)",
       "Bash(cat /Users/judicaelahmedtraore/Documents/SAAS/qarte-saas/src/app/[locale]/boutique/page.tsx)",
-      "Bash(vercel env:*)"
+      "Bash(vercel env:*)",
+      "Bash(cat)",
+      "Bash(chmod +x /tmp/check_i18n.sh)",
+      "Bash(/tmp/check_i18n.sh)",
+      "Bash(PLAYWRIGHT_BASE_URL=http://localhost:3000 npx playwright test e2e/audit-mobile.spec.ts --reporter=list --workers=1)"
     ]
   }
 }

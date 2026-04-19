@@ -18,6 +18,7 @@ import {
   Crown,
   Globe,
   ShieldAlert,
+  MessageSquareOff,
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -48,6 +49,8 @@ export default function SettingsPage() {
   const [userEmail, setUserEmail] = useState('');
   const [shieldEnabled, setShieldEnabled] = useState(true);
   const [shieldSaving, setShieldSaving] = useState(false);
+  const [smsOptedOut, setSmsOptedOut] = useState(false);
+  const [smsOptOutSaving, setSmsOptOutSaving] = useState(false);
 
   useEffect(() => {
     const fetchMerchant = async () => {
@@ -72,6 +75,7 @@ export default function SettingsPage() {
           phone: data.phone || '',
         });
         setShieldEnabled(data.shield_enabled !== false);
+        setSmsOptedOut(data.marketing_sms_opted_out === true);
       }
       setLoading(false);
     };
@@ -118,6 +122,20 @@ export default function SettingsPage() {
       .eq('id', merchant.id);
     if (shieldError) setShieldEnabled(prev);
     setShieldSaving(false);
+  };
+
+  const toggleSmsOptOut = async () => {
+    if (!merchant || smsOptOutSaving) return;
+    const next = !smsOptedOut;
+    setSmsOptOutSaving(true);
+    const prev = smsOptedOut;
+    setSmsOptedOut(next);
+    const { error: smsError } = await supabase
+      .from('merchants')
+      .update({ marketing_sms_opted_out: next })
+      .eq('id', merchant.id);
+    if (smsError) setSmsOptedOut(prev);
+    setSmsOptOutSaving(false);
   };
 
   const exportCSV = async () => {
@@ -302,6 +320,37 @@ export default function SettingsPage() {
             className={`shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${shieldEnabled ? 'bg-indigo-600' : 'bg-gray-300'} ${shieldSaving ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${shieldEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white/60 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/30">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className={`p-2 md:p-2.5 rounded-xl shadow-lg shrink-0 ${!smsOptedOut ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-indigo-200' : 'bg-gray-100 text-gray-400 shadow-gray-100'}`}>
+              <MessageSquareOff className="w-4 h-4 md:w-5 md:h-5" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-base md:text-xl font-bold text-gray-900">
+                {t('marketingSmsTitle')}
+              </h2>
+              <p className="mt-1 text-sm text-gray-600 leading-relaxed">
+                {t('marketingSmsDesc')}
+              </p>
+              <p className={`mt-2 text-xs font-bold uppercase tracking-wider ${!smsOptedOut ? 'text-emerald-600' : 'text-gray-400'}`}>
+                {!smsOptedOut ? t('marketingSmsOn') : t('marketingSmsOff')}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={!smsOptedOut}
+            onClick={toggleSmsOptOut}
+            disabled={smsOptOutSaving}
+            className={`shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${!smsOptedOut ? 'bg-indigo-600' : 'bg-gray-300'} ${smsOptOutSaving ? 'opacity-60 cursor-not-allowed' : ''}`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${!smsOptedOut ? 'translate-x-6' : 'translate-x-1'}`} />
           </button>
         </div>
       </div>
