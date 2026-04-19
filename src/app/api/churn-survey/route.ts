@@ -7,6 +7,7 @@ import {
   BLOCKER_VALUES,
   CONVINCE_VALUES,
   FEATURE_VALUES,
+  WANTED_UNAVAILABLE_VALUES,
   CHURN_BONUS_DAYS_BY_CONVINCE,
   CHURN_PROMO_CODE,
 } from '@/lib/churn-survey-config';
@@ -19,6 +20,7 @@ const surveySchema = z.object({
   features_tested: z.array(z.enum(FEATURE_VALUES)).min(1),
   would_convince: z.enum(CONVINCE_VALUES),
   free_comment: z.string().max(500).optional().nullable(),
+  features_wanted_unavailable: z.array(z.enum(WANTED_UNAVAILABLE_VALUES)).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -50,7 +52,7 @@ export async function POST(request: NextRequest) {
     // Fetch merchant + verify ownership + check trial status + idempotence
     const { data: merchant, error: merchantError } = await supabaseAdmin
       .from('merchants')
-      .select('id, trial_ends_at, subscription_status, churn_survey_seen_at, shop_name, email, phone')
+      .select('id, trial_ends_at, subscription_status, churn_survey_seen_at, shop_name, email, phone, plan_tier')
       .eq('user_id', user.id)
       .is('deleted_at', null)
       .single();
@@ -82,6 +84,8 @@ export async function POST(request: NextRequest) {
         would_convince: parsed.data.would_convince,
         free_comment: parsed.data.free_comment?.trim() || null,
         bonus_days_granted: bonusDays,
+        plan_tier_at_churn: merchant.plan_tier ?? null,
+        features_wanted_unavailable: parsed.data.features_wanted_unavailable ?? [],
       });
 
     if (insertError) {

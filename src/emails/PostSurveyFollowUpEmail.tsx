@@ -61,7 +61,7 @@ export function PostSurveyFollowUpEmail({ shopName, variant, daysRemaining, loca
       )}
 
       <Section style={buttonContainer}>
-        <Button style={button} href={`https://getqarte.com/${variant === 'lower_price' ? 'dashboard/subscription' : 'dashboard'}`}>
+        <Button style={button} href={`https://getqarte.com/${variant === 'lower_price' || variant === 'fidelity_tier_ok' ? 'dashboard/subscription' : 'dashboard'}`}>
           {t(`${ns}.cta` as any)}
         </Button>
       </Section>

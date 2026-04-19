@@ -152,7 +152,6 @@ export interface Merchant {
   show_public_page_on_card: boolean;
   signup_source: string | null;
   locale: 'fr' | 'en';
-  first_feature_choice: 'loyalty' | 'vitrine' | null;
   deleted_at: string | null;
   // Booking mode (free = merchant sets opening hours, system computes availability)
   booking_mode: 'slots' | 'free';

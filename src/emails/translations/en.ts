@@ -61,6 +61,7 @@ export const en = {
     postSurveyFollowUpLongerTrial: '{shopName}, have you tried online booking?',
     postSurveyFollowUpTeamDemo: '{shopName}, how was your demo?',
     postSurveyFollowUpMoreFeatures: '{shopName}, see what we\'ve added',
+    postSurveyFollowUpFidelityTierOk: '{shopName}, the Loyalty 19€ tier fits you better',
     postSurveyFollowUpNothing: '{shopName}, one last word',
     postSurveyFollowUpLastDay: '{shopName}, last day of your trial',
     postSurveyLastChanceLowerPrice: '{shopName}, your code expires tomorrow',
@@ -922,6 +923,13 @@ export const en = {
       body: '<strong>Free mode planning</strong> — clients book based on your opening hours.<br/><strong>Birthday SMS</strong> — automatic gift on the day.<br/><strong>Online deposits</strong> — no more no-shows.<br/><strong>Referral program</strong> — your clients recruit for you.',
       cta: 'See what\'s new',
     },
+    fidelityTierOk: {
+      preview: '{shopName}, the Loyalty tier at 19€/month is waiting',
+      heading: 'The Loyalty tier at 19€/month',
+      intro: 'You only need loyalty — that\'s exactly why we built the Loyalty tier at 19€/month.',
+      body: 'Loyalty card, cashback, automated reminders, birthdays — everything that keeps your clients coming back, without paying for what you don\'t use.',
+      cta: 'Choose Loyalty tier',
+    },
     nothing: {
       preview: '{shopName}, one last word',
       heading: 'Thanks for your feedback',
@@ -962,6 +970,12 @@ export const en = {
       heading: 'Your trial is over',
       intro: 'We added the features you were waiting for. If you want to use them, it\'s now.',
       cta: 'Reactivate my account',
+    },
+    fidelityTierOk: {
+      preview: '{shopName}, switch to Loyalty 19€ before deletion',
+      heading: 'The Loyalty tier awaits',
+      intro: 'Last chance: the Loyalty tier at 19€/month covers exactly what you need.',
+      cta: 'Activate Loyalty 19€',
     },
     nothing: {
       preview: '{shopName}, your data will be deleted',

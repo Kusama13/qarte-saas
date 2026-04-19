@@ -14,6 +14,7 @@ export const CONVINCE_VALUES = [
   'longer_trial',
   'team_demo',
   'more_features',
+  'fidelity_tier_ok',
   'nothing',
 ] as const;
 
@@ -26,9 +27,19 @@ export const FEATURE_VALUES = [
   'referral',
 ] as const;
 
+/** Features Tout-en-un non dispo dans Fidélité — collectées via Q3bis pour merchants fidélité. */
+export const WANTED_UNAVAILABLE_VALUES = [
+  'planning',
+  'online_booking',
+  'sms_marketing',
+  'contest',
+  'member_programs',
+] as const;
+
 export type ChurnBlocker = (typeof BLOCKER_VALUES)[number];
 export type ChurnConvince = (typeof CONVINCE_VALUES)[number];
 export type ChurnFeature = (typeof FEATURE_VALUES)[number];
+export type ChurnWantedUnavailable = (typeof WANTED_UNAVAILABLE_VALUES)[number];
 
 // Mapping from snake_case DB values to camelCase translation keys
 export const CONVINCE_VARIANT_KEYS: Record<ChurnConvince, string> = {
@@ -36,6 +47,7 @@ export const CONVINCE_VARIANT_KEYS: Record<ChurnConvince, string> = {
   longer_trial: 'longerTrial',
   team_demo: 'teamDemo',
   more_features: 'moreFeatures',
+  fidelity_tier_ok: 'fidelityTierOk',
   nothing: 'nothing',
 };
 
@@ -54,6 +66,7 @@ export const CONVINCE_LABELS_FR: Record<ChurnConvince, string> = {
   longer_trial: 'Essai plus long',
   team_demo: 'Démo avec équipe',
   more_features: 'Plus de fonctionnalités',
+  fidelity_tier_ok: 'Tier Fidélité 19€ suffisant',
   nothing: 'Rien',
 };
 
@@ -64,6 +77,14 @@ export const FEATURE_LABELS_FR: Record<ChurnFeature, string> = {
   sms: 'SMS',
   push_offers: 'Push / offres',
   referral: 'Parrainage',
+};
+
+export const WANTED_UNAVAILABLE_LABELS_FR: Record<ChurnWantedUnavailable, string> = {
+  planning: 'Planning',
+  online_booking: 'Réservation en ligne',
+  sms_marketing: 'Campagnes SMS',
+  contest: 'Jeux concours',
+  member_programs: 'Programmes membres',
 };
 
 // Trigger for the admin page badges + merchant card colors
@@ -86,5 +107,6 @@ export const CHURN_BONUS_DAYS_BY_CONVINCE: Record<ChurnConvince, number> = {
   longer_trial: 7,
   team_demo: 5,
   more_features: 2,
+  fidelity_tier_ok: 5,
   nothing: 2,
 };

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, MessageCircle, Plus } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 import { useTranslations } from 'next-intl';
+import { trackFaqOpened } from '@/lib/analytics';
 
 const INITIAL_VISIBLE_FAQS = 4;
 
@@ -133,7 +134,11 @@ export function FAQSection() {
               faq={faq}
               index={index}
               isOpen={openIndex === index}
-              onToggle={() => setOpenIndex(openIndex === index ? null : index)}
+              onToggle={() => {
+                const willOpen = openIndex !== index;
+                setOpenIndex(willOpen ? index : null);
+                if (willOpen) trackFaqOpened({ faq_question: faq.question, faq_index: index });
+              }}
             />
           ))}
         </div>

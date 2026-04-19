@@ -11,7 +11,9 @@ import type {
   ChurnBlocker as Blocker,
   ChurnFeature as Feature,
   ChurnConvince as Convince,
+  ChurnWantedUnavailable as WantedUnavailable,
 } from '@/lib/churn-survey-config';
+import { getPlanTier } from '@/lib/plan-tiers';
 
 export default function ChurnSurveyPage() {
   const router = useRouter();
@@ -21,8 +23,15 @@ export default function ChurnSurveyPage() {
   const [blocker, setBlocker] = useState<Blocker | null>(null);
   const [missingFeature, setMissingFeature] = useState('');
   const [featuresTested, setFeaturesTested] = useState<Feature[]>([]);
+  const [featuresWantedUnavailable, setFeaturesWantedUnavailable] = useState<WantedUnavailable[]>([]);
   const [wouldConvince, setWouldConvince] = useState<Convince | null>(null);
   const [freeComment, setFreeComment] = useState('');
+
+  // Tier at time of survey : 'fidelity' limits Q3 (planning/booking not accessible)
+  // and unlocks Q3bis. 'all_in' unlocks the "fidelity_tier_ok" convince option.
+  // Legacy merchants (no plan_tier) behave like all_in.
+  const merchantTier = merchant ? getPlanTier(merchant) : 'all_in';
+  const isFidelity = merchant?.plan_tier === 'fidelity';
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -57,31 +66,57 @@ export default function ChurnSurveyPage() {
     [t]
   );
 
-  const features: { value: Feature; label: string }[] = useMemo(
-    () => [
+  const features: { value: Feature; label: string }[] = useMemo(() => {
+    const all: { value: Feature; label: string }[] = [
       { value: 'loyalty', label: t('featureLoyalty') },
       { value: 'planning', label: t('featurePlanning') },
       { value: 'online_booking', label: t('featureOnlineBooking') },
       { value: 'sms', label: t('featureSms') },
       { value: 'push_offers', label: t('featurePushOffers') },
       { value: 'referral', label: t('featureReferral') },
+    ];
+    // Fidélité n'a pas accès à planning + résa en ligne → on retire ces options
+    // pour éviter les réponses contradictoires.
+    return isFidelity
+      ? all.filter((f) => f.value !== 'planning' && f.value !== 'online_booking')
+      : all;
+  }, [t, isFidelity]);
+
+  const wantedUnavailable: { value: WantedUnavailable; label: string }[] = useMemo(
+    () => [
+      { value: 'planning', label: t('wantedPlanning') },
+      { value: 'online_booking', label: t('wantedOnlineBooking') },
+      { value: 'sms_marketing', label: t('wantedSmsMarketing') },
+      { value: 'contest', label: t('wantedContest') },
+      { value: 'member_programs', label: t('wantedMemberPrograms') },
     ],
     [t]
   );
 
-  const convinces: { value: Convince; label: string }[] = useMemo(
-    () => [
+  const convinces: { value: Convince; label: string }[] = useMemo(() => {
+    const all: { value: Convince; label: string }[] = [
       { value: 'lower_price', label: t('convinceLowerPrice') },
       { value: 'longer_trial', label: t('convinceLongerTrial') },
       { value: 'team_demo', label: t('convinceTeamDemo') },
       { value: 'more_features', label: t('convinceMoreFeatures') },
+      { value: 'fidelity_tier_ok', label: t('convinceFidelityTierOk') },
       { value: 'nothing', label: t('convinceNothing') },
-    ],
-    [t]
-  );
+    ];
+    // L'option "tier Fidélité 19€ me suffirait" ne concerne que les merchants
+    // qui étaient sur Tout-en-un (ou legacy tout-en-un implicite).
+    return merchantTier === 'fidelity'
+      ? all.filter((c) => c.value !== 'fidelity_tier_ok')
+      : all;
+  }, [t, merchantTier]);
 
   const toggleFeature = (f: Feature) => {
     setFeaturesTested((prev) =>
+      prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]
+    );
+  };
+
+  const toggleWantedUnavailable = (f: WantedUnavailable) => {
+    setFeaturesWantedUnavailable((prev) =>
       prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]
     );
   };
@@ -103,6 +138,7 @@ export default function ChurnSurveyPage() {
           features_tested: featuresTested,
           would_convince: wouldConvince,
           free_comment: freeComment.trim() || null,
+          features_wanted_unavailable: isFidelity ? featuresWantedUnavailable : [],
         }),
       });
 
@@ -243,6 +279,27 @@ export default function ChurnSurveyPage() {
                     ))}
                   </div>
                 </div>
+
+                {/* Q3bis — Features de Tout-en-un qui auraient convaincu (Fidélité only) */}
+                {isFidelity && (
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-1">
+                      {t('q3bisLabel')}
+                    </label>
+                    <p className="text-xs text-gray-400 mb-3">{t('q3bisHint')}</p>
+                    <div className="space-y-2">
+                      {wantedUnavailable.map((f) => (
+                        <OptionButton
+                          key={f.value}
+                          type="checkbox"
+                          label={f.label}
+                          checked={featuresWantedUnavailable.includes(f.value)}
+                          onClick={() => toggleWantedUnavailable(f.value)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Q4 — Would convince */}
                 <div>

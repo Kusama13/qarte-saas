@@ -24,6 +24,8 @@ interface SurveyRow {
   would_convince: string;
   free_comment: string | null;
   bonus_days_granted: number;
+  plan_tier_at_churn: string | null;
+  features_wanted_unavailable: string[] | null;
   created_at: string;
   merchant: SurveyMerchantJoin | null;
 }
@@ -45,6 +47,8 @@ export async function GET(request: NextRequest) {
         would_convince,
         free_comment,
         bonus_days_granted,
+        plan_tier_at_churn,
+        features_wanted_unavailable,
         created_at,
         merchant:merchants!merchant_id (
           id,
@@ -77,6 +81,8 @@ export async function GET(request: NextRequest) {
     const blockerCounts: Record<string, number> = {};
     const convinceCounts: Record<string, number> = {};
     const featureCounts: Record<string, number> = {};
+    const tierCounts: Record<string, number> = {};
+    const wantedUnavailableCounts: Record<string, number> = {};
     let convertedCount = 0;
 
     for (const s of surveys) {
@@ -84,6 +90,11 @@ export async function GET(request: NextRequest) {
       convinceCounts[s.would_convince] = (convinceCounts[s.would_convince] || 0) + 1;
       for (const f of s.features_tested || []) {
         featureCounts[f] = (featureCounts[f] || 0) + 1;
+      }
+      const tier = s.plan_tier_at_churn || 'legacy';
+      tierCounts[tier] = (tierCounts[tier] || 0) + 1;
+      for (const f of s.features_wanted_unavailable || []) {
+        wantedUnavailableCounts[f] = (wantedUnavailableCounts[f] || 0) + 1;
       }
       const status = s.merchant?.subscription_status;
       if (status === 'active' || status === 'canceling') convertedCount++;
@@ -108,6 +119,8 @@ export async function GET(request: NextRequest) {
         would_convince: s.would_convince,
         free_comment: s.free_comment,
         bonus_days_granted: s.bonus_days_granted,
+        plan_tier_at_churn: s.plan_tier_at_churn,
+        features_wanted_unavailable: s.features_wanted_unavailable || [],
         created_at: s.created_at,
       };
     });
@@ -119,6 +132,8 @@ export async function GET(request: NextRequest) {
         blockers: blockerCounts,
         convinces: convinceCounts,
         features: featureCounts,
+        tiers: tierCounts,
+        wantedUnavailable: wantedUnavailableCounts,
         converted: convertedCount,
       },
     });

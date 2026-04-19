@@ -61,6 +61,7 @@ export const fr = {
     postSurveyFollowUpLongerTrial: '{shopName}, as-tu essayé le planning ?',
     postSurveyFollowUpTeamDemo: '{shopName}, ta démo est passée ?',
     postSurveyFollowUpMoreFeatures: '{shopName}, voici ce qu\'on a ajouté',
+    postSurveyFollowUpFidelityTierOk: '{shopName}, le tier Fidélité 19€ te convient mieux',
     postSurveyFollowUpNothing: '{shopName}, un dernier mot',
     postSurveyFollowUpLastDay: '{shopName}, dernier jour de ton essai',
     postSurveyLastChanceLowerPrice: '{shopName}, ton code expire demain',
@@ -922,6 +923,13 @@ export const fr = {
       body: '<strong>Planning mode libre</strong> — tes clientes réservent selon tes horaires d\'ouverture.<br/><strong>SMS anniversaire</strong> — un cadeau automatique le jour J.<br/><strong>Acomptes en ligne</strong> — fini les no-show.<br/><strong>Parrainage</strong> — tes clientes recrutent pour toi.',
       cta: 'Voir les nouveautés',
     },
+    fidelityTierOk: {
+      preview: '{shopName}, le tier Fidélité à 19€/mois te tend les bras',
+      heading: 'Le tier Fidélité à 19€/mois',
+      intro: 'Tu n\'as besoin que de la fidélité — c\'est exactement pour ça qu\'on a créé le tier Fidélité à 19€/mois.',
+      body: 'Carte de fidélité, cagnotte, relances automatiques, anniversaires — tout ce qui garde tes clientes dans ton salon, sans payer pour ce que tu n\'utilises pas.',
+      cta: 'Choisir le tier Fidélité',
+    },
     nothing: {
       preview: '{shopName}, un dernier mot',
       heading: 'Merci pour ton retour',
@@ -962,6 +970,12 @@ export const fr = {
       heading: 'C\'est la fin de ton essai',
       intro: 'On a ajouté les fonctionnalités que tu attendais. Si tu veux en profiter, c\'est maintenant.',
       cta: 'Réactiver mon compte',
+    },
+    fidelityTierOk: {
+      preview: '{shopName}, passe sur le tier Fidélité à 19€ avant suppression',
+      heading: 'Le tier Fidélité t\'attend',
+      intro: 'Dernière chance : le tier Fidélité à 19€/mois couvre exactement ce dont tu as besoin.',
+      cta: 'Activer Fidélité 19€',
     },
     nothing: {
       preview: '{shopName}, tes données seront supprimées',

@@ -19,6 +19,7 @@ import {
   BLOCKER_LABELS_FR,
   CONVINCE_LABELS_FR,
   FEATURE_LABELS_FR,
+  WANTED_UNAVAILABLE_LABELS_FR,
   BLOCKER_BADGE_CLASSES,
   type ChurnBlocker,
 } from '@/lib/churn-survey-config';
@@ -40,6 +41,8 @@ interface ChurnSurveyItem {
   would_convince: string;
   free_comment: string | null;
   bonus_days_granted: number;
+  plan_tier_at_churn: string | null;
+  features_wanted_unavailable: string[];
   created_at: string;
 }
 
@@ -47,16 +50,33 @@ interface Stats {
   blockers: Record<string, number>;
   convinces: Record<string, number>;
   features: Record<string, number>;
+  tiers: Record<string, number>;
+  wantedUnavailable: Record<string, number>;
   converted: number;
 }
+
+const TIER_LABELS: Record<string, string> = {
+  fidelity: 'Fidélité 19€',
+  all_in: 'Tout-en-un 24€',
+  legacy: 'Historique',
+};
+
+const TIER_BADGE_CLASSES: Record<string, string> = {
+  fidelity: 'bg-pink-50 text-pink-700 border-pink-200',
+  all_in: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  legacy: 'bg-gray-50 text-gray-700 border-gray-200',
+};
 
 const blockerLabel = (k: string) => BLOCKER_LABELS_FR[k as ChurnBlocker] || k;
 const convinceLabel = (k: string) =>
   CONVINCE_LABELS_FR[k as keyof typeof CONVINCE_LABELS_FR] || k;
 const featureLabel = (k: string) =>
   FEATURE_LABELS_FR[k as keyof typeof FEATURE_LABELS_FR] || k;
+const wantedLabel = (k: string) =>
+  WANTED_UNAVAILABLE_LABELS_FR[k as keyof typeof WANTED_UNAVAILABLE_LABELS_FR] || k;
 const blockerBadgeClass = (k: string) =>
   BLOCKER_BADGE_CLASSES[k as ChurnBlocker] || BLOCKER_BADGE_CLASSES.other;
+const tierKey = (t: string | null) => t || 'legacy';
 
 export default function ChurnSurveysAdminPage() {
   const supabase = getSupabase();
@@ -65,6 +85,7 @@ export default function ChurnSurveysAdminPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterBlocker, setFilterBlocker] = useState<string>('all');
+  const [filterTier, setFilterTier] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fetchSurveys = useCallback(async () => {
@@ -100,6 +121,10 @@ export default function ChurnSurveysAdminPage() {
       list = list.filter((s) => s.blocker === filterBlocker);
     }
 
+    if (filterTier !== 'all') {
+      list = list.filter((s) => tierKey(s.plan_tier_at_churn) === filterTier);
+    }
+
     if (search.trim()) {
       const q = search.toLowerCase().trim();
       list = list.filter(
@@ -111,7 +136,7 @@ export default function ChurnSurveysAdminPage() {
     }
 
     return list;
-  }, [surveys, search, filterBlocker]);
+  }, [surveys, search, filterBlocker, filterTier]);
 
   const total = surveys.length;
 
@@ -180,26 +205,42 @@ export default function ChurnSurveysAdminPage() {
 
       {/* Distribution charts (compact) */}
       {stats && total > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <DistributionCard
-            title="Blocages"
-            data={stats.blockers}
-            labels={BLOCKER_LABELS_FR}
-            color="violet"
-          />
-          <DistributionCard
-            title="Ce qui convaincrait"
-            data={stats.convinces}
-            labels={CONVINCE_LABELS_FR}
-            color="indigo"
-          />
-          <DistributionCard
-            title="Features essayées"
-            data={stats.features}
-            labels={FEATURE_LABELS_FR}
-            color="emerald"
-          />
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <DistributionCard
+              title="Blocages"
+              data={stats.blockers}
+              labels={BLOCKER_LABELS_FR}
+              color="violet"
+            />
+            <DistributionCard
+              title="Ce qui convaincrait"
+              data={stats.convinces}
+              labels={CONVINCE_LABELS_FR}
+              color="indigo"
+            />
+            <DistributionCard
+              title="Features essayées"
+              data={stats.features}
+              labels={FEATURE_LABELS_FR}
+              color="emerald"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <DistributionCard
+              title="Tier à l'abandon"
+              data={stats.tiers}
+              labels={TIER_LABELS}
+              color="indigo"
+            />
+            <DistributionCard
+              title="Features Tout-en-un voulues (Fidélité)"
+              data={stats.wantedUnavailable}
+              labels={WANTED_UNAVAILABLE_LABELS_FR}
+              color="violet"
+            />
+          </div>
+        </>
       )}
 
       {/* Filters */}
@@ -221,6 +262,18 @@ export default function ChurnSurveysAdminPage() {
         >
           <option value="all">Tous les blocages</option>
           {Object.entries(BLOCKER_LABELS_FR).map(([k, label]) => (
+            <option key={k} value={k}>
+              {label}
+            </option>
+          ))}
+        </select>
+        <select
+          value={filterTier}
+          onChange={(e) => setFilterTier(e.target.value)}
+          className="h-11 px-4 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 focus:outline-none text-sm bg-white"
+        >
+          <option value="all">Tous les tiers</option>
+          {Object.entries(TIER_LABELS).map(([k, label]) => (
             <option key={k} value={k}>
               {label}
             </option>
@@ -280,6 +333,13 @@ export default function ChurnSurveysAdminPage() {
                           }`}
                         >
                           {blockerLabel(s.blocker)}
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                            TIER_BADGE_CLASSES[tierKey(s.plan_tier_at_churn)]
+                          }`}
+                        >
+                          {TIER_LABELS[tierKey(s.plan_tier_at_churn)]}
                         </span>
                       </div>
                     </div>
@@ -375,6 +435,25 @@ export default function ChurnSurveysAdminPage() {
                         <p className="text-xs italic text-gray-400">Aucune</p>
                       )}
                     </div>
+
+                    {/* Q3bis — Features Tout-en-un voulues (Fidélité merchants) */}
+                    {s.features_wanted_unavailable.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                          Q3bis — Features Tout-en-un qui auraient décidé
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {s.features_wanted_unavailable.map((f) => (
+                            <span
+                              key={f}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium"
+                            >
+                              {wantedLabel(f)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Q4 — Would convince */}
                     <div className="mb-3">

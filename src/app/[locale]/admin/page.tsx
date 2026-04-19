@@ -687,9 +687,9 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* Funnel → voir Métriques */}
+      {/* Funnel → voir Analytics */}
       <Link
-        href="/admin/metriques"
+        href="/admin/analytics"
         className="flex items-center justify-between bg-white rounded-lg border border-slate-100 shadow-md p-5 hover:bg-slate-50 transition-colors group"
       >
         <div className="flex items-center gap-3">
@@ -698,7 +698,7 @@ export default function AdminDashboardPage() {
           </div>
           <div>
             <h2 className="font-semibold text-slate-900">Funnel de conversion</h2>
-            <p className="text-xs text-slate-500">Voir le funnel complet dans Métriques</p>
+            <p className="text-xs text-slate-500">Voir le funnel complet dans Analytics</p>
           </div>
         </div>
         <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-[#5167fc] transition-colors" />

@@ -333,6 +333,7 @@ const FOLLOW_UP_SUBJECT_KEYS: Record<string, string> = {
   longer_trial: 'postSurveyFollowUpLongerTrial',
   team_demo: 'postSurveyFollowUpTeamDemo',
   more_features: 'postSurveyFollowUpMoreFeatures',
+  fidelity_tier_ok: 'postSurveyFollowUpFidelityTierOk',
   nothing: 'postSurveyFollowUpNothing',
 };
 
