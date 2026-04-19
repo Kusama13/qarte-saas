@@ -60,6 +60,25 @@ function DashboardLayoutContent({
 
   useEffect(() => { setHasMounted(true); }, []);
 
+  // Ferme la sidebar dès que la route change — garantit qu'un clic sur un item
+  // de menu ne laisse pas la sidebar "collée" si le setState ne flush pas avant
+  // la navigation (cas PWA/iOS standalone). Defense in depth vs onClick handlers.
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
+  // Body scroll lock quand sidebar ouverte (iOS standalone PWA sinon laisse scroll
+  // traverser + peut geler le touch dispatching après fermeture).
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [sidebarOpen]);
+
   const planFeatures = getPlanFeatures(merchant);
   const navItems = [
     { href: '/dashboard', icon: Home, label: t('home'), color: 'text-indigo-500', bg: 'bg-indigo-50' },
@@ -172,7 +191,8 @@ function DashboardLayoutContent({
         className={cn(
           'fixed top-0 left-0 z-50 w-[270px] lg:w-72 h-full bg-white/95 backdrop-blur-xl border-r border-gray-100/50 transition-transform duration-300 lg:translate-x-0 shadow-xl shadow-gray-200/20 touch-pan-y',
           'pt-[env(safe-area-inset-top)]',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+          sidebarOpen ? 'pointer-events-auto' : 'pointer-events-none lg:pointer-events-auto'
         )}
       >
         <div className="flex flex-col h-full">
