@@ -56,11 +56,13 @@ export function PricingSectionCondensed() {
             </div>
             <p className="text-xs text-gray-400 mb-5">{t('condensedFidelityAnnual')}</p>
 
-            <ul className="space-y-2 mb-6 flex-1">
+            <ul className="space-y-2.5 mb-6 flex-1">
               {(['condensedFidelityF1', 'condensedFidelityF2', 'condensedFidelityF3'] as const).map(k => (
-                <li key={k} className="flex items-start gap-2">
-                  <Check className="w-4 h-4 md:w-5 md:h-5 text-indigo-500 shrink-0 mt-1 md:mt-1.5" />
-                  <span className="text-sm md:text-base text-gray-500 leading-relaxed">{t(k)}</span>
+                <li key={k} className="flex items-start gap-2.5">
+                  <div className="shrink-0 w-4 h-4 md:w-5 md:h-5 rounded-full bg-emerald-500 flex items-center justify-center mt-0.5 md:mt-1">
+                    <Check className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" strokeWidth={3.5} />
+                  </div>
+                  <span className="text-sm md:text-base text-gray-600 leading-relaxed">{t(k)}</span>
                 </li>
               ))}
             </ul>
@@ -98,11 +100,19 @@ export function PricingSectionCondensed() {
             </div>
             <p className="text-xs text-gray-400 mb-5">{t('condensedAllInAnnual')}</p>
 
-            <ul className="space-y-2 mb-6 flex-1">
+            <ul className="space-y-2.5 mb-6 flex-1">
+              <li className="flex items-start gap-2.5 pb-2 mb-1 border-b border-gray-100">
+                <div className="shrink-0 w-4 h-4 md:w-5 md:h-5 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center mt-0.5 md:mt-1">
+                  <Check className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" strokeWidth={3.5} />
+                </div>
+                <span className="text-sm md:text-base font-bold text-gray-900 leading-relaxed">{t('allInIncludesPrefix')}</span>
+              </li>
               {(['condensedAllInF1', 'condensedAllInF2', 'condensedAllInF3'] as const).map(k => (
-                <li key={k} className="flex items-start gap-2">
-                  <Check className="w-4 h-4 md:w-5 md:h-5 text-violet-500 shrink-0 mt-1 md:mt-1.5" />
-                  <span className="text-sm md:text-base text-gray-500 leading-relaxed">{t(k)}</span>
+                <li key={k} className="flex items-start gap-2.5">
+                  <div className="shrink-0 w-4 h-4 md:w-5 md:h-5 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center mt-0.5 md:mt-1">
+                    <Check className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" strokeWidth={3.5} />
+                  </div>
+                  <span className="text-sm md:text-base text-gray-600 leading-relaxed">{t(k)}</span>
                 </li>
               ))}
             </ul>
