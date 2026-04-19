@@ -10,6 +10,8 @@ export const fr = {
     trialEndingS2: '{shopName}, {customerCount} clientes — plus que 2j pour garder',
     trialEndingS3: '{shopName} : {customerCount} clientes, {bookingCount} RDV — plus que 2j',
     activationStalled: '{shopName}, par quoi commencer en 3 min ?',
+    upgradeAllInSmsBlocked: '{shopName}, ta campagne SMS est prête — débloque-la',
+    upgradeAllInBookingRequest: '{shopName}, {context} clientes ont demandé la résa en ligne',
     trialExpiredPromo: '{shopName}, -10€ pour réactiver ton compte',
     trialExpired: '{shopName}, ton essai est terminé',
     subscriptionConfirmed: '{shopName} - Ton abonnement Qarte est actif',
@@ -798,6 +800,33 @@ export const fr = {
     trialNote: 'Il te reste <strong>{daysRemaining} jour{daysPlural}</strong> d\'essai.',
     cta: 'Recevoir mes premières résas',
     signature: 'L\'\u00e9quipe Qarte',
+  },
+
+  upgradeAllIn: {
+    greeting: 'Bonjour <strong>{shopName}</strong>,',
+    triggers: {
+      sms_campaign_blocked: {
+        preview: 'Ta campagne SMS marketing est prête à partir — 1 clic pour l\'activer',
+        heading: 'Ta campagne SMS est prête à partir',
+        hook: 'Tu as tenté d\'envoyer une campagne SMS marketing chez {shopName}. Cette feature fait partie du plan Tout-en-un.',
+      },
+      booking_request_manual: {
+        preview: '{context} clientes veulent réserver en ligne chez toi',
+        heading: '{context} clientes ont demandé la résa en ligne',
+        hook: 'Plusieurs clientes ont voulu prendre RDV en ligne chez {shopName} mais la feature résa n\'est pas active dans ton plan actuel.',
+      },
+    },
+    pivot: 'Passe au plan Tout-en-un pour débloquer toutes les features.',
+    diffTitle: 'Ce que tu débloques en passant Tout-en-un',
+    diffBooking: 'Réservation en ligne 24/7 (planning intégré)',
+    diffMarketingSms: 'Campagnes SMS marketing (100 SMS/mois inclus)',
+    diffPlanning: 'Planning pro avec gestion des créneaux',
+    diffVipPrograms: 'Programmes Membres VIP + jeu concours',
+    priceText: 'Tout-en-un : 24€/mois (au lieu de 19€)',
+    prorataNote: 'Prorata appliqué sur ton mois en cours — tu paies seulement la différence aujourd\'hui.',
+    cta: 'Passer à Tout-en-un',
+    escape: 'Rester sur Fidélité pour le moment',
+    signature: 'L\'équipe Qarte',
   },
 
   activationStalled: {

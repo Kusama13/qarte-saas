@@ -48,6 +48,8 @@ import {
   PostSurveyLastChanceEmail,
   AmbassadorWelcomeEmail,
   ActivationStalledEmail,
+  UpgradeAllInEmail,
+  type UpgradeTrigger,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import logger from './logger';
@@ -285,6 +287,23 @@ export async function sendTrialExpiredEmail(
   return sendEmail(to, subj(locale, 'trialExpired', { shopName }), TrialExpiredEmail, { shopName, daysUntilDeletion, locale }, {
     logLabel: `Trial expired email (${daysUntilDeletion} days until deletion)`,
   });
+}
+
+export async function sendUpgradeAllInEmail(
+  to: string,
+  shopName: string,
+  trigger: UpgradeTrigger,
+  locale: EmailLocale = 'fr',
+  triggerContext?: string,
+): Promise<SendEmailResult> {
+  const subjectKey = trigger === 'sms_campaign_blocked' ? 'upgradeAllInSmsBlocked' : 'upgradeAllInBookingRequest';
+  return sendEmail(
+    to,
+    subj(locale, subjectKey, { shopName, context: triggerContext ?? '' }),
+    UpgradeAllInEmail,
+    { shopName, trigger, triggerContext, locale },
+    { logLabel: `Upgrade All-in email (trigger: ${trigger})` }
+  );
 }
 
 export async function sendActivationStalledEmail(

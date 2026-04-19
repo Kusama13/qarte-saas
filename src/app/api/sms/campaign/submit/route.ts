@@ -7,6 +7,7 @@ import { countSms, validateMarketingSms } from '@/lib/sms-validator';
 import { SMS_UNIT_COST_CENTS } from '@/lib/sms';
 import { isLegalSendTime, nextLegalSlot } from '@/lib/sms-compliance';
 import { getPlanFeatures } from '@/lib/plan-tiers';
+import { triggerUpgradeAllInEmail } from '@/lib/upgrade-triggers';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -48,6 +49,11 @@ export async function POST(request: NextRequest) {
     if (!merchant) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 
     if (!getPlanFeatures(merchant).marketingSms) {
+      // Trigger UpgradeAllInEmail (dedup 14j via pending_email_tracking code -330)
+      // Fire-and-forget : ne bloque pas la réponse 403
+      void triggerUpgradeAllInEmail(supabaseAdmin, merchant.id, 'sms_campaign_blocked').catch((e) =>
+        console.warn('[upgrade-trigger] failed', e),
+      );
       return NextResponse.json(
         { error: 'plan_tier_required', message: 'Les campagnes SMS marketing nécessitent le plan Tout-en-un.' },
         { status: 403 },

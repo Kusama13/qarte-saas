@@ -10,6 +10,8 @@ export const en = {
     trialEndingS2: '{shopName}, {customerCount} clients — 2 days to keep them',
     trialEndingS3: '{shopName}: {customerCount} clients, {bookingCount} bookings — 2 days left',
     activationStalled: '{shopName}, where to start in 3 min?',
+    upgradeAllInSmsBlocked: '{shopName}, your SMS campaign is ready — unlock it',
+    upgradeAllInBookingRequest: '{shopName}, {context} clients requested online booking',
     trialExpiredPromo: '{shopName}, $10 off to reactivate your account',
     trialExpired: '{shopName}, your trial has ended',
     subscriptionConfirmed: '{shopName} - Your Qarte subscription is active',
@@ -797,6 +799,33 @@ export const en = {
     bonusDesc: 'Every client who books <strong>automatically gets their loyalty card</strong>. You fill your calendar and build loyalty at the same time.',
     trialNote: 'You have <strong>{daysRemaining} day{daysPlural}</strong> left in your trial.',
     cta: 'Get my first bookings',
+    signature: 'The Qarte Team',
+  },
+
+  upgradeAllIn: {
+    greeting: 'Hi <strong>{shopName}</strong>,',
+    triggers: {
+      sms_campaign_blocked: {
+        preview: 'Your SMS marketing campaign is ready — 1 click to activate it',
+        heading: 'Your SMS campaign is ready to send',
+        hook: 'You tried to send an SMS marketing campaign at {shopName}. This feature is part of the All-in-one plan.',
+      },
+      booking_request_manual: {
+        preview: '{context} clients want to book online with you',
+        heading: '{context} clients requested online booking',
+        hook: 'Several clients wanted to book at {shopName} online, but the booking feature is not active in your current plan.',
+      },
+    },
+    pivot: 'Upgrade to All-in-one to unlock all features.',
+    diffTitle: 'What you unlock with All-in-one',
+    diffBooking: 'Online booking 24/7 (integrated scheduling)',
+    diffMarketingSms: 'SMS marketing campaigns (100 SMS/month included)',
+    diffPlanning: 'Pro scheduling with slot management',
+    diffVipPrograms: 'VIP Member programs + contest',
+    priceText: 'All-in-one: 24€/month (instead of 19€)',
+    prorataNote: 'Prorata applied on your current month — you only pay the difference today.',
+    cta: 'Upgrade to All-in-one',
+    escape: 'Stay on Loyalty for now',
     signature: 'The Qarte Team',
   },
 
