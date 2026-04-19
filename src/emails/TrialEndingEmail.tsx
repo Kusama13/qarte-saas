@@ -13,13 +13,28 @@ interface TrialEndingEmailProps {
   daysRemaining: number;
   /** Recommended tier based on activation usage. When set, shows a 2-card chooser instead of the legacy price block. */
   recommendedTier?: 'fidelity' | 'all_in' | null;
+  /** Activation score (0-3) — number of pillars activated (fidelity, planning, vitrine). */
+  activationState?: 0 | 1 | 2 | 3;
+  /** Total customers count (for endowment effect in body). */
+  customerCount?: number;
+  /** Online bookings count (for endowment effect in body). */
+  bookingCount?: number;
   locale?: EmailLocale;
 }
 
-export function TrialEndingEmail({ shopName, daysRemaining, recommendedTier = null, locale = 'fr' }: TrialEndingEmailProps) {
+export function TrialEndingEmail({
+  shopName,
+  daysRemaining,
+  recommendedTier = null,
+  activationState = 0,
+  customerCount = 0,
+  bookingCount = 0,
+  locale = 'fr',
+}: TrialEndingEmailProps) {
   const t = getEmailT(locale);
   const isUrgent = daysRemaining <= 1;
   const daysPlural = daysRemaining > 1 ? 's' : '';
+  const showStats = activationState >= 1 && (customerCount > 0 || bookingCount > 0);
 
   return (
     <BaseLayout preview={t('trialEnding.preview', { daysRemaining: String(daysRemaining), daysPlural })} locale={locale}>
@@ -46,6 +61,29 @@ export function TrialEndingEmail({ shopName, daysRemaining, recommendedTier = nu
           {t('trialEnding.lossWarning')}
         </Text>
       </Section>
+
+      {showStats && (
+        <Section style={statsBox}>
+          <Text style={statsLabel}>
+            {t('trialEnding.statsLabel', { shopName })}
+          </Text>
+          <Text style={statsLine}>
+            {customerCount > 0 && (
+              <>
+                <span style={statsValue}>{customerCount} </span>
+                {t('trialEnding.statsCustomers', { plural: customerCount > 1 ? 's' : '' })}
+              </>
+            )}
+            {customerCount > 0 && bookingCount > 0 && ' · '}
+            {bookingCount > 0 && (
+              <>
+                <span style={statsValue}>{bookingCount} </span>
+                {t('trialEnding.statsBookings', { plural: bookingCount > 1 ? 's' : '' })}
+              </>
+            )}
+          </Text>
+        </Section>
+      )}
 
       {recommendedTier ? (
         <>
@@ -217,6 +255,18 @@ const socialProofLinkStyle = {
   fontWeight: '600' as const,
   textDecoration: 'underline',
 };
+
+const statsBox = {
+  backgroundColor: '#fffbeb',
+  borderRadius: '12px',
+  padding: '16px 24px',
+  margin: '0 0 24px 0',
+  borderLeft: '4px solid #f59e0b',
+  textAlign: 'center' as const,
+};
+const statsLabel = { color: '#92400e', fontSize: '13px', fontWeight: '500' as const, margin: '0 0 6px 0', textTransform: 'uppercase' as const, letterSpacing: '0.5px' };
+const statsLine = { color: '#1a1a1a', fontSize: '17px', fontWeight: '600' as const, margin: '0' };
+const statsValue = { color: '#7c3aed', fontWeight: '800' as const };
 
 const tierBox = { backgroundColor: '#f8f9fa', borderRadius: '12px', padding: '20px 24px', margin: '0 0 12px 0', borderLeft: '4px solid #94a3b8' };
 const tierBoxRecommended = { backgroundColor: '#faf5ff', borderRadius: '12px', padding: '20px 24px', margin: '0 0 12px 0', borderLeft: '4px solid #7c3aed', position: 'relative' as const };

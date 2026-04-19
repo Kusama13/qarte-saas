@@ -206,20 +206,73 @@ export async function sendWelcomeEmail(
   return sendEmail(to, subj(locale, 'welcome', { shopName }), WelcomeEmail, { shopName, slug, locale }, { logLabel: 'Welcome email' });
 }
 
+interface TrialEndingStats {
+  activationState?: 0 | 1 | 2 | 3;
+  customerCount?: number;
+  bookingCount?: number;
+  firstPillar?: 'fidelity' | 'planning' | 'vitrine' | null;
+}
+
+/**
+ * Subject routing — 4 variantes state-aware (plan v2 §3).
+ * Fallback sur legacy trialEndingDays si activationState non fourni.
+ */
+function pickTrialEndingSubject(
+  locale: EmailLocale,
+  shopName: string,
+  daysRemaining: number,
+  stats: TrialEndingStats,
+): string {
+  const { activationState, customerCount = 0, bookingCount = 0, firstPillar } = stats;
+
+  if (activationState === undefined) {
+    return daysRemaining <= 1
+      ? subj(locale, 'trialEndingLastDay', { shopName })
+      : subj(locale, 'trialEndingDays', { shopName, daysRemaining });
+  }
+
+  if (activationState === 0) {
+    return subj(locale, 'trialEndingS0', { shopName });
+  }
+  if (activationState === 1) {
+    if (firstPillar === 'planning' && bookingCount > 0) {
+      return subj(locale, 'trialEndingS1Planning', { shopName, bookingCount });
+    }
+    return subj(locale, 'trialEndingS1Fidelity', { shopName, customerCount });
+  }
+  if (activationState === 2) {
+    return subj(locale, 'trialEndingS2', { shopName, customerCount });
+  }
+  return subj(locale, 'trialEndingS3', { shopName, customerCount, bookingCount });
+}
+
 export async function sendTrialEndingEmail(
   to: string,
   shopName: string,
   daysRemaining: number,
   locale: EmailLocale = 'fr',
   recommendedTier: 'fidelity' | 'all_in' | null = null,
+  stats: TrialEndingStats = {},
 ): Promise<SendEmailResult> {
-  const subject = daysRemaining <= 1
-    ? subj(locale, 'trialEndingLastDay', { shopName })
-    : subj(locale, 'trialEndingDays', { shopName, daysRemaining });
+  const subject = pickTrialEndingSubject(locale, shopName, daysRemaining, stats);
 
-  return sendEmail(to, subject, TrialEndingEmail, { shopName, daysRemaining, recommendedTier, locale }, {
-    logLabel: `Trial ending email (${daysRemaining} days, reco: ${recommendedTier ?? 'none'})`,
-  });
+  return sendEmail(
+    to,
+    subject,
+    TrialEndingEmail,
+    {
+      shopName,
+      daysRemaining,
+      recommendedTier,
+      activationState: stats.activationState,
+      customerCount: stats.customerCount,
+      bookingCount: stats.bookingCount,
+      locale,
+    },
+    {
+      logLabel: `Trial ending email (${daysRemaining}d, S${stats.activationState ?? '?'}, tier: ${recommendedTier ?? 'none'})`,
+    }
+  );
 }
 
 export async function sendTrialExpiredEmail(

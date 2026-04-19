@@ -25,6 +25,7 @@ import {
 } from '@/lib/cron-helpers';
 import { CHURN_BONUS_DAYS_BY_CONVINCE } from '@/lib/churn-survey-config';
 import { recommendTierForMerchant } from '@/lib/trial-tier-reco';
+import { computeActivationScore } from '@/lib/activation-score';
 import logger from '@/lib/logger';
 
 const supabase = createClient(
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
   // ==================== PREFETCH ====================
   const { data: allMerchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, user_id, locale, trial_ends_at, subscription_status, churn_survey_seen_at, created_at, updated_at, reward_description, no_contact, email_bounced_at, email_unsubscribed_at');
+    .select('id, shop_name, user_id, locale, trial_ends_at, subscription_status, churn_survey_seen_at, created_at, updated_at, reward_description, no_contact, email_bounced_at, email_unsubscribed_at, bio, shop_address');
 
   const allMerchantsList = allMerchants || [];
   const allUserIds = [...new Set(allMerchantsList.map(m => m.user_id))];
@@ -97,8 +98,25 @@ export async function GET(request: NextRequest) {
           if (trialStatus.isActive && trialStatus.daysRemaining === 2) {
             const trackCode = -201;
             if (globalTrackingSet.has(`${merchant.id}:${trackCode}`)) continue;
-            const recommendedTier = await recommendTierForMerchant(supabase, merchant.id);
-            await sendTrialEndingEmail(email, merchant.shop_name, trialStatus.daysRemaining, (merchant.locale as EmailLocale) || 'fr', recommendedTier);
+            const [recommendedTier, activation, customersRes, bookingsRes] = await Promise.all([
+              recommendTierForMerchant(supabase, merchant.id),
+              computeActivationScore(supabase, { id: merchant.id, bio: merchant.bio, shop_address: merchant.shop_address }),
+              supabase.from('customers').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
+              supabase.from('merchant_planning_slots').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id).eq('booked_online', true),
+            ]);
+            await sendTrialEndingEmail(
+              email,
+              merchant.shop_name,
+              trialStatus.daysRemaining,
+              (merchant.locale as EmailLocale) || 'fr',
+              recommendedTier,
+              {
+                activationState: activation.score,
+                customerCount: customersRes.count ?? 0,
+                bookingCount: bookingsRes.count ?? 0,
+                firstPillar: activation.firstPillar,
+              },
+            );
             await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
             results.trialEmails.ending++;
             await rateLimitDelay();
