@@ -166,6 +166,10 @@ export interface Merchant {
   // Trial marketing SMS (mig 115)
   celebration_sms_sent_at: string | null;
   marketing_sms_opted_out: boolean;
+  // SMS quota prorata (mig 118)
+  sms_quota_override: number | null;
+  sms_quota_override_cycle_anchor: string | null;
+  sms_alert_90_sent_cycle: string | null;
 }
 
 export type BookingMode = 'slots' | 'free';
