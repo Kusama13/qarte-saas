@@ -145,12 +145,12 @@ export default function SubscriptionPage() {
     t('featureProPage'),
     t('featureReferral'),
     t('featureDuoOffer'),
-    t('featureNotifications'),
     t('featureQrNfc'),
   ];
   const allInExtrasFeatures = [
     t('featurePlanning'),
     t('featureSms'),
+    t('featureSmsCampaigns'),
     t('featureContest'),
     t('featureMemberPrograms'),
   ];
