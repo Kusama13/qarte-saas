@@ -19,10 +19,12 @@ import {
   UserPlus,
   CalendarDays,
   ArrowRight,
+  Lock,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { getTrialStatus } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { getPlanFeatures } from '@/lib/plan-tiers';
 import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
 import InstallAppBanner from '@/components/dashboard/InstallAppBanner';
 import AdminAnnouncementBanner from '@/components/dashboard/AdminAnnouncementBanner';
@@ -58,12 +60,13 @@ function DashboardLayoutContent({
 
   useEffect(() => { setHasMounted(true); }, []);
 
+  const planFeatures = getPlanFeatures(merchant);
   const navItems = [
     { href: '/dashboard', icon: Home, label: t('home'), color: 'text-indigo-500', bg: 'bg-indigo-50' },
     { href: '/dashboard/program', icon: Gift, label: t('program'), color: 'text-pink-500', bg: 'bg-pink-50' },
     { href: '/dashboard/public-page', icon: Globe, label: t('publicPage'), color: 'text-violet-500', bg: 'bg-violet-50' },
     { href: '/dashboard/qr-download', icon: QrCode, label: t('qrCode'), color: 'text-violet-500', bg: 'bg-violet-50' },
-    { href: '/dashboard/planning', icon: CalendarDays, label: t('planning'), color: 'text-cyan-500', bg: 'bg-cyan-50' },
+    { href: '/dashboard/planning', icon: CalendarDays, label: t('planning'), color: 'text-cyan-500', bg: 'bg-cyan-50', locked: !planFeatures.planning },
     { href: '/dashboard/customers', icon: Users, label: t('customers'), color: 'text-emerald-500', bg: 'bg-emerald-50' },
     { href: '/dashboard/referrals', icon: UserPlus, label: t('referrals'), color: 'text-blue-500', bg: 'bg-blue-50' },
     { href: '/dashboard/marketing', icon: Megaphone, label: t('notifications'), color: 'text-orange-500', bg: 'bg-orange-50' },
@@ -276,6 +279,9 @@ function DashboardLayoutContent({
                     <item.icon className={cn('w-4 h-4', isActive ? 'text-white' : item.color)} />
                   </div>
                   <span className="font-medium flex-1 text-sm">{item.label}</span>
+                  {item.locked && (
+                    <Lock className={cn('w-3.5 h-3.5 shrink-0', isActive ? 'text-white/80' : 'text-gray-400')} />
+                  )}
                 </Link>
               );
             })}

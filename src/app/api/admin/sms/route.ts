@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeAdmin } from '@/lib/api-helpers';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { SMS_FREE_QUOTA, SMS_OVERAGE_COST, PAID_STATUSES } from '@/lib/sms';
+import { SMS_OVERAGE_COST, PAID_STATUSES, getQuotaFor } from '@/lib/sms';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
   // Fetch all merchants with billing_period_start
   const { data: allMerchantData } = await supabaseAdmin
     .from('merchants')
-    .select('id, shop_name, billing_period_start')
+    .select('id, shop_name, billing_period_start, plan_tier, subscription_status')
     .in('subscription_status', PAID_STATUSES as readonly string[]);
 
   // Compute each merchant's current billing cycle start
@@ -65,12 +65,15 @@ export async function GET(request: NextRequest) {
       new Date(l.created_at) >= cycleStart &&
       new Date(l.created_at) < cycleEnd
     ).length;
+    const quota = getQuotaFor(m);
     return {
       merchant_id: m.id,
       shop_name: m.shop_name || 'Inconnu',
+      plan_tier: m.plan_tier || 'all_in',
+      quota,
       sent_this_month: sent,
-      free_remaining: Math.max(0, SMS_FREE_QUOTA - sent),
-      overage_cost: parseFloat((Math.max(0, sent - SMS_FREE_QUOTA) * SMS_OVERAGE_COST).toFixed(2)),
+      free_remaining: Math.max(0, quota - sent),
+      overage_cost: parseFloat((Math.max(0, sent - quota) * SMS_OVERAGE_COST).toFixed(2)),
       period_start: cycleStart.toISOString(),
       period_end: cycleEnd.toISOString(),
     };

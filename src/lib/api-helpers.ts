@@ -3,6 +3,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { createRouteHandlerSupabaseClient, getSupabaseAdmin } from './supabase';
 import { verifyAdminAuth } from './admin-auth';
 import { checkRateLimit, RATE_LIMITS } from './rate-limit';
+import { getPlanFeatures, type PlanFeatures } from './plan-tiers';
 
 interface AuthorizeAdminSuccess {
   supabaseAdmin: SupabaseClient;
@@ -119,4 +120,35 @@ export async function authorizeMerchant(
   }
 
   return { supabaseAdmin, userId: user.id, merchantId };
+}
+
+/**
+ * Check that the merchant's plan tier grants access to a given feature.
+ * Returns a 403 NextResponse if not, or null if the feature is available.
+ *
+ * Trials always have full access (handled inside getPlanFeatures).
+ *
+ * Usage:
+ *   const block = await requirePlanFeature(supabase, merchantId, 'planning');
+ *   if (block) return block;
+ */
+export async function requirePlanFeature(
+  supabase: SupabaseClient,
+  merchantId: string,
+  feature: keyof PlanFeatures,
+): Promise<NextResponse | null> {
+  const { data } = await supabase
+    .from('merchants')
+    .select('subscription_status, plan_tier')
+    .eq('id', merchantId)
+    .maybeSingle();
+  const features = getPlanFeatures(data as { subscription_status?: string; plan_tier?: string } | null);
+  const value = features[feature];
+  if (value === false) {
+    return NextResponse.json(
+      { error: 'plan_tier_required', feature, message: 'Cette fonctionnalité nécessite le plan Tout-en-un.' },
+      { status: 403 },
+    );
+  }
+  return null;
 }

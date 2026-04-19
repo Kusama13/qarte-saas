@@ -15,6 +15,8 @@ import ProgramDetailView from './ProgramDetailView';
 import EmptyState from './EmptyState';
 import HowItWorks from './HowItWorks';
 import { CreateProgramModal } from './Modals';
+import { getPlanFeatures } from '@/lib/plan-tiers';
+import PlanUpgradeCTA from '@/components/dashboard/PlanUpgradeCTA';
 
 export default function MembersPage() {
   const t = useTranslations('members');
@@ -46,6 +48,17 @@ export default function MembersPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+
+  if (!getPlanFeatures(data.merchant).memberPrograms) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-10">
+        <PlanUpgradeCTA
+          title={t('upgradeTitle')}
+          description={t('upgradeDesc')}
+        />
       </div>
     );
   }

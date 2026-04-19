@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
-import { stripe, PLAN, PLAN_ANNUAL, PLAN_EN, PLAN_ANNUAL_EN } from '@/lib/stripe';
+import { stripe, PLAN, PLAN_ANNUAL, PLAN_EN, PLAN_ANNUAL_EN, PLAN_FIDELITY, PLAN_FIDELITY_ANNUAL } from '@/lib/stripe';
+import type { PlanTier } from '@/types';
 import logger from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
@@ -18,11 +19,13 @@ export async function POST(request: NextRequest) {
 
     // Parse plan preference from body
     let planChoice: 'monthly' | 'annual' = 'monthly';
+    let tierChoice: PlanTier = 'all_in';
     try {
       const body = await request.json();
       if (body.plan === 'annual') planChoice = 'annual';
+      if (body.tier === 'fidelity') tierChoice = 'fidelity';
     } catch {
-      // No body or invalid JSON = default to monthly
+      // No body or invalid JSON = default to monthly all_in
     }
 
     // Get merchant info
@@ -39,17 +42,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Resolve price ID based on merchant locale (EUR for FR, USD for EN)
+    // Resolve price ID based on tier + merchant locale (EUR for FR, USD for EN — Fidelity is FR/EUR only)
     const isEN = merchant.locale === 'en';
-    const monthlyPlan = isEN ? PLAN_EN : PLAN;
-    const annualPlan = isEN ? PLAN_ANNUAL_EN : PLAN_ANNUAL;
+    let monthlyPlan, annualPlan;
+    if (tierChoice === 'fidelity') {
+      // Fidelity has no EN price set (FR/BE/CH only); fall back to all_in EN if EN merchant asks for it
+      monthlyPlan = isEN ? PLAN_EN : PLAN_FIDELITY;
+      annualPlan = isEN ? PLAN_ANNUAL_EN : PLAN_FIDELITY_ANNUAL;
+    } else {
+      monthlyPlan = isEN ? PLAN_EN : PLAN;
+      annualPlan = isEN ? PLAN_ANNUAL_EN : PLAN_ANNUAL;
+    }
     const selectedPriceId = planChoice === 'annual' && annualPlan.priceId
       ? annualPlan.priceId
       : monthlyPlan.priceId;
 
     if (!selectedPriceId) {
       return NextResponse.json(
-        { error: 'Configuration Stripe incomplete - STRIPE_PRICE_ID manquant' },
+        { error: 'Configuration Stripe incomplete - prix manquant pour ce plan' },
         { status: 500 }
       );
     }
@@ -114,15 +124,17 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/subscription?success=true&plan=${planChoice}`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/subscription?success=true&plan=${planChoice}&tier=${tierChoice}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/subscription?canceled=true`,
       metadata: {
         merchant_id: merchant.id,
         plan: planChoice,
+        tier: tierChoice,
       },
       subscription_data: {
         metadata: {
           merchant_id: merchant.id,
+          tier: tierChoice,
         },
       },
       allow_promotion_codes: true,

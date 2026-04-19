@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
 import logger from '@/lib/logger';
+import { getPlanFeatures } from '@/lib/plan-tiers';
 
 const patchSchema = z.object({
   merchantId: z.string().uuid(),
@@ -71,13 +72,20 @@ export async function PATCH(request: NextRequest) {
 
     const { data: merchant } = await supabase
       .from('merchants')
-      .select('id')
+      .select('id, subscription_status, plan_tier')
       .eq('id', merchantId)
       .eq('user_id', user.id)
       .single();
 
     if (!merchant) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+    }
+
+    if (contestEnabled && !getPlanFeatures(merchant).contest) {
+      return NextResponse.json(
+        { error: 'plan_tier_required', message: 'Le jeu concours nécessite le plan Tout-en-un.' },
+        { status: 403 },
+      );
     }
 
     const { error } = await supabase

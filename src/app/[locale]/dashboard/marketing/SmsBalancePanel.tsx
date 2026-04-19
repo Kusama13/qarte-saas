@@ -10,6 +10,7 @@ interface SmsUsage {
   remaining: number;
   packBalance: number;
   periodStart: string;
+  quota: number;
 }
 
 interface SmsBalancePanelProps {
@@ -26,7 +27,7 @@ export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePan
     if (!merchantId) return;
     let cancelled = false;
     (async () => {
-      let fallback = { sent: 0, remaining: SMS_FREE_QUOTA, packBalance: 0, periodStart: '' };
+      let fallback = { sent: 0, remaining: SMS_FREE_QUOTA, packBalance: 0, periodStart: '', quota: SMS_FREE_QUOTA };
       try {
         const res = await fetch(`/api/sms/usage?merchantId=${merchantId}`);
         if (res.ok) {
@@ -36,6 +37,7 @@ export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePan
             remaining: Number(data.remaining || 0),
             packBalance: Number(data.packBalance || 0),
             periodStart: String(data.periodStart || ''),
+            quota: Number(data.quota || SMS_FREE_QUOTA),
           };
         }
       } catch {
@@ -61,7 +63,7 @@ export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePan
     );
   }
 
-  const percent = Math.min(100, Math.round((usage.sent / SMS_FREE_QUOTA) * 100));
+  const percent = Math.min(100, Math.round((usage.sent / usage.quota) * 100));
   const quotaDepleted = usage.remaining === 0;
   const packEmpty = usage.packBalance === 0;
   const blocked = quotaDepleted && packEmpty;
@@ -98,7 +100,7 @@ export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePan
       <div className="mt-3">
         <div className="flex items-baseline justify-between mb-1.5">
           <span className="text-xs text-gray-500">
-            {t('includedUsage', { sent: usage.sent, quota: SMS_FREE_QUOTA })}
+            {t('includedUsage', { sent: usage.sent, quota: usage.quota })}
           </span>
           <span className="text-xs font-semibold text-gray-700">{percent}%</span>
         </div>

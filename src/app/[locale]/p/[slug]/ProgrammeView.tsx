@@ -13,6 +13,7 @@ import { trackCtaClick } from '@/lib/analytics';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import type { Merchant } from '@/types';
+import { getPlanFeatures } from '@/lib/plan-tiers';
 
 type Photo = { id: string; url: string; position: number };
 type ServiceCategory = { id: string; name: string; position: number };
@@ -76,6 +77,7 @@ type MerchantPublic = Pick<
   | 'display_phone'
   | 'country'
   | 'subscription_status'
+  | 'plan_tier'
   | 'trial_ends_at'
   | 'booking_mode'
   | 'buffer_minutes'
@@ -103,8 +105,10 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const [planningExpanded, setPlanningExpanded] = useState(false);
   const [promoOffer, setPromoOffer] = useState<PromoOffer | null>(null);
   // Online booking: mode créneaux needs pre-generated slots, mode libre needs at least one open day
+  // + tier gating: Fidélité tier doesn't get the booking module on the public page
   const isFreeMod = merchant.booking_mode === 'free';
-  const canBookOnline = merchant.auto_booking_enabled && (
+  const tierAllowsBooking = isDemo || getPlanFeatures(merchant).bookingOnline;
+  const canBookOnline = tierAllowsBooking && merchant.auto_booking_enabled && (
     isFreeMod
       ? Object.values(merchant.opening_hours ?? {}).some(h => h !== null)
       : planningSlots.length > 0

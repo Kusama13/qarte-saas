@@ -96,10 +96,12 @@ export async function POST(request: Request) {
       logger.debug('Activating subscription for merchant:', merchantId);
 
       // Idempotent: only update if not already active (H11)
+      const tierFromSession = session.metadata?.tier === 'fidelity' ? 'fidelity' : 'all_in';
       const { data: merchant } = await supabase
         .from('merchants')
         .update({
           subscription_status: 'active',
+          plan_tier: tierFromSession,
           billing_interval: session.metadata?.plan === 'annual' ? 'annual' : 'monthly',
           stripe_customer_id: session.customer as string,
           stripe_subscription_id: session.subscription as string,

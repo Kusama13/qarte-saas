@@ -960,6 +960,8 @@
       "errorGeneric": "Impossible de lancer le paiement. Réessaie."
     },
     "smsTab": {
+      "upgradeTitle": "Les campagnes SMS sont incluses dans Tout-en-un",
+      "upgradeDesc": "Rédige tes campagnes marketing, choisis ton audience, validation par notre équipe et envoi au bon créneau légal. Passe en Tout-en-un pour activer.",
       "composerTitle": "Rédiger mon SMS",
       "suggestions": "Inspirations",
       "messageLabel": "Message",
@@ -1194,6 +1196,8 @@
     }
   },
   "members": {
+    "upgradeTitle": "Les programmes Membres VIP sont inclus dans Tout-en-un",
+    "upgradeDesc": "Crée des programmes de fidélisation premium (avantage permanent, durée libre, skip-acompte). Passe en Tout-en-un pour activer.",
     "title": "Clients fidèles",
     "subtitle": "Récompense tes meilleurs clients",
     "howItWorks": "Comment ça marche ?",
@@ -1635,6 +1639,10 @@
     "smsOverage": "{count} SMS au-delà du forfait ({cost}€)"
   },
   "subscription": {
+    "tierFidelityName": "Fidélité",
+    "tierFidelityHint": "Programme, avis, relances. Tes 50 SMS par mois.",
+    "tierAllInName": "Tout-en-un",
+    "tierAllInHint": "Fidélité + planning + résa en ligne + 100 SMS + campagnes.",
     "title": "Abonnement",
     "subtitle": "Tes clientes t'attendent — active tout",
     "successToast": "Abonnement actif !",
@@ -1812,6 +1820,8 @@
   },
   "planning": {
     "title": "Planning",
+    "upgradeTitle": "Le planning est inclus dans Tout-en-un",
+    "upgradeDesc": "Crée des créneaux, accepte les réservations en ligne avec ou sans acompte, gère ton agenda. Passe en Tout-en-un pour débloquer.",
     "visiblePublic": "Visible sur ta page publique",
     "hiddenPublic": "Masqué de ta page publique",
     "active": "Actif",
@@ -3226,6 +3236,8 @@
   "contest": {
     "pageTitle": "Jeu concours mensuel",
     "pageDesc": "Fais gagner tes clientes chaque mois",
+    "upgradeTitle": "Le jeu concours est inclus dans Tout-en-un",
+    "upgradeDesc": "Tirage au sort mensuel parmi tes clientes fidèles, story d'annonce et de gagnante prêtes à publier. Passe en Tout-en-un pour activer.",
     "title": "Tirage au sort",
     "desc": "un gagnant chaque mois",
     "hint": "Les clients qui réservent pendant le mois participent automatiquement au tirage.",

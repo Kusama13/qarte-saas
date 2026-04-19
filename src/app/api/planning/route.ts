@@ -5,6 +5,7 @@ import { getTodayForCountry, formatPhoneNumber, getAllPhoneFormats } from '@/lib
 import { sendBookingSms } from '@/lib/sms';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
+import { requirePlanFeature } from '@/lib/api-helpers';
 
 async function verifyOwnership(supabase: Awaited<ReturnType<typeof createRouteHandlerSupabaseClient>>, merchantId: string, userId: string) {
   const { data } = await supabase
@@ -138,6 +139,8 @@ export async function POST(request: NextRequest) {
     if (!await verifyOwnership(supabase, merchantId, user.id)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
+    const tierBlock = await requirePlanFeature(supabase, merchantId, 'planning');
+    if (tierBlock) return tierBlock;
 
     // Check max 500 active future slots (~2 months for a busy salon)
     const MAX_ACTIVE_SLOTS = 500;

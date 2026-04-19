@@ -42,6 +42,8 @@ export const COUNTRIES_BY_LOCALE: Record<string, MerchantCountry[]> = {
 
 export type SubscriptionStatus = 'trial' | 'active' | 'canceled' | 'canceling' | 'past_due';
 
+export type PlanTier = 'fidelity' | 'all_in';
+
 export type LoyaltyMode = 'visit' | 'cagnotte';
 
 export interface CagnotteData {
@@ -94,6 +96,7 @@ export interface Merchant {
   billing_interval: 'monthly' | 'annual';
   billing_period_start: string | null;
   subscription_status: SubscriptionStatus;
+  plan_tier: PlanTier;
   onboarding_completed: boolean;
   shield_enabled: boolean;
   referral_code: string;

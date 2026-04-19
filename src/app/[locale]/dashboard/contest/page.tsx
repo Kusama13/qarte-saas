@@ -9,6 +9,8 @@ import { formatContestMonth } from '@/lib/utils';
 import type { MerchantContest } from '@/types';
 import ContestWinnerStory from '@/components/marketing/ContestWinnerStory';
 import ContestAnnouncementStory from '@/components/marketing/ContestAnnouncementStory';
+import PlanUpgradeCTA from '@/components/dashboard/PlanUpgradeCTA';
+import { getPlanFeatures } from '@/lib/plan-tiers';
 
 const PRIZE_SUGGESTIONS: Record<string, string[]> = {
   coiffeur: [
@@ -143,6 +145,17 @@ export default function ContestPage() {
   };
 
   if (!merchant) return null;
+
+  if (!getPlanFeatures(merchant).contest) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-10">
+        <PlanUpgradeCTA
+          title={t('upgradeTitle')}
+          description={t('upgradeDesc')}
+        />
+      </div>
+    );
+  }
 
   const suggestions = PRIZE_SUGGESTIONS[merchant.shop_type] || PRIZE_SUGGESTIONS.autre;
 

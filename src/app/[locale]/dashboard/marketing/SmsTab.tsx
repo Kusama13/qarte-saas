@@ -28,6 +28,8 @@ import {
   validateMarketingSms,
 } from '@/lib/sms-validator';
 import type { AudienceFilter } from '@/lib/sms-audience';
+import { getPlanFeatures } from '@/lib/plan-tiers';
+import PlanUpgradeCTA from '@/components/dashboard/PlanUpgradeCTA';
 
 type CampaignRow = {
   id: string;
@@ -230,6 +232,15 @@ export default function SmsTab() {
 
   const smsCountLabel =
     smsCount === 3 ? t('tooLong') : smsCount === 2 ? t('twoSms') : t('oneSms');
+
+  if (!getPlanFeatures(merchant).marketingSms) {
+    return (
+      <PlanUpgradeCTA
+        title={t('upgradeTitle')}
+        description={t('upgradeDesc')}
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">

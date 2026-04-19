@@ -26,6 +26,8 @@ import ReservationsSection from './ReservationsSection';
 import DayView from './DayView';
 import WeekView from './WeekView';
 import PlanningModal, { ModalHeader, ModalFooter } from './PlanningModal';
+import PlanUpgradeCTA from '@/components/dashboard/PlanUpgradeCTA';
+import { getPlanFeatures } from '@/lib/plan-tiers';
 
 const VIEW_MODE_KEY = 'qarte_planning_view';
 const VIEW_MODES = ['day', '2day', 'week'] as const;
@@ -436,6 +438,17 @@ export default function PlanningDashboard() {
 
   if (merchantLoading) {
     return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
+  }
+
+  if (!getPlanFeatures(merchant).planning) {
+    return (
+      <div className="max-w-3xl mx-auto py-10">
+        <PlanUpgradeCTA
+          title={t('upgradeTitle')}
+          description={t('upgradeDesc')}
+        />
+      </div>
+    );
   }
 
   const planningEnabled = !!merchant?.planning_enabled;

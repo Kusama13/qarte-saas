@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
 import logger from '@/lib/logger';
+import { getPlanFeatures } from '@/lib/plan-tiers';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -88,12 +89,19 @@ export async function POST(request: NextRequest) {
     // Get merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id')
+      .select('id, subscription_status, plan_tier')
       .eq('user_id', user.id)
       .single();
 
     if (!merchant) {
       return NextResponse.json({ error: 'Commerçant non trouvé' }, { status: 404 });
+    }
+
+    if (!getPlanFeatures(merchant).memberPrograms) {
+      return NextResponse.json(
+        { error: 'plan_tier_required', message: 'Les programmes Membres VIP nécessitent le plan Tout-en-un.' },
+        { status: 403 },
+      );
     }
 
     const { name, benefit_label, duration_months, discount_percent, skip_deposit } = validation.data;

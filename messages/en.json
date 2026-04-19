@@ -960,6 +960,8 @@
       "errorGeneric": "Couldn't start payment. Retry."
     },
     "smsTab": {
+      "upgradeTitle": "SMS campaigns are part of All-in-one",
+      "upgradeDesc": "Write marketing campaigns, pick your audience, get team validation and sending at the right legal slot. Switch to All-in-one to activate.",
       "composerTitle": "Compose my SMS",
       "suggestions": "Starters",
       "messageLabel": "Message",
@@ -1194,6 +1196,8 @@
     }
   },
   "members": {
+    "upgradeTitle": "VIP Member programs are part of All-in-one",
+    "upgradeDesc": "Build premium loyalty programs (permanent perks, custom duration, skip-deposit). Switch to All-in-one to activate.",
     "title": "Loyal Clients",
     "subtitle": "Reward your best clients",
     "howItWorks": "How it works?",
@@ -1635,6 +1639,10 @@
     "smsOverage": "{count} SMS over quota ({cost}€)"
   },
   "subscription": {
+    "tierFidelityName": "Loyalty",
+    "tierFidelityHint": "Program, reviews, reminders. 50 SMS per month.",
+    "tierAllInName": "All-in-one",
+    "tierAllInHint": "Loyalty + scheduling + online booking + 100 SMS + campaigns.",
     "title": "Subscription",
     "subtitle": "Your clients are waiting — activate everything",
     "successToast": "Subscription active!",
@@ -1812,6 +1820,8 @@
   },
   "planning": {
     "title": "Schedule",
+    "upgradeTitle": "Scheduling is part of All-in-one",
+    "upgradeDesc": "Create slots, accept online bookings with or without deposits, manage your calendar. Switch to All-in-one to unlock.",
     "visiblePublic": "Visible on your public page",
     "hiddenPublic": "Hidden from your public page",
     "active": "Active",
@@ -3226,6 +3236,8 @@
   "contest": {
     "pageTitle": "Monthly contest",
     "pageDesc": "Reward your clients every month",
+    "upgradeTitle": "Monthly contest is part of All-in-one",
+    "upgradeDesc": "Random monthly draw among loyal clients, ready-to-post announcement and winner stories. Switch to All-in-one to activate.",
     "title": "Monthly draw",
     "desc": "one winner every month",
     "hint": "Clients who book during the month are automatically entered in the draw.",

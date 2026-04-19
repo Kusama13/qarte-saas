@@ -6,6 +6,7 @@ import type { AudienceFilter } from '@/lib/sms-audience';
 import { countSms, validateMarketingSms } from '@/lib/sms-validator';
 import { SMS_UNIT_COST_CENTS } from '@/lib/sms';
 import { isLegalSendTime, nextLegalSlot } from '@/lib/sms-compliance';
+import { getPlanFeatures } from '@/lib/plan-tiers';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -40,11 +41,18 @@ export async function POST(request: NextRequest) {
 
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, country')
+      .select('id, country, subscription_status, plan_tier')
       .eq('id', merchantId)
       .eq('user_id', user.id)
       .single();
     if (!merchant) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+
+    if (!getPlanFeatures(merchant).marketingSms) {
+      return NextResponse.json(
+        { error: 'plan_tier_required', message: 'Les campagnes SMS marketing nécessitent le plan Tout-en-un.' },
+        { status: 403 },
+      );
+    }
 
     // Validate content (appends STOP, checks length/forbidden)
     const validation = validateMarketingSms(body, { requireStop: true });

@@ -79,6 +79,7 @@ export default function SubscriptionPage() {
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState(false);
   const [billingPlan, setBillingPlan] = useState<'monthly' | 'annual'>('monthly');
+  const [planTier, setPlanTier] = useState<'fidelity' | 'all_in'>('all_in');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [loadingPayment, setLoadingPayment] = useState(false);
@@ -304,7 +305,7 @@ export default function SubscriptionPage() {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: billingPlan }),
+        body: JSON.stringify({ plan: billingPlan, tier: planTier }),
       });
       const data = await res.json();
       if (data.error) {
@@ -468,6 +469,41 @@ export default function SubscriptionPage() {
               )}
             </div>
 
+            {/* Sélecteur tier */}
+            {showSubscribeCTA && (
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <button
+                  onClick={() => setPlanTier('fidelity')}
+                  className={`rounded-xl border-2 px-3 py-3 text-left transition-all ${
+                    planTier === 'fidelity'
+                      ? 'border-[#4b0082] bg-[#4b0082]/5'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-baseline justify-between mb-0.5">
+                    <span className="text-sm font-bold text-gray-900">{t('tierFidelityName')}</span>
+                    <span className="text-sm font-extrabold text-gray-900">{billingPlan === 'annual' ? '180€' : '19€'}</span>
+                  </div>
+                  <p className="text-[11px] text-gray-500 leading-tight">{t('tierFidelityHint')}</p>
+                </button>
+                <button
+                  onClick={() => setPlanTier('all_in')}
+                  className={`rounded-xl border-2 px-3 py-3 text-left transition-all relative ${
+                    planTier === 'all_in'
+                      ? 'border-[#4b0082] bg-[#4b0082]/5'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <span className="absolute -top-2 left-3 text-[9px] font-black tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white uppercase">{t('recommended')}</span>
+                  <div className="flex items-baseline justify-between mb-0.5">
+                    <span className="text-sm font-bold text-gray-900">{t('tierAllInName')}</span>
+                    <span className="text-sm font-extrabold text-gray-900">{billingPlan === 'annual' ? '240€' : '24€'}</span>
+                  </div>
+                  <p className="text-[11px] text-gray-500 leading-tight">{t('tierAllInHint')}</p>
+                </button>
+              </div>
+            )}
+
             {/* Toggle mensuel/annuel */}
             {showSubscribeCTA && (
               <div className="flex items-center justify-center gap-1 p-1 rounded-xl bg-gray-100 mb-6">
@@ -490,7 +526,6 @@ export default function SubscriptionPage() {
                   }`}
                 >
                   {t('annual')}
-                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full">{t('recommended')}</span>
                   <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">{PLANS.annual.savings}</span>
                 </button>
               </div>

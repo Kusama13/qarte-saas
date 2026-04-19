@@ -10,6 +10,7 @@ import { sendBookingNotificationEmail } from '@/lib/email';
 import { sendMerchantPush } from '@/lib/merchant-push';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
+import { getPlanFeatures } from '@/lib/plan-tiers';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, welcome_offer_enabled, welcome_offer_description, booking_mode, buffer_minutes')
+      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, welcome_offer_enabled, welcome_offer_description, booking_mode, buffer_minutes')
       .eq('id', merchant_id)
       .single();
 
@@ -58,6 +59,11 @@ export async function POST(request: NextRequest) {
 
     if (!merchant.auto_booking_enabled || !merchant.planning_enabled) {
       return NextResponse.json({ error: 'Réservation en ligne désactivée' }, { status: 403 });
+    }
+
+    // Block online booking if merchant is on Fidélité tier (booking_online feature gated)
+    if (!getPlanFeatures(merchant).bookingOnline) {
+      return NextResponse.json({ error: 'Réservation en ligne indisponible' }, { status: 403 });
     }
 
     const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
