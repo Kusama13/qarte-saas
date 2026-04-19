@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Download } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -75,41 +75,38 @@ export default function InstallAppBanner() {
 
   return (
     <>
-      {/* Sticky install banner */}
-      <AnimatePresence>
-        {visible && !showIOSInstructions && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-r from-indigo-600 to-violet-600 shadow-[0_-4px_20px_rgba(0,0,0,0.15)]"
-            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-          >
-            <div className="flex items-center gap-3 px-4 py-3 max-w-lg mx-auto">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                <Download className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white">{t('installTitle')}</p>
-                <p className="text-xs text-white/70">{t('installSubtitle')}</p>
-              </div>
-              <button
-                onClick={promptInstall}
-                className="shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-indigo-600 bg-white transition-all active:scale-95 hover:bg-indigo-50"
-              >
-                {t('installBtn')}
-              </button>
-              <button
-                onClick={handleDismiss}
-                className="shrink-0 p-1.5 rounded-full hover:bg-white/20 transition-colors"
-              >
-                <X className="w-4 h-4 text-white/70" />
-              </button>
+      {/* Sticky install banner — no AnimatePresence (avoids framer-motion unmount races on PWA route changes) */}
+      {visible && !showIOSInstructions && (
+        <motion.div
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-r from-indigo-600 to-violet-600 shadow-[0_-4px_20px_rgba(0,0,0,0.15)]"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        >
+          <div className="flex items-center gap-3 px-4 py-3 max-w-lg mx-auto">
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <Download className="w-5 h-5 text-white" />
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-white">{t('installTitle')}</p>
+              <p className="text-xs text-white/70">{t('installSubtitle')}</p>
+            </div>
+            <button
+              onClick={promptInstall}
+              className="shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-indigo-600 bg-white transition-all active:scale-95 hover:bg-indigo-50"
+            >
+              {t('installBtn')}
+            </button>
+            <button
+              onClick={handleDismiss}
+              className="shrink-0 p-1.5 rounded-full hover:bg-white/20 transition-colors"
+            >
+              <X className="w-4 h-4 text-white/70" />
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Instructions modal */}
       {showIOSInstructions && (

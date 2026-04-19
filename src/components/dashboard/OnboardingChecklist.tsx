@@ -10,7 +10,7 @@ import {
   Scissors, FileText, CreditCard, MessageSquare,
   Heart, Store, EyeOff,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
 import { isPlanningHidden } from '@/lib/plan-tiers';
@@ -278,9 +278,7 @@ export default function OnboardingChecklist() {
       if (!error) {
         setConfirmingHidePlanning(false);
         setExpandedGroup(prev => prev === 'planning' ? null : prev);
-        // Defer the actual group removal so AnimatePresence can finish its exit
-        // animation cleanly before the planning <div> is unmounted from the parent.
-        setTimeout(() => updateMerchant({ planning_intent: 'no' }), 350);
+        updateMerchant({ planning_intent: 'no' });
       }
     } catch (err) {
       console.error('Hide planning error:', err);
@@ -471,17 +469,14 @@ export default function OnboardingChecklist() {
                 </button>
               )}
 
-              {/* Group body (accordion) */}
-              <AnimatePresence initial={false}>
-                {isExpanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                    className="overflow-hidden"
-                  >
-                    <div className="pt-1 pb-1 pl-11 pr-3 space-y-0.5">
+              {/* Group body (accordion) — CSS-only transition (no AnimatePresence) to avoid framer-motion unmount races on dashboard re-renders. */}
+              <div
+                className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                  isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                }`}
+              >
+                <div className="overflow-hidden">
+                  <div className="pt-1 pb-1 pl-11 pr-3 space-y-0.5">
                       {group.steps.map((step) => {
                         const isNext = !step.done && step.id === nextStep?.id;
 
@@ -539,10 +534,9 @@ export default function OnboardingChecklist() {
                           {t('hidePlanningLink')}
                         </button>
                       )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                  </div>
+                </div>
+              </div>
             </div>
           );
         })}
