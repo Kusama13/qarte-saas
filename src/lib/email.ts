@@ -47,6 +47,7 @@ import {
   PostSurveyFollowUpEmail,
   PostSurveyLastChanceEmail,
   AmbassadorWelcomeEmail,
+  ActivationStalledEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import logger from './logger';
@@ -283,6 +284,17 @@ export async function sendTrialExpiredEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'trialExpired', { shopName }), TrialExpiredEmail, { shopName, daysUntilDeletion, locale }, {
     logLabel: `Trial expired email (${daysUntilDeletion} days until deletion)`,
+  });
+}
+
+export async function sendActivationStalledEmail(
+  to: string,
+  shopName: string,
+  locale: EmailLocale = 'fr',
+  shopType: string | null = null,
+): Promise<SendEmailResult> {
+  return sendEmail(to, subj(locale, 'activationStalled', { shopName }), ActivationStalledEmail, { shopName, shopType, locale }, {
+    logLabel: `Activation stalled email (S0 J+3)`,
   });
 }
 

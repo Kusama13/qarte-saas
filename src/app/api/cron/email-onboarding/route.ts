@@ -9,7 +9,9 @@ import {
   sendPlanningReminderEmail,
   sendQRCodeEmail,
   sendFirstClientScriptEmail,
+  sendActivationStalledEmail,
 } from '@/lib/email';
+import { computeActivationScore } from '@/lib/activation-score';
 import type { EmailLocale } from '@/emails/translations';
 import { getTrialStatus } from '@/lib/utils';
 import { sendMerchantPush } from '@/lib/merchant-push';
@@ -36,6 +38,7 @@ export async function GET(request: NextRequest) {
 
   const results = {
     programReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    activationStalled: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     socialProof: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     qrCode: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     firstClientScript: { processed: 0, sent: 0, skipped: 0, errors: 0 },
@@ -189,6 +192,50 @@ export async function GET(request: NextRequest) {
     sectionStatuses.push({ name: 'programReminders', status: 'ok' });
   } catch (error) {
     sectionStatuses.push({ name: 'programReminders', status: 'error', error: String(error) });
+  }
+
+  // ==================== ACTIVATION STALLED (S0 J+3, plan v2 Email 8) ====================
+  if (isTimedOut()) { sectionStatuses.push({ name: 'activationStalled', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
+    const seventyThreeHoursAgo = new Date(now.getTime() - 73 * 60 * 60 * 1000);
+    const seventyTwoHoursAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
+    const TRACK_ACTIVATION_STALLED = -320;
+
+    const stalledCandidates = configuredActiveMerchants.filter(m =>
+      m.subscription_status === 'trial' &&
+      m.created_at <= seventyTwoHoursAgo.toISOString() &&
+      m.created_at >= seventyThreeHoursAgo.toISOString() &&
+      !globalTrackingSet.has(`${m.id}:${TRACK_ACTIVATION_STALLED}`)
+    );
+
+    for (const merchant of stalledCandidates) {
+      results.activationStalled.processed++;
+      const email = globalEmailMap.get(merchant.user_id);
+      if (!email) { results.activationStalled.skipped++; continue; }
+
+      try {
+        const activation = await computeActivationScore(supabase, {
+          id: merchant.id,
+          bio: merchant.bio,
+          shop_address: merchant.shop_address,
+        });
+
+        // On envoie uniquement aux S0 (aucun pilier atteint après 3 jours)
+        if (activation.score !== 0) {
+          results.activationStalled.skipped++;
+          continue;
+        }
+
+        await sendActivationStalledEmail(email, merchant.shop_name, (merchant.locale as EmailLocale) || 'fr', merchant.shop_type);
+        await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: TRACK_ACTIVATION_STALLED, pending_count: 0 });
+        results.activationStalled.sent++;
+      } catch {
+        results.activationStalled.errors++;
+      }
+    }
+    sectionStatuses.push({ name: 'activationStalled', status: 'ok' });
+  } catch (error) {
+    sectionStatuses.push({ name: 'activationStalled', status: 'error', error: String(error) });
   }
 
   // ==================== QR CODE + FIRST CLIENT SCRIPT ====================
