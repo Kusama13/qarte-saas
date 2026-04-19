@@ -415,10 +415,11 @@ export async function sendSubscriptionConfirmedEmail(
   shopName: string,
   nextBillingDate?: string,
   billingInterval?: 'monthly' | 'annual',
-  locale: EmailLocale = 'fr'
+  locale: EmailLocale = 'fr',
+  planTier: 'fidelity' | 'all_in' = 'all_in',
 ): Promise<SendEmailResult> {
-  return sendEmail(to, subj(locale, 'subscriptionConfirmed', { shopName }), SubscriptionConfirmedEmail, { shopName, nextBillingDate, billingInterval, locale }, {
-    logLabel: 'Subscription confirmed email',
+  return sendEmail(to, subj(locale, 'subscriptionConfirmed', { shopName }), SubscriptionConfirmedEmail, { shopName, nextBillingDate, billingInterval, planTier, locale }, {
+    logLabel: `Subscription confirmed email (tier: ${planTier})`,
   });
 }
 
@@ -595,10 +596,11 @@ export async function sendInactiveMerchantDay14Email(
 export async function sendInactiveMerchantDay30Email(
   to: string,
   shopName: string,
-  locale: EmailLocale = 'fr'
+  locale: EmailLocale = 'fr',
+  planTier: 'fidelity' | 'all_in' = 'all_in',
 ): Promise<SendEmailResult> {
-  return sendEmail(to, subj(locale, 'inactiveDay30', { shopName }), InactiveMerchantDay30Email, { shopName, locale }, {
-    logLabel: 'Inactive merchant day 30 email',
+  return sendEmail(to, subj(locale, 'inactiveDay30', { shopName }), InactiveMerchantDay30Email, { shopName, planTier, locale }, {
+    logLabel: `Inactive merchant day 30 email (tier: ${planTier})`,
   });
 }
 

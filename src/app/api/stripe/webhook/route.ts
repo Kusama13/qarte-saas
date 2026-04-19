@@ -121,7 +121,7 @@ export async function POST(request: Request) {
         })
         .eq('id', merchantId)
         .neq('subscription_status', 'active')
-        .select('shop_name, user_id, trial_ends_at, locale, country')
+        .select('shop_name, user_id, trial_ends_at, locale, country, plan_tier')
         .single();
 
       if (!merchant) {
@@ -137,7 +137,7 @@ export async function POST(request: Request) {
         // Debit immediat — prochain prelevement dans 30j (mensuel) ou 1 an (annuel)
         const billingInterval = session.metadata?.plan === 'annual' ? 'annual' : 'monthly';
         const nextBillingDate: string | undefined = undefined; // Email uses generic fallback ("dans 30 jours" / "dans 1 an")
-        await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name, nextBillingDate, billingInterval, locale).catch((err) => {
+        await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name, nextBillingDate, billingInterval, locale, (merchant.plan_tier as 'fidelity' | 'all_in') || 'all_in').catch((err) => {
           logger.error('Failed to send subscription email', err);
         });
 
@@ -232,14 +232,14 @@ export async function POST(request: Request) {
         })
         .eq('stripe_customer_id', invoice.customer as string)
         .eq('subscription_status', 'past_due')
-        .select('shop_name, user_id, locale')
+        .select('shop_name, user_id, locale, plan_tier')
         .single();
 
       // Email de confirmation si paiement récupéré (past_due → active)
       if (merchant) {
         const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
         if (userData?.user?.email) {
-          await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name, undefined, undefined, mLocale(merchant)).catch((err) => {
+          await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name, undefined, undefined, mLocale(merchant), (merchant.plan_tier as 'fidelity' | 'all_in') || 'all_in').catch((err) => {
             logger.error('Failed to send payment recovery email', err);
           });
         }

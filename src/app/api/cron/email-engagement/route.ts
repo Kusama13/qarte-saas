@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
   // ==================== PREFETCH ====================
   const { data: allMerchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, slug, user_id, locale, trial_ends_at, subscription_status, created_at, reward_description, stamps_required, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, referral_code, no_contact, pwa_installed_at, auto_booking_enabled, email_bounced_at, email_unsubscribed_at, billing_period_start');
+    .select('id, shop_name, slug, user_id, locale, trial_ends_at, subscription_status, plan_tier, created_at, reward_description, stamps_required, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, referral_code, no_contact, pwa_installed_at, auto_booking_enabled, email_bounced_at, email_unsubscribed_at, billing_period_start');
 
   const allMerchantsList = allMerchants || [];
   const allMerchantsMap = new Map(allMerchantsList.map(m => [m.id, m]));
@@ -345,7 +345,7 @@ export async function GET(request: NextRequest) {
                 mLocale
               );
             } else {
-              result = await sendInactiveMerchantDay30Email(email, merchant.shop_name, mLocale);
+              result = await sendInactiveMerchantDay30Email(email, merchant.shop_name, mLocale, (merchant.plan_tier as 'fidelity' | 'all_in') || 'all_in');
             }
 
             if (result.success) {

@@ -14,12 +14,15 @@ interface SubscriptionConfirmedEmailProps {
   nextBillingDate?: string;
   billingInterval?: 'monthly' | 'annual';
   referralCode?: string;
+  /** Plan tier — change le label + les features listées (plan v2). */
+  planTier?: 'fidelity' | 'all_in';
   locale?: EmailLocale;
 }
 
-export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingInterval, referralCode, locale = 'fr' }: SubscriptionConfirmedEmailProps) {
+export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingInterval, referralCode, planTier = 'all_in', locale = 'fr' }: SubscriptionConfirmedEmailProps) {
   const t = getEmailT(locale);
   const planLabel = billingInterval === 'annual' ? t('subscriptionConfirmed.planAnnual') : t('subscriptionConfirmed.planMonthly');
+  const tierName = planTier === 'fidelity' ? t('subscriptionConfirmed.tierFidelityName') : t('subscriptionConfirmed.tierAllInName');
 
   return (
     <BaseLayout preview={t('subscriptionConfirmed.preview')} locale={locale}>
@@ -32,7 +35,7 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingI
       <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('subscriptionConfirmed.intro') }} />
 
       <Section style={confirmBox}>
-        <Text style={confirmTitle}>{t('subscriptionConfirmed.confirmTitle')}</Text>
+        <Text style={confirmTitle}>{tierName}</Text>
         <Text style={confirmDetail}>{t('subscriptionConfirmed.planLabel', { planLabel })}</Text>
         <Text style={confirmNote}>
           {nextBillingDate
