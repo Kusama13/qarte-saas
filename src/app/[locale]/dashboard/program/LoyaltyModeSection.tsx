@@ -33,6 +33,7 @@ interface LoyaltyModeSectionProps {
   tier2Error: string;
   setTier2Error: (v: string) => void;
   shopType?: ShopType;
+  tier2MaxStamps: number;
   handleLoyaltySettingsChange: (settings: LoyaltySettings) => void;
 }
 
@@ -49,6 +50,7 @@ export function LoyaltyModeSection({
   tier2Error,
   setTier2Error,
   shopType,
+  tier2MaxStamps,
   handleLoyaltySettingsChange,
 }: LoyaltyModeSectionProps) {
   const t = useTranslations('program');
@@ -277,7 +279,7 @@ export function LoyaltyModeSection({
               <Input
                 type="number"
                 min={1}
-                max={30}
+                max={tier2MaxStamps}
                 placeholder={t('tier2StampsPlaceholder', { example: formData.stampsRequired * 2 })}
                 value={formData.tier2StampsRequired || ''}
                 onChange={(e) => {
@@ -291,7 +293,7 @@ export function LoyaltyModeSection({
               />
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-400">{t('suggestionsLabel')}</span>
-                {[15, 20, 30].map((n) => (
+                {[15, 20, 30].filter((n) => n <= tier2MaxStamps).map((n) => (
                   <button
                     key={n}
                     type="button"

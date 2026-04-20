@@ -1313,7 +1313,7 @@
     "tier2ErrorReward": "Veuillez entrer la récompense du palier 2",
     "tier2ErrorStamps": "Veuillez entrer le nombre de passages requis pour le palier 2",
     "tier2ErrorMin": "Le palier 2 doit être supérieur au palier 1 ({stamps})",
-    "tier2ErrorMax": "Le palier 2 ne peut pas dépasser 30 passages",
+    "tier2ErrorMax": "Le palier 2 ne peut pas dépasser {max} passages",
     "cagnotteRewardDesc": "{percent}% sur votre cagnotte fidélité",
     "loyaltyModeTitle": "Mode de fidélité",
     "loyaltyModePassages": "Passages",

@@ -19,6 +19,7 @@ import type { ProgramFormData } from './types';
 import { CardPreview } from './CardPreview';
 import { LoyaltyModeSection } from './LoyaltyModeSection';
 import { ExtrasSection } from './ExtrasSection';
+import { getTier2MaxStamps } from '@/lib/tier2-max';
 
 
 export default function ProgramPage() {
@@ -127,6 +128,8 @@ export default function ProgramPage() {
     return `https://${trimmed}`;
   };
 
+  const tier2MaxStamps = getTier2MaxStamps(merchant?.created_at);
+
   const handleSave = async () => {
     if (!merchant) return;
     if (formData.loyaltyMode !== 'cagnotte' && !formData.rewardDescription.trim()) {
@@ -154,8 +157,8 @@ export default function ProgramPage() {
         setTier2Error(t('tier2ErrorMin', { stamps: formData.stampsRequired }));
         return;
       }
-      if (formData.tier2StampsRequired > 30) {
-        setTier2Error(t('tier2ErrorMax'));
+      if (formData.tier2StampsRequired > tier2MaxStamps) {
+        setTier2Error(t('tier2ErrorMax', { max: tier2MaxStamps }));
         return;
       }
     }
@@ -305,6 +308,7 @@ export default function ProgramPage() {
             tier2Error={tier2Error}
             setTier2Error={setTier2Error}
             shopType={merchant?.shop_type}
+            tier2MaxStamps={tier2MaxStamps}
             handleLoyaltySettingsChange={handleLoyaltySettingsChange}
           />
 

@@ -1313,7 +1313,7 @@
     "tier2ErrorReward": "Please enter the tier 2 reward",
     "tier2ErrorStamps": "Please enter the number of visits required for tier 2",
     "tier2ErrorMin": "Tier 2 must be higher than tier 1 ({stamps})",
-    "tier2ErrorMax": "Tier 2 cannot exceed 30 visits",
+    "tier2ErrorMax": "Tier 2 cannot exceed {max} visits",
     "cagnotteRewardDesc": "{percent}% on your loyalty cashback",
     "loyaltyModeTitle": "Loyalty mode",
     "loyaltyModePassages": "Stamp card",

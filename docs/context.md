@@ -119,6 +119,8 @@ Detection basee sur le **nombre de visites**, pas sur le montant.
 
 **Cycle palier** : palier 1 ne peut etre reclame qu'une fois entre deux paliers 2.
 
+**Cap tier2_stamps_required** : `src/lib/tier2-max.ts` — merchants crees ≥ 2026-04-20 limites a 20 passages, anciens conserves a 30 (legacy). Validation client-side uniquement.
+
 ### 4.4 Reset au redeem
 
 | Scenario | `current_stamps` | `current_amount` |
