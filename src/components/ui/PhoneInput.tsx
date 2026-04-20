@@ -72,10 +72,10 @@ export function PhoneInput({
     };
     const handleScroll = () => setDropdownOpen(false);
     document.addEventListener('mousedown', handleClose);
-    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
     return () => {
       document.removeEventListener('mousedown', handleClose);
-      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('scroll', handleScroll, { capture: true });
     };
   }, [dropdownOpen, updateDropdownPosition]);
 

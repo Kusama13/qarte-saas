@@ -91,7 +91,7 @@ export default function NotificationBell() {
         setOpen(false);
       }
     };
-    document.addEventListener('pointerdown', handler);
+    document.addEventListener('pointerdown', handler, { passive: true });
     return () => document.removeEventListener('pointerdown', handler);
   }, [open]);
 

@@ -13,7 +13,7 @@ export function ScrollToTopButton() {
       setIsVisible(window.scrollY > 400);
     };
 
-    window.addEventListener('scroll', toggleVisibility);
+    window.addEventListener('scroll', toggleVisibility, { passive: true });
     return () => window.removeEventListener('scroll', toggleVisibility);
   }, []);
 
