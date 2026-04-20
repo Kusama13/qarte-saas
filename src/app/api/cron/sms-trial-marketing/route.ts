@@ -20,7 +20,6 @@ import { computeActivationScore } from '@/lib/activation-score';
 import { recommendTierForMerchant } from '@/lib/trial-tier-reco';
 import {
   sendTrialMarketingSms,
-  hasSentTrialSms,
   celebrationTypeFromPillar,
   type TierRecommended,
 } from '@/lib/sms-trial-marketing';
@@ -29,6 +28,7 @@ import {
   preLossSmsBody,
   churnSurveySmsBody,
 } from '@/lib/trial-sms-copy';
+import { TRIAL_MARKETING_CUTOFF } from '@/lib/trial-marketing-cutoff';
 import { getTrialStatus } from '@/lib/utils';
 import logger from '@/lib/logger';
 
@@ -42,6 +42,7 @@ interface MerchantRow {
   shop_name: string;
   phone: string;
   country: string;
+  created_at: string;
   bio: string | null;
   shop_address: string | null;
   trial_ends_at: string | null;
@@ -51,26 +52,15 @@ interface MerchantRow {
   email_unsubscribed_at: string | null;
   marketing_sms_opted_out: boolean;
   celebration_sms_sent_at: string | null;
+  pre_loss_sms_sent_at: string | null;
+  churn_sms_sent_at: string | null;
 }
 
-const SELECT = 'id, shop_name, phone, country, bio, shop_address, trial_ends_at, subscription_status, churn_survey_seen_at, no_contact, email_unsubscribed_at, marketing_sms_opted_out, celebration_sms_sent_at';
-
-// KILL-SWITCH : cron désactivé suite à envoi rétroactif massif (celebration SMS
-// envoyé à tous les merchants existants en trial à cause d'absence de backfill
-// celebration_sms_sent_at lors de la migration 115). Ne pas réactiver tant que :
-// 1. Backfill SQL appliqué (UPDATE merchants SET celebration_sms_sent_at = NOW() WHERE celebration_sms_sent_at IS NULL)
-// 2. Garde-fou ajouté dans Section 1 (cutoff date sur merchant.created_at)
-// 3. Audit des dégâts terminé
-const CRON_DISABLED = true;
+const SELECT = 'id, shop_name, phone, country, created_at, bio, shop_address, trial_ends_at, subscription_status, churn_survey_seen_at, no_contact, email_unsubscribed_at, marketing_sms_opted_out, celebration_sms_sent_at, pre_loss_sms_sent_at, churn_sms_sent_at';
 
 export async function GET(request: NextRequest) {
   if (!verifyCronAuth(request.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  if (CRON_DISABLED) {
-    logger.warn('sms_trial_marketing_cron_disabled', { reason: 'post-incident lockdown' });
-    return NextResponse.json({ ok: true, disabled: true, reason: 'kill-switch active' });
   }
 
   const results = {
@@ -83,13 +73,15 @@ export async function GET(request: NextRequest) {
   const sentThisRun = new Set<string>();
 
   // ==================== SECTION 1 — CÉLÉBRATION ====================
-  // Merchants en trial actif, sans celebration_sms_sent_at, qui ont au moins 1 aha event
+  // Merchants en trial actif, sans celebration_sms_sent_at, créés APRÈS le cutoff,
+  // qui ont au moins 1 aha event. Le cutoff empêche tout envoi rétroactif.
   try {
     const { data: trialMerchants } = await supabase
       .from('merchants')
       .select(SELECT)
       .eq('subscription_status', 'trial')
       .is('celebration_sms_sent_at', null)
+      .gte('created_at', TRIAL_MARKETING_CUTOFF.toISOString())
       .eq('marketing_sms_opted_out', false)
       .eq('no_contact', false);
 
@@ -137,12 +129,15 @@ export async function GET(request: NextRequest) {
   }
 
   // ==================== SECTION 2 — PRE-LOSS J-1 ====================
-  // Merchants en trial dont trial finit dans ~24h, ≥S1, copy tier-aware
+  // Merchants en trial dont trial finit dans ~24h, ≥S1, créés APRÈS le cutoff.
+  // Dedup via flag col pre_loss_sms_sent_at (filtré en SQL + re-vérifié dans gating).
   try {
     const { data: trialMerchants } = await supabase
       .from('merchants')
       .select(SELECT)
       .eq('subscription_status', 'trial')
+      .is('pre_loss_sms_sent_at', null)
+      .gte('created_at', TRIAL_MARKETING_CUTOFF.toISOString())
       .eq('marketing_sms_opted_out', false)
       .eq('no_contact', false);
 
@@ -154,13 +149,6 @@ export async function GET(request: NextRequest) {
         const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
         // J-1 : actif et exactement 1 jour restant
         if (!trialStatus.isActive || trialStatus.daysRemaining !== 1) {
-          results.preLoss.skipped++;
-          continue;
-        }
-
-        // Dedup par type
-        const alreadySent = await hasSentTrialSms(supabase, merchant.id, 'trial_pre_loss');
-        if (alreadySent) {
           results.preLoss.skipped++;
           continue;
         }
@@ -213,13 +201,17 @@ export async function GET(request: NextRequest) {
   }
 
   // ==================== SECTION 3 — CHURN SURVEY ====================
-  // Merchants fully expired (J+5 minimum) sans churn_survey_seen_at
+  // Merchants fully expired ≥5j (donc ≥8j après trial_ends_at, vu la grace 3j),
+  // sans churn_survey_seen_at, créés APRÈS le cutoff.
+  // Dedup via flag col churn_sms_sent_at.
   try {
     const { data: expiredMerchants } = await supabase
       .from('merchants')
       .select(SELECT)
       .eq('subscription_status', 'trial')
       .is('churn_survey_seen_at', null)
+      .is('churn_sms_sent_at', null)
+      .gte('created_at', TRIAL_MARKETING_CUTOFF.toISOString())
       .eq('marketing_sms_opted_out', false)
       .eq('no_contact', false);
 
@@ -236,12 +228,6 @@ export async function GET(request: NextRequest) {
         }
         const daysExpired = Math.abs(trialStatus.daysRemaining);
         if (daysExpired < 5) {
-          results.churnSurvey.skipped++;
-          continue;
-        }
-
-        const alreadySent = await hasSentTrialSms(supabase, merchant.id, 'churn_survey');
-        if (alreadySent) {
           results.churnSurvey.skipped++;
           continue;
         }

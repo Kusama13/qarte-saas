@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { sendSms } from './ovh-sms';
 import { isLegalSendTime } from './sms-compliance';
 import { SMS_UNIT_COST } from './sms-constants';
+import { isEligibleForTrialMarketing } from './trial-marketing-cutoff';
 import logger from './logger';
 import type { Pillar } from './activation-score';
 
@@ -26,15 +27,18 @@ interface MerchantGatingInfo {
   id: string;
   phone: string;
   country: string;
+  created_at: string;
   no_contact: boolean;
   email_unsubscribed_at: string | null;
   marketing_sms_opted_out: boolean;
   celebration_sms_sent_at: string | null;
+  pre_loss_sms_sent_at: string | null;
+  churn_sms_sent_at: string | null;
 }
 
 interface SendResult {
   success: boolean;
-  skipped?: 'opted_out' | 'no_contact' | 'unsubscribed' | 'already_sent' | 'illegal_time' | 'invalid_phone';
+  skipped?: 'opted_out' | 'no_contact' | 'unsubscribed' | 'already_sent' | 'illegal_time' | 'invalid_phone' | 'pre_cutoff';
   error?: string;
   logId?: string;
 }
@@ -48,15 +52,19 @@ export function checkTrialSmsGating(
   smsType: TrialSmsType,
   now: Date = new Date(),
 ): SendResult['skipped'] | null {
+  // Cutoff date : seuls les merchants créés à partir du 2026-04-20 sont éligibles
+  // (garantie contre les envois rétroactifs, voir incident 20 avril 2026)
+  if (!isEligibleForTrialMarketing(merchant.created_at)) return 'pre_cutoff';
+
   if (merchant.no_contact) return 'no_contact';
   if (merchant.email_unsubscribed_at) return 'unsubscribed';
   if (merchant.marketing_sms_opted_out) return 'opted_out';
   if (!merchant.phone || merchant.phone.length < 8) return 'invalid_phone';
 
-  // Célébration : dedup global (1 max sur toute la vie merchant)
-  if (smsType.startsWith('celebration_') && merchant.celebration_sms_sent_at) {
-    return 'already_sent';
-  }
+  // Dedup par type via flag column (atomique, pas de log-check approximatif)
+  if (smsType.startsWith('celebration_') && merchant.celebration_sms_sent_at) return 'already_sent';
+  if (smsType === 'trial_pre_loss' && merchant.pre_loss_sms_sent_at) return 'already_sent';
+  if (smsType === 'churn_survey' && merchant.churn_sms_sent_at) return 'already_sent';
 
   const compliance = isLegalSendTime(now, merchant.country || 'FR');
   if (!compliance.ok) return 'illegal_time';
@@ -117,12 +125,17 @@ export async function sendTrialMarketingSms(params: {
     logger.error('trial_sms_log_failed', { merchantId: merchant.id, smsType, error: logError });
   }
 
-  // 4. Dedup célébration : marker sur merchants
-  if (result.success && smsType.startsWith('celebration_')) {
-    await supabase
-      .from('merchants')
-      .update({ celebration_sms_sent_at: new Date().toISOString() })
-      .eq('id', merchant.id);
+  // 4. Dedup : marker le flag correspondant dès que l'envoi OVH a réussi
+  if (result.success) {
+    const nowIso = new Date().toISOString();
+    const updates: Record<string, string> = {};
+    if (smsType.startsWith('celebration_')) updates.celebration_sms_sent_at = nowIso;
+    else if (smsType === 'trial_pre_loss') updates.pre_loss_sms_sent_at = nowIso;
+    else if (smsType === 'churn_survey') updates.churn_sms_sent_at = nowIso;
+
+    if (Object.keys(updates).length > 0) {
+      await supabase.from('merchants').update(updates).eq('id', merchant.id);
+    }
   }
 
   return {
