@@ -4,7 +4,6 @@ import { isLegalSendTime } from './sms-compliance';
 import { SMS_UNIT_COST } from './sms-constants';
 import { isEligibleForTrialMarketing } from './trial-marketing-cutoff';
 import logger from './logger';
-import type { Pillar } from './activation-score';
 
 /**
  * SMS marketing trial (plan v2 emails+SMS) — helper d'envoi centralisé.
@@ -15,9 +14,11 @@ import type { Pillar } from './activation-score';
  */
 
 export type TrialSmsType =
-  | 'celebration_fidelity'
-  | 'celebration_planning'
-  | 'celebration_vitrine'
+  | 'celebration_fidelity'   // check-in 48h variante B (fidélité seule)
+  | 'celebration_planning'   // fallback rare (planning seul)
+  | 'celebration_vitrine'    // check-in 48h variante C (vitrine seule)
+  | 'checkin_nudge'          // check-in 48h variante A (rien configuré)
+  | 'checkin_combo'          // check-in 48h variante D (2+ piliers)
   | 'trial_pre_loss'
   | 'churn_survey';
 
@@ -61,8 +62,11 @@ export function checkTrialSmsGating(
   if (merchant.marketing_sms_opted_out) return 'opted_out';
   if (!merchant.phone || merchant.phone.length < 8) return 'invalid_phone';
 
-  // Dedup par type via flag column (atomique, pas de log-check approximatif)
-  if (smsType.startsWith('celebration_') && merchant.celebration_sms_sent_at) return 'already_sent';
+  // Dedup par type via flag column (atomique, pas de log-check approximatif).
+  // Les 5 variantes du check-in 48h partagent le même flag celebration_sms_sent_at.
+  if ((smsType.startsWith('celebration_') || smsType.startsWith('checkin_')) && merchant.celebration_sms_sent_at) {
+    return 'already_sent';
+  }
   if (smsType === 'trial_pre_loss' && merchant.pre_loss_sms_sent_at) return 'already_sent';
   if (smsType === 'churn_survey' && merchant.churn_sms_sent_at) return 'already_sent';
 
@@ -70,12 +74,6 @@ export function checkTrialSmsGating(
   if (!compliance.ok) return 'illegal_time';
 
   return null;
-}
-
-export function celebrationTypeFromPillar(pillar: Pillar): TrialSmsType {
-  if (pillar === 'fidelity') return 'celebration_fidelity';
-  if (pillar === 'planning') return 'celebration_planning';
-  return 'celebration_vitrine';
 }
 
 /**
@@ -125,13 +123,19 @@ export async function sendTrialMarketingSms(params: {
     logger.error('trial_sms_log_failed', { merchantId: merchant.id, smsType, error: logError });
   }
 
-  // 4. Dedup : marker le flag correspondant dès que l'envoi OVH a réussi
+  // 4. Dedup : marker le flag correspondant dès que l'envoi OVH a réussi.
+  // Les 5 variantes du check-in 48h (celebration_*, checkin_*) partagent le
+  // même flag celebration_sms_sent_at (1 max sur la vie du merchant).
   if (result.success) {
     const nowIso = new Date().toISOString();
     const updates: Record<string, string> = {};
-    if (smsType.startsWith('celebration_')) updates.celebration_sms_sent_at = nowIso;
-    else if (smsType === 'trial_pre_loss') updates.pre_loss_sms_sent_at = nowIso;
-    else if (smsType === 'churn_survey') updates.churn_sms_sent_at = nowIso;
+    if (smsType.startsWith('celebration_') || smsType.startsWith('checkin_')) {
+      updates.celebration_sms_sent_at = nowIso;
+    } else if (smsType === 'trial_pre_loss') {
+      updates.pre_loss_sms_sent_at = nowIso;
+    } else if (smsType === 'churn_survey') {
+      updates.churn_sms_sent_at = nowIso;
+    }
 
     if (Object.keys(updates).length > 0) {
       await supabase.from('merchants').update(updates).eq('id', merchant.id);

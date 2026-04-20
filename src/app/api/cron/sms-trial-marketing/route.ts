@@ -20,11 +20,10 @@ import { computeActivationScore } from '@/lib/activation-score';
 import { recommendTierForMerchant } from '@/lib/trial-tier-reco';
 import {
   sendTrialMarketingSms,
-  celebrationTypeFromPillar,
   type TierRecommended,
 } from '@/lib/sms-trial-marketing';
 import {
-  celebrationSmsBody,
+  checkInSmsSelection,
   preLossSmsBody,
   churnSurveySmsBody,
 } from '@/lib/trial-sms-copy';
@@ -72,9 +71,15 @@ export async function GET(request: NextRequest) {
   // Frequency cap intra-cron : un merchant ne reçoit pas 2 SMS dans la même run
   const sentThisRun = new Set<string>();
 
-  // ==================== SECTION 1 — CÉLÉBRATION ====================
-  // Merchants en trial actif, sans celebration_sms_sent_at, créés APRÈS le cutoff,
-  // qui ont au moins 1 aha event. Le cutoff empêche tout envoi rétroactif.
+  // ==================== SECTION 1 — CHECK-IN 48H ====================
+  // Merchants créés il y a ≥48h, en trial, sans celebration_sms_sent_at, créés
+  // APRÈS le cutoff. Le SMS choisit la variante selon l'état d'activation :
+  // - checkin_nudge : rien configuré (S0)
+  // - celebration_fidelity / vitrine : 1 pilier atteint (next step teaser)
+  // - checkin_combo : 2+ piliers atteints (célébration complète)
+  const CHECK_IN_HOURS = 48;
+  const checkInThreshold = new Date(Date.now() - CHECK_IN_HOURS * 60 * 60 * 1000);
+
   try {
     const { data: trialMerchants } = await supabase
       .from('merchants')
@@ -82,6 +87,7 @@ export async function GET(request: NextRequest) {
       .eq('subscription_status', 'trial')
       .is('celebration_sms_sent_at', null)
       .gte('created_at', TRIAL_MARKETING_CUTOFF.toISOString())
+      .lte('created_at', checkInThreshold.toISOString())
       .eq('marketing_sms_opted_out', false)
       .eq('no_contact', false);
 
@@ -95,13 +101,7 @@ export async function GET(request: NextRequest) {
           shop_address: merchant.shop_address,
         });
 
-        if (activation.score === 0 || !activation.firstPillar) {
-          results.celebration.skipped++;
-          continue;
-        }
-
-        const smsType = celebrationTypeFromPillar(activation.firstPillar);
-        const body = celebrationSmsBody(activation.firstPillar, merchant.shop_name);
+        const { smsType, body } = checkInSmsSelection(activation, merchant.shop_name);
 
         const result = await sendTrialMarketingSms({
           supabase,
@@ -121,11 +121,11 @@ export async function GET(request: NextRequest) {
         }
       } catch (err) {
         results.celebration.errors++;
-        logger.error('celebration_sms_failed', { merchantId: merchant.id, err: String(err) });
+        logger.error('checkin_sms_failed', { merchantId: merchant.id, err: String(err) });
       }
     }
   } catch (err) {
-    logger.error('celebration_section_failed', { err: String(err) });
+    logger.error('checkin_section_failed', { err: String(err) });
   }
 
   // ==================== SECTION 2 — PRE-LOSS J-1 ====================
