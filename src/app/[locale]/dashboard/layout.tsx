@@ -153,20 +153,28 @@ function DashboardLayoutContent({
     return <>{children}</>;
   }
 
+  const hideDistractions =
+    pathname === '/dashboard/subscription' &&
+    (trialStatus.isInGracePeriod || trialStatus.isFullyExpired);
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <button
-        onClick={() => setSidebarOpen(true)}
-        aria-label={t('openMenu')}
-        className="fixed z-40 flex items-center gap-1.5 px-3 py-2 bg-white/90 backdrop-blur-xl border border-gray-100 rounded-xl shadow-lg top-3 left-3 lg:hidden active:scale-95 transition-all duration-200 touch-manipulation"
-      >
-        <Menu className="w-5 h-5 text-indigo-600" />
-        <span className="text-sm font-medium text-indigo-600">{t('menu')}</span>
-      </button>
+      {!hideDistractions && (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          aria-label={t('openMenu')}
+          className="fixed z-40 flex items-center gap-1.5 px-3 py-2 bg-white/90 backdrop-blur-xl border border-gray-100 rounded-xl shadow-lg top-3 left-3 lg:hidden active:scale-95 transition-all duration-200 touch-manipulation"
+        >
+          <Menu className="w-5 h-5 text-indigo-600" />
+          <span className="text-sm font-medium text-indigo-600">{t('menu')}</span>
+        </button>
+      )}
 
-      <div className="fixed z-40 top-3 right-3 lg:hidden bg-white/90 backdrop-blur-xl border border-gray-100 rounded-xl shadow-lg">
-        <NotificationBell />
-      </div>
+      {!hideDistractions && (
+        <div className="fixed z-40 top-3 right-3 lg:hidden bg-white/90 backdrop-blur-xl border border-gray-100 rounded-xl shadow-lg">
+          <NotificationBell />
+        </div>
+      )}
 
       {/* Backdrop — conditionally rendered (évite les captures de touch sur iOS PWA où
           pointer-events-none ne flush pas après transition opacity). Perte du fade-out
