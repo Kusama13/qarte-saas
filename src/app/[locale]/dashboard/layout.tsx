@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   Megaphone,
+  Bell,
   UserPlus,
   CalendarDays,
   ArrowRight,
@@ -382,31 +383,30 @@ function DashboardLayoutContent({
             </Link>
           )}
 
-          {/* Push notifications prompt */}
+          {/* Push notifications prompt — brand gradient + Bell icon */}
           {showPushPrompt && (
-            <div className="flex items-center gap-3 p-4 mb-4 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shrink-0">
-                <Megaphone className="w-5 h-5 text-white" />
+            <div className="relative flex items-center gap-3 p-3.5 mb-4 bg-gradient-to-r from-indigo-600 via-violet-600 to-pink-600 rounded-2xl shadow-lg shadow-indigo-500/20">
+              <div className="shrink-0 w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <Bell className="w-4 h-4 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900">{tp('promptTitle')}</p>
-                <p className="text-xs text-gray-500">{tp('promptDesc')}</p>
+                <p className="text-sm font-bold text-white leading-tight">{tp('promptTitle')}</p>
+                <p className="text-[11px] text-white/80 leading-tight mt-0.5">{tp('promptDesc')}</p>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  onClick={dismissPush}
-                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {tp('promptDismiss')}
-                </button>
-                <button
-                  onClick={subscribePush}
-                  disabled={pushSubscribing}
-                  className="px-3 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-indigo-500 to-blue-500 rounded-lg hover:shadow-md disabled:opacity-50 transition-all"
-                >
-                  {pushSubscribing ? '...' : tp('promptCta')}
-                </button>
-              </div>
+              <button
+                onClick={subscribePush}
+                disabled={pushSubscribing}
+                className="shrink-0 px-3.5 py-1.5 rounded-lg bg-white text-indigo-600 text-xs font-bold hover:bg-indigo-50 disabled:opacity-60 transition-colors active:scale-95"
+              >
+                {pushSubscribing ? '…' : tp('promptCta')}
+              </button>
+              <button
+                onClick={dismissPush}
+                aria-label={tp('promptDismiss')}
+                className="shrink-0 p-1 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
           )}
 

@@ -1920,8 +1920,8 @@
     "pushNotifTitle": "Notifications",
     "pushNotifActive": "Actives",
     "pushNotifEnable": "Activer",
-    "pushNotifActiveHint": "Tu recevras toutes les notifs importantes sur ce téléphone. Si tu n'en reçois pas, désinstalle et réinstalle l'app, puis réactive ici.",
-    "pushNotifHint": "Active les notifications pour recevoir tous les trucs importants (nouvelles réservations, rappels, alertes). À faire sur chaque appareil.",
+    "pushNotifActiveHint": "Tu recevras toutes les alertes sur ce téléphone. Rien ne se passe ? Désinstalle / réinstalle l'app puis réactive ici.",
+    "pushNotifHint": "Résas, rappels, anniversaires en temps réel. À activer sur chaque appareil.",
     "pushNotifDenied": "Tu as refusé les notifs. Va dans les réglages de ton téléphone pour autoriser Qarte Pro, puis reviens ici.",
     "pushNotifUnsupported": "Ton navigateur ne supporte pas les notifications push.",
     "pushNotifIosPwa": "Sur iPhone, installe d'abord Qarte Pro sur ton écran d'accueil (Partager → Sur l'écran d'accueil), puis rouvre l'app depuis l'icône.",
@@ -3271,8 +3271,8 @@
     "memberLookup": "Vérification..."
   },
   "merchantPush": {
-    "promptTitle": "Active les notifications",
-    "promptDesc": "Reçois une alerte instantanée à chaque nouvelle réservation en ligne et pour les anniversaires de tes clients.",
+    "promptTitle": "Active les notifs",
+    "promptDesc": "Résas, rappels, anniversaires — en temps réel.",
     "promptCta": "Activer",
     "promptDismiss": "Plus tard",
     "enabled": "Notifications activées",
