@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
 
     const { data: cards } = await supabase
       .from('loyalty_cards')
-      .select('customer_id, created_at, customers(first_name, phone_number, no_contact)')
+      .select('customer_id, created_at, customers(first_name, phone_number)')
       .eq('merchant_id', m.id)
       .gte('created_at', minAgo)
       .lt('created_at', maxAgo);
@@ -183,7 +183,7 @@ export async function GET(request: NextRequest) {
     for (const card of cards) {
       const customer = getEmbeddedCustomer(card);
       const phone = customer?.phone_number;
-      if (!phone || customer?.no_contact || optOuts.has(phone)) continue;
+      if (!phone || optOuts.has(phone)) continue;
 
       if (await hasSmsLog(supabase, m.id, 'welcome', phone)) continue;
 
@@ -219,7 +219,7 @@ export async function GET(request: NextRequest) {
 
     const { data: visits } = await supabase
       .from('visits')
-      .select('id, customer_id, visited_at, customers(first_name, phone_number, no_contact)')
+      .select('id, customer_id, visited_at, customers(first_name, phone_number)')
       .eq('merchant_id', m.id)
       .gte('visited_at', minAgo)
       .lt('visited_at', maxAgo);
@@ -232,7 +232,7 @@ export async function GET(request: NextRequest) {
     for (const v of visits) {
       const customer = getEmbeddedCustomer(v);
       const phone = customer?.phone_number;
-      if (!phone || customer?.no_contact || optOuts.has(phone)) continue;
+      if (!phone || optOuts.has(phone)) continue;
 
       if (await hasSmsLog(supabase, m.id, 'review_request', phone, todayStart.toISOString())) continue;
 
@@ -279,7 +279,7 @@ export async function GET(request: NextRequest) {
 
     const { data: cards } = await supabase
       .from('loyalty_cards')
-      .select('customer_id, customers(first_name, phone_number, no_contact)')
+      .select('customer_id, customers(first_name, phone_number)')
       .eq('merchant_id', m.id);
 
     if (!cards || cards.length === 0) continue;
@@ -291,7 +291,7 @@ export async function GET(request: NextRequest) {
     for (const card of cards) {
       const customer = getEmbeddedCustomer(card);
       const phone = customer?.phone_number;
-      if (!phone || customer?.no_contact || optOuts.has(phone)) continue;
+      if (!phone || optOuts.has(phone)) continue;
 
       const first = customer?.first_name ? `${customer.first_name}, ` : '';
       const intro = locale === 'en'
@@ -340,7 +340,7 @@ export async function GET(request: NextRequest) {
 
     const { data: vouchers } = await supabase
       .from('vouchers')
-      .select('id, expires_at, customer_id, reward_description, customers(first_name, phone_number, no_contact)')
+      .select('id, expires_at, customer_id, reward_description, customers(first_name, phone_number)')
       .eq('merchant_id', m.id)
       .eq('is_used', false)
       .gte('expires_at', minExpires)
@@ -354,7 +354,7 @@ export async function GET(request: NextRequest) {
     for (const v of vouchers) {
       const customer = getEmbeddedCustomer(v);
       const phone = customer?.phone_number;
-      if (!phone || customer?.no_contact || optOuts.has(phone)) continue;
+      if (!phone || optOuts.has(phone)) continue;
 
       if (await hasSmsLog(supabase, m.id, 'voucher_expiry', phone, todayStart.toISOString())) continue;
 
@@ -423,7 +423,7 @@ export async function GET(request: NextRequest) {
 
     const [optOuts, customersRes] = await Promise.all([
       fetchOptedOutPhones(supabase, m.id),
-      supabase.from('customers').select('id, first_name, phone_number, no_contact').in('id', eligibleIds),
+      supabase.from('customers').select('id, first_name, phone_number').in('id', eligibleIds),
     ]);
     const customers = customersRes.data || [];
     const eligiblePhones = customers.map((c) => c.phone_number).filter((p): p is string => !!p);
@@ -438,7 +438,7 @@ export async function GET(request: NextRequest) {
 
     for (const customer of customers) {
       const phone = customer.phone_number;
-      if (!phone || customer.no_contact || optOuts.has(phone) || alreadySent.has(phone)) continue;
+      if (!phone || optOuts.has(phone) || alreadySent.has(phone)) continue;
 
       const locale = m.locale || 'fr';
       const first = customer.first_name ? `${customer.first_name}, ` : '';
@@ -498,7 +498,7 @@ export async function GET(request: NextRequest) {
     const dedupSince = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString();
     const [optOuts, customersRes] = await Promise.all([
       fetchOptedOutPhones(supabase, m.id),
-      supabase.from('customers').select('id, first_name, phone_number, no_contact').in('id', eligibleIds),
+      supabase.from('customers').select('id, first_name, phone_number').in('id', eligibleIds),
     ]);
     const customers = customersRes.data || [];
     const candidatePhones = customers.map((c) => c.phone_number).filter((p): p is string => !!p);
@@ -514,7 +514,7 @@ export async function GET(request: NextRequest) {
 
     for (const customer of customers) {
       const phone = customer.phone_number;
-      if (!phone || customer.no_contact || optOuts.has(phone) || alreadySent.has(phone)) continue;
+      if (!phone || optOuts.has(phone) || alreadySent.has(phone)) continue;
 
       const locale = m.locale || 'fr';
       const first = customer.first_name ? `${customer.first_name}, ` : '';
@@ -560,7 +560,7 @@ export async function GET(request: NextRequest) {
 
     const { data: cards } = await supabase
       .from('loyalty_cards')
-      .select('customer_id, current_stamps, last_visit_date, customers(first_name, phone_number, no_contact)')
+      .select('customer_id, current_stamps, last_visit_date, customers(first_name, phone_number)')
       .eq('merchant_id', m.id)
       .in('current_stamps', thresholds.map((t) => t.stamps))
       .lte('last_visit_date', cutoff);
@@ -584,7 +584,7 @@ export async function GET(request: NextRequest) {
       const customer = getEmbeddedCustomer(card);
       const phone = customer?.phone_number;
       const currentStamps = (card as { current_stamps?: number }).current_stamps ?? -1;
-      if (!phone || customer?.no_contact || optOuts.has(phone) || alreadySent.has(phone)) continue;
+      if (!phone || optOuts.has(phone) || alreadySent.has(phone)) continue;
 
       const match = thresholds.find((t) => t.stamps === currentStamps);
       if (!match) continue;
@@ -628,7 +628,7 @@ export async function GET(request: NextRequest) {
 
     const { data: bdayCustomers } = await supabase
       .from('customers')
-      .select('first_name, phone_number, no_contact')
+      .select('first_name, phone_number')
       .eq('merchant_id', m.id)
       .eq('birth_month', targetMonth)
       .eq('birth_day', targetDay)
@@ -637,7 +637,7 @@ export async function GET(request: NextRequest) {
     if (!bdayCustomers || bdayCustomers.length === 0) continue;
 
     for (const customer of bdayCustomers) {
-      if (!customer.phone_number || customer.no_contact) continue;
+      if (!customer.phone_number) continue;
       const sent = await sendBookingSms(supabase, {
         merchantId: m.id,
         phone: customer.phone_number,

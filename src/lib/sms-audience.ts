@@ -48,7 +48,6 @@ export async function resolveAudienceUnion(
 export type CustomerEmbed = {
   first_name?: string | null;
   phone_number?: string | null;
-  no_contact?: boolean | null;
 };
 
 export async function fetchOptedOutPhones(
@@ -103,7 +102,7 @@ async function fetchCandidatePhones(
   }
 }
 
-type CustomerEmbedRow = { phone_number: string | null; no_contact?: boolean | null };
+type CustomerEmbedRow = { phone_number: string | null };
 type CardRow = {
   customer_id: string;
   customers?: CustomerEmbedRow | CustomerEmbedRow[] | null;
@@ -120,7 +119,7 @@ function extractPhones(rows: CardRow[]): string[] {
   const phones: string[] = [];
   for (const r of rows) {
     const c = normalizeCustomer(r.customers);
-    if (c && !c.no_contact && c.phone_number) phones.push(c.phone_number);
+    if (c && c.phone_number) phones.push(c.phone_number);
   }
   return phones;
 }
@@ -128,7 +127,7 @@ function extractPhones(rows: CardRow[]): string[] {
 async function fetchAllCards(supabase: SupabaseClient, merchantId: string): Promise<string[]> {
   const { data } = await supabase
     .from('loyalty_cards')
-    .select('customer_id, customers(phone_number, no_contact)')
+    .select('customer_id, customers(phone_number)')
     .eq('merchant_id', merchantId);
   return extractPhones((data || []) as unknown as CardRow[]);
 }
@@ -137,7 +136,7 @@ async function fetchInactive(supabase: SupabaseClient, merchantId: string, days:
   const cutoff = new Date(Date.now() - days * 24 * 3600 * 1000).toISOString().slice(0, 10);
   const { data } = await supabase
     .from('loyalty_cards')
-    .select('customer_id, last_visit_date, customers(phone_number, no_contact)')
+    .select('customer_id, last_visit_date, customers(phone_number)')
     .eq('merchant_id', merchantId)
     .or(`last_visit_date.lte.${cutoff},last_visit_date.is.null`);
   return extractPhones((data || []) as unknown as CardRow[]);
@@ -147,7 +146,7 @@ async function fetchNew(supabase: SupabaseClient, merchantId: string, days: numb
   const cutoff = new Date(Date.now() - days * 24 * 3600 * 1000).toISOString();
   const { data } = await supabase
     .from('loyalty_cards')
-    .select('customer_id, created_at, customers(phone_number, no_contact)')
+    .select('customer_id, created_at, customers(phone_number)')
     .eq('merchant_id', merchantId)
     .gte('created_at', cutoff);
   return extractPhones((data || []) as unknown as CardRow[]);
@@ -161,7 +160,7 @@ async function fetchVip(
 ): Promise<string[]> {
   let q = supabase
     .from('loyalty_cards')
-    .select('customer_id, current_stamps, current_amount, customers(phone_number, no_contact)')
+    .select('customer_id, current_stamps, current_amount, customers(phone_number)')
     .eq('merchant_id', merchantId);
   if (typeof minStamps === 'number') q = q.gte('current_stamps', minStamps);
   if (typeof minAmount === 'number') q = q.gte('current_amount', minAmount);
@@ -180,12 +179,12 @@ async function fetchBirthdayMonth(supabase: SupabaseClient, merchantId: string):
 
   const { data: customers } = await supabase
     .from('customers')
-    .select('phone_number, no_contact, birth_month')
+    .select('phone_number, birth_month')
     .in('id', ids)
     .eq('birth_month', month);
 
   return (customers || [])
-    .filter((c: { phone_number: string | null; no_contact?: boolean | null }) => !c.no_contact && c.phone_number)
+    .filter((c: { phone_number: string | null }) => !!c.phone_number)
     .map((c: { phone_number: string }) => c.phone_number);
 }
 
@@ -211,10 +210,10 @@ async function fetchUnusedVoucher(
 
   const { data: customers } = await supabase
     .from('customers')
-    .select('phone_number, no_contact')
+    .select('phone_number')
     .in('id', ids);
 
   return (customers || [])
-    .filter((c: { phone_number: string | null; no_contact?: boolean | null }) => !c.no_contact && c.phone_number)
+    .filter((c: { phone_number: string | null }) => !!c.phone_number)
     .map((c: { phone_number: string }) => c.phone_number);
 }

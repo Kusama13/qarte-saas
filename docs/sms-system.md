@@ -138,6 +138,8 @@ Opt-outs batch-fetched une fois par merchant via `fetchOptedOutPhones()`. Dedup 
 ### Opt-out
 Mention "STOP SMS" en fin de corps (pas de mécanisme actif — pas de webhook inbound OVH). Table `sms_opt_outs(phone, merchant_id)` consultée partout (resolveAudienceUnion, sms-hourly, vouchers/use pour referral_reward). Plan URL courte `qrt.fr/s/{token}` non implémenté (domaine pas réservé).
 
+**Note** : la colonne `no_contact` n'existe que sur `merchants` (pour blocker les SMS outbound admin). Elle n'existe PAS sur `customers` — l'opt-out client passe uniquement par `sms_opt_outs`.
+
 ---
 
 ## Admin — `/admin/sms`
