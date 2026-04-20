@@ -2145,6 +2145,8 @@
     "modeSwitchTitle": "Changer de mode ?",
     "modeSwitchToFreeWarning": "Les créneaux vides ne seront plus utilisés. Les RDV existants sont conservés. Les clientes réserveront selon tes horaires d'ouverture.",
     "modeSwitchToSlotsWarning": "Les clientes ne pourront pas réserver tant que tu n'as pas créé de créneaux. Les RDV existants sont conservés.",
+    "modeSwitchEmptySlotsWarning": "{count} créneau vide sera supprimé (sinon il bloquerait la création de RDV en mode libre).",
+    "modeSwitchEmptySlotsWarningPlural": "{count} créneaux vides seront supprimés (sinon ils bloqueraient la création de RDV en mode libre).",
     "modeSwitchConfirm": "Passer en {mode}",
     "modeSwitchCancel": "Garder le mode actuel",
     "bufferTitle": "Tampon entre les RDV",
@@ -2165,7 +2167,18 @@
     "viewDay": "1 jour",
     "view2Day": "2 jours",
     "viewWeek": "Semaine",
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "toastSlotsAdded": "{count} créneau ajouté",
+    "toastSlotsAddedPlural": "{count} créneaux ajoutés",
+    "toastSlotDeleted": "Créneau supprimé",
+    "toastSlotsDeleted": "{count} créneaux supprimés",
+    "toastBookingSaved": "Modifications enregistrées",
+    "toastBookingCreated": "Superbe, {name} est réservée",
+    "toastBookingMoved": "Réservation déplacée",
+    "toastBookingCancelled": "Réservation annulée",
+    "toastDepositConfirmed": "Acompte confirmé",
+    "toastBringBackSuccess": "Réservation restaurée",
+    "toastCustomerCreated": "{name} ajoutée à tes clientes"
   },
   "qrDownload": {
     "title": "Mon QR code & Kit promo",

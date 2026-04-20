@@ -59,6 +59,7 @@ interface BookingDetailsModalProps {
     notes: string | null;
     send_sms?: boolean;
     send_sms_cancel?: boolean;
+    delete_if_empty?: boolean;
   }) => Promise<void>;
   onDelete: (slotId: string) => Promise<void>;
   onShiftSlot: (slotId: string, newTime: string, newDate?: string, force?: boolean, sendSms?: boolean) => Promise<{ success: boolean; error?: string }>;
@@ -269,6 +270,8 @@ export default function BookingDetailsModal({
       service_ids: [],
       notes: null,
       ...(cancelSendSms && { send_sms_cancel: true }),
+      // Mode libre : supprimer le slot après annulation (pas de slot fantôme).
+      ...(bookingMode === 'free' && { delete_if_empty: true }),
     });
   };
 
@@ -779,8 +782,8 @@ export default function BookingDetailsModal({
           </div>
         </div>
 
-        {/* Footer actions */}
-        <div className="p-4 border-t border-gray-100 space-y-2">
+        {/* Footer actions — sticky bottom pour garder les boutons visibles pendant scroll des tabs */}
+        <div className="p-4 border-t border-gray-100 space-y-2 sticky bottom-0 bg-white z-10">
           {/* SMS confirmation toggle — only for new bookings (slot not yet assigned) */}
           {!slot.client_name && draft.clientPhone.trim() && (
             <button
@@ -851,20 +854,20 @@ export default function BookingDetailsModal({
                   )}
                 </button>
               )}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2">
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-gray-100 text-gray-700 text-sm font-bold hover:bg-gray-200 transition-colors disabled:opacity-50"
                 >
-                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {t('save')}
                 </button>
                 <button
                   onClick={() => { onConfirmDeposit(slot, depositSendSms); onClose(); }}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
+                  className="w-full sm:flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm"
                 >
-                  <Check className="w-3.5 h-3.5" />
+                  <Check className="w-4 h-4" />
                   {t('confirmDeposit')}
                 </button>
               </div>
@@ -883,48 +886,49 @@ export default function BookingDetailsModal({
           )}
           {slot.deposit_confirmed !== false && (
             slot.client_name ? (
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                  className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50 shadow-sm"
                 >
-                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                   {t('save')}
                 </button>
                 <button
                   onClick={() => { setMoveDate(slot.slot_date); setMoveTime(''); setMoveError(null); setMoveMode(true); }}
                   disabled={saving}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-white text-gray-700 border border-gray-200 text-xs font-bold hover:border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl bg-white text-gray-700 border border-gray-200 text-sm font-bold hover:border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
-                  <CalendarClock className="w-3.5 h-3.5" />
+                  <CalendarClock className="w-4 h-4" />
                   {t('moveBooking')}
                 </button>
                 <button
                   onClick={() => setCancelMode(true)}
                   disabled={saving}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-white text-red-600 border border-red-200 text-xs font-bold hover:bg-red-50 hover:border-red-300 transition-colors disabled:opacity-50"
+                  className="flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl bg-white text-red-600 border border-red-200 text-sm font-bold hover:bg-red-50 hover:border-red-300 transition-colors disabled:opacity-50"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                   {t('cancel')}
                 </button>
               </div>
             ) : (
-              <div className="flex gap-2">
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50"
-                >
-                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                  {t('save')}
-                </button>
+              <div className="flex flex-col-reverse sm:flex-row gap-2">
                 <button
                   onClick={() => onDelete(slot.id)}
                   disabled={saving}
-                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white text-red-600 border border-red-200 text-xs font-bold hover:bg-red-50 hover:border-red-300 transition-colors disabled:opacity-50"
+                  aria-label={t('deleteSlot')}
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-white text-red-600 border border-red-200 text-sm font-bold hover:bg-red-50 hover:border-red-300 transition-colors disabled:opacity-50"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="w-full sm:flex-1 flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50 shadow-sm"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  {t('save')}
                 </button>
               </div>
             )
@@ -1040,18 +1044,18 @@ export default function BookingDetailsModal({
                   )}
                 </button>
               )}
-              <div className="flex gap-2">
+              <div className="flex flex-col-reverse sm:flex-row gap-2">
                 <button
                   onClick={() => setMoveMode(false)}
                   disabled={moving}
-                  className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-xs font-bold hover:bg-gray-200 transition-colors"
+                  className="w-full sm:flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 text-sm font-bold hover:bg-gray-200 transition-colors"
                 >
                   {t('cancel')}
                 </button>
                 <button
                   onClick={handleMoveConfirm}
                   disabled={moving || !moveTime}
-                  className="flex-[2] py-2.5 rounded-xl bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full sm:flex-[2] py-3 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
                 >
                   {moving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CalendarClock className="w-4 h-4" />}
                   {t('moveBookingConfirm')}
@@ -1112,18 +1116,18 @@ export default function BookingDetailsModal({
                   )}
                 </button>
               )}
-              <div className="flex gap-2">
+              <div className="flex flex-col-reverse sm:flex-row gap-2">
                 <button
                   onClick={() => { setCancelMode(false); setCancelSendSms(false); }}
                   disabled={saving}
-                  className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-xs font-bold hover:bg-gray-200 transition-colors"
+                  className="w-full sm:flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 text-sm font-bold hover:bg-gray-200 transition-colors"
                 >
                   {t('cancelBookingKeep')}
                 </button>
                 <button
                   onClick={() => { handleClearSlot(); setCancelMode(false); }}
                   disabled={saving}
-                  className="flex-[2] py-2.5 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full sm:flex-[2] py-3 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                   {t('cancelBookingConfirm')}

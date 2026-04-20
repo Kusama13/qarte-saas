@@ -106,7 +106,7 @@ export default function AddSlotsModal({
         </div>
 
         {atLimit && (
-          <p className="text-[11px] text-amber-600">{t('maxSlotsReached', { max: MAX_SLOTS_PER_BATCH })}</p>
+          <p className="text-xs text-amber-600">{t('maxSlotsReached', { max: MAX_SLOTS_PER_BATCH })}</p>
         )}
 
         {selectedTimes.length > 0 && (
@@ -124,14 +124,14 @@ export default function AddSlotsModal({
       <ModalFooter>
         <button
           onClick={onClose}
-          className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200 transition-colors"
+          className="w-full sm:flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 text-sm font-bold hover:bg-gray-200 transition-colors"
         >
           {t('blockSlotCancel')}
         </button>
         <button
           onClick={onSave}
           disabled={saving || selectedTimes.length === 0}
-          className="flex-[2] py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+          className="w-full sm:flex-[2] py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50 shadow-sm"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : (selectedTimes.length > 1 ? t('createSlotsPlural', { count: selectedTimes.length }) : t('createSlots', { count: selectedTimes.length }))}
         </button>

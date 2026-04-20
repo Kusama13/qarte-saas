@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMerchant } from '@/contexts/MerchantContext';
+import { useToast } from '@/components/ui/Toast';
 import { getSupabase } from '@/lib/supabase';
 import type { PlanningSlot, CustomerSearchResult, MerchantCountry, BookingMode, BookingDepositFailure } from '@/types';
 import { getWeekStart, formatDate, getSlotServiceIds } from './utils';
@@ -50,6 +52,8 @@ const emptyDraft: BookingDraft = {
 export function usePlanningState() {
   const { merchant, loading: merchantLoading, refetch } = useMerchant();
   const supabase = getSupabase();
+  const t = useTranslations('planning');
+  const { addToast } = useToast();
 
   const [tab, setTab] = useState<'slots' | 'reservations' | 'settings'>('slots');
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
@@ -226,11 +230,12 @@ export function usePlanningState() {
       }
       setDepositFailures(prev => prev.filter(f => f.id !== failureId));
       setUpcomingFetched(false);
+      addToast(t('toastBringBackSuccess'), 'success');
       return { success: true };
     } catch {
       return { success: false, error: 'Erreur réseau' };
     }
-  }, [merchant]);
+  }, [merchant, addToast, t]);
 
   // Fetch slots
   const fetchSlots = useCallback(async () => {
@@ -288,12 +293,15 @@ export function usePlanningState() {
   const handleAddSlots = async () => {
     if (!merchant || modalState.type !== 'add-slots' || selectedTimes.length === 0) return;
     setSaving(true);
+    const count = selectedTimes.length;
+    let ok = false;
     try {
-      await fetch('/api/planning', {
+      const res = await fetch('/api/planning', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ merchantId: merchant.id, slots: selectedTimes.map(time => ({ date: modalState.day, time })) }),
       });
+      ok = res.ok;
       await fetchSlots();
       invalidateUpcoming();
     } catch { /* */ }
@@ -301,6 +309,7 @@ export function usePlanningState() {
     setModalState({ type: 'closed' });
     setSelectedTimes([]);
     setCustomTime('');
+    if (ok) addToast(t(count > 1 ? 'toastSlotsAddedPlural' : 'toastSlotsAdded', { count }), 'success');
   };
 
   const handleUpdateSlot = async (slotId: string, data: {
@@ -312,39 +321,61 @@ export function usePlanningState() {
     phone_country?: string;
     send_sms?: boolean;
     send_sms_cancel?: boolean;
+    delete_if_empty?: boolean;
   }) => {
     if (!merchant) return;
     setSaving(true);
+    // Détecte create vs update vs cancel pour toast ciblé
+    const previousSlot = slots.find(s => s.id === slotId);
+    const wasEmpty = !previousSlot?.client_name;
+    const isNowEmpty = !data.client_name;
+    let ok = false;
     try {
-      await fetch('/api/planning', {
+      const res = await fetch('/api/planning', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slotId, merchantId: merchant.id, ...data }),
       });
+      ok = res.ok;
       await fetchSlots();
       invalidateUpcoming();
     } catch { /* */ }
     setSaving(false);
     setModalState({ type: 'closed' });
+    if (ok) {
+      if (wasEmpty && !isNowEmpty && data.client_name) {
+        const firstName = data.client_name.trim().split(/\s+/)[0];
+        addToast(t('toastBookingCreated', { name: firstName }), 'success');
+      } else if (!wasEmpty && isNowEmpty) {
+        addToast(t('toastBookingCancelled'), 'info');
+      } else {
+        addToast(t('toastBookingSaved'), 'success');
+      }
+    }
   };
 
   const handleDeleteSlot = async (slotId: string) => {
     if (!merchant) return;
+    let ok = false;
     try {
-      await fetch('/api/planning', {
+      const res = await fetch('/api/planning', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ merchantId: merchant.id, slotIds: [slotId] }),
       });
+      ok = res.ok;
       await fetchSlots();
       invalidateUpcoming();
     } catch { /* */ }
     setModalState({ type: 'closed' });
+    if (ok) addToast(t('toastSlotDeleted'), 'info');
   };
 
   const handleBulkDeleteSlots = async (slotIds: string[]) => {
     if (!merchant || slotIds.length === 0) return;
     setSaving(true);
+    const count = slotIds.length;
+    let ok = false;
     try {
       // Batch by 200 (API limit)
       for (let i = 0; i < slotIds.length; i += 200) {
@@ -355,11 +386,13 @@ export function usePlanningState() {
           body: JSON.stringify({ merchantId: merchant.id, slotIds: chunk }),
         });
       }
+      ok = true;
       await fetchSlots();
       invalidateUpcoming();
     } catch { /* */ }
     setSaving(false);
     setModalState({ type: 'closed' });
+    if (ok) addToast(t(count > 1 ? 'toastSlotsDeleted' : 'toastSlotDeleted', { count }), 'info');
   };
 
   const handleMoveSlot = async (slotId: string, newTime: string, newDate?: string, force?: boolean, sendSms?: boolean): Promise<{ success: boolean; error?: string }> => {
@@ -383,6 +416,7 @@ export function usePlanningState() {
       await fetchSlots();
       invalidateUpcoming();
       setSaving(false);
+      addToast(t('toastBookingMoved'), 'success');
       return { success: true };
     } catch {
       setSaving(false);
@@ -518,6 +552,7 @@ export function usePlanningState() {
           }).catch(() => {});
         }
 
+        addToast(t('toastCustomerCreated', { name: firstName }), 'success');
         setCreatingCustomer(false);
         return data.customer_id as string;
       }

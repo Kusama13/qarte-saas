@@ -194,7 +194,7 @@ export default function ClientSelectModal({
             {hasClient && (
               <div className="mt-1.5 flex items-center gap-1.5 text-emerald-600">
                 <UserCheck className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-medium">{t('clientLinked')}</span>
+                <span className="text-xs font-medium">{t('clientLinked')}</span>
               </div>
             )}
 
@@ -218,7 +218,7 @@ export default function ClientSelectModal({
                           {c.facebook_url && <FacebookIcon className="w-3 h-3 text-blue-600" />}
                         </div>
                       </div>
-                      <span className="text-[11px] text-gray-400">{formatPhoneLabel(c.phone_number)}</span>
+                      <span className="text-xs text-gray-400">{formatPhoneLabel(c.phone_number)}</span>
                     </button>
                   ))
                 ) : (
@@ -254,7 +254,7 @@ export default function ClientSelectModal({
           {showSocial && (hasClient || canCreate) && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[11px] font-medium text-gray-500 mb-0.5 block flex items-center gap-1">
+                <label className="text-xs font-medium text-gray-500 mb-0.5 block flex items-center gap-1">
                   <Instagram className="w-3 h-3 text-pink-500" /> Instagram
                 </label>
                 <input
@@ -262,11 +262,11 @@ export default function ClientSelectModal({
                   value={draft.instagramHandle}
                   onChange={(e) => onDraftChange({ instagramHandle: e.target.value })}
                   placeholder="@pseudo"
-                  className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-gray-500 mb-0.5 block flex items-center gap-1">
+                <label className="text-xs font-medium text-gray-500 mb-0.5 block flex items-center gap-1">
                   <TikTokIcon className="w-3 h-3 text-gray-700" /> TikTok
                 </label>
                 <input
@@ -274,11 +274,11 @@ export default function ClientSelectModal({
                   value={draft.tiktokHandle}
                   onChange={(e) => onDraftChange({ tiktokHandle: e.target.value })}
                   placeholder="@pseudo"
-                  className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
               <div className="col-span-2">
-                <label className="text-[11px] font-medium text-gray-500 mb-0.5 block flex items-center gap-1">
+                <label className="text-xs font-medium text-gray-500 mb-0.5 block flex items-center gap-1">
                   <FacebookIcon className="w-3 h-3 text-blue-600" /> Facebook
                 </label>
                 <input
@@ -286,7 +286,7 @@ export default function ClientSelectModal({
                   value={draft.facebookUrl}
                   onChange={(e) => onDraftChange({ facebookUrl: e.target.value })}
                   placeholder="https://facebook.com/..."
-                  className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
             </div>
@@ -345,23 +345,23 @@ export default function ClientSelectModal({
             <button
               onClick={handleCreateAndProceed}
               disabled={creatingCustomer}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50 shadow-sm"
             >
               {creatingCustomer ? (
-                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {t('creating')}</>
+                <><Loader2 className="w-4 h-4 animate-spin" /> {t('creating')}</>
               ) : (
-                <><UserPlus className="w-3.5 h-3.5" /> {t('createAsNewClient', { name: draft.clientName.trim().split(' ')[0] })}</>
+                <><UserPlus className="w-4 h-4" /> {t('createAsNewClient', { name: draft.clientName.trim().split(' ')[0] })}</>
               )}
             </button>
           )}
         </div>
 
-        {/* Footer buttons */}
-        <div className="p-4 border-t border-gray-100 flex gap-2">
+        {/* Footer buttons — sticky bottom, stack mobile */}
+        <div className="p-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row gap-2 sticky bottom-0 bg-white z-10">
           {onDelete && (
             <button
               onClick={onDelete}
-              className="flex-1 py-2.5 rounded-xl bg-white border border-red-200 text-red-600 text-xs font-bold hover:bg-red-50 hover:border-red-300 transition-colors"
+              className="w-full sm:flex-1 py-3 rounded-xl bg-white border border-red-200 text-red-600 text-sm font-bold hover:bg-red-50 hover:border-red-300 transition-colors"
             >
               {t('deleteSlot')}
             </button>
@@ -369,7 +369,7 @@ export default function ClientSelectModal({
           {!hasClient && draft.clientPhone.trim().length < 6 && (
             <button
               onClick={handleSkip}
-              className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200 transition-colors"
+              className="w-full sm:flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 text-sm font-bold hover:bg-gray-200 transition-colors"
             >
               {t('skipClient')}
             </button>
@@ -377,10 +377,10 @@ export default function ClientSelectModal({
           {hasClient && (
             <button
               onClick={handleProceedWithClient}
-              className="flex-[2] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
+              className="w-full sm:flex-[2] flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm"
             >
               {t('nextStep')}
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-4 h-4" />
             </button>
           )}
         </div>

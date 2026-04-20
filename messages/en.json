@@ -2145,6 +2145,8 @@
     "modeSwitchTitle": "Change mode?",
     "modeSwitchToFreeWarning": "Empty slots will no longer be used. Existing bookings are kept. Clients will book based on your opening hours.",
     "modeSwitchToSlotsWarning": "Clients cannot book until you create slots. Existing bookings are kept.",
+    "modeSwitchEmptySlotsWarning": "{count} empty slot will be deleted (otherwise it would block free-mode bookings).",
+    "modeSwitchEmptySlotsWarningPlural": "{count} empty slots will be deleted (otherwise they would block free-mode bookings).",
     "modeSwitchConfirm": "Switch to {mode}",
     "modeSwitchCancel": "Keep current mode",
     "bufferTitle": "Buffer between appointments",
@@ -2165,7 +2167,18 @@
     "viewDay": "1 day",
     "view2Day": "2 days",
     "viewWeek": "Week",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "toastSlotsAdded": "{count} slot added",
+    "toastSlotsAddedPlural": "{count} slots added",
+    "toastSlotDeleted": "Slot deleted",
+    "toastSlotsDeleted": "{count} slots deleted",
+    "toastBookingSaved": "Changes saved",
+    "toastBookingCreated": "Booked, {name} is confirmed",
+    "toastBookingMoved": "Booking moved",
+    "toastBookingCancelled": "Booking cancelled",
+    "toastDepositConfirmed": "Deposit confirmed",
+    "toastBringBackSuccess": "Booking restored",
+    "toastCustomerCreated": "{name} added to your customers"
   },
   "qrDownload": {
     "title": "My QR Code & Promo Kit",

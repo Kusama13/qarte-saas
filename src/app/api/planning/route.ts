@@ -203,6 +203,9 @@ const updateSlotSchema = z.object({
   phone_country: z.enum(['FR', 'BE', 'CH']).optional(),
   send_sms: z.boolean().optional(),
   send_sms_cancel: z.boolean().optional(),
+  // Mode libre: après avoir vidé un slot (annulation), on le supprime entièrement.
+  // Évite le slot fantôme qui bloque la recréation sur le même horaire.
+  delete_if_empty: z.boolean().optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -221,7 +224,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
     }
 
-    const { slotId, merchantId, client_name, client_phone, customer_id, service_ids, notes, deposit_confirmed, send_sms, send_sms_cancel } = parsed.data;
+    const { slotId, merchantId, client_name, client_phone, customer_id, service_ids, notes, deposit_confirmed, send_sms, send_sms_cancel, delete_if_empty } = parsed.data;
 
     if (!await verifyOwnership(supabase, merchantId, user.id)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
@@ -405,6 +408,14 @@ export async function PATCH(request: NextRequest) {
           subscriptionStatus: smsMerchant.subscription_status,
         }).catch(() => {});
       }
+    }
+
+    if (delete_if_empty && (client_name === null || client_name === '')) {
+      await supabaseAdmin
+        .from('merchant_planning_slots')
+        .delete()
+        .eq('id', slotId)
+        .eq('merchant_id', merchantId);
     }
 
     return NextResponse.json({ success: true });

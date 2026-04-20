@@ -28,6 +28,7 @@ import WeekView from './WeekView';
 import PlanningModal, { ModalHeader, ModalFooter } from './PlanningModal';
 import PlanUpgradeCTA from '@/components/dashboard/PlanUpgradeCTA';
 import { getPlanFeatures } from '@/lib/plan-tiers';
+import { useToast } from '@/components/ui/Toast';
 
 const VIEW_MODE_KEY = 'qarte_planning_view';
 const VIEW_MODES = ['day', '2day', 'week'] as const;
@@ -37,6 +38,7 @@ export default function PlanningDashboard() {
   const t = useTranslations('planning');
   const locale = useLocale();
   const supabase = getSupabase();
+  const { addToast } = useToast();
 
   const state = usePlanningState();
   const {
@@ -256,6 +258,8 @@ export default function PlanningDashboard() {
       setShowManualBookingModal(false);
       setManualServiceIds([]);
       setManualNotes('');
+      const firstName = draft.clientName.trim().split(/\s+/)[0];
+      addToast(t('toastBookingCreated', { name: firstName }), 'success');
     } catch {
       setManualError(t('saveError'));
     }
@@ -275,15 +279,39 @@ export default function PlanningDashboard() {
 
   // Mode switch confirmation
   const [modeSwitchTarget, setModeSwitchTarget] = useState<BookingMode | null>(null);
+  const [modeSwitchCleanup, setModeSwitchCleanup] = useState(false);
+  // Slots → free : les créneaux vides bloqueraient la création libre
+  // (contrainte unique slot_date+start_time).
+  const emptySlotIds = useMemo(
+    () => slots.filter(s => !s.client_name && !s.primary_slot_id).map(s => s.id),
+    [slots],
+  );
   const handleBookingModeChange = (mode: BookingMode) => {
     if (mode === bookingMode) return;
     setModeSwitchTarget(mode);
   };
-  const confirmModeSwitch = () => {
-    if (!modeSwitchTarget) return;
-    setBookingMode(modeSwitchTarget);
-    if (modeSwitchTarget === 'free') setAutoBookingEnabled(true);
-    setModeSwitchTarget(null);
+  const confirmModeSwitch = async () => {
+    if (!modeSwitchTarget || !merchant) return;
+    setModeSwitchCleanup(true);
+    try {
+      if (modeSwitchTarget === 'free' && bookingMode === 'slots' && emptySlotIds.length > 0) {
+        const chunks: Promise<Response>[] = [];
+        for (let i = 0; i < emptySlotIds.length; i += 200) {
+          chunks.push(fetch('/api/planning', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ merchantId: merchant.id, slotIds: emptySlotIds.slice(i, i + 200) }),
+          }));
+        }
+        await Promise.all(chunks);
+        await fetchSlots();
+      }
+      setBookingMode(modeSwitchTarget);
+      if (modeSwitchTarget === 'free') setAutoBookingEnabled(true);
+    } finally {
+      setModeSwitchCleanup(false);
+      setModeSwitchTarget(null);
+    }
   };
 
   // SMS usage
@@ -329,6 +357,7 @@ export default function PlanningDashboard() {
     setDepositError(null);
     invalidateUpcoming();
     await fetchSlots();
+    addToast(t('toastDepositConfirmed'), 'success');
   };
 
   const handleCancelDeposit = async (slot: PlanningSlot) => {
@@ -2006,16 +2035,33 @@ export default function PlanningDashboard() {
               iconTint="amber"
               onClose={() => setModeSwitchTarget(null)}
             />
-            <div className="p-4">
-              <p className="text-xs text-gray-600 leading-relaxed">
+            <div className="p-4 space-y-2">
+              <p className="text-sm text-gray-700 leading-relaxed">
                 {modeSwitchTarget === 'free' ? t('modeSwitchToFreeWarning') : t('modeSwitchToSlotsWarning')}
               </p>
+              {modeSwitchTarget === 'free' && emptySlotIds.length > 0 && (
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-100">
+                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-800 leading-relaxed">
+                    {t(emptySlotIds.length > 1 ? 'modeSwitchEmptySlotsWarningPlural' : 'modeSwitchEmptySlotsWarning', { count: emptySlotIds.length })}
+                  </p>
+                </div>
+              )}
             </div>
             <ModalFooter>
-              <button onClick={() => setModeSwitchTarget(null)} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200 transition-colors">
+              <button
+                onClick={() => setModeSwitchTarget(null)}
+                disabled={modeSwitchCleanup}
+                className="w-full sm:flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 text-sm font-bold hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
                 {t('modeSwitchCancel')}
               </button>
-              <button onClick={confirmModeSwitch} className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors">
+              <button
+                onClick={confirmModeSwitch}
+                disabled={modeSwitchCleanup}
+                className="w-full sm:flex-[2] py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50 shadow-sm flex items-center justify-center gap-2"
+              >
+                {modeSwitchCleanup && <Loader2 className="w-4 h-4 animate-spin" />}
                 {t('modeSwitchConfirm', { mode: modeSwitchTarget === 'free' ? t('bookingModeFree') : t('bookingModeSlots') })}
               </button>
             </ModalFooter>

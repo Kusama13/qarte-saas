@@ -57,14 +57,14 @@ export default function ConfirmDeleteSlotsModal({
         <button
           onClick={onClose}
           disabled={saving}
-          className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200 transition-colors disabled:opacity-50"
+          className="w-full sm:flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 text-sm font-bold hover:bg-gray-200 transition-colors disabled:opacity-50"
         >
           {t('cancel')}
         </button>
         <button
           onClick={onConfirm}
           disabled={saving || !canDelete}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full sm:flex-[2] flex items-center justify-center gap-2 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
         >
           {saving ? (
             <>

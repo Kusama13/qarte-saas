@@ -131,18 +131,18 @@ export default function BringBackBookingModal({ failure, services, merchantCount
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-100">
+        <div className="p-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 bg-white">
           <button
             onClick={onClose}
             disabled={saving}
-            className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50"
+            className="w-full sm:w-auto sm:flex-initial py-3 sm:py-2.5 px-4 rounded-xl text-sm font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50"
           >
             {t('cancel')}
           </button>
           <button
             onClick={handleConfirm}
             disabled={saving}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-[#4b0082] hover:bg-violet-800 text-white transition-colors disabled:opacity-50"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 py-3 sm:py-2.5 px-4 rounded-xl text-sm font-bold bg-[#4b0082] hover:bg-violet-800 text-white transition-colors disabled:opacity-50 shadow-sm"
           >
             <Undo2 className="w-4 h-4" />
             {saving ? t('saving') : t('bringBackConfirm')}

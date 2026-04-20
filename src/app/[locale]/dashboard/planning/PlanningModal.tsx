@@ -94,6 +94,22 @@ export function ModalHeader({
   );
 }
 
-export function ModalFooter({ children }: { children: ReactNode }) {
-  return <div className="p-4 border-t border-gray-100 flex gap-2">{children}</div>;
+// flex-col-reverse : mobile stacke les enfants avec le primary en haut (ordre source = Cancel puis Action).
+// sticky : garde les boutons visibles pendant scroll du body (modals à tabs/long contenu).
+export function ModalFooter({
+  children,
+  sticky = false,
+}: {
+  children: ReactNode;
+  sticky?: boolean;
+}) {
+  return (
+    <div
+      className={`p-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row gap-2 bg-white ${
+        sticky ? 'sticky bottom-0 z-10' : ''
+      }`}
+    >
+      {children}
+    </div>
+  );
 }

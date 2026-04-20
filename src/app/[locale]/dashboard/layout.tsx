@@ -27,6 +27,7 @@ import { getTrialStatus } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { getPlanFeatures, getPlanTier } from '@/lib/plan-tiers';
 import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
+import { ToastProvider } from '@/components/ui/Toast';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import InstallAppBanner from '@/components/dashboard/InstallAppBanner';
 import AdminAnnouncementBanner from '@/components/dashboard/AdminAnnouncementBanner';
@@ -180,7 +181,7 @@ function DashboardLayoutContent({
       {/* `inert` désactive hit-test + focus + events sur le subtree quand fermée sur mobile
           (plus fiable que pointer-events-none sur iOS PWA où les transitions peuvent ne pas flush). */}
       <aside
-        {...(isMobile && !sidebarOpen ? { inert: '' as unknown as boolean } : {})}
+        inert={isMobile && !sidebarOpen ? true : undefined}
         className={cn(
           'fixed top-0 left-0 z-50 w-[270px] lg:w-72 h-full bg-white/95 backdrop-blur-xl border-r border-gray-100/50 transition-transform duration-300 lg:translate-x-0 shadow-xl shadow-gray-200/20',
           'pt-[env(safe-area-inset-top)]',
@@ -426,7 +427,9 @@ export default function DashboardLayout({
 }) {
   return (
     <MerchantProvider>
-      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+      <ToastProvider>
+        <DashboardLayoutContent>{children}</DashboardLayoutContent>
+      </ToastProvider>
     </MerchantProvider>
   );
 }
