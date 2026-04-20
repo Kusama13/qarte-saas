@@ -19,7 +19,7 @@ export function ChurnSurveyReminderEmail({ shopName, locale = 'fr' }: ChurnSurve
   return (
     <BaseLayout preview={t('churnSurveyReminder.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        {t('churnSurveyReminder.heading')}
+        {t('churnSurveyReminder.heading', { shopName })}
       </Heading>
 
       <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('churnSurveyReminder.greeting', { shopName }) }} />
