@@ -9,6 +9,7 @@ import { SuspendedBanner } from '@/components/shared/SuspendedBanner';
 import SimulatedCard from './SimulatedCard';
 import BookingModal from './BookingModal';
 import { useInView } from '@/hooks/useInView';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency, detectBookingPlatform, displayPhoneWithFlag, getTrialStatus } from '@/lib/utils';
 import { trackCtaClick } from '@/lib/analytics';
 import { useLocale, useTranslations } from 'next-intl';
@@ -148,15 +149,12 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
     if (e.key === 'ArrowRight') setLightboxIndex(prev => prev === null ? null : (prev + 1) % photos.length);
   }, [photos.length]);
 
+  useBodyScrollLock(lightboxIndex !== null);
+
   useEffect(() => {
-    if (lightboxIndex !== null) {
-      document.body.style.overflow = 'hidden';
-      document.addEventListener('keydown', handleLightboxKey);
-      return () => {
-        document.body.style.overflow = '';
-        document.removeEventListener('keydown', handleLightboxKey);
-      };
-    }
+    if (lightboxIndex === null) return;
+    document.addEventListener('keydown', handleLightboxKey);
+    return () => document.removeEventListener('keydown', handleLightboxKey);
   }, [lightboxIndex, handleLightboxKey]);
 
   const reward = merchant.reward_description || '';

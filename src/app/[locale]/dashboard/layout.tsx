@@ -27,6 +27,7 @@ import { getTrialStatus } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { getPlanFeatures, getPlanTier } from '@/lib/plan-tiers';
 import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import InstallAppBanner from '@/components/dashboard/InstallAppBanner';
 import AdminAnnouncementBanner from '@/components/dashboard/AdminAnnouncementBanner';
 import StatusBanner from '@/components/dashboard/StatusBanner';
@@ -76,17 +77,9 @@ function DashboardLayoutContent({
     setSidebarOpen(false);
   }, [pathname]);
 
-  // Body scroll lock quand sidebar ouverte (iOS standalone PWA sinon laisse scroll
-  // traverser + peut geler le touch dispatching après fermeture).
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    if (sidebarOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [sidebarOpen]);
+  // Body scroll lock via counter shared hook (évite les races avec les autres modaux
+  // qui mutent body.style.overflow — cause connue du fige iOS PWA).
+  useBodyScrollLock(sidebarOpen);
 
   const planFeatures = getPlanFeatures(merchant);
   const navItems = [
