@@ -55,9 +55,22 @@ interface MerchantRow {
 
 const SELECT = 'id, shop_name, phone, country, bio, shop_address, trial_ends_at, subscription_status, churn_survey_seen_at, no_contact, email_unsubscribed_at, marketing_sms_opted_out, celebration_sms_sent_at';
 
+// KILL-SWITCH : cron désactivé suite à envoi rétroactif massif (celebration SMS
+// envoyé à tous les merchants existants en trial à cause d'absence de backfill
+// celebration_sms_sent_at lors de la migration 115). Ne pas réactiver tant que :
+// 1. Backfill SQL appliqué (UPDATE merchants SET celebration_sms_sent_at = NOW() WHERE celebration_sms_sent_at IS NULL)
+// 2. Garde-fou ajouté dans Section 1 (cutoff date sur merchant.created_at)
+// 3. Audit des dégâts terminé
+const CRON_DISABLED = true;
+
 export async function GET(request: NextRequest) {
   if (!verifyCronAuth(request.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (CRON_DISABLED) {
+    logger.warn('sms_trial_marketing_cron_disabled', { reason: 'post-incident lockdown' });
+    return NextResponse.json({ ok: true, disabled: true, reason: 'kill-switch active' });
   }
 
   const results = {
