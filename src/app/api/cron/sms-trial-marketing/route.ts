@@ -16,7 +16,7 @@ export const maxDuration = 300;
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verifyCronAuth } from '@/lib/cron-helpers';
-import { computeActivationScore } from '@/lib/activation-score';
+import { computeActivationScore, computeActivationScoresBatch } from '@/lib/activation-score';
 import { recommendTierForMerchant } from '@/lib/trial-tier-reco';
 import {
   sendTrialMarketingSms,
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
   }
 
   const results = {
-    celebration: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    checkIn: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     preLoss: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     churnSurvey: { processed: 0, sent: 0, skipped: 0, errors: 0 },
   };
@@ -91,16 +91,17 @@ export async function GET(request: NextRequest) {
       .eq('marketing_sms_opted_out', false)
       .eq('no_contact', false);
 
-    for (const merchant of (trialMerchants as MerchantRow[]) || []) {
-      results.celebration.processed++;
+    const rows = (trialMerchants as MerchantRow[]) || [];
+    // Batch activation scores (N×3 queries parallèles au lieu de N séquentiels)
+    const activationMap = await computeActivationScoresBatch(
+      supabase,
+      rows.map(m => ({ id: m.id, bio: m.bio, shop_address: m.shop_address })),
+    );
 
+    for (const merchant of rows) {
+      results.checkIn.processed++;
       try {
-        const activation = await computeActivationScore(supabase, {
-          id: merchant.id,
-          bio: merchant.bio,
-          shop_address: merchant.shop_address,
-        });
-
+        const activation = activationMap.get(merchant.id)!;
         const { smsType, body } = checkInSmsSelection(activation, merchant.shop_name);
 
         const result = await sendTrialMarketingSms({
@@ -112,15 +113,15 @@ export async function GET(request: NextRequest) {
         });
 
         if (result.success) {
-          results.celebration.sent++;
+          results.checkIn.sent++;
           sentThisRun.add(merchant.id);
         } else if (result.skipped) {
-          results.celebration.skipped++;
+          results.checkIn.skipped++;
         } else {
-          results.celebration.errors++;
+          results.checkIn.errors++;
         }
       } catch (err) {
-        results.celebration.errors++;
+        results.checkIn.errors++;
         logger.error('checkin_sms_failed', { merchantId: merchant.id, err: String(err) });
       }
     }

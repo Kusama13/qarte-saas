@@ -24,6 +24,21 @@ export type TrialSmsType =
 
 export type TierRecommended = 'fidelity' | 'all_in' | null;
 
+type DedupFlagColumn = 'celebration_sms_sent_at' | 'pre_loss_sms_sent_at' | 'churn_sms_sent_at';
+
+/** Mapping total vers la colonne de dédup. TS garantit l'exhaustivité si un
+ *  nouveau TrialSmsType est ajouté → compile-time safety. Les 5 variantes du
+ *  check-in 48h partagent celebration_sms_sent_at (1 SMS max sur la vie). */
+const DEDUP_FLAG: Record<TrialSmsType, DedupFlagColumn> = {
+  celebration_fidelity: 'celebration_sms_sent_at',
+  celebration_planning: 'celebration_sms_sent_at',
+  celebration_vitrine: 'celebration_sms_sent_at',
+  checkin_nudge: 'celebration_sms_sent_at',
+  checkin_combo: 'celebration_sms_sent_at',
+  trial_pre_loss: 'pre_loss_sms_sent_at',
+  churn_survey: 'churn_sms_sent_at',
+};
+
 interface MerchantGatingInfo {
   id: string;
   phone: string;
@@ -53,22 +68,12 @@ export function checkTrialSmsGating(
   smsType: TrialSmsType,
   now: Date = new Date(),
 ): SendResult['skipped'] | null {
-  // Cutoff date : seuls les merchants créés à partir du 2026-04-20 sont éligibles
-  // (garantie contre les envois rétroactifs, voir incident 20 avril 2026)
   if (!isEligibleForTrialMarketing(merchant.created_at)) return 'pre_cutoff';
-
   if (merchant.no_contact) return 'no_contact';
   if (merchant.email_unsubscribed_at) return 'unsubscribed';
   if (merchant.marketing_sms_opted_out) return 'opted_out';
   if (!merchant.phone || merchant.phone.length < 8) return 'invalid_phone';
-
-  // Dedup par type via flag column (atomique, pas de log-check approximatif).
-  // Les 5 variantes du check-in 48h partagent le même flag celebration_sms_sent_at.
-  if ((smsType.startsWith('celebration_') || smsType.startsWith('checkin_')) && merchant.celebration_sms_sent_at) {
-    return 'already_sent';
-  }
-  if (smsType === 'trial_pre_loss' && merchant.pre_loss_sms_sent_at) return 'already_sent';
-  if (smsType === 'churn_survey' && merchant.churn_sms_sent_at) return 'already_sent';
+  if (merchant[DEDUP_FLAG[smsType]]) return 'already_sent';
 
   const compliance = isLegalSendTime(now, merchant.country || 'FR');
   if (!compliance.ok) return 'illegal_time';
@@ -123,23 +128,12 @@ export async function sendTrialMarketingSms(params: {
     logger.error('trial_sms_log_failed', { merchantId: merchant.id, smsType, error: logError });
   }
 
-  // 4. Dedup : marker le flag correspondant dès que l'envoi OVH a réussi.
-  // Les 5 variantes du check-in 48h (celebration_*, checkin_*) partagent le
-  // même flag celebration_sms_sent_at (1 max sur la vie du merchant).
+  // 4. Dedup : marker le flag correspondant (atomique via lookup DEDUP_FLAG)
   if (result.success) {
-    const nowIso = new Date().toISOString();
-    const updates: Record<string, string> = {};
-    if (smsType.startsWith('celebration_') || smsType.startsWith('checkin_')) {
-      updates.celebration_sms_sent_at = nowIso;
-    } else if (smsType === 'trial_pre_loss') {
-      updates.pre_loss_sms_sent_at = nowIso;
-    } else if (smsType === 'churn_survey') {
-      updates.churn_sms_sent_at = nowIso;
-    }
-
-    if (Object.keys(updates).length > 0) {
-      await supabase.from('merchants').update(updates).eq('id', merchant.id);
-    }
+    await supabase
+      .from('merchants')
+      .update({ [DEDUP_FLAG[smsType]]: new Date().toISOString() })
+      .eq('id', merchant.id);
   }
 
   return {
@@ -149,27 +143,3 @@ export async function sendTrialMarketingSms(params: {
   };
 }
 
-/**
- * Vérifie si un SMS de ce type a déjà été envoyé à ce merchant (dedup).
- * Utile pour pre-loss + churn (dédup par type, pas de marker sur merchants).
- */
-export async function hasSentTrialSms(
-  supabase: SupabaseClient,
-  merchantId: string,
-  smsType: TrialSmsType,
-): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('merchant_marketing_sms_logs')
-    .select('id')
-    .eq('merchant_id', merchantId)
-    .eq('sms_type', smsType)
-    .eq('status', 'sent')
-    .limit(1);
-
-  if (error) {
-    logger.error('hasSentTrialSms_failed', { merchantId, smsType, error });
-    return true;
-  }
-
-  return (data?.length ?? 0) > 0;
-}

@@ -24,9 +24,8 @@ export function checkInSmsSelection(
   shopName: string,
 ): { smsType: TrialSmsType; body: string } {
   const { fidelity, planning, vitrine } = activation.pillars;
-  const pillarsAchieved = Number(fidelity) + Number(planning) + Number(vitrine);
 
-  if (pillarsAchieved >= 2) {
+  if (activation.score >= 2) {
     return {
       smsType: 'checkin_combo',
       body: `Bravo ${shopName}, top depart : 1re cliente fidelisee et vitrine en ligne. Qarte bosse pour toi, ouvre l'app.`,
