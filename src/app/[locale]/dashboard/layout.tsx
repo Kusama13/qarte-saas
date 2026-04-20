@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname, Link } from '@/i18n/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import {
@@ -57,8 +57,16 @@ function DashboardLayoutContent({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   const [previewDone, setPreviewDone] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => { setHasMounted(true); }, []);
+  useEffect(() => {
+    setHasMounted(true);
+    const mql = window.matchMedia('(max-width: 1023px)');
+    setIsMobile(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
 
   // Ferme la sidebar dès que la route change — garantit qu'un clic sur un item
   // de menu ne laisse pas la sidebar "collée" si le setState ne flush pas avant
@@ -96,17 +104,6 @@ function DashboardLayoutContent({
   // Check if merchant has tested their card (localStorage flag set on qr-download page)
   useEffect(() => {
     try { setPreviewDone(!!localStorage.getItem('qarte_preview_done')); } catch {}
-  }, []);
-
-  // Swipe-to-close
-  const SWIPE_CLOSE_THRESHOLD = 60;
-  const touchStartX = useRef(0);
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  }, []);
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (diff > SWIPE_CLOSE_THRESHOLD) setSidebarOpen(false);
   }, []);
 
   const handleLogout = async () => {
@@ -176,20 +173,22 @@ function DashboardLayoutContent({
         <NotificationBell />
       </div>
 
-      {/* Backdrop — always rendered, animated opacity */}
-      <div
-        className={cn(
-          'fixed inset-0 z-40 bg-black/40 lg:hidden transition-opacity duration-300',
-          sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        )}
-        onClick={() => setSidebarOpen(false)}
-      />
+      {/* Backdrop — conditionally rendered (évite les captures de touch sur iOS PWA où
+          pointer-events-none ne flush pas après transition opacity). Perte du fade-out
+          acceptée pour garantir que le hamburger ne rate jamais un tap. */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden animate-fade-in"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
+      {/* `inert` désactive hit-test + focus + events sur le subtree quand fermée sur mobile
+          (plus fiable que pointer-events-none sur iOS PWA où les transitions peuvent ne pas flush). */}
       <aside
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
+        {...(isMobile && !sidebarOpen ? { inert: '' as unknown as boolean } : {})}
         className={cn(
-          'fixed top-0 left-0 z-50 w-[270px] lg:w-72 h-full bg-white/95 backdrop-blur-xl border-r border-gray-100/50 transition-transform duration-300 lg:translate-x-0 shadow-xl shadow-gray-200/20 touch-pan-y',
+          'fixed top-0 left-0 z-50 w-[270px] lg:w-72 h-full bg-white/95 backdrop-blur-xl border-r border-gray-100/50 transition-transform duration-300 lg:translate-x-0 shadow-xl shadow-gray-200/20',
           'pt-[env(safe-area-inset-top)]',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
           sidebarOpen ? 'pointer-events-auto' : 'pointer-events-none lg:pointer-events-auto'
