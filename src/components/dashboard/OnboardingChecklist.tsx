@@ -10,7 +10,6 @@ import {
   Scissors, FileText, CreditCard, MessageSquare,
   Heart, Store, EyeOff,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
 import { isPlanningHidden } from '@/lib/plan-tiers';
@@ -301,12 +300,7 @@ export default function OnboardingChecklist() {
 
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="relative bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden"
-    >
+    <div className="relative bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4 md:px-6 md:pt-5">
         <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#4b0082]/10 shrink-0">
@@ -462,10 +456,10 @@ export default function OnboardingChecklist() {
                     </div>
                   )}
 
-                  {/* Chevron */}
-                  <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                    <ChevronDown className={`w-4 h-4 shrink-0 ${isComplete ? 'text-gray-300' : 'text-gray-400'}`} />
-                  </motion.div>
+                  {/* Chevron — CSS transform pour éviter framer-motion sur un composant layout-level */}
+                  <ChevronDown
+                    className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''} ${isComplete ? 'text-gray-300' : 'text-gray-400'}`}
+                  />
                 </button>
               )}
 
@@ -541,6 +535,6 @@ export default function OnboardingChecklist() {
           );
         })}
       </div>
-    </motion.div>
+    </div>
   );
 }

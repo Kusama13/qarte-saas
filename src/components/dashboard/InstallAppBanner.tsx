@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { X, Download } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -75,13 +74,10 @@ export default function InstallAppBanner() {
 
   return (
     <>
-      {/* Sticky install banner — no AnimatePresence (avoids framer-motion unmount races on PWA route changes) */}
+      {/* Sticky install banner — CSS slide-up (évite framer-motion sur composant layout-level) */}
       {visible && !showIOSInstructions && (
-        <motion.div
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-r from-indigo-600 to-violet-600 shadow-[0_-4px_20px_rgba(0,0,0,0.15)]"
+        <div
+          className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-r from-indigo-600 to-violet-600 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] animate-slide-up"
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
           <div className="flex items-center gap-3 px-4 py-3 max-w-lg mx-auto">
@@ -105,7 +101,7 @@ export default function InstallAppBanner() {
               <X className="w-4 h-4 text-white/70" />
             </button>
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Instructions modal */}
