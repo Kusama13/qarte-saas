@@ -81,7 +81,18 @@ export async function sendSms(phone: string, message: string): Promise<{ success
     const { ok, data, status } = await ovhRequest('POST', `/sms/${SMS_SERVICE}/jobs`, jobBody);
 
     if (!ok) {
-      const errMsg = typeof data === 'object' && data && 'message' in data ? String((data as { message: string }).message) : `HTTP ${status}`;
+      const ovhMsg = typeof data === 'object' && data && 'message' in data
+        ? String((data as { message: string }).message)
+        : null;
+      const ovhCode = typeof data === 'object' && data && 'errorCode' in data
+        ? String((data as { errorCode: string }).errorCode)
+        : null;
+      // Format: "[HTTP 400] Invalid phone (INVALID_RECEIVER)" — tout le contexte dans error_message
+      const errMsg = [
+        `[HTTP ${status}]`,
+        ovhMsg || 'OVH error',
+        ovhCode ? `(${ovhCode})` : '',
+      ].filter(Boolean).join(' ').trim();
       console.error(`[ovh-sms] Send failed: ${errMsg}`);
       return { success: false, error: errMsg };
     }

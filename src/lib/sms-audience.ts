@@ -103,15 +103,26 @@ async function fetchCandidatePhones(
   }
 }
 
+type CustomerEmbedRow = { phone_number: string | null; no_contact?: boolean | null };
 type CardRow = {
   customer_id: string;
-  customers?: { phone_number: string | null; no_contact?: boolean | null } | null;
+  customers?: CustomerEmbedRow | CustomerEmbedRow[] | null;
 };
 
+// PostgREST peut retourner l'embed parent soit comme objet soit comme array
+// selon la detection de cardinalite. On normalise.
+function normalizeCustomer(c: CardRow['customers']): CustomerEmbedRow | null {
+  if (!c) return null;
+  return Array.isArray(c) ? c[0] ?? null : c;
+}
+
 function extractPhones(rows: CardRow[]): string[] {
-  return rows
-    .filter((r) => r.customers && !r.customers.no_contact && r.customers.phone_number)
-    .map((r) => r.customers!.phone_number as string);
+  const phones: string[] = [];
+  for (const r of rows) {
+    const c = normalizeCustomer(r.customers);
+    if (c && !c.no_contact && c.phone_number) phones.push(c.phone_number);
+  }
+  return phones;
 }
 
 async function fetchAllCards(supabase: SupabaseClient, merchantId: string): Promise<string[]> {

@@ -10,6 +10,7 @@ import {
   Users,
   Calendar,
   Clock,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface MerchantSms {
@@ -31,6 +32,16 @@ interface SmsData {
   totalFailed: number;
   totalCost: number;
   merchants: MerchantSms[];
+}
+
+interface SmsFailure {
+  id: string;
+  merchant_id: string;
+  shop_name: string;
+  phone_to: string;
+  sms_type: string;
+  error_message: string;
+  created_at: string;
 }
 
 interface PendingCampaign {
@@ -89,13 +100,16 @@ function describeFilter(f: Record<string, unknown>): string {
 }
 
 export default function AdminSmsPage() {
-  const [tab, setTab] = useState<'overview' | 'review'>('overview');
+  const [tab, setTab] = useState<'overview' | 'review' | 'failures'>('overview');
 
   const [data, setData] = useState<SmsData | null>(null);
   const [loadingOverview, setLoadingOverview] = useState(true);
 
   const [campaigns, setCampaigns] = useState<PendingCampaign[]>([]);
   const [loadingReview, setLoadingReview] = useState(true);
+
+  const [failures, setFailures] = useState<SmsFailure[]>([]);
+  const [loadingFailures, setLoadingFailures] = useState(false);
   const [processing, setProcessing] = useState<string | null>(null);
   const [rejectNoteById, setRejectNoteById] = useState<Record<string, string>>({});
   const [showRejectFormFor, setShowRejectFormFor] = useState<string | null>(null);
@@ -119,7 +133,21 @@ export default function AdminSmsPage() {
     }
   }, []);
 
+  const fetchFailures = useCallback(async () => {
+    setLoadingFailures(true);
+    try {
+      const res = await fetch('/api/admin/sms/failures');
+      if (res.ok) {
+        const body = await res.json();
+        setFailures(body.failures || []);
+      }
+    } finally {
+      setLoadingFailures(false);
+    }
+  }, []);
+
   useEffect(() => { fetchOverview(); fetchPending(); }, [fetchOverview, fetchPending]);
+  useEffect(() => { if (tab === 'failures' && failures.length === 0 && !loadingFailures) fetchFailures(); }, [tab, failures.length, loadingFailures, fetchFailures]);
 
   const handleApprove = async (id: string) => {
     if (processing) return;
@@ -194,6 +222,20 @@ export default function AdminSmsPage() {
             </span>
           )}
         </button>
+        <button
+          onClick={() => setTab('failures')}
+          className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+            tab === 'failures' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <AlertTriangle className="w-3.5 h-3.5" />
+          Échecs
+          {data && data.totalFailed > 0 && (
+            <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold">
+              {data.totalFailed}
+            </span>
+          )}
+        </button>
       </div>
 
       {tab === 'overview' && (
@@ -207,7 +249,19 @@ export default function AdminSmsPage() {
               <MetricCard label="Total SMS" value={data.totalAll} />
               <MetricCard label="Ce mois" value={data.totalMonth} />
               <MetricCard label="Cette semaine" value={data.totalWeek} />
-              <MetricCard label="Échecs" value={data.totalFailed} sub={data.totalCost > 0 ? `Coût total: ${data.totalCost.toFixed(2)}€` : undefined} />
+              <button
+                onClick={() => setTab('failures')}
+                className="text-left bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:border-rose-200 hover:bg-rose-50/30 transition-colors"
+              >
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                  Échecs
+                  {data.totalFailed > 0 && <AlertTriangle className="w-3 h-3 text-rose-500" />}
+                </p>
+                <p className={`text-2xl font-bold mt-1 ${data.totalFailed > 0 ? 'text-rose-600' : 'text-gray-900'}`}>{data.totalFailed}</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {data.totalFailed > 0 ? 'Voir détails →' : data.totalCost > 0 ? `Coût total: ${data.totalCost.toFixed(2)}€` : '—'}
+                </p>
+              </button>
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -369,6 +423,57 @@ export default function AdminSmsPage() {
                 )}
               </div>
             ))}
+          </div>
+        )
+      )}
+
+      {tab === 'failures' && (
+        loadingFailures ? (
+          <div className="flex items-center justify-center min-h-[40vh]"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+        ) : failures.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+            <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-2" />
+            <p className="text-sm font-semibold text-gray-700">Aucun échec SMS sur 30j</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-gray-800">Échecs SMS (30 derniers jours)</h2>
+              <button
+                onClick={fetchFailures}
+                className="text-xs font-medium text-gray-500 hover:text-gray-700"
+              >
+                Rafraîchir
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="text-[11px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50">
+                    <th className="px-4 py-2">Merchant</th>
+                    <th className="px-4 py-2">Type</th>
+                    <th className="px-4 py-2">Téléphone</th>
+                    <th className="px-4 py-2">Erreur</th>
+                    <th className="px-4 py-2 whitespace-nowrap">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {failures.map((f) => (
+                    <tr key={f.id} className="border-b border-gray-50 last:border-0 hover:bg-rose-50/30">
+                      <td className="px-4 py-2.5 text-sm font-medium text-gray-700 max-w-[160px] truncate" title={f.shop_name}>{f.shop_name}</td>
+                      <td className="px-4 py-2.5 text-xs">
+                        <span className="inline-flex px-2 py-0.5 rounded-md font-semibold bg-gray-100 text-gray-600">{f.sms_type}</span>
+                      </td>
+                      <td className="px-4 py-2.5 text-sm text-gray-600 tabular-nums">{f.phone_to}</td>
+                      <td className="px-4 py-2.5 text-xs text-rose-700 max-w-[300px]" title={f.error_message}>
+                        <span className="line-clamp-2">{f.error_message}</span>
+                      </td>
+                      <td className="px-4 py-2.5 text-xs text-gray-400 whitespace-nowrap">{formatDate(f.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )
       )}
