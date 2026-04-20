@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, Clock, ChevronRight, Wallet, AlertTriangle, Trash2, Undo2 } from 'lucide-react';
+import { CalendarDays, Clock, ChevronRight, Wallet, AlertTriangle, Trash2, Undo2, Search, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot, BookingDepositFailure } from '@/types';
 import { formatTime, toBCP47, formatCurrency, formatPhoneLabel } from '@/lib/utils';
@@ -35,6 +35,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
   const [showPast, setShowPast] = useState(false);
   const [showFailures, setShowFailures] = useState(true);
   const [confirmDeleteFailureId, setConfirmDeleteFailureId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const failuresRef = useRef<HTMLDivElement | null>(null);
 
   const scrollToFailures = () => {
@@ -62,10 +63,29 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
 
   const todayStr = useMemo(() => formatDate(new Date()), []);
 
+  // Normalize search query: lowercase name part + digits-only phone part
+  const normalizedQuery = useMemo(() => {
+    const q = searchQuery.trim();
+    if (!q) return null;
+    return { text: q.toLowerCase(), digits: q.replace(/\D+/g, '') };
+  }, [searchQuery]);
+
   // Split into upcoming and past groups
   const { upcomingGroups, pastGroups } = useMemo(() => {
     // Only show primary slots (not fillers from multi-slot bookings)
-    const primarySlots = slots.filter(s => s.client_name && s.client_name !== '__blocked__' && !s.primary_slot_id);
+    let primarySlots = slots.filter(s => s.client_name && s.client_name !== '__blocked__' && !s.primary_slot_id);
+
+    if (normalizedQuery) {
+      const { text, digits } = normalizedQuery;
+      primarySlots = primarySlots.filter(s => {
+        const nameMatch = s.client_name?.toLowerCase().includes(text) ?? false;
+        const phoneMatch = digits.length >= 2 && s.client_phone
+          ? s.client_phone.replace(/\D+/g, '').includes(digits)
+          : false;
+        return nameMatch || phoneMatch;
+      });
+    }
+
     const groups = new Map<string, PlanningSlot[]>();
 
     for (const slot of primarySlots) {
@@ -96,7 +116,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
     past.reverse();
 
     return { upcomingGroups: upcoming, pastGroups: past };
-  }, [slots, locale, todayStr]);
+  }, [slots, locale, todayStr, normalizedQuery]);
 
   const getSlotServices = (slot: PlanningSlot) => {
     const svcIds = getSlotServiceIds(slot);
@@ -119,11 +139,44 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
 
   const totalReservations = upcomingGroups.reduce((n, g) => n + g.slots.length, 0) + pastGroups.reduce((n, g) => n + g.slots.length, 0);
 
+  // Total before filtering — used to decide whether to show the search bar
+  const hasAnySlotsBeforeFilter = useMemo(
+    () => slots.some(s => s.client_name && s.client_name !== '__blocked__' && !s.primary_slot_id),
+    [slots],
+  );
+
   // Keep computed counts accessible to the empty state AND the main render
   const upcomingCountInline = upcomingGroups.reduce((n, g) => n + g.slots.length, 0);
   const pastCountInline = pastGroups.reduce((n, g) => n + g.slots.length, 0);
   const hasOnlyPast = upcomingCountInline === 0 && pastCountInline > 0;
   const isFullyEmpty = totalReservations === 0;
+  const isSearching = !!normalizedQuery;
+  const hasNoResults = isSearching && isFullyEmpty;
+
+  const SearchBar = hasAnySlotsBeforeFilter ? (
+    <div className="relative">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none" />
+      <input
+        type="search"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder={t('searchPlaceholder')}
+        autoComplete="off"
+        spellCheck={false}
+        enterKeyHint="search"
+        className="w-full pl-9 pr-10 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 [&::-webkit-search-cancel-button]:appearance-none"
+      />
+      {searchQuery && (
+        <button
+          onClick={() => setSearchQuery('')}
+          aria-label={t('cancel')}
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  ) : null;
 
   const EmptyStateBlock = (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 text-center">
@@ -135,7 +188,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
     </div>
   );
 
-  if (isFullyEmpty) {
+  if (isFullyEmpty && !isSearching) {
     return <div className="max-w-lg mx-auto">{EmptyStateBlock}</div>;
   }
 
@@ -254,15 +307,28 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
 
   return (
     <div className="space-y-3">
+        {/* Search bar — visible d\u00e8s qu'il y a au moins 1 r\u00e9sa */}
+        {SearchBar}
+
+        {/* No-results state (recherche active sans match) */}
+        {hasNoResults && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
+            <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gray-50 mb-2">
+              <Search className="w-5 h-5 text-gray-300" />
+            </div>
+            <p className="text-sm font-semibold text-gray-700">{t('noReservationsForQuery', { query: searchQuery })}</p>
+          </div>
+        )}
+
         {/* Si seulement des r\u00e9sas pass\u00e9es : afficher l'empty state enrichi en haut */}
-        {hasOnlyPast && (
+        {hasOnlyPast && !isSearching && (
           <div className="max-w-lg mx-auto">
             {EmptyStateBlock}
           </div>
         )}
 
         {/* Summary bar (masqu\u00e9 si seulement des pass\u00e9es — on a d\u00e9j\u00e0 l'empty state) */}
-        {!hasOnlyPast && (
+        {!hasOnlyPast && !hasNoResults && (
           <div className="flex items-center justify-between gap-2 px-1 flex-wrap">
             <p className="text-sm font-bold text-gray-900">
               {upcomingCount > 0
@@ -309,8 +375,8 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
           </div>
         )}
 
-        {/* Past */}
-        {showPast && pastGroups.map(renderDayGroup)}
+        {/* Past — auto-shown when searching so matching past results are visible */}
+        {(showPast || isSearching) && pastGroups.map(renderDayGroup)}
 
         {/* Acomptes échoués */}
         {failuresCount > 0 && (

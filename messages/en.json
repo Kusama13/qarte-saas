@@ -2055,6 +2055,7 @@
     "noDetailsYet": "No details for this booking yet",
     "noReservations": "No reservations",
     "noReservationsHint": "Share your link everywhere on social media to start getting your first bookings",
+    "noReservationsForQuery": "No reservations for \"{query}\"",
     "upcomingCount": "{count} upcoming appointments",
     "sectionAgenda": "My agenda",
     "sectionOnlineBooking": "Online booking",

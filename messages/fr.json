@@ -2055,6 +2055,7 @@
     "noDetailsYet": "Aucun détail pour ce RDV",
     "noReservations": "Aucune réservation",
     "noReservationsHint": "Partage ton lien partout sur tous tes réseaux pour commencer à avoir tes premières réservations",
+    "noReservationsForQuery": "Aucune réservation pour « {query} »",
     "upcomingCount": "{count} RDV à venir",
     "sectionAgenda": "Mon agenda",
     "sectionOnlineBooking": "Résa en ligne",
