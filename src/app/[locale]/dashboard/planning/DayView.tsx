@@ -154,8 +154,8 @@ export default function DayView({
                 <div className="absolute inset-0 flex items-center justify-center gap-1.5 px-2 z-10">
                   <span className={STRIPED_PILL_CLASS}>
                     <Lock className="w-2.5 h-2.5 text-gray-500" />
-                    <span className="text-[10px] font-bold text-gray-600 tabular-nums">{formatTime(slot.start_time, locale)}</span>
-                    {slot.notes && <span className="text-[10px] text-gray-500 truncate max-w-[120px]">· {slot.notes}</span>}
+                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">{t('blocked')}</span>
+                    {slot.notes && <span className="text-[10px] text-gray-500 truncate max-w-[120px] normal-case tracking-normal">· {slot.notes}</span>}
                   </span>
                 </div>
               </button>

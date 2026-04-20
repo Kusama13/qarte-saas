@@ -35,6 +35,7 @@ export default function ChurnSurveyPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [showSkipConfirm, setShowSkipConfirm] = useState(false);
 
   const [success, setSuccess] = useState(false);
   const [promoCode, setPromoCode] = useState<string | null>(null);
@@ -163,6 +164,10 @@ export default function ChurnSurveyPage() {
   };
 
   const handleSkip = () => {
+    setShowSkipConfirm(true);
+  };
+
+  const confirmSkip = () => {
     // No API call — skip is not persisted. Merchant will see survey again on next visit.
     router.push('/dashboard/subscription');
   };
@@ -460,6 +465,45 @@ export default function ChurnSurveyPage() {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Skip confirmation modal */}
+      <AnimatePresence>
+        {showSkipConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setShowSkipConfirm(false); }}
+          >
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 30, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-5 sm:p-6"
+            >
+              <h3 className="text-base font-bold text-gray-900">{t('skipConfirmTitle')}</h3>
+              <p className="mt-2 text-sm text-gray-600 leading-relaxed">{t('skipConfirmBody')}</p>
+              <div className="mt-5 flex flex-col-reverse sm:flex-row gap-2">
+                <button
+                  type="button"
+                  onClick={confirmSkip}
+                  className="w-full sm:flex-1 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  {t('skipConfirmLeave')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSkipConfirm(false)}
+                  className="w-full sm:flex-[2] py-2.5 rounded-xl bg-gradient-to-r from-[#4b0082] to-violet-600 text-white text-sm font-bold shadow-sm hover:shadow-md transition-shadow"
+                >
+                  {t('skipConfirmStay')}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

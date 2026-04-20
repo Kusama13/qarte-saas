@@ -463,13 +463,16 @@ export default function SubscriptionPage() {
 
       {/* Header */}
       <div className="mb-6 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors mb-3"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {t('back')}
-        </Link>
+        {/* Back link masque quand le compte est inactif (grace ou expire) : le layout force la redirection ici de toute facon */}
+        {!trialStatus.isInGracePeriod && !trialStatus.isFullyExpired && (
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors mb-3"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {t('back')}
+          </Link>
+        )}
         <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
           {t('title')}
         </h1>
