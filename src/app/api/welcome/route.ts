@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
 
     // Check subscription status
     const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
-    if (trialStatus.isFullyExpired) {
+    if (trialStatus.isTrialExpired) {
       return NextResponse.json({ error: 'Ce commerce n\'accepte plus les inscriptions pour le moment.' }, { status: 403 });
     }
 

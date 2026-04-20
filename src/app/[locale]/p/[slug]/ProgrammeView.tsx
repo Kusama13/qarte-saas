@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, Users, Zap, Trophy, CalendarDays, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import BrandedQRCode from '@/components/shared/BrandedQRCode';
+import { SuspendedBanner } from '@/components/shared/SuspendedBanner';
 import SimulatedCard from './SimulatedCard';
 import BookingModal from './BookingModal';
 import { useInView } from '@/hooks/useInView';
@@ -99,7 +100,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const p = merchant.primary_color;
   const s = merchant.secondary_color || merchant.primary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
-  const isSuspended = !isDemo && getTrialStatus(merchant.trial_ends_at, merchant.subscription_status).isFullyExpired;
+  const isSuspended = !isDemo && getTrialStatus(merchant.trial_ends_at, merchant.subscription_status).isTrialExpired;
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [servicesExpanded, setServicesExpanded] = useState(false);
   const [planningExpanded, setPlanningExpanded] = useState(false);
@@ -234,12 +235,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   return (
     <div className="min-h-screen bg-[#f7f6fb] relative">
 
-      {/* ── SUSPENDED BANNER ── */}
-      {isSuspended && (
-        <div className="sticky top-0 z-50 bg-red-600 text-white text-center py-3 px-4 font-semibold text-sm tracking-wide shadow-lg">
-          ⚠️ {t('suspendedBanner')}
-        </div>
-      )}
+      {isSuspended && <SuspendedBanner />}
 
       {/* ── AMBIENT BACKGROUND BLOBS ── */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -537,8 +533,9 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             {isFreeMod && canBookOnline && (
               <button
                 type="button"
-                onClick={isDemo ? noOp : () => setBookingSlot({ date: null, time: null })}
-                className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 mb-3"
+                disabled={isSuspended}
+                onClick={isDemo || isSuspended ? noOp : () => setBookingSlot({ date: null, time: null })}
+                className={`w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 mb-3 ${isSuspended ? 'opacity-50 cursor-not-allowed' : ''}`}
                 style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
               >
                 <CalendarDays className="w-4 h-4" />
@@ -593,8 +590,9 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                                       <button
                                         key={raw}
                                         type="button"
-                                        onClick={() => setBookingSlot({ date: day.dateStr, time: raw })}
-                                        className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                                        disabled={isSuspended}
+                                        onClick={isDemo || isSuspended ? noOp : () => setBookingSlot({ date: day.dateStr, time: raw })}
+                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${isSuspended ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95 cursor-pointer'}`}
                                         style={{ backgroundColor: `${p}12`, color: p }}
                                       >
                                         {display}

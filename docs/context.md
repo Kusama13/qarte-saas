@@ -666,6 +666,8 @@ Footer badge Google Reviews : logo Google couleur + 5 etoiles + "5.0 sur Google"
 SocialProof bandeau : "Plus d'un millier de **pros de la beaute** attirent et **fidelisent** avec Qarte" — mots cles en indigo-600
 
 Demos accessibles via : bouton hero → demo carte fidelite, page vitrine `/p/demo-*`, selecteur tampons/cagnotte sur carte demo.
+
+**SEO getqarte.com (avril 2026)** : meta description mise a jour pour forcer "Qarte" en premier mot (reduit le hijack par footer dans Google SERP) : *"Qarte — l'app tout-en-un des salons de beaute : carte de fidelite digitale, reservation en ligne sans commission, page salon. Essai 7 jours."* LandingNav desktop + mobile ajoute liens **Blog** + **Comparatifs** (pointe `/compare/planity`) pour influencer les sitelinks Google (pages nav-level > pages footer-only).
 Demo popup (sessionStorage) : explique les 2 piliers (carte + vitrine) au premier affichage de la demo carte.
 CTA uniforme : "Essayer gratuitement" (toutes sections). Positionnement : page pro (acquisition) + programme fidelite (retention) = un seul outil. Lien en bio = feature principale.
 
@@ -714,6 +716,8 @@ Metriques startup (MRR, churn, ARPU, LTV), lifecycle segments, health score, ann
 ### Page Publique Programme (`/p/[slug]`)
 Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette page (sauf CTA offre nouveaux clients → `/scan/{code}?welcome=`).
 **Pas de pixels FB/TT ni cookie banner** sur cette page (c'est la vitrine du merchant, pas la landing Qarte). Seul `trackCtaClick` (Vercel Analytics, first-party, exempt RGPD) est conserve. Le `CookieBanner` detecte `/p/` et ne s'affiche pas.
+
+**Trial expire — suspension customer-facing** : `getTrialStatus().isTrialExpired` (true des la fin d'essai sans abo, incluant la grace) bloque les actions client-facing. Bandeau rouge sticky `<SuspendedBanner />` (shared, clef i18n `common.suspendedBanner`) affiche sur `/p/[slug]` ET `/scan/[code]`. Bouton "Reserver" + slots desactives (opacity-50 + disabled). APIs client-facing (checkin, cagnotte/checkin, planning/book, welcome, referrals, merchant-offers/claim, vouchers/use) retournent 403. Les emails grace/expiration (`GracePeriodSetupEmail`, `TrialExpiredEmail`) continuent de se declencher normalement sur `isInGracePeriod`/`isFullyExpired`.
 
 **Ordre des sections :**
 1. Hero (logo glow couleurs merchant, nom gradient, adresse + badge "Y aller", bio glassmorphism)

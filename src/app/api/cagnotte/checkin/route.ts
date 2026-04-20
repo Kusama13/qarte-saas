@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     // Check trial status
     const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
 
-    if (trialStatus.isFullyExpired) {
+    if (trialStatus.isTrialExpired) {
       return NextResponse.json(
         { error: 'Ce commerce n\'accepte plus les passages pour le moment.', trial_expired: true },
         { status: 403 }

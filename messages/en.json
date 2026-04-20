@@ -18,13 +18,16 @@
     "no": "No",
     "or": "or",
     "and": "and",
-    "findUsOn": "Find us on"
+    "findUsOn": "Find us on",
+    "suspendedBanner": "Page suspended — inactive account. A subscription is required to reactivate this page."
   },
   "nav": {
     "bannerHasCard": "Already have a loyalty card?",
     "bannerHasCardMobile": "Already a client?",
     "bannerFindCard": "Find my card →",
     "pricing": "Pricing",
+    "blog": "Blog",
+    "compare": "Compare",
     "contact": "Contact",
     "login": "Sign in",
     "freeTrial": "Free trial",
@@ -2514,7 +2517,6 @@
     "hairSalon": "Hair salon"
   },
   "programmeView": {
-    "suspendedBanner": "Page suspended — inactive account. A subscription is required to reactivate this page.",
     "demoBanner": "Demo mode — actions are disabled",
     "demoBannerCta": "Create my account",
     "goThere": "Directions",

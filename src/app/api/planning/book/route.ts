@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     }
 
     const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
-    if (trialStatus.isFullyExpired) {
+    if (trialStatus.isTrialExpired) {
       return NextResponse.json({ error: 'Ce commerce n\'accepte plus les réservations' }, { status: 403 });
     }
 

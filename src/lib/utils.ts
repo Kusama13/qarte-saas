@@ -238,12 +238,14 @@ export function getDaysRemaining(endDate: string): number {
 }
 
 export interface TrialStatus {
-  isActive: boolean;           // Essai en cours
-  isInGracePeriod: boolean;    // Période de grâce (3 jours après expiration)
-  isFullyExpired: boolean;     // Plus de 3 jours après expiration
-  daysRemaining: number;       // Jours restants (négatif si expiré)
-  daysUntilDeletion: number;   // Jours avant suppression des données
-  gracePeriodDays: number;     // Constante: 3 jours
+  isActive: boolean;
+  isInGracePeriod: boolean;
+  isFullyExpired: boolean;
+  /** True dès la fin de l'essai (grâce ou au-delà), sauf si abonné. Destiné au blocage customer-facing. */
+  isTrialExpired: boolean;
+  daysRemaining: number;
+  daysUntilDeletion: number;
+  gracePeriodDays: number;
 }
 
 // Pricing history — old price before 2026-04-05, new price after
@@ -280,6 +282,7 @@ export function getTrialStatus(trialEndsAt: string | null, subscriptionStatus: s
       isActive: false,
       isInGracePeriod: false,
       isFullyExpired: false,
+      isTrialExpired: false,
       daysRemaining: 0,
       daysUntilDeletion: 0,
       gracePeriodDays: GRACE_PERIOD_DAYS,
@@ -291,6 +294,7 @@ export function getTrialStatus(trialEndsAt: string | null, subscriptionStatus: s
       isActive: false,
       isInGracePeriod: false,
       isFullyExpired: true,
+      isTrialExpired: true,
       daysRemaining: 0,
       daysUntilDeletion: 0,
       gracePeriodDays: GRACE_PERIOD_DAYS,
@@ -308,6 +312,7 @@ export function getTrialStatus(trialEndsAt: string | null, subscriptionStatus: s
       isActive: true,
       isInGracePeriod: false,
       isFullyExpired: false,
+      isTrialExpired: false,
       daysRemaining,
       daysUntilDeletion: daysRemaining + GRACE_PERIOD_DAYS,
       gracePeriodDays: GRACE_PERIOD_DAYS,
@@ -323,6 +328,7 @@ export function getTrialStatus(trialEndsAt: string | null, subscriptionStatus: s
       isActive: false,
       isInGracePeriod: true,
       isFullyExpired: false,
+      isTrialExpired: true,
       daysRemaining,
       daysUntilDeletion,
       gracePeriodDays: GRACE_PERIOD_DAYS,
@@ -334,6 +340,7 @@ export function getTrialStatus(trialEndsAt: string | null, subscriptionStatus: s
     isActive: false,
     isInGracePeriod: false,
     isFullyExpired: true,
+    isTrialExpired: true,
     daysRemaining,
     daysUntilDeletion: 0,
     gracePeriodDays: GRACE_PERIOD_DAYS,

@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     // Check merchant subscription is still active
     if (voucherMerchant) {
       const trialStatus = getTrialStatus(voucherMerchant.trial_ends_at, voucherMerchant.subscription_status);
-      if (trialStatus.isFullyExpired) {
+      if (trialStatus.isTrialExpired) {
         return NextResponse.json({ error: 'Ce commerce n\'accepte plus les récompenses pour le moment.' }, { status: 403 });
       }
     }

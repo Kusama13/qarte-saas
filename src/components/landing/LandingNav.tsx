@@ -47,6 +47,8 @@ export default function LandingNav({ minimal = false }: LandingNavProps) {
             {!minimal && (
               <>
                 <Link href="/#pricing" className="hover:text-indigo-600 transition-colors link-underline">{t('pricing')}</Link>
+                <Link href="/blog" className="hover:text-indigo-600 transition-colors link-underline">{t('blog')}</Link>
+                <Link href="/compare/planity" className="hover:text-indigo-600 transition-colors link-underline">{t('compare')}</Link>
                 <Link href="/contact" className="hover:text-indigo-600 transition-colors link-underline">{t('contact')}</Link>
                 <Link href="/auth/merchant" className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold border border-indigo-200 rounded-lg transition-colors">{t('login')}</Link>
               </>
@@ -105,6 +107,20 @@ export default function LandingNav({ minimal = false }: LandingNavProps) {
                     className="block py-2 text-gray-600 hover:text-indigo-600 font-medium transition-colors"
                   >
                     {t('pricing')}
+                  </Link>
+                  <Link
+                    href="/blog"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-2 text-gray-600 hover:text-indigo-600 font-medium transition-colors"
+                  >
+                    {t('blog')}
+                  </Link>
+                  <Link
+                    href="/compare/planity"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-2 text-gray-600 hover:text-indigo-600 font-medium transition-colors"
+                  >
+                    {t('compare')}
                   </Link>
                   <Link
                     href="/contact"

@@ -23,7 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { sparkleGrand } from '@/lib/sparkles';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { formatPhoneNumber, validatePhone, getTodayForCountry, PHONE_CONFIG, getCurrencySymbol, formatCurrency } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getTodayForCountry, PHONE_CONFIG, getCurrencySymbol, formatCurrency, getTrialStatus } from '@/lib/utils';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import type { Merchant, Customer, LoyaltyCard, MerchantCountry } from '@/types';
 import { trackQrScanned, trackCardCreated, trackPointEarned, trackRewardRedeemed } from '@/lib/analytics';
@@ -31,6 +31,7 @@ import { useTranslations } from 'next-intl';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { ScanSuccessStep } from '@/components/loyalty';
 import { WelcomeBanner, ScanRewardScreen, ScanAlreadyCheckedScreen, ScanPendingScreen } from '@/components/scan';
+import { SuspendedBanner } from '@/components/shared/SuspendedBanner';
 
 type Step = 'phone' | 'register' | 'amount' | 'amount-confirm' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward' | 'pending' | 'banned' | 'referral-success';
 
@@ -782,9 +783,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   const primaryColor = merchant.primary_color;
   const secondaryColor = merchant.secondary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
+  const isSuspended = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status).isTrialExpired;
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white, ${primaryColor}12)` }}>
+      {isSuspended && <SuspendedBanner />}
       <main className="flex-1 px-4 pt-4 pb-4 mx-auto max-w-md w-full">
         {step === 'phone' && (
           <div className="animate-fade-in">

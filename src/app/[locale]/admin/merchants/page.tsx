@@ -396,8 +396,7 @@ export default function AdminMerchantsPage() {
 
   const superAdminIds = useMemo(() => new Set(data?.superAdminIds || []), [data]);
 
-  // Helper
-  const isTrialExpired = (m: Merchant) =>
+  const isTrialPast = (m: Merchant) =>
     m.subscription_status === 'trial' && m.trial_ends_at && new Date(m.trial_ends_at) < new Date();
 
   // Stats
@@ -406,8 +405,8 @@ export default function AdminMerchantsPage() {
     const nonAdmin = data.merchants.filter((m) => !superAdminIds.has(m.user_id) && !m.deleted_at);
     return {
       total: nonAdmin.length,
-      trial: nonAdmin.filter((m) => m.subscription_status === 'trial' && !isTrialExpired(m)).length,
-      trialExpired: nonAdmin.filter((m) => isTrialExpired(m)).length,
+      trial: nonAdmin.filter((m) => m.subscription_status === 'trial' && !isTrialPast(m)).length,
+      trialExpired: nonAdmin.filter((m) => isTrialPast(m)).length,
       active: nonAdmin.filter((m) => m.subscription_status === 'active' || m.subscription_status === 'canceling' || m.subscription_status === 'past_due').length,
       canceling: nonAdmin.filter((m) => m.subscription_status === 'canceling').length,
       canceled: nonAdmin.filter((m) => m.subscription_status === 'canceled').length,
@@ -435,9 +434,9 @@ export default function AdminMerchantsPage() {
 
     // Status filter
     if (statusFilter === 'trial') {
-      filtered = filtered.filter((m) => m.subscription_status === 'trial' && !isTrialExpired(m));
+      filtered = filtered.filter((m) => m.subscription_status === 'trial' && !isTrialPast(m));
     } else if (statusFilter === 'trial_expired') {
-      filtered = filtered.filter((m) => isTrialExpired(m));
+      filtered = filtered.filter((m) => isTrialPast(m));
     } else if (statusFilter === 'active') {
       filtered = filtered.filter((m) => m.subscription_status === 'active' || m.subscription_status === 'canceling' || m.subscription_status === 'past_due');
     } else if (statusFilter !== 'all') {

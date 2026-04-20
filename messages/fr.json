@@ -18,13 +18,16 @@
     "no": "Non",
     "or": "ou",
     "and": "et",
-    "findUsOn": "Retrouvez-nous sur"
+    "findUsOn": "Retrouvez-nous sur",
+    "suspendedBanner": "Page suspendue — compte inactif. Un abonnement est nécessaire pour réactiver cette page."
   },
   "nav": {
     "bannerHasCard": "Tu as déjà une carte de fidélité ?",
     "bannerHasCardMobile": "Déjà client ?",
     "bannerFindCard": "Retrouver ma carte →",
     "pricing": "Tarifs",
+    "blog": "Blog",
+    "compare": "Comparatifs",
     "contact": "Contact",
     "login": "S'identifier",
     "freeTrial": "Essai gratuit",
@@ -2514,7 +2517,6 @@
     "hairSalon": "Coiffure"
   },
   "programmeView": {
-    "suspendedBanner": "Page suspendue — compte inactif. Un abonnement est nécessaire pour réactiver cette page.",
     "demoBanner": "Mode démo — les actions sont désactivées",
     "demoBannerCta": "Créer mon compte",
     "goThere": "Y aller",
