@@ -198,8 +198,13 @@ export default function WeekView({
                       className="absolute left-0.5 right-0.5 rounded-md text-left transition-all hover:brightness-95 active:scale-[0.99] overflow-hidden border border-dashed border-gray-400"
                       style={{ top: topInCol, height: Math.max(height, 20), background: STRIPED_BG }}
                     >
-                      <div className="absolute inset-0 flex items-center justify-center z-10">
-                        <Lock className="w-3 h-3 text-gray-500" />
+                      <div className="absolute inset-0 flex items-center justify-center px-1 z-10">
+                        <span className={STRIPED_PILL_CLASS}>
+                          <Lock className="w-2.5 h-2.5 text-gray-500 shrink-0" />
+                          {slot.notes && (
+                            <span className="text-[9px] font-medium text-gray-600 truncate max-w-[80px]">{slot.notes}</span>
+                          )}
+                        </span>
                       </div>
                     </button>
                   );

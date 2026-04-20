@@ -373,16 +373,16 @@ export default function OnboardingChecklist() {
       <div className="mx-4 md:mx-6 mb-3">
         <Link
           href="/dashboard/subscription"
-          className="flex items-center gap-3 p-3.5 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 hover:shadow-md transition-all duration-200 group/cta"
+          className="flex items-center gap-3 p-3.5 rounded-xl bg-gradient-to-r from-indigo-50 via-violet-50 to-pink-50 border border-indigo-200/60 hover:shadow-lg hover:shadow-indigo-200/40 transition-all duration-200 group/cta"
         >
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-white shrink-0 shadow-sm">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-white shrink-0 shadow-md shadow-indigo-300/40">
             <CreditCard className="w-4 h-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <span className="text-sm font-semibold text-amber-900 block">{t('stepSubscribe')}</span>
-            <p className="text-[11px] text-amber-600/80 leading-tight mt-0.5">{t('stepSubscribeHint')}</p>
+            <span className="text-sm font-semibold text-indigo-900 block">{t('stepSubscribe')}</span>
+            <p className="text-[11px] text-indigo-700/70 leading-tight mt-0.5">{t('stepSubscribeHint')}</p>
           </div>
-          <ArrowRight className="w-4 h-4 text-amber-400 group-hover/cta:translate-x-0.5 transition-transform shrink-0" />
+          <ArrowRight className="w-4 h-4 text-indigo-500 group-hover/cta:translate-x-0.5 transition-transform shrink-0" />
         </Link>
       </div>
 

@@ -800,7 +800,8 @@ export default function PlanningDashboard() {
                       <span className="hidden sm:inline">{t('blockSlot')}</span>
                     </button>
 
-                    {/* Kebab menu — week-scoped actions */}
+                    {/* Kebab menu — week-scoped actions (hidden in mode libre if rien à supprimer) */}
+                    {(!isFreeMod || selectedDayFreeCount > 0 || freeSlots > 0) && (
                     <div className="relative">
                       <button
                         onClick={() => setShowActionsMenu(v => !v)}
@@ -854,6 +855,7 @@ export default function PlanningDashboard() {
                         </>
                       )}
                     </div>
+                    )}
                   </div>
                 )}
               </div>
