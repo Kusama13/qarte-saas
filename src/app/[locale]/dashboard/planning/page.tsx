@@ -783,7 +783,7 @@ export default function PlanningDashboard() {
                         onClick={() => setSelectedDay(day)}
                         className={`relative flex flex-col items-center justify-center py-2 px-0.5 rounded-xl border transition-all ${
                           isSelected
-                            ? 'bg-indigo-600 border-indigo-600 shadow-md shadow-indigo-200'
+                            ? 'bg-slate-900 border-slate-900'
                             : today
                               ? 'bg-indigo-50 border-indigo-300 hover:bg-indigo-100'
                               : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
@@ -1039,7 +1039,7 @@ export default function PlanningDashboard() {
                         key={mode}
                         type="button"
                         onClick={() => handleBookingModeChange(mode)}
-                        className={`text-left rounded-xl border p-3 transition-all ${isActive ? 'bg-indigo-600 border-indigo-600 shadow-md shadow-indigo-200' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'}`}
+                        className={`text-left rounded-xl border p-3 transition-all ${isActive ? 'bg-slate-900 border-slate-900' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'}`}
                       >
                         <div className="flex items-center justify-between gap-1 mb-1">
                           <p className={`text-xs font-bold ${isActive ? 'text-white' : 'text-gray-700'}`}>
@@ -1076,7 +1076,7 @@ export default function PlanningDashboard() {
                         key={val}
                         type="button"
                         onClick={() => setBufferMinutes(val)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${bufferMinutes === val ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${bufferMinutes === val ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
                       >
                         {val === 0 ? t('bufferNone') : `${val} min`}
                       </button>
@@ -1210,7 +1210,7 @@ export default function PlanningDashboard() {
                           <div className="flex flex-wrap gap-1.5 mb-3">
                             {['10', '15', '20', '25', '30'].map(v => (
                               <button key={`p${v}`} type="button" onClick={() => { setDepositPercent(v); setDepositAmount(''); }}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositPercent === v ? 'bg-indigo-600 text-white border border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{v}%</button>
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositPercent === v ? 'bg-slate-900 text-white border border-slate-900' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{v}%</button>
                             ))}
                             <input type="number" value={!['10', '15', '20', '25', '30'].includes(depositPercent) ? depositPercent : ''} onChange={(e) => { setDepositPercent(e.target.value); if (e.target.value) setDepositAmount(''); }} placeholder={t('customPercent')} min={1} max={100}
                               className={`w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`} />
@@ -1222,7 +1222,7 @@ export default function PlanningDashboard() {
                           <div className="flex flex-wrap gap-1.5">
                             {['10', '15', '20', '25', '30'].map(v => (
                               <button key={`a${v}`} type="button" onClick={() => { setDepositAmount(v); setDepositPercent(''); }}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositAmount === v ? 'bg-indigo-600 text-white border border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{v}{getCurrencySymbol(merchant?.country)}</button>
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositAmount === v ? 'bg-slate-900 text-white border border-slate-900' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{v}{getCurrencySymbol(merchant?.country)}</button>
                             ))}
                             <input type="number" value={!['10', '15', '20', '25', '30'].includes(depositAmount) ? depositAmount : ''} onChange={(e) => { setDepositAmount(e.target.value); if (e.target.value) setDepositPercent(''); }} placeholder={t('customAmount')} min={1}
                               className={`w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`} />
@@ -1236,7 +1236,7 @@ export default function PlanningDashboard() {
                         <div className="flex flex-wrap gap-1.5">
                           <button type="button" onClick={() => setDepositDeadlineHours('')} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${!depositDeadlineHours ? 'bg-gray-900 text-white border border-gray-900 shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{t('depositDeadlineFree')}</button>
                           {['1', '2', '3', '4'].map(v => (
-                            <button key={`d${v}`} type="button" onClick={() => setDepositDeadlineHours(v)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositDeadlineHours === v ? 'bg-indigo-600 text-white border border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{v}h</button>
+                            <button key={`d${v}`} type="button" onClick={() => setDepositDeadlineHours(v)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositDeadlineHours === v ? 'bg-slate-900 text-white border border-slate-900' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{v}h</button>
                           ))}
                           <input type="number" value={!['', '1', '2', '3', '4'].includes(depositDeadlineHours) ? depositDeadlineHours : ''} onChange={(e) => setDepositDeadlineHours(e.target.value)} placeholder={t('customHours')} min={1}
                             className="w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 border-gray-200" />
@@ -1291,7 +1291,7 @@ export default function PlanningDashboard() {
                         <div className="flex flex-wrap gap-1.5">
                           {[{ value: '1', label: t('deadlineDay1') }, { value: '2', label: t('deadlineDay2') }, { value: '3', label: t('deadlineDay3') }, { value: '7', label: t('deadlineDay7') }].map(opt => (
                             <button key={opt.value} type="button" onClick={() => setCancelDeadlineDays(opt.value)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${cancelDeadlineDays === opt.value ? 'bg-indigo-600 text-white border border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{opt.label}</button>
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${cancelDeadlineDays === opt.value ? 'bg-slate-900 text-white border border-slate-900' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{opt.label}</button>
                           ))}
                         </div>
                       </div>
@@ -1315,7 +1315,7 @@ export default function PlanningDashboard() {
                         <div className="flex flex-wrap gap-1.5">
                           {[{ value: '1', label: t('deadlineDay1') }, { value: '2', label: t('deadlineDay2') }, { value: '3', label: t('deadlineDay3') }, { value: '7', label: t('deadlineDay7') }].map(opt => (
                             <button key={opt.value} type="button" onClick={() => setRescheduleDeadlineDays(opt.value)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${rescheduleDeadlineDays === opt.value ? 'bg-indigo-600 text-white border border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{opt.label}</button>
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${rescheduleDeadlineDays === opt.value ? 'bg-slate-900 text-white border border-slate-900' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{opt.label}</button>
                           ))}
                         </div>
                       </div>
@@ -1352,7 +1352,7 @@ export default function PlanningDashboard() {
                       type="button"
                       onClick={subscribePush}
                       disabled={pushSubscribing || pushPermission === 'denied'}
-                      className="shrink-0 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-xs font-bold disabled:opacity-50 hover:shadow-md transition-all"
+                      className="shrink-0 px-3 py-1.5 rounded-lg bg-[#4b0082] hover:bg-[#4b0082]/90 text-white text-xs font-bold active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50"
                     >
                       {pushSubscribing ? '...' : t('pushNotifEnable')}
                     </button>
@@ -1454,7 +1454,7 @@ export default function PlanningDashboard() {
                 ) : (
                   <div className="ml-9 flex items-center justify-between gap-3">
                     <p className="text-[11px] text-gray-500">{t('smsTrialMessage')}</p>
-                    <a href="/dashboard/subscription" className="shrink-0 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-[11px] font-bold hover:shadow-md transition-all">
+                    <a href="/dashboard/subscription" className="shrink-0 px-3 py-1.5 rounded-lg bg-[#4b0082] hover:bg-[#4b0082]/90 text-white text-[11px] font-bold active:scale-[0.98] touch-manipulation transition-all">
                       {t('smsTrialCta')}
                     </a>
                   </div>
@@ -1544,7 +1544,7 @@ export default function PlanningDashboard() {
                 {/* Progress bar */}
                 <div className="h-0.5 bg-gray-100">
                   <div
-                    className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-300"
+                    className="h-full bg-[#4b0082] transition-all duration-300"
                     style={{ width: manualStep === 1 ? '50%' : '100%' }}
                   />
                 </div>
