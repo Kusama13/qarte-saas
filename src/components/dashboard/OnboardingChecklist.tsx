@@ -394,6 +394,24 @@ export default function OnboardingChecklist() {
           const isLocked = !isComplete && groupIndex > 0 && groups.slice(0, groupIndex).some(g => g.steps.some(s => !s.done));
           const prevGroupName = groupIndex > 0 ? groups[groupIndex - 1].name : '';
 
+          const buttonBgClass = isComplete
+            ? 'bg-gray-50'
+            : isExpanded
+              ? 'bg-gray-50 border border-gray-100'
+              : isLocked
+                ? 'bg-gray-50/60 hover:bg-gray-100'
+                : 'bg-gray-50 hover:bg-gray-100';
+          const iconBgClass = isComplete
+            ? 'bg-emerald-50 text-emerald-600'
+            : isLocked
+              ? 'bg-gray-100 text-gray-400'
+              : 'bg-[#4b0082]/10 text-[#4b0082]';
+          const nameColorClass = isComplete
+            ? 'text-gray-400'
+            : isLocked
+              ? 'text-gray-500'
+              : 'text-gray-900';
+
           return (
             <div key={group.id}>
               {showHideConfirm ? (
@@ -420,24 +438,10 @@ export default function OnboardingChecklist() {
                 <button
                   type="button"
                   onClick={() => toggleGroup(group.id)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${
-                    isComplete
-                      ? 'bg-gray-50'
-                      : isExpanded
-                        ? 'bg-gray-50 border border-gray-100'
-                        : isLocked
-                          ? 'bg-gray-50/60 hover:bg-gray-100'
-                          : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${buttonBgClass}`}
                 >
                   {/* Group icon */}
-                  <div className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-all ${
-                    isComplete
-                      ? 'bg-emerald-50 text-emerald-600'
-                      : isLocked
-                        ? 'bg-gray-100 text-gray-400'
-                        : 'bg-[#4b0082]/10 text-[#4b0082]'
-                  }`}>
+                  <div className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-all ${iconBgClass}`}>
                     {isComplete ? (
                       <Check className="w-4 h-4 stroke-[3]" />
                     ) : (
@@ -446,9 +450,7 @@ export default function OnboardingChecklist() {
                   </div>
 
                   {/* Group name */}
-                  <span className={`flex-1 text-left text-sm font-semibold truncate ${
-                    isComplete ? 'text-gray-400' : isLocked ? 'text-gray-500' : 'text-gray-900'
-                  }`}>
+                  <span className={`flex-1 text-left text-sm font-semibold truncate ${nameColorClass}`}>
                     {group.name}
                   </span>
 

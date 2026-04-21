@@ -4,7 +4,13 @@ import { Link } from '@/i18n/navigation';
 import { AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type TrialSeverity = 'calm' | 'warning' | 'urgent';
+export type TrialSeverity = 'calm' | 'warning' | 'urgent';
+
+export function trialSeverityFromDays(daysRemaining: number): TrialSeverity {
+  if (daysRemaining <= 1) return 'urgent';
+  if (daysRemaining <= 3) return 'warning';
+  return 'calm';
+}
 
 interface StatusBannerProps {
   variant: 'trial' | 'grace' | 'canceling' | 'past_due';
@@ -21,7 +27,7 @@ interface StatusBannerProps {
 }
 
 const variantStyles: Record<StatusBannerProps['variant'], string> = {
-  trial: '',  // dynamic, based on severity prop
+  trial: '',
   grace: 'bg-red-100 text-red-800 border border-red-300',
   canceling: 'bg-orange-50 text-orange-700',
   past_due: 'bg-red-50 text-red-700 border border-red-200',

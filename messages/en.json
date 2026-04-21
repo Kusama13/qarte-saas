@@ -716,7 +716,6 @@
   "signupComplete": {
     "title": "Create your loyalty card",
     "subtitle": "Email confirmed, just tell us about your shop",
-    "stepBadge": "Step 2 of 2",
     "step1Done": "Email",
     "step2Current": "Your shop",
     "clientsWillLove": "Your clients will love it",

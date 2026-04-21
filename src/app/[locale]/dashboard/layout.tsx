@@ -30,7 +30,7 @@ import { ToastProvider } from '@/components/ui/Toast';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import InstallAppBanner from '@/components/dashboard/InstallAppBanner';
 import AdminAnnouncementBanner from '@/components/dashboard/AdminAnnouncementBanner';
-import StatusBanner from '@/components/dashboard/StatusBanner';
+import StatusBanner, { trialSeverityFromDays } from '@/components/dashboard/StatusBanner';
 import NotificationBell from '@/components/dashboard/NotificationBell';
 import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
 import BottomNav from './_nav/BottomNav';
@@ -230,7 +230,7 @@ function DashboardLayoutContent({
           {trialStatus.isActive && (
             <StatusBanner
               variant="trial"
-              severity={trialStatus.daysRemaining <= 1 ? 'urgent' : trialStatus.daysRemaining <= 3 ? 'warning' : 'calm'}
+              severity={trialSeverityFromDays(trialStatus.daysRemaining)}
               message={trialStatus.daysRemaining > 1 ? t('trialDaysPlural', { count: trialStatus.daysRemaining }) : t('trialDays', { count: trialStatus.daysRemaining })}
               description={!merchant?.stripe_subscription_id ? t('trialSmsHint') : undefined}
               linkText={merchant?.stripe_subscription_id ? t('viewSubscription') : t('addPayment')}

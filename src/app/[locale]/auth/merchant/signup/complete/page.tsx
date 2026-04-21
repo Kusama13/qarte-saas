@@ -201,7 +201,6 @@ export default function CompleteProfilePage() {
         <div className="w-full max-w-md">
           <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl shadow-primary/10 rounded-3xl">
             <div className="text-center mb-5">
-              {/* Progress indicator — Phase 1 done, Phase 2 current */}
               <div className="flex items-center justify-center gap-2 mb-4">
                 <div className="flex items-center gap-1.5">
                   <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm">
