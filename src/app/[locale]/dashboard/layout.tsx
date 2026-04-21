@@ -290,8 +290,8 @@ function DashboardLayoutContent({
                   className={cn(
                     'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group touch-manipulation',
                     isActive
-                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-200/50'
-                      : 'text-gray-600 lg:hover:bg-gray-50 lg:hover:translate-x-1 active:bg-gray-100'
+                      ? 'bg-[#4b0082] text-white'
+                      : 'text-gray-600 lg:hover:bg-gray-50 active:bg-gray-100'
                   )}
                 >
                   <div className={cn(
@@ -315,7 +315,7 @@ function DashboardLayoutContent({
               onClick={() => setSidebarOpen(false)}
               className="flex items-center gap-2.5 px-2.5 py-2 mb-2 bg-white rounded-xl border border-gray-100 shadow-sm lg:hover:border-indigo-200 lg:hover:shadow-md transition-all duration-200 group touch-manipulation"
             >
-              <div className="flex items-center justify-center w-9 h-9 font-bold text-white text-sm rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 shadow-md shadow-indigo-200/50 shrink-0 overflow-hidden">
+              <div className="flex items-center justify-center w-9 h-9 font-bold text-white text-sm rounded-lg bg-[#4b0082] shrink-0 overflow-hidden">
                 {merchant?.logo_url
                   ? <img src={merchant.logo_url} alt={merchant.shop_name || ''} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.textContent = merchant?.shop_name?.charAt(0) || 'M'; }} />
                   : merchant?.shop_name?.charAt(0) || 'M'
@@ -326,11 +326,11 @@ function DashboardLayoutContent({
               </p>
               {(merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling') && (
                 getPlanTier(merchant) === 'fidelity' ? (
-                  <span className="shrink-0 text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-sm">
+                  <span className="shrink-0 text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-rose-500 text-white">
                     CŒUR
                   </span>
                 ) : (
-                  <span className="shrink-0 text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-sm">
+                  <span className="shrink-0 text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#4b0082] text-white">
                     PRO
                   </span>
                 )
@@ -372,10 +372,10 @@ function DashboardLayoutContent({
           {previewDone && merchant && !merchant.bio && !merchant.shop_address && pathname !== '/dashboard/public-page' && (
             <Link
               href="/dashboard/public-page"
-              className="flex items-center gap-3 p-4 mb-4 bg-gradient-to-r from-violet-50 to-pink-50 border border-violet-100 rounded-2xl hover:shadow-md transition-all group"
+              className="flex items-center gap-3 p-4 mb-4 bg-violet-50 border border-violet-100 rounded-2xl hover:bg-violet-100 active:scale-[0.99] touch-manipulation transition-all"
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shrink-0">
-                <Globe className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shrink-0">
+                <Globe className="w-5 h-5 text-[#4b0082]" strokeWidth={2.25} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-900">{t('vitrineBannerTitle')}</p>
@@ -387,8 +387,8 @@ function DashboardLayoutContent({
 
           {/* Push notifications prompt — brand gradient + Bell icon */}
           {showPushPrompt && (
-            <div className="relative flex items-center gap-3 p-3.5 mb-4 bg-gradient-to-r from-indigo-600 via-violet-600 to-pink-600 rounded-2xl shadow-lg shadow-indigo-500/20">
-              <div className="shrink-0 w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <div className="relative flex items-center gap-3 p-3.5 mb-4 bg-[#4b0082] rounded-2xl">
+              <div className="shrink-0 w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
                 <Bell className="w-4 h-4 text-white" />
               </div>
               <div className="flex-1 min-w-0">
