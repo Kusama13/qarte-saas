@@ -40,11 +40,11 @@ export function useInstallPrompt(manifestHref: string | undefined): UseInstallPr
   const [isInstalled, setIsInstalled] = useState(false);
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
 
-  // Register service worker scoped to /dashboard (needed for beforeinstallprompt)
+  // Scope unifie sur '/' pour eviter les conflits iOS PWA (une seule registration SW active).
   useEffect(() => {
     if (!enabled) return;
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js', { scope: '/dashboard' }).catch(() => {});
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
     }
   }, [enabled]);
 

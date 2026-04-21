@@ -73,10 +73,10 @@ export function useMerchantPushNotifications() {
         return;
       }
 
-      // Register SW with /dashboard scope (must match manifest Pro scope)
+      // Scope unifie sur '/' pour eviter les conflits iOS PWA (une seule registration SW active).
       let registration: ServiceWorkerRegistration | null = null;
       try {
-        registration = await navigator.serviceWorker.register('/sw.js', { scope: '/dashboard' });
+        registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
       } catch {
         registration = null;
       }

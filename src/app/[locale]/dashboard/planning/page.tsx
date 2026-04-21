@@ -890,7 +890,7 @@ export default function PlanningDashboard() {
               </div>
 
               {/* Copy week picker */}
-              <AnimatePresence>
+              <AnimatePresence mode="wait">
                 {modalState.type === 'copy-week' && (
                   <CopyWeekModal
                     weekOffset={weekOffset}
@@ -1466,7 +1466,7 @@ export default function PlanningDashboard() {
       )}
 
       {/* ── MODAL: Add slots ── */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {modalState.type === 'add-slots' && (
           <AddSlotsModal
             addSlotsDay={modalState.day}
@@ -1483,7 +1483,7 @@ export default function PlanningDashboard() {
       </AnimatePresence>
 
       {/* ── MODAL: Manual booking (free mode) ── */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {showManualBookingModal && (() => {
           const hasClient = !!draft.customerId;
           const canCreate = draft.clientName.trim().length >= 2 && draft.clientPhone.trim().length >= 6 && !draft.customerId;
@@ -1496,9 +1496,9 @@ export default function PlanningDashboard() {
             setManualServiceIds(ids => ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]);
           return (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0, pointerEvents: 'none' }}
+              animate={{ opacity: 1, pointerEvents: 'auto' }}
+              exit={{ opacity: 0, pointerEvents: 'none' }}
               className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
               onClick={(e) => { if (e.target === e.currentTarget) setShowManualBookingModal(false); }}
             >
@@ -1692,8 +1692,8 @@ export default function PlanningDashboard() {
                       <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
                         {customerResults.length > 0 ? (
                           customerResults.map(c => (
-                            <button key={c.id} onMouseDown={() => selectCustomer(c)}
-                              className="w-full text-left px-3 py-2.5 hover:bg-indigo-50 transition-colors border-b border-gray-50 last:border-0">
+                            <button key={c.id} onPointerDown={() => selectCustomer(c)}
+                              className="w-full text-left px-3 py-2.5 hover:bg-indigo-50 transition-colors border-b border-gray-50 last:border-0 touch-manipulation">
                               <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium text-gray-800">{c.first_name} {c.last_name || ''}</span>
                                 <div className="flex items-center gap-1.5">
@@ -1905,7 +1905,7 @@ export default function PlanningDashboard() {
       </AnimatePresence>
 
       {/* ── MODAL: Block slot/period (unified) ── */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {showBlockModal && (
           <PlanningModal onClose={() => setShowBlockModal(false)} size="sm">
             <ModalHeader
@@ -2000,7 +2000,7 @@ export default function PlanningDashboard() {
       </AnimatePresence>
 
       {/* ── CONFIRM: Delete blocked slot ── */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {confirmDeleteBlock && (
           <PlanningModal onClose={() => setConfirmDeleteBlock(null)} size="sm">
             <ModalHeader
@@ -2026,7 +2026,7 @@ export default function PlanningDashboard() {
       </AnimatePresence>
 
       {/* ── CONFIRM: Mode switch ── */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {modeSwitchTarget && (
           <PlanningModal onClose={() => setModeSwitchTarget(null)} size="sm">
             <ModalHeader
@@ -2070,7 +2070,7 @@ export default function PlanningDashboard() {
       </AnimatePresence>
 
       {/* ── MODAL: Client select (Modal 1) ── */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {modalState.type === 'client-select' && (
           <ClientSelectModal
             slot={modalState.slot}
@@ -2096,7 +2096,7 @@ export default function PlanningDashboard() {
       </AnimatePresence>
 
       {/* ── MODAL: Bring back failed deposit ── */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {bringBackFailure && (
           <BringBackBookingModal
             failure={bringBackFailure}
@@ -2111,7 +2111,7 @@ export default function PlanningDashboard() {
       </AnimatePresence>
 
       {/* ── MODAL: Booking details (Modal 2) ── */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {modalState.type === 'booking-details' && merchant && (
           <BookingDetailsModal
             slot={modalState.slot}

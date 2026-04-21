@@ -146,9 +146,9 @@ export default function ClientSelectModal({
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      initial={{ opacity: 0, pointerEvents: 'none' }}
+      animate={{ opacity: 1, pointerEvents: 'auto' }}
+      exit={{ opacity: 0, pointerEvents: 'none' }}
       className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -205,8 +205,8 @@ export default function ClientSelectModal({
                   customerResults.map(c => (
                     <button
                       key={c.id}
-                      onMouseDown={() => onSelectCustomer(c)}
-                      className="w-full text-left px-3 py-2.5 hover:bg-indigo-50 transition-colors border-b border-gray-50 last:border-0"
+                      onPointerDown={() => onSelectCustomer(c)}
+                      className="w-full text-left px-3 py-2.5 hover:bg-indigo-50 transition-colors border-b border-gray-50 last:border-0 touch-manipulation"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-800">

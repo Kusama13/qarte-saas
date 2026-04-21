@@ -134,12 +134,16 @@ export default function NotificationBell() {
     setOpen(false);
     if (notif.url) {
       // next-intl router.push doesn't handle query strings in raw URLs reliably
-      // Use window.location for URLs with query params, router.push for simple paths
-      if (notif.url.includes('?')) {
-        window.location.href = `/${locale}${notif.url}`;
-      } else {
-        router.push(notif.url);
-      }
+      // Use window.location for URLs with query params, router.push for simple paths.
+      // RAF avant nav : laisse React flush setOpen(false) avant la transition (fix iOS PWA).
+      const url = notif.url;
+      requestAnimationFrame(() => {
+        if (url.includes('?')) {
+          window.location.href = `/${locale}${url}`;
+        } else {
+          router.push(url);
+        }
+      });
     }
   };
 
@@ -149,7 +153,7 @@ export default function NotificationBell() {
     <div ref={dropdownRef} className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className="relative p-2 rounded-xl hover:bg-gray-100 transition-colors"
+        className="relative p-2 rounded-xl hover:bg-gray-100 transition-colors touch-manipulation"
         aria-label={t('title')}
       >
         <Bell className="w-5 h-5 text-gray-600" />

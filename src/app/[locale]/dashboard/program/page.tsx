@@ -71,51 +71,55 @@ export default function ProgramPage() {
   const [showTestModal, setShowTestModal] = useState(false);
   useEffect(() => {
     const fetchMerchant = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/auth/merchant');
-        return;
-      }
-
-      const { data } = await supabase
-        .from('merchants')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (data) {
-        setMerchant(data);
-        setFormData({
-          logoUrl: data.logo_url || '',
-          primaryColor: data.primary_color || '#654EDA',
-          secondaryColor: data.secondary_color || '#9D8FE8',
-          reviewLink: data.review_link || '',
-          loyaltyMode: data.loyalty_mode || 'visit',
-          stampsRequired: data.stamps_required || 5,
-          rewardDescription: data.reward_description || '',
-          cagnottePercent: data.cagnotte_percent || 10,
-          cagnotteTier2Percent: data.cagnotte_tier2_percent || 15,
-          tier2Enabled: data.tier2_enabled || false,
-          tier2StampsRequired: data.tier2_stamps_required || 0,
-          tier2RewardDescription: data.tier2_reward_description || '',
-          duoOfferEnabled: data.duo_offer_enabled || false,
-          duoOfferDescription: data.duo_offer_description || '',
-          doubleDaysEnabled: data.double_days_enabled || false,
-          doubleDaysOfWeek: (() => { try { return JSON.parse(data.double_days_of_week || '[]'); } catch { return []; } })(),
-          birthdayGiftEnabled: data.birthday_gift_enabled || false,
-          birthdayGiftDescription: data.birthday_gift_description || '',
-          referralEnabled: data.referral_program_enabled || false,
-          referralRewardReferred: data.referral_reward_referred || '',
-          referralRewardReferrer: data.referral_reward_referrer || '',
-        });
-        setOriginalLoyaltyMode(data.loyalty_mode || 'visit');
-        setOriginalStampsRequired(data.stamps_required || 5);
-        if (!data.reward_description && !data.cagnotte_percent) {
-          setIsFirstSetup(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/auth/merchant');
+          return;
         }
 
+        const { data } = await supabase
+          .from('merchants')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (data) {
+          setMerchant(data);
+          setFormData({
+            logoUrl: data.logo_url || '',
+            primaryColor: data.primary_color || '#654EDA',
+            secondaryColor: data.secondary_color || '#9D8FE8',
+            reviewLink: data.review_link || '',
+            loyaltyMode: data.loyalty_mode || 'visit',
+            stampsRequired: data.stamps_required || 5,
+            rewardDescription: data.reward_description || '',
+            cagnottePercent: data.cagnotte_percent || 10,
+            cagnotteTier2Percent: data.cagnotte_tier2_percent || 15,
+            tier2Enabled: data.tier2_enabled || false,
+            tier2StampsRequired: data.tier2_stamps_required || 0,
+            tier2RewardDescription: data.tier2_reward_description || '',
+            duoOfferEnabled: data.duo_offer_enabled || false,
+            duoOfferDescription: data.duo_offer_description || '',
+            doubleDaysEnabled: data.double_days_enabled || false,
+            doubleDaysOfWeek: (() => { try { return JSON.parse(data.double_days_of_week || '[]'); } catch { return []; } })(),
+            birthdayGiftEnabled: data.birthday_gift_enabled || false,
+            birthdayGiftDescription: data.birthday_gift_description || '',
+            referralEnabled: data.referral_program_enabled || false,
+            referralRewardReferred: data.referral_reward_referred || '',
+            referralRewardReferrer: data.referral_reward_referrer || '',
+          });
+          setOriginalLoyaltyMode(data.loyalty_mode || 'visit');
+          setOriginalStampsRequired(data.stamps_required || 5);
+          if (!data.reward_description && !data.cagnotte_percent) {
+            setIsFirstSetup(true);
+          }
+        }
+      } catch (e) {
+        console.error('[program] fetchMerchant failed:', e);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchMerchant();
