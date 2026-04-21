@@ -350,7 +350,7 @@ export default function ChurnSurveyPage() {
                   type="button"
                   onClick={handleSubmit}
                   disabled={!canSubmit || submitting}
-                  className="w-full h-12 rounded-xl bg-gradient-to-r from-[#4b0082] to-violet-600 text-white font-semibold shadow-lg shadow-[#4b0082]/20 hover:shadow-xl hover:shadow-[#4b0082]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full h-12 rounded-xl bg-[#4b0082] hover:bg-[#4b0082]/90 text-white font-bold active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {submitting ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -378,13 +378,13 @@ export default function ChurnSurveyPage() {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
-                  className="w-16 h-16 mx-auto mb-5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-200/60"
+                  className="w-12 h-12 mx-auto mb-4 rounded-full bg-emerald-500 flex items-center justify-center"
                 >
-                  <Check className="w-8 h-8 text-white" strokeWidth={3} />
+                  <Check className="w-6 h-6 text-white" strokeWidth={3} />
                 </motion.div>
 
-                <h2 className="text-2xl font-extrabold text-gray-900 mb-2">{t('successTitle')}</h2>
-                <p className="text-gray-500 mb-6">{t('successMessage', { days: String(bonusDays) })}</p>
+                <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-2 tracking-tight">{t('successTitle')}</h2>
+                <p className="text-slate-500 mb-6">{t('successMessage', { days: String(bonusDays) })}</p>
 
                 {/* Demo requested */}
                 {demoRequested && (
@@ -405,20 +405,17 @@ export default function ChurnSurveyPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3, duration: 0.4 }}
-                    className="relative p-4 md:p-5 mb-5 md:mb-6 rounded-2xl bg-gradient-to-br from-[#4b0082] to-violet-600 text-white overflow-hidden"
+                    className="p-4 md:p-5 mb-5 md:mb-6 rounded-2xl bg-[#4b0082] text-white"
                   >
-                    <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-                    <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-
-                    <div className="relative">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm mb-3">
+                    <div>
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 mb-3">
                         <Sparkles className="w-3.5 h-3.5" />
                         <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider">
                           {t('promoBadge')}
                         </span>
                       </div>
 
-                      <h3 className="text-lg md:text-xl font-extrabold mb-3 flex items-center justify-center gap-2">
+                      <h3 className="text-lg md:text-xl font-bold mb-3 flex items-center justify-center gap-2 tracking-tight">
                         <Tag className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
                         <span>{t('promoTitle')}</span>
                       </h3>
@@ -426,7 +423,7 @@ export default function ChurnSurveyPage() {
                       <button
                         type="button"
                         onClick={handleCopyPromo}
-                        className="w-full flex items-center justify-between gap-2 px-3 md:px-4 py-3 rounded-xl bg-white/15 hover:bg-white/20 backdrop-blur-sm border border-white/30 transition-all"
+                        className="w-full flex items-center justify-between gap-2 px-3 md:px-4 py-3 rounded-xl bg-white/15 hover:bg-white/20 border border-white/30 active:scale-[0.99] touch-manipulation transition-all"
                       >
                         <span className="font-mono text-base md:text-lg font-bold tracking-wider truncate">
                           {promoCode}
@@ -455,7 +452,7 @@ export default function ChurnSurveyPage() {
                 <button
                   type="button"
                   onClick={handleContinue}
-                  className="w-full h-12 rounded-xl bg-gradient-to-r from-[#4b0082] to-violet-600 text-white font-semibold shadow-lg shadow-[#4b0082]/20 hover:shadow-xl hover:shadow-[#4b0082]/30 transition-all flex items-center justify-center gap-2"
+                  className="w-full h-12 rounded-xl bg-[#4b0082] hover:bg-[#4b0082]/90 text-white font-bold active:scale-[0.98] touch-manipulation transition-all flex items-center justify-center gap-2"
                 >
                   {t('continueToSubscription')}
                   <ArrowRight className="w-5 h-5" />
@@ -480,7 +477,7 @@ export default function ChurnSurveyPage() {
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 30, opacity: 0 }}
-              className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-5 sm:p-6"
+              className="bg-white rounded-2xl w-full max-w-sm shadow-sm border border-slate-100 p-6"
             >
               <h3 className="text-base font-bold text-gray-900">{t('skipConfirmTitle')}</h3>
               <p className="mt-2 text-sm text-gray-600 leading-relaxed">{t('skipConfirmBody')}</p>
@@ -495,7 +492,7 @@ export default function ChurnSurveyPage() {
                 <button
                   type="button"
                   onClick={() => setShowSkipConfirm(false)}
-                  className="w-full sm:flex-[2] py-2.5 rounded-xl bg-gradient-to-r from-[#4b0082] to-violet-600 text-white text-sm font-bold shadow-sm hover:shadow-md transition-shadow"
+                  className="w-full sm:flex-[2] py-2.5 rounded-xl bg-[#4b0082] hover:bg-[#4b0082]/90 text-white text-sm font-bold active:scale-[0.98] touch-manipulation transition-all"
                 >
                   {t('skipConfirmStay')}
                 </button>
