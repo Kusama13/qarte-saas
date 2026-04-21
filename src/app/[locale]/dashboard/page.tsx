@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from '@/i18n/navigation';
-import { Users, UserCheck, UserPlus, Calendar, CalendarDays, CalendarClock, CalendarCheck, Clock, Gift, Sparkles, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Coins, Banknote, Wallet, Globe, Heart, Cake, Eye, MessageSquare } from 'lucide-react';
+import { Users, Gift, AlertTriangle, X, Eye, UserPlus, Sparkles } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
-import { formatRelativeTime, getTodayForCountry, formatCurrency, unwrapJoin } from '@/lib/utils';
-import { endTimeFromStart } from '@/app/[locale]/dashboard/planning/utils';
+import { formatRelativeTime, getTodayForCountry, unwrapJoin } from '@/lib/utils';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { showPlanningUi } from '@/lib/plan-tiers';
@@ -14,12 +13,15 @@ import PendingPointsWidget from '@/components/dashboard/PendingPointsWidget';
 import PendingDepositsWidget from '@/components/dashboard/PendingDepositsWidget';
 import OnboardingChecklist from '@/components/dashboard/OnboardingChecklist';
 import ZeroScansCoach from '@/components/dashboard/ZeroScansCoach';
-import StatsCard from '@/components/dashboard/StatsCard';
+import HeroToday from '@/components/dashboard/HeroToday';
+import ToSeeList, { type ToSeeItem } from '@/components/dashboard/ToSeeList';
+import WeekTiles from '@/components/dashboard/WeekTiles';
+import SmsRecent from '@/components/dashboard/SmsRecent';
 import MilestoneModal from '@/components/dashboard/MilestoneModal';
 import type { MilestoneType } from '@/components/dashboard/MilestoneModal';
 
 // Cache for dashboard stats
-const STATS_CACHE_KEY = 'qarte_dashboard_stats';
+const STATS_CACHE_KEY = 'qarte_dashboard_stats_v2';
 const STATS_CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
 
 // Try to load cached stats for instant display
@@ -51,24 +53,8 @@ function setCachedStats(merchantId: string, data: { stats: typeof initialStats; 
   }
 }
 
-// Semantic palette tokens
-const TOKENS = {
-  brand: '#4b0082',
-  planning: '#10B981',
-  loyalty: '#e11d48',
-  alert: '#D97706',
-  customers: '#6366F1',
-  visits: '#0EA5E9',
-  cumul: '#F59E0B',
-  cashback: '#8B5CF6',
-  welcome: '#EC4899',
-} as const;
-
 const initialStats = {
   totalCustomers: 0,
-  activeCustomers: 0,
-  visitsThisMonth: 0,
-  redemptionsThisMonth: 0,
 };
 
 const initialWeeklyData = { thisWeek: 0, lastWeek: 0 };
@@ -81,11 +67,11 @@ interface ActivityEvent {
   customerId?: string;
 }
 
-const EVENT_CONFIG: Record<ActivityEvent['type'], { icon: React.ElementType; color: string; bg: string; href: string }> = {
-  scan:     { icon: Eye,      color: 'text-emerald-600', bg: 'bg-emerald-50', href: '/dashboard/customers' },
-  reward:   { icon: Gift,     color: 'text-rose-600',    bg: 'bg-rose-50',    href: '/dashboard/customers' },
-  referral: { icon: UserPlus, color: 'text-[#4b0082]',   bg: 'bg-violet-50',  href: '/dashboard/referrals' },
-  welcome:  { icon: Sparkles, color: 'text-rose-600',    bg: 'bg-rose-50',    href: '/dashboard/customers' },
+const EVENT_CONFIG: Record<ActivityEvent['type'], { icon: React.ElementType; href: string; color: string }> = {
+  scan:     { icon: Eye,      href: '/dashboard/customers', color: 'text-emerald-500' },
+  reward:   { icon: Gift,     href: '/dashboard/customers', color: 'text-pink-500' },
+  referral: { icon: UserPlus, href: '/dashboard/referrals', color: 'text-blue-500' },
+  welcome:  { icon: Sparkles, href: '/dashboard/customers', color: 'text-amber-500' },
 };
 
 export default function DashboardPage() {
@@ -111,9 +97,15 @@ export default function DashboardPage() {
     return initialWeeklyData;
   });
 
-  const [cagnotteStats, setCagnotteStats] = useState({ totalCumul: 0, totalCashback: 0 });
   const [pendingReferrals, setPendingReferrals] = useState(0);
   const [welcomeVouchers, setWelcomeVouchers] = useState(0);
+  const [todayVisitsCount, setTodayVisitsCount] = useState(0);
+  const [todayRedemptionsCount, setTodayRedemptionsCount] = useState(0);
+  const [thisWeekRedemptions, setThisWeekRedemptions] = useState(0);
+  const [lastWeekRedemptions, setLastWeekRedemptions] = useState(0);
+  const [nearRewardCustomers, setNearRewardCustomers] = useState<Array<{
+    id: string; firstName: string; remaining: number;
+  }>>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<Array<{
     id: string; slot_date: string; start_time: string; client_name: string; deposit_confirmed: boolean | null;
     total_duration_minutes: number | null;
@@ -122,7 +114,6 @@ export default function DashboardPage() {
   const [upcomingBirthdays, setUpcomingBirthdays] = useState<Array<{
     firstName: string; lastName: string; birthMonth: number; birthDay: number;
   }>>([]);
-  const birthdayDatesRef = useRef<Array<{ month: number; day: number }>>([]);
   const [smsUsage, setSmsUsage] = useState<{ sent: number; remaining: number; overageCount: number; overageCost: number; periodStart: string } | null>(null);
 
   // Fetch SMS usage
@@ -230,17 +221,19 @@ export default function DashboardPage() {
           d.setDate(todayBase.getDate() + i);
           birthdayDates.push({ month: d.getMonth() + 1, day: d.getDate() });
         }
-        birthdayDatesRef.current = birthdayDates;
+
+        // Today bounds (timezone-aware)
+        const todayStartIso = new Date(`${todayStr}T00:00:00`).toISOString();
+        const todayEndIso = new Date(new Date(`${todayStr}T00:00:00`).getTime() + 24 * 60 * 60 * 1000).toISOString();
+
+        const stampsRequired = merchant.stamps_required || 0;
+        const tier1Threshold = stampsRequired > 1 ? stampsRequired - 1 : null; // proche palier 1
 
         const [
           totalCustomersResult,
-          activeCustomersResult,
-          visitsThisMonthResult,
-          redemptionsThisMonthResult,
           feedVisitsResult,
           thisWeekVisitsResult,
           lastWeekVisitsResult,
-          cagnotteCardsResult,
           pendingReferralsResult,
           welcomeVouchersResult,
           upcomingBookingsResult,
@@ -251,28 +244,16 @@ export default function DashboardPage() {
           allBookingsResult,
           feedReferralsResult,
           feedWelcomeResult,
+          todayVisitsResult,
+          todayRedemptionsResult,
+          thisWeekRedemptionsResult,
+          lastWeekRedemptionsResult,
+          nearRewardResult,
         ] = await Promise.all([
           supabase
             .from('loyalty_cards')
             .select('*', { count: 'exact', head: true })
             .eq('merchant_id', merchant.id),
-          supabase
-            .from('loyalty_cards')
-            .select('*', { count: 'exact', head: true })
-            .eq('merchant_id', merchant.id)
-            .gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
-          supabase
-            .from('visits')
-            .select('*', { count: 'exact', head: true })
-            .eq('merchant_id', merchant.id)
-            .gte('visited_at', firstDayOfMonth.toISOString())
-            .lt('visited_at', firstDayOfNextMonth.toISOString()),
-          supabase
-            .from('redemptions')
-            .select('*', { count: 'exact', head: true })
-            .eq('merchant_id', merchant.id)
-            .gte('redeemed_at', firstDayOfMonth.toISOString())
-            .lt('redeemed_at', firstDayOfNextMonth.toISOString()),
           supabase
             .from('visits')
             .select('visited_at, points_earned, loyalty_card:loyalty_cards!inner(customer_id, customer:customers(first_name, last_name))')
@@ -292,9 +273,6 @@ export default function DashboardPage() {
             .eq('merchant_id', merchant.id)
             .gte('visited_at', fourteenDaysAgo.toISOString())
             .lt('visited_at', sevenDaysAgo.toISOString()),
-          merchant.loyalty_mode === 'cagnotte'
-            ? supabase.from('loyalty_cards').select('current_amount').eq('merchant_id', merchant.id)
-            : Promise.resolve({ data: null }),
           merchant.referral_program_enabled
             ? supabase.from('referrals').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id).eq('status', 'pending')
             : Promise.resolve({ count: 0 }),
@@ -342,10 +320,58 @@ export default function DashboardPage() {
           merchant.welcome_offer_enabled
             ? supabase.from('vouchers').select('created_at, customer_id, customer:customers(first_name)').eq('merchant_id', merchant.id).eq('source', 'welcome').order('created_at', { ascending: false }).limit(8)
             : Promise.resolve({ data: [] }),
+          // Today : visites + redemptions (utilises uniquement par HeroToday mode fidelite)
+          !merchant.planning_enabled
+            ? supabase.from('visits').select('*', { count: 'exact', head: true })
+                .eq('merchant_id', merchant.id)
+                .eq('status', 'confirmed')
+                .gte('visited_at', todayStartIso)
+                .lt('visited_at', todayEndIso)
+            : Promise.resolve({ count: 0 }),
+          !merchant.planning_enabled
+            ? supabase.from('redemptions').select('*', { count: 'exact', head: true })
+                .eq('merchant_id', merchant.id)
+                .gte('redeemed_at', todayStartIso)
+                .lt('redeemed_at', todayEndIso)
+            : Promise.resolve({ count: 0 }),
+          // Récompenses cette semaine vs précédente (pour WeekTiles)
+          supabase.from('redemptions').select('*', { count: 'exact', head: true })
+            .eq('merchant_id', merchant.id)
+            .gte('redeemed_at', sevenDaysAgo.toISOString()),
+          supabase.from('redemptions').select('*', { count: 'exact', head: true })
+            .eq('merchant_id', merchant.id)
+            .gte('redeemed_at', fourteenDaysAgo.toISOString())
+            .lt('redeemed_at', sevenDaysAgo.toISOString()),
+          // Proches recompense (palier 1) — HeroToday mode fidelite uniquement
+          !merchant.planning_enabled && merchant.loyalty_mode !== 'cagnotte' && tier1Threshold !== null
+            ? supabase.from('loyalty_cards')
+                .select('id, current_stamps, customer:customers(id, first_name)')
+                .eq('merchant_id', merchant.id)
+                .gte('current_stamps', tier1Threshold)
+                .lt('current_stamps', stampsRequired)
+                .order('current_stamps', { ascending: false })
+                .limit(3)
+            : Promise.resolve({ data: [] }),
         ]);
 
         setPendingReferrals(pendingReferralsResult.count || 0);
         setWelcomeVouchers(welcomeVouchersResult.count || 0);
+        setTodayVisitsCount(todayVisitsResult.count || 0);
+        setTodayRedemptionsCount(todayRedemptionsResult.count || 0);
+        setThisWeekRedemptions(thisWeekRedemptionsResult.count || 0);
+        setLastWeekRedemptions(lastWeekRedemptionsResult.count || 0);
+
+        // Near reward customers
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const nearReward = ((nearRewardResult.data || []) as any[]).map((row) => {
+          const cust = unwrapJoin(row.customer);
+          return {
+            id: row.id as string,
+            firstName: (cust?.first_name as string) || t('defaultClient'),
+            remaining: stampsRequired - (row.current_stamps as number),
+          };
+        });
+        setNearRewardCustomers(nearReward);
 
         if (upcomingBookingsResult.data) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -377,15 +403,6 @@ export default function DashboardPage() {
           setUpcomingBirthdays(birthdays);
         }
 
-        // Cagnotte stats
-        if (merchant.loyalty_mode === 'cagnotte' && cagnotteCardsResult.data) {
-          const amounts = cagnotteCardsResult.data as { current_amount: number }[];
-          const totalCumul = amounts.reduce((sum, c) => sum + Number(c.current_amount || 0), 0);
-          const percent = Number(merchant.cagnotte_percent || 0);
-          const totalCashback = Math.round(totalCumul * percent) / 100;
-          setCagnotteStats({ totalCumul, totalCashback });
-        }
-
         // Milestone data
         setServicesCount(servicesCountResult.count || 0);
         setTotalRedemptions(allRedemptionsResult.count || 0);
@@ -393,9 +410,6 @@ export default function DashboardPage() {
 
         const newStats = {
           totalCustomers: totalCustomersResult.count || 0,
-          activeCustomers: activeCustomersResult.count || 0,
-          visitsThisMonth: visitsThisMonthResult.count || 0,
-          redemptionsThisMonth: redemptionsThisMonthResult.count || 0,
         };
         setStats(newStats);
 
@@ -541,42 +555,71 @@ export default function DashboardPage() {
     );
   }
 
-  const renderDepositBadge = (status: boolean | null) => {
-    if (status === false) return (
-      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600">
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-        {t('depositPending')}
-      </span>
-    );
-    if (status === true) return (
-      <span className="text-[10px] font-bold text-emerald-600">{t('depositOk')}</span>
-    );
-    return null;
-  };
+  const MOTIVATION_KEYS = ['motivationSunday', 'motivationMonday', 'motivationTuesday', 'motivationWednesday', 'motivationThursday', 'motivationFriday', 'motivationSaturday'] as const;
+  const motivationKey = MOTIVATION_KEYS[new Date().getDay()];
+  const todayStrK = getTodayForCountry(merchant.country);
+  const todayBookingsForHero = upcomingBookings
+    .filter(b => b.slot_date === todayStrK)
+    .map(b => ({
+      id: b.id,
+      client_name: b.client_name,
+      start_time: b.start_time,
+      totalPrice: b.services.reduce((s, sv) => s + (sv.price || 0), 0),
+      servicesLabel: b.services.map(s => s.name).join(' · '),
+      deposit_confirmed: b.deposit_confirmed,
+    }));
+
+  const toSeeItems: ToSeeItem[] = [];
+  if (upcomingBirthdays.length > 0) {
+    const names = upcomingBirthdays.slice(0, 3).map(b => b.firstName).join(', ');
+    toSeeItems.push({
+      key: 'birthdays',
+      icon: 'cake',
+      label: upcomingBirthdays.length === 1
+        ? t('toSeeBirthdaysOne', { name: names })
+        : t('toSeeBirthdaysMany', { count: upcomingBirthdays.length, names }),
+      count: upcomingBirthdays.length,
+      href: '/dashboard/customers',
+    });
+  }
+  if (pendingReferrals > 0) {
+    toSeeItems.push({
+      key: 'referrals',
+      icon: 'userPlus',
+      label: t('toSeeReferrals', { count: pendingReferrals }),
+      count: pendingReferrals,
+      href: '/dashboard/referrals',
+    });
+  }
+  if (welcomeVouchers > 0) {
+    toSeeItems.push({
+      key: 'welcome',
+      icon: 'sparkles',
+      label: t('toSeeWelcome', { count: welcomeVouchers }),
+      count: welcomeVouchers,
+      href: '/dashboard/customers',
+    });
+  }
 
   return (
-      <div className="space-y-8">
-        {(() => {
-          const MOTIVATION_KEYS = ['motivationSunday', 'motivationMonday', 'motivationTuesday', 'motivationWednesday', 'motivationThursday', 'motivationFriday', 'motivationSaturday'] as const;
-          const motivationKey = MOTIVATION_KEYS[new Date().getDay()];
-          return (
-            <div>
-              <h1 className="text-xl md:text-3xl font-extrabold tracking-tight text-gray-900">
-                {t('greeting')} <span className="bg-gradient-to-r from-[#4b0082] to-violet-600 bg-clip-text text-transparent">
-                  {merchant?.shop_name}
-                </span>
-              </h1>
-              <p className="mt-1.5 text-xs md:text-sm text-gray-500">
-                {t(motivationKey)}
-              </p>
-            </div>
-          );
-        })()}
+      <div className="space-y-4 md:space-y-6">
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+            {t('greeting')} {merchant?.shop_name}
+          </h1>
+          <p className="mt-0.5 text-xs md:text-sm text-slate-500">{t(motivationKey)}</p>
+        </div>
 
-      {/* Onboarding Checklist */}
       <OnboardingChecklist />
 
-      {/* Acomptes en attente — visible uniquement si planning enabled + count > 0 */}
+      <HeroToday
+        merchant={merchant}
+        todayBookings={todayBookingsForHero}
+        todayVisitsCount={todayVisitsCount}
+        todayRedemptionsCount={todayRedemptionsCount}
+        nearRewardCustomers={nearRewardCustomers}
+      />
+
       {merchant.planning_enabled && (
         <PendingDepositsWidget
           merchantId={merchant.id}
@@ -587,180 +630,78 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* Today KPIs */}
-      {merchant.planning_enabled && (() => {
-        const todayStrK = getTodayForCountry(merchant.country);
-        const todayB = upcomingBookings.filter(b => b.slot_date === todayStrK);
-        const todayCount = todayB.length;
-        const todayRev = todayB.reduce((sum, b) => sum + b.services.reduce((s, sv) => s + (sv.price || 0), 0), 0);
-        return (
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm p-4 md:p-5">
-              <div className="flex items-center gap-2.5 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                  <CalendarCheck className="w-4 h-4 text-gray-600" />
-                </div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 leading-tight line-clamp-2">{t('todayBookingsCount')}</p>
-              </div>
-              <p className="text-2xl md:text-3xl font-bold text-gray-900 tracking-[-0.03em] tabular-nums text-center">{todayCount}</p>
-            </div>
-            <div className="bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm p-4 md:p-5">
-              <div className="flex items-center gap-2.5 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                  <Banknote className="w-4 h-4 text-gray-600" />
-                </div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 leading-tight line-clamp-2">{t('todayRevenue')}</p>
-              </div>
-              <p className="text-2xl md:text-3xl font-bold text-gray-900 tracking-[-0.03em] tabular-nums text-center">{formatCurrency(todayRev, merchant.country, locale, 0)}</p>
-            </div>
-          </div>
-        );
-      })()}
+      <ToSeeList items={toSeeItems} />
 
-      {/* Upcoming Bookings Widget */}
-      {merchant.planning_enabled && upcomingBookings.length > 0 && (() => {
-        const todayStr2 = getTodayForCountry(merchant.country);
-        const tomorrowDate = new Date(todayStr2);
-        tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-        const tomorrowStr = tomorrowDate.toISOString().split('T')[0];
+      <WeekTiles
+        tiles={[
+          {
+            label: t('weekVisitsLabel'),
+            value: weeklyData.thisWeek,
+            thisWeek: weeklyData.thisWeek,
+            lastWeek: weeklyData.lastWeek,
+          },
+          {
+            label: t('weekRewardsLabel'),
+            value: thisWeekRedemptions,
+            thisWeek: thisWeekRedemptions,
+            lastWeek: lastWeekRedemptions,
+          },
+        ]}
+      />
 
-        const todayBookings = upcomingBookings.filter(b => b.slot_date === todayStr2);
-        const laterBookings = upcomingBookings.filter(b => b.slot_date !== todayStr2);
 
-        return (
-          <div className="bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden">
-            <div className="p-4 md:p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                    <CalendarDays className="w-4 h-4 text-emerald-600" />
-                  </div>
-                  <h2 className="text-sm md:text-base font-bold text-gray-900">{t('upcomingBookings')}</h2>
-                </div>
-                <Link href="/dashboard/planning" className="hidden md:flex items-center gap-1 text-xs font-semibold text-gray-400 hover:text-gray-600">
-                  {t('viewPlanning')}
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+      {stats.totalCustomers > 0 && (
+        <PendingPointsWidget
+          merchantId={merchant.id}
+          shieldEnabled={shieldEnabled}
+          onShieldToggle={handleShieldToggle}
+        />
+      )}
 
-              {/* Today section */}
-              {todayBookings.length > 0 && (
-                <div className="mb-5">
-                  <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#4b0082] mb-2">{t('today')}</p>
-                  <div className="space-y-2">
-                    {todayBookings.map((b) => {
-                      const duration = b.total_duration_minutes ?? b.services.reduce((sum, s) => sum + (s.duration || 0), 0);
-                      const endTime = duration > 0 ? endTimeFromStart(b.start_time, duration) : null;
-                      const totalPrice = b.services.reduce((sum, s) => sum + (s.price || 0), 0);
-                      const servicesLabel = b.services.map(s => s.name).join(' · ');
-
-                      return (
-                        <Link
-                          key={b.id}
-                          href={`/dashboard/planning?slot=${b.id}`}
-                          className="block relative pl-4 pr-3 py-3 rounded-xl bg-violet-50/50 hover:bg-violet-50 transition-colors cursor-pointer active:scale-[0.99] border border-violet-100/60"
-                        >
-                          <span className="absolute left-0 top-3 bottom-3 w-1 rounded-r bg-gradient-to-b from-[#4b0082] to-violet-600" />
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-gray-900 truncate">{b.client_name}</p>
-                              {servicesLabel && (
-                                <p className="text-[11px] text-gray-500 truncate mt-0.5">{servicesLabel}</p>
-                              )}
-                              <div className="flex items-center gap-2 mt-1.5 text-[11px] font-medium text-gray-500">
-                                <span className="tabular-nums">{b.start_time}{endTime && ` – ${endTime}`}</span>
-                                {renderDepositBadge(b.deposit_confirmed)}
-                              </div>
-                            </div>
-                            {totalPrice > 0 && (
-                              <span className="text-sm font-bold text-gray-900 shrink-0 tabular-nums">
-                                {formatCurrency(totalPrice, merchant?.country, locale, 0)}
-                              </span>
-                            )}
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Later section */}
-              {laterBookings.length > 0 && (
-                <div>
-                  {todayBookings.length > 0 && (
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="h-px flex-1 bg-gray-100" />
-                      <p className="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">{t('upcoming')}</p>
-                      <span className="h-px flex-1 bg-gray-100" />
-                    </div>
-                  )}
-                  <div className="space-y-1.5">
-                    {laterBookings.map((b) => {
-                      const isTomorrow = b.slot_date === tomorrowStr;
-                      const slotDate = new Date(b.slot_date + 'T12:00:00');
-                      const dayLabel = isTomorrow
-                        ? t('tomorrow')
-                        : slotDate.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-
-                      return (
-                        <Link key={b.id} href={`/dashboard/planning?slot=${b.id}`} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50/80 hover:bg-gray-100/80 transition-colors cursor-pointer active:scale-[0.99]">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">{b.client_name}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <p className="text-[11px] text-gray-400">{dayLabel}</p>
-                              {renderDepositBadge(b.deposit_confirmed)}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1 shrink-0 text-xs font-medium text-gray-400">
-                            <Clock className="w-3 h-3" />
-                            {b.start_time}
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* Upcoming Birthdays */}
-      {merchant?.birthday_gift_enabled && upcomingBirthdays.length > 0 && (
-        <div className="bg-pink-50/50 border border-pink-100 rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="p-1.5 rounded-lg bg-pink-100">
-              <Cake className="w-4 h-4 text-pink-600" />
-            </div>
-            <h3 className="text-sm font-bold text-gray-900">{t('upcomingBirthdays')}</h3>
-          </div>
-          <div className="space-y-1.5">
-            {upcomingBirthdays.map((b, i) => {
-              const bd = birthdayDatesRef.current;
-              const label = bd[0]?.month === b.birthMonth && bd[0]?.day === b.birthDay
-                ? t('birthdayToday')
-                : bd[1]?.month === b.birthMonth && bd[1]?.day === b.birthDay
-                  ? t('birthdayTomorrow')
-                  : t('birthdayIn2Days');
-              return (
-                <div key={i} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/70">
-                  <div className="flex items-center justify-center w-8 h-8 shrink-0 text-xs font-bold text-white rounded-lg bg-gradient-to-br from-pink-500 to-rose-500">
-                    {b.firstName.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">
-                      {b.firstName} {b.lastName?.charAt(0) ? `${b.lastName.charAt(0)}.` : ''}
-                    </p>
-                  </div>
-                  <span className="text-xs font-medium text-pink-600 bg-pink-100 px-2 py-0.5 rounded-full shrink-0">{label}</span>
-                </div>
-              );
-            })}
+      {activityFeed.length > 0 ? (
+        <div>
+          <p className="px-1 mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+            {t('recentActivity')}
+          </p>
+          <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden">
+            <ul className="divide-y divide-slate-100">
+              {activityFeed.map((event, i) => {
+                const config = EVENT_CONFIG[event.type];
+                const Icon = config.icon;
+                return (
+                  <li key={`${event.type}-${i}`}>
+                    <Link
+                      href={event.customerId ? `${config.href}?customer=${event.customerId}` : config.href}
+                      className="flex items-center gap-3 px-4 py-2.5 active:bg-slate-50 transition-colors touch-manipulation"
+                    >
+                      <Icon className={`w-4 h-4 shrink-0 ${config.color}`} strokeWidth={2} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-medium text-slate-800 truncate">
+                          {event.title}
+                          {event.subtitle && (
+                            <span className="text-slate-400 font-normal"> · {event.subtitle}</span>
+                          )}
+                        </p>
+                      </div>
+                      <span className="text-[11px] text-slate-400 shrink-0 whitespace-nowrap">
+                        {formatRelativeTime(event.timestamp, locale)}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         </div>
-      )}
+      ) : merchant?.reward_description ? (
+        <ZeroScansCoach merchant={merchant} />
+      ) : null}
+
+      <SmsRecent
+        merchantId={merchant.id}
+        smsUsage={smsUsage}
+        showQuota={showPlanningUi(merchant)}
+      />
 
       {/* Shield Disable Warning Modal */}
       {showShieldWarning && (
@@ -781,304 +722,21 @@ export default function DashboardPage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-
             <div className="p-4 rounded-xl bg-red-50 border border-red-100 mb-6">
               <p className="text-sm text-red-800 font-medium mb-2">{t('disableShieldRisks')}</p>
               <ul className="text-sm text-red-700 space-y-1.5">
-                <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-1">•</span>
-                  <span>{t('disableShieldRisk1')}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-1">•</span>
-                  <span>{t('disableShieldRisk2')}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-1">•</span>
-                  <span>{t('disableShieldRisk3')}</span>
-                </li>
+                <li className="flex items-start gap-2"><span className="text-red-400 mt-1">•</span><span>{t('disableShieldRisk1')}</span></li>
+                <li className="flex items-start gap-2"><span className="text-red-400 mt-1">•</span><span>{t('disableShieldRisk2')}</span></li>
+                <li className="flex items-start gap-2"><span className="text-red-400 mt-1">•</span><span>{t('disableShieldRisk3')}</span></li>
               </ul>
             </div>
-
             <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setShowShieldWarning(false)}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-              >
-                {t('disableShieldCancel')}
-              </button>
-              <button
-                type="button"
-                onClick={confirmDisableShield}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors"
-              >
-                {t('disableShieldConfirm')}
-              </button>
+              <button type="button" onClick={() => setShowShieldWarning(false)} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors">{t('disableShieldCancel')}</button>
+              <button type="button" onClick={confirmDisableShield} className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors">{t('disableShieldConfirm')}</button>
             </div>
           </div>
         </div>
       )}
-
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 items-stretch">
-        <Link href="/dashboard/customers" className="block h-full">
-          <StatsCard
-            title={t('totalClients')}
-            value={stats.totalCustomers}
-            icon={Users}
-            color={TOKENS.customers}
-          />
-        </Link>
-        <Link href="/dashboard/customers" className="block h-full">
-          <StatsCard
-            title={t('activeClients')}
-            value={stats.activeCustomers}
-            icon={UserCheck}
-            color={TOKENS.planning}
-          />
-        </Link>
-        <StatsCard
-          title={t('visitsMonth')}
-          value={stats.visitsThisMonth}
-          icon={Calendar}
-          color={TOKENS.visits}
-        />
-        <StatsCard
-          title={t('rewardsMonth')}
-          value={stats.redemptionsThisMonth}
-          icon={Gift}
-          color={TOKENS.loyalty}
-        />
-      </div>
-
-      {merchant?.loyalty_mode === 'cagnotte' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <StatsCard
-            title={t('cumulClients')}
-            value={formatCurrency(cagnotteStats.totalCumul, merchant?.country, locale, 0)}
-            icon={Coins}
-            color={TOKENS.cumul}
-          />
-          <StatsCard
-            title={t('cashbackOngoing')}
-            value={formatCurrency(cagnotteStats.totalCashback, merchant?.country, locale, 0)}
-            icon={Wallet}
-            color={TOKENS.cashback}
-          />
-        </div>
-      )}
-
-      {/* Referrals + Welcome offer highlights */}
-      {(pendingReferrals > 0 || welcomeVouchers > 0) && (
-        <div className="grid grid-cols-2 gap-3">
-          {pendingReferrals > 0 && (
-            <Link href="/dashboard/referrals" className="block">
-              <StatsCard
-                title={t('pendingReferrals')}
-                value={pendingReferrals}
-                icon={UserPlus}
-                color={TOKENS.brand}
-              />
-            </Link>
-          )}
-          {welcomeVouchers > 0 && (
-            <Link href="/dashboard/customers" className="block">
-              <StatsCard
-                title={t('welcomeOffer')}
-                value={welcomeVouchers}
-                icon={Sparkles}
-                color={TOKENS.welcome}
-              />
-            </Link>
-          )}
-        </div>
-      )}
-
-      {stats.totalCustomers > 0 && (
-        <PendingPointsWidget
-          merchantId={merchant.id}
-          shieldEnabled={shieldEnabled}
-          onShieldToggle={handleShieldToggle}
-        />
-      )}
-
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
-        {/* Weekly Comparison Card */}
-        <div className="bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden">
-          <div className="p-5 md:p-8">
-            <p className="text-[10px] font-black text-slate-400/80 uppercase tracking-[0.2em] mb-4 md:mb-6">
-              {t('last7Days')}
-            </p>
-            {weeklyData.thisWeek > 0 || weeklyData.lastWeek > 0 ? (
-              <div>
-                <div className="flex items-baseline gap-2.5">
-                  <span className="text-3xl md:text-5xl font-black tracking-[-0.03em] text-slate-900">
-                    {weeklyData.thisWeek}
-                  </span>
-                  <span className="text-sm md:text-base font-semibold text-slate-400">
-                    {weeklyData.thisWeek !== 1 ? t('visitsPlural') : t('visits')}
-                  </span>
-                </div>
-
-                {weeklyData.lastWeek > 0 ? (() => {
-                  const change = Math.round(((weeklyData.thisWeek - weeklyData.lastWeek) / weeklyData.lastWeek) * 100);
-                  const isPositive = change >= 0;
-                  return (
-                    <div className="flex items-center gap-2.5 mt-3">
-                      <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black ${
-                        isPositive
-                          ? 'bg-emerald-50/80 text-emerald-600 border border-emerald-100/50'
-                          : 'bg-red-50/80 text-red-600 border border-red-100/50'
-                      }`}>
-                        {isPositive ? (
-                          <ArrowUpRight className="w-3.5 h-3.5 stroke-[3]" />
-                        ) : (
-                          <ArrowDownRight className="w-3.5 h-3.5 stroke-[3]" />
-                        )}
-                        {change > 0 ? '+' : ''}{change}%
-                      </div>
-                      <span className="text-sm text-slate-500">
-                        {t('vsLastWeek', { count: weeklyData.lastWeek })}
-                      </span>
-                    </div>
-                  );
-                })() : (
-                  <p className="text-sm text-slate-400 mt-3">
-                    {t('noPrevWeekData')}
-                  </p>
-                )}
-
-                {/* Visual comparison bars */}
-                <div className="mt-8 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider w-20 shrink-0">{t('thisWeek')}</span>
-                    <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-700"
-                        style={{
-                          width: `${Math.min((weeklyData.thisWeek / Math.max(weeklyData.thisWeek, weeklyData.lastWeek, 1)) * 100, 100)}%`,
-                          backgroundColor: TOKENS.brand,
-                        }}
-                      />
-                    </div>
-                    <span className="text-sm font-bold text-slate-700 w-8 text-right tabular-nums">{weeklyData.thisWeek}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-20 shrink-0">{t('prevWeek')}</span>
-                    <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-slate-300 rounded-full transition-all duration-700"
-                        style={{ width: `${Math.min((weeklyData.lastWeek / Math.max(weeklyData.thisWeek, weeklyData.lastWeek, 1)) * 100, 100)}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-bold text-slate-400 w-8 text-right tabular-nums">{weeklyData.lastWeek}</span>
-                  </div>
-                </div>
-
-                {weeklyData.lastWeek > 0 && (() => {
-                  const change = Math.round(((weeklyData.thisWeek - weeklyData.lastWeek) / weeklyData.lastWeek) * 100);
-                  if (change > 0) return <p className="text-xs text-emerald-600 font-medium mt-4">{t('trendUp', { percent: change })}</p>;
-                  if (change < 0) return <p className="text-xs text-red-500 font-medium mt-4">{t('trendDown', { percent: Math.abs(change) })}</p>;
-                  return <p className="text-xs text-gray-400 font-medium mt-4">{t('trendStable')}</p>;
-                })()}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-[200px] text-gray-500">
-                <div className="p-4 mb-4 rounded-2xl bg-indigo-50/50">
-                  <Calendar className="w-10 h-10 text-indigo-200" />
-                </div>
-                <p className="font-medium text-gray-900">{t('noVisits')}</p>
-                <p className="text-sm">{t('noVisitsHint')}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Activity Card */}
-        <div className="bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden">
-          <div className="p-4 md:p-6">
-            <h2 className="text-base md:text-xl font-bold tracking-tight text-gray-900 mb-3">
-              {t('recentActivity')}
-            </h2>
-
-            {activityFeed.length > 0 ? (
-              <div className="space-y-1.5">
-                {activityFeed.map((event, i) => {
-                  const config = EVENT_CONFIG[event.type];
-                  const Icon = config.icon;
-                  return (
-                    <Link
-                      key={`${event.type}-${i}`}
-                      href={event.customerId ? `${config.href}?customer=${event.customerId}` : config.href}
-                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gray-50/80 border border-transparent hover:bg-white hover:border-gray-200 hover:shadow-sm transition-all duration-150 cursor-pointer"
-                    >
-                      <div className={`flex items-center justify-center w-8 h-8 shrink-0 rounded-lg ${config.bg}`}>
-                        <Icon className={`w-4 h-4 ${config.color}`} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-semibold text-gray-900 truncate">{event.title}</p>
-                        </div>
-                        {event.subtitle && (
-                          <p className="text-[11px] text-gray-400 leading-none mt-0.5">{event.subtitle}</p>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-gray-400 shrink-0 whitespace-nowrap">
-                        {formatRelativeTime(event.timestamp, locale)}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            ) : merchant?.reward_description ? (
-              <ZeroScansCoach merchant={merchant} />
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                <div className="p-4 mb-4 rounded-2xl bg-indigo-50/50">
-                  <Users className="w-10 h-10 text-indigo-200" />
-                </div>
-                <p className="font-medium text-gray-900">{t('noClientsYet')}</p>
-                <p className="text-sm">{t('noClientsHint')}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {smsUsage && showPlanningUi(merchant) && (() => {
-        const isPaid = merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling' || merchant?.subscription_status === 'past_due';
-        const pct = Math.min(100, Math.round((smsUsage.sent / 100) * 100));
-        const isOverage = smsUsage.sent > 100;
-        return (
-          <div className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border ${isPaid ? 'bg-gray-50/80 border-gray-100' : 'bg-amber-50/60 border-amber-100'}`}>
-            <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isOverage ? 'text-amber-600' : 'text-gray-400'}`} />
-            <span className="text-[11px] font-semibold text-gray-600 shrink-0">{t('smsQuotaTitle')}</span>
-            {isPaid ? (
-              <>
-                <div className="flex-1 h-1 bg-gray-200/70 rounded-full overflow-hidden min-w-[40px]">
-                  <div
-                    className={`h-full rounded-full transition-all ${isOverage ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-                <span className="text-[11px] font-bold text-gray-700 tabular-nums shrink-0">{t('smsQuotaUsed', { sent: smsUsage.sent })}</span>
-                {isOverage && (
-                  <span className="text-[10px] font-semibold text-amber-600 shrink-0">
-                    {t('smsOverage', { count: smsUsage.overageCount, cost: smsUsage.overageCost.toFixed(2) })}
-                  </span>
-                )}
-              </>
-            ) : (
-              <>
-                <span className="flex-1 text-[11px] text-gray-500 truncate">{t('smsQuotaTrialHint')}</span>
-                <Link href="/dashboard/subscription" className="shrink-0 px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold hover:shadow-md transition-all">
-                  {t('smsQuotaTrialCta')}
-                </Link>
-              </>
-            )}
-          </div>
-        );
-      })()}
 
       {activeMilestone && (
         <MilestoneModal type={activeMilestone} onClose={() => setActiveMilestone(null)} />
