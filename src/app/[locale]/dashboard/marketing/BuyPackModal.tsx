@@ -103,7 +103,7 @@ export default function BuyPackModal({ open, onClose }: BuyPackModalProps) {
                 } disabled:opacity-50`}
               >
                 <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ${
                     p.popular ? 'bg-[#4b0082] text-white' : 'bg-gray-100 text-gray-700'
                   }`}>
                     {p.size}
@@ -124,7 +124,7 @@ export default function BuyPackModal({ open, onClose }: BuyPackModalProps) {
                 </div>
                 <div className="flex items-center gap-2 text-right shrink-0">
                   <div>
-                    <p className="text-base font-black text-gray-900">{p.ttcWithFee.toFixed(2)}€</p>
+                    <p className="text-base font-bold text-gray-900">{p.ttcWithFee.toFixed(2)}€</p>
                     <p className="text-[10px] text-gray-400">TTC</p>
                   </div>
                   {loading === p.size && <Loader2 className="w-4 h-4 animate-spin text-[#4b0082]" />}

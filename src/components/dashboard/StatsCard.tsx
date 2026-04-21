@@ -36,7 +36,7 @@ const StatsCard = memo(function StatsCard({ title, value, icon: Icon, trend, col
         {trend && (
           <div className={`flex items-center gap-0.5 px-1.5 py-0 rounded-full border flex-shrink-0 ${trendClasses}`}>
             <TrendIcon className="w-2.5 h-2.5 stroke-[3]" />
-            <span className="text-[9px] md:text-[10px] font-black">{trend}</span>
+            <span className="text-[9px] md:text-[10px] font-bold">{trend}</span>
           </div>
         )}
       </div>

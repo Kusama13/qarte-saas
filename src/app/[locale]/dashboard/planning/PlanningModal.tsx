@@ -14,12 +14,12 @@ const SIZE: Record<ModalSize, string> = {
 };
 
 const TINT: Record<IconTint, string> = {
-  gray: 'bg-gray-100 text-gray-600',
-  red: 'bg-red-50 text-red-500',
-  amber: 'bg-amber-100 text-amber-600',
+  gray: 'bg-slate-100 text-slate-600',
+  red: 'bg-red-50 text-red-600',
+  amber: 'bg-amber-50 text-amber-600',
   indigo: 'bg-indigo-50 text-indigo-600',
   emerald: 'bg-emerald-50 text-emerald-600',
-  violet: 'bg-violet-100 text-violet-600',
+  violet: 'bg-violet-50 text-violet-600',
 };
 
 export default function PlanningModal({
@@ -36,14 +36,14 @@ export default function PlanningModal({
       initial={{ opacity: 0, pointerEvents: 'none' }}
       animate={{ opacity: 1, pointerEvents: 'auto' }}
       exit={{ opacity: 0, pointerEvents: 'none' }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <motion.div
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 50, opacity: 0 }}
-        className={`relative bg-white rounded-2xl w-full ${SIZE[size]} max-h-[85vh] overflow-y-auto shadow-xl`}
+        className={`relative bg-white rounded-2xl w-full ${SIZE[size]} max-h-[85vh] overflow-y-auto shadow-sm border border-slate-100`}
       >
         {children}
       </motion.div>
@@ -72,22 +72,22 @@ export function ModalHeader({
     <div className="flex items-center justify-between p-4 border-b border-gray-100 gap-3">
       <div className="flex items-center gap-3 min-w-0 flex-1">
         {icon && (
-          <div className={`shrink-0 w-8 h-8 rounded-xl flex items-center justify-center ${TINT[iconTint]}`}>
+          <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${TINT[iconTint]}`}>
             {icon}
           </div>
         )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold text-gray-900 truncate">{title}</h3>
+            <h3 className="text-sm font-bold text-slate-900 truncate">{title}</h3>
             {badge}
           </div>
-          {subtitle && <p className="text-xs text-gray-400 truncate">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-slate-400 truncate">{subtitle}</p>}
         </div>
       </div>
       <div className="flex items-center gap-1 shrink-0">
         {actions}
-        <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-          <X className="w-5 h-5 text-gray-400" />
+        <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 active:scale-95 touch-manipulation transition-colors">
+          <X className="w-5 h-5 text-slate-400" />
         </button>
       </div>
     </div>

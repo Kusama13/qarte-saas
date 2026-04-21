@@ -37,7 +37,7 @@ export default function BillingToggle({ value, onChange, annualSavingsPct }: Bil
           }`}
         >
           {t('annual')}
-          <span className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full ${
+          <span className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${
             value === 'annual'
               ? 'bg-emerald-400/20 text-emerald-200'
               : 'bg-emerald-50 text-emerald-700'

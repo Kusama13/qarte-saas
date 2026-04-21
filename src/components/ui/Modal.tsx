@@ -44,31 +44,31 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
     >
       <div
         className={cn(
-          'relative w-full bg-white rounded-2xl shadow-xl animate-slide-up',
+          'relative w-full bg-white rounded-2xl shadow-sm border border-slate-100 animate-slide-up',
           sizes[size]
         )}
       >
         {title && (
-          <div className="flex items-center justify-between p-6 border-b">
-            <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+          <div className="flex items-center justify-between p-6 border-b border-slate-100">
+            <h2 className="text-base font-bold text-slate-900">{title}</h2>
             <button
               onClick={onClose}
-              className="p-2 transition-colors rounded-lg hover:bg-gray-100"
+              className="p-2 transition-colors rounded-lg hover:bg-slate-100 active:scale-95 touch-manipulation"
             >
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-5 h-5 text-slate-500" />
             </button>
           </div>
         )}
         {!title && (
           <button
             onClick={onClose}
-            className="absolute p-2 transition-colors rounded-lg top-4 right-4 hover:bg-gray-100"
+            className="absolute p-2 transition-colors rounded-lg top-4 right-4 hover:bg-slate-100 active:scale-95 touch-manipulation"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-slate-500" />
           </button>
         )}
         <div className="p-6">{children}</div>

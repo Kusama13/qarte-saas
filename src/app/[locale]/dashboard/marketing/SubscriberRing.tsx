@@ -26,7 +26,7 @@ export default function SubscriberRing({ subscriberCount, subscribers, loadingCo
             <div className="w-6 h-6 bg-gray-100 rounded animate-pulse" />
           ) : (
             <div className="flex flex-col items-center">
-              <span className="text-lg font-black text-indigo-600 leading-none">{count}</span>
+              <span className="text-lg font-bold text-indigo-600 leading-none">{count}</span>
               <Bell className="w-3 h-3 text-indigo-400 mt-0.5" />
             </div>
           )}

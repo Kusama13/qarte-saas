@@ -199,11 +199,11 @@ export default function QRDownloadPage() {
   return (
     <div className="max-w-lg lg:max-w-5xl mx-auto">
       {/* Header */}
-      <div className="mb-6 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
-        <h1 className="text-xl md:text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
+      <div className="mb-4 md:mb-6">
+        <h1 className="text-lg md:text-2xl font-bold tracking-tight text-slate-900">
           {t('title')}
         </h1>
-        <p className="mt-1 text-sm text-gray-500 font-medium">
+        <p className="mt-0.5 text-xs md:text-sm text-slate-500">
           {t('subtitle')}
         </p>
       </div>
@@ -339,12 +339,12 @@ export default function QRDownloadPage() {
                         />
                       ) : (
                         <div className="w-9 h-9 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center">
-                          <span className="text-sm font-black text-white">
+                          <span className="text-sm font-bold text-white">
                             {merchant.shop_name[0]?.toUpperCase()}
                           </span>
                         </div>
                       )}
-                      <h2 className="mt-1 text-sm font-black text-white tracking-tight leading-tight">
+                      <h2 className="mt-1 text-sm font-bold text-white tracking-tight leading-tight">
                         {merchant.shop_name}
                       </h2>
                       <p className="mt-0.5 text-[7px] text-white/50 font-semibold uppercase tracking-[0.2em]">
@@ -387,7 +387,7 @@ export default function QRDownloadPage() {
                           </div>
                         )}
                       </div>
-                      <p className="mt-2 text-sm font-black text-white tracking-tight">
+                      <p className="mt-2 text-sm font-bold text-white tracking-tight">
                         {t('scanMe')}
                       </p>
                     </div>
@@ -749,7 +749,7 @@ export default function QRDownloadPage() {
               <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mb-4 shadow-lg shadow-indigo-200">
                 <Users className="w-6 h-6 text-white" />
               </div>
-              <p className="text-lg font-black text-gray-900">{t('postDownloadTitle')}</p>
+              <p className="text-lg font-bold text-gray-900">{t('postDownloadTitle')}</p>
               <p className="mt-2 text-sm text-gray-500 leading-relaxed">
                 {t('postDownloadDesc')}
               </p>

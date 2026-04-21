@@ -26,7 +26,7 @@ export default function ProgramCard({
       whileHover={{ y: -4 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="group relative overflow-hidden p-6 bg-white/70 backdrop-blur-xl rounded-2xl border border-indigo-100 shadow-md hover:shadow-2xl hover:shadow-indigo-200/30 hover:border-indigo-400 transition-all text-left w-full"
+      className="group relative overflow-hidden p-6 bg-white/70 rounded-2xl border border-indigo-100 shadow-md hover:shadow-2xl hover:shadow-indigo-200/30 hover:border-indigo-400 transition-all text-left w-full"
     >
       {/* Golden Shine & Glass Effects */}
       <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent -translate-x-full group-hover:animate-shimmer pointer-events-none" />

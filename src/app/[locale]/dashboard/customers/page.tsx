@@ -409,9 +409,9 @@ export default function CustomersPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
       {/* Header : titre compact + boutons d'actions */}
-      <div className="flex flex-col gap-3 p-3 md:p-4 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
-        <h1 className="text-lg md:text-2xl font-extrabold tracking-tight text-gray-900">
-          {t('title')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4b0082] to-violet-600">{t('titleHighlight')}</span>
+      <div className="flex flex-col gap-3">
+        <h1 className="text-lg md:text-2xl font-bold tracking-tight text-slate-900">
+          {t('title')} <span className="text-[#4b0082]">{t('titleHighlight')}</span>
         </h1>
         <div className="flex flex-wrap items-center gap-2">
           <Link href="/dashboard/members">
@@ -457,7 +457,7 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      <div className="p-4 md:p-8 bg-white/80 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/20 shadow-xl shadow-indigo-100/50 relative overflow-hidden">
+      <div className="p-4 md:p-8 bg-white/80 rounded-2xl border border-white/20 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-600 to-violet-600 opacity-80" />
 
         <div className="flex flex-col sm:flex-row gap-3 mb-6 md:mb-8">

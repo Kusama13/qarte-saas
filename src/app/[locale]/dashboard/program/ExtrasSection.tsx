@@ -32,7 +32,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
   return (
     <>
       {/* ═══════ PARRAINAGE ═══════ */}
-      <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white/60 border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-3 md:p-5">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2 md:gap-3">
@@ -118,7 +118,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
       </div>
 
       {/* ═══════ AVIS GOOGLE ═══════ */}
-      <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white/60 border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-3 md:p-5">
           <div className="flex items-center gap-2 md:gap-3 mb-3">
             <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
@@ -139,7 +139,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
       </div>
 
       {/* ═══════ OFFRE DUO ═══════ */}
-      <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white/60 border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-3 md:p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 md:gap-3">
@@ -195,7 +195,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
 
       {/* ═══════ JOURS x2 (passage uniquement) ═══════ */}
       {formData.loyaltyMode !== 'cagnotte' && (
-      <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white/60 border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-3 md:p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 md:gap-3">
@@ -263,7 +263,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
       )}
 
       {/* ═══════ CADEAU ANNIVERSAIRE ═══════ */}
-      <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white/60 border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-3 md:p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 md:gap-3">

@@ -78,7 +78,7 @@ export default function MemberItem({
         {/* Dynamic Status Badges */}
         <div className="hidden sm:flex items-center gap-3">
           {isValid && daysRemaining <= 7 && (
-            <span className="px-2.5 py-1 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-black uppercase tracking-wider rounded-lg shadow-sm">
+            <span className="px-2.5 py-1 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-sm">
               {t('daysRemaining', { count: daysRemaining })}
             </span>
           )}

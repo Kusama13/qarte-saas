@@ -406,7 +406,7 @@ export default function PushTab(props: PushTabProps) {
                 </p>
                 <div className="bg-white rounded-lg shadow-md p-2.5 flex gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-xs font-black italic">Q</span>
+                    <span className="text-white text-xs font-bold italic">Q</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
@@ -502,7 +502,7 @@ export default function PushTab(props: PushTabProps) {
             <button
               onClick={onSend}
               disabled={!title.trim() || !body.trim() || sending}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold shadow-md hover:shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
             >
               {sending ? (
                 <>

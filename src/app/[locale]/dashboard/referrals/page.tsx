@@ -132,14 +132,14 @@ export default function ReferralsPage() {
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="mb-8 p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
-        <div className="flex items-center gap-3 mb-1">
-          <UserPlus className="w-7 h-7 text-indigo-600" />
-          <h1 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+      <div className="mb-4 md:mb-6">
+        <div className="flex items-center gap-2">
+          <UserPlus className="w-5 h-5 text-indigo-600" />
+          <h1 className="text-lg md:text-2xl font-bold tracking-tight text-slate-900">
             {t('title')}
           </h1>
         </div>
-        <p className="mt-1 text-gray-500 font-medium">
+        <p className="mt-0.5 text-xs md:text-sm text-slate-500">
           {t('subtitle')}
         </p>
       </div>
@@ -280,7 +280,7 @@ export default function ReferralsPage() {
                 </div>
                 <span className="text-sm font-medium text-gray-500">{t('totalReferrals')}</span>
               </div>
-              <p className="text-3xl font-black text-gray-900">{totalReferrals}</p>
+              <p className="text-3xl font-bold text-gray-900">{totalReferrals}</p>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
@@ -290,7 +290,7 @@ export default function ReferralsPage() {
                 </div>
                 <span className="text-sm font-medium text-gray-500">{t('pending')}</span>
               </div>
-              <p className="text-3xl font-black text-gray-900">{pendingCount}</p>
+              <p className="text-3xl font-bold text-gray-900">{pendingCount}</p>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
@@ -300,7 +300,7 @@ export default function ReferralsPage() {
                 </div>
                 <span className="text-sm font-medium text-gray-500">{t('completed')}</span>
               </div>
-              <p className="text-3xl font-black text-gray-900">{completedCount}</p>
+              <p className="text-3xl font-bold text-gray-900">{completedCount}</p>
             </div>
 
           </div>

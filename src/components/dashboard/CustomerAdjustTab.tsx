@@ -175,7 +175,7 @@ export function CustomerAdjustTab({
                 </span>
               )}
             </div>
-            <p className="text-2xl font-black text-emerald-800">
+            <p className="text-2xl font-bold text-emerald-800">
               {activeValue}
               <span className="text-sm font-bold text-emerald-600 ml-1">({activePercent}%)</span>
             </p>

@@ -173,7 +173,7 @@ export default function ContestPage() {
       </div>
 
       {/* ═══ CONFIGURATION ═══ */}
-      <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden mb-4">
+      <div className="bg-white/60 border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden mb-4">
         <div className="p-4 md:p-5">
           {/* Toggle row */}
           <div className="flex items-center justify-between">
@@ -268,7 +268,7 @@ export default function ContestPage() {
 
       {/* ═══ CE MOIS — ligne compacte ═══ */}
       {contestEnabled && (
-        <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden mb-4">
+        <div className="bg-white/60 border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden mb-4">
           <button
             type="button"
             onClick={() => participants > 0 && setShowParticipants(p => !p)}
@@ -313,7 +313,7 @@ export default function ContestPage() {
       )}
 
       {/* ═══ DERNIERS TIRAGES ═══ */}
-      <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white/60 border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-4 md:p-5">
           <h3 className="text-sm font-bold text-gray-900 mb-3">{t('pastWinners')}</h3>
           {contests.length === 0 ? (

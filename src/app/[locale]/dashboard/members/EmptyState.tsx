@@ -36,7 +36,7 @@ export default function EmptyState({ onCreateProgram }: EmptyStateProps) {
         </p>
         <Button
           onClick={onCreateProgram}
-          className="relative h-12 px-6 md:h-14 md:px-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl md:rounded-2xl shadow-lg shadow-indigo-600/25 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group"
+          className="relative h-12 px-6 md:h-14 md:px-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl md:rounded-2xl shadow-lg shadow-indigo-600/25 transition-all duration-300 active:scale-[0.98] overflow-hidden group"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shimmer" />
           <Plus className="w-5 h-5 mr-3 group-hover:rotate-90 transition-transform duration-500" />

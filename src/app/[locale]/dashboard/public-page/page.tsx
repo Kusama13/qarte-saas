@@ -90,14 +90,14 @@ export default function PublicPageDashboard() {
       <div className="mb-6 p-5 md:p-6 rounded-2xl bg-violet-50/40 border border-violet-100">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-sm">
-              <Globe className="w-5 h-5 text-white" />
+            <div className="shrink-0 w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center">
+              <Globe className="w-4 h-4 text-[#4b0082]" strokeWidth={2.25} />
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+              <h1 className="text-lg md:text-2xl font-bold tracking-tight text-slate-900">
                 {t('title')}
               </h1>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-0.5 text-xs md:text-sm text-slate-500">
                 {t('subtitle')}
               </p>
             </div>

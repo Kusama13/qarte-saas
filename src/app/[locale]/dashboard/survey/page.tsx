@@ -206,7 +206,7 @@ export default function ChurnSurveyPage() {
         <button
           type="button"
           onClick={handleSkip}
-          className="fixed z-40 top-4 right-4 md:top-6 md:right-6 px-3 py-1.5 bg-white/90 backdrop-blur-xl border border-gray-100 rounded-lg shadow-sm text-sm text-gray-500 hover:text-gray-700 transition-colors font-medium"
+          className="fixed z-40 top-4 right-4 md:top-6 md:right-6 px-3 py-1.5 bg-white/90 border border-gray-100 rounded-lg shadow-sm text-sm text-gray-500 hover:text-gray-700 transition-colors font-medium"
         >
           {t('skip')}
         </button>
@@ -223,11 +223,11 @@ export default function ChurnSurveyPage() {
               transition={{ duration: 0.4 }}
             >
               {/* Title bandeau — aligned with other dashboard pages */}
-              <div className="mb-5 md:mb-10 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
-                <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
+              <div className="mb-4 md:mb-6">
+                <h1 className="text-lg md:text-2xl font-bold tracking-tight text-slate-900">
                   {t('title')}
                 </h1>
-                <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
+                <p className="mt-0.5 text-xs md:text-sm text-slate-500">
                   {t('subtitle')}
                 </p>
               </div>

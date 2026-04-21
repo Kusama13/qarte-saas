@@ -116,7 +116,7 @@ export default function ProgramDetailView({
                 <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-black text-gray-900 truncate">{selectedProgram.name}</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{selectedProgram.name}</h1>
                 {selectedProgram.benefit_label && <p className="text-indigo-600 font-semibold text-sm sm:text-base truncate">{selectedProgram.benefit_label}</p>}
               </div>
             </div>
@@ -154,11 +154,11 @@ export default function ProgramDetailView({
       <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <div className="p-4 sm:p-5 bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm">
           <p className="text-xs sm:text-sm text-gray-500 mb-1">{t('activeMembers')}</p>
-          <p className="text-2xl sm:text-3xl font-black text-emerald-600">{activeMembers}</p>
+          <p className="text-2xl sm:text-3xl font-bold text-emerald-600">{activeMembers}</p>
         </div>
         <div className="p-4 sm:p-5 bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm">
           <p className="text-xs sm:text-sm text-gray-500 mb-1">{t('expiredMembers')}</p>
-          <p className="text-2xl sm:text-3xl font-black text-gray-400">{memberCount - activeMembers}</p>
+          <p className="text-2xl sm:text-3xl font-bold text-gray-400">{memberCount - activeMembers}</p>
         </div>
       </div>
 

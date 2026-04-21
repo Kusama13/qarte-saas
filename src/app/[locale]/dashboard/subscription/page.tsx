@@ -473,7 +473,7 @@ export default function SubscriptionPage() {
             {t('back')}
           </Link>
         )}
-        <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
+        <h1 className="text-lg md:text-2xl font-bold tracking-tight text-slate-900">
           {t('title')}
         </h1>
       </div>
@@ -532,7 +532,7 @@ export default function SubscriptionPage() {
               {/* Intro + billing toggle */}
               <div className="text-center space-y-4">
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-black tracking-tight text-gray-900">
+                  <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">
                     {t('pageChooseTitle')}
                   </h2>
                   <p className="text-sm text-gray-500 mt-2">{t('pageChooseSubtitle')}</p>
@@ -642,7 +642,7 @@ export default function SubscriptionPage() {
                     <div key={unit.label} className="flex items-center gap-1">
                       {i > 0 && <span className="text-white/30 font-bold">:</span>}
                       <div className="bg-white/15 backdrop-blur-sm rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 min-w-[42px] sm:min-w-[48px] text-center">
-                        <span className="text-xl sm:text-2xl font-black tabular-nums">{String(unit.value).padStart(2, '0')}</span>
+                        <span className="text-xl sm:text-2xl font-bold tabular-nums">{String(unit.value).padStart(2, '0')}</span>
                         <span className="text-[9px] font-bold uppercase tracking-wider opacity-60 ml-0.5">{unit.label}</span>
                       </div>
                     </div>
@@ -657,7 +657,7 @@ export default function SubscriptionPage() {
         {/* ===== RIGHT COLUMN — Billing (only when Stripe customer exists) ===== */}
         {merchant?.stripe_subscription_id && (
           <div className="lg:col-span-2">
-            <div className="bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl rounded-3xl p-5 sm:p-8">
+            <div className="bg-white/80 border border-white/40 shadow-xl rounded-2xl p-5 sm:p-8">
               <h2 className="text-lg font-extrabold text-gray-900 mb-6">{t('billing')}</h2>
 
               <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 mb-6">

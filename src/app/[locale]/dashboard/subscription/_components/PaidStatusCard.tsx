@@ -36,7 +36,7 @@ export default function PaidStatusCard({
   }[statusTone];
 
   return (
-    <div className="bg-white border border-gray-200 rounded-3xl p-6 md:p-8 shadow-sm">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm">
       {/* Header row */}
       <div className="flex items-start justify-between gap-3 mb-5">
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -44,20 +44,20 @@ export default function PaidStatusCard({
             <Zap className="w-5 h-5 text-white" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-lg md:text-xl font-black text-gray-900 truncate">
+            <p className="text-lg md:text-xl font-bold text-gray-900 truncate">
               Qarte {tierDisplayName}
             </p>
             <p className="text-xs text-gray-500 font-medium">{intervalDisplayName}</p>
           </div>
         </div>
-        <span className={`shrink-0 px-3 py-1 text-[11px] font-black uppercase tracking-wide rounded-full border ${toneClasses}`}>
+        <span className={`shrink-0 px-3 py-1 text-[11px] font-bold uppercase tracking-wide rounded-full border ${toneClasses}`}>
           {statusLabel}
         </span>
       </div>
 
       {/* Price + next billing */}
       <div className="pb-5 mb-5 border-b border-gray-100">
-        <p className="text-3xl font-black text-gray-900 tabular-nums tracking-tight">
+        <p className="text-3xl font-bold text-gray-900 tabular-nums tracking-tight">
           {priceLabel}
         </p>
         {nextBillingDate && statusTone === 'active' && (
@@ -72,7 +72,7 @@ export default function PaidStatusCard({
 
       {/* Included features */}
       <div className="mb-5">
-        <p className="text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">{t('planSummaryTitle')}</p>
+        <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">{t('planSummaryTitle')}</p>
         <div className="flex flex-wrap gap-x-3 gap-y-1.5">
           {includedFeatures.map((feature, i) => (
             <div key={i} className="flex items-center gap-1.5 text-[13px] text-gray-600">

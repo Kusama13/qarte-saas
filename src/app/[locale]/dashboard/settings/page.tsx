@@ -208,12 +208,12 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto pb-12">
-      <div className="flex items-center justify-between mb-6 md:mb-10 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
+      <div className="flex items-center justify-between mb-4 md:mb-6">
         <div>
-          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
+          <h1 className="text-lg md:text-2xl font-bold tracking-tight text-slate-900">
             {t('title')}
           </h1>
-          <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
+          <p className="mt-0.5 text-xs md:text-sm text-slate-500">
             {t('subtitle')}
           </p>
         </div>
@@ -250,7 +250,7 @@ export default function SettingsPage() {
 
       {/* Parrainage - en haut */}
       {merchant?.referral_code && (
-        <div className="mb-6 md:mb-8 p-5 md:p-8 bg-gradient-to-br from-emerald-50 to-teal-50 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-emerald-200/60 shadow-xl shadow-emerald-100/30">
+        <div className="mb-6 md:mb-8 p-5 md:p-8 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-200/60 shadow-sm">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 md:p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200">
               <Gift className="w-4 h-4 md:w-5 md:h-5" />
@@ -309,7 +309,7 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white/60 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/30">
+      <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white/60 rounded-2xl border border-white/40 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 min-w-0">
             <div className={`p-2 md:p-2.5 rounded-xl shadow-lg shrink-0 ${shieldEnabled ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-indigo-200' : 'bg-gray-100 text-gray-400 shadow-gray-100'}`}>
@@ -340,7 +340,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white/60 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/30">
+      <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white/60 rounded-2xl border border-white/40 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 min-w-0">
             <div className={`p-2 md:p-2.5 rounded-xl shadow-lg shrink-0 ${!smsOptedOut ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-indigo-200' : 'bg-gray-100 text-gray-400 shadow-gray-100'}`}>
@@ -372,7 +372,7 @@ export default function SettingsPage() {
       </div>
 
       {isPlanningHidden(merchant) && (
-        <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white/60 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/30">
+        <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white/60 rounded-2xl border border-white/40 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3 min-w-0">
               <div className="p-2 md:p-2.5 rounded-xl bg-gray-100 text-gray-400 shrink-0">
@@ -399,7 +399,7 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/50">
+      <div className="p-5 md:p-8 bg-white/80 rounded-2xl border border-white/40 shadow-sm">
         <div className="flex items-center gap-3 mb-5 md:mb-8">
           <div className="p-2 md:p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200">
             <Store className="w-4 h-4 md:w-5 md:h-5" />
@@ -454,7 +454,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-white/60 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/30">
+      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-white/60 rounded-2xl border border-white/40 shadow-sm">
         <h2 className="mb-5 md:mb-8 text-base md:text-xl font-bold text-gray-900">
           {t('accountTitle')}
         </h2>
@@ -535,7 +535,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-white/60 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/30">
+      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-white/60 rounded-2xl border border-white/40 shadow-sm">
         <h2 className="mb-2 text-base md:text-xl font-bold text-gray-900">
           {t('dataTitle')}
         </h2>
@@ -553,7 +553,7 @@ export default function SettingsPage() {
         </Button>
       </div>
 
-      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-red-50/50 backdrop-blur-sm rounded-2xl md:rounded-3xl border border-red-100/50 shadow-lg shadow-red-100/20">
+      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-red-50/50 backdrop-blur-sm rounded-2xl border border-red-100/50 shadow-lg shadow-red-100/20">
         <h2 className="mb-2 text-base md:text-xl font-bold text-red-900">
           {t('dangerTitle')}
         </h2>

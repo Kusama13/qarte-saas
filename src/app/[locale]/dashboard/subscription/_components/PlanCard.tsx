@@ -48,14 +48,14 @@ export default function PlanCard({
   const [intPart, decPart] = priceDisplay.split(priceSep);
 
   return (
-    <div className={`relative flex flex-col rounded-3xl p-6 md:p-7 transition-all ${
+    <div className={`relative flex flex-col rounded-2xl p-6 md:p-7 transition-all ${
       isRecommended
-        ? 'bg-gradient-to-b from-white via-white to-indigo-50/40 border-2 border-[#4b0082] shadow-xl shadow-[#4b0082]/10 md:-translate-y-2'
+        ? 'bg-gradient-to-b from-white via-white to-indigo-50/40 border-2 border-[#4b0082] shadow-sm md:-translate-y-2'
         : 'bg-white border border-gray-200 shadow-sm'
     }`}>
       {isRecommended && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <span className="inline-flex items-center gap-1 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 shadow-md shadow-[#4b0082]/20">
+          <span className="inline-flex items-center gap-1 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 shadow-md shadow-[#4b0082]/20">
             <Sparkles className="w-3 h-3" />
             {t('recommended')}
           </span>
@@ -64,7 +64,7 @@ export default function PlanCard({
 
       {/* Tier name */}
       <div className="mb-3">
-        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400">
           {tier === 'fidelity' ? t('tierFidelityName') : t('tierAllInName')}
         </p>
         <p className="text-[13px] text-gray-500 font-medium mt-1 leading-snug">{persona}</p>
@@ -73,8 +73,8 @@ export default function PlanCard({
       {/* Price */}
       <div className="mb-5 pb-5 border-b border-gray-100">
         <div className="flex items-baseline gap-1">
-          <span className="text-5xl font-black text-gray-900 tabular-nums tracking-tight">{intPart}</span>
-          <span className="text-2xl font-black text-gray-900">{priceSep}{decPart}</span>
+          <span className="text-5xl font-bold text-gray-900 tabular-nums tracking-tight">{intPart}</span>
+          <span className="text-2xl font-bold text-gray-900">{priceSep}{decPart}</span>
           <span className="text-sm text-gray-400 font-medium ml-1">{t('perMonth')}</span>
         </div>
         <div className="mt-1.5 flex items-center gap-2 flex-wrap text-xs">

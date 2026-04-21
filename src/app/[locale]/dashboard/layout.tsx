@@ -326,11 +326,11 @@ function DashboardLayoutContent({
               </p>
               {(merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling') && (
                 getPlanTier(merchant) === 'fidelity' ? (
-                  <span className="shrink-0 text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-sm">
+                  <span className="shrink-0 text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-sm">
                     CŒUR
                   </span>
                 ) : (
-                  <span className="shrink-0 text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-sm">
+                  <span className="shrink-0 text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-sm">
                     PRO
                   </span>
                 )

@@ -168,13 +168,13 @@ function PersonalizeContent() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-center mb-8"
+        className="mb-6"
       >
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
+        <h1 className="text-lg md:text-2xl font-bold text-slate-900 tracking-tight">
           {from ? t('titleEdit') : t('titleAdd')}{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">{t('titleHighlight')}</span>
+          <span className="text-[#4b0082]">{t('titleHighlight')}</span>
         </h1>
-        <p className="text-gray-500 mt-2 text-sm">
+        <p className="text-slate-500 mt-0.5 text-xs md:text-sm">
           {from ? t('subtitleEdit') : t('subtitleAdd')}
         </p>
       </motion.div>

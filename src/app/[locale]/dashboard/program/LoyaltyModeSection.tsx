@@ -138,7 +138,7 @@ export function LoyaltyModeSection({
         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
       </div>
 
-      <div className="p-3 md:p-6 bg-gradient-to-br from-white via-white to-indigo-50/30 rounded-2xl shadow-lg shadow-indigo-200/50 border border-indigo-100/50 backdrop-blur-xl transition-all duration-300">
+      <div className="p-3 md:p-6 bg-gradient-to-br from-white via-white to-indigo-50/30 rounded-2xl shadow-lg shadow-indigo-200/50 border border-indigo-100/50 transition-all duration-300">
         <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
           <div className="p-1.5 md:p-2.5 rounded-lg md:rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 shadow-lg shadow-indigo-200">
             <Gift className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
@@ -414,7 +414,7 @@ export function LoyaltyModeSection({
                 setFormData(prev => ({ ...prev, loyaltyMode: pendingModeSwitch }));
                 setPendingModeSwitch(null);
               }}
-              className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200/50 hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200/50 hover:shadow-xl transition-all active:scale-[0.98]"
             >
               {t('confirmChange')}
             </button>
@@ -478,7 +478,7 @@ export function LoyaltyModeSection({
 
             <button
               onClick={() => setModeHelp(null)}
-              className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200/50 hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200/50 hover:shadow-xl transition-all active:scale-[0.98]"
             >
               {t('helpGotIt')}
             </button>

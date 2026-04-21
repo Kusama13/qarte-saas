@@ -49,12 +49,12 @@ export default function MarketingPushPage() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
+      <div className="mb-4 md:mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
+          <h1 className="text-lg md:text-2xl font-bold tracking-tight text-slate-900">
             {t('title')}
           </h1>
-          <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
+          <p className="mt-0.5 text-xs md:text-sm text-slate-500">
             {t('subtitle')}
           </p>
         </div>

@@ -85,10 +85,10 @@ export default function MembersPage() {
   return (
     <div className="max-w-4xl mx-auto pb-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
         <div>
-          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">{t('title')}</h1>
-          <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">{t('subtitle')}</p>
+          <h1 className="text-lg md:text-2xl font-bold tracking-tight text-slate-900">{t('title')}</h1>
+          <p className="mt-0.5 text-xs md:text-sm text-slate-500">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <button
