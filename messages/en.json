@@ -910,6 +910,20 @@
     "vitrineBannerTitle": "Set up your online salon page",
     "vitrineBannerDesc": "Services, hours, photos — one link for your Instagram bio."
   },
+  "navShort": {
+    "home": "Home",
+    "planning": "Agenda",
+    "customers": "Clients",
+    "qrCode": "QR",
+    "more": "More"
+  },
+  "moreSheet": {
+    "title": "Menu",
+    "accountSection": "Account",
+    "supportSection": "Support",
+    "help": "WhatsApp help",
+    "logout": "Sign out"
+  },
   "personalize": {
     "back": "Back",
     "titleEdit": "Change",
