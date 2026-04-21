@@ -715,7 +715,10 @@
   },
   "signupComplete": {
     "title": "Crée ta carte de fidélité",
-    "subtitle": "3 infos et c'est parti",
+    "subtitle": "Email validé, plus qu'à te présenter",
+    "stepBadge": "Étape 2 sur 2",
+    "step1Done": "Email",
+    "step2Current": "Ton salon",
     "clientsWillLove": "Vos clients vont adorer",
     "shopNameLabel": "Votre établissement",
     "shopNamePlaceholder": "Ex: Institut Beauté Marie",
@@ -2355,7 +2358,8 @@
     "hidePlanningLink": "Je n'utilise pas le planning",
     "hidePlanningConfirm": "Tu n'utilises pas le planning ? On masque cette section.",
     "hidePlanningCancel": "Garder",
-    "hidePlanningConfirmYes": "Masquer"
+    "hidePlanningConfirmYes": "Masquer",
+    "lockedAfter": "Après {group}"
   },
   "milestones": {
     "vitrine_live": {
@@ -3340,6 +3344,8 @@
     "bookingConfirmedHint": "Un SMS de rappel vous sera envoyé la veille de votre rendez-vous.",
     "smsAfterDeposit": "Un SMS de confirmation vous sera envoyé dès que l'acompte est validé.",
     "depositPendingHintTrial": "Le salon confirmera votre rendez-vous après réception de l'acompte.",
+    "loyaltyCardReady": "Votre carte de fidélité {shop} est prête",
+    "loyaltyCardAfterDeposit": "Votre carte de fidélité sera activée après paiement de l'acompte.",
     "depositDeadlineInfo": "Vous avez {hours}h pour régler l'acompte",
     "totalDurationEstimate": "Durée estimée",
     "checkStatusHint": "Vous pouvez revenir sur cette page pour suivre le statut de votre réservation.",

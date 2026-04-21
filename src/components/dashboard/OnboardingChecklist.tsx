@@ -382,7 +382,7 @@ export default function OnboardingChecklist() {
 
       {/* Groups accordion */}
       <div className="px-4 pb-4 md:px-6 md:pb-6 pt-2 space-y-2">
-        {groups.map((group) => {
+        {groups.map((group, groupIndex) => {
           const isExpanded = expandedGroup === group.id;
           const trackableSteps = group.steps;
           const doneCount = trackableSteps.filter(s => s.done).length;
@@ -391,6 +391,8 @@ export default function OnboardingChecklist() {
           const progress = trackableSteps.length > 0 ? doneCount / trackableSteps.length : 0;
 
           const showHideConfirm = confirmingHidePlanning && group.id === 'planning';
+          const isLocked = !isComplete && groupIndex > 0 && groups.slice(0, groupIndex).some(g => g.steps.some(s => !s.done));
+          const prevGroupName = groupIndex > 0 ? groups[groupIndex - 1].name : '';
 
           return (
             <div key={group.id}>
@@ -423,14 +425,18 @@ export default function OnboardingChecklist() {
                       ? 'bg-gray-50'
                       : isExpanded
                         ? 'bg-gray-50 border border-gray-100'
-                        : 'bg-gray-50 hover:bg-gray-100'
+                        : isLocked
+                          ? 'bg-gray-50/60 hover:bg-gray-100'
+                          : 'bg-gray-50 hover:bg-gray-100'
                   }`}
                 >
                   {/* Group icon */}
                   <div className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-all ${
                     isComplete
                       ? 'bg-emerald-50 text-emerald-600'
-                      : 'bg-[#4b0082]/10 text-[#4b0082]'
+                      : isLocked
+                        ? 'bg-gray-100 text-gray-400'
+                        : 'bg-[#4b0082]/10 text-[#4b0082]'
                   }`}>
                     {isComplete ? (
                       <Check className="w-4 h-4 stroke-[3]" />
@@ -441,14 +447,16 @@ export default function OnboardingChecklist() {
 
                   {/* Group name */}
                   <span className={`flex-1 text-left text-sm font-semibold truncate ${
-                    isComplete ? 'text-gray-400' : 'text-gray-900'
+                    isComplete ? 'text-gray-400' : isLocked ? 'text-gray-500' : 'text-gray-900'
                   }`}>
                     {group.name}
                   </span>
 
-                  {/* Progress ring + fraction */}
+                  {/* Progress ring + fraction — or lock label */}
                   {isComplete ? (
                     <span className="text-xs font-bold text-emerald-500 shrink-0">{doneCount}/{trackableSteps.length}</span>
+                  ) : isLocked ? (
+                    <span className="text-[11px] font-medium text-gray-400 shrink-0">{t('lockedAfter', { group: prevGroupName })}</span>
                   ) : (
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-xs font-bold text-gray-500 tabular-nums">{doneCount}/{trackableSteps.length}</span>

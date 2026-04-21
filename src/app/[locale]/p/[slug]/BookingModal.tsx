@@ -766,9 +766,15 @@ export default function BookingModal({
                     </p>
                   </>
                 ) : (
-                  <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
-                    {t('bookingConfirmedHint')}
-                  </p>
+                  <>
+                    <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
+                      {t('bookingConfirmedHint')}
+                    </p>
+                    <div className="mx-auto mb-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[12px] font-semibold">
+                      <Crown className="w-3.5 h-3.5" strokeWidth={2.5} />
+                      <span>{t('loyaltyCardReady', { shop: merchant.shop_name })}</span>
+                    </div>
+                  </>
                 )}
                 <p className="text-center text-[11px] text-gray-400 mb-4 px-2">
                   {t('checkStatusHint')}
@@ -864,13 +870,18 @@ export default function BookingModal({
                 })()}
 
                 {depositResult?.link ? (
-                  <button
-                    type="button"
-                    onClick={() => router.push(`/customer/card/${merchant.id}`)}
-                    className="w-full py-2 text-xs text-gray-400 hover:text-gray-600 transition-colors text-center"
-                  >
-                    {t('viewBookingsAndCard')}
-                  </button>
+                  <>
+                    <p className="text-center text-[11px] text-gray-400 mb-2 px-2">
+                      {t('loyaltyCardAfterDeposit')}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/customer/card/${merchant.id}`)}
+                      className="w-full py-2 text-xs text-gray-400 hover:text-gray-600 transition-colors text-center"
+                    >
+                      {t('viewBookingsAndCard')}
+                    </button>
+                  </>
                 ) : (
                   <button
                     type="button"

@@ -201,6 +201,22 @@ export default function CompleteProfilePage() {
         <div className="w-full max-w-md">
           <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl shadow-primary/10 rounded-3xl">
             <div className="text-center mb-5">
+              {/* Progress indicator — Phase 1 done, Phase 2 current */}
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm">
+                    <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                  </div>
+                  <span className="text-[11px] font-semibold text-emerald-700">{t('step1Done')}</span>
+                </div>
+                <div className="h-px w-6 bg-gray-300" />
+                <div className="flex items-center gap-1.5">
+                  <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-sm">
+                    <span className="text-[10px] font-bold text-white">2</span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-primary">{t('step2Current')}</span>
+                </div>
+              </div>
               <h1 className="text-2xl font-bold text-gray-900">
                 {t('title')}
               </h1>

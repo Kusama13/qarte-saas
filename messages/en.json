@@ -715,7 +715,10 @@
   },
   "signupComplete": {
     "title": "Create your loyalty card",
-    "subtitle": "3 details and you're set",
+    "subtitle": "Email confirmed, just tell us about your shop",
+    "stepBadge": "Step 2 of 2",
+    "step1Done": "Email",
+    "step2Current": "Your shop",
     "clientsWillLove": "Your clients will love it",
     "shopNameLabel": "Your business",
     "shopNamePlaceholder": "e.g. Marie's Beauty Studio",
@@ -2351,7 +2354,8 @@
     "hidePlanningLink": "I don't use the planning",
     "hidePlanningConfirm": "You don't use the planning? We'll hide this section.",
     "hidePlanningCancel": "Keep",
-    "hidePlanningConfirmYes": "Hide"
+    "hidePlanningConfirmYes": "Hide",
+    "lockedAfter": "After {group}"
   },
   "milestones": {
     "vitrine_live": {
@@ -3324,6 +3328,8 @@
     "bookingConfirmedHint": "A reminder SMS will be sent the day before your appointment.",
     "smsAfterDeposit": "A confirmation SMS will be sent as soon as your deposit is validated.",
     "depositPendingHintTrial": "The salon will confirm your appointment after receiving the deposit.",
+    "loyaltyCardReady": "Your loyalty card at {shop} is ready",
+    "loyaltyCardAfterDeposit": "Your loyalty card will be activated after the deposit is paid.",
     "depositDeadlineInfo": "You have {hours}h to pay the deposit",
     "totalDurationEstimate": "Estimated duration",
     "checkStatusHint": "You can return to this page to check the status of your booking.",

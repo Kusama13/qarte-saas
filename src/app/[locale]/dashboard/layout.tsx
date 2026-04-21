@@ -230,7 +230,7 @@ function DashboardLayoutContent({
           {trialStatus.isActive && (
             <StatusBanner
               variant="trial"
-              urgent={trialStatus.daysRemaining <= 3}
+              severity={trialStatus.daysRemaining <= 1 ? 'urgent' : trialStatus.daysRemaining <= 3 ? 'warning' : 'calm'}
               message={trialStatus.daysRemaining > 1 ? t('trialDaysPlural', { count: trialStatus.daysRemaining }) : t('trialDays', { count: trialStatus.daysRemaining })}
               description={!merchant?.stripe_subscription_id ? t('trialSmsHint') : undefined}
               linkText={merchant?.stripe_subscription_id ? t('viewSubscription') : t('addPayment')}
