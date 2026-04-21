@@ -86,7 +86,7 @@ export default function DayView({
   }, [isToday]);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-hidden">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-clip">
       {/* Day header — sticky sous la top bar mobile, top-0 sur desktop */}
       <div className={`px-4 py-3 border-b flex items-center justify-between gap-2 sticky top-[calc(48px+env(safe-area-inset-top))] lg:top-0 z-20 ${isToday ? 'bg-indigo-50/50 border-indigo-100' : 'bg-gray-50 border-gray-100'}`}>
         <div className="flex items-center gap-2 min-w-0">
@@ -111,7 +111,7 @@ export default function DayView({
       </div>
 
       {/* Timeline — pt-3 leaves room for the first hour label (8:00) */}
-      <div className="relative overflow-x-hidden pt-3 pb-2" style={{ height: TOTAL_HEIGHT + 20 }}>
+      <div className="relative overflow-x-clip pt-3 pb-2" style={{ height: TOTAL_HEIGHT + 20 }}>
         {/* Current time indicator (ligne rouge) */}
         {nowTop != null && (
           <div className="absolute left-12 right-0 pointer-events-none z-10" style={{ top: nowTop }}>

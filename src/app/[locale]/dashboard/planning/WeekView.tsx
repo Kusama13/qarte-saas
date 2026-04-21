@@ -83,7 +83,7 @@ export default function WeekView({
   }, []);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-hidden">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-clip">
       {/* Header row : sticky sous la top bar mobile (48px + safe-area), top-0 sur desktop */}
       <div
         className="grid border-b border-gray-100 sticky top-[calc(48px+env(safe-area-inset-top))] lg:top-0 z-20 bg-white shadow-[0_1px_0_0_rgba(0,0,0,0.04)]"
@@ -144,7 +144,7 @@ export default function WeekView({
 
       {/* Timeline grid : 1 hour gutter + N day columns */}
       <div
-        className="relative pt-3 pb-2 overflow-x-hidden"
+        className="relative pt-3 pb-2 overflow-x-clip"
         style={{ height: TOTAL_HEIGHT + 20, display: 'grid', gridTemplateColumns: gridCols }}
       >
         {/* Hour gutter (shared) */}
