@@ -78,7 +78,7 @@ export default function AdminAnnouncementBanner({ variant }: Props) {
                   <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${config.iconColor}`} />
                   <div className="min-w-0">
                     <span className="font-semibold">{a.title}</span>
-                    <p className="mt-0.5 text-xs opacity-80">{a.body}</p>
+                    <p className="mt-0.5 text-xs opacity-80 leading-relaxed whitespace-pre-line">{a.body}</p>
                     <span className="inline-flex items-center gap-0.5 mt-1 text-[10px] font-medium opacity-60">
                       <ExternalLink className="w-2.5 h-2.5" />
                       En savoir plus
@@ -90,7 +90,7 @@ export default function AdminAnnouncementBanner({ variant }: Props) {
                   <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${config.iconColor}`} />
                   <div>
                     <span className="font-semibold">{a.title}</span>
-                    <p className="mt-0.5 text-xs opacity-80">{a.body}</p>
+                    <p className="mt-0.5 text-xs opacity-80 leading-relaxed whitespace-pre-line">{a.body}</p>
                   </div>
                 </div>
               )}
@@ -109,13 +109,13 @@ export default function AdminAnnouncementBanner({ variant }: Props) {
         const Icon = config.icon;
 
         const content = (
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${config.bg} ${config.border} ${config.text} relative`}>
+          <div className={`flex items-start gap-3 px-4 py-3 rounded-2xl border ${config.bg} ${config.border} ${config.text} relative`}>
             <div className={`w-9 h-9 rounded-xl ${config.iconBg} flex items-center justify-center shrink-0`}>
               <Icon className={`w-4 h-4 ${config.iconColor}`} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold leading-tight">{a.title}</p>
-              <p className="text-xs opacity-75 mt-0.5 line-clamp-2">{a.body}</p>
+              <p className="text-xs opacity-75 mt-1 leading-relaxed whitespace-pre-line">{a.body}</p>
             </div>
             {a.link_url && (
               <ExternalLink className={`w-4 h-4 shrink-0 ${config.iconColor} opacity-50`} />
