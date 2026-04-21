@@ -120,7 +120,7 @@ export default function CustomersPage() {
         .order('updated_at', { ascending: false }),
 
       fetch(`/api/push/subscribers?merchantId=${merchant.id}`)
-        .then(r => r.json())
+        .then(r => r.ok ? r.json() : { subscriberIds: [] })
         .catch(() => ({ subscriberIds: [] })),
 
       supabase

@@ -18,7 +18,7 @@ const StatsCard = memo(function StatsCard({ title, value, icon: Icon, trend, col
     ? 'bg-red-50 text-red-600 border-red-100'
     : 'bg-emerald-50 text-emerald-600 border-emerald-100';
   return (
-    <div className="h-full p-4 md:p-6 bg-white border border-gray-100 rounded-xl md:rounded-3xl shadow-sm transition-shadow hover:shadow-md flex flex-col gap-3 md:gap-4">
+    <div className="h-full p-4 md:p-6 bg-white border border-gray-100 rounded-xl md:rounded-3xl shadow-sm flex flex-col gap-3 md:gap-4">
       <div className="flex items-center gap-2.5 min-w-0">
         <div
           className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-lg md:rounded-xl shrink-0 shadow-md"

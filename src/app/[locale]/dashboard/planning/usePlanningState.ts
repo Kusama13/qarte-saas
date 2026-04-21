@@ -172,7 +172,7 @@ export function usePlanningState() {
   useEffect(() => {
     if (!merchant) return;
     fetch(`/api/services?merchantId=${merchant.id}`)
-      .then(r => r.json())
+      .then(r => r.ok ? r.json() : { services: [] })
       .then(data => setServices((data.services || []).map((s: ServiceWithDuration) => ({
         id: s.id, name: s.name, duration: s.duration ?? null, price: s.price, category_id: s.category_id ?? null,
       }))))

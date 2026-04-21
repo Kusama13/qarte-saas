@@ -122,7 +122,7 @@ export default function OnboardingChecklist() {
           bookedResult,
           smsCampaignsResult,
         ] = await Promise.all([
-          fetch('/api/onboarding/status').then(r => r.json()).catch(() => ({})),
+          fetch('/api/onboarding/status').then(r => r.ok ? r.json() as Promise<{ qrDownloaded?: boolean }> : { qrDownloaded: false }).catch(() => ({ qrDownloaded: false })),
           supabase.from('visits').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id).eq('status', 'confirmed'),
           supabase.from('merchant_photos').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
           supabase.from('merchant_services').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
