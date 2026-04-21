@@ -59,7 +59,7 @@ export default function SubscriberRing({ subscriberCount, subscribers, loadingCo
               <div className="grid gap-2 max-h-64 overflow-y-auto">
                 {subscribers.map((subscriber) => (
                   <div key={subscriber.id} className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white font-bold text-xs">
+                    <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-semibold text-xs">
                       {subscriber.first_name?.charAt(0) || '?'}
                     </div>
                     <p className="font-medium text-gray-900 text-sm truncate flex-1">

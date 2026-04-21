@@ -248,8 +248,8 @@ export default function PushTab(props: PushTabProps) {
                     : 'border-pink-200 bg-pink-50/50 hover:bg-pink-50 hover:border-pink-300'
                 }`}
               >
-                <div className="w-9 h-9 rounded-lg bg-pink-500 flex items-center justify-center shadow-sm shadow-pink-200 flex-shrink-0">
-                  <Gift className="w-5 h-5 text-white" />
+                <div className="shrink-0 w-9 h-9 rounded-lg bg-pink-50 flex items-center justify-center">
+                  <Gift className="w-5 h-5 text-pink-600" strokeWidth={2.25} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-pink-900">{t('addOffer')}</p>
@@ -502,7 +502,7 @@ export default function PushTab(props: PushTabProps) {
             <button
               onClick={onSend}
               disabled={!title.trim() || !body.trim() || sending}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold shadow-md hover:shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl bg-[#4b0082] hover:bg-[#4b0082]/90 text-white font-bold active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {sending ? (
                 <>

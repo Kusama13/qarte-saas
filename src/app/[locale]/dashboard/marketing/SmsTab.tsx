@@ -434,7 +434,7 @@ export default function SmsTab() {
           <button
             onClick={handleSubmit}
             disabled={submitting || !validation.ok || !body.trim() || audienceCount === 0 || (scheduleMode === 'later' && !scheduleDate)}
-            className="w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm rounded-xl hover:opacity-95 transition-opacity disabled:opacity-40 flex items-center justify-center gap-2"
+            className="w-full py-3 bg-[#4b0082] hover:bg-[#4b0082]/90 text-white font-bold text-sm rounded-xl active:scale-[0.98] touch-manipulation transition-all disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             {t('submit')}

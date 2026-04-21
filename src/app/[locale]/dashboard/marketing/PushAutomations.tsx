@@ -207,7 +207,7 @@ export default function PushAutomations({ merchantId }: PushAutomationsProps) {
                 <button
                   onClick={saveInactiveConfig}
                   disabled={savingInactive}
-                  className="w-full py-2.5 bg-blue-500 text-white font-bold text-sm rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-2.5 bg-[#4b0082] hover:bg-[#4b0082]/90 text-white font-bold text-sm rounded-xl active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {savingInactive ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" />{t('save')}</>}
                 </button>
@@ -327,7 +327,7 @@ export default function PushAutomations({ merchantId }: PushAutomationsProps) {
                 <button
                   onClick={saveEventsConfig}
                   disabled={savingEvents || !eventsOfferText.trim()}
-                  className="w-full py-2.5 bg-violet-500 text-white font-bold text-sm rounded-xl hover:bg-violet-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-2.5 bg-[#4b0082] hover:bg-[#4b0082]/90 text-white font-bold text-sm rounded-xl active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {savingEvents ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" />{t('save')}</>}
                 </button>
@@ -343,9 +343,9 @@ export default function PushAutomations({ merchantId }: PushAutomationsProps) {
         </AnimatePresence>
       </div>
 
-      <div className="bg-indigo-50/50 rounded-2xl p-4 border border-indigo-100/50">
-        <p className="text-xs text-indigo-700 font-medium flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+      <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+        <p className="text-xs text-slate-600 flex items-center gap-2">
+          <Sparkles className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={2.25} />
           {t('infoAutoRun')}
         </p>
       </div>
