@@ -913,7 +913,7 @@
   "navShort": {
     "home": "Accueil",
     "planning": "Agenda",
-    "customers": "Clientes",
+    "customers": "Clients",
     "qrCode": "QR",
     "more": "Plus"
   },
@@ -1825,11 +1825,11 @@
   },
   "customers": {
     "title": "Gestion",
-    "titleHighlight": "Clientes",
-    "subtotalSingular": "Cliente inscrite sur la plateforme",
-    "subtotalPlural": "Clientes inscrites sur la plateforme",
+    "titleHighlight": "Clients",
+    "subtotalSingular": "Client inscrit sur la plateforme",
+    "subtotalPlural": "Clients inscrits sur la plateforme",
     "statVisits": "Passages",
-    "statSignups": "Clientes inscrites",
+    "statSignups": "Clients inscrits",
     "statRewards": "Récompenses",
     "total": "total",
     "newButton": "Nouveau",
