@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, History, BookOpen, ChevronDown, Camera, StickyNote, CalendarClock, CalendarPlus, MessageSquare } from 'lucide-react';
+import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, History, BookOpen, ChevronDown, Camera, StickyNote, CalendarClock, CalendarPlus } from 'lucide-react';
+import SmsToggle from './SmsToggle';
 import { getTypeStyle } from '@/lib/note-styles';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
 import { useTranslations } from 'next-intl';
@@ -24,7 +25,7 @@ function TabButton({ active, onClick, icon, label, badge }: {
     <button
       type="button"
       onClick={onClick}
-      className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 transition-colors ${active ? 'bg-indigo-50 text-indigo-700' : 'text-gray-500 hover:bg-gray-50'}`}
+      className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 transition-colors ${active ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-50'}`}
     >
       {icon}
       <span className="text-xs font-semibold">{label}</span>
@@ -433,14 +434,14 @@ export default function BookingDetailsModal({
       initial={{ opacity: 0, pointerEvents: 'none' }}
       animate={{ opacity: 1, pointerEvents: 'auto' }}
       exit={{ opacity: 0, pointerEvents: 'none' }}
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <motion.div
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 50, opacity: 0 }}
-        className="relative bg-white rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-xl"
+        className="relative bg-white rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-sm border border-slate-100"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
@@ -784,75 +785,30 @@ export default function BookingDetailsModal({
 
         {/* Footer actions — sticky bottom pour garder les boutons visibles pendant scroll des tabs */}
         <div className="p-4 border-t border-gray-100 space-y-2 sticky bottom-0 bg-white z-10">
-          {/* SMS confirmation toggle — only for new bookings (slot not yet assigned) */}
           {!slot.client_name && draft.clientPhone.trim() && (
-            <button
-              type="button"
-              onClick={() => isPaid && setSendSms(s => !s)}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${
-                !isPaid
-                  ? 'border-gray-100 bg-gray-50 cursor-not-allowed'
-                  : sendSms
-                    ? 'border-indigo-200 bg-indigo-50'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
-            >
-              <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
-                sendSms ? 'bg-indigo-100' : 'bg-gray-100'
-              }`}>
-                <MessageSquare className={`w-4 h-4 ${sendSms ? 'text-indigo-600' : 'text-gray-400'}`} />
-              </div>
-              <div className="flex-1 text-left min-w-0">
-                <p className={`text-xs font-semibold ${sendSms ? 'text-indigo-700' : 'text-gray-700'}`}>
-                  {t('sendSmsConfirmation')}
-                </p>
-                {!isPaid && (
-                  <p className="text-[10px] text-gray-400 mt-0.5">{t('sendSmsTrialHint')}</p>
-                )}
-              </div>
-              {isPaid ? (
-                <div className={`shrink-0 w-9 h-5 rounded-full transition-colors relative ${
-                  sendSms ? 'bg-indigo-600' : 'bg-gray-300'
-                }`}>
-                  <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${
-                    sendSms ? 'translate-x-4' : 'translate-x-0.5'
-                  }`} />
-                </div>
-              ) : (
-                <span className="shrink-0 text-[9px] font-bold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-md uppercase tracking-wide">Pro</span>
-              )}
-            </button>
+            <SmsToggle
+              checked={sendSms}
+              onToggle={() => setSendSms(s => !s)}
+              label={t('sendSmsConfirmation')}
+              hint={t('sendSmsTrialHint')}
+              isPaid={isPaid}
+              proLabel="Pro"
+              tint="indigo"
+            />
           )}
 
           {/* Confirm / cancel deposit */}
           {slot.deposit_confirmed === false && onConfirmDeposit && (
             <div className="space-y-2">
               {slot.client_phone && (
-                <button
-                  type="button"
-                  onClick={() => isPaid && setDepositSendSms(s => !s)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl border transition-all ${
-                    !isPaid
-                      ? 'border-gray-100 bg-gray-50 cursor-not-allowed'
-                      : depositSendSms
-                        ? 'border-emerald-200 bg-emerald-50'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
-                >
-                  <div className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center ${depositSendSms ? 'bg-emerald-100' : 'bg-gray-100'}`}>
-                    <MessageSquare className={`w-3.5 h-3.5 ${depositSendSms ? 'text-emerald-600' : 'text-gray-400'}`} />
-                  </div>
-                  <p className={`flex-1 text-left text-xs font-semibold ${depositSendSms ? 'text-emerald-700' : 'text-gray-700'}`}>
-                    {t('sendSmsConfirmation')}
-                  </p>
-                  {isPaid ? (
-                    <div className={`shrink-0 w-9 h-5 rounded-full transition-colors relative ${depositSendSms ? 'bg-emerald-600' : 'bg-gray-300'}`}>
-                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${depositSendSms ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                    </div>
-                  ) : (
-                    <span className="shrink-0 text-[9px] font-bold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-md uppercase tracking-wide">Pro</span>
-                  )}
-                </button>
+                <SmsToggle
+                  checked={depositSendSms}
+                  onToggle={() => setDepositSendSms(s => !s)}
+                  label={t('sendSmsConfirmation')}
+                  isPaid={isPaid}
+                  proLabel="Pro"
+                  tint="emerald"
+                />
               )}
               <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2">
                 <button
@@ -865,7 +821,7 @@ export default function BookingDetailsModal({
                 </button>
                 <button
                   onClick={() => { onConfirmDeposit(slot, depositSendSms); onClose(); }}
-                  className="w-full sm:flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm"
+                  className="w-full sm:flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 active:scale-[0.98] touch-manipulation transition-all"
                 >
                   <Check className="w-4 h-4" />
                   {t('confirmDeposit')}
@@ -890,7 +846,7 @@ export default function BookingDetailsModal({
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50 shadow-sm"
+                  className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                   {t('save')}
@@ -898,7 +854,7 @@ export default function BookingDetailsModal({
                 <button
                   onClick={() => { setMoveDate(slot.slot_date); setMoveTime(''); setMoveError(null); setMoveMode(true); }}
                   disabled={saving}
-                  className="flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl bg-white text-gray-700 border border-gray-200 text-sm font-bold hover:border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl bg-white text-slate-700 border border-slate-200 text-sm font-bold hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50"
                 >
                   <CalendarClock className="w-4 h-4" />
                   {t('moveBooking')}
@@ -925,7 +881,7 @@ export default function BookingDetailsModal({
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="w-full sm:flex-1 flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50 shadow-sm"
+                  className="w-full sm:flex-1 flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                   {t('save')}
@@ -986,7 +942,7 @@ export default function BookingDetailsModal({
                             key={startTime}
                             type="button"
                             onClick={() => { setMoveTime(startTime); setMoveError(null); }}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${moveTime === startTime ? 'bg-indigo-600 text-white border border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all tabular-nums ${moveTime === startTime ? 'bg-slate-900 text-white border border-slate-900' : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'}`}
                           >
                             {formatTime(startTime, locale)}
                           </button>
@@ -1018,31 +974,14 @@ export default function BookingDetailsModal({
             </div>
             <div className="p-4 border-t border-gray-100 space-y-2">
               {slot.client_phone && (
-                <button
-                  type="button"
-                  onClick={() => isPaid && setMoveSendSms(s => !s)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl border transition-all ${
-                    !isPaid
-                      ? 'border-gray-100 bg-gray-50 cursor-not-allowed'
-                      : moveSendSms
-                        ? 'border-violet-200 bg-violet-50'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
-                >
-                  <div className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center ${moveSendSms ? 'bg-violet-100' : 'bg-gray-100'}`}>
-                    <MessageSquare className={`w-3.5 h-3.5 ${moveSendSms ? 'text-violet-600' : 'text-gray-400'}`} />
-                  </div>
-                  <p className={`flex-1 text-left text-xs font-semibold ${moveSendSms ? 'text-violet-700' : 'text-gray-700'}`}>
-                    {t('sendSmsMove')}
-                  </p>
-                  {isPaid ? (
-                    <div className={`shrink-0 w-9 h-5 rounded-full transition-colors relative ${moveSendSms ? 'bg-violet-600' : 'bg-gray-300'}`}>
-                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${moveSendSms ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                    </div>
-                  ) : (
-                    <span className="shrink-0 text-[9px] font-bold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-md uppercase tracking-wide">Pro</span>
-                  )}
-                </button>
+                <SmsToggle
+                  checked={moveSendSms}
+                  onToggle={() => setMoveSendSms(s => !s)}
+                  label={t('sendSmsMove')}
+                  isPaid={isPaid}
+                  proLabel="Pro"
+                  tint="violet"
+                />
               )}
               <div className="flex flex-col-reverse sm:flex-row gap-2">
                 <button
@@ -1055,7 +994,7 @@ export default function BookingDetailsModal({
                 <button
                   onClick={handleMoveConfirm}
                   disabled={moving || !moveTime}
-                  className="w-full sm:flex-[2] py-3 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+                  className="w-full sm:flex-[2] py-3 rounded-xl bg-[#4b0082] text-white text-sm font-bold hover:bg-[#4b0082]/90 active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {moving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CalendarClock className="w-4 h-4" />}
                   {t('moveBookingConfirm')}
@@ -1090,31 +1029,14 @@ export default function BookingDetailsModal({
             </div>
             <div className="p-4 border-t border-gray-100 space-y-2">
               {slot.client_phone && (
-                <button
-                  type="button"
-                  onClick={() => isPaid && setCancelSendSms(s => !s)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl border transition-all ${
-                    !isPaid
-                      ? 'border-gray-100 bg-gray-50 cursor-not-allowed'
-                      : cancelSendSms
-                        ? 'border-red-200 bg-red-50'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
-                >
-                  <div className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center ${cancelSendSms ? 'bg-red-100' : 'bg-gray-100'}`}>
-                    <MessageSquare className={`w-3.5 h-3.5 ${cancelSendSms ? 'text-red-600' : 'text-gray-400'}`} />
-                  </div>
-                  <p className={`flex-1 text-left text-xs font-semibold ${cancelSendSms ? 'text-red-700' : 'text-gray-700'}`}>
-                    {t('sendSmsCancel')}
-                  </p>
-                  {isPaid ? (
-                    <div className={`shrink-0 w-9 h-5 rounded-full transition-colors relative ${cancelSendSms ? 'bg-red-600' : 'bg-gray-300'}`}>
-                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${cancelSendSms ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                    </div>
-                  ) : (
-                    <span className="shrink-0 text-[9px] font-bold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-md uppercase tracking-wide">Pro</span>
-                  )}
-                </button>
+                <SmsToggle
+                  checked={cancelSendSms}
+                  onToggle={() => setCancelSendSms(s => !s)}
+                  label={t('sendSmsCancel')}
+                  isPaid={isPaid}
+                  proLabel="Pro"
+                  tint="red"
+                />
               )}
               <div className="flex flex-col-reverse sm:flex-row gap-2">
                 <button
@@ -1127,7 +1049,7 @@ export default function BookingDetailsModal({
                 <button
                   onClick={() => { handleClearSlot(); setCancelMode(false); }}
                   disabled={saving}
-                  className="w-full sm:flex-[2] py-3 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+                  className="w-full sm:flex-[2] py-3 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                   {t('cancelBookingConfirm')}
