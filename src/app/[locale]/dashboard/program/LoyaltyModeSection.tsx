@@ -62,9 +62,9 @@ export function LoyaltyModeSection({
 
       {/* Mode selector */}
       <div className="flex items-center gap-3 mt-4 mb-1">
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
+        <div className="h-px flex-1 bg-slate-200" />
         <h2 className="text-sm md:text-base font-bold text-gray-500 uppercase tracking-wider">{t('loyaltyModeTitle')}</h2>
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
+        <div className="h-px flex-1 bg-slate-200" />
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
@@ -133,15 +133,15 @@ export function LoyaltyModeSection({
       )}
 
       <div className="flex items-center gap-3 mb-1">
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
+        <div className="h-px flex-1 bg-slate-200" />
         <h2 className="text-sm md:text-base font-bold text-gray-500 uppercase tracking-wider">{t('rewardsTitle')}</h2>
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
+        <div className="h-px flex-1 bg-slate-200" />
       </div>
 
-      <div className="p-3 md:p-6 bg-gradient-to-br from-white via-white to-indigo-50/30 rounded-2xl shadow-lg shadow-indigo-200/50 border border-indigo-100/50 transition-all duration-300">
+      <div className="p-3 md:p-6 bg-white rounded-2xl shadow-sm border border-slate-100">
         <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
-          <div className="p-1.5 md:p-2.5 rounded-lg md:rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 shadow-lg shadow-indigo-200">
-            <Gift className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
+          <div className="shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
+            <Gift className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" strokeWidth={2.25} />
           </div>
           <div className="flex-1">
             <h3 className="text-sm md:text-lg font-bold text-gray-900">{t('tier1Title')}</h3>
@@ -227,11 +227,11 @@ export function LoyaltyModeSection({
       </div>
 
       {/* 2nd Tier Reward Section */}
-      <div className="p-3 md:p-6 bg-gradient-to-br from-white via-white to-violet-50/30 rounded-2xl shadow-lg shadow-violet-200/30 border border-violet-100/50 backdrop-blur-xl">
+      <div className="p-3 md:p-6 bg-white rounded-2xl shadow-sm border border-slate-100">
         <div className="flex items-center justify-between mb-3 md:mb-6">
           <div className="flex items-center gap-2 md:gap-3">
-            <div className="p-1.5 md:p-2.5 rounded-lg md:rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 shadow-lg shadow-violet-200">
-              <Trophy className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
+            <div className="shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-lg bg-violet-50 flex items-center justify-center">
+              <Trophy className="w-4 h-4 md:w-5 md:h-5 text-violet-600" strokeWidth={2.25} />
             </div>
             <div>
               <h3 className="text-sm md:text-lg font-bold text-gray-900">{t('tier2Title')} <span className="text-gray-400 font-medium text-xs md:text-sm">{t('tier2Optional')}</span></h3>
@@ -394,12 +394,12 @@ export function LoyaltyModeSection({
       {/* Mode switch confirmation modal */}
       {pendingModeSwitch && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 text-center animate-in zoom-in-95 duration-300">
-            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-200/50">
-              <AlertTriangle className="w-7 h-7 text-white" />
+          <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-slate-100 p-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-amber-50 flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-amber-600" strokeWidth={2.25} />
             </div>
 
-            <h3 className="text-lg font-bold text-gray-900 mb-2">
+            <h3 className="text-base font-bold text-slate-900 mb-2">
               {t('changeMode')}
             </h3>
 
@@ -414,7 +414,7 @@ export function LoyaltyModeSection({
                 setFormData(prev => ({ ...prev, loyaltyMode: pendingModeSwitch }));
                 setPendingModeSwitch(null);
               }}
-              className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200/50 hover:shadow-xl transition-all active:scale-[0.98]"
+              className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-[#4b0082] hover:bg-[#4b0082]/90 text-white font-bold rounded-xl transition-all active:scale-[0.98] touch-manipulation"
             >
               {t('confirmChange')}
             </button>
@@ -431,29 +431,29 @@ export function LoyaltyModeSection({
 
       {/* Mode help modal */}
       {modeHelp && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setModeHelp(null)}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setModeHelp(null)}>
           <div
-            className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl p-5 sm:p-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-300"
+            className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-100 p-6 animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-200/50">
-                  {modeHelp === 'visit' ? <Stamp className="w-5 h-5 text-white" /> : <Euro className="w-5 h-5 text-white" />}
+                <div className="w-10 h-10 rounded-lg bg-violet-50 flex items-center justify-center">
+                  {modeHelp === 'visit' ? <Stamp className="w-5 h-5 text-violet-600" strokeWidth={2.25} /> : <Euro className="w-5 h-5 text-violet-600" strokeWidth={2.25} />}
                 </div>
-                <h3 className="text-base font-bold text-gray-900">
+                <h3 className="text-base font-bold text-slate-900">
                   {modeHelp === 'visit' ? t('helpModeVisitTitle') : t('helpModeCagnotteTitle')}
                 </h3>
               </div>
               <button
                 onClick={() => setModeHelp(null)}
-                className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 active:scale-95 touch-manipulation transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-sm font-semibold text-violet-700 mb-3">{t('helpHowItWorks')}</p>
+            <p className="text-sm font-bold text-violet-700 mb-3">{t('helpHowItWorks')}</p>
 
             <ul className="space-y-3 mb-5">
               {(modeHelp === 'visit' ? [
@@ -468,17 +468,17 @@ export function LoyaltyModeSection({
                 { text: t('helpCagnotte4') },
               ]).map((item, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-bold text-violet-600">{i + 1}</span>
+                  <div className="w-6 h-6 rounded-full bg-violet-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-violet-600 tabular-nums">{i + 1}</span>
                   </div>
-                  <p className="text-sm text-gray-700 leading-relaxed">{item.text}</p>
+                  <p className="text-sm text-slate-700 leading-relaxed">{item.text}</p>
                 </li>
               ))}
             </ul>
 
             <button
               onClick={() => setModeHelp(null)}
-              className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200/50 hover:shadow-xl transition-all active:scale-[0.98]"
+              className="w-full py-3 px-4 bg-[#4b0082] hover:bg-[#4b0082]/90 text-white font-bold rounded-xl transition-all active:scale-[0.98] touch-manipulation"
             >
               {t('helpGotIt')}
             </button>

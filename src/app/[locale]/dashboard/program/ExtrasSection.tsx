@@ -32,12 +32,12 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
   return (
     <>
       {/* ═══════ PARRAINAGE ═══════ */}
-      <div className="bg-white/60 border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-3 md:p-5">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2 md:gap-3">
-              <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
-                <Gift className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+              <div className="shrink-0 w-8 h-8 md:w-9 md:h-9 rounded-lg bg-emerald-50 flex items-center justify-center">
+                <Gift className="w-4 h-4 text-emerald-600" strokeWidth={2.25} />
               </div>
               <div>
                 <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">{t('referralTitle')}</span> <span className="font-normal text-gray-400">{t('referralDesc')}</span></h3>
@@ -118,11 +118,11 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
       </div>
 
       {/* ═══════ AVIS GOOGLE ═══════ */}
-      <div className="bg-white/60 border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-3 md:p-5">
           <div className="flex items-center gap-2 md:gap-3 mb-3">
-            <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-              <Star className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+            <div className="shrink-0 w-8 h-8 md:w-9 md:h-9 rounded-lg bg-amber-50 flex items-center justify-center">
+              <Star className="w-4 h-4 text-amber-600" strokeWidth={2.25} />
             </div>
             <div>
               <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">{t('googleReviewTitle')}</span> <span className="font-normal text-gray-400">{t('googleReviewDesc')}</span></h3>
@@ -139,12 +139,12 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
       </div>
 
       {/* ═══════ OFFRE DUO ═══════ */}
-      <div className="bg-white/60 border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-3 md:p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 md:gap-3">
-              <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center">
-                <Users className="w-3.5 h-3.5 md:w-4 md:h-4 text-violet-500" />
+              <div className="shrink-0 w-8 h-8 md:w-9 md:h-9 rounded-lg bg-violet-50 flex items-center justify-center">
+                <Users className="w-4 h-4 text-violet-600" strokeWidth={2.25} />
               </div>
               <div>
                 <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">{t('duoOfferTitle')}</span> <span className="font-normal text-gray-400">{t('duoOfferDesc')}</span></h3>
@@ -195,12 +195,12 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
 
       {/* ═══════ JOURS x2 (passage uniquement) ═══════ */}
       {formData.loyaltyMode !== 'cagnotte' && (
-      <div className="bg-white/60 border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-3 md:p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 md:gap-3">
-              <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center">
-                <Zap className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500" />
+              <div className="shrink-0 w-8 h-8 md:w-9 md:h-9 rounded-lg bg-amber-50 flex items-center justify-center">
+                <Zap className="w-4 h-4 text-amber-600" strokeWidth={2.25} />
               </div>
               <div>
                 <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">{t('doubleDaysTitle')}</span> <span className="font-normal text-gray-400">{t('doubleDaysDesc')}</span></h3>
@@ -263,12 +263,12 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
       )}
 
       {/* ═══════ CADEAU ANNIVERSAIRE ═══════ */}
-      <div className="bg-white/60 border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-3 md:p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 md:gap-3">
-              <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center">
-                <Cake className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+              <div className="shrink-0 w-8 h-8 md:w-9 md:h-9 rounded-lg bg-pink-50 flex items-center justify-center">
+                <Cake className="w-4 h-4 text-pink-600" strokeWidth={2.25} />
               </div>
               <div>
                 <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">{t('birthdayTitle')}</span> <span className="font-normal text-gray-400">{t('birthdayDesc')}</span></h3>
