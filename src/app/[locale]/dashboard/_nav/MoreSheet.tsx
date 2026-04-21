@@ -70,7 +70,7 @@ export default function MoreSheet({ open, onClose, onLogout }: MoreSheetProps) {
             onDragEnd={(_, info) => {
               if (info.offset.y > 60 || info.velocity.y > 400) onClose();
             }}
-            className="fixed bottom-2 right-2 z-50 lg:hidden w-[52%] max-w-[280px] min-w-[230px] bg-white rounded-2xl ring-1 ring-slate-900/5 shadow-[0_20px_60px_-15px_rgba(75,0,130,0.30)] pb-[env(safe-area-inset-bottom)] overflow-hidden"
+            className="fixed bottom-2 right-2 z-50 lg:hidden w-[52%] max-w-[280px] min-w-[230px] bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-900/10 pb-[env(safe-area-inset-bottom)] overflow-hidden"
             aria-label={tSheet('title')}
           >
             {/* Drag handle — discret */}

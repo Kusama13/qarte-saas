@@ -457,8 +457,7 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      <div className="p-4 md:p-8 bg-white/80 rounded-2xl border border-white/20 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-600 to-violet-600 opacity-80" />
+      <div className="p-4 md:p-8 bg-white rounded-2xl border border-slate-100 shadow-sm">
 
         <div className="flex flex-col sm:flex-row gap-3 mb-6 md:mb-8">
           <div className="relative flex-1 max-w-md group">
@@ -501,7 +500,7 @@ export default function CustomersPage() {
             </button>
             <button
               onClick={() => setCreateModalOpen(true)}
-              className="inline-flex items-center gap-2 px-4 h-11 rounded-xl text-sm font-bold transition-all bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-md shadow-indigo-200"
+              className="inline-flex items-center gap-2 px-4 h-11 rounded-xl text-sm font-bold bg-slate-900 hover:bg-slate-800 text-white active:scale-[0.98] touch-manipulation transition-all"
             >
               <UserPlus className="w-4 h-4" />
               <span>{t('newButton')}</span>
@@ -1085,7 +1084,7 @@ export default function CustomersPage() {
           <Button
             onClick={handleCreateCustomer}
             disabled={!newFirstName.trim() || !newPhone.trim() || creatingCustomer}
-            className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white"
+            className="w-full bg-slate-900 hover:bg-slate-800 text-white"
           >
             {creatingCustomer ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />

@@ -216,7 +216,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
       </div>
 
       {/* Day stats bar — 2 chips en carte (RDV + Total estimé) */}
-      <div className={`px-3 py-2.5 border-b border-gray-100 ${group.isPast ? 'bg-gray-50/50' : group.isToday ? 'bg-gradient-to-r from-indigo-50/70 to-violet-50/70' : 'bg-gradient-to-r from-indigo-50/40 to-violet-50/40'}`}>
+      <div className={`px-3 py-2.5 border-b border-gray-100 ${group.isPast ? 'bg-slate-50/60' : group.isToday ? 'bg-indigo-50/60' : 'bg-slate-50'}`}>
         <div className="flex items-center gap-2">
           <div className="flex-1 flex items-center gap-2.5 px-3 py-2 bg-white rounded-xl border border-white shadow-sm">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${group.isPast ? 'bg-gray-100' : 'bg-indigo-100'}`}>

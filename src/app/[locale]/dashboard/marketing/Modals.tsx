@@ -31,14 +31,14 @@ export function HowItWorksModal({ show, onClose }: HowItWorksModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
           onClick={onClose}
         >
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-white rounded-2xl max-w-lg w-full shadow-2xl max-h-[85vh] overflow-y-auto"
+            className="bg-white rounded-2xl max-w-lg w-full shadow-sm border border-slate-100 max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header sticky */}
@@ -136,7 +136,7 @@ export function HowItWorksModal({ show, onClose }: HowItWorksModalProps) {
             <div className="sticky bottom-0 bg-white border-t border-gray-100 px-5 py-3">
               <button
                 onClick={onClose}
-                className="w-full py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors"
+                className="w-full py-2.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 active:scale-[0.98] touch-manipulation transition-all"
               >
                 {t('understood')}
               </button>
@@ -168,14 +168,14 @@ export function OfferModal({ show, onClose, title, description, imageUrl, expire
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
           onClick={onClose}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-white rounded-2xl p-5 max-w-md w-full shadow-2xl max-h-[80vh] overflow-y-auto"
+            className="bg-white rounded-2xl p-6 max-w-md w-full shadow-sm border border-slate-100 max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
