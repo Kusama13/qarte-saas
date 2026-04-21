@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Lock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot, MerchantCountry } from '@/types';
@@ -68,16 +68,6 @@ export default function WeekView({
   const gridCols = `48px repeat(${weekDays.length}, minmax(0, 1fr))`;
   const isCompact = weekDays.length <= 2;
 
-  // Auto-scroll to current hour on mount (comme Google Calendar / Cal.com)
-  const scrollRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!scrollRef.current) return;
-    const now = new Date();
-    const currentHour = now.getHours() + now.getMinutes() / 60;
-    const target = Math.max(0, (currentHour - START_HOUR) * HOUR_HEIGHT - 120);
-    scrollRef.current.scrollTop = target;
-  }, []);
-
   // Current time indicator (ligne rouge sur la colonne du jour) — rafraichi chaque minute
   const [nowTop, setNowTop] = useState<number | null>(null);
   useEffect(() => {
@@ -93,12 +83,12 @@ export default function WeekView({
   }, []);
 
   return (
-    <div
-      ref={scrollRef}
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-y-auto overflow-x-hidden max-h-[calc(100dvh-220px)] lg:max-h-[calc(100vh-200px)]"
-    >
-      {/* Header row : mini day headers — sticky pour rester visible au scroll */}
-      <div className="grid border-b border-gray-100 sticky top-0 z-20 bg-white shadow-[0_1px_0_0_rgba(0,0,0,0.04)]" style={{ gridTemplateColumns: gridCols }}>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-hidden">
+      {/* Header row : sticky sous la top bar mobile (48px + safe-area), top-0 sur desktop */}
+      <div
+        className="grid border-b border-gray-100 sticky top-[calc(48px+env(safe-area-inset-top))] lg:top-0 z-20 bg-white shadow-[0_1px_0_0_rgba(0,0,0,0.04)]"
+        style={{ gridTemplateColumns: gridCols }}
+      >
         <div className="bg-gray-50" />
         {columnData.map(({ day, dayStr, past, revenue }) => {
           const today = isToday(day);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Plus, Lock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot, MerchantCountry } from '@/types';
@@ -70,16 +70,6 @@ export default function DayView({
     [daySlots, serviceMap]
   );
 
-  // Auto-scroll to current hour on mount (only for today)
-  const scrollRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!scrollRef.current || !isToday) return;
-    const now = new Date();
-    const currentHour = now.getHours() + now.getMinutes() / 60;
-    const target = Math.max(0, (currentHour - START_HOUR) * HOUR_HEIGHT - 120);
-    scrollRef.current.scrollTop = target;
-  }, [isToday]);
-
   // Current time indicator
   const [nowTop, setNowTop] = useState<number | null>(null);
   useEffect(() => {
@@ -96,12 +86,9 @@ export default function DayView({
   }, [isToday]);
 
   return (
-    <div
-      ref={scrollRef}
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-y-auto overflow-x-hidden max-h-[calc(100dvh-220px)] lg:max-h-[calc(100vh-200px)]"
-    >
-      {/* Day header — sticky pour rester visible au scroll */}
-      <div className={`px-4 py-3 border-b flex items-center justify-between gap-2 sticky top-0 z-20 ${isToday ? 'bg-indigo-50/50 border-indigo-100' : 'bg-gray-50 border-gray-100'}`}>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-hidden">
+      {/* Day header — sticky sous la top bar mobile, top-0 sur desktop */}
+      <div className={`px-4 py-3 border-b flex items-center justify-between gap-2 sticky top-[calc(48px+env(safe-area-inset-top))] lg:top-0 z-20 ${isToday ? 'bg-indigo-50/50 border-indigo-100' : 'bg-gray-50 border-gray-100'}`}>
         <div className="flex items-center gap-2 min-w-0">
           <p className={`text-sm font-bold capitalize truncate ${isToday ? 'text-indigo-600' : 'text-gray-700'}`}>
             {day.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
