@@ -149,14 +149,14 @@ export default function ClientSelectModal({
       initial={{ opacity: 0, pointerEvents: 'none' }}
       animate={{ opacity: 1, pointerEvents: 'auto' }}
       exit={{ opacity: 0, pointerEvents: 'none' }}
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <motion.div
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 50, opacity: 0 }}
-        className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-xl"
+        className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-sm border border-slate-100"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
@@ -345,7 +345,7 @@ export default function ClientSelectModal({
             <button
               onClick={handleCreateAndProceed}
               disabled={creatingCustomer}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50 shadow-sm"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50"
             >
               {creatingCustomer ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> {t('creating')}</>
@@ -377,7 +377,7 @@ export default function ClientSelectModal({
           {hasClient && (
             <button
               onClick={handleProceedWithClient}
-              className="w-full sm:flex-[2] flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm"
+              className="w-full sm:flex-[2] flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 active:scale-[0.98] touch-manipulation transition-all"
             >
               {t('nextStep')}
               <ArrowRight className="w-4 h-4" />

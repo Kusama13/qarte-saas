@@ -272,35 +272,35 @@ export default function ReferralsPage() {
       {/* Stats */}
       {enabled && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
-                  <Users className="w-5 h-5 text-indigo-600" />
+          <div className="grid grid-cols-3 gap-2 mb-4 md:mb-6">
+            <div className="bg-white rounded-xl border border-slate-100 p-3 md:p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="shrink-0 w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
+                  <Users className="w-3.5 h-3.5 text-indigo-600" strokeWidth={2.25} />
                 </div>
-                <span className="text-sm font-medium text-gray-500">{t('totalReferrals')}</span>
+                <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-slate-500 truncate">{t('totalReferrals')}</span>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{totalReferrals}</p>
+              <p className="text-xl md:text-2xl font-bold text-slate-900 tabular-nums leading-tight">{totalReferrals}</p>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-amber-600" />
+            <div className="bg-white rounded-xl border border-slate-100 p-3 md:p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="shrink-0 w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center">
+                  <Clock className="w-3.5 h-3.5 text-amber-600" strokeWidth={2.25} />
                 </div>
-                <span className="text-sm font-medium text-gray-500">{t('pending')}</span>
+                <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-slate-500 truncate">{t('pending')}</span>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{pendingCount}</p>
+              <p className="text-xl md:text-2xl font-bold text-slate-900 tabular-nums leading-tight">{pendingCount}</p>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                  <Gift className="w-5 h-5 text-emerald-600" />
+            <div className="bg-white rounded-xl border border-slate-100 p-3 md:p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="shrink-0 w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
+                  <Gift className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2.25} />
                 </div>
-                <span className="text-sm font-medium text-gray-500">{t('completed')}</span>
+                <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-slate-500 truncate">{t('completed')}</span>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{completedCount}</p>
+              <p className="text-xl md:text-2xl font-bold text-slate-900 tabular-nums leading-tight">{completedCount}</p>
             </div>
 
           </div>
