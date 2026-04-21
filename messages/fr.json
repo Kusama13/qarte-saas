@@ -910,6 +910,20 @@
     "vitrineBannerTitle": "Configure ta vitrine en ligne",
     "vitrineBannerDesc": "Prestations, horaires, photos — un seul lien pour ta bio Instagram."
   },
+  "navShort": {
+    "home": "Accueil",
+    "planning": "Agenda",
+    "customers": "Clientes",
+    "qrCode": "QR",
+    "more": "Plus"
+  },
+  "moreSheet": {
+    "title": "Menu",
+    "accountSection": "Compte",
+    "supportSection": "Support",
+    "help": "Aide WhatsApp",
+    "logout": "Déconnexion"
+  },
   "personalize": {
     "back": "Retour",
     "titleEdit": "Change",

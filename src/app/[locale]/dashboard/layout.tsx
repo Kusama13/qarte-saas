@@ -34,6 +34,10 @@ import AdminAnnouncementBanner from '@/components/dashboard/AdminAnnouncementBan
 import StatusBanner from '@/components/dashboard/StatusBanner';
 import NotificationBell from '@/components/dashboard/NotificationBell';
 import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
+import BottomNav from './_nav/BottomNav';
+import MoreSheet from './_nav/MoreSheet';
+
+const BOTTOM_NAV_ENABLED = process.env.NEXT_PUBLIC_MOBILE_BOTTOM_NAV === '1';
 
 
 function DashboardLayoutContent({
@@ -58,6 +62,7 @@ function DashboardLayoutContent({
   } = useMerchantPushNotifications();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   const [previewDone, setPreviewDone] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -76,6 +81,7 @@ function DashboardLayoutContent({
   // la navigation (cas PWA/iOS standalone). Defense in depth vs onClick handlers.
   useEffect(() => {
     setSidebarOpen(false);
+    setMoreOpen(false);
   }, [pathname]);
 
   // Body scroll lock via counter shared hook (évite les races avec les autres modaux
@@ -159,7 +165,7 @@ function DashboardLayoutContent({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {!hideDistractions && (
+      {!hideDistractions && !BOTTOM_NAV_ENABLED && (
         <button
           onClick={() => setSidebarOpen(true)}
           aria-label={t('openMenu')}
@@ -362,7 +368,14 @@ function DashboardLayoutContent({
       </aside>
 
       <main className="lg:ml-72 min-h-screen">
-        <div className="px-4 pt-14 pb-20 lg:pt-8 lg:px-8 lg:pb-8">
+        <div
+          className={cn(
+            'px-4 lg:pt-8 lg:px-8 lg:pb-8',
+            BOTTOM_NAV_ENABLED
+              ? 'pt-14 pb-[calc(60px+env(safe-area-inset-bottom)+16px)]'
+              : 'pt-14 pb-20'
+          )}
+        >
           {/* Annonces admin — banner mobile uniquement */}
           <div className="lg:hidden">
             <AdminAnnouncementBanner variant="banner" />
@@ -422,6 +435,13 @@ function DashboardLayoutContent({
           {children}
         </div>
       </main>
+
+      {BOTTOM_NAV_ENABLED && !hideDistractions && (
+        <>
+          <BottomNav onOpenMore={() => setMoreOpen(true)} moreOpen={moreOpen} />
+          <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} onLogout={handleLogout} />
+        </>
+      )}
 
       <InstallAppBanner />
     </div>
