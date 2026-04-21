@@ -594,28 +594,25 @@ export default function SubscriptionPage() {
 
           {/* Syncing indicator */}
           {polling && (
-            <div className="rounded-2xl shadow-xl overflow-hidden relative p-4 sm:p-5 bg-gradient-to-r from-indigo-600 to-violet-600 shadow-indigo-100">
-              <div className="relative z-10 flex flex-col items-center justify-center gap-1.5 text-white">
+            <div className="rounded-2xl p-4 sm:p-5 bg-[#4b0082]">
+              <div className="flex flex-col items-center justify-center gap-1.5 text-white">
                 <div className="flex items-center gap-3">
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span className="text-sm font-bold">{t('syncingTitle')}</span>
                 </div>
                 <p className="text-xs text-white/70">{t('syncingDesc')}</p>
               </div>
-              <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-white/5 skew-x-12 translate-x-10" />
             </div>
           )}
 
           {/* Countdown timer */}
           {!polling && trialStatus.isActive && (
-            <div className={`rounded-2xl text-white shadow-xl overflow-hidden relative p-4 sm:p-5 ${
-              trialStatus.daysRemaining <= 3
-                ? 'bg-gradient-to-r from-red-600 to-red-500 shadow-red-100'
-                : 'bg-gradient-to-r from-indigo-600 to-violet-600 shadow-indigo-100'
+            <div className={`rounded-2xl text-white p-4 sm:p-5 ${
+              trialStatus.daysRemaining <= 3 ? 'bg-red-600' : 'bg-[#4b0082]'
             }`}>
-              <div className="relative z-10">
+              <div>
                 <div className="flex items-center justify-center gap-2 mb-3">
-                  <Calendar className="w-3.5 h-3.5 opacity-80" />
+                  <Calendar className="w-3.5 h-3.5 opacity-80" strokeWidth={2.25} />
                   <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider opacity-80">
                     {t('trialEndsOn', { date: formatDate(merchant?.trial_ends_at || '') })}
                   </span>
@@ -629,7 +626,7 @@ export default function SubscriptionPage() {
                   ].map((unit, i) => (
                     <div key={unit.label} className="flex items-center gap-1">
                       {i > 0 && <span className="text-white/30 font-bold">:</span>}
-                      <div className="bg-white/15 backdrop-blur-sm rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 min-w-[42px] sm:min-w-[48px] text-center">
+                      <div className="bg-white/15 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 min-w-[42px] sm:min-w-[48px] text-center">
                         <span className="text-xl sm:text-2xl font-bold tabular-nums">{String(unit.value).padStart(2, '0')}</span>
                         <span className="text-[9px] font-bold uppercase tracking-wider opacity-60 ml-0.5">{unit.label}</span>
                       </div>
@@ -637,7 +634,6 @@ export default function SubscriptionPage() {
                   ))}
                 </div>
               </div>
-              <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-white/5 skew-x-12 translate-x-10" />
             </div>
           )}
         </div>
@@ -646,7 +642,7 @@ export default function SubscriptionPage() {
         {merchant?.stripe_subscription_id && (
           <div className="lg:col-span-2">
             <div className="bg-white/80 border border-white/40 shadow-xl rounded-2xl p-5 sm:p-8">
-              <h2 className="text-lg font-extrabold text-gray-900 mb-6">{t('billing')}</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-6">{t('billing')}</h2>
 
               <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 mb-6">
                 <div className="flex items-center gap-3">
@@ -702,7 +698,7 @@ export default function SubscriptionPage() {
                     </button>
                   </div>
                   <Button
-                    className="w-full h-11 rounded-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
+                    className="w-full h-11 rounded-xl font-bold bg-[#4b0082] hover:bg-[#4b0082]/90"
                     onClick={() => handleSubscribe()}
                     loading={subscribing}
                   >
@@ -776,7 +772,7 @@ export default function SubscriptionPage() {
                     {tier === 'fidelity' ? t('tierFidelityName') : t('tierAllInName')}
                     {isCurrent && <span className="ml-2 text-[10px] font-bold uppercase text-emerald-700">· {t('changeTierCurrent')}</span>}
                   </span>
-                  <span className="text-sm font-extrabold text-gray-900">{price}</span>
+                  <span className="text-sm font-bold text-gray-900">{price}</span>
                 </div>
                 <p className="text-xs text-gray-500 leading-snug">
                   {tier === 'fidelity' ? t('tierFidelityHint') : t('tierAllInHint')}
@@ -845,14 +841,14 @@ export default function SubscriptionPage() {
               </div>
 
               {cancelReason === 'too_expensive' && (
-                <div className="p-4 bg-gradient-to-br from-violet-50 to-indigo-50 rounded-2xl border border-violet-200">
+                <div className="p-4 bg-violet-50 rounded-xl border border-violet-100">
                   <div className="flex items-center gap-2 mb-2">
-                    <Gift className="w-4 h-4 text-violet-600" />
-                    <span className="text-sm font-bold text-violet-900">{t('saveOfferPromoTitle')}</span>
+                    <Gift className="w-4 h-4 text-[#4b0082]" strokeWidth={2.25} />
+                    <span className="text-sm font-bold text-[#4b0082]">{t('saveOfferPromoTitle')}</span>
                   </div>
                   <p className="text-sm text-violet-700">{t('saveOfferPromoDesc')}</p>
                   <Button
-                    className="w-full mt-3 h-10 rounded-xl bg-violet-600 hover:bg-violet-700 font-bold text-sm"
+                    className="w-full mt-3 h-10 rounded-xl bg-[#4b0082] hover:bg-[#4b0082]/90 font-bold text-sm"
                     onClick={() => setShowPromoCode(true)}
                   >
                     {t('saveOfferPromoAccept')}

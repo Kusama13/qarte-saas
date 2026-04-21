@@ -486,7 +486,7 @@ export default function CustomersPage() {
               onClick={() => setShowFilterModal(true)}
               className={`inline-flex items-center gap-2 px-4 h-11 rounded-xl border text-sm font-bold transition-all ${
                 activeFilterCount > 0
-                  ? 'bg-[#4b0082] text-white border-[#4b0082] shadow-md shadow-[#4b0082]/20'
+                  ? 'bg-[#4b0082] text-white border-[#4b0082]'
                   : 'bg-[#4b0082]/5 text-[#4b0082] border-[#4b0082]/20 hover:bg-[#4b0082]/10 hover:border-[#4b0082]/30'
               }`}
             >
@@ -844,7 +844,7 @@ export default function CustomersPage() {
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => setActiveFilter(activeFilter === 'new7' ? 'all' : 'new7')}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'new7' ? 'bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-200' : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50'}`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'new7' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
                     >
                       <Sparkles className={`w-3.5 h-3.5 ${activeFilter === 'new7' ? 'text-white' : 'text-emerald-500'}`} />
                       <span>{t('filterNew7')}</span>
@@ -852,7 +852,7 @@ export default function CustomersPage() {
                     </button>
                     <button
                       onClick={() => setActiveFilter(activeFilter === 'active30' ? 'all' : 'active30')}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'active30' ? 'bg-indigo-500 text-white border-indigo-500 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50'}`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'active30' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
                     >
                       <Users className={`w-3.5 h-3.5 ${activeFilter === 'active30' ? 'text-white' : 'text-indigo-500'}`} />
                       <span>{t('filterActive30')}</span>
@@ -860,7 +860,7 @@ export default function CustomersPage() {
                     </button>
                     <button
                       onClick={() => setActiveFilter(activeFilter === 'inactive60' ? 'all' : 'inactive60')}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'inactive60' ? 'bg-rose-500 text-white border-rose-500 shadow-md shadow-rose-200' : 'bg-white text-gray-600 border-gray-200 hover:border-rose-300 hover:bg-rose-50'}`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'inactive60' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
                     >
                       <Clock className={`w-3.5 h-3.5 ${activeFilter === 'inactive60' ? 'text-white' : 'text-rose-500'}`} />
                       <span>{t('filterInactive60')}</span>
@@ -868,7 +868,7 @@ export default function CustomersPage() {
                     </button>
                     <button
                       onClick={() => setActiveFilter(activeFilter === 'close' ? 'all' : 'close')}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'close' ? 'bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-200' : 'bg-white text-gray-600 border-gray-200 hover:border-amber-300 hover:bg-amber-50'}`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'close' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
                     >
                       <Target className={`w-3.5 h-3.5 ${activeFilter === 'close' ? 'text-white' : 'text-amber-500'}`} />
                       <span>{t('filterClose')}</span>
@@ -876,7 +876,7 @@ export default function CustomersPage() {
                     </button>
                     <button
                       onClick={() => setActiveFilter(activeFilter === 'reward' ? 'all' : 'reward')}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'reward' ? 'bg-green-500 text-white border-green-500 shadow-md shadow-green-200' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300 hover:bg-green-50'}`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'reward' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
                     >
                       <Gift className={`w-3.5 h-3.5 ${activeFilter === 'reward' ? 'text-white' : 'text-green-500'}`} />
                       <span>{t('filterReward')}</span>
@@ -885,7 +885,7 @@ export default function CustomersPage() {
                     {birthdayMonthCount > 0 && (
                       <button
                         onClick={() => setActiveFilter(activeFilter === 'birthday_month' ? 'all' : 'birthday_month')}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'birthday_month' ? 'bg-fuchsia-500 text-white border-fuchsia-500 shadow-md shadow-fuchsia-200' : 'bg-white text-gray-600 border-gray-200 hover:border-fuchsia-300 hover:bg-fuchsia-50'}`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'birthday_month' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
                       >
                         <Cake className={`w-3.5 h-3.5 ${activeFilter === 'birthday_month' ? 'text-white' : 'text-fuchsia-500'}`} />
                         <span>{t('filterBirthdayMonth')}</span>
@@ -901,7 +901,7 @@ export default function CustomersPage() {
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => setFilterPushOnly(!filterPushOnly)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${filterPushOnly ? 'bg-violet-500 text-white border-violet-500 shadow-md shadow-violet-200' : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300 hover:bg-violet-50'}`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${filterPushOnly ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
                     >
                       <Bell className={`w-3.5 h-3.5 ${filterPushOnly ? 'text-white' : 'text-violet-500'}`} />
                       <span>{t('filterNotifiable')}</span>
@@ -918,7 +918,7 @@ export default function CustomersPage() {
                       {merchant?.welcome_offer_enabled && welcomeCount > 0 && (
                         <button
                           onClick={() => setFilterWelcome(!filterWelcome)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${filterWelcome ? 'bg-sky-500 text-white border-sky-500 shadow-md shadow-sky-200' : 'bg-white text-gray-600 border-gray-200 hover:border-sky-300 hover:bg-sky-50'}`}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${filterWelcome ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
                         >
                           <Sparkles className={`w-3.5 h-3.5 ${filterWelcome ? 'text-white' : 'text-sky-500'}`} />
                           <span>{t('filterWelcome')}</span>
@@ -928,7 +928,7 @@ export default function CustomersPage() {
                       {promoCount > 0 && (
                         <button
                           onClick={() => setFilterPromo(!filterPromo)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${filterPromo ? 'bg-pink-500 text-white border-pink-500 shadow-md shadow-pink-200' : 'bg-white text-gray-600 border-gray-200 hover:border-pink-300 hover:bg-pink-50'}`}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${filterPromo ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
                         >
                           <Ticket className={`w-3.5 h-3.5 ${filterPromo ? 'text-white' : 'text-pink-500'}`} />
                           <span>{t('filterPromo')}</span>

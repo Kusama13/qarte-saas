@@ -163,8 +163,8 @@ export default function ContestPage() {
     <div className="max-w-2xl mx-auto px-4 py-6 pb-24 md:pb-6">
       {/* ═══ PAGE HEADER ═══ */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-          <Trophy className="w-5 h-5 text-white" />
+        <div className="shrink-0 w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
+          <Trophy className="w-5 h-5 text-amber-600" strokeWidth={2.25} />
         </div>
         <div>
           <h1 className="text-lg font-bold text-gray-900">{t('pageTitle')}</h1>
@@ -241,7 +241,7 @@ export default function ContestPage() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 transition-all disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50"
                 >
                   {saving ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> {t('saving')}</>
@@ -387,7 +387,7 @@ export default function ContestPage() {
             <button
               onClick={() => downloadStory(storyRef, `gagnant-${storyContest.contest_month}.png`)}
               disabled={downloading}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 transition-all disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50"
             >
               {downloading ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> {t('downloading')}</>
@@ -424,7 +424,7 @@ export default function ContestPage() {
             <button
               onClick={() => downloadStory(announceRef, `concours-${currentMonth}.png`)}
               disabled={downloading}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 transition-all disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50"
             >
               {downloading ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> {t('downloading')}</>
