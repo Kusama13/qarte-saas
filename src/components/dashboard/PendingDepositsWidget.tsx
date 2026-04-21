@@ -3,16 +3,18 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-import { Wallet, Clock, ArrowRight, Check, X, Loader2 } from 'lucide-react';
+import { Wallet, Clock, ArrowRight, Check, X, Loader2, MessageSquare } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { computeDepositAmount } from '@/lib/deposit';
 import { formatCurrency, getTodayForCountry, unwrapJoin } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
+import { useMerchant } from '@/contexts/MerchantContext';
 import type { MerchantCountry } from '@/types';
 
 interface PendingDeposit {
   id: string;
   client_name: string;
+  client_phone: string | null;
   slot_date: string;
   start_time: string;
   totalPrice: number;
@@ -33,10 +35,13 @@ export default function PendingDepositsWidget({ merchantId, country, depositFixe
   const t = useTranslations('pendingDeposits');
   const locale = useLocale();
   const { addToast } = useToast();
+  const { merchant } = useMerchant();
+  const isPaid = merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling' || merchant?.subscription_status === 'past_due';
   const [items, setItems] = useState<PendingDeposit[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [smsEnabled, setSmsEnabled] = useState<Record<string, boolean>>({});
   const [confirmReject, setConfirmReject] = useState<PendingDeposit | null>(null);
 
   const fetchPending = useCallback(async () => {
@@ -49,7 +54,7 @@ export default function PendingDepositsWidget({ merchantId, country, depositFixe
     const { data, count } = await supabase
       .from('merchant_planning_slots')
       .select(
-        'id, slot_date, start_time, client_name, planning_slot_services(service:merchant_services!service_id(price))',
+        'id, slot_date, start_time, client_name, client_phone, planning_slot_services(service:merchant_services!service_id(price))',
         { count: 'exact' }
       )
       .eq('merchant_id', merchantId)
@@ -72,6 +77,7 @@ export default function PendingDepositsWidget({ merchantId, country, depositFixe
       return {
         id: b.id,
         client_name: b.client_name,
+        client_phone: b.client_phone ?? null,
         slot_date: b.slot_date,
         start_time: b.start_time,
         totalPrice,
@@ -89,6 +95,7 @@ export default function PendingDepositsWidget({ merchantId, country, depositFixe
   }, [fetchPending]);
 
   const handleAccept = async (item: PendingDeposit) => {
+    const withSms = !!smsEnabled[item.id] && isPaid && !!item.client_phone;
     setBusyId(item.id);
     try {
       const res = await fetch('/api/planning', {
@@ -99,6 +106,7 @@ export default function PendingDepositsWidget({ merchantId, country, depositFixe
           merchantId,
           client_name: item.client_name,
           deposit_confirmed: true,
+          ...(withSms && { send_sms: true }),
         }),
       });
       if (!res.ok) throw new Error('fail');
@@ -203,7 +211,27 @@ export default function PendingDepositsWidget({ merchantId, country, depositFixe
                   >
                     {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                     {t('accept')}
+                    {smsEnabled[item.id] && isPaid && item.client_phone && (
+                      <MessageSquare className="w-3 h-3 ml-0.5" strokeWidth={2.5} />
+                    )}
                   </button>
+                  {item.client_phone && (
+                    <button
+                      type="button"
+                      onClick={() => isPaid && setSmsEnabled((prev) => ({ ...prev, [item.id]: !prev[item.id] }))}
+                      disabled={busy || !isPaid}
+                      title={!isPaid ? t('smsPaidOnly') : smsEnabled[item.id] ? t('smsOn') : t('smsOff')}
+                      aria-label={smsEnabled[item.id] ? t('smsOn') : t('smsOff')}
+                      aria-pressed={!!smsEnabled[item.id]}
+                      className={`shrink-0 h-9 w-9 flex items-center justify-center rounded-lg border transition-all touch-manipulation disabled:opacity-40 disabled:cursor-not-allowed ${
+                        smsEnabled[item.id] && isPaid
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                          : 'bg-white border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-300'
+                      }`}
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" strokeWidth={2.25} />
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setConfirmReject(item)}

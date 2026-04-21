@@ -2409,7 +2409,10 @@
     "cancel": "Annuler",
     "toastAccepted": "Acompte confirmé",
     "toastRejected": "Réservation refusée",
-    "errorAction": "Une erreur est survenue"
+    "errorAction": "Une erreur est survenue",
+    "smsOn": "SMS de confirmation activé",
+    "smsOff": "Envoyer un SMS de confirmation",
+    "smsPaidOnly": "SMS disponibles après abonnement"
   },
   "heroToday": {
     "todayLabel": "Aujourd'hui",
