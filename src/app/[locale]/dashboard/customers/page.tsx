@@ -29,7 +29,6 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Modal } from '@/components/ui';
 import { CustomerManagementModal } from '@/components/dashboard/CustomerManagementModal';
-import StatsCard from '@/components/dashboard/StatsCard';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
 import { formatDate, formatPhoneNumber, formatPhoneLabel, formatCurrency, PHONE_CONFIG } from '@/lib/utils';
@@ -102,7 +101,6 @@ export default function CustomersPage() {
   const [createError, setCreateError] = useState<string | null>(null);
 
   // Loyalty stats — total visits + redemptions across the merchant
-  const [statVisits, setStatVisits] = useState<number | null>(null);
   const [statRewards, setStatRewards] = useState<number | null>(null);
 
   const monthNames = t('monthNames').split(',');
@@ -111,7 +109,7 @@ export default function CustomersPage() {
     if (!merchant) return;
 
     // Parallel fetch: cards + push subscribers + vouchers + loyalty counts
-    const [cardsResult, pushResult, vouchersResult, visitsCount, rewardsCount] = await Promise.all([
+    const [cardsResult, pushResult, vouchersResult, rewardsCount] = await Promise.all([
       supabase
         .from('loyalty_cards')
         .select(`
@@ -132,11 +130,9 @@ export default function CustomersPage() {
         .eq('is_used', false)
         .in('source', ['welcome', 'offer']),
 
-      supabase.from('visits').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
       supabase.from('redemptions').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
     ]);
 
-    setStatVisits(visitsCount.count ?? 0);
     setStatRewards(rewardsCount.count ?? 0);
 
     // Build voucher sets
@@ -411,56 +407,54 @@ export default function CustomersPage() {
   const remaining = filteredCustomers.length - displayCount;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
-      {/* Header : titre + compteur + boutons d'actions en dessous */}
-      <div className="flex flex-col gap-4 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
-        <div>
-          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight text-gray-900">
-            {t('title')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4b0082] to-violet-600">{t('titleHighlight')}</span>
-          </h1>
-          <p className="mt-1 text-sm md:text-base font-medium text-gray-500">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#4b0082]/10 text-[#4b0082] mr-2 border border-[#4b0082]/20">
-              {customers.length} {t('total')}
-            </span>
-            {customers.length > 1 ? t('subtotalPlural') : t('subtotalSingular')}
-          </p>
-        </div>
+    <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
+      {/* Header : titre compact + boutons d'actions */}
+      <div className="flex flex-col gap-3 p-3 md:p-4 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
+        <h1 className="text-lg md:text-2xl font-extrabold tracking-tight text-gray-900">
+          {t('title')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4b0082] to-violet-600">{t('titleHighlight')}</span>
+        </h1>
         <div className="flex flex-wrap items-center gap-2">
           <Link href="/dashboard/members">
             <Button
               variant="outline"
-              className="h-9 px-3 text-sm border-amber-200 hover:border-amber-300 hover:bg-amber-50/50 text-amber-700 rounded-lg transition-all duration-200 shadow-sm"
+              className="h-8 px-2.5 text-xs border-amber-200 hover:border-amber-300 hover:bg-amber-50/50 text-amber-700 rounded-lg transition-all duration-200 shadow-sm"
             >
-              <Crown className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
+              <Crown className="w-3 h-3 mr-1 text-amber-500" />
               {t('vipPrograms')}
             </Button>
           </Link>
           <Link href="/dashboard/contest">
             <Button
               variant="outline"
-              className="h-9 px-3 text-sm border-amber-200 hover:border-amber-300 hover:bg-amber-50/50 text-amber-700 rounded-lg transition-all duration-200 shadow-sm"
+              className="h-8 px-2.5 text-xs border-amber-200 hover:border-amber-300 hover:bg-amber-50/50 text-amber-700 rounded-lg transition-all duration-200 shadow-sm"
             >
-              <Trophy className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
+              <Trophy className="w-3 h-3 mr-1 text-amber-500" />
               {t('contest')}
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Loyalty stats (fidélité-only) */}
-      <div className="grid grid-cols-2 gap-3">
-        <StatsCard
-          title={t('statVisits')}
-          value={statVisits ?? '—'}
-          icon={UserCheck}
-          color="#10B981"
-        />
-        <StatsCard
-          title={t('statRewards')}
-          value={statRewards ?? '—'}
-          icon={Gift}
-          color="#e11d48"
-        />
+      {/* Loyalty stats — compact inline */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="flex items-center gap-2.5 px-3 py-2.5 bg-white border border-slate-100 rounded-xl">
+          <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+            <UserCheck className="w-4 h-4 text-emerald-600" strokeWidth={2.25} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 leading-none">{t('statSignups')}</p>
+            <p className="text-lg font-bold text-slate-900 tabular-nums leading-tight mt-0.5">{customers.length}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2.5 px-3 py-2.5 bg-white border border-slate-100 rounded-xl">
+          <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center shrink-0">
+            <Gift className="w-4 h-4 text-rose-600" strokeWidth={2.25} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 leading-none">{t('statRewards')}</p>
+            <p className="text-lg font-bold text-slate-900 tabular-nums leading-tight mt-0.5">{statRewards ?? '—'}</p>
+          </div>
+        </div>
       </div>
 
       <div className="p-4 md:p-8 bg-white/80 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/20 shadow-xl shadow-indigo-100/50 relative overflow-hidden">
