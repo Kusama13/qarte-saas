@@ -301,7 +301,7 @@ export function AssignModal({
                     }`}>
                       {isSelected && <Check className="w-3 h-3 text-white stroke-[3]" />}
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-semibold shrink-0">
                       {c.customer?.first_name?.charAt(0) || '?'}
                     </div>
                     <div className="text-left flex-1 min-w-0">

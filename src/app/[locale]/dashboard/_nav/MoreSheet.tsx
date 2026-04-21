@@ -80,7 +80,7 @@ export default function MoreSheet({ open, onClose, onLogout }: MoreSheetProps) {
 
             {/* Header — aligne gauche, avatar puis texte */}
             <div className="flex items-center gap-3 px-4 pt-2 pb-3">
-              <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-700 shadow-sm ring-1 ring-violet-900/10 flex items-center justify-center overflow-hidden">
+              <div className="shrink-0 w-10 h-10 rounded-lg bg-[#4b0082] flex items-center justify-center overflow-hidden">
                 {merchant?.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img

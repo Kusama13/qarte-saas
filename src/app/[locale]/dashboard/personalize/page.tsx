@@ -194,7 +194,7 @@ function PersonalizeContent() {
           onClick={() => fileInputRef.current?.click()}
           className="w-full flex items-center gap-4 p-4 bg-white rounded-2xl border-2 border-dashed border-gray-200 hover:border-indigo-300 transition-all group"
         >
-          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
+          <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
             {uploading ? (
               <Loader2 className="w-5 h-5 text-indigo-500 animate-spin" />
             ) : logoUrl ? (
@@ -289,7 +289,7 @@ function PersonalizeContent() {
         <button
           onClick={handleContinue}
           disabled={saving || uploading || saved}
-          className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg shadow-indigo-200/50 hover:shadow-xl hover:shadow-indigo-200/60 transition-all disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-[#4b0082] hover:bg-[#4b0082]/90 text-white font-bold active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50"
         >
           {saving ? (
             <Loader2 className="w-5 h-5 animate-spin" />

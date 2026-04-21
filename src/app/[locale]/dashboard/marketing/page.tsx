@@ -81,7 +81,7 @@ export default function MarketingPushPage() {
           onClick={() => setActiveTab('push')}
           className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-2 rounded-xl font-bold text-[13px] sm:text-sm transition-all ${
             activeTab === 'push'
-              ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-200'
+              ? 'bg-slate-900 text-white'
               : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
           }`}
         >
@@ -92,7 +92,7 @@ export default function MarketingPushPage() {
           onClick={() => setActiveTab('sms')}
           className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-2 rounded-xl font-bold text-[13px] sm:text-sm transition-all ${
             activeTab === 'sms'
-              ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-200'
+              ? 'bg-slate-900 text-white'
               : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
           }`}
         >
@@ -103,7 +103,7 @@ export default function MarketingPushPage() {
           onClick={() => setActiveTab('automations')}
           className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-2 rounded-xl font-bold text-[13px] sm:text-sm transition-all ${
             activeTab === 'automations'
-              ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-200'
+              ? 'bg-slate-900 text-white'
               : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
           }`}
         >

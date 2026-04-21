@@ -245,7 +245,7 @@ export default function PublicPageDashboard() {
 
       {/* ── LIEN PAGE PUBLIQUE (visible quand page suffisamment remplie) ── */}
       {merchant?.slug && completion.done >= 3 && (
-        <div className="bg-gradient-to-br from-indigo-50/80 to-violet-50/80 rounded-2xl border border-indigo-100 p-5 mb-6">
+        <div className="bg-indigo-50 rounded-2xl border border-indigo-100 p-5 mb-6">
           <div className="flex items-center gap-3">
             <div className="px-3 py-1.5 bg-white/70 border border-indigo-100 rounded-lg text-sm font-mono text-gray-600 truncate flex-1">
               getqarte.com/p/{merchant.slug}
@@ -253,7 +253,7 @@ export default function PublicPageDashboard() {
             <button
               onClick={handleCopy}
               className={`px-4 py-1.5 rounded-lg font-semibold text-sm flex items-center gap-1.5 transition-all shrink-0 ${
-                copied ? 'bg-emerald-500 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                copied ? 'bg-emerald-500 text-white' : 'bg-[#4b0082] text-white hover:bg-[#4b0082]/90'
               }`}
             >
               {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}

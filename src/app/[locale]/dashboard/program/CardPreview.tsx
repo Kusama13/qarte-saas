@@ -16,7 +16,7 @@ export function CardPreview({ formData, onNavigateToPersonalize }: CardPreviewPr
       className="w-full flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-white/60 border border-white/20 rounded-2xl shadow-sm hover:shadow-md hover:border-indigo-100 transition-all group"
     >
       {/* Logo preview */}
-      <div className="shrink-0 w-11 h-11 md:w-14 md:h-14 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
+      <div className="shrink-0 w-11 h-11 md:w-14 md:h-14 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden">
         {formData.logoUrl ? (
           <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-cover rounded-xl" />
         ) : (

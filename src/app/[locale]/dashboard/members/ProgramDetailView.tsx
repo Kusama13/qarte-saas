@@ -112,8 +112,8 @@ export default function ProgramDetailView({
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shrink-0">
-                <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                <Crown className="w-5 h-5 text-indigo-600" strokeWidth={2.25} />
               </div>
               <div className="min-w-0">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{selectedProgram.name}</h1>

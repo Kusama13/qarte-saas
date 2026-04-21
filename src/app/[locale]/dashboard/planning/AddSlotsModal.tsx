@@ -80,7 +80,7 @@ export default function AddSlotsModal({
                 key={time}
                 onClick={() => { if (!disabled) toggleTime(time); }}
                 disabled={disabled}
-                className={`py-2 rounded-xl text-xs font-semibold border transition-all ${disabled && !selected ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' : selected ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
+                className={`py-2 rounded-xl text-xs font-semibold border transition-all ${disabled && !selected ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' : selected ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
               >
                 {formatTime(time, locale)}
               </button>

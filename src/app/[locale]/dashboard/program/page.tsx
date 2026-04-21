@@ -362,12 +362,12 @@ export default function ProgramPage() {
       {/* Test Scan Modal — shown after first program save */}
       {showTestModal && merchant && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 text-center animate-in zoom-in-95 duration-300">
-            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200/50">
-              <Sparkles className="w-7 h-7 text-white" />
+          <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-slate-100 p-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-indigo-50 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-indigo-600" strokeWidth={2.25} />
             </div>
 
-            <h3 className="text-lg font-bold text-gray-900 mb-2">
+            <h3 className="text-base font-bold text-slate-900 mb-2">
               {t('modalTitle')}
             </h3>
 
@@ -408,7 +408,7 @@ export default function ProgramPage() {
                   body: JSON.stringify({ step: 'preview' }),
                 }).catch(() => {});
               }}
-              className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200/50 hover:shadow-xl transition-all active:scale-[0.98]"
+              className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-[#4b0082] hover:bg-[#4b0082]/90 text-white font-bold rounded-xl active:scale-[0.98] touch-manipulation transition-all"
             >
               <Smartphone className="w-5 h-5" />
               {t('viewClientJourney')}

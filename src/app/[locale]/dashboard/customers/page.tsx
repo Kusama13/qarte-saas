@@ -595,7 +595,7 @@ export default function CustomersPage() {
                         <div className="flex items-center gap-1.5">
                           <div className="w-14 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                             <div
-                              className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500"
+                              className="h-full rounded-full bg-[#4b0082]"
                               style={{ width: `${progress}%` }}
                             />
                           </div>
@@ -705,7 +705,7 @@ export default function CustomersPage() {
                                     className={`h-full rounded-full transition-all duration-500 ease-out ${
                                       card.current_stamps >= (merchant.stamps_required || 10)
                                         ? 'bg-emerald-500'
-                                        : 'bg-gradient-to-r from-indigo-500 to-violet-500'
+                                        : 'bg-[#4b0082]'
                                     }`}
                                     style={{ width: `${Math.min((card.current_stamps / (merchant.stamps_required || 10)) * 100, 100)}%` }}
                                   />
@@ -722,7 +722,7 @@ export default function CustomersPage() {
                                     className={`h-full rounded-full transition-all duration-500 ease-out ${
                                       card.current_stamps >= (merchant.tier2_stamps_required || 20)
                                         ? 'bg-violet-500'
-                                        : 'bg-gradient-to-r from-gray-300 to-gray-400'
+                                        : 'bg-gray-300'
                                     }`}
                                     style={{ width: `${Math.min(Math.max(0, (card.current_stamps - (merchant.stamps_required || 10)) / ((merchant.tier2_stamps_required || 20) - (merchant.stamps_required || 10))) * 100, 100)}%` }}
                                   />
@@ -738,7 +738,7 @@ export default function CustomersPage() {
                               <div className="flex items-center gap-3">
                                 <div className="flex-1 w-28 h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
                                   <div
-                                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500 ease-out"
+                                    className="h-full rounded-full bg-[#4b0082] transition-all duration-500 ease-out"
                                     style={{ width: `${progress}%` }}
                                   />
                                 </div>
