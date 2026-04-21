@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { Link } from '@/i18n/navigation';
 import { Users, Gift, AlertTriangle, X, Eye, UserPlus, Sparkles } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
@@ -10,9 +11,10 @@ import { safeFetchJson } from '@/lib/fetch';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { showPlanningUi } from '@/lib/plan-tiers';
-import PendingPointsWidget from '@/components/dashboard/PendingPointsWidget';
-import PendingDepositsWidget from '@/components/dashboard/PendingDepositsWidget';
-import OnboardingChecklist from '@/components/dashboard/OnboardingChecklist';
+
+const PendingPointsWidget = dynamic(() => import('@/components/dashboard/PendingPointsWidget'), { ssr: false });
+const PendingDepositsWidget = dynamic(() => import('@/components/dashboard/PendingDepositsWidget'), { ssr: false });
+const OnboardingChecklist = dynamic(() => import('@/components/dashboard/OnboardingChecklist'), { ssr: false });
 import HeroToday from '@/components/dashboard/HeroToday';
 import ToSeeList, { type ToSeeItem } from '@/components/dashboard/ToSeeList';
 import WeekTiles from '@/components/dashboard/WeekTiles';
