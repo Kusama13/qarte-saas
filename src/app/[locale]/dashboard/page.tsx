@@ -12,7 +12,6 @@ import { showPlanningUi } from '@/lib/plan-tiers';
 import PendingPointsWidget from '@/components/dashboard/PendingPointsWidget';
 import PendingDepositsWidget from '@/components/dashboard/PendingDepositsWidget';
 import OnboardingChecklist from '@/components/dashboard/OnboardingChecklist';
-import ZeroScansCoach from '@/components/dashboard/ZeroScansCoach';
 import HeroToday from '@/components/dashboard/HeroToday';
 import ToSeeList, { type ToSeeItem } from '@/components/dashboard/ToSeeList';
 import WeekTiles from '@/components/dashboard/WeekTiles';
@@ -658,7 +657,7 @@ export default function DashboardPage() {
         />
       )}
 
-      {activityFeed.length > 0 ? (
+      {activityFeed.length > 0 && (
         <div>
           <p className="px-1 mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
             {t('recentActivity')}
@@ -693,9 +692,7 @@ export default function DashboardPage() {
             </ul>
           </div>
         </div>
-      ) : merchant?.reward_description ? (
-        <ZeroScansCoach merchant={merchant} />
-      ) : null}
+      )}
 
       <SmsRecent
         merchantId={merchant.id}
