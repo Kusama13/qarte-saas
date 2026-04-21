@@ -48,58 +48,55 @@ export default function PlanCard({
   const [intPart, decPart] = priceDisplay.split(priceSep);
 
   return (
-    <div className={`relative flex flex-col rounded-2xl p-6 md:p-7 transition-all ${
+    <div className={`relative flex flex-col rounded-2xl p-6 transition-colors ${
       isRecommended
-        ? 'bg-gradient-to-b from-white via-white to-indigo-50/40 border-2 border-[#4b0082] shadow-sm md:-translate-y-2'
-        : 'bg-white border border-gray-200 shadow-sm'
+        ? 'bg-white border-2 border-[#4b0082] shadow-sm'
+        : 'bg-white border border-slate-200 shadow-sm'
     }`}>
       {isRecommended && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <span className="inline-flex items-center gap-1 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 shadow-md shadow-[#4b0082]/20">
-            <Sparkles className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white rounded-full bg-[#4b0082]">
+            <Sparkles className="w-3 h-3" strokeWidth={2.25} />
             {t('recommended')}
           </span>
         </div>
       )}
 
-      {/* Tier name */}
       <div className="mb-3">
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400">
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
           {tier === 'fidelity' ? t('tierFidelityName') : t('tierAllInName')}
         </p>
-        <p className="text-[13px] text-gray-500 font-medium mt-1 leading-snug">{persona}</p>
+        <p className="text-[13px] text-slate-500 mt-1 leading-snug">{persona}</p>
       </div>
 
-      {/* Price */}
-      <div className="mb-5 pb-5 border-b border-gray-100">
+      <div className="mb-5 pb-5 border-b border-slate-100">
         <div className="flex items-baseline gap-1">
-          <span className="text-5xl font-bold text-gray-900 tabular-nums tracking-tight">{intPart}</span>
-          <span className="text-2xl font-bold text-gray-900">{priceSep}{decPart}</span>
-          <span className="text-sm text-gray-400 font-medium ml-1">{t('perMonth')}</span>
+          <span className="text-4xl font-bold text-slate-900 tabular-nums tracking-tight">{intPart}</span>
+          <span className="text-xl font-bold text-slate-900 tabular-nums">{priceSep}{decPart}</span>
+          <span className="text-sm text-slate-400 ml-1">{t('perMonth')}</span>
         </div>
         <div className="mt-1.5 flex items-center gap-2 flex-wrap text-xs">
           {interval === 'annual' && annualOriginal && (
-            <span className="text-gray-400">
-              <span className="line-through">{annualOriginal}</span>{' '}
-              <span className="font-bold text-gray-700">→ {totalLabel}</span>
+            <span className="text-slate-400">
+              <span className="line-through tabular-nums">{annualOriginal}</span>{' '}
+              <span className="font-bold text-slate-700 tabular-nums">→ {totalLabel}</span>
             </span>
           )}
           {interval === 'monthly' && (
-            <span className="text-gray-400 font-medium">{totalLabel}</span>
+            <span className="text-slate-400 tabular-nums">{totalLabel}</span>
           )}
         </div>
       </div>
 
-      {/* Features */}
       <ul className="space-y-2.5 mb-6 flex-1">
         {inheritsFromFidelity && (
-          <li className="flex items-start gap-2.5 pb-2 mb-1 border-b border-gray-100">
+          <li className="flex items-start gap-2.5 pb-2 mb-1 border-b border-slate-100">
             <div className={`shrink-0 w-4 h-4 rounded-full flex items-center justify-center mt-0.5 ${
               isRecommended ? 'bg-[#4b0082]' : 'bg-emerald-500'
             }`}>
               <Check className="w-2.5 h-2.5 text-white" strokeWidth={3.5} />
             </div>
-            <span className="text-[13px] font-bold text-gray-900">{t('planIncludesAllFidelity')}</span>
+            <span className="text-[13px] font-bold text-slate-900">{t('planIncludesAllFidelity')}</span>
           </li>
         )}
         {features.map((feature, i) => (
@@ -109,7 +106,7 @@ export default function PlanCard({
             }`}>
               <Check className="w-2.5 h-2.5 text-white" strokeWidth={3.5} />
             </div>
-            <span className="text-[13px] text-gray-700 leading-snug">{feature}</span>
+            <span className="text-[13px] text-slate-700 leading-snug">{feature}</span>
           </li>
         ))}
         {nfcIncluded && interval === 'annual' && (
@@ -117,25 +114,24 @@ export default function PlanCard({
             <button
               type="button"
               onClick={onClickNfc}
-              className="w-full flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 hover:from-indigo-100 hover:to-violet-100 transition-colors text-left group"
+              className="w-full flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 active:scale-[0.99] touch-manipulation transition-all text-left"
             >
-              <CreditCard className="w-4 h-4 text-indigo-600 shrink-0" />
+              <CreditCard className="w-4 h-4 text-indigo-600 shrink-0" strokeWidth={2.25} />
               <span className="text-[12px] font-bold text-indigo-700 flex-1">{t('nfcIncluded')}</span>
-              <span className="text-[10px] text-indigo-400 group-hover:text-indigo-600 transition-colors">i</span>
+              <span className="text-[10px] text-indigo-400">i</span>
             </button>
           </li>
         )}
       </ul>
 
-      {/* CTA */}
       <button
         type="button"
         onClick={onSelect}
         disabled={disabled || loading}
-        className={`w-full h-12 rounded-2xl font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+        className={`w-full h-12 rounded-xl font-bold text-sm transition-colors active:scale-[0.98] touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed ${
           isRecommended
-            ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-[#4b0082]/20 hover:shadow-xl hover:shadow-[#4b0082]/30 hover:from-indigo-700 hover:to-violet-700'
-            : 'bg-white text-gray-900 border-2 border-gray-200 hover:border-[#4b0082] hover:text-[#4b0082]'
+            ? 'bg-[#4b0082] text-white hover:bg-[#4b0082]/90'
+            : 'bg-white text-slate-900 border-2 border-slate-200 hover:border-[#4b0082] hover:text-[#4b0082]'
         }`}
       >
         {loading ? (
