@@ -242,7 +242,7 @@ export default function SettingsPage() {
       </div>
 
       {error && (
-        <div className="p-4 mb-8 text-sm font-medium text-red-700 bg-red-50/50 backdrop-blur-sm border border-red-100 rounded-2xl flex items-center gap-3">
+        <div className="p-4 mb-8 text-sm font-medium text-red-700 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
           {error}
         </div>
@@ -250,10 +250,10 @@ export default function SettingsPage() {
 
       {/* Parrainage - en haut */}
       {merchant?.referral_code && (
-        <div className="mb-6 md:mb-8 p-5 md:p-8 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-200/60 shadow-sm">
+        <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white rounded-2xl border border-slate-100 shadow-sm">
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 md:p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200">
-              <Gift className="w-4 h-4 md:w-5 md:h-5" />
+            <div className="shrink-0 w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center">
+              <Gift className="w-4 h-4 md:w-5 md:h-5 text-emerald-600" strokeWidth={2.25} />
             </div>
             <h2 className="text-base md:text-xl font-bold text-gray-900">
               {t('referralTitle')}
@@ -309,11 +309,11 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white/60 rounded-2xl border border-white/40 shadow-sm">
+      <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 min-w-0">
-            <div className={`p-2 md:p-2.5 rounded-xl shadow-lg shrink-0 ${shieldEnabled ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-indigo-200' : 'bg-gray-100 text-gray-400 shadow-gray-100'}`}>
-              <ShieldAlert className="w-4 h-4 md:w-5 md:h-5" />
+            <div className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${shieldEnabled ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}>
+              <ShieldAlert className="w-4 h-4 md:w-5 md:h-5" strokeWidth={2.25} />
             </div>
             <div className="min-w-0">
               <h2 className="text-base md:text-xl font-bold text-gray-900">
@@ -340,11 +340,11 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white/60 rounded-2xl border border-white/40 shadow-sm">
+      <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 min-w-0">
-            <div className={`p-2 md:p-2.5 rounded-xl shadow-lg shrink-0 ${!smsOptedOut ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-indigo-200' : 'bg-gray-100 text-gray-400 shadow-gray-100'}`}>
-              <MessageSquareOff className="w-4 h-4 md:w-5 md:h-5" />
+            <div className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${!smsOptedOut ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}>
+              <MessageSquareOff className="w-4 h-4 md:w-5 md:h-5" strokeWidth={2.25} />
             </div>
             <div className="min-w-0">
               <h2 className="text-base md:text-xl font-bold text-gray-900">
@@ -372,7 +372,7 @@ export default function SettingsPage() {
       </div>
 
       {isPlanningHidden(merchant) && (
-        <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white/60 rounded-2xl border border-white/40 shadow-sm">
+        <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white rounded-2xl border border-slate-100 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3 min-w-0">
               <div className="p-2 md:p-2.5 rounded-xl bg-gray-100 text-gray-400 shrink-0">
@@ -399,10 +399,10 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <div className="p-5 md:p-8 bg-white/80 rounded-2xl border border-white/40 shadow-sm">
+      <div className="p-5 md:p-8 bg-white rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3 mb-5 md:mb-8">
-          <div className="p-2 md:p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200">
-            <Store className="w-4 h-4 md:w-5 md:h-5" />
+          <div className="shrink-0 w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center">
+            <Store className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" strokeWidth={2.25} />
           </div>
           <h2 className="text-base md:text-xl font-bold text-gray-900">
             {t('businessInfoTitle')}
@@ -454,7 +454,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-white/60 rounded-2xl border border-white/40 shadow-sm">
+      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-white rounded-2xl border border-slate-100 shadow-sm">
         <h2 className="mb-5 md:mb-8 text-base md:text-xl font-bold text-gray-900">
           {t('accountTitle')}
         </h2>
@@ -509,10 +509,10 @@ export default function SettingsPage() {
           </div>
 
           {(merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling') && (
-            <div className="col-span-1 md:col-span-2 p-5 rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 shadow-sm flex items-center justify-between">
+            <div className="col-span-1 md:col-span-2 p-4 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-200/50">
-                  <Crown className="w-4 h-4" />
+                <div className="shrink-0 w-8 h-8 rounded-lg bg-white flex items-center justify-center">
+                  <Crown className="w-4 h-4 text-indigo-600" strokeWidth={2.25} />
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-0.5">{t('subscriptionLabel')}</p>
@@ -535,7 +535,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-white/60 rounded-2xl border border-white/40 shadow-sm">
+      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-white rounded-2xl border border-slate-100 shadow-sm">
         <h2 className="mb-2 text-base md:text-xl font-bold text-gray-900">
           {t('dataTitle')}
         </h2>
@@ -553,7 +553,7 @@ export default function SettingsPage() {
         </Button>
       </div>
 
-      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-red-50/50 backdrop-blur-sm rounded-2xl border border-red-100/50 shadow-lg shadow-red-100/20">
+      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-red-50 rounded-2xl border border-red-100">
         <h2 className="mb-2 text-base md:text-xl font-bold text-red-900">
           {t('dangerTitle')}
         </h2>
@@ -562,7 +562,7 @@ export default function SettingsPage() {
         </p>
         <Link
           href="/contact"
-          className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-sm transition-colors shadow-md shadow-red-200"
+          className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-sm active:scale-[0.98] touch-manipulation transition-all"
         >
           {t('deleteAccount')}
         </Link>
