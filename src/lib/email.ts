@@ -36,6 +36,8 @@ import {
   AnnouncementMaPageEmail,
   WinBackEmail,
   BookingNotificationEmail,
+  BookingRescheduledEmail,
+  BookingCancelledEmail,
   SmsQuotaEmail,
   VitrineReminderEmail,
   PlanningReminderEmail,
@@ -867,6 +869,50 @@ export async function sendBookingNotificationEmail(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return sendEmail(to, subject, BookingNotificationEmail as any, params as any, {
     logLabel: 'Booking notification email',
+  });
+}
+
+interface BookingRescheduledParams {
+  shopName: string;
+  clientName: string;
+  oldDate: string;
+  oldTime: string;
+  newDate: string;
+  newTime: string;
+  locale: EmailLocale;
+}
+
+export async function sendBookingRescheduledEmail(
+  to: string,
+  params: BookingRescheduledParams
+): Promise<SendEmailResult> {
+  const subject = params.locale === 'en'
+    ? `Appointment moved — ${params.clientName}`
+    : `RDV deplace — ${params.clientName}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return sendEmail(to, subject, BookingRescheduledEmail as any, params as any, {
+    logLabel: 'Booking rescheduled email',
+  });
+}
+
+interface BookingCancelledParams {
+  shopName: string;
+  clientName: string;
+  date: string;
+  time: string;
+  locale: EmailLocale;
+}
+
+export async function sendBookingCancelledEmail(
+  to: string,
+  params: BookingCancelledParams
+): Promise<SendEmailResult> {
+  const subject = params.locale === 'en'
+    ? `Appointment cancelled — ${params.clientName}`
+    : `RDV annule — ${params.clientName}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return sendEmail(to, subject, BookingCancelledEmail as any, params as any, {
+    logLabel: 'Booking cancelled email',
   });
 }
 

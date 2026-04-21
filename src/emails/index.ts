@@ -33,6 +33,8 @@ export { BirthdayNotificationEmail } from './BirthdayNotificationEmail';
 export { AnnouncementMaPageEmail } from './AnnouncementMaPageEmail';
 export { WinBackEmail } from './WinBackEmail';
 export { BookingNotificationEmail } from './BookingNotificationEmail';
+export { BookingRescheduledEmail } from './BookingRescheduledEmail';
+export { BookingCancelledEmail } from './BookingCancelledEmail';
 export { VitrineReminderEmail } from './VitrineReminderEmail';
 export { PlanningReminderEmail } from './PlanningReminderEmail';
 export { ChurnSurveyReminderEmail } from './ChurnSurveyReminderEmail';

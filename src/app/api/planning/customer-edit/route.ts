@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { resend, EMAIL_FROM, EMAIL_HEADERS } from '@/lib/resend';
 import { getAuthenticatedPhone } from '@/lib/customer-auth';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { sendMerchantPush } from '@/lib/merchant-push';
+import { sendBookingRescheduledEmail, sendBookingCancelledEmail } from '@/lib/email';
 import { getTodayForCountry, formatDate } from '@/lib/utils';
 import logger from '@/lib/logger';
+import type { EmailLocale } from '@/emails/translations';
 
 const cancelSchema = z.object({
   slot_id: z.string().uuid(),
@@ -180,13 +181,13 @@ export async function DELETE(request: NextRequest) {
       try {
         const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(merchant.user_id);
         if (authUser?.user?.email) {
-          resend?.emails.send({
-            from: EMAIL_FROM,
-            headers: EMAIL_HEADERS,
-            to: authUser.user.email,
-            subject: `RDV annule — ${slot.client_name}`,
-            text: `${slot.client_name} a annule son RDV du ${formattedDate} a ${slot.start_time}.\n\nConnecte-toi sur ton dashboard pour voir tes reservations.\nhttps://getqarte.com/dashboard/planning`,
-          }).catch(() => {});
+          await sendBookingCancelledEmail(authUser.user.email, {
+            shopName: merchant.shop_name,
+            clientName: slot.client_name,
+            date: formattedDate,
+            time: slot.start_time,
+            locale: (merchant.locale || 'fr') as EmailLocale,
+          });
         }
       } catch {
         // silent
@@ -389,13 +390,15 @@ export async function PATCH(request: NextRequest) {
       try {
         const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(merchant.user_id);
         if (authUser?.user?.email) {
-          resend?.emails.send({
-            from: EMAIL_FROM,
-            headers: EMAIL_HEADERS,
-            to: authUser.user.email,
-            subject: `RDV modifie — ${slot.client_name}`,
-            text: `${slot.client_name} a deplace son RDV du ${oldDate} a ${slot.start_time} au ${newDateFormatted} a ${new_time}.\n\nConnecte-toi sur ton dashboard pour voir tes reservations.\nhttps://getqarte.com/dashboard/planning`,
-          }).catch(() => {});
+          await sendBookingRescheduledEmail(authUser.user.email, {
+            shopName: merchant.shop_name,
+            clientName: slot.client_name,
+            oldDate,
+            oldTime: slot.start_time,
+            newDate: newDateFormatted,
+            newTime: new_time,
+            locale: (merchant.locale || 'fr') as EmailLocale,
+          });
         }
       } catch {
         // silent
