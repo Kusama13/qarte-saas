@@ -12,7 +12,6 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
-  ArrowLeft,
   ShieldCheck,
   Gift,
   Copy,
@@ -461,18 +460,7 @@ export default function SubscriptionPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="mb-6 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
-        {/* Back link masque quand le compte est inactif (grace ou expire) : le layout force la redirection ici de toute facon */}
-        {!trialStatus.isInGracePeriod && !trialStatus.isFullyExpired && (
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors mb-3"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {t('back')}
-          </Link>
-        )}
+      <div className="mb-4 md:mb-6">
         <h1 className="text-lg md:text-2xl font-bold tracking-tight text-slate-900">
           {t('title')}
         </h1>

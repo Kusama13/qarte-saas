@@ -304,7 +304,7 @@ export default function QRDownloadPage() {
             </div>
 
             {/* Gray container */}
-            <div className="relative flex items-center justify-center p-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl">
+            <div className="relative flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl">
               <div className="absolute inset-0 m-8 bg-black/10 blur-2xl rounded-2xl transform translate-y-4" />
               <div className="relative">
                 {/* QR Card */}
@@ -507,7 +507,7 @@ export default function QRDownloadPage() {
             </div>
 
             {/* Gray container */}
-            <div className="relative flex items-center justify-center p-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl">
+            <div className="relative flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl">
               <div className="absolute inset-0 m-8 bg-black/10 blur-2xl rounded-2xl transform translate-y-4" />
               <div className="relative">
                 <SocialMediaTemplate
@@ -642,12 +642,12 @@ export default function QRDownloadPage() {
               <Nfc className="w-3.5 h-3.5" />
               {t('nfcCard')}
             </div>
-            <div className="relative flex items-center justify-center p-8 bg-gradient-to-br from-violet-50 to-indigo-50 rounded-2xl border border-violet-100/50">
-              <div className="relative">
+            <div className="relative flex items-center justify-center p-4 sm:p-8 bg-violet-50 rounded-2xl border border-violet-100">
+              <div className="relative w-full max-w-[300px]">
                 <img
                   src="/images/carte-nfc-qarte.png"
                   alt={t('nfcCard')}
-                  className="w-[300px] rounded-2xl shadow-2xl shadow-violet-200/50"
+                  className="w-full rounded-2xl shadow-sm"
                 />
                 <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full border-2 border-violet-300/50 animate-ping" style={{ animationDuration: '2s' }} />
               </div>

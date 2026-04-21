@@ -320,60 +320,104 @@ export default function ReferralsPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      <th className="px-6 py-3">{t('thReferrer')}</th>
-                      <th className="px-6 py-3">{t('thReferred')}</th>
-                      <th className="px-6 py-3">{t('thDate')}</th>
-                      <th className="px-6 py-3">{t('thReferredStatus')}</th>
-                      <th className="px-6 py-3">{t('thReferrerStatus')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {realReferrals.map((r) => (
-                      <tr key={r.id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-3.5 text-sm font-medium text-gray-900">
-                          {customerName(r.referrer_customer)}
-                        </td>
-                        <td className="px-6 py-3.5 text-sm font-medium text-gray-900">
-                          {customerName(r.referred_customer)}
-                        </td>
-                        <td className="px-6 py-3.5 text-sm text-gray-500">
-                          {formatDate(r.created_at)}
-                        </td>
-                        <td className="px-6 py-3.5">
-                          {r.referred_voucher?.is_used ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
+              <>
+                {/* Mobile: cards */}
+                <div className="md:hidden divide-y divide-slate-100">
+                  {realReferrals.map((r) => (
+                    <div key={r.id} className="p-4 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{t('thReferrer')}</p>
+                          <p className="text-sm font-semibold text-slate-900 truncate">{customerName(r.referrer_customer)}</p>
+                        </div>
+                        <span className="text-xs text-slate-400 tabular-nums shrink-0">{formatDate(r.created_at)}</span>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{t('thReferred')}</p>
+                        <p className="text-sm font-semibold text-slate-900 truncate">{customerName(r.referred_customer)}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {r.referred_voucher?.is_used ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold">
+                            <Check className="w-3 h-3" /> {t('statusUsed')}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[11px] font-semibold">
+                            <Clock className="w-3 h-3" /> {t('statusPending')}
+                          </span>
+                        )}
+                        {r.status === 'completed' && (
+                          r.referrer_voucher?.is_used ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold">
                               <Check className="w-3 h-3" /> {t('statusUsed')}
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold">
-                              <Clock className="w-3 h-3" /> {t('statusPending')}
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold">
+                              <Gift className="w-3 h-3" /> {t('statusCreated')}
                             </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-3.5">
-                          {r.status === 'completed' ? (
-                            r.referrer_voucher?.is_used ? (
+                          )
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop: table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3">{t('thReferrer')}</th>
+                        <th className="px-6 py-3">{t('thReferred')}</th>
+                        <th className="px-6 py-3">{t('thDate')}</th>
+                        <th className="px-6 py-3">{t('thReferredStatus')}</th>
+                        <th className="px-6 py-3">{t('thReferrerStatus')}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {realReferrals.map((r) => (
+                        <tr key={r.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-3.5 text-sm font-medium text-gray-900">
+                            {customerName(r.referrer_customer)}
+                          </td>
+                          <td className="px-6 py-3.5 text-sm font-medium text-gray-900">
+                            {customerName(r.referred_customer)}
+                          </td>
+                          <td className="px-6 py-3.5 text-sm text-gray-500 tabular-nums">
+                            {formatDate(r.created_at)}
+                          </td>
+                          <td className="px-6 py-3.5">
+                            {r.referred_voucher?.is_used ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
                                 <Check className="w-3 h-3" /> {t('statusUsed')}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">
-                                <Gift className="w-3 h-3" /> {t('statusCreated')}
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold">
+                                <Clock className="w-3 h-3" /> {t('statusPending')}
                               </span>
-                            )
-                          ) : (
-                            <span className="text-xs text-gray-400">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-3.5">
+                            {r.status === 'completed' ? (
+                              r.referrer_voucher?.is_used ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
+                                  <Check className="w-3 h-3" /> {t('statusUsed')}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">
+                                  <Gift className="w-3 h-3" /> {t('statusCreated')}
+                                </span>
+                              )
+                            ) : (
+                              <span className="text-xs text-gray-400">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </>

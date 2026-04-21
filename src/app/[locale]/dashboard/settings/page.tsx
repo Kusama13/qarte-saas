@@ -264,10 +264,10 @@ export default function SettingsPage() {
             {t.rich('referralDesc', { b: (chunks) => <strong className="font-semibold text-gray-800">{chunks}</strong> })}
           </p>
 
-          <div className="flex items-center gap-3 p-4 rounded-2xl bg-white/80 border border-emerald-100 mb-4">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-2xl bg-white/80 border border-emerald-100 mb-4">
+            <div className="flex-1 min-w-0">
               <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">{t('referralCodeLabel')}</p>
-              <p className="text-lg font-mono font-bold text-[#4b0082]">{merchant.referral_code}</p>
+              <p className="text-lg font-mono font-bold text-[#4b0082] truncate">{merchant.referral_code}</p>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -276,7 +276,7 @@ export default function SettingsPage() {
                   setReferralCopied(true);
                   setTimeout(() => setReferralCopied(false), 2000);
                 }}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl bg-[#4b0082]/10 text-[#4b0082] hover:bg-[#4b0082]/20 transition-colors"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl bg-[#4b0082]/10 text-[#4b0082] hover:bg-[#4b0082]/20 active:scale-[0.98] touch-manipulation transition-all"
               >
                 {referralCopied ? (
                   <><Check className="w-4 h-4" /> {t('referralCopied')}</>
@@ -295,7 +295,7 @@ export default function SettingsPage() {
                     setTimeout(() => setReferralCopied(false), 2000);
                   }
                 }}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98] touch-manipulation transition-all"
               >
                 <Share2 className="w-4 h-4" />
                 {t('referralShare')}
