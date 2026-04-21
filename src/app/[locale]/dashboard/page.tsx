@@ -6,6 +6,7 @@ import { Users, Gift, AlertTriangle, X, Eye, UserPlus, Sparkles } from 'lucide-r
 import { useTranslations, useLocale } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime, getTodayForCountry, unwrapJoin } from '@/lib/utils';
+import { safeFetchJson } from '@/lib/fetch';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { showPlanningUi } from '@/lib/plan-tiers';
@@ -118,10 +119,10 @@ export default function DashboardPage() {
   // Fetch SMS usage
   useEffect(() => {
     if (!merchant?.id) return;
-    fetch(`/api/sms/usage?merchantId=${merchant.id}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setSmsUsage(data); })
-      .catch(() => {});
+    const controller = new AbortController();
+    safeFetchJson<typeof smsUsage>(`/api/sms/usage?merchantId=${merchant.id}`, { signal: controller.signal })
+      .then(data => { if (data && !controller.signal.aborted) setSmsUsage(data); });
+    return () => controller.abort();
   }, [merchant?.id]);
 
   // If we have cached data, don't show loading state

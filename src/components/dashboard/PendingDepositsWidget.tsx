@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { Wallet, Clock, ArrowRight, Check, X, Loader2, MessageSquare } from 'lucide-react';
@@ -44,6 +44,12 @@ export default function PendingDepositsWidget({ merchantId, country, depositFixe
   const [smsEnabled, setSmsEnabled] = useState<Record<string, boolean>>({});
   const [confirmReject, setConfirmReject] = useState<PendingDeposit | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
   const fetchPending = useCallback(async () => {
     if (!planningEnabled) {
       setLoading(false);
@@ -66,6 +72,8 @@ export default function PendingDepositsWidget({ merchantId, country, depositFixe
       .order('slot_date', { ascending: true })
       .order('start_time', { ascending: true })
       .limit(MAX_PREVIEW);
+
+    if (!mountedRef.current) return;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mapped = (data || []).map((b: any) => {

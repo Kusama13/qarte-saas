@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import type { PendingVisit } from '@/types';
 import { toBCP47 } from '@/lib/utils';
+import { safeFetchJson } from '@/lib/fetch';
 
 interface PendingPointsWidgetProps {
   merchantId: string;
@@ -41,22 +42,21 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
   const [toast, setToast] = useState<ToastState>({ show: false, message: '', type: 'success' });
   const [showHelp, setShowHelp] = useState(false);
 
-  const fetchVisits = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/visits/moderate?merchant_id=${merchantId}`);
-      if (!response.ok) throw new Error('Failed to fetch');
-      const data = await response.json();
-      setVisits(data.visits || []);
-    } catch (error) {
-      console.error('Error fetching pending visits:', error);
-    } finally {
-      setLoading(false);
-    }
+  const fetchVisits = useCallback(async (signal?: AbortSignal) => {
+    setLoading(true);
+    const data = await safeFetchJson<{ visits?: PendingVisit[] }>(
+      `/api/visits/moderate?merchant_id=${merchantId}`,
+      { signal },
+    );
+    if (signal?.aborted) return;
+    setVisits(data?.visits || []);
+    setLoading(false);
   }, [merchantId]);
 
   useEffect(() => {
-    fetchVisits();
+    const controller = new AbortController();
+    fetchVisits(controller.signal);
+    return () => controller.abort();
   }, [fetchVisits]);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {

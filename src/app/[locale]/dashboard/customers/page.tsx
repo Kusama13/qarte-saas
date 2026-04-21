@@ -32,6 +32,7 @@ import { CustomerManagementModal } from '@/components/dashboard/CustomerManageme
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
 import { formatDate, formatPhoneNumber, formatPhoneLabel, formatCurrency, PHONE_CONFIG } from '@/lib/utils';
+import { safeFetchJson } from '@/lib/fetch';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import type { MerchantCountry } from '@/types';
 import type { LoyaltyCard, Customer } from '@/types';
@@ -119,9 +120,8 @@ export default function CustomersPage() {
         .eq('merchant_id', merchant.id)
         .order('updated_at', { ascending: false }),
 
-      fetch(`/api/push/subscribers?merchantId=${merchant.id}`)
-        .then(r => r.ok ? r.json() : { subscriberIds: [] })
-        .catch(() => ({ subscriberIds: [] })),
+      safeFetchJson<{ subscriberIds: string[] }>(`/api/push/subscribers?merchantId=${merchant.id}`)
+        .then(data => data ?? { subscriberIds: [] }),
 
       supabase
         .from('vouchers')

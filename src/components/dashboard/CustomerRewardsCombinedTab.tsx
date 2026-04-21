@@ -94,11 +94,12 @@ export function CustomerRewardsCombinedTab({
   const hasRedeemable = canRedeemTier1 || canRedeemTier2;
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchAll = async () => {
       try {
         const [offersRes, vouchersRes, redemptionResult] = await Promise.all([
-          fetch(`/api/merchant-offers?merchantId=${merchantId}`),
-          fetch(`/api/vouchers/grant?customer_id=${customerId}&merchant_id=${merchantId}`),
+          fetch(`/api/merchant-offers?merchantId=${merchantId}`, { signal: controller.signal }),
+          fetch(`/api/vouchers/grant?customer_id=${customerId}&merchant_id=${merchantId}`, { signal: controller.signal }),
           supabase
             .from('redemptions')
             .select('id, redeemed_at, stamps_used, tier')
@@ -107,6 +108,8 @@ export function CustomerRewardsCombinedTab({
             .limit(1)
             .maybeSingle(),
         ]);
+
+        if (controller.signal.aborted) return;
 
         if (offersRes.ok) {
           const data = await offersRes.json();
@@ -123,11 +126,12 @@ export function CustomerRewardsCombinedTab({
       } catch {
         // ignore — UI shows empty state
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
     fetchAll();
+    return () => controller.abort();
   }, [customerId, merchantId, loyaltyCardId]);
 
   // ── Rewards handlers ──
