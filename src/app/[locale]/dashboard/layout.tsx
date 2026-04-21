@@ -176,8 +176,24 @@ function DashboardLayoutContent({
         </button>
       )}
 
+      {/* Brand Qarte mobile — visible quand bottom nav actif (sidebar masquee) */}
+      {BOTTOM_NAV_ENABLED && !hideDistractions && (
+        <Link
+          href="/dashboard"
+          aria-label="Qarte"
+          className="fixed z-40 top-3 left-3 lg:hidden flex items-center gap-1.5 active:scale-95 transition-transform touch-manipulation"
+        >
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 shadow-md shadow-indigo-200/40 flex items-center justify-center">
+            <span className="text-xs font-black text-white tracking-tight">Q</span>
+          </div>
+          <span className="text-base font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 leading-none">
+            Qarte
+          </span>
+        </Link>
+      )}
+
       {!hideDistractions && (
-        <div className="fixed z-40 top-3 right-3 lg:hidden bg-white/90 backdrop-blur-xl border border-gray-100 rounded-xl shadow-lg">
+        <div className="fixed z-40 top-3 right-3 lg:hidden">
           <NotificationBell />
         </div>
       )}

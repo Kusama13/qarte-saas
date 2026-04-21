@@ -880,8 +880,8 @@
     "menu": "Menu",
     "proSpace": "Espace pro",
     "home": "Accueil",
-    "program": "Programme de fidélité",
-    "publicPage": "Ma Vitrine",
+    "program": "Fidélité",
+    "publicPage": "Vitrine",
     "qrCode": "QR code & Supports",
     "planning": "Planning",
     "customers": "Clients",
@@ -2384,6 +2384,12 @@
     "step3Title": "Carte fidélité automatique",
     "step3Desc": "Chaque cliente qui réserve reçoit automatiquement sa carte de fidélité.",
     "trialDay": "Jour {current} sur 7 de ton essai"
+  },
+  "pendingDeposits": {
+    "title": "Acomptes en attente",
+    "viewAll": "Tout voir",
+    "today": "Aujourd'hui",
+    "tomorrow": "Demain"
   },
   "pendingPoints": {
     "pointConfirmed": "Point validé",

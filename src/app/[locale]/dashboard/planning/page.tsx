@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
-import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical } from 'lucide-react';
+import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical, Settings } from 'lucide-react';
 import type { BookingMode, MerchantCountry, BookingDepositFailure } from '@/types';
 import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -567,25 +567,42 @@ export default function PlanningDashboard() {
         </button>
       </div>
 
-      {/* ── TABS (3 tabs, only when planning enabled) ── */}
-      {planningEnabled && (
-        <div className="grid grid-cols-3 gap-0 bg-gray-100 p-1 rounded-xl mb-5">
-          {(['slots', 'reservations', 'settings'] as const).map(tabKey => (
-            <button
-              key={tabKey}
-              onClick={() => {
-                setTab(tabKey);
-                if (tabKey === 'reservations' && merchant?.planning_enabled) {
-                  state.fetchReservations();
-                }
-              }}
-              className={`py-2.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${tab === tabKey ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              {tabKey === 'slots' ? t('tabSlots') : tabKey === 'reservations' ? t('tabReservations') : t('tabSettings')}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* ── TABS (3 tabs, only when planning enabled) — compact segmented control ── */}
+      {planningEnabled && (() => {
+        const TAB_META: Record<'slots' | 'reservations' | 'settings', { icon: typeof Clock; activeColor: string }> = {
+          slots: { icon: Clock, activeColor: 'text-cyan-700' },
+          reservations: { icon: CalendarDays, activeColor: 'text-indigo-700' },
+          settings: { icon: Settings, activeColor: 'text-slate-700' },
+        };
+        return (
+          <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-5 lg:max-w-md">
+            {(['slots', 'reservations', 'settings'] as const).map(tabKey => {
+              const Icon = TAB_META[tabKey].icon;
+              const active = tab === tabKey;
+              const label = tabKey === 'slots' ? t('tabSlots') : tabKey === 'reservations' ? t('tabReservations') : t('tabSettings');
+              return (
+                <button
+                  key={tabKey}
+                  onClick={() => {
+                    setTab(tabKey);
+                    if (tabKey === 'reservations' && merchant?.planning_enabled) {
+                      state.fetchReservations();
+                    }
+                  }}
+                  className={`flex items-center justify-center gap-1.5 flex-1 py-2 px-2 rounded-lg text-[13px] font-semibold transition-all duration-150 touch-manipulation ${
+                    active
+                      ? `bg-white shadow-sm ${TAB_META[tabKey].activeColor}`
+                      : 'text-gray-500 active:bg-white/50'
+                  }`}
+                >
+                  <Icon className={`w-3.5 h-3.5 ${active ? TAB_META[tabKey].activeColor : 'text-gray-400'}`} strokeWidth={2.25} />
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* Global error banner */}
       {depositError && (

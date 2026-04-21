@@ -1,6 +1,6 @@
 import {
   Home,
-  Gift,
+  Heart,
   Globe,
   QrCode,
   CalendarDays,
@@ -33,7 +33,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/qr-download', labelKey: 'qrCode', shortLabelKey: 'qrCode', icon: QrCode, color: 'text-violet-500', bg: 'bg-violet-50', primary: true },
 
   // Secondary — dans le sheet "Plus" uniquement sur mobile, sidebar complete sur desktop
-  { href: '/dashboard/program', labelKey: 'program', icon: Gift, color: 'text-pink-500', bg: 'bg-pink-50', primary: false },
+  { href: '/dashboard/program', labelKey: 'program', icon: Heart, color: 'text-pink-500', bg: 'bg-pink-50', primary: false },
   { href: '/dashboard/public-page', labelKey: 'publicPage', icon: Globe, color: 'text-violet-500', bg: 'bg-violet-50', primary: false },
   { href: '/dashboard/marketing', labelKey: 'notifications', icon: Megaphone, color: 'text-orange-500', bg: 'bg-orange-50', primary: false },
   { href: '/dashboard/referrals', labelKey: 'referrals', icon: UserPlus, color: 'text-blue-500', bg: 'bg-blue-50', primary: false },

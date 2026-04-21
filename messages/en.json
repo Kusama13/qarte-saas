@@ -880,8 +880,8 @@
     "menu": "Menu",
     "proSpace": "Pro space",
     "home": "Home",
-    "program": "Loyalty program",
-    "publicPage": "My Salon Page",
+    "program": "Loyalty",
+    "publicPage": "Salon Page",
     "qrCode": "QR code & Materials",
     "planning": "Schedule",
     "customers": "Clients",
@@ -2384,6 +2384,12 @@
     "step3Title": "Loyalty card automatically",
     "step3Desc": "Every client who books automatically gets their loyalty card.",
     "trialDay": "Day {current} of 7 of your trial"
+  },
+  "pendingDeposits": {
+    "title": "Pending deposits",
+    "viewAll": "View all",
+    "today": "Today",
+    "tomorrow": "Tomorrow"
   },
   "pendingPoints": {
     "pointConfirmed": "Point confirmed",

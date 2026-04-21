@@ -11,6 +11,7 @@ import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { showPlanningUi } from '@/lib/plan-tiers';
 import PendingPointsWidget from '@/components/dashboard/PendingPointsWidget';
+import PendingDepositsWidget from '@/components/dashboard/PendingDepositsWidget';
 import OnboardingChecklist from '@/components/dashboard/OnboardingChecklist';
 import ZeroScansCoach from '@/components/dashboard/ZeroScansCoach';
 import StatsCard from '@/components/dashboard/StatsCard';
@@ -575,28 +576,16 @@ export default function DashboardPage() {
       {/* Onboarding Checklist */}
       <OnboardingChecklist />
 
-      {/* Raccourcis rapides */}
-      <div className="md:hidden space-y-2">
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 px-1">{t('shortcuts')}</p>
-        <div className="grid grid-cols-3 gap-2.5">
-          {[
-            { href: '/dashboard/public-page', icon: Globe, label: t('shortcutPage'), iconGradient: 'from-[#4b0082] via-violet-600 to-fuchsia-500 shadow-violet-500/30' },
-            { href: '/dashboard/program', icon: Heart, label: t('shortcutLoyalty'), iconGradient: 'from-rose-400 via-pink-500 to-rose-500 shadow-rose-400/30' },
-            { href: '/dashboard/planning', icon: CalendarClock, label: t('shortcutPlanning'), iconGradient: 'from-teal-500 via-emerald-500 to-teal-600 shadow-emerald-500/30' },
-          ].map(({ href, icon: Icon, label, iconGradient }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-gray-100 active:scale-95 transition-transform"
-            >
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${iconGradient} flex items-center justify-center shadow-md`}>
-                <Icon className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-[11px] font-semibold text-center leading-tight text-gray-700">{label}</span>
-            </Link>
-          ))}
-        </div>
-      </div>
+      {/* Acomptes en attente — visible uniquement si planning enabled + count > 0 */}
+      {merchant.planning_enabled && (
+        <PendingDepositsWidget
+          merchantId={merchant.id}
+          country={merchant.country}
+          depositFixed={merchant.deposit_amount}
+          depositPercent={merchant.deposit_percent}
+          planningEnabled={merchant.planning_enabled}
+        />
+      )}
 
       {/* Today KPIs */}
       {merchant.planning_enabled && (() => {

@@ -20,6 +20,7 @@ import {
   X,
   CreditCard,
   Nfc,
+  ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { getScanUrl } from '@/lib/utils';
@@ -36,6 +37,7 @@ export default function QRDownloadPage() {
   const t = useTranslations('qrDownload');
   const { merchant, loading } = useMerchant();
   const [activeTab, setActiveTab] = useState<Tab>('qr');
+  const [howOpen, setHowOpen] = useState(false);
   const [scanUrl, setScanUrl] = useState<string>('');
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [socialDownloadSuccess, setSocialDownloadSuccess] = useState(false);
@@ -206,78 +208,87 @@ export default function QRDownloadPage() {
         </p>
       </div>
 
-      {/* Comment ça marche (QR tab only) */}
-      {activeTab === 'qr' && <div className="mb-6">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <h3 className="text-sm font-bold text-gray-900 mb-3">{t('howTitle')}</h3>
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <QrCode className="w-4 h-4 text-indigo-600" />
+      {/* Comment ça marche (QR tab only) — collapsible */}
+      {activeTab === 'qr' && (
+        <div className="mb-6">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setHowOpen(o => !o)}
+              aria-expanded={howOpen}
+              className="w-full flex items-center justify-between gap-3 p-4 active:bg-gray-50 transition-colors touch-manipulation"
+            >
+              <h3 className="text-sm font-bold text-gray-900">{t('howTitle')}</h3>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${howOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {howOpen && (
+              <div className="px-4 pb-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <QrCode className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{t('howQrTitle')}</p>
+                    <p className="text-xs text-gray-500">{t('howQrDesc')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Gift className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{t('howRewardTitle')}</p>
+                    <p className="text-xs text-gray-500">{t('howRewardDesc')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-pink-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Smartphone className="w-4 h-4 text-pink-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{t('howMobileTitle')}</p>
+                    <p className="text-xs text-gray-500">{t('howMobileDesc')}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">{t('howQrTitle')}</p>
-                <p className="text-xs text-gray-500">{t('howQrDesc')}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Gift className="w-4 h-4 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">{t('howRewardTitle')}</p>
-                <p className="text-xs text-gray-500">{t('howRewardDesc')}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-7 h-7 rounded-lg bg-pink-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Smartphone className="w-4 h-4 text-pink-600" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">{t('howMobileTitle')}</p>
-                <p className="text-xs text-gray-500">{t('howMobileDesc')}</p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
-      </div>}
+      )}
 
-      {/* Tabs */}
-      <div className="flex gap-1.5 p-1.5 bg-gray-100/80 rounded-2xl mb-6 lg:max-w-xl border border-gray-200/60">
+      {/* Tabs — compact segmented control */}
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-5 lg:max-w-md">
         <button
           onClick={() => setActiveTab('qr')}
-          className={`flex items-center justify-center gap-2 flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all duration-200 ${
+          className={`flex items-center justify-center gap-1.5 flex-1 py-2 px-2 rounded-lg text-[13px] font-semibold transition-all duration-150 touch-manipulation ${
             activeTab === 'qr'
-              ? 'bg-white text-indigo-700 shadow-md shadow-indigo-100/50 ring-1 ring-indigo-100'
-              : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'
+              ? 'bg-white text-indigo-700 shadow-sm'
+              : 'text-gray-500 active:bg-white/50'
           }`}
         >
-          <QrCode className={`w-4 h-4 ${activeTab === 'qr' ? 'text-indigo-500' : ''}`} />
+          <QrCode className={`w-3.5 h-3.5 ${activeTab === 'qr' ? 'text-indigo-600' : 'text-gray-400'}`} strokeWidth={2.25} />
           {t('tabQr')}
         </button>
         <button
           onClick={() => setActiveTab('social')}
-          className={`flex items-center justify-center gap-2 flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all duration-200 ${
+          className={`flex items-center justify-center gap-1.5 flex-1 py-2 px-2 rounded-lg text-[13px] font-semibold transition-all duration-150 touch-manipulation ${
             activeTab === 'social'
-              ? 'bg-white text-purple-700 shadow-md shadow-purple-100/50 ring-1 ring-purple-100'
-              : 'text-purple-600 bg-purple-50 hover:bg-purple-100 ring-1 ring-purple-200'
+              ? 'bg-white text-purple-700 shadow-sm'
+              : 'text-gray-500 active:bg-white/50'
           }`}
         >
-          <Image className="w-4 h-4 text-purple-500" />
+          <Image className={`w-3.5 h-3.5 ${activeTab === 'social' ? 'text-purple-600' : 'text-gray-400'}`} strokeWidth={2.25} />
           {t('tabSocial')}
-          {activeTab !== 'social' && (
-            <span className="px-1.5 py-0.5 text-[10px] font-bold bg-purple-600 text-white rounded-full">NEW</span>
-          )}
         </button>
         <button
           onClick={() => setActiveTab('nfc')}
-          className={`flex items-center justify-center gap-2 flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all duration-200 ${
+          className={`flex items-center justify-center gap-1.5 flex-1 py-2 px-2 rounded-lg text-[13px] font-semibold transition-all duration-150 touch-manipulation ${
             activeTab === 'nfc'
-              ? 'bg-white text-violet-700 shadow-md shadow-violet-100/50 ring-1 ring-violet-100'
-              : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'
+              ? 'bg-white text-violet-700 shadow-sm'
+              : 'text-gray-500 active:bg-white/50'
           }`}
         >
-          <Nfc className={`w-4 h-4 ${activeTab === 'nfc' ? 'text-violet-500' : ''}`} />
+          <Nfc className={`w-3.5 h-3.5 ${activeTab === 'nfc' ? 'text-violet-600' : 'text-gray-400'}`} strokeWidth={2.25} />
           {t('tabNfc')}
         </button>
       </div>
