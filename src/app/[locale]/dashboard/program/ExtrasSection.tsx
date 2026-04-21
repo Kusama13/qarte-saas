@@ -34,13 +34,14 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
       {/* ═══════ PARRAINAGE ═══════ */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-3 md:p-5">
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="flex items-start gap-2 md:gap-3 min-w-0 flex-1">
               <div className="shrink-0 w-8 h-8 md:w-9 md:h-9 rounded-lg bg-emerald-50 flex items-center justify-center">
                 <Gift className="w-4 h-4 text-emerald-600" strokeWidth={2.25} />
               </div>
-              <div>
-                <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">{t('referralTitle')}</span> <span className="font-normal text-gray-400">{t('referralDesc')}</span></h3>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm md:text-base font-bold text-slate-900">{t('referralTitle')}</h3>
+                <p className="text-[11px] md:text-xs text-slate-400 mt-0.5">{t('referralDesc')}</p>
               </div>
             </div>
             <button
@@ -48,7 +49,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
               role="switch"
               aria-checked={formData.referralEnabled}
               onClick={() => setFormData(prev => ({ ...prev, referralEnabled: !prev.referralEnabled }))}
-              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 ${
+              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 mt-1 ${
                 formData.referralEnabled ? 'bg-emerald-500' : 'bg-gray-200'
               }`}
             >
@@ -120,12 +121,13 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
       {/* ═══════ AVIS GOOGLE ═══════ */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-3 md:p-5">
-          <div className="flex items-center gap-2 md:gap-3 mb-3">
+          <div className="flex items-start gap-2 md:gap-3 mb-3">
             <div className="shrink-0 w-8 h-8 md:w-9 md:h-9 rounded-lg bg-amber-50 flex items-center justify-center">
               <Star className="w-4 h-4 text-amber-600" strokeWidth={2.25} />
             </div>
-            <div>
-              <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">{t('googleReviewTitle')}</span> <span className="font-normal text-gray-400">{t('googleReviewDesc')}</span></h3>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm md:text-base font-bold text-slate-900">{t('googleReviewTitle')}</h3>
+              <p className="text-[11px] md:text-xs text-slate-400 mt-0.5">{t('googleReviewDesc')}</p>
             </div>
           </div>
           <Input
@@ -141,13 +143,14 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
       {/* ═══════ OFFRE DUO ═══════ */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-3 md:p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="flex items-start gap-2 md:gap-3 min-w-0 flex-1">
               <div className="shrink-0 w-8 h-8 md:w-9 md:h-9 rounded-lg bg-violet-50 flex items-center justify-center">
                 <Users className="w-4 h-4 text-violet-600" strokeWidth={2.25} />
               </div>
-              <div>
-                <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">{t('duoOfferTitle')}</span> <span className="font-normal text-gray-400">{t('duoOfferDesc')}</span></h3>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm md:text-base font-bold text-slate-900">{t('duoOfferTitle')}</h3>
+                <p className="text-[11px] md:text-xs text-slate-400 mt-0.5">{t('duoOfferDesc')}</p>
               </div>
             </div>
             <button
@@ -155,7 +158,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
               role="switch"
               aria-checked={formData.duoOfferEnabled}
               onClick={() => setFormData(prev => ({ ...prev, duoOfferEnabled: !prev.duoOfferEnabled }))}
-              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2 ${
+              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2 mt-1 ${
                 formData.duoOfferEnabled ? 'bg-violet-500' : 'bg-gray-200'
               }`}
             >
@@ -197,13 +200,14 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
       {formData.loyaltyMode !== 'cagnotte' && (
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-3 md:p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="flex items-start gap-2 md:gap-3 min-w-0 flex-1">
               <div className="shrink-0 w-8 h-8 md:w-9 md:h-9 rounded-lg bg-amber-50 flex items-center justify-center">
                 <Zap className="w-4 h-4 text-amber-600" strokeWidth={2.25} />
               </div>
-              <div>
-                <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">{t('doubleDaysTitle')}</span> <span className="font-normal text-gray-400">{t('doubleDaysDesc')}</span></h3>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm md:text-base font-bold text-slate-900">{t('doubleDaysTitle')}</h3>
+                <p className="text-[11px] md:text-xs text-slate-400 mt-0.5">{t('doubleDaysDesc')}</p>
               </div>
             </div>
             <button
@@ -211,7 +215,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
               role="switch"
               aria-checked={formData.doubleDaysEnabled}
               onClick={() => setFormData(prev => ({ ...prev, doubleDaysEnabled: !prev.doubleDaysEnabled }))}
-              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 ${
+              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 mt-1 ${
                 formData.doubleDaysEnabled ? 'bg-amber-400' : 'bg-gray-200'
               }`}
             >
@@ -265,13 +269,14 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
       {/* ═══════ CADEAU ANNIVERSAIRE ═══════ */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-3 md:p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="flex items-start gap-2 md:gap-3 min-w-0 flex-1">
               <div className="shrink-0 w-8 h-8 md:w-9 md:h-9 rounded-lg bg-pink-50 flex items-center justify-center">
                 <Cake className="w-4 h-4 text-pink-600" strokeWidth={2.25} />
               </div>
-              <div>
-                <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">{t('birthdayTitle')}</span> <span className="font-normal text-gray-400">{t('birthdayDesc')}</span></h3>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm md:text-base font-bold text-slate-900">{t('birthdayTitle')}</h3>
+                <p className="text-[11px] md:text-xs text-slate-400 mt-0.5">{t('birthdayDesc')}</p>
               </div>
             </div>
             <button
@@ -279,7 +284,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
               role="switch"
               aria-checked={formData.birthdayGiftEnabled}
               onClick={() => setFormData(prev => ({ ...prev, birthdayGiftEnabled: !prev.birthdayGiftEnabled }))}
-              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 ${
+              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 mt-1 ${
                 formData.birthdayGiftEnabled ? 'bg-pink-500' : 'bg-gray-200'
               }`}
             >
