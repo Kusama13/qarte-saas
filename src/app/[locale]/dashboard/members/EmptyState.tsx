@@ -1,48 +1,36 @@
 'use client';
 
-import {
-  Crown,
-  Plus,
-  Sparkles,
-} from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Crown, Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface EmptyStateProps {
   onCreateProgram: () => void;
 }
 
 export default function EmptyState({ onCreateProgram }: EmptyStateProps) {
+  const t = useTranslations('members');
+
   return (
-    <div className="relative overflow-hidden text-center py-12 md:py-20 bg-gradient-to-b from-white to-indigo-50/40 rounded-2xl md:rounded-[2rem] border border-indigo-100/60 shadow-xl shadow-indigo-900/5">
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-indigo-300 to-transparent opacity-50" />
-
-      <div className="relative mx-auto mb-6 md:mb-10 group inline-block">
-        <div className="absolute inset-0 bg-indigo-400 opacity-20 blur-3xl rounded-full animate-pulse group-hover:opacity-30 transition-opacity" />
-        <div className="relative w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-[2rem] bg-gradient-to-tr from-indigo-500 via-violet-500 to-violet-300 p-1 shadow-[0_10px_40px_-10px_rgba(79,70,229,0.5)] rotate-3 group-hover:rotate-0 transition-transform duration-700 ease-out">
-          <div className="w-full h-full rounded-xl md:rounded-[1.75rem] bg-white flex items-center justify-center overflow-hidden">
-            <Crown className="w-8 h-8 md:w-12 md:h-12 text-indigo-600 drop-shadow-sm group-hover:scale-110 transition-transform duration-500" />
-          </div>
-        </div>
-        <Sparkles className="absolute -top-2 -right-4 w-6 h-6 md:w-8 md:h-8 text-indigo-400 animate-pulse" />
-        <Sparkles className="absolute -bottom-2 -left-4 w-4 h-4 md:w-6 md:h-6 text-indigo-300 opacity-60 animate-bounce" />
+    <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-8 md:p-10 text-center">
+      <div className="mx-auto w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center mb-4">
+        <Crown className="w-5 h-5 text-indigo-600" strokeWidth={2.25} />
       </div>
 
-      <div className="relative z-10 px-5 md:px-8">
-        <h3 className="text-xl md:text-3xl font-bold text-gray-900 mb-2 md:mb-3 tracking-tight">
-          Inaugure ton <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Exp&eacute;rience Elite</span>
-        </h3>
-        <p className="text-gray-500 mb-6 md:mb-10 max-w-md mx-auto text-sm md:text-lg leading-relaxed">
-          Transforme tes clients fid&egrave;les en membres privil&eacute;gi&eacute;s. Commence par cr&eacute;er ton premier programme.
-        </p>
-        <Button
-          onClick={onCreateProgram}
-          className="relative h-12 px-6 md:h-14 md:px-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl md:rounded-2xl shadow-lg shadow-indigo-600/25 transition-all duration-300 active:scale-[0.98] overflow-hidden group"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shimmer" />
-          <Plus className="w-5 h-5 mr-3 group-hover:rotate-90 transition-transform duration-500" />
-          D&eacute;marrez maintenant
-        </Button>
-      </div>
+      <h3 className="text-base md:text-lg font-bold text-slate-900 mb-1.5 tracking-tight">
+        {t('emptyTitle')}
+      </h3>
+      <p className="text-sm text-slate-500 mb-5 max-w-sm mx-auto leading-relaxed">
+        {t('emptyDesc')}
+      </p>
+
+      <button
+        type="button"
+        onClick={onCreateProgram}
+        className="inline-flex items-center justify-center gap-2 h-10 px-5 bg-[#4b0082] hover:bg-[#4b0082]/90 active:scale-[0.98] text-white font-bold text-sm rounded-xl transition-all touch-manipulation"
+      >
+        <Plus className="w-4 h-4" strokeWidth={2.5} />
+        {t('emptyCta')}
+      </button>
     </div>
   );
 }
