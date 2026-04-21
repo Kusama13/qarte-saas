@@ -706,9 +706,35 @@ Header colore avec nom merchant. Boutons conditionnels dans le header : "Membre"
 Inscription rapide, validation passage, progression fidelite, detection `?ref=` pour parrainage
 
 ### Dashboard (`/dashboard`)
-Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 filtres + CustomerManagementModal 5 onglets : Points, Cadeaux/Offres fusionne, Historique avec RDV planning, Journal de suivi client, Supprimer), push notifications, abonnement, parrainage, parametres. **Liste clients** : design minimaliste sans avatar lettre — dot de statut colore (gris=en cours, vert=recompense prete, violet=tier 2) + nom + cloche push inline. Mobile cards + desktop table. **Widget "Prochains rendez-vous"** : 5 prochains RDV bookes groupes Aujourd'hui/A venir, clic → deep link `/dashboard/planning?slot=id` ouvre le modal detail. **Welcome claims** : 3 derniers vouchers bienvenue dans la section activite recente. Raccourcis mobile : Ma Page (gradient indigo-violet 400), Fidelite (gradient pink-rose 400), Planning (gradient cyan-blue 400), Clients (gris), QR Code (gris), Abonnement (gris).
 
-**Navigation sidebar** : Accueil, Programme de fidelite, Ma Page, QR code & Supports, Planning, Clients, Parrainage, Notifications, Abonnement, Parametres
+**Accueil refondu (avril 2026)** : structure adaptative Fidelite vs All-In.
+
+**Ordre mobile** :
+1. Greeting simple (pas de gradient) : `Bonjour {shop_name}` + motivation du jour
+2. `OnboardingChecklist` — trial uniquement
+3. **`HeroToday`** (`src/components/dashboard/HeroToday.tsx`) — gradient brand violet :
+   - Mode All-In (planning enabled) : `X RDV · Y€` + timeline 4 RDV du jour + lien planning
+   - Mode Fidelite : `X tampons · Y recompenses du jour` + 3 clientes proches palier 1 (mode visit only) + lien clients
+4. `PendingDepositsWidget` (si planning enabled + count > 0)
+5. **`ToSeeList`** (`src/components/dashboard/ToSeeList.tsx`) — one-liners compacts : anniversaires (avec prenoms), parrainages a valider, offres bienvenue. Icones colorees (pink/blue/amber).
+6. **`WeekTiles`** (`src/components/dashboard/WeekTiles.tsx`) — 2 tiles flat colorees (Visites + Recompenses cette semaine vs precedente, fond emerald/red/slate selon trend)
+7. `PendingPointsWidget` Shield (si `totalCustomers > 0`) — actions inline validation
+8. Activity feed — liste dense, icones colorees (scan emerald, reward pink, referral blue, welcome amber)
+9. **`SmsRecent`** (`src/components/dashboard/SmsRecent.tsx`) — section finale, collapsible, 5 derniers SMS envoyes (type + prenom client via join phone_to ↔ customers.phone_number scope merchant), quota pill, lien "Configurer" → `/dashboard/marketing?tab=automations`
+
+**Supprime de l'accueil** : stats mensuelles (StatsCards total/actives/visits/redemptions), cagnotte StatsCards, Weekly Comparison Card, carte Birthdays pink, raccourcis mobile — tout migre vers `/dashboard/customers` ou ToSeeList.
+
+**Palette reduite** : brand violet (hero uniquement), slate-900/500/100 (95%), emerald/red (tendances). Plus de rainbow 9 couleurs. Chaque section ToSee/WeekTile a sa couleur semantique sur l'icone seulement.
+
+**Cache localStorage** : `qarte_dashboard_stats_v2_${merchantId}` (bumpe post-purge des stats).
+
+**Queries conditionnelles** : `todayVisitsCount`, `todayRedemptionsCount`, `nearRewardCustomers` gatees sur `!planning_enabled` (HeroToday mode planning les ignore, evite 3 requetes inutiles pour merchants All-In).
+
+**Liste clients** (`/dashboard/customers`) : design minimaliste sans avatar lettre — dot de statut colore (gris=en cours, vert=recompense prete, violet=tier 2) + nom + cloche push inline. Mobile cards + desktop table.
+
+**Navigation sidebar** (desktop) : Accueil, Fidelite (icone Heart), Vitrine, QR code & Supports, Planning, Clients, Parrainage, Notifications, Abonnement, Parametres. **Brand header** : "Qarte" texte gradient uniquement (plus de Q carre depuis avril 2026).
+
+**Bottom nav mobile (feature flag `NEXT_PUBLIC_MOBILE_BOTTOM_NAV=1`)** : 5 tabs — Accueil, Agenda, Clientes, QR, Plus. Chaque tab a sa couleur semantique visible en permanence (indigo/cyan/emerald/violet/violet). Dot indicator 4px sous label actif. Haptic 8ms au tap. "Plus" ouvre un bottom sheet compact demi-ecran droite (`MoreSheet.tsx`) avec items secondaires (Fidelite, Vitrine, Notifs, Parrainage, Abonnement, Parametres) + WhatsApp help + logout icone. NotificationBell top-right mobile (cercle 36px plat, plus de glass card). Config centralisee dans `src/app/[locale]/dashboard/_nav/nav-config.ts`. Hook `useVirtualKeyboardVisible` masque le bottom nav quand clavier iOS ouvre.
 - **Membres** (`/dashboard/members`) : retire de la nav, accessible via bouton "Programmes VIP" dans Clients
 - **Ma Page** (`/dashboard/public-page`) : 3 sections collapsibles avec bordure coloree et header gradient — "Mon salon" (emerald: InfoSection), "Contenu" (pink: PhotosSection, ServicesSection), "Acquisition" (violet: WelcomeSection, PromoSection). Sub-components dans fichiers separes, exposes via `forwardRef`/`useImperativeHandle` avec `save()`. Autosave debounce 1.5s : chaque enfant appelle `onDirty`, le parent orchestre `Promise.all` sur les `save()`. Barre de completion SVG ring (7 items : nom, adresse, bio, logo, horaires, reseaux, bienvenue) — lien page publique visible seulement si completion >= 3/7. Deux modals au niveau page : help modal (explication page) et welcome help modal (remonte depuis WelcomeSection). **ServicesSection** : edition d'une prestation permet de **changer sa categorie** via pills (et de **creer une nouvelle categorie inline** depuis le formulaire d'edition, auto-selectionnee apres creation).
 - **Parametres** (`/dashboard/settings`) : email (lecture seule), type commerce, telephone, infos compte, export CSV, zone danger. Nom et adresse geres dans Ma Page uniquement.

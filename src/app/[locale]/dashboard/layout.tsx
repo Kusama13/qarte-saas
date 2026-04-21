@@ -181,12 +181,9 @@ function DashboardLayoutContent({
         <Link
           href="/dashboard"
           aria-label="Qarte"
-          className="fixed z-40 top-3 left-3 lg:hidden flex items-center gap-1.5 active:scale-95 transition-transform touch-manipulation"
+          className="fixed z-40 top-3 left-3 lg:hidden active:scale-95 transition-transform touch-manipulation"
         >
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 shadow-md shadow-indigo-200/40 flex items-center justify-center">
-            <span className="text-xs font-black text-white tracking-tight">Q</span>
-          </div>
-          <span className="text-base font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 leading-none">
+          <span className="text-lg font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 leading-none">
             Qarte
           </span>
         </Link>
@@ -221,15 +218,12 @@ function DashboardLayoutContent({
       >
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between px-5 py-4 lg:px-6 lg:py-5 border-b border-gray-100/50 bg-white/40 backdrop-blur-md sticky top-0 z-10">
-            <Link href="/dashboard" onClick={() => setSidebarOpen(false)} className="flex items-center gap-3 group touch-manipulation">
-              <div className="flex items-center justify-center w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200/40 transition-transform lg:group-hover:scale-105 duration-200">
-                <span className="text-sm lg:text-base font-black text-white">Q</span>
-              </div>
+            <Link href="/dashboard" onClick={() => setSidebarOpen(false)} className="flex items-center group touch-manipulation">
               <div className="flex flex-col">
-                <span className="text-lg lg:text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 leading-none">
+                <span className="text-2xl lg:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 leading-none">
                   Qarte
                 </span>
-                <span className="text-[10px] font-semibold text-gray-400 tracking-wider uppercase leading-none mt-0.5">
+                <span className="text-[10px] font-semibold text-gray-400 tracking-wider uppercase leading-none mt-1">
                   {t('proSpace')}
                 </span>
               </div>
