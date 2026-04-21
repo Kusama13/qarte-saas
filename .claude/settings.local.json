@@ -141,7 +141,8 @@
       "Bash(/tmp/check_i18n.sh)",
       "Bash(PLAYWRIGHT_BASE_URL=http://localhost:3000 npx playwright test e2e/audit-mobile.spec.ts --reporter=list --workers=1)",
       "Bash(npx tsc *)",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(uniq cat *)"
     ]
   }
 }

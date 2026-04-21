@@ -13,7 +13,6 @@ import {
   Wallet,
   Settings,
   LogOut,
-  Menu,
   X,
   Megaphone,
   Bell,
@@ -36,9 +35,6 @@ import NotificationBell from '@/components/dashboard/NotificationBell';
 import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
 import BottomNav from './_nav/BottomNav';
 import MoreSheet from './_nav/MoreSheet';
-
-const BOTTOM_NAV_ENABLED = process.env.NEXT_PUBLIC_MOBILE_BOTTOM_NAV === '1';
-
 
 function DashboardLayoutContent({
   children,
@@ -165,19 +161,8 @@ function DashboardLayoutContent({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {!hideDistractions && !BOTTOM_NAV_ENABLED && (
-        <button
-          onClick={() => setSidebarOpen(true)}
-          aria-label={t('openMenu')}
-          className="fixed z-40 flex items-center gap-1.5 px-3 py-2 bg-white/90 backdrop-blur-xl border border-gray-100 rounded-xl shadow-lg top-3 left-3 lg:hidden active:scale-95 transition-all duration-200 touch-manipulation"
-        >
-          <Menu className="w-5 h-5 text-indigo-600" />
-          <span className="text-sm font-medium text-indigo-600">{t('menu')}</span>
-        </button>
-      )}
-
-      {/* Brand Qarte mobile — visible quand bottom nav actif (sidebar masquee) */}
-      {BOTTOM_NAV_ENABLED && !hideDistractions && (
+      {/* Brand Qarte mobile — sidebar masquee, remplacee par bottom nav */}
+      {!hideDistractions && (
         <Link
           href="/dashboard"
           aria-label="Qarte"
@@ -378,14 +363,7 @@ function DashboardLayoutContent({
       </aside>
 
       <main className="lg:ml-72 min-h-screen">
-        <div
-          className={cn(
-            'px-4 lg:pt-8 lg:px-8 lg:pb-8',
-            BOTTOM_NAV_ENABLED
-              ? 'pt-14 pb-[calc(60px+env(safe-area-inset-bottom)+16px)]'
-              : 'pt-14 pb-20'
-          )}
-        >
+        <div className="px-4 lg:pt-8 lg:px-8 lg:pb-8 pt-14 pb-[calc(60px+env(safe-area-inset-bottom)+16px)]">
           {/* Annonces admin — banner mobile uniquement */}
           <div className="lg:hidden">
             <AdminAnnouncementBanner variant="banner" />
@@ -446,7 +424,7 @@ function DashboardLayoutContent({
         </div>
       </main>
 
-      {BOTTOM_NAV_ENABLED && !hideDistractions && (
+      {!hideDistractions && (
         <>
           <BottomNav onOpenMore={() => setMoreOpen(true)} moreOpen={moreOpen} />
           <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} onLogout={handleLogout} />
