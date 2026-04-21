@@ -242,10 +242,10 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+          className={`w-full py-2.5 rounded-xl text-sm font-bold active:scale-[0.98] touch-manipulation transition-all flex items-center justify-center gap-2 ${
             saved
               ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-              : 'bg-violet-600 text-white hover:bg-violet-700 shadow-sm'
+              : 'bg-[#4b0082] text-white hover:bg-[#4b0082]/90'
           }`}
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : null}

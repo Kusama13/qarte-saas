@@ -281,7 +281,7 @@ export default function PublicPageDashboard() {
           <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden border-l-4 border-l-emerald-400">
             <button
               onClick={() => toggleSection('salon')}
-              className="w-full flex items-center justify-between p-4 md:p-5 bg-gradient-to-r from-emerald-50/60 to-transparent"
+              className="w-full flex items-center justify-between p-4 md:p-5 bg-white hover:bg-slate-50 active:bg-slate-50 touch-manipulation transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shadow-sm">
@@ -332,7 +332,7 @@ export default function PublicPageDashboard() {
           <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden border-l-4 border-l-pink-400">
             <button
               onClick={() => toggleSection('contenu')}
-              className="w-full flex items-center justify-between p-4 md:p-5 bg-gradient-to-r from-pink-50/60 to-transparent"
+              className="w-full flex items-center justify-between p-4 md:p-5 bg-white hover:bg-slate-50 active:bg-slate-50 touch-manipulation transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center shadow-sm">
@@ -357,7 +357,7 @@ export default function PublicPageDashboard() {
           <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden border-l-4 border-l-amber-400">
             <button
               onClick={() => toggleSection('prestations')}
-              className="w-full flex items-center justify-between p-4 md:p-5 bg-gradient-to-r from-amber-50/60 to-transparent"
+              className="w-full flex items-center justify-between p-4 md:p-5 bg-white hover:bg-slate-50 active:bg-slate-50 touch-manipulation transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shadow-sm">
@@ -382,7 +382,7 @@ export default function PublicPageDashboard() {
           <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden border-l-4 border-l-violet-400">
             <button
               onClick={() => toggleSection('acquisition')}
-              className="w-full flex items-center justify-between p-4 md:p-5 bg-gradient-to-r from-violet-50/60 to-transparent"
+              className="w-full flex items-center justify-between p-4 md:p-5 bg-white hover:bg-slate-50 active:bg-slate-50 touch-manipulation transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center shadow-sm">
