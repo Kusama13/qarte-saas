@@ -161,22 +161,21 @@ function DashboardLayoutContent({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Brand Qarte mobile — sidebar masquee, remplacee par bottom nav */}
+      {/* Top bar mobile sticky — Qarte brand + NotificationBell, backdrop-blur pour rester lisible au-dessus du contenu qui scrolle */}
       {!hideDistractions && (
-        <Link
-          href="/dashboard"
-          aria-label="Qarte"
-          className="fixed z-40 top-3 left-3 lg:hidden active:scale-95 transition-transform touch-manipulation"
-        >
-          <span className="text-lg font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 leading-none">
-            Qarte
-          </span>
-        </Link>
-      )}
-
-      {!hideDistractions && (
-        <div className="fixed z-40 top-3 right-3 lg:hidden">
-          <NotificationBell />
+        <div className="fixed top-0 left-0 right-0 z-40 lg:hidden bg-white/80 backdrop-blur-lg border-b border-slate-100 pt-[env(safe-area-inset-top)]">
+          <div className="flex items-center justify-between px-3 h-12">
+            <Link
+              href="/dashboard"
+              aria-label="Qarte"
+              className="active:scale-95 transition-transform touch-manipulation"
+            >
+              <span className="text-lg font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 leading-none">
+                Qarte
+              </span>
+            </Link>
+            <NotificationBell />
+          </div>
         </div>
       )}
 
@@ -363,7 +362,7 @@ function DashboardLayoutContent({
       </aside>
 
       <main className="lg:ml-72 min-h-screen">
-        <div className="px-4 lg:pt-8 lg:px-8 lg:pb-8 pt-14 pb-[calc(60px+env(safe-area-inset-bottom)+16px)]">
+        <div className="px-4 lg:pt-8 lg:px-8 lg:pb-8 pt-[calc(48px+env(safe-area-inset-top)+8px)] pb-[calc(60px+env(safe-area-inset-bottom)+16px)]">
           {/* Annonces admin — banner mobile uniquement */}
           <div className="lg:hidden">
             <AdminAnnouncementBanner variant="banner" />
