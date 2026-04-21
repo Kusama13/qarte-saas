@@ -2400,7 +2400,16 @@
     "title": "Acomptes en attente",
     "viewAll": "Tout voir",
     "today": "Aujourd'hui",
-    "tomorrow": "Demain"
+    "tomorrow": "Demain",
+    "accept": "Accepter",
+    "reject": "Refuser",
+    "rejectConfirmTitle": "Refuser cette réservation ?",
+    "rejectConfirmBody": "Le créneau sera supprimé et redevient libre. {name} sera prévenu par SMS.",
+    "rejectConfirmCta": "Oui, refuser",
+    "cancel": "Annuler",
+    "toastAccepted": "Acompte confirmé",
+    "toastRejected": "Réservation refusée",
+    "errorAction": "Une erreur est survenue"
   },
   "heroToday": {
     "todayLabel": "Aujourd'hui",
