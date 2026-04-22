@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { verifyCronAuth } from '@/lib/cron-helpers';
 import { sendBookingSms, sendMarketingSms, getGlobalSmsConfig, PAID_STATUSES } from '@/lib/sms';
@@ -27,11 +28,9 @@ interface MerchantRow {
   subscription_status: string;
   billing_period_start: string | null;
   reminder_j0_enabled: boolean | null;
-  welcome_sms_enabled: boolean | null;
   post_visit_review_enabled: boolean | null;
   events_sms_enabled: boolean | null;
   events_sms_offer_text: string | null;
-  events_sms_last_event_id: string | null;
   voucher_expiry_sms_enabled: boolean | null;
   referral_invite_sms_enabled: boolean | null;
   inactive_sms_enabled: boolean | null;
@@ -53,6 +52,34 @@ const NEAR_REWARD_MIN_DAYS_SINCE_VISIT = 15;
 // near reward, inactive) utilisent la meme fenetre de dedup de 60 jours :
 // un client ne recoit pas deux fois le meme type de SMS sous 60j.
 const MARKETING_DEDUP_DAYS = 60;
+
+// Cap anti-spam : max 1 SMS marketing par telephone par jour, tous types
+// confondus. Si bloque, la dedup 60j n'est PAS incrementee → retry au
+// prochain cron (demain, ou plus tard tant que la condition du trigger tient).
+const MARKETING_SMS_TYPES_FOR_DAILY_CAP = [
+  'review_request', 'voucher_expiry', 'referral_invite',
+  'inactive_reminder', 'near_reward', 'campaign',
+];
+
+async function fetchPhonesWithMarketingToday(
+  supabase: SupabaseClient,
+  merchantId: string,
+  todayStartIso: string,
+): Promise<Set<string>> {
+  const { data } = await supabase
+    .from('sms_logs')
+    .select('phone_to')
+    .eq('merchant_id', merchantId)
+    .in('sms_type', MARKETING_SMS_TYPES_FOR_DAILY_CAP)
+    .gte('created_at', todayStartIso);
+  return new Set((data || []).map((r: { phone_to: string }) => r.phone_to));
+}
+
+function todayStartIsoUtc(): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
 
 function localHourFor(now: Date, tz: string): number {
   const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', hour12: false });
@@ -88,7 +115,6 @@ export async function GET(request: NextRequest) {
 
   const results = {
     j0Sent: 0,
-    welcomeSent: 0,
     reviewSent: 0,
     eventSent: 0,
     voucherExpirySent: 0,
@@ -102,7 +128,7 @@ export async function GET(request: NextRequest) {
 
   const { data: merchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, country, locale, subscription_status, billing_period_start, reminder_j0_enabled, welcome_sms_enabled, post_visit_review_enabled, events_sms_enabled, events_sms_offer_text, events_sms_last_event_id, voucher_expiry_sms_enabled, referral_invite_sms_enabled, inactive_sms_enabled, near_reward_sms_enabled, referral_program_enabled, planning_enabled, review_link, stamps_required, reward_description, tier2_enabled, tier2_stamps_required, tier2_reward_description, birthday_gift_enabled, birthday_gift_description')
+    .select('id, shop_name, country, locale, subscription_status, billing_period_start, reminder_j0_enabled, post_visit_review_enabled, events_sms_enabled, events_sms_offer_text, voucher_expiry_sms_enabled, referral_invite_sms_enabled, inactive_sms_enabled, near_reward_sms_enabled, referral_program_enabled, planning_enabled, review_link, stamps_required, reward_description, tier2_enabled, tier2_stamps_required, tier2_reward_description, birthday_gift_enabled, birthday_gift_description')
     .in('subscription_status', PAID_STATUSES);
 
   const activeMerchants = (merchants || []) as MerchantRow[];
@@ -169,65 +195,16 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // ── 2. WELCOME SMS (transactional — confirmation de creation de compte) ──
-  // Floor 8h local (courtoisie). Fenetre scan H-1 a H-4 pour couvrir les
-  // salons qui ouvrent a 8-9h (scan 8h verra son welcome a 9h, scan 7h30
-  // non couvert car le premier cron legal est a 8h, acceptable).
-  // Dedup via hasSmsLog empeche les doublons.
-  for (const m of activeMerchants) {
-    if (Date.now() - startedAt > 270_000) break;
-    if (!m.welcome_sms_enabled) continue;
-
-    const tz = getTimezoneForCountry(m.country || 'FR');
-    if (localHourFor(now, tz) < 8) continue;
-
-    const minAgo = new Date(now.getTime() - 240 * 60 * 1000).toISOString();
-    const maxAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
-
-    const { data: cards } = await supabase
-      .from('loyalty_cards')
-      .select('customer_id, created_at, customers(first_name, phone_number)')
-      .eq('merchant_id', m.id)
-      .gte('created_at', minAgo)
-      .lt('created_at', maxAgo);
-
-    if (!cards || cards.length === 0) continue;
-    const optOuts = await fetchOptedOutPhones(supabase, m.id);
-
-    for (const card of cards) {
-      const customer = getEmbeddedCustomer(card);
-      const phone = customer?.phone_number;
-      if (!phone || optOuts.has(phone)) continue;
-
-      const welcomeDedupSince = new Date(now.getTime() - MARKETING_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
-      if (await hasSmsLog(supabase, m.id, 'welcome', phone, welcomeDedupSince)) continue;
-
-      const locale = m.locale || 'fr';
-      const first = customer?.first_name ? `${customer.first_name}, ` : '';
-      const body = locale === 'en'
-        ? `${first}welcome to ${m.shop_name}'s loyalty card! Earn points on every visit. STOP SMS`
-        : `${first}bienvenue dans la carte fidélité ${m.shop_name} ! Cumulez des points à chaque visite. STOP SMS`;
-
-      const result = await sendMarketingSms(supabase, {
-        merchantId: m.id,
-        phone,
-        body,
-        billingPeriodStart: m.billing_period_start,
-        smsType: 'welcome',
-      });
-      if (result.success) results.welcomeSent++;
-      else if (result.blocked) { results.errors++; break; }
-      else results.skipped++;
-    }
-  }
+  // ── 2. (retire) — l'automatisation WELCOME SMS n'a pas de toggle UI.
+  // Column welcome_sms_enabled conservee en DB (default false) pour eviter
+  // une migration ; a dropper dans un futur cleanup si aucun merchant actif.
 
   // ── 3. REVIEW REQUEST SMS (marketing) — post-recompense H+2 ──
   // Trigger : quand un client vient de recuperer sa recompense (palier 1 ou 2).
   // Moment "peak happiness" = meilleur taux de conversion avis Google.
-  // Marketing → plancher legal 10h (isLegalSendTime). Fenetre [120, 300] min
-  // pour couvrir les redemptions du matin qui tombent avant 10h.
-  // Dedup LIFETIME par phone+merchant — un client ne recoit le SMS review
-  // qu'une seule fois dans sa vie chez ce merchant.
+  // Marketing → plancher legal 10h (isLegalSendTime). Fenetre [H-2h, H-36h]
+  // pour donner plusieurs tentatives si le cap daily bloque aujourd'hui.
+  // Dedup 60j par phone+merchant. Cap 1 marketing/jour cross-types.
   for (const m of activeMerchants) {
     if (Date.now() - startedAt > 285_000) break;
     if (!m.post_visit_review_enabled) continue;
@@ -235,7 +212,7 @@ export async function GET(request: NextRequest) {
     if (!reviewLink) continue;
     if (!isLegalSendTime(now, m.country || 'FR').ok) continue;
 
-    const minAgo = new Date(now.getTime() - 300 * 60 * 1000).toISOString();
+    const minAgo = new Date(now.getTime() - 36 * 60 * 60 * 1000).toISOString();
     const maxAgo = new Date(now.getTime() - 120 * 60 * 1000).toISOString();
 
     const { data: redemptions } = await supabase
@@ -247,11 +224,13 @@ export async function GET(request: NextRequest) {
 
     if (!redemptions || redemptions.length === 0) continue;
     const optOuts = await fetchOptedOutPhones(supabase, m.id);
+    const sentMarketingToday = await fetchPhonesWithMarketingToday(supabase, m.id, todayStartIsoUtc());
 
     for (const r of redemptions) {
       const customer = getEmbeddedCustomer(r);
       const phone = customer?.phone_number;
       if (!phone || optOuts.has(phone)) continue;
+      if (sentMarketingToday.has(phone)) continue; // cap daily — retry demain
 
       const reviewDedupSince = new Date(now.getTime() - MARKETING_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
       if (await hasSmsLog(supabase, m.id, 'review_request', phone, reviewDedupSince)) continue;
@@ -283,19 +262,13 @@ export async function GET(request: NextRequest) {
 
     const tz = getTimezoneForCountry(m.country || 'FR');
     const localHour = localHourFor(now, tz);
-    // Fenetre 10h-11h au lieu de 10h pile : filet de securite si Vercel rate
-    // le run de 10h. Idempotence (events_sms_last_event_id) empeche doublon.
+    // Fenetre 10h-11h (filet de securite si Vercel rate le run de 10h).
     if (localHour < 10 || localHour > 11) continue;
 
     // Paris as neutral anchor for event detection (event dates fixed in FR cal).
     const nowParis = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
     const upcomingEvent = getUpcomingEvent(nowParis, m.locale === 'en' ? 'en' : 'fr');
     if (!upcomingEvent) continue;
-
-    // Idempotency: once the event is stored in events_sms_last_event_id + today, skip.
-    const today = localDateFor(now, tz);
-    const eventKey = `${upcomingEvent.id}:${today}`;
-    if (m.events_sms_last_event_id === eventKey) continue;
 
     if (!isLegalSendTime(now, m.country || 'FR').ok) continue;
 
@@ -308,25 +281,16 @@ export async function GET(request: NextRequest) {
     const optOuts = await fetchOptedOutPhones(supabase, m.id);
     const locale = m.locale || 'fr';
     const offerText = m.events_sms_offer_text || '';
-    let anySent = false;
 
-    // Dedup par-phone : protege contre un re-run du cron (timeout / crash
-    // mid-loop) avant que events_sms_last_event_id soit persiste. Pre-fetch
-    // les phones deja servis aujourd'hui pour ce type 'campaign'.
-    const todayStartIso = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString(); })();
-    const { data: sentToday } = await supabase
-      .from('sms_logs')
-      .select('phone_to')
-      .eq('merchant_id', m.id)
-      .eq('sms_type', 'campaign')
-      .gte('created_at', todayStartIso);
-    const alreadySentToday = new Set((sentToday || []).map((r: { phone_to: string }) => r.phone_to));
+    // Dedup cross-types + per-phone daily. Le flag events_sms_last_event_id
+    // a ete retire au profit de sms_logs (plus fiable, retry natif).
+    const sentMarketingToday = await fetchPhonesWithMarketingToday(supabase, m.id, todayStartIsoUtc());
 
     for (const card of cards) {
       const customer = getEmbeddedCustomer(card);
       const phone = customer?.phone_number;
       if (!phone || optOuts.has(phone)) continue;
-      if (alreadySentToday.has(phone)) continue;
+      if (sentMarketingToday.has(phone)) continue; // cap daily
 
       const first = customer?.first_name ? `${customer.first_name}, ` : '';
       const intro = locale === 'en'
@@ -346,17 +310,12 @@ export async function GET(request: NextRequest) {
       });
       if (result.success) {
         results.eventSent++;
-        anySent = true;
       } else if (result.blocked) {
         results.errors++;
         break;
       } else {
         results.skipped++;
       }
-    }
-
-    if (anySent) {
-      await supabase.from('merchants').update({ events_sms_last_event_id: eventKey }).eq('id', m.id);
     }
   }
 
@@ -385,11 +344,13 @@ export async function GET(request: NextRequest) {
     const optOuts = await fetchOptedOutPhones(supabase, m.id);
     const todayStart = new Date();
     todayStart.setUTCHours(0, 0, 0, 0);
+    const sentMarketingToday = await fetchPhonesWithMarketingToday(supabase, m.id, todayStartIsoUtc());
 
     for (const v of vouchers) {
       const customer = getEmbeddedCustomer(v);
       const phone = customer?.phone_number;
       if (!phone || optOuts.has(phone)) continue;
+      if (sentMarketingToday.has(phone)) continue; // cap daily — retry demain
 
       if (await hasSmsLog(supabase, m.id, 'voucher_expiry', phone, todayStart.toISOString())) continue;
 
@@ -472,10 +433,12 @@ export async function GET(request: NextRequest) {
       .gte('created_at', referralDedupSince)
       .in('phone_to', eligiblePhones);
     const alreadySent = new Set((existingLogs || []).map((r: { phone_to: string }) => r.phone_to));
+    const sentMarketingToday = await fetchPhonesWithMarketingToday(supabase, m.id, todayStartIsoUtc());
 
     for (const customer of customers) {
       const phone = customer.phone_number;
       if (!phone || optOuts.has(phone) || alreadySent.has(phone)) continue;
+      if (sentMarketingToday.has(phone)) continue; // cap daily — retry demain
 
       const locale = m.locale || 'fr';
       const first = customer.first_name ? `${customer.first_name}, ` : '';
@@ -548,10 +511,12 @@ export async function GET(request: NextRequest) {
       .gte('created_at', dedupSince)
       .in('phone_to', candidatePhones);
     const alreadySent = new Set((existingLogs || []).map((r: { phone_to: string }) => r.phone_to));
+    const sentMarketingToday = await fetchPhonesWithMarketingToday(supabase, m.id, todayStartIsoUtc());
 
     for (const customer of customers) {
       const phone = customer.phone_number;
       if (!phone || optOuts.has(phone) || alreadySent.has(phone)) continue;
+      if (sentMarketingToday.has(phone)) continue; // cap daily — retry demain
 
       const locale = m.locale || 'fr';
       const first = customer.first_name ? `${customer.first_name}, ` : '';
@@ -616,12 +581,14 @@ export async function GET(request: NextRequest) {
         .gte('created_at', dedupSince).in('phone_to', candidatePhones),
     ]);
     const alreadySent = new Set((existingLogsRes.data || []).map((r: { phone_to: string }) => r.phone_to));
+    const sentMarketingToday = await fetchPhonesWithMarketingToday(supabase, m.id, todayStartIsoUtc());
 
     for (const card of cards) {
       const customer = getEmbeddedCustomer(card);
       const phone = customer?.phone_number;
       const currentStamps = (card as { current_stamps?: number }).current_stamps ?? -1;
       if (!phone || optOuts.has(phone) || alreadySent.has(phone)) continue;
+      if (sentMarketingToday.has(phone)) continue; // cap daily — retry demain
 
       const match = thresholds.find((t) => t.stamps === currentStamps);
       if (!match) continue;

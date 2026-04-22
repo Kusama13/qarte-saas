@@ -197,7 +197,7 @@ Ajout :
 | `near_reward_sms_enabled` | Plus qu'un tampon | hourly cron 10h-11h, dedup 60j | `reward_description` défini |
 | `inactive_sms_enabled` | Relance inactif | hourly cron 10h-11h, dedup 60j | — |
 | `events_sms_enabled` | Rappel avant fêtes | hourly cron 10h-11h, dedup daily per phone | — |
-| `welcome_sms_enabled` | Welcome (retiré de l'UI, toggle DB subsiste) | hourly cron H+1 à H+4 (jamais avant 8h), dedup 60j | — |
+| ~~`welcome_sms_enabled`~~ | ~~Welcome~~ | Supprimé 22 avril 2026 (pas de toggle UI, code mort retiré). Colonne DB conservée en attendant un cleanup de migration. | — |
 
 ---
 
