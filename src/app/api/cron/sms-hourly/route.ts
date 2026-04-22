@@ -49,7 +49,10 @@ interface MerchantRow {
 }
 
 const NEAR_REWARD_MIN_DAYS_SINCE_VISIT = 15;
-const NEAR_REWARD_DEDUP_DAYS = 90;
+// Toutes les automatisations marketing (welcome, review, referral invite,
+// near reward, inactive) utilisent la meme fenetre de dedup de 60 jours :
+// un client ne recoit pas deux fois le meme type de SMS sous 60j.
+const MARKETING_DEDUP_DAYS = 60;
 
 function localHourFor(now: Date, tz: string): number {
   const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', hour12: false });
@@ -196,7 +199,8 @@ export async function GET(request: NextRequest) {
       const phone = customer?.phone_number;
       if (!phone || optOuts.has(phone)) continue;
 
-      if (await hasSmsLog(supabase, m.id, 'welcome', phone)) continue;
+      const welcomeDedupSince = new Date(now.getTime() - MARKETING_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
+      if (await hasSmsLog(supabase, m.id, 'welcome', phone, welcomeDedupSince)) continue;
 
       const locale = m.locale || 'fr';
       const first = customer?.first_name ? `${customer.first_name}, ` : '';
@@ -249,7 +253,8 @@ export async function GET(request: NextRequest) {
       const phone = customer?.phone_number;
       if (!phone || optOuts.has(phone)) continue;
 
-      if (await hasSmsLog(supabase, m.id, 'review_request', phone)) continue;
+      const reviewDedupSince = new Date(now.getTime() - MARKETING_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
+      if (await hasSmsLog(supabase, m.id, 'review_request', phone, reviewDedupSince)) continue;
 
       const locale = m.locale || 'fr';
       const first = customer?.first_name ? `${customer.first_name}, ` : '';
@@ -458,11 +463,13 @@ export async function GET(request: NextRequest) {
     const customers = customersRes.data || [];
     const eligiblePhones = customers.map((c) => c.phone_number).filter((p): p is string => !!p);
     if (eligiblePhones.length === 0) continue;
+    const referralDedupSince = new Date(now.getTime() - MARKETING_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
     const { data: existingLogs } = await supabase
       .from('sms_logs')
       .select('phone_to')
       .eq('merchant_id', m.id)
       .eq('sms_type', 'referral_invite')
+      .gte('created_at', referralDedupSince)
       .in('phone_to', eligiblePhones);
     const alreadySent = new Set((existingLogs || []).map((r: { phone_to: string }) => r.phone_to));
 
@@ -602,7 +609,7 @@ export async function GET(request: NextRequest) {
       .filter((p): p is string => !!p);
     if (candidatePhones.length === 0) continue;
 
-    const dedupSince = new Date(now.getTime() - NEAR_REWARD_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    const dedupSince = new Date(now.getTime() - MARKETING_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
     const [optOuts, existingLogsRes] = await Promise.all([
       fetchOptedOutPhones(supabase, m.id),
       supabase.from('sms_logs').select('phone_to').eq('merchant_id', m.id).eq('sms_type', 'near_reward')

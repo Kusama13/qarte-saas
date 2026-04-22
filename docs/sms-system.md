@@ -191,13 +191,13 @@ Ajout :
 | `reminder_j1_enabled` | Rappel J-1 | evening cron | `planning_enabled` |
 | `reminder_j0_enabled` | Rappel J-0 | hourly cron H-3 | `planning_enabled` |
 | `referral_reward_sms_enabled` | Récompense parrain | `/api/vouchers/use` | `referral_program_enabled` |
-| `referral_invite_sms_enabled` | Invitation parrain | hourly cron 10h | `referral_program_enabled` |
-| `post_visit_review_enabled` | Avis Google | hourly cron H+2 après récompense (palier 1 ou 2), dedup lifetime | `review_link` défini |
-| `voucher_expiry_sms_enabled` | Voucher expire | hourly cron 10h | — |
-| `near_reward_sms_enabled` | Plus qu'un tampon | hourly cron 10h | `reward_description` défini |
-| `inactive_sms_enabled` | Relance inactif | hourly cron 10h | — |
-| `events_sms_enabled` | Rappel avant fêtes | hourly cron 10h | — |
-| `welcome_sms_enabled` | Welcome (retiré de l'UI, toggle DB subsiste) | hourly cron H+1 | — |
+| `referral_invite_sms_enabled` | Invitation parrain | hourly cron 10h-11h, dedup 60j | `referral_program_enabled` |
+| `post_visit_review_enabled` | Avis Google | hourly cron H+2 après récompense (palier 1 ou 2), dedup 60j | `review_link` défini |
+| `voucher_expiry_sms_enabled` | Voucher expire | hourly cron 10h-11h, dedup daily | — |
+| `near_reward_sms_enabled` | Plus qu'un tampon | hourly cron 10h-11h, dedup 60j | `reward_description` défini |
+| `inactive_sms_enabled` | Relance inactif | hourly cron 10h-11h, dedup 60j | — |
+| `events_sms_enabled` | Rappel avant fêtes | hourly cron 10h-11h, dedup daily per phone | — |
+| `welcome_sms_enabled` | Welcome (retiré de l'UI, toggle DB subsiste) | hourly cron H+1 à H+4 (jamais avant 8h), dedup 60j | — |
 
 ---
 
