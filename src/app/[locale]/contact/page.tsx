@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import {
-  CreditCard,
   Mail,
   User,
   MessageSquare,
@@ -110,13 +109,10 @@ export default function ContactPage() {
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
       <header className="bg-white/80 backdrop-blur-lg border-b border-gray-100">
         <div className="flex items-center justify-between px-4 py-4 mx-auto max-w-7xl">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
-              <CreditCard className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">Qarte</span>
+          <Link href="/" className="text-2xl font-extrabold tracking-tight text-indigo-600">
+            Qarte
           </Link>
-          <Link href="/" className="text-gray-600 hover:text-primary">
+          <Link href="/" className="text-gray-600 hover:text-indigo-600 transition-colors">
             <ArrowLeft className="w-5 h-5 inline mr-1" />
             {t('back')}
           </Link>
