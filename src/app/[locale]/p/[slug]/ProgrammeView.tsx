@@ -501,9 +501,6 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             {!merchant.auto_booking_enabled && (
               <p className="text-[11px] text-gray-500 mb-3">{t('planningManualHint')}</p>
             )}
-            {merchant.auto_booking_enabled && !isFreeMod && (
-              <p className="text-[11px] text-emerald-500 font-medium mb-3">{t('planningAutoHint')}</p>
-            )}
 
             {/* Message libre */}
             {hasPublicMessage && (
@@ -521,6 +518,10 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.14em] mb-1">{t('conditions')}</p>
                 <p className="text-[12px] text-gray-600 whitespace-pre-line">{merchant.booking_message}</p>
               </div>
+            )}
+
+            {merchant.auto_booking_enabled && !isFreeMod && (
+              <p className="text-[11px] text-emerald-500 font-medium mb-3">{t('planningAutoHint')}</p>
             )}
 
             {/* Mode libre: single "Réserver" CTA */}
