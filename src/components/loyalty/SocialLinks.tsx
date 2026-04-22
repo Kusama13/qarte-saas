@@ -16,6 +16,7 @@ const SOCIALS = [
     icon: InstagramIcon,
     bg: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
     shadow: 'rgba(225,48,108,0.3)',
+    iconClass: 'text-white',
   },
   {
     key: 'facebook' as const,
@@ -24,6 +25,7 @@ const SOCIALS = [
     icon: FacebookIcon,
     bg: '#1877F2',
     shadow: 'rgba(24,119,242,0.3)',
+    iconClass: 'text-white',
   },
   {
     key: 'tiktok' as const,
@@ -32,6 +34,7 @@ const SOCIALS = [
     icon: TikTokIcon,
     bg: '#000000',
     shadow: 'rgba(0,0,0,0.2)',
+    iconClass: 'text-white',
   },
   {
     key: 'whatsapp' as const,
@@ -40,6 +43,7 @@ const SOCIALS = [
     icon: WhatsAppIcon,
     bg: '#25D366',
     shadow: 'rgba(37,211,102,0.3)',
+    iconClass: 'text-white',
   },
   {
     key: 'snapchat' as const,
@@ -48,6 +52,7 @@ const SOCIALS = [
     icon: SnapchatIcon,
     bg: '#FFFC00',
     shadow: 'rgba(255,252,0,0.3)',
+    iconClass: 'text-black',
   },
 ];
 
@@ -87,7 +92,7 @@ export default function SocialLinks({ merchant }: SocialLinksProps) {
                     boxShadow: `0 4px 12px ${s.shadow}`,
                   }}
                 >
-                  <Icon className="w-[22px] h-[22px] text-white" />
+                  <Icon className={`w-[22px] h-[22px] ${s.iconClass}`} />
                 </div>
               </a>
             );

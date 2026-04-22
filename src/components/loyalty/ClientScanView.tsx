@@ -161,7 +161,7 @@ export function ClientScanView({
             </motion.span>
             <span className="text-2xl font-bold text-gray-300">/{stampsTarget}</span>
           </div>
-          <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-2">
+          <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px] mt-2">
             {t('passages')}
           </p>
         </div>
@@ -302,7 +302,7 @@ export function ClientScanView({
           <Gift className="w-6 h-6" style={{ color: merchant.primary_color }} />
         </div>
         <div>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">
+          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">
             {t('atStamps', { count: stampsTarget })}
           </p>
           <p className="font-bold text-gray-900">{merchant.reward_description}</p>

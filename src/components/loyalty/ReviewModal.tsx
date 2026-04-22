@@ -61,7 +61,7 @@ export default function ReviewModal({ isOpen, onClose, reviewLink, shopName, mer
             exit={{ opacity: 0, y: 40, scale: 0.97 }}
             transition={{ type: 'spring', damping: 26, stiffness: 320 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-sm mb-2 sm:mb-0 bg-white rounded-[2.5rem] shadow-2xl overflow-hidden"
+            className="relative w-full max-w-sm mb-2 sm:mb-0 bg-white rounded-3xl shadow-2xl overflow-hidden"
           >
             {/* Fond doré subtil en haut */}
             <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-amber-50 to-transparent pointer-events-none" />
@@ -134,7 +134,7 @@ export default function ReviewModal({ isOpen, onClose, reviewLink, shopName, mer
 
                 <button
                   onClick={handleDismiss}
-                  className="w-full py-3 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors"
+                  className="w-full py-3 text-sm font-medium text-gray-500 hover:text-gray-600 transition-colors"
                 >
                   {t('noThanks')}
                 </button>

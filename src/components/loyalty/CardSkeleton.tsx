@@ -8,7 +8,7 @@ export default function CardSkeleton() {
         <div className="relative mx-auto lg:max-w-lg lg:mt-4 lg:rounded-3xl overflow-hidden">
           <div className="bg-gray-200 animate-pulse flex flex-col items-center pt-16 pb-14 px-5">
             <div className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white/20" />
-            <div className="w-[88px] h-[88px] rounded-[1.75rem] bg-white/30 mb-4" />
+            <div className="w-[100px] h-[100px] rounded-[1.75rem] bg-white/30 mb-2.5" />
             <div className="w-36 h-6 bg-white/20 rounded-lg mb-2" />
           </div>
         </div>

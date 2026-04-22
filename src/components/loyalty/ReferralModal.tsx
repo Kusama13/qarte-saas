@@ -15,14 +15,17 @@ interface ReferralModalProps {
   merchantId: string;
   rewardReferrer: string | null;
   rewardReferred: string | null;
+  primaryColor: string;
+  secondaryColor?: string | null;
 }
 
 const REFERRAL_COOLDOWN_DAYS = 90;
 
 export default function ReferralModal({
   isOpen, onClose, referralCode, scanCode, shopName, merchantId,
-  rewardReferrer, rewardReferred,
+  rewardReferrer, rewardReferred, primaryColor, secondaryColor,
 }: ReferralModalProps) {
+  const accentColor = secondaryColor || primaryColor;
   const t = useTranslations('referralModal');
   const [copied, setCopied] = useState(false);
 
@@ -78,10 +81,13 @@ export default function ReferralModal({
             exit={{ opacity: 0, y: 40, scale: 0.97 }}
             transition={{ type: 'spring', damping: 26, stiffness: 320 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-sm mb-2 sm:mb-0 bg-white rounded-[2.5rem] shadow-2xl overflow-hidden"
+            className="relative w-full max-w-sm mb-2 sm:mb-0 bg-white rounded-3xl shadow-2xl overflow-hidden"
           >
-            {/* Fond violet subtil */}
-            <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-violet-50 to-transparent pointer-events-none" />
+            {/* Fond brand subtil */}
+            <div
+              className="absolute inset-x-0 top-0 h-32 pointer-events-none"
+              style={{ background: `linear-gradient(to bottom, ${primaryColor}15, transparent)` }}
+            />
 
             {/* Bouton fermer */}
             <button
@@ -97,7 +103,11 @@ export default function ReferralModal({
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 18 }}
-                className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-200/60 mb-6"
+                className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
+                style={{
+                  background: `linear-gradient(135deg, ${primaryColor}, ${accentColor})`,
+                  boxShadow: `0 10px 24px ${primaryColor}30`,
+                }}
               >
                 <Users className="w-8 h-8 text-white" />
               </motion.div>
@@ -131,14 +141,20 @@ export default function ReferralModal({
                   className="space-y-2 mb-6"
                 >
                   {rewardReferrer && (
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-violet-50 border border-violet-100">
-                      <span className="text-xs font-bold text-violet-500 uppercase tracking-wider shrink-0">{t('youGet')}</span>
+                    <div
+                      className="flex items-center gap-3 px-4 py-3 rounded-2xl border"
+                      style={{ backgroundColor: `${primaryColor}0D`, borderColor: `${primaryColor}25` }}
+                    >
+                      <span className="text-xs font-bold uppercase tracking-wider shrink-0" style={{ color: primaryColor }}>{t('youGet')}</span>
                       <span className="text-sm font-semibold text-gray-900 text-left">{rewardReferrer}</span>
                     </div>
                   )}
                   {rewardReferred && (
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-indigo-50 border border-indigo-100">
-                      <span className="text-xs font-bold text-indigo-500 uppercase tracking-wider shrink-0">{t('theyGet')}</span>
+                    <div
+                      className="flex items-center gap-3 px-4 py-3 rounded-2xl border"
+                      style={{ backgroundColor: `${accentColor}0D`, borderColor: `${accentColor}25` }}
+                    >
+                      <span className="text-xs font-bold uppercase tracking-wider shrink-0" style={{ color: accentColor }}>{t('theyGet')}</span>
                       <span className="text-sm font-semibold text-gray-900 text-left">{rewardReferred}</span>
                     </div>
                   )}
@@ -154,8 +170,11 @@ export default function ReferralModal({
               >
                 <button
                   onClick={handleShare}
-                  className="w-full h-14 flex items-center justify-center gap-2 rounded-2xl text-white text-base font-bold shadow-lg shadow-violet-200/60 hover:shadow-xl hover:shadow-violet-300/50 active:scale-[0.97] transition-all"
-                  style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
+                  className="w-full h-14 flex items-center justify-center gap-2 rounded-2xl text-white text-base font-bold shadow-lg hover:shadow-xl active:scale-[0.97] transition-all"
+                  style={{
+                    background: `linear-gradient(135deg, ${primaryColor}, ${accentColor})`,
+                    boxShadow: `0 10px 24px ${primaryColor}30`,
+                  }}
                 >
                   {copied ? (
                     <>
@@ -172,7 +191,7 @@ export default function ReferralModal({
 
                 <button
                   onClick={handleDismiss}
-                  className="w-full py-3 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors"
+                  className="w-full py-3 text-sm font-medium text-gray-500 hover:text-gray-600 transition-colors"
                 >
                   {t('noThanks')}
                 </button>

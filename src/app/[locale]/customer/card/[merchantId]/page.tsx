@@ -761,11 +761,11 @@ export default function CustomerCardPage({
   const tier2Reward = merchant.tier2_reward_description || '';
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(160deg, ${merchant.primary_color}15 0%, ${merchant.primary_color}40 40%, ${merchant.primary_color}60 70%, ${merchant.primary_color}35 100%)` }}>
+    <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(180deg, ${merchant.primary_color}08 0%, ${merchant.primary_color}25 100%)` }}>
       {/* Preview Mode Banner */}
       {isPreview && !isDemo && (
         <div className="sticky top-0 z-50 shadow-lg">
-          <div className="bg-indigo-600 text-white text-center py-2.5 px-4 text-sm font-semibold flex items-center justify-center gap-2">
+          <div className="bg-neutral-900 text-white text-center py-2.5 px-4 text-sm font-semibold flex items-center justify-center gap-2">
             <Eye className="w-4 h-4" />
             {isOnboarding
               ? t('previewOnboarding')
@@ -785,19 +785,19 @@ export default function CustomerCardPage({
         <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/50 py-2 px-4">
           <div className="flex items-center justify-center gap-2">
             {[
-              { id: 'demo-onglerie', label: t('stampMode'), emoji: '💅' },
-              { id: 'demo-coiffure', label: t('cagnotteMode'), emoji: '💰' },
+              { id: 'demo-onglerie', label: t('stampMode') },
+              { id: 'demo-coiffure', label: t('cagnotteMode') },
             ].map((demo) => (
               <Link
                 key={demo.id}
                 href={`/customer/card/${demo.id}?preview=true&demo=true`}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                   merchantId === demo.id
-                    ? 'bg-indigo-600 text-white shadow-md'
+                    ? 'bg-neutral-900 text-white shadow-md'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {demo.emoji} {demo.label}
+                {demo.label}
               </Link>
             ))}
           </div>
@@ -826,7 +826,7 @@ export default function CustomerCardPage({
             <div>
               <p className="text-sm text-gray-500 font-medium">{t('hello')}</p>
               <p className="text-2xl font-black tracking-tight text-gray-900">{card?.customer?.first_name}</p>
-              <p className="text-[11px] text-gray-400 mt-0.5 italic">{getGreetingMessage(t)}</p>
+              <p className="text-[11px] text-gray-500 mt-0.5 italic">{getGreetingMessage(t)}</p>
             </div>
             {!memberCard && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
@@ -837,9 +837,9 @@ export default function CustomerCardPage({
           {/* Hero counter + progress */}
           <div className="flex items-end justify-between mb-2">
             <p className="text-4xl font-black tracking-tight" style={{ color: safeColor }}>
-              {currentStamps}<span className="text-gray-300 text-2xl mx-0.5">/</span><span className="text-gray-400 text-2xl">{tier2Enabled && effectiveTier1Redeemed ? tier2Required : tier1Required}</span>
+              {currentStamps}<span className="text-gray-300 text-2xl mx-0.5">/</span><span className="text-gray-500 text-2xl">{tier2Enabled && effectiveTier1Redeemed ? tier2Required : tier1Required}</span>
             </p>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
               {getLoyaltyLabel(currentStamps, t)}
             </p>
           </div>
@@ -942,8 +942,8 @@ export default function CustomerCardPage({
                 </div>
               </div>
               <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-amber-100">
-                <Shield className="w-3 h-3 text-gray-400" />
-                <span className="text-[9px] font-medium text-gray-400 uppercase tracking-wider">
+                <Shield className="w-3 h-3 text-gray-500" />
+                <span className="text-[9px] font-medium text-gray-500 uppercase tracking-wider">
                   {t('protectedByShield')}
                 </span>
               </div>
@@ -1071,6 +1071,7 @@ export default function CustomerCardPage({
               isTier2Ready={isTier2Ready}
               effectiveTier1Redeemed={effectiveTier1Redeemed}
               merchantColor={merchant.primary_color}
+              secondaryColor={merchant.secondary_color}
               rewardDescription={merchant.reward_description || ''}
               tier2RewardDescription={merchant.tier2_reward_description || ''}
               completedCycles={completedCycles}
@@ -1137,7 +1138,7 @@ export default function CustomerCardPage({
                   </div>
                   <div>
                     <p className="text-sm font-bold text-gray-900">{memberCard.program?.name}</p>
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t('privilegeMember')}</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">{t('privilegeMember')}</p>
                   </div>
                 </div>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
@@ -1165,7 +1166,7 @@ export default function CustomerCardPage({
                 </div>
               )}
 
-              <p className="text-[10px] text-gray-400">
+              <p className="text-[10px] text-gray-500">
                 {t('memberValidUntil')} {new Date(memberCard.valid_until).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             </div>
@@ -1269,8 +1270,8 @@ export default function CustomerCardPage({
 
         <footer className="py-6 text-center">
           <a href="https://www.getqarte.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
-            <span className="text-xs text-gray-400 group-hover:text-gray-500">{t('poweredBy')}</span>
-            <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+            <span className="text-xs text-gray-500 group-hover:text-gray-600">{t('poweredBy')}</span>
+            <span className="text-xs font-bold text-gray-700">
               Qarte
             </span>
           </a>
@@ -1330,7 +1331,7 @@ export default function CustomerCardPage({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-base rounded-2xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:from-indigo-700 hover:to-violet-700 transition-all active:scale-[0.98]"
+                className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-neutral-900 text-white font-bold text-base rounded-2xl shadow-lg shadow-gray-900/20 hover:shadow-xl hover:bg-neutral-800 transition-all active:scale-[0.98]"
               >
                 <QrCode className="w-5 h-5" />
                 {t('generateQrCode')}
@@ -1378,6 +1379,8 @@ export default function CustomerCardPage({
           merchantId={merchantId}
           rewardReferrer={merchant.referral_reward_referrer}
           rewardReferred={merchant.referral_reward_referred}
+          primaryColor={merchant.primary_color}
+          secondaryColor={merchant.secondary_color}
         />
       )}
     </div>

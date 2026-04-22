@@ -310,14 +310,14 @@ export default function ScanSuccessStep({
                 <span className="text-xl font-bold text-gray-300">/{displayTarget}</span>
               </div>
 
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">
                 {t('stampsAccumulated')}{tier2On && tier1Done ? t('tier2Label') : tier2On ? t('tier1Label') : ''}
               </p>
 
               {isCagnotte && (
                 <p className="text-sm font-bold mb-4" style={{ color: primaryColor }}>
                   {t('cumulatedAmount', { amount: formatCurrency(cagnotteData.currentAmount, merchant.country, locale) })}
-                  <span className="text-gray-400 font-normal"> {t('addedAmount', { amount: formatCurrency(cagnotteData.amountAdded, merchant.country, locale) })}</span>
+                  <span className="text-gray-500 font-normal"> {t('addedAmount', { amount: formatCurrency(cagnotteData.amountAdded, merchant.country, locale) })}</span>
                 </p>
               )}
 
@@ -369,7 +369,7 @@ export default function ScanSuccessStep({
             >
               <Link
                 href={`/customer/card/${merchant.id}`}
-                className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors"
+                className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-600 transition-colors"
               >
                 <CreditCard className="w-4 h-4" />
                 {t('viewFullCard')}

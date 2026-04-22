@@ -178,7 +178,7 @@ export default function InstallPrompts({
                 onClick={onDismissInstallBar}
                 className="shrink-0 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
               >
-                <X className="w-4 h-4 text-gray-400" />
+                <X className="w-4 h-4 text-gray-500" />
               </button>
             </div>
           </motion.div>

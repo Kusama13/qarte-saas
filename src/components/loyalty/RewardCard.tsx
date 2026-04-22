@@ -142,7 +142,7 @@ export default function RewardCard({
               <Coins className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">
                 {tierLabel ? t('cagnotteLabel', { tier: tierLabel }) : t('cagnotteSimple')}
               </p>
               <p className="text-sm font-bold text-gray-800 line-clamp-2">
@@ -219,7 +219,7 @@ export default function RewardCard({
               <TierIcon className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">
                 {tierLabel ? t('rewardLabel', { tier: tierLabel }) : t('rewardSimple')}
               </p>
               <p className="text-sm font-bold text-gray-800 line-clamp-2">

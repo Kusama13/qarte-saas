@@ -114,7 +114,7 @@ export function MerchantSettingsForm({
           className="text-center font-bold text-lg h-12 border-2 max-w-[120px]"
         />
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400">Suggestions :</span>
+          <span className="text-xs text-gray-500">Suggestions :</span>
           {stampsSuggestions.map((n) => (
             <button
               key={n}

@@ -66,7 +66,7 @@ export default function VoucherModals({
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 max-w-sm w-full text-center overflow-hidden"
+              className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 max-w-sm w-full text-center overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Icon */}
@@ -131,7 +131,7 @@ export default function VoucherModals({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.4 }}
-                  className="text-xs text-gray-400 mb-3"
+                  className="text-xs text-gray-500 mb-3"
                 >
                   {t('validUntil', { date: new Date(selectedVoucher.expiresAt).toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'long', year: 'numeric' }) })}
                 </motion.p>
@@ -196,7 +196,7 @@ export default function VoucherModals({
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 max-w-sm w-full text-center overflow-hidden"
+              className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 max-w-sm w-full text-center overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <motion.div

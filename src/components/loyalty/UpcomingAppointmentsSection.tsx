@@ -348,8 +348,8 @@ export default function UpcomingAppointmentsSection({
                     {deadlinePassed && (
                       <div className="mt-2 pt-2 border-t" style={{ borderColor: `${merchantColor}15` }}>
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100">
-                          <Clock className="w-2.5 h-2.5 text-gray-400" />
-                          <span className="text-[10px] text-gray-400">{t('editDeadlinePassed')}</span>
+                          <Clock className="w-2.5 h-2.5 text-gray-500" />
+                          <span className="text-[10px] text-gray-500">{t('editDeadlinePassed')}</span>
                         </span>
                       </div>
                     )}
@@ -362,7 +362,7 @@ export default function UpcomingAppointmentsSection({
 
         {/* Footer message — only when no edit is allowed */}
         {showFooterContact && (
-          <p className="text-[10px] text-gray-400 text-center pt-2 border-t border-gray-100">
+          <p className="text-[10px] text-gray-500 text-center pt-2 border-t border-gray-100">
             {t('contactToModify', { shop: shopName })}
           </p>
         )}
@@ -401,7 +401,7 @@ export default function UpcomingAppointmentsSection({
                 {formatLongDate(confirmCancelSlot.slot_date)} — {formatTime(confirmCancelSlot.start_time, locale)}
               </p>
               {modalServices.length > 0 && (
-                <p className="text-xs text-gray-400 text-center">{modalServices.join(', ')}</p>
+                <p className="text-xs text-gray-500 text-center">{modalServices.join(', ')}</p>
               )}
 
               {error && (
@@ -471,7 +471,7 @@ export default function UpcomingAppointmentsSection({
                   </div>
                   <p className="text-sm font-bold text-gray-900 mb-1">{t('bookingRescheduled')}</p>
                   {selectedDate && selectedTime && (
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-500">
                       {formatLongDate(selectedDate)} — {formatTime(selectedTime, locale)}
                     </p>
                   )}
@@ -490,7 +490,7 @@ export default function UpcomingAppointmentsSection({
                   <h3 className="text-sm font-bold text-gray-900 leading-tight">
                     {t('rescheduleTitle')}
                   </h3>
-                  <p className="text-[11px] text-gray-400 truncate">
+                  <p className="text-[11px] text-gray-500 truncate">
                     {formatLongDate(rescheduleSlot.slot_date)} — {formatTime(rescheduleSlot.start_time, locale)}
                   </p>
                 </div>
@@ -501,19 +501,19 @@ export default function UpcomingAppointmentsSection({
                 {/* Loading */}
                 {loadingSlots && (
                   <div className="flex justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                    <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
                   </div>
                 )}
 
                 {/* No slots */}
                 {!loadingSlots && availableDates.length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-6">{t('noSlotsAvailable')}</p>
+                  <p className="text-sm text-gray-500 text-center py-6">{t('noSlotsAvailable')}</p>
                 )}
 
                 {/* Date + time picker */}
                 {!loadingSlots && availableDates.length > 0 && (
                   <>
-                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">{t('reschedulePickSlot')}</p>
+                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('reschedulePickSlot')}</p>
 
                     {/* Horizontal scrollable dates with fade edges */}
                     <div className="relative mb-3">

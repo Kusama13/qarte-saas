@@ -128,7 +128,7 @@ export default function MemberCardModal({
 
         {/* Reference */}
         <div className="mt-3 text-center">
-          <p className="text-[10px] text-gray-400 font-medium tracking-wider font-mono">
+          <p className="text-[10px] text-gray-500 font-medium tracking-wider font-mono">
             {memberCard.id.slice(0, 8).toUpperCase()}
           </p>
         </div>

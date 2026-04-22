@@ -44,13 +44,12 @@ export default function RedeemModal({
 }: RedeemModalProps) {
   const t = useTranslations('redeemModal');
   const TierIcon = isCagnotte ? Coins : (tier === 2 ? Trophy : Gift);
-  const gradient = isCagnotte
-    ? (tier === 2
-      ? 'linear-gradient(135deg, #7C3AED, #6D28D9)'
-      : `linear-gradient(135deg, #10b981, #059669)`)
-    : (tier === 2
-      ? 'linear-gradient(135deg, #7C3AED, #6D28D9)'
-      : `linear-gradient(135deg, ${merchantColor}, ${secondaryColor || merchantColor})`);
+  const tier2Color = secondaryColor || merchantColor;
+  const gradient = tier === 2
+    ? `linear-gradient(135deg, ${tier2Color}, ${tier2Color}dd)`
+    : isCagnotte
+      ? 'linear-gradient(135deg, #10b981, #059669)'
+      : `linear-gradient(135deg, ${merchantColor}, ${tier2Color})`;
 
   return (
     <AnimatePresence>
@@ -155,7 +154,7 @@ export default function RedeemModal({
                   className="w-full h-14 rounded-2xl text-base font-bold shadow-lg transition-all disabled:opacity-60"
                   style={{
                     backgroundColor: 'white',
-                    color: isCagnotte ? (tier === 2 ? '#7C3AED' : '#059669') : (tier === 2 ? '#7C3AED' : merchantColor),
+                    color: tier === 2 ? tier2Color : isCagnotte ? '#059669' : merchantColor,
                   }}
                 >
                   {redeeming ? (

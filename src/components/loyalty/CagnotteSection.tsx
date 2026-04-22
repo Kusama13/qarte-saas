@@ -29,6 +29,7 @@ interface CagnotteSectionProps {
   isTier2Ready: boolean;
   effectiveTier1Redeemed: boolean;
   merchantColor: string;
+  secondaryColor?: string | null;
   rewardDescription: string;
   tier2RewardDescription: string;
   completedCycles?: number;
@@ -36,7 +37,7 @@ interface CagnotteSectionProps {
 
 function getDualStampClass(isEarned: boolean, isGreyed: boolean, isLast: boolean): string {
   if (isEarned && !isGreyed) return 'text-white shadow-md';
-  if (isEarned && isGreyed) return 'bg-gray-200 text-gray-400';
+  if (isEarned && isGreyed) return 'bg-gray-200 text-gray-500';
   if (isLast) return 'bg-gray-50 border-2 border-dashed text-gray-300';
   return 'bg-gray-50 text-gray-300 border border-gray-100';
 }
@@ -68,7 +69,7 @@ function getTier1StatusBadge(
   if (remaining <= 2) {
     return <span className="px-2.5 py-1 rounded-full bg-amber-100 text-[10px] font-black text-amber-700 border border-amber-200">{t('onlyLeft', { count: remaining })}</span>;
   }
-  return <span className="text-[10px] font-bold text-gray-400">{t('remaining', { count: remaining })}</span>;
+  return <span className="text-[10px] font-bold text-gray-500">{t('remaining', { count: remaining })}</span>;
 }
 
 export default function CagnotteSection({
@@ -80,11 +81,13 @@ export default function CagnotteSection({
   isTier2Ready,
   effectiveTier1Redeemed,
   merchantColor,
+  secondaryColor,
   rewardDescription,
   tier2RewardDescription,
   completedCycles = 0,
 }: CagnotteSectionProps) {
   const t = useTranslations('cagnotteSection');
+  const tier2Color = secondaryColor || merchantColor;
   const cycleBadge = completedCycles > 0 ? (
     <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 border ${
       completedCycles >= 4 ? 'bg-amber-50 border-amber-200 text-amber-700'
@@ -111,8 +114,8 @@ export default function CagnotteSection({
         }`}>
           <div className="flex justify-between items-center mb-3">
             <div className="flex items-center gap-2">
-              <Gift className={`w-4 h-4 ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-500' : 'text-gray-400'}`} />
-              <span className={`text-[11px] font-black uppercase tracking-widest ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-600' : 'text-gray-400'}`}>
+              <Gift className={`w-4 h-4 ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-500' : 'text-gray-500'}`} />
+              <span className={`text-[11px] font-black uppercase tracking-widest ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-600' : 'text-gray-500'}`}>
                 {t('tier1')}
               </span>
             </div>
@@ -161,15 +164,23 @@ export default function CagnotteSection({
         }`}>
           <div className="flex justify-between items-center mb-3">
             <div className="flex items-center gap-2">
-              <Trophy className={`w-4 h-4 ${isTier2Ready ? 'text-violet-500' : 'text-gray-400'}`} />
-              <span className={`text-[11px] font-black uppercase tracking-widest ${isTier2Ready ? 'text-violet-600' : 'text-gray-400'}`}>{t('tier2')}</span>
+              <Trophy className="w-4 h-4" style={{ color: isTier2Ready ? tier2Color : '#9ca3af' }} />
+              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: isTier2Ready ? tier2Color : '#9ca3af' }}>{t('tier2')}</span>
             </div>
             {isTier2Ready ? (
-              <motion.span animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="px-2.5 py-1 rounded-full bg-violet-600 text-[10px] font-black text-white uppercase shadow-lg shadow-violet-200">{t('unlocked')}</motion.span>
+              <motion.span
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="px-2.5 py-1 rounded-full text-[10px] font-black text-white uppercase shadow-lg"
+                style={{ backgroundColor: tier2Color, boxShadow: `0 4px 14px ${tier2Color}30` }}
+              >{t('unlocked')}</motion.span>
             ) : tier2Required - currentStamps <= 2 ? (
-              <span className="px-2.5 py-1 rounded-full bg-violet-100 text-[10px] font-black text-violet-700 border border-violet-200">{t('onlyLeft', { count: tier2Required - currentStamps })}</span>
+              <span
+                className="px-2.5 py-1 rounded-full text-[10px] font-black border"
+                style={{ backgroundColor: `${tier2Color}15`, color: tier2Color, borderColor: `${tier2Color}30` }}
+              >{t('onlyLeft', { count: tier2Required - currentStamps })}</span>
             ) : (
-              <span className="text-[10px] font-bold text-gray-400">{t('remaining', { count: tier2Required - currentStamps })}</span>
+              <span className="text-[10px] font-bold text-gray-500">{t('remaining', { count: tier2Required - currentStamps })}</span>
             )}
           </div>
 
@@ -184,8 +195,15 @@ export default function CagnotteSection({
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: i * 0.04 }}
                   className={`aspect-square rounded-xl flex items-center justify-center transition-all duration-300 ${
-                    isEarned ? 'bg-violet-600 text-white shadow-md' : isLast ? 'bg-gray-50 border-2 border-dashed border-violet-200 text-violet-300' : 'bg-gray-50 text-gray-300 border border-gray-100'
+                    isEarned ? 'text-white shadow-md' : isLast ? 'bg-gray-50 border-2 border-dashed' : 'bg-gray-50 text-gray-300 border border-gray-100'
                   }`}
+                  style={
+                    isEarned
+                      ? { backgroundColor: tier2Color }
+                      : isLast
+                        ? { borderColor: `${tier2Color}30`, color: `${tier2Color}60` }
+                        : undefined
+                  }
                 >
                   {isLast && !isEarned ? <Trophy className="w-5 h-5" /> : <Heart className="w-5 h-5" />}
                 </motion.div>
@@ -206,7 +224,7 @@ export default function CagnotteSection({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">{t('myLoyalty')}</span>
+          <span className="text-[11px] font-black text-gray-500 uppercase tracking-widest">{t('myLoyalty')}</span>
           {cycleBadge}
         </div>
         {isRewardReady ? (
