@@ -586,7 +586,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                                         type="button"
                                         disabled={isSuspended}
                                         onClick={isDemo || isSuspended ? noOp : () => setBookingSlot({ date: day.dateStr, time: raw })}
-                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${isSuspended ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95 cursor-pointer'}`}
+                                        className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all ${isSuspended ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95 cursor-pointer'}`}
                                         style={{ backgroundColor: `${p}12`, color: p }}
                                       >
                                         {display}
@@ -596,7 +596,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                                   return (
                                     <span
                                       key={raw}
-                                      className="px-2.5 py-1 rounded-lg text-[11px] font-semibold"
+                                      className="px-3 py-1.5 rounded-lg text-[12px] font-semibold"
                                       style={{ backgroundColor: `${p}12`, color: p }}
                                     >
                                       {display}

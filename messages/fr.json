@@ -3377,7 +3377,15 @@
     "memberDiscount": "-{percent}% sur vos prestations",
     "memberSkipDeposit": "Acompte non requis",
     "memberOriginalPrice": "Prix initial",
-    "memberLookup": "Vérification..."
+    "memberLookup": "Vérification...",
+    "otherServices": "Autres prestations",
+    "categoryServicesCount": "{count, plural, =0 {aucune prestation} =1 {# prestation} other {# prestations}}",
+    "selectAtLeastOne": "Choisissez au moins une prestation",
+    "period": {
+      "morning": "Matin",
+      "afternoon": "Après-midi",
+      "evening": "Soirée"
+    }
   },
   "merchantPush": {
     "promptTitle": "Active les notifs",

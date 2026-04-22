@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Clock, ChevronRight, ChevronLeft, Loader2, Gift, CreditCard, CalendarDays, Hourglass, Info, Crown } from 'lucide-react';
+import { X, Check, Clock, ChevronRight, ChevronLeft, ChevronDown, Loader2, Gift, CreditCard, CalendarDays, Hourglass, Info, Crown } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { formatTime, toBCP47, formatCurrency } from '@/lib/utils';
@@ -309,6 +309,41 @@ export default function BookingModal({
     return grouped;
   }, [services, serviceCategories]);
 
+  const useAccordion = categorizedServices.length >= 2;
+  const [openCategories, setOpenCategories] = useState<Set<string>>(() => {
+    const first = categorizedServices[0];
+    if (!first) return new Set();
+    return new Set([first.category?.id || '__uncategorized__']);
+  });
+  const toggleCategory = (key: string) => {
+    setOpenCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  // Group free slots by period (morning/afternoon/evening)
+  const groupedFreeSlots = useMemo(() => {
+    const morning: PlanningSlotPublic[] = [];
+    const afternoon: PlanningSlotPublic[] = [];
+    const evening: PlanningSlotPublic[] = [];
+    for (const s of freeSlots) {
+      const h = parseInt(s.start_time.split(':')[0], 10);
+      if (h < 12) morning.push(s);
+      else if (h < 17) afternoon.push(s);
+      else evening.push(s);
+    }
+    return { morning, afternoon, evening };
+  }, [freeSlots]);
+
+  // Step indicator
+  const indicatorSteps: Step[] = isFreeMod
+    ? ['services', 'datetime', 'info']
+    : ['services', 'info'];
+  const currentStepIdx = indicatorSteps.indexOf(step);
+
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -336,10 +371,23 @@ export default function BookingModal({
               <p className="text-xs text-gray-500 mt-0.5">{t('chooseDateTime')}</p>
             )}
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+          <button onClick={onClose} aria-label={t('close')} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
             <X className="w-4 h-4 text-gray-500" />
           </button>
         </div>
+
+        {/* Step indicator */}
+        {step !== 'confirm' && (
+          <div className="px-5 pt-3 pb-1 flex gap-1.5">
+            {indicatorSteps.map((_, i) => (
+              <div
+                key={i}
+                className="h-1 flex-1 rounded-full transition-colors"
+                style={{ backgroundColor: i <= currentStepIdx ? p : '#e5e7eb' }}
+              />
+            ))}
+          </div>
+        )}
 
         <div className="p-5">
           <AnimatePresence mode="wait">
@@ -348,55 +396,120 @@ export default function BookingModal({
               <motion.div key="services" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <p className="text-sm font-semibold text-gray-700 mb-3">{t('selectServices')}</p>
 
-                <div className="space-y-4 mb-4">
-                  {categorizedServices.map(({ category, services: catServices }) => (
-                    <div key={category?.id || 'uncategorized'}>
-                      {category && (
-                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">{category.name}</p>
-                      )}
-                      <div className="space-y-1.5">
-                        {catServices.map(svc => {
-                          const selected = selectedServiceIds.has(svc.id);
+                {(() => {
+                  const renderServiceBtn = (svc: Service) => {
+                    const selected = selectedServiceIds.has(svc.id);
+                    return (
+                      <button
+                        key={svc.id}
+                        type="button"
+                        onClick={() => toggleService(svc.id)}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
+                          selected
+                            ? 'bg-opacity-10 border-2'
+                            : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                        }`}
+                        style={selected ? { backgroundColor: `${p}10`, borderColor: p } : undefined}
+                      >
+                        <div
+                          className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-colors ${
+                            selected ? 'border-transparent' : 'border-gray-300'
+                          }`}
+                          style={selected ? { backgroundColor: p } : undefined}
+                        >
+                          {selected && <Check className="w-3 h-3 text-white" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900">{svc.name}</p>
+                          {svc.duration && (
+                            <p className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5">
+                              <Clock className="w-3 h-3" />
+                              {formatDuration(svc.duration, locale)}
+                            </p>
+                          )}
+                        </div>
+                        <p className="text-sm font-bold text-gray-700 shrink-0">
+                          {svc.price_from && <span className="text-[10px] font-normal text-gray-500">{t('from')} </span>}
+                          {formatCurrency(Number(svc.price), country, locale)}
+                        </p>
+                      </button>
+                    );
+                  };
+
+                  if (useAccordion) {
+                    return (
+                      <div className="space-y-2 mb-4">
+                        {categorizedServices.map(({ category, services: catServices }) => {
+                          const catKey = category?.id || '__uncategorized__';
+                          const isOpen = openCategories.has(catKey);
+                          const catName = category?.name || t('otherServices');
+                          const prices = catServices.map(s => Number(s.price || 0));
+                          const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+                          const selectedInCat = catServices.filter(s => selectedServiceIds.has(s.id)).length;
                           return (
-                            <button
-                              key={svc.id}
-                              type="button"
-                              onClick={() => toggleService(svc.id)}
-                              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
-                                selected
-                                  ? 'bg-opacity-10 border-2'
-                                  : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
-                              }`}
-                              style={selected ? { backgroundColor: `${p}10`, borderColor: p } : undefined}
-                            >
-                              <div
-                                className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-colors ${
-                                  selected ? 'border-transparent' : 'border-gray-300'
-                                }`}
-                                style={selected ? { backgroundColor: p } : undefined}
+                            <div key={catKey} className="rounded-xl border border-gray-100 overflow-hidden bg-white">
+                              <button
+                                type="button"
+                                onClick={() => toggleCategory(catKey)}
+                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
                               >
-                                {selected && <Check className="w-3 h-3 text-white" />}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-900">{svc.name}</p>
-                                {svc.duration && (
-                                  <p className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5">
-                                    <Clock className="w-3 h-3" />
-                                    {formatDuration(svc.duration, locale)}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm font-bold text-gray-900 truncate">{catName}</p>
+                                    {selectedInCat > 0 && (
+                                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white shrink-0" style={{ backgroundColor: p }}>
+                                        {selectedInCat}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[11px] text-gray-500 mt-0.5">
+                                    {t('categoryServicesCount', { count: catServices.length })} · {t('from')} {formatCurrency(minPrice, country, locale)}
                                   </p>
+                                </div>
+                                <ChevronDown
+                                  className="w-4 h-4 text-gray-500 shrink-0 transition-transform"
+                                  style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                                />
+                              </button>
+                              <AnimatePresence initial={false}>
+                                {isOpen && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    style={{ overflow: 'hidden' }}
+                                  >
+                                    <div className="p-2 pt-0 space-y-1.5 border-t border-gray-100">
+                                      <div className="pt-2" />
+                                      {catServices.map(renderServiceBtn)}
+                                    </div>
+                                  </motion.div>
                                 )}
-                              </div>
-                              <p className="text-sm font-bold text-gray-700 shrink-0">
-                                {svc.price_from && <span className="text-[10px] font-normal text-gray-500">{t('from')} </span>}
-                                {formatCurrency(Number(svc.price), country, locale)}
-                              </p>
-                            </button>
+                              </AnimatePresence>
+                            </div>
                           );
                         })}
                       </div>
+                    );
+                  }
+
+                  // Flat fallback (single category or uncategorized only)
+                  return (
+                    <div className="space-y-4 mb-4">
+                      {categorizedServices.map(({ category, services: catServices }) => (
+                        <div key={category?.id || 'uncategorized'}>
+                          {category && (
+                            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-[0.14em] mb-2">{category.name}</p>
+                          )}
+                          <div className="space-y-1.5">
+                            {catServices.map(renderServiceBtn)}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  );
+                })()}
 
                 {/* Promo offer banner */}
                 {promoOffer && (
@@ -405,7 +518,6 @@ export default function BookingModal({
                     <p className="text-xs text-amber-700 font-medium">{promoOffer.title} — {promoOffer.description}</p>
                   </div>
                 )}
-
 
                 {/* Totals */}
                 {selectedServiceIds.size > 0 && (
@@ -453,16 +565,31 @@ export default function BookingModal({
                   <p className="text-xs text-red-500 font-medium mb-3">{t('durationTooLong')}</p>
                 )}
 
-                <button
-                  type="button"
-                  onClick={() => setStep(isFreeMod ? 'datetime' : 'info')}
-                  disabled={selectedServiceIds.size === 0 || !durationAvailable}
-                  className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center justify-center gap-2"
-                  style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
-                >
-                  {t('next')}
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                {/* Sticky bottom bar */}
+                <div className="sticky bottom-0 -mx-5 -mb-5 mt-4 px-5 py-3 bg-white/95 backdrop-blur-sm border-t border-gray-100 flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    {selectedServiceIds.size === 0 ? (
+                      <p className="text-[12px] text-gray-500">{t('selectAtLeastOne')}</p>
+                    ) : (
+                      <>
+                        <p className="text-[11px] text-gray-500 font-medium">
+                          {t('categoryServicesCount', { count: selectedServiceIds.size })} · {hasDurationEstimate ? '~' : ''}{formatDuration(totalDuration, locale)}
+                        </p>
+                        <p className="text-sm font-bold text-gray-900">{formatCurrency(displayPrice, country, locale)}</p>
+                      </>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setStep(isFreeMod ? 'datetime' : 'info')}
+                    disabled={selectedServiceIds.size === 0 || !durationAvailable}
+                    className="shrink-0 px-5 py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center gap-2"
+                    style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
+                  >
+                    {t('next')}
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </motion.div>
             )}
 
@@ -532,7 +659,7 @@ export default function BookingModal({
                         ))}
                       </div>
                       {/* Day cells */}
-                      <div className="grid grid-cols-7 gap-y-0.5">
+                      <div className="grid grid-cols-7 gap-y-1">
                         {cells.map((day, idx) => {
                           if (day === null) return <span key={`e-${idx}`} />;
                           const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -546,7 +673,7 @@ export default function BookingModal({
                               type="button"
                               disabled={isPast || isFuture}
                               onClick={() => { setSelectedDate(dateStr); if (selectedTime) setSelectedTime(''); }}
-                              className={`mx-auto w-8 h-8 flex items-center justify-center rounded-full text-xs transition-all
+                              className={`mx-auto w-10 h-10 flex items-center justify-center rounded-full text-sm transition-all
                                 ${isSelected ? 'font-bold text-white' : ''}
                                 ${!isSelected && isToday ? 'font-bold' : ''}
                                 ${isPast || isFuture ? 'text-gray-300 cursor-not-allowed' : !isSelected ? 'text-gray-700 hover:bg-gray-100' : ''}`}
@@ -574,19 +701,32 @@ export default function BookingModal({
                     ) : freeSlots.length === 0 ? (
                       <p className="text-xs text-gray-500">{t('noFreeSlotsThisDay')}</p>
                     ) : (
-                      <div className="flex flex-wrap gap-2">
-                        {freeSlots.map(slot => {
-                          const isSelected = slot.start_time === selectedTime;
+                      <div className="space-y-3">
+                        {(['morning', 'afternoon', 'evening'] as const).map(period => {
+                          const slots = groupedFreeSlots[period];
+                          if (slots.length === 0) return null;
                           return (
-                            <button
-                              key={slot.start_time}
-                              type="button"
-                              onClick={() => setSelectedTime(slot.start_time)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${isSelected ? 'text-white border-transparent' : 'text-gray-700 border-gray-200 hover:border-opacity-60'}`}
-                              style={isSelected ? { backgroundColor: p, borderColor: p } : { borderColor: `${p}40` }}
-                            >
-                              {formatTime(slot.start_time, locale)}
-                            </button>
+                            <div key={period}>
+                              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-[0.14em] mb-2">
+                                {t(`period.${period}`)}
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {slots.map(slot => {
+                                  const isSelected = slot.start_time === selectedTime;
+                                  return (
+                                    <button
+                                      key={slot.start_time}
+                                      type="button"
+                                      onClick={() => setSelectedTime(slot.start_time)}
+                                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${isSelected ? 'text-white border-transparent' : 'text-gray-700 border-gray-200 hover:border-opacity-60'}`}
+                                      style={isSelected ? { backgroundColor: p, borderColor: p } : { borderColor: `${p}40` }}
+                                    >
+                                      {formatTime(slot.start_time, locale)}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
                           );
                         })}
                       </div>
@@ -661,11 +801,14 @@ export default function BookingModal({
 
                 {/* Member benefit banner */}
                 {memberBenefit && (
-                  <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-100 mb-4">
+                  <div
+                    className="p-3 rounded-xl mb-4"
+                    style={{ backgroundColor: `${p}12`, border: `1px solid ${p}30` }}
+                  >
                     <div className="flex items-start gap-2.5">
-                      <Crown className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                      <div className="text-[12px] text-indigo-800 leading-relaxed">
-                        <p className="font-semibold">{t('memberDetected', { name: memberBenefit.first_name })}</p>
+                      <Crown className="w-4 h-4 shrink-0 mt-0.5" style={{ color: p }} />
+                      <div className="text-[12px] text-gray-800 leading-relaxed">
+                        <p className="font-semibold text-gray-900">{t('memberDetected', { name: memberBenefit.first_name })}</p>
                         <ul className="mt-1 space-y-0.5">
                           {memberBenefit.discount_percent && (
                             <li>→ {t('memberDiscount', { percent: memberBenefit.discount_percent })}</li>
