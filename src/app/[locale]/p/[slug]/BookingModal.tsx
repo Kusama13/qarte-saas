@@ -337,7 +337,7 @@ export default function BookingModal({
             )}
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-            <X className="w-4 h-4 text-gray-400" />
+            <X className="w-4 h-4 text-gray-500" />
           </button>
         </div>
 
@@ -352,7 +352,7 @@ export default function BookingModal({
                   {categorizedServices.map(({ category, services: catServices }) => (
                     <div key={category?.id || 'uncategorized'}>
                       {category && (
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">{category.name}</p>
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">{category.name}</p>
                       )}
                       <div className="space-y-1.5">
                         {catServices.map(svc => {
@@ -380,14 +380,14 @@ export default function BookingModal({
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold text-gray-900">{svc.name}</p>
                                 {svc.duration && (
-                                  <p className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
+                                  <p className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5">
                                     <Clock className="w-3 h-3" />
                                     {formatDuration(svc.duration, locale)}
                                   </p>
                                 )}
                               </div>
                               <p className="text-sm font-bold text-gray-700 shrink-0">
-                                {svc.price_from && <span className="text-[10px] font-normal text-gray-400">{t('from')} </span>}
+                                {svc.price_from && <span className="text-[10px] font-normal text-gray-500">{t('from')} </span>}
                                 {formatCurrency(Number(svc.price), country, locale)}
                               </p>
                             </button>
@@ -418,7 +418,7 @@ export default function BookingModal({
                       <span className="text-gray-500">{t('totalPrice')}</span>
                       <span className="flex items-center gap-1.5">
                         {memberBenefit?.discount_percent && totalPrice !== displayPrice && (
-                          <span className="text-xs text-gray-400 line-through">{formatCurrency(totalPrice, country, locale)}</span>
+                          <span className="text-xs text-gray-500 line-through">{formatCurrency(totalPrice, country, locale)}</span>
                         )}
                         <span className="font-bold text-gray-900">{formatCurrency(displayPrice, country, locale)}</span>
                       </span>
@@ -511,7 +511,7 @@ export default function BookingModal({
                           type="button"
                           disabled={!canGoPrev}
                           onClick={() => setCalMonth(new Date(year, month - 1, 1))}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         >
                           <ChevronLeft className="w-4 h-4" />
                         </button>
@@ -520,7 +520,7 @@ export default function BookingModal({
                           type="button"
                           disabled={!canGoNext}
                           onClick={() => setCalMonth(new Date(year, month + 1, 1))}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         >
                           <ChevronRight className="w-4 h-4" />
                         </button>
@@ -528,7 +528,7 @@ export default function BookingModal({
                       {/* Day headers */}
                       <div className="grid grid-cols-7 mb-1">
                         {dayLabels.map((l, i) => (
-                          <span key={i} className="text-center text-[10px] font-semibold text-gray-400 py-1">{l}</span>
+                          <span key={i} className="text-center text-[10px] font-semibold text-gray-500 py-1">{l}</span>
                         ))}
                       </div>
                       {/* Day cells */}
@@ -567,12 +567,12 @@ export default function BookingModal({
                     <p className="text-sm font-semibold text-gray-700 mb-2">{t('chooseTime')}</p>
                     {loadingFreeSlots ? (
                       <div className="flex justify-center py-4">
-                        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                        <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
                       </div>
                     ) : freeSlotsError ? (
                       <p className="text-xs text-red-500">{t('freeSlotsError')}</p>
                     ) : freeSlots.length === 0 ? (
-                      <p className="text-xs text-gray-400">{t('noFreeSlotsThisDay')}</p>
+                      <p className="text-xs text-gray-500">{t('noFreeSlotsThisDay')}</p>
                     ) : (
                       <div className="flex flex-wrap gap-2">
                         {freeSlots.map(slot => {
@@ -700,7 +700,7 @@ export default function BookingModal({
                     )}
                   </div>
                 ) : (
-                  <p className="text-[11px] text-gray-400 text-center mb-3">{t('noModify')}</p>
+                  <p className="text-[11px] text-gray-500 text-center mb-3">{t('noModify')}</p>
                 )}
 
                 {error && (
@@ -776,7 +776,7 @@ export default function BookingModal({
                     </div>
                   </>
                 )}
-                <p className="text-center text-[11px] text-gray-400 mb-4 px-2">
+                <p className="text-center text-[11px] text-gray-500 mb-4 px-2">
                   {t('checkStatusHint')}
                 </p>
 
@@ -871,13 +871,13 @@ export default function BookingModal({
 
                 {depositResult?.link ? (
                   <>
-                    <p className="text-center text-[11px] text-gray-400 mb-2 px-2">
+                    <p className="text-center text-[11px] text-gray-500 mb-2 px-2">
                       {t('loyaltyCardAfterDeposit')}
                     </p>
                     <button
                       type="button"
                       onClick={() => router.push(`/customer/card/${merchant.id}`)}
-                      className="w-full py-2 text-xs text-gray-400 hover:text-gray-600 transition-colors text-center"
+                      className="w-full py-2 text-xs text-gray-500 hover:text-gray-600 transition-colors text-center"
                     >
                       {t('viewBookingsAndCard')}
                     </button>

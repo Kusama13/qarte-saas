@@ -166,7 +166,7 @@ export default function SimulatedCard({
               {/* Shimmer sweep */}
               <motion.div
                 animate={{ x: ['-150%', '200%'] }}
-                transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
+                transition={{ duration: 2.2, ease: 'easeInOut' }}
                 className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent skew-x-12 pointer-events-none"
               />
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_40%,rgba(255,255,255,0.16),transparent_60%)] pointer-events-none" />

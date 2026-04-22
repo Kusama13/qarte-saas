@@ -140,7 +140,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
       })
       .catch(() => {});
   }, [merchant.id, isDemo, demoOffer]);
-  const glassCard = 'rounded-2xl overflow-hidden bg-white/70 backdrop-blur-sm border border-white/60 shadow-lg shadow-gray-200/40';
+  const glassCard = 'rounded-2xl overflow-hidden bg-white border border-black/[0.06] shadow-[0_1px_2px_rgba(15,10,40,0.04),0_8px_24px_rgba(15,10,40,0.05)]';
 
   // Keyboard navigation for lightbox
   const handleLightboxKey = useCallback((e: KeyboardEvent) => {
@@ -274,7 +274,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.4 }}
             className="text-[28px] font-black tracking-tight leading-tight mb-2"
-            style={{ background: `linear-gradient(135deg, ${p}, ${s})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+            style={{ color: p }}
           >
             {merchant.shop_name}
           </motion.h1>
@@ -284,7 +284,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.12, duration: 0.35 }}
-              className="flex items-center gap-1 text-[12px] text-gray-400 font-medium mb-2"
+              className="flex items-center gap-1 text-[12px] text-gray-500 font-medium mb-2"
             >
               <MapPin className="w-3 h-3 shrink-0" />
               <span>{merchant.shop_address}</span>
@@ -309,7 +309,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.16, duration: 0.35 }}
-                className="flex items-center gap-1 text-[12px] text-gray-400 font-medium hover:text-gray-600 transition-colors"
+                className="flex items-center gap-1 text-[12px] text-gray-500 font-medium hover:text-gray-600 transition-colors"
               >
                 <Phone className="w-3 h-3 shrink-0" />
                 <span>{flag} {display}</span>
@@ -339,7 +339,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             {/* Shimmer sweep */}
             <motion.div
               animate={{ x: ['-150%', '200%'] }}
-              transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 6, ease: 'easeInOut' }}
+              transition={{ duration: 2.4, ease: 'easeInOut' }}
               className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent skew-x-12 pointer-events-none"
             />
             {/* Radial glow */}
@@ -378,7 +378,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.4 }}
-            className={`${glassCard} px-5 py-4 text-center relative overflow-hidden`}
+            className={`${glassCard} p-5 text-center relative overflow-hidden`}
             style={{ borderColor: `${p}15` }}
           >
             <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{ background: `linear-gradient(135deg, ${p}, ${s})` }} />
@@ -412,7 +412,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               {t('bookAppointment')}
             </a>
             {bookingPlatform && (
-              <span className="mt-1.5 text-[11px] text-gray-400 font-medium">via {bookingPlatform}</span>
+              <span className="mt-1.5 text-[11px] text-gray-500 font-medium">via {bookingPlatform}</span>
             )}
           </motion.div>
         )}
@@ -423,9 +423,9 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.28, duration: 0.4 }}
-            className={`${glassCard} p-4`}
+            className={`${glassCard} p-5`}
           >
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-2.5">
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.14em] mb-2.5">
               {t('hours')}
             </p>
             <div className="grid grid-cols-7 gap-0.5">
@@ -447,18 +447,14 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                     {slot ? (
                       slot.break_start && slot.break_end ? (
                         <>
-                          <p className="text-[8px] text-gray-600 font-medium leading-tight">{slot.open} {slot.break_start}</p>
-                          <p className="text-[8px] text-gray-400 font-medium leading-tight">–</p>
-                          <p className="text-[8px] text-gray-600 font-medium leading-tight">{slot.break_end} {slot.close}</p>
+                          <p className="text-[10px] text-gray-600 font-medium leading-tight">{slot.open}–{slot.break_start}</p>
+                          <p className="text-[10px] text-gray-600 font-medium leading-tight">{slot.break_end}–{slot.close}</p>
                         </>
                       ) : (
-                        <>
-                          <p className="text-[9px] text-gray-600 font-medium">{slot.open}</p>
-                          <p className="text-[9px] text-gray-600 font-medium">{slot.close}</p>
-                        </>
+                        <p className="text-[10px] text-gray-600 font-medium leading-tight">{slot.open}–{slot.close}</p>
                       )
                     ) : (
-                      <p className="text-[9px] text-gray-400 font-medium">{t('closed')}</p>
+                      <p className="text-[10px] text-gray-500 font-medium">{t('closed')}</p>
                     )}
                   </div>
                 );
@@ -473,7 +469,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.4 }}
-            className={`${glassCard} p-4`}
+            className={`${glassCard} p-5`}
           >
             <div
               className="rounded-xl px-4 py-3 text-center"
@@ -483,7 +479,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             </div>
             {hasBookingMessage && (
               <div className="rounded-lg px-3 py-2 mt-3 bg-gray-50 border border-gray-100">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">{t('conditions')}</p>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.14em] mb-1">{t('conditions')}</p>
                 <p className="text-[12px] text-gray-600 whitespace-pre-line">{merchant.booking_message}</p>
               </div>
             )}
@@ -496,14 +492,14 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.4 }}
-            className={`${glassCard} p-4`}
+            className={`${glassCard} p-5`}
           >
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1">
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.14em] mb-1">
               <CalendarDays className="w-3 h-3 inline-block mr-1 -mt-0.5" />
               {t('availability')}
             </p>
             {!merchant.auto_booking_enabled && (
-              <p className="text-[11px] text-gray-400 mb-3">{t('planningManualHint')}</p>
+              <p className="text-[11px] text-gray-500 mb-3">{t('planningManualHint')}</p>
             )}
             {merchant.auto_booking_enabled && !isFreeMod && (
               <p className="text-[11px] text-emerald-500 font-medium mb-3">{t('planningAutoHint')}</p>
@@ -522,7 +518,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             {/* Conditions de réservation */}
             {hasBookingMessage && (
               <div className="rounded-lg px-3 py-2 mb-3 bg-gray-50 border border-gray-100">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">{t('conditions')}</p>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.14em] mb-1">{t('conditions')}</p>
                 <p className="text-[12px] text-gray-600 whitespace-pre-line">{merchant.booking_message}</p>
               </div>
             )}
@@ -566,7 +562,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 <>
                   {visibleByMonth.map(monthGroup => (
                     <div key={monthGroup.month} className="mb-3 last:mb-0">
-                      <p className="text-[11px] font-bold uppercase tracking-wider mb-2 text-center" style={{ color: p }}>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] mb-2 text-center" style={{ color: p }}>
                         {monthGroup.month}
                       </p>
                       <div className="space-y-2">
@@ -675,7 +671,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           const renderItem = (item: typeof allFlat[number], idx: number) => {
             if (item.type === 'cat') {
               return (
-                <p key={`cat-${item.id}`} className="text-[11px] font-bold uppercase tracking-wider mb-1 pt-2" style={{ color: p }}>
+                <p key={`cat-${item.id}`} className="text-[11px] font-bold uppercase tracking-[0.14em] mb-1 pt-2" style={{ color: p }}>
                   {item.name}
                 </p>
               );
@@ -690,19 +686,19 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                   <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
                   <div className="flex items-center gap-2 shrink-0 ml-4">
                     {svc.duration && (
-                      <span className="text-[11px] text-gray-400 flex items-center gap-0.5">
+                      <span className="text-[11px] text-gray-500 flex items-center gap-0.5">
                         <Clock className="w-3 h-3" />
                         {fmtDuration(svc.duration)}
                       </span>
                     )}
                     <p className="text-[13px] font-bold text-gray-900">
-                      {svc.price_from && <span className="text-[11px] font-normal text-gray-400">{t('priceFrom')}</span>}
+                      {svc.price_from && <span className="text-[11px] font-normal text-gray-500">{t('priceFrom')}</span>}
                       {formatCurrency(Number(svc.price), merchant.country, locale)}
                     </p>
                   </div>
                 </div>
                 {svc.description && (
-                  <p className="text-[11px] text-gray-400 mt-0.5 leading-snug">{svc.description}</p>
+                  <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">{svc.description}</p>
                 )}
               </div>
             );
@@ -725,7 +721,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 </div>
                 <div>
                   <p className="text-[15px] font-bold text-gray-900">{t('myServices')}</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
+                  <p className="text-[11px] text-gray-500 mt-0.5">
                     {totalSvcCount > 1 ? t('servicePlural', { count: totalSvcCount }) : t('serviceSingular', { count: totalSvcCount })}
                   </p>
                 </div>
@@ -777,7 +773,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 <Gift className="w-5 h-5" style={{ color: p }} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-bold uppercase tracking-[0.15em]" style={{ color: p }}>
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: p }}>
                   {t('welcomeOffer')}
                 </p>
                 <p className="text-[14px] font-bold text-gray-800 leading-snug mt-0.5">
@@ -818,7 +814,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 <Gift className="w-6 h-6 text-amber-600" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-0.5 text-amber-600">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] mb-0.5 text-amber-600">
                   {promoOffer.title}
                 </p>
                 <p className="text-[15px] font-bold text-gray-800 leading-tight">
@@ -862,7 +858,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 <Trophy className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-amber-600">{t('contestBadge')}</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-600">{t('contestBadge')}</p>
                 <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">{t('contestDesc')}</p>
                 <p className="text-[14px] font-bold mt-0.5" style={{ color: p }}>{merchant.contest_prize}</p>
               </div>
@@ -875,7 +871,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.35 }}
-          className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1 pt-2"
+          className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 px-1 pt-2"
         >
           {t('loyaltyCard')}
         </motion.p>
@@ -903,7 +899,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.45, duration: 0.4 }}
-          className="text-center text-[11px] text-gray-400 font-medium -mt-1"
+          className="text-center text-[11px] text-gray-500 font-medium -mt-1"
         >
           {t('loyaltyNote')}
         </motion.p>
@@ -923,7 +919,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           >
             <motion.div
               animate={{ x: ['-150%', '200%'] }}
-              transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 5, ease: 'easeInOut' }}
+              transition={{ duration: 2.2, ease: 'easeInOut' }}
               className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent skew-x-12 pointer-events-none"
             />
             <div
@@ -941,7 +937,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             <div className="relative px-6 pt-6 pb-7">
               <div className="flex items-center gap-2 mb-2">
                 <Trophy className="w-3.5 h-3.5 text-white/40" />
-                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.14em]">
                   {t('afterVisits', { count: Number(merchant.tier2_stamps_required || 0) })}
                 </p>
               </div>
@@ -967,7 +963,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             className={glassCard}
           >
             <div className="px-5 pt-4 pb-1">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em]">
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.14em]">
                 {t('exclusiveAdvantages')}
               </p>
             </div>
@@ -1029,7 +1025,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                   <div className="min-w-0">
                     <p className="text-[13px] font-bold text-gray-800 leading-tight">{t('studentOfferTitle')}</p>
                     <p className="text-[12px] font-semibold text-blue-600 mt-0.5 leading-snug">{merchant.student_offer_description}</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5">{t('studentOfferHint')}</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">{t('studentOfferHint')}</p>
                   </div>
                 </div>
               )}
@@ -1058,9 +1054,9 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.55, duration: 0.4 }}
-            className={`${glassCard} p-4`}
+            className={`${glassCard} p-5`}
           >
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-3">
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.14em] mb-3">
               {t('ourWork')}
             </p>
             <div className="grid grid-cols-3 gap-2">
@@ -1132,7 +1128,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-gray-900 truncate">{merchant.shop_name}</p>
                 {bookingPlatform && (
-                  <p className="text-[11px] text-gray-400 font-medium">via {bookingPlatform}</p>
+                  <p className="text-[11px] text-gray-500 font-medium">via {bookingPlatform}</p>
                 )}
               </div>
               <a
@@ -1140,8 +1136,8 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 target={isDemo ? undefined : '_blank'}
                 rel={isDemo ? undefined : 'noopener noreferrer'}
                 onClick={isDemo ? () => { trackCtaClick('demo_vitrine_sticky_cta', 'vitrine_page'); } : undefined}
-                className={`shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all active:scale-95 ${isDemo ? 'bg-gradient-to-r from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/25' : ''}`}
-                style={isDemo ? undefined : {
+                className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all active:scale-95"
+                style={{
                   background: `linear-gradient(135deg, ${p}, ${s})`,
                   boxShadow: `0 4px 14px ${p}30`,
                 }}
@@ -1223,7 +1219,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           primaryColor={p}
           secondaryColor={s}
         />
-        <p className="text-[10px] text-gray-400 font-medium text-center leading-tight">
+        <p className="text-[10px] text-gray-500 font-medium text-center leading-tight">
           {t('scanOnMobile')}
         </p>
       </div>

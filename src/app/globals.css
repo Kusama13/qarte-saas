@@ -358,3 +358,21 @@
     100% { transform: translate(calc(-50% + 40px), -40px) scale(1.2); }
   }
 }
+
+/* Respect OS-level reduced motion preference (accessibility WCAG 2.3.3) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Finition Lucide : stroke par defaut 1.75 (au lieu de 2) pour un rendu plus net,
+   surtout sur les icones petites. Peut etre surcharge via strokeWidth={n} inline. */
+svg.lucide {
+  stroke-width: 1.75;
+}
