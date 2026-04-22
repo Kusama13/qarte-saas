@@ -3381,6 +3381,8 @@
     "otherServices": "Autres prestations",
     "categoryServicesCount": "{count, plural, =0 {aucune prestation} =1 {# prestation} other {# prestations}}",
     "selectAtLeastOne": "Choisissez au moins une prestation",
+    "depositIncluded": "dont {amount} d'acompte",
+    "depositFullPaymentShort": "paiement intégral",
     "period": {
       "morning": "Matin",
       "afternoon": "Après-midi",

@@ -49,6 +49,8 @@ function formatDuration(mins: number, locale: string): string {
   return m > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
 }
 
+const CATEGORY_COLORS = ['#F59E0B', '#EC4899', '#10B981', '#8B5CF6', '#06B6D4', '#F97316'];
+
 const PAYMENT_PROVIDER_RULES: Array<[RegExp, string]> = [
   [/revolut\.(me|com)/, 'Revolut'],
   [/paypal\.(com|me)/, 'PayPal'],
@@ -344,6 +346,18 @@ export default function BookingModal({
     : ['services', 'info'];
   const currentStepIdx = indicatorSteps.indexOf(step);
 
+  // Sticky bar deposit info
+  const stickyDeposit = useMemo(() => {
+    if (!merchant.deposit_link) return null;
+    if (!merchant.deposit_percent && !merchant.deposit_amount) return null;
+    if (totalPrice <= 0 || memberBenefit?.skip_deposit) return null;
+    const rawDeposit = merchant.deposit_amount
+      ? Number(merchant.deposit_amount)
+      : Math.round(totalPrice * (merchant.deposit_percent || 0) / 100);
+    const capped = Math.min(rawDeposit, totalPrice);
+    return { amount: capped, isFullPayment: rawDeposit >= totalPrice };
+  }, [merchant.deposit_link, merchant.deposit_percent, merchant.deposit_amount, totalPrice, memberBenefit]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -439,13 +453,16 @@ export default function BookingModal({
                   if (useAccordion) {
                     return (
                       <div className="space-y-2 mb-4">
-                        {categorizedServices.map(({ category, services: catServices }) => {
+                        {categorizedServices.map(({ category, services: catServices }, idx) => {
                           const catKey = category?.id || '__uncategorized__';
                           const isOpen = openCategories.has(catKey);
                           const catName = category?.name || t('otherServices');
                           const prices = catServices.map(s => Number(s.price || 0));
                           const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
                           const selectedInCat = catServices.filter(s => selectedServiceIds.has(s.id)).length;
+                          const dotColor = category
+                            ? CATEGORY_COLORS[idx % CATEGORY_COLORS.length]
+                            : '#9CA3AF';
                           return (
                             <div key={catKey} className="rounded-xl border border-gray-100 overflow-hidden bg-white">
                               <button
@@ -453,6 +470,10 @@ export default function BookingModal({
                                 onClick={() => toggleCategory(catKey)}
                                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
                               >
+                                <span
+                                  className="w-2 h-2 rounded-full shrink-0"
+                                  style={{ backgroundColor: dotColor }}
+                                />
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
                                     <p className="text-sm font-bold text-gray-900 truncate">{catName}</p>
@@ -575,7 +596,16 @@ export default function BookingModal({
                         <p className="text-[11px] text-gray-500 font-medium">
                           {t('categoryServicesCount', { count: selectedServiceIds.size })} · {hasDurationEstimate ? '~' : ''}{formatDuration(totalDuration, locale)}
                         </p>
-                        <p className="text-sm font-bold text-gray-900">{formatCurrency(displayPrice, country, locale)}</p>
+                        <p className="text-sm font-bold text-gray-900 leading-tight">
+                          {formatCurrency(displayPrice, country, locale)}
+                          {stickyDeposit && (
+                            <span className="text-[10px] font-medium text-gray-500 ml-1.5">
+                              · {stickyDeposit.isFullPayment
+                                ? t('depositFullPaymentShort')
+                                : t('depositIncluded', { amount: formatCurrency(stickyDeposit.amount, country, locale) })}
+                            </span>
+                          )}
+                        </p>
                       </>
                     )}
                   </div>

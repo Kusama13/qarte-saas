@@ -586,7 +586,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                                         type="button"
                                         disabled={isSuspended}
                                         onClick={isDemo || isSuspended ? noOp : () => setBookingSlot({ date: day.dateStr, time: raw })}
-                                        className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all ${isSuspended ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95 cursor-pointer'}`}
+                                        className={`px-3 py-2 rounded-lg text-[12px] font-semibold transition-all ${isSuspended ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95 cursor-pointer'}`}
                                         style={{ backgroundColor: `${p}12`, color: p }}
                                       >
                                         {display}
@@ -596,7 +596,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                                   return (
                                     <span
                                       key={raw}
-                                      className="px-3 py-1.5 rounded-lg text-[12px] font-semibold"
+                                      className="px-3 py-2 rounded-lg text-[12px] font-semibold"
                                       style={{ backgroundColor: `${p}12`, color: p }}
                                     >
                                       {display}
@@ -787,7 +787,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 <a
                   href={isDemo ? '#' : `/scan/${merchant.scan_code}?welcome=${merchant.welcome_referral_code}`}
                   onClick={isDemo ? noOp : undefined}
-                  className="shrink-0 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white"
+                  className="shrink-0 px-3.5 py-2.5 rounded-xl text-[12px] font-bold text-white"
                   style={{ background: p }}
                 >
                   {t('enjoyNow')}
@@ -827,7 +827,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               {!canBookOnline && merchant.scan_code && (
                 <a
                   href={`/scan/${merchant.scan_code}?offer=${promoOffer.id}`}
-                  className="shrink-0 px-4 py-2 rounded-xl text-[13px] font-bold text-white bg-amber-500"
+                  className="shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-bold text-white bg-amber-500"
                 >
                   {t('enjoyNow')}
                 </a>
@@ -1136,7 +1136,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 target={isDemo ? undefined : '_blank'}
                 rel={isDemo ? undefined : 'noopener noreferrer'}
                 onClick={isDemo ? () => { trackCtaClick('demo_vitrine_sticky_cta', 'vitrine_page'); } : undefined}
-                className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all active:scale-95"
+                className="shrink-0 px-5 py-3 rounded-2xl text-sm font-bold text-white transition-all active:scale-95"
                 style={{
                   background: `linear-gradient(135deg, ${p}, ${s})`,
                   boxShadow: `0 4px 14px ${p}30`,
