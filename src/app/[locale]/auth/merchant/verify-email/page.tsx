@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useRouter } from '@/i18n/navigation';
-import { CreditCard, Mail, CheckCircle2, RefreshCw, ArrowRight } from 'lucide-react';
+import { Mail, CheckCircle2, RefreshCw, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useTranslations } from 'next-intl';
@@ -73,12 +73,9 @@ export default function VerifyEmailPage() {
       <div className="max-w-md w-full">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary">
-              <CreditCard className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-3xl font-bold text-gray-900">Qarte</span>
-          </Link>
+          <Link href="/" className="inline-block text-4xl font-extrabold tracking-tight text-indigo-600">
+              Qarte
+            </Link>
         </div>
 
         {/* Card */}

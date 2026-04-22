@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, Link } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
 import { getSupabase } from '@/lib/supabase';
-import { CreditCard, Eye, EyeOff, CheckCircle2, Lock } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle2, Lock } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { useTranslations } from 'next-intl';
 
@@ -98,11 +98,8 @@ function ResetPasswordContent() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50">
         <div className="max-w-md w-full mx-4">
           <div className="text-center mb-8">
-            <Link href="/" className="inline-flex items-center gap-2">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary">
-                <CreditCard className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-3xl font-bold text-gray-900">Qarte</span>
+            <Link href="/" className="inline-block text-4xl font-extrabold tracking-tight text-indigo-600">
+              Qarte
             </Link>
           </div>
 
@@ -129,11 +126,8 @@ function ResetPasswordContent() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50">
         <div className="max-w-md w-full mx-4">
           <div className="text-center mb-8">
-            <Link href="/" className="inline-flex items-center gap-2">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary">
-                <CreditCard className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-3xl font-bold text-gray-900">Qarte</span>
+            <Link href="/" className="inline-block text-4xl font-extrabold tracking-tight text-indigo-600">
+              Qarte
             </Link>
           </div>
 
@@ -158,12 +152,9 @@ function ResetPasswordContent() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50">
       <div className="max-w-md w-full mx-4">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary">
-              <CreditCard className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-3xl font-bold text-gray-900">Qarte</span>
-          </Link>
+          <Link href="/" className="inline-block text-4xl font-extrabold tracking-tight text-indigo-600">
+              Qarte
+            </Link>
         </div>
 
         <div className="bg-white rounded-3xl shadow-xl p-8">
