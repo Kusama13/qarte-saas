@@ -89,7 +89,7 @@ export default function BlogPage() {
               </div>
               <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
                 Conseils fidélisation pour{' '}
-                <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                <span className="text-indigo-600">
                   salons de beauté
                 </span>
               </h1>

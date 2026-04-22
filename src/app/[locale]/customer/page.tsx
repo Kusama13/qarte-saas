@@ -98,7 +98,7 @@ export default function CustomerLoginPage() {
       {/* ── Header ── */}
       <header className="relative z-10 py-5 px-6">
         <div className="flex items-center justify-center">
-          <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+          <span className="text-2xl font-black text-indigo-600">
             Qarte
           </span>
         </div>
@@ -179,7 +179,7 @@ export default function CustomerLoginPage() {
       <footer className="relative z-10 py-8 text-center">
         <Link href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
           <span className="text-xs text-gray-400 group-hover:text-gray-500">{t('poweredBy')}</span>
-          <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+          <span className="text-xs font-bold text-indigo-600">
             Qarte
           </span>
           <span className="text-xs text-gray-400 group-hover:text-gray-500">{t('inFrance')}</span>

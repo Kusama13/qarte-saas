@@ -78,7 +78,7 @@ export default function CustomerCardsPage() {
     return (
       <div className="min-h-screen bg-[#f7f6fb]">
         <div className="py-5 px-6 max-w-4xl mx-auto flex items-center justify-between">
-          <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">Qarte</span>
+          <span className="text-2xl font-black text-indigo-600">Qarte</span>
           <div className="w-24 h-3 bg-gray-200 rounded-full animate-pulse" />
         </div>
         <div className="px-6 pt-2 pb-8 max-w-4xl mx-auto">
@@ -106,7 +106,7 @@ export default function CustomerCardsPage() {
 
       {/* Header */}
       <div className="py-5 px-6 max-w-4xl mx-auto flex items-center justify-between">
-        <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+        <span className="text-2xl font-black text-indigo-600">
           Qarte
         </span>
         <button
@@ -317,7 +317,7 @@ export default function CustomerCardsPage() {
       <footer className="py-8 text-center">
         <Link href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
           <span className="text-xs text-gray-300 group-hover:text-gray-400">{t('madeWithLove')}</span>
-          <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+          <span className="text-xs font-bold text-indigo-600">
             Qarte
           </span>
         </Link>

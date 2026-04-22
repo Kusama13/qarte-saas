@@ -1,7 +1,7 @@
 import { Link } from '@/i18n/navigation';
-import { ArrowLeft, CreditCard } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import type { Metadata } from 'next';
-import { getTranslations, getLocale } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 import NoRightClick from '@/components/NoRightClick';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -25,10 +25,13 @@ function PrivacyContentFR() {
         <p className="text-gray-600 mt-2">
           <strong>SAS Tenga Labs (Qarte)</strong><br />
           58 rue de Monceau, CS 48756, 75380 Paris Cedex 08<br />
-          Téléphone : +33 6 07 44 74 20<br />
           Email :{' '}
           <a href="mailto:contact@getqarte.com" className="text-indigo-600 hover:text-indigo-800 underline">
             contact@getqarte.com
+          </a><br />
+          WhatsApp :{' '}
+          <a href="https://wa.me/33607447420" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 underline">
+            +33 6 07 44 74 20
           </a>
         </p>
       </section>
@@ -187,6 +190,12 @@ function PrivacyContentFR() {
                 <td className="py-2 pr-4">Publicité et mesure de conversion (TikTok Pixel)</td>
                 <td className="py-2 pr-4">USA / Singapour</td>
                 <td className="py-2">CCT</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4 font-medium">OVH SAS</td>
+                <td className="py-2 pr-4">Envoi de SMS transactionnels et marketing (OVH SMS)</td>
+                <td className="py-2 pr-4">France</td>
+                <td className="py-2">DPA</td>
               </tr>
             </tbody>
           </table>
@@ -372,371 +381,11 @@ function PrivacyContentFR() {
   );
 }
 
-function PrivacyContentEN() {
-  return (
-    <div className="prose prose-gray max-w-none space-y-8">
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          1. Data Controller
-        </h2>
-        <p className="text-gray-600">
-          The data controller for personal data is:
-        </p>
-        <p className="text-gray-600 mt-2">
-          <strong>SAS Tenga Labs (Qarte)</strong><br />
-          60 rue Fran&ccedil;ois 1er, 75008 Paris, France<br />
-          Phone: +33 6 07 44 74 20<br />
-          Email:{' '}
-          <a href="mailto:contact@getqarte.com" className="text-indigo-600 hover:text-indigo-800 underline">
-            contact@getqarte.com
-          </a>
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          2. Data We Collect
-        </h2>
-        <p className="text-gray-600">
-          In the course of providing the Service, we collect the following categories of data:
-        </p>
-
-        <p className="text-gray-600 font-medium mt-3">Merchant data (Service users):</p>
-        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-1">
-          <li>Email address and password (authentication)</li>
-          <li>Business name, type of activity, address, phone number</li>
-          <li>Logo and visual customization (colors)</li>
-          <li>Social media links and booking link</li>
-          <li>Billing data (processed by Stripe, not stored by Qarte)</li>
-        </ul>
-
-        <p className="text-gray-600 font-medium mt-3">End-customer data (merchants&apos; customers):</p>
-        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-1">
-          <li>First name and last name</li>
-          <li>Phone number (international format)</li>
-          <li>Birthday (day and month only, optional)</li>
-          <li>Visit history and loyalty stamps</li>
-          <li>Referral code</li>
-          <li>Discount vouchers and rewards</li>
-        </ul>
-
-        <p className="text-gray-600 font-medium mt-3">Technical data:</p>
-        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-1">
-          <li>IP address (hashed, used for fraud detection via Qarte Shield)</li>
-          <li>Browsing data (pages visited, session duration)</li>
-          <li>Device information (type, browser, operating system)</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          3. Purposes and Legal Bases
-        </h2>
-        <div className="overflow-x-auto mt-2">
-          <table className="min-w-full text-sm text-gray-600">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-2 pr-4 font-semibold text-gray-900">Purpose</th>
-                <th className="text-left py-2 font-semibold text-gray-900">Legal Basis (GDPR)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              <tr>
-                <td className="py-2 pr-4">Provision of the Service (account, loyalty, stamps, rewards)</td>
-                <td className="py-2">Performance of contract (Art. 6.1.b)</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4">Billing and payment</td>
-                <td className="py-2">Performance of contract (Art. 6.1.b)</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4">Retention of invoices and accounting data</td>
-                <td className="py-2">Legal obligation (Art. 6.1.c)</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4">Fraud prevention (Qarte Shield)</td>
-                <td className="py-2">Legitimate interest (Art. 6.1.f)</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4">Service improvement and aggregated statistics</td>
-                <td className="py-2">Legitimate interest (Art. 6.1.f)</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4">Transactional emails (welcome, reminders, billing)</td>
-                <td className="py-2">Performance of contract (Art. 6.1.b)</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4">Push notifications</td>
-                <td className="py-2">Consent (Art. 6.1.a)</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4">Audience measurement and behavioral analytics</td>
-                <td className="py-2">Consent (Art. 6.1.a)</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4">Targeted advertising (Facebook Pixel, TikTok Pixel)</td>
-                <td className="py-2">Consent (Art. 6.1.a)</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          4. Sub-processors and Data Recipients
-        </h2>
-        <p className="text-gray-600">
-          We use the following sub-processors to provide the Service:
-        </p>
-        <div className="overflow-x-auto mt-2">
-          <table className="min-w-full text-sm text-gray-600">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-2 pr-4 font-semibold text-gray-900">Sub-processor</th>
-                <th className="text-left py-2 pr-4 font-semibold text-gray-900">Purpose</th>
-                <th className="text-left py-2 pr-4 font-semibold text-gray-900">Location</th>
-                <th className="text-left py-2 font-semibold text-gray-900">Safeguards</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              <tr>
-                <td className="py-2 pr-4 font-medium">Supabase Inc.</td>
-                <td className="py-2 pr-4">Database hosting</td>
-                <td className="py-2 pr-4">EU (Frankfurt)</td>
-                <td className="py-2">DPA + SCC</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4 font-medium">Vercel Inc.</td>
-                <td className="py-2 pr-4">Web application hosting</td>
-                <td className="py-2 pr-4">USA / EU</td>
-                <td className="py-2">DPA + EU-US DPF</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4 font-medium">Stripe Inc.</td>
-                <td className="py-2 pr-4">Payment processing</td>
-                <td className="py-2 pr-4">Ireland / USA</td>
-                <td className="py-2">DPA + EU-US DPF</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4 font-medium">Resend Inc.</td>
-                <td className="py-2 pr-4">Transactional email delivery</td>
-                <td className="py-2 pr-4">USA</td>
-                <td className="py-2">DPA + SCC</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4 font-medium">Google LLC</td>
-                <td className="py-2 pr-4">Audience measurement (GA4, GTM)</td>
-                <td className="py-2 pr-4">USA</td>
-                <td className="py-2">EU-US DPF + SCC</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4 font-medium">Meta Platforms Inc.</td>
-                <td className="py-2 pr-4">Advertising and conversion measurement</td>
-                <td className="py-2 pr-4">USA</td>
-                <td className="py-2">EU-US DPF + SCC</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4 font-medium">Microsoft Corp.</td>
-                <td className="py-2 pr-4">Behavioral analytics (Clarity)</td>
-                <td className="py-2 pr-4">USA</td>
-                <td className="py-2">EU-US DPF + SCC</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4 font-medium">TikTok Inc. (ByteDance)</td>
-                <td className="py-2 pr-4">Advertising and conversion measurement (TikTok Pixel)</td>
-                <td className="py-2 pr-4">USA / Singapore</td>
-                <td className="py-2">SCC</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p className="text-gray-600 mt-3 text-sm">
-          DPA = Data Processing Agreement | SCC = Standard Contractual Clauses | EU-US DPF = EU-US Data Privacy Framework
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          5. International Data Transfers
-        </h2>
-        <p className="text-gray-600">
-          Some of our sub-processors are located in the United States. These transfers are governed by:
-        </p>
-        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-2">
-          <li>The EU-US Data Privacy Framework (EU-US DPF), where the sub-processor is certified</li>
-          <li>Standard Contractual Clauses (SCCs) adopted by the European Commission (Implementing Decision 2021/914)</li>
-          <li>Supplementary technical measures (encryption in transit and at rest, pseudonymization)</li>
-        </ul>
-        <p className="text-gray-600 mt-2">
-          You may obtain a copy of the Standard Contractual Clauses by contacting us at{' '}
-          <a href="mailto:contact@getqarte.com" className="text-indigo-600 hover:text-indigo-800 underline">
-            contact@getqarte.com
-          </a>.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          6. Data Retention
-        </h2>
-        <div className="overflow-x-auto mt-2">
-          <table className="min-w-full text-sm text-gray-600">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-2 pr-4 font-semibold text-gray-900">Data Category</th>
-                <th className="text-left py-2 font-semibold text-gray-900">Retention Period</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              <tr>
-                <td className="py-2 pr-4">Merchant account data</td>
-                <td className="py-2">Duration of contract + 3 years (civil statute of limitations)</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4">Loyalty customer data</td>
-                <td className="py-2">Duration of contract + 3 years</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4">Billing data</td>
-                <td className="py-2">10 years (legal accounting obligation)</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4">Connection logs</td>
-                <td className="py-2">12 months (French LCEN obligation)</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4">Referral data</td>
-                <td className="py-2">Duration of contract + 3 years</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4">Audience measurement cookies</td>
-                <td className="py-2">13 months maximum (CNIL recommendation)</td>
-              </tr>
-              <tr>
-                <td className="py-2 pr-4">Prospecting data</td>
-                <td className="py-2">3 years after last contact</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p className="text-gray-600 mt-3">
-          Upon expiration of these periods, data is permanently deleted or irreversibly anonymized.
-        </p>
-      </section>
-
-      <section id="cookies">
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          7. Cookies and Trackers
-        </h2>
-        <p className="text-gray-600 font-medium">Strictly necessary cookies (no consent required):</p>
-        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-1">
-          <li>Authentication cookies (user session)</li>
-          <li>Consent cookie (remembering your choices)</li>
-        </ul>
-
-        <p className="text-gray-600 font-medium mt-3">Cookies subject to your consent:</p>
-        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-1">
-          <li><strong>Google Analytics 4 (GA4)</strong> -- audience measurement and website traffic analysis</li>
-          <li><strong>Google Tag Manager (GTM)</strong> -- technical tracker management</li>
-          <li><strong>Facebook Pixel (Meta)</strong> -- advertising conversion measurement and custom audiences</li>
-          <li><strong>TikTok Pixel</strong> -- advertising conversion measurement and audience targeting on TikTok</li>
-          <li><strong>Microsoft Clarity</strong> -- session recording and heatmaps for interface improvement</li>
-        </ul>
-
-        <p className="text-gray-600 mt-3">
-          These cookies are only placed after obtaining your consent through our cookie management banner. You can change your preferences at any time by clicking the &quot;Manage cookies&quot; link at the bottom of the page.
-        </p>
-        <p className="text-gray-600 mt-2">
-          You can also configure your browser to reject cookies. Please note that rejecting necessary cookies may affect the operation of the Service.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          8. Your Rights (GDPR)
-        </h2>
-        <p className="text-gray-600">
-          In accordance with the General Data Protection Regulation (GDPR) and the French Data Protection Act (<em>loi Informatique et Libert&eacute;s</em>), you have the following rights:
-        </p>
-        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-2">
-          <li><strong>Right of access</strong> -- obtain confirmation that your data is being processed and receive a copy</li>
-          <li><strong>Right to rectification</strong> -- correct inaccurate or incomplete data</li>
-          <li><strong>Right to erasure</strong> -- request deletion of your data, subject to legal retention obligations</li>
-          <li><strong>Right to data portability</strong> -- receive your data in a structured, machine-readable format</li>
-          <li><strong>Right to object</strong> -- object to the processing of your data on legitimate grounds</li>
-          <li><strong>Right to restriction</strong> -- request suspension of the processing of your data</li>
-          <li><strong>Right to withdraw consent</strong> -- at any time, for processing based on consent</li>
-        </ul>
-        <p className="text-gray-600 mt-3">
-          To exercise your rights, contact us at{' '}
-          <a href="mailto:contact@getqarte.com" className="text-indigo-600 hover:text-indigo-800 underline">
-            contact@getqarte.com
-          </a>.
-          We will respond within one (1) month of receiving your request.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          9. Data Security
-        </h2>
-        <p className="text-gray-600">
-          We implement appropriate technical and organizational measures to protect your personal data against unauthorized access, alteration, disclosure, or destruction:
-        </p>
-        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-2">
-          <li>SSL/TLS encryption for all communications</li>
-          <li>Secure authentication with password hashing</li>
-          <li>Row Level Security (RLS) policies on the database</li>
-          <li>Hashed IP addresses (not stored in plain text)</li>
-          <li>Restricted data access following the principle of least privilege</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          10. Complaint with the CNIL
-        </h2>
-        <p className="text-gray-600">
-          If you believe that the processing of your personal data constitutes a violation of the GDPR, you have the right to lodge a complaint with the CNIL (Commission Nationale de l&apos;Informatique et des Libert&eacute;s), the French data protection authority:
-        </p>
-        <p className="text-gray-600 mt-2">
-          CNIL -- 3 Place de Fontenoy, TSA 80715, 75334 Paris Cedex 07, France<br />
-          <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 underline">
-            www.cnil.fr
-          </a>
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          11. Changes
-        </h2>
-        <p className="text-gray-600">
-          We reserve the right to modify this privacy policy at any time. In the event of a substantial change, we will notify users by email or through the Service. The date of the last update is indicated at the top of this page.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          12. Contact
-        </h2>
-        <p className="text-gray-600">
-          For any questions regarding the protection of your personal data or to exercise your rights, contact us at:{' '}
-          <a href="mailto:contact@getqarte.com" className="text-indigo-600 hover:text-indigo-800 underline">
-            contact@getqarte.com
-          </a>
-        </p>
-      </section>
-    </div>
-  );
-}
 
 export default async function PrivacyPolicyPage() {
-  const [t, tCommon, locale] = await Promise.all([
+  const [t, tCommon] = await Promise.all([
     getTranslations('privacy'),
     getTranslations('legalCommon'),
-    getLocale(),
   ]);
 
   return (
@@ -744,13 +393,10 @@ export default async function PrivacyPolicyPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-100">
         <div className="flex items-center justify-between px-4 py-4 mx-auto max-w-4xl">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
-              <CreditCard className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">Qarte</span>
+          <Link href="/" className="text-2xl font-extrabold tracking-tight text-indigo-600">
+            Qarte
           </Link>
-          <Link href="/" className="text-gray-600 hover:text-primary">
+          <Link href="/" className="text-gray-600 hover:text-indigo-600 transition-colors">
             <ArrowLeft className="w-5 h-5 inline mr-1" />
             {tCommon('back')}
           </Link>
@@ -758,14 +404,14 @@ export default async function PrivacyPolicyPage() {
       </header>
 
       <main className="px-4 py-12 mx-auto max-w-4xl">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
           {t('title')}
         </h1>
         <p className="text-gray-500 mb-10">
-          {tCommon('lastUpdate', { date: locale === 'fr' ? 'Février 2026' : 'February 2026' })}
+          {tCommon('lastUpdate', { date: 'Avril 2026' })}
         </p>
 
-        {locale === 'fr' ? <PrivacyContentFR /> : <PrivacyContentEN />}
+        <PrivacyContentFR />
       </main>
     </div>
     </NoRightClick>

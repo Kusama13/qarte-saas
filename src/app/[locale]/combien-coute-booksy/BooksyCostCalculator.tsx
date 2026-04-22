@@ -45,7 +45,7 @@ export default function BooksyCostCalculator() {
           </span>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-4">
             Combien te coûte vraiment{' '}
-            <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">
+            <span className="relative font-[family-name:var(--font-display)] italic text-red-600">
               Booksy
               <span className="absolute -bottom-1 left-0 right-0 h-3 bg-red-100/60 -skew-x-3 rounded-sm -z-10" />
             </span>{' '}
@@ -197,7 +197,7 @@ export default function BooksyCostCalculator() {
               <div className="absolute -inset-4 bg-gradient-to-br from-emerald-200/40 via-teal-200/30 to-indigo-200/40 rounded-[3rem] blur-2xl opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
               <div className="relative bg-white/80 backdrop-blur-xl border border-emerald-100 rounded-3xl shadow-xl shadow-emerald-100/30 p-8 md:p-12 text-center">
                 <p className="text-xs font-bold uppercase tracking-wider text-emerald-600 mb-2">Tu pourrais économiser</p>
-                <p className="text-6xl md:text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-emerald-600 to-teal-600 mb-2">
+                <p className="text-6xl md:text-7xl font-extrabold tracking-tighter text-emerald-600 mb-2">
                   {formatEUR(calc.savings)}
                 </p>
                 <p className="text-sm md:text-base text-gray-600 mb-6">par an en passant à Qarte — et tu gardes la fidélité, la vitrine SEO et le parrainage en plus.</p>
@@ -235,7 +235,7 @@ export default function BooksyCostCalculator() {
         <div className="max-w-3xl mx-auto px-6">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-10 text-center">
             Questions{' '}
-            <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+            <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
               fréquentes
               <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
             </span>

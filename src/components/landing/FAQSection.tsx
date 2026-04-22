@@ -9,6 +9,12 @@ import { trackFaqOpened } from '@/lib/analytics';
 
 const INITIAL_VISIBLE_FAQS = 4;
 
+// Ordre affiché des questions dans messages/fr.json `faq` (clés q1..q13).
+// Non séquentiel car trié par objections les + bloquantes en premier :
+// q13 (migration depuis concurrent) → q1 (résiliation) → q2 (engagement) →
+// q4-6 (mise en place/temps/formation) → q9-12 (détails techniques).
+const FAQ_ORDER = [13, 1, 2, 4, 5, 6, 9, 10, 11, 12] as const;
+
 function AccordionItem({
   faq,
   index,
@@ -86,7 +92,7 @@ export function FAQSection() {
   const [showAll, setShowAll] = useState(false);
   const t = useTranslations('faq');
 
-  const faqItems = [13, 1, 2, 4, 5, 6, 9, 10, 11, 12].map((i) => ({
+  const faqItems = FAQ_ORDER.map((i) => ({
     question: t(`q${i}`),
     answer: t(`a${i}`),
   }));

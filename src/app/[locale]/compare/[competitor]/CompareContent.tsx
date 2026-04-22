@@ -127,7 +127,7 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
           <div className={`text-center mb-12 md:mb-16 ${tableInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
               {t('tableTitle')}{' '}
-              <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+              <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
                 {t('tableSubtitle')}
                 <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
               </span>
@@ -139,7 +139,7 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
             <div className="grid grid-cols-3 gap-0 border-b border-gray-100 bg-gray-50/80">
               <div className="px-4 py-4 md:px-8 text-sm md:text-base font-semibold text-gray-500">{t('featureCol')}</div>
               <div className="px-4 py-4 md:px-8 text-center">
-                <span className="text-sm md:text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">{t('qarteCol')}</span>
+                <span className="text-sm md:text-base font-bold text-indigo-600">{t('qarteCol')}</span>
               </div>
               <div className="px-4 py-4 md:px-8 text-center text-sm md:text-base font-semibold text-gray-500">{competitorName}</div>
             </div>
@@ -226,7 +226,7 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
           <div className={`text-center mb-12 md:mb-16 ${whyInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
               {t('whyTitle')}{' '}
-              <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+              <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
                 {t('whyTitleBold')}
                 <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
               </span>
@@ -284,7 +284,7 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
           <div className={`text-center ${pricingInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
               {t('pricingTitle')}{' '}
-              <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+              <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
                 {t('pricingTitleBold')}
                 <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
               </span>
@@ -296,7 +296,7 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
               <div className="relative bg-white/70 backdrop-blur-xl border border-white/80 rounded-3xl shadow-xl shadow-indigo-100/30 p-8 md:p-12 text-center">
                 <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('pricingFromLabel')}</p>
                 <div className="inline-flex items-baseline justify-center gap-1.5 mb-2">
-                  <span className="text-6xl md:text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-gray-900 to-gray-600">19</span>
+                  <span className="text-6xl md:text-7xl font-extrabold tracking-tighter text-gray-900">19</span>
                   <span className="text-xl font-semibold text-gray-400">&euro;/mois</span>
                 </div>
                 <p className="text-xs font-medium text-indigo-600 mb-6">{t('pricingTwoPlans')}</p>
@@ -327,7 +327,7 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
             <div className="text-center mb-10">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
                 {t('altMigrationTitle', { competitor: competitorName })}{' '}
-                <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+                <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
                   {t('altMigrationTitleBold')}
                   <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
                 </span>
@@ -357,7 +357,7 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
           <div className={`text-center mb-12 md:mb-16 ${faqInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
               {t('faqTitle')}{' '}
-              <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+              <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
                 {t('faqTitleBold')}
                 <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
               </span>

@@ -132,7 +132,7 @@ export default function MerchantSignupPage() {
       <AuthBackground />
 
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12">
-        <Link href="/" className="mb-8 inline-block text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
+        <Link href="/" className="mb-8 inline-block text-4xl font-extrabold tracking-tight text-indigo-600">
           Qarte
         </Link>
 
@@ -151,7 +151,7 @@ export default function MerchantSignupPage() {
           <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl shadow-primary/10 rounded-3xl">
             <div className="text-center mb-5">
               <h1 className="text-xl font-bold text-gray-900">
-                {t('title')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">{t('titleBold')}</span> {t('titleEnd')}
+                {t('title')} <span className="text-indigo-600">{t('titleBold')}</span> {t('titleEnd')}
               </h1>
               <p className="mt-2 text-gray-600">
                 {t('subtitle')}

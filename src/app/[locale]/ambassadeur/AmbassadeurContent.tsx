@@ -335,7 +335,7 @@ export default function AmbassadeurContent() {
             <h1 className="text-[2.5rem] md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
               {t('heroTitle1')}{' '}
               <span className="relative">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+                <span className="text-indigo-600">
                   {t('heroTitle2')}
                 </span>
                 <span className="absolute -bottom-2 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
@@ -348,7 +348,7 @@ export default function AmbassadeurContent() {
             </p>
 
             <div className="inline-flex items-center gap-4 px-8 py-5 bg-white/70 backdrop-blur-xl border border-white/80 rounded-2xl shadow-xl shadow-indigo-100/30 mb-10">
-              <div className="text-5xl md:text-6xl font-black bg-clip-text text-transparent bg-gradient-to-b from-indigo-600 to-violet-600">
+              <div className="text-5xl md:text-6xl font-black text-indigo-600">
                 20%
               </div>
               <div className="text-left">
@@ -379,7 +379,7 @@ export default function AmbassadeurContent() {
           <div className={`text-center mb-12 md:mb-16 ${stepsInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               {t('stepsTitle')}{' '}
-              <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+              <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
                 {t('stepsTitleBold')}
                 <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
               </span>
@@ -416,7 +416,7 @@ export default function AmbassadeurContent() {
           <div className={`text-center mb-12 md:mb-16 ${perksInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               {t('perksTitle')}{' '}
-              <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+              <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
                 {t('perksTitleBold')}
                 <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
               </span>
@@ -446,7 +446,7 @@ export default function AmbassadeurContent() {
           <div className={`text-center mb-12 md:mb-16 ${profilesInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               {t('profilesTitle')}{' '}
-              <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+              <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
                 {t('profilesTitleBold')}
                 <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
               </span>
@@ -479,7 +479,7 @@ export default function AmbassadeurContent() {
           <div className={`text-center mb-12 md:mb-16 ${simulatorInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               {t('simulatorSectionTitle')}{' '}
-              <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">
+              <span className="relative font-[family-name:var(--font-display)] italic text-emerald-600">
                 {t('simulatorSectionBold')}
                 <span className="absolute -bottom-1 left-0 right-0 h-3 bg-emerald-100/60 -skew-x-3 rounded-sm -z-10" />
               </span>
@@ -526,7 +526,7 @@ export default function AmbassadeurContent() {
           <div className={`text-center mb-12 md:mb-16 ${faqInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               {t('faqTitle')}{' '}
-              <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+              <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
                 {t('faqTitleBold')}
                 <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
               </span>
@@ -564,7 +564,7 @@ export default function AmbassadeurContent() {
           <div className="text-center mb-10">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               {t('formTitle')}{' '}
-              <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+              <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
                 {t('formTitleBold')}
                 <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
               </span>

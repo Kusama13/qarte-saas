@@ -194,7 +194,7 @@ export default function CompleteProfilePage() {
       <AuthBackground />
 
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12">
-        <Link href="/" className="mb-8 inline-block text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
+        <Link href="/" className="mb-8 inline-block text-4xl font-extrabold tracking-tight text-indigo-600">
           Qarte
         </Link>
 

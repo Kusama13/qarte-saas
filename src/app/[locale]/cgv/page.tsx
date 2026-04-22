@@ -1,7 +1,7 @@
 import { Link } from '@/i18n/navigation';
-import { ArrowLeft, CreditCard } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import NoRightClick from '@/components/NoRightClick';
-import { getTranslations, getLocale } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata() {
   const t = await getTranslations('cgv');
@@ -43,7 +43,11 @@ function CGVContentFR() {
           <li>Un système de parrainage client</li>
           <li>Des relances automatiques et l&apos;envoi de notifications push aux clients</li>
           <li>La collecte d&apos;avis Google</li>
+          <li>L&apos;envoi de SMS transactionnels (confirmations, rappels de rendez-vous, anniversaires) et de campagnes SMS marketing, dans la limite des packs souscrits (50 à 250 SMS/mois), sans dépassement automatique et dans le respect des plages horaires légales (10h-20h du lundi au samedi). Le Client est responsable du consentement explicite de ses destinataires finaux au regard de la réglementation applicable.</li>
         </ul>
+        <p className="text-gray-600 mt-3">
+          Le Service est actuellement disponible pour les professionnels établis en France, Belgique et Suisse. Les clients finaux (destinataires des SMS, bénéficiaires des cartes de fidélité) peuvent résider dans l&apos;Union Européenne et en Suisse.
+        </p>
       </section>
 
       <section>
@@ -51,15 +55,21 @@ function CGVContentFR() {
           3. Tarification et modalités de paiement
         </h2>
         <p className="text-gray-600">
-          Le Service est proposé selon les formules suivantes :
+          Le Service est proposé selon deux formules, au choix du Client :
         </p>
-        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-2">
-          <li><strong>Abonnement mensuel :</strong> 24€ HT par mois, sans engagement de durée, renouvelable par tacite reconduction chaque mois.</li>
-          <li><strong>Abonnement annuel :</strong> 240€ HT par an (soit 20€ HT/mois), facturé en une seule fois, en contrepartie d&apos;un engagement ferme de douze (12) mois.</li>
-          <li><strong>Essai gratuit :</strong> Un essai gratuit de 7 jours est proposé sans carte bancaire. À l&apos;issue de l&apos;essai, le Client doit souscrire un abonnement pour continuer à utiliser le Service.</li>
+        <p className="text-gray-600 mt-3"><strong>Formule Fidélité</strong> — programme de fidélité digital + page professionnelle + relances et avis Google :</p>
+        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-1">
+          <li><strong>Mensuel :</strong> 19€ par mois, sans engagement, renouvelable par tacite reconduction chaque mois.</li>
+          <li><strong>Annuel :</strong> 190€ par an (soit ~16€/mois), facturé en une fois, engagement ferme de douze (12) mois.</li>
         </ul>
+        <p className="text-gray-600 mt-3"><strong>Formule Tout-en-un</strong> — Formule Fidélité + réservation en ligne, planning et gestion des acomptes :</p>
+        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-1">
+          <li><strong>Mensuel :</strong> 24€ par mois, sans engagement, renouvelable par tacite reconduction chaque mois.</li>
+          <li><strong>Annuel :</strong> 240€ par an (soit 20€/mois), facturé en une fois, engagement ferme de douze (12) mois.</li>
+        </ul>
+        <p className="text-gray-600 mt-3"><strong>Essai gratuit :</strong> un essai gratuit de 7 jours est proposé sans carte bancaire. À l&apos;issue de l&apos;essai, le Client doit souscrire une formule pour continuer à utiliser le Service.</p>
         <p className="text-gray-600 mt-3">
-          Le paiement est effectué par carte bancaire via la plateforme sécurisée Stripe. Les prix s&apos;entendent hors taxes et sont majorés de la TVA applicable au jour de la facturation.
+          Les prix indiqués s&apos;entendent hors taxes (HT). La TVA applicable au jour de la facturation (20% pour la France, taux applicable dans le pays de résidence du Client pour la Belgique et la Suisse) est ajoutée au tarif HT. Le paiement est effectué par carte bancaire via la plateforme sécurisée Stripe. Le Client peut basculer d&apos;une formule à l&apos;autre à tout moment ; un prorata est appliqué en cas d&apos;upgrade en cours de période et le changement prend effet à la prochaine échéance en cas de downgrade.
         </p>
       </section>
 
@@ -323,9 +333,12 @@ function CGVContentFR() {
           19. Contact
         </h2>
         <p className="text-gray-600">
-          Pour toute question concernant les présentes CGV, contactez-nous à{' '}
+          Pour toute question concernant les présentes CGV, contactez-nous par email à{' '}
           <a href="mailto:contact@getqarte.com" className="text-indigo-600 hover:text-indigo-800 underline">
             contact@getqarte.com
+          </a>{' '}ou par WhatsApp au{' '}
+          <a href="https://wa.me/33607447420" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 underline">
+            +33 6 07 44 74 20
           </a>.
         </p>
       </section>
@@ -333,344 +346,19 @@ function CGVContentFR() {
   );
 }
 
-function CGVContentEN() {
-  return (
-    <div className="prose prose-gray max-w-none space-y-8">
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          1. Purpose
-        </h2>
-        <p className="text-gray-600">
-          These Terms of Service (hereinafter &quot;Terms&quot;) govern the contractual relationship between SAS Tenga Labs, the company that publishes the Qarte service, with its registered office at 60 rue Fran&ccedil;ois 1er, 75008 Paris, France (hereinafter &quot;the Provider&quot;), and any business or individual (hereinafter &quot;the Client&quot;) subscribing to Qarte, a SaaS platform providing professional business pages and digital loyalty programs for beauty and wellness professionals.
-        </p>
-        <p className="text-gray-600 mt-2">
-          Any subscription to the Service implies full and unconditional acceptance of these Terms, which shall prevail over any other document.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          2. Description of the Service
-        </h2>
-        <p className="text-gray-600">
-          Qarte provides merchants with a solution to create and manage a digital loyalty program. The Service includes, but is not limited to:
-        </p>
-        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-2">
-          <li>Creation and customization of a digital loyalty card (stamp-based or cashback mode)</li>
-          <li>QR code generation and NFC card compatibility for recording customer visits</li>
-          <li>A customizable professional business page (bio, services, pricing, hours, photo gallery)</li>
-          <li>An online scheduling module for availability management</li>
-          <li>A dashboard for tracking and analytics</li>
-          <li>Customer and reward management</li>
-          <li>A customer referral system</li>
-          <li>Automated follow-ups and push notifications to customers</li>
-          <li>Google review collection</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          3. Pricing and Payment Terms
-        </h2>
-        <p className="text-gray-600">
-          The Service is offered under the following plans:
-        </p>
-        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-2">
-          <li><strong>Monthly subscription:</strong> 24&#8364; excl. tax per month, with no minimum commitment, automatically renewed each month.</li>
-          <li><strong>Annual subscription:</strong> 240&#8364; excl. tax per year (20&#8364; excl. tax/month), billed as a single payment in consideration of a firm twelve (12) month commitment.</li>
-          <li><strong>Free trial:</strong> A 7-day free trial is available without requiring a credit card. At the end of the trial period, the Client must subscribe to a paid plan to continue using the Service.</li>
-        </ul>
-        <p className="text-gray-600 mt-3">
-          Payment is processed by credit card through the secure Stripe payment platform. All prices are quoted exclusive of tax and are subject to the applicable VAT rate at the time of invoicing.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          4. Right of Withdrawal
-        </h2>
-        <p className="text-gray-600">
-          In accordance with Article L221-28, 13&deg; of the French Consumer Code (Code de la consommation), the Client acknowledges and agrees that the performance of the Service begins upon validation of their registration and access to their personal account.
-        </p>
-        <p className="text-gray-600 mt-2">
-          Accordingly, the Client expressly waives their fourteen (14) day right of withdrawal provided for in Article L221-18 of the French Consumer Code.
-        </p>
-        <p className="text-gray-600 mt-2">
-          The Client acknowledges having been informed of this waiver prior to subscribing and having expressly agreed that the provision of the Service shall commence before the expiration of the withdrawal period.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          5. Duration and Termination
-        </h2>
-        <p className="text-gray-600 font-medium">Monthly subscription:</p>
-        <p className="text-gray-600 mt-1">
-          The contract is entered into for an indefinite period with a minimum term of one (1) month, automatically renewed by tacit agreement. The Client may cancel at any time from their dashboard. Cancellation takes effect at the end of the current monthly billing period. The Service remains accessible until the end of the paid period.
-        </p>
-        <p className="text-gray-600 font-medium mt-3">Annual subscription:</p>
-        <p className="text-gray-600 mt-1">
-          The contract is entered into for a period of twelve (12) months, automatically renewed by tacit agreement. The Client may opt out of renewal by canceling from their dashboard. In accordance with Article L215-1 of the French Consumer Code, the Client shall be notified by email of the option not to renew the contract no later than one (1) month before the end of the current period.
-        </p>
-        <p className="text-gray-600 font-medium mt-3">Suspension for non-payment:</p>
-        <p className="text-gray-600 mt-1">
-          In the event of non-payment, the Provider reserves the right to suspend access to the Service after a notice has been sent and remained without effect for eight (8) days.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          6. No Refund Policy
-        </h2>
-        <p className="text-gray-600 font-medium">Monthly subscription:</p>
-        <p className="text-gray-600 mt-1">
-          In the event of cancellation during a billing month, the Service remains accessible until the end of the current paid period. No pro-rata refund shall be issued for any partially used period.
-        </p>
-        <p className="text-gray-600 font-medium mt-3">Annual subscription:</p>
-        <p className="text-gray-600 mt-1">
-          The annual subscription is billed as a single payment for the entire 12-month period. All amounts paid are deemed earned by the Provider and shall not be refunded, in whole or in part, in the event of early termination initiated by the Client. The Service remains accessible until the end of the paid annual period.
-        </p>
-        <p className="text-gray-600 mt-2">
-          The Client acknowledges that the annual rate constitutes a preferential rate granted in consideration of the 12-month commitment, and that early termination shall not entitle the Client to any pro-rata refund.
-        </p>
-        <p className="text-gray-600 mt-2">
-          In the event of termination initiated by the Provider for reasons other than the Client&apos;s fault, the Client shall be refunded on a pro-rata basis for the remaining unused period.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          7. Client Obligations
-        </h2>
-        <p className="text-gray-600">The Client agrees to:</p>
-        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-2">
-          <li>Provide accurate and up-to-date information upon registration</li>
-          <li>Use the Service in accordance with its intended purpose and these Terms</li>
-          <li>Refrain from using the Service for any unlawful or unauthorized purpose</li>
-          <li>Maintain the confidentiality of their login credentials</li>
-          <li>Comply with applicable data protection regulations with respect to their own customers&apos; personal data</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          8. Provider Obligations
-        </h2>
-        <p className="text-gray-600">The Provider agrees to:</p>
-        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-2">
-          <li>Provide the Service in accordance with its description</li>
-          <li>Ensure the security and confidentiality of hosted data</li>
-          <li>Notify the Client of any scheduled Service interruptions</li>
-          <li>Implement the necessary measures to ensure Service availability</li>
-        </ul>
-        <p className="text-gray-600 mt-3">
-          The Provider&apos;s obligations are obligations of means (best efforts). The Provider undertakes to deliver the Service with due diligence and in accordance with industry standards, to the exclusion of any obligation of result.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          9. Suspension and Termination by the Provider
-        </h2>
-        <p className="text-gray-600">
-          The Provider reserves the right to suspend or terminate access to the Service, without prior notice or compensation, in the following cases:
-        </p>
-        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-2">
-          <li>Breach of these Terms</li>
-          <li>Fraudulent or abusive use of the Service</li>
-          <li>Provision of false or incomplete information upon registration</li>
-          <li>Unlawful activity or infringement of third-party rights</li>
-          <li>Non-payment after a notice has remained without effect for eight (8) days</li>
-        </ul>
-        <p className="text-gray-600 mt-2">
-          In the event of termination due to the Client&apos;s fault, no refund shall be due. The Provider shall notify the Client by email of the suspension or termination of their account.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          10. Service Availability and Evolution
-        </h2>
-        <p className="text-gray-600">
-          The Provider endeavors to maintain the Service accessible 24 hours a day, 7 days a week, with a target availability of 99.5% per month, excluding scheduled maintenance periods.
-        </p>
-        <p className="text-gray-600 mt-2">
-          The Provider reserves the right to temporarily interrupt the Service for maintenance, updates, or improvements, and shall endeavor to notify the Client within a reasonable timeframe.
-        </p>
-        <p className="text-gray-600 mt-2">
-          Service interruptions shall not entitle the Client to any compensation.
-        </p>
-        <p className="text-gray-600 mt-2">
-          The Provider reserves the right to modify the features of the Service (addition, modification, or removal of features) in order to improve its quality. Such changes shall not constitute a modification of the contractual terms, provided they do not substantially alter the subscribed Service.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          11. Intellectual Property
-        </h2>
-        <p className="text-gray-600">
-          The Provider retains all intellectual property rights in and to the Service, including the source code, user interface, algorithms, documentation, and associated trademarks.
-        </p>
-        <p className="text-gray-600 mt-2">
-          The subscription grants the Client a personal, non-exclusive, non-assignable, and non-transferable right to use the Service, limited to the duration of the subscription and the purpose defined herein.
-        </p>
-        <p className="text-gray-600 mt-2">
-          The Client retains ownership of all data entered into the Service. The Provider shall not use such data for any purpose other than the performance of the Service.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          12. Limitation of Liability
-        </h2>
-        <p className="text-gray-600">
-          The Provider shall only be liable for direct, personal, and certain damages suffered by the Client, expressly excluding any indirect damages, including but not limited to loss of profits, loss of customers, loss of data, or damage to brand reputation.
-        </p>
-        <p className="text-gray-600 mt-2">
-          In any event, the total aggregate liability of the Provider, regardless of cause, shall be limited to the amounts actually paid by the Client during the twelve (12) months preceding the event giving rise to the claim.
-        </p>
-        <p className="text-gray-600 mt-2">
-          The Service is provided &quot;as is.&quot; The Provider does not warrant that the Service will operate without interruption or be free from errors.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          13. Force Majeure
-        </h2>
-        <p className="text-gray-600">
-          The Provider shall not be held liable for any failure to perform its contractual obligations resulting from a force majeure event within the meaning of Article 1218 of the French Civil Code, including but not limited to: natural disasters, pandemics, fires, strikes, wars, telecommunications network failures, cyberattacks, government decisions, or any other circumstance beyond the reasonable control of the Provider.
-        </p>
-        <p className="text-gray-600 mt-2">
-          In the event of a force majeure lasting more than three (3) months, either party may terminate the contract by operation of law, without compensation.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          14. Data Protection
-        </h2>
-        <p className="text-gray-600">
-          The Provider undertakes to protect personal data in accordance with the General Data Protection Regulation (GDPR) and the French Data Protection Act (Loi Informatique et Libert&eacute;s). For more information on the collection, processing, and storage of your data, please refer to our{' '}
-          <Link href="/politique-confidentialite" className="text-indigo-600 hover:text-indigo-800 underline">
-            Privacy Policy
-          </Link>.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          15. Merchant Referral Program
-        </h2>
-        <p className="text-gray-600">
-          Qarte offers a referral program enabling any Client with an active subscription (monthly or annual) to recommend the Service to other merchants.
-        </p>
-        <p className="text-gray-600 font-medium mt-3">Conditions:</p>
-        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-2">
-          <li>When a referred merchant subscribes to a paid plan, the referring Client receives a credit of 10&#8364; excl. tax, automatically applied to their next invoice.</li>
-          <li>This credit is limited to one (1) rewarded referral per calendar month.</li>
-          <li>The credit is not convertible to cash and cannot be refunded.</li>
-        </ul>
-        <p className="text-gray-600 font-medium mt-3">Annual subscription:</p>
-        <p className="text-gray-600 mt-1">
-          For Clients holding an annual subscription, referral credits accumulate on the client balance and are automatically deducted upon subscription renewal.
-        </p>
-        <p className="text-gray-600 mt-3">
-          The Provider reserves the right to modify or suspend the referral program at any time, subject to notifying Clients. Credits already earned shall remain valid.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          16. Mediation and Dispute Resolution
-        </h2>
-        <p className="text-gray-600">
-          In the event of a dispute, the Client is invited to send a written complaint to the Provider by email at{' '}
-          <a href="mailto:contact@getqarte.com" className="text-indigo-600 hover:text-indigo-800 underline">
-            contact@getqarte.com
-          </a>.
-        </p>
-        <p className="text-gray-600 mt-2">
-          In accordance with Articles L611-1 et seq. of the French Consumer Code, the Client may refer the matter to a consumer mediator or any other alternative dispute resolution mechanism for amicable settlement.
-        </p>
-        <p className="text-gray-600 mt-2">
-          The Client may also use the European Online Dispute Resolution platform:{' '}
-          <a href="https://ec.europa.eu/consumers/odr/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 underline">
-            https://ec.europa.eu/consumers/odr/
-          </a>
-        </p>
-        <p className="text-gray-600 mt-2">
-          Failing amicable resolution, the dispute shall be submitted to the competent courts under the applicable rules of jurisdiction.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          17. Governing Law and Jurisdiction
-        </h2>
-        <p className="text-gray-600">
-          These Terms shall be governed by and construed in accordance with the laws of France. Failing amicable resolution within sixty (60) days, any dispute shall be submitted to the competent courts within the jurisdiction of the Provider&apos;s registered office.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          18. General Provisions
-        </h2>
-        <p className="text-gray-600 font-medium">Amendment of Terms:</p>
-        <p className="text-gray-600 mt-1">
-          The Provider reserves the right to amend these Terms at any time, in particular to comply with any legislative or regulatory changes, or to reflect changes to the Service. The Client shall be notified by email of any material change at least thirty (30) days before it takes effect. Continued use of the Service after such date shall constitute acceptance of the revised Terms.
-        </p>
-        <p className="text-gray-600 font-medium mt-3">Assignment:</p>
-        <p className="text-gray-600 mt-1">
-          The Client may not assign or transfer their rights and obligations under these Terms to any third party without the prior written consent of the Provider.
-        </p>
-        <p className="text-gray-600 font-medium mt-3">Electronic communications:</p>
-        <p className="text-gray-600 mt-1">
-          The Client agrees to receive communications relating to the Service (notifications, invoices, information about Service updates) electronically at the email address provided upon registration.
-        </p>
-        <p className="text-gray-600 font-medium mt-3">Severability:</p>
-        <p className="text-gray-600 mt-1">
-          If any provision of these Terms is held to be invalid or unenforceable, the remaining provisions shall continue in full force and effect.
-        </p>
-        <p className="text-gray-600 font-medium mt-3">No waiver:</p>
-        <p className="text-gray-600 mt-1">
-          The failure of the Provider to exercise any right or provision of these Terms shall not constitute a waiver of such right or provision, unless expressly agreed in writing.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          19. Contact
-        </h2>
-        <p className="text-gray-600">
-          For any questions regarding these Terms, please contact us at{' '}
-          <a href="mailto:contact@getqarte.com" className="text-indigo-600 hover:text-indigo-800 underline">
-            contact@getqarte.com
-          </a>.
-        </p>
-      </section>
-    </div>
-  );
-}
 
 export default async function CGVPage() {
   const t = await getTranslations();
-  const locale = await getLocale();
 
   return (
     <NoRightClick>
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-100">
         <div className="flex items-center justify-between px-4 py-4 mx-auto max-w-4xl">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
-              <CreditCard className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">Qarte</span>
+          <Link href="/" className="text-2xl font-extrabold tracking-tight text-indigo-600">
+            Qarte
           </Link>
-          <Link href="/" className="text-gray-600 hover:text-primary">
+          <Link href="/" className="text-gray-600 hover:text-indigo-600 transition-colors">
             <ArrowLeft className="w-5 h-5 inline mr-1" />
             {t('legalCommon.back')}
           </Link>
@@ -678,14 +366,14 @@ export default async function CGVPage() {
       </header>
 
       <main className="px-4 py-12 mx-auto max-w-4xl">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
           {t('cgv.title')}
         </h1>
         <p className="text-gray-500 mb-10">
-          {t('legalCommon.lastUpdate', { date: locale === 'fr' ? 'Mars 2026' : 'March 2026' })}
+          {t('legalCommon.lastUpdate', { date: 'Avril 2026' })}
         </p>
 
-        {locale === 'en' ? <CGVContentEN /> : <CGVContentFR />}
+        <CGVContentFR />
       </main>
     </div>
     </NoRightClick>

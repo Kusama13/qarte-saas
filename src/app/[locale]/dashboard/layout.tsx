@@ -170,7 +170,7 @@ function DashboardLayoutContent({
               aria-label="Qarte"
               className="active:scale-95 transition-transform touch-manipulation"
             >
-              <span className="text-lg font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 leading-none">
+              <span className="text-lg font-extrabold tracking-tight text-indigo-600 leading-none">
                 Qarte
               </span>
             </Link>
@@ -204,7 +204,7 @@ function DashboardLayoutContent({
           <div className="flex items-center justify-between px-5 py-4 lg:px-6 lg:py-5 border-b border-gray-100/50 bg-white/40 backdrop-blur-md sticky top-0 z-10">
             <Link href="/dashboard" onClick={() => setSidebarOpen(false)} className="flex items-center group touch-manipulation">
               <div className="flex flex-col">
-                <span className="text-2xl lg:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 leading-none">
+                <span className="text-2xl lg:text-3xl font-extrabold tracking-tight text-indigo-600 leading-none">
                   Qarte
                 </span>
                 <span className="text-[10px] font-semibold text-gray-400 tracking-wider uppercase leading-none mt-1">

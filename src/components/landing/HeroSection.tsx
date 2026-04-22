@@ -3,7 +3,6 @@
 import {
   ChevronDown,
   CalendarCheck,
-  UserPlus,
   Heart,
   Gift,
   MessageSquare,
@@ -20,63 +19,43 @@ import LandingNav from './LandingNav';
 function LoyaltyCardMockup({ t }: { t: (key: string) => string }) {
   return (
     <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-white shadow-2xl shadow-gray-900/20 flex flex-col">
-      {/* Header salon */}
+      {/* 1. Header salon */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-rose-500 via-pink-500 to-violet-500" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.2),transparent)]" />
-        <div className="relative px-5 pt-8 pb-3 text-white text-center">
-          <div className="w-11 h-11 bg-white/20 backdrop-blur-sm rounded-xl mx-auto mb-1.5 flex items-center justify-center text-base font-bold border border-white/30 shadow-lg shadow-black/10">
+        <div className="relative px-5 pt-8 pb-4 text-white text-center">
+          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl mx-auto mb-2 flex items-center justify-center text-lg font-bold border border-white/30 shadow-lg shadow-black/10">
             E
           </div>
-          <p className="font-bold text-[13px] tracking-tight">Elodie Nails Studio</p>
+          <p className="font-bold text-[14px] tracking-tight">Elodie Nails Studio</p>
+          <p className="text-[10px] font-medium text-white/80 mt-0.5">{t('mockupGreeting')}</p>
         </div>
       </div>
 
-      {/* Greeting */}
-      <div className="px-3.5 pt-2.5 pb-0.5">
-        <p className="text-[12px] font-bold text-gray-800">{t('mockupGreeting')}</p>
-      </div>
-
-      {/* Upcoming booking */}
-      <div className="px-3.5 pt-1.5 pb-1">
-        <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-200/60 rounded-xl p-2.5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-lg flex items-center justify-center flex-shrink-0">
+      {/* 2. Upcoming booking */}
+      <div className="px-4 pt-3 pb-1.5">
+        <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-200/60 rounded-xl p-3 shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-lg flex items-center justify-center flex-shrink-0">
               <CalendarCheck className="w-4 h-4 text-white" strokeWidth={2.5} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[8px] font-bold text-gray-400 uppercase tracking-wider">{t('mockupNextBooking')}</p>
-              <p className="text-[11px] font-extrabold text-gray-900">{t('mockupBookingDate')}</p>
-              <p className="text-[9px] text-indigo-600 font-semibold">{t('mockupBookingService')}</p>
+              <p className="text-[12px] font-extrabold text-gray-900 leading-tight">{t('mockupBookingDate')}</p>
+              <p className="text-[10px] text-indigo-600 font-semibold">{t('mockupBookingService')}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Referral */}
-      <div className="px-3.5 pt-1 pb-1">
-        <div className="bg-gradient-to-r from-violet-50 to-pink-50 border border-violet-200/60 rounded-xl p-2.5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
-              <UserPlus className="w-4 h-4 text-white" strokeWidth={2.5} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-extrabold text-gray-900">{t('mockupReferralTitle')}</p>
-              <p className="text-[8px] text-violet-600 font-semibold">{t('mockupReferralSub')}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Points section */}
-      <div className="px-3.5 pt-2 pb-1.5">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">{t('mockupMyLoyalty')}</span>
-          <span className="text-[10px] font-extrabold text-rose-500">7/10</span>
+      {/* 3. Points section (hero feature) */}
+      <div className="px-4 pt-3 pb-2 flex-1">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('mockupMyLoyalty')}</span>
+          <span className="text-sm font-extrabold text-rose-500">7/10</span>
         </div>
 
-        {/* Stamp grid - 2 rows of 5 */}
-        <div className="grid grid-cols-5 gap-1.5">
+        <div className="grid grid-cols-5 gap-1.5 mb-2">
           {[...Array(10)].map((_, i) => (
             <div key={i}>
               <div className={`aspect-square rounded-lg flex items-center justify-center ${
@@ -85,46 +64,31 @@ function LoyaltyCardMockup({ t }: { t: (key: string) => string }) {
                   : 'bg-gray-50 border-2 border-dashed border-gray-200'
               }`}>
                 {i < 7 ? (
-                  <Heart className="w-2.5 h-2.5 text-white fill-white" strokeWidth={2.5} />
+                  <Heart className="w-3 h-3 text-white fill-white" strokeWidth={2.5} />
                 ) : (
-                  <span className="text-[8px] font-bold text-gray-300">{i + 1}</span>
+                  <span className="text-[9px] font-bold text-gray-300">{i + 1}</span>
                 )}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Progress bar */}
-        <div className="mt-2 h-1 bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
           <div className="h-full w-[70%] bg-gradient-to-r from-rose-400 to-pink-500 rounded-full" />
         </div>
       </div>
 
-      {/* Reward card */}
-      <div className="px-3.5 py-1.5">
-        <div className="bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200/60 rounded-xl p-2.5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-rose-400 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
+      {/* 4. Reward card */}
+      <div className="px-4 pb-4">
+        <div className="bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200/60 rounded-xl p-3 shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-gradient-to-br from-rose-400 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
               <Gift className="w-4 h-4 text-white" strokeWidth={2.5} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-extrabold text-gray-900">{t('mockupReward')}</p>
-              <p className="text-[8px] text-rose-600 font-bold">{t('mockupVisitsLeft')}</p>
+              <p className="text-[12px] font-extrabold text-gray-900 leading-tight">{t('mockupReward')}</p>
+              <p className="text-[10px] text-rose-600 font-bold">{t('mockupVisitsLeft')}</p>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent visit — single line */}
-      <div className="px-3.5 pt-1.5 pb-3">
-        <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t('mockupHistory')}</p>
-        <div className="flex items-center gap-2 p-2 bg-gray-50/80 rounded-xl">
-          <div className="flex-1 min-w-0">
-            <p className="text-[9px] font-semibold text-gray-700 truncate">{t('mockupVisit1')}</p>
-            <p className="text-[7px] text-gray-400">{t('mockupToday')}</p>
-          </div>
-          <div className="flex items-center px-1.5 py-0.5 bg-emerald-50 rounded-full">
-            <span className="text-[8px] font-extrabold text-emerald-600">+1</span>
           </div>
         </div>
       </div>

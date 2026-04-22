@@ -79,7 +79,7 @@ function MerchantLoginContent() {
       <div className="max-w-md w-full mx-4 z-10">
         {/* Logo */}
         <div className="text-center mb-10">
-          <Link href="/" className="inline-block text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
+          <Link href="/" className="inline-block text-4xl font-extrabold tracking-tight text-indigo-600">
             Qarte
           </Link>
         </div>

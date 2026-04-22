@@ -99,7 +99,7 @@ export default async function InspirationPage({ params }: { params: Promise<{ lo
         <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-4 leading-tight">
           {t('heading1')}
           <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
+          <span className="text-indigo-600">
             {t('heading2')}
           </span>
         </h1>
