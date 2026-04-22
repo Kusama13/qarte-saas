@@ -6,8 +6,20 @@ import ProgrammeView from './ProgrammeView';
 import { SHOP_TYPES } from '@/types';
 import type { Metadata } from 'next';
 import { isDemoSlug, getDemoMerchantData } from '@/lib/demo-merchants';
-import { getTodayForCountry } from '@/lib/utils';
+import { getTodayForCountry, extractCityFromAddress } from '@/lib/utils';
 import DemoNav from './DemoNav';
+
+// SEO-optimised, terser shop labels for the title tag (no slashes, no compound forms).
+const SHOP_TYPES_SEO: Record<string, string> = {
+  coiffeur: 'Salon de coiffure',
+  barbier: 'Barbier',
+  institut_beaute: 'Institut de beauté',
+  onglerie: 'Onglerie',
+  spa: 'Spa',
+  estheticienne: 'Esthéticienne',
+  tatouage: 'Salon de tatouage',
+  autre: 'Salon de beauté',
+};
 
 import { cache } from 'react';
 
@@ -117,22 +129,28 @@ export async function generateMetadata({
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
   const { merchant, photos, services } = result;
-  const shopLabel = SHOP_TYPES[merchant.shop_type as keyof typeof SHOP_TYPES] || '';
-  const location = merchant.shop_address ? ` à ${merchant.shop_address}` : '';
+  const shopLabelSeo = SHOP_TYPES_SEO[merchant.shop_type] || SHOP_TYPES[merchant.shop_type as keyof typeof SHOP_TYPES] || 'Salon de beauté';
+  const city = extractCityFromAddress(merchant.shop_address);
 
   const isEN = locale === 'en';
-  const title = isEN
-    ? `${merchant.shop_name} — ${shopLabel || 'Salon'}${merchant.shop_address ? ` in ${merchant.shop_address}` : ''}`
-    : `${merchant.shop_name} — ${shopLabel || 'Salon'}${location}`;
 
-  // Build a richer description with top services
+  // Title — keyword-first, brand at the end. Local pack ranking favours this pattern.
+  // FR: "Institut de beauté à Paris 9 — Studio Margot"
+  // EN: "Beauty salon in Paris 9 — Studio Margot"
+  const title = isEN
+    ? `${shopLabelSeo}${city ? ` in ${city}` : ''} — ${merchant.shop_name}`
+    : `${shopLabelSeo}${city ? ` à ${city}` : ''} — ${merchant.shop_name}`;
+
+  // Meta description — keyword + booking CTA + loyalty mention. Target ~150 chars.
+  // FR: "Institut de beauté à Paris 9, Studio Margot. Réservation en ligne 24h/24, soin visage, massage. Programme de fidélité."
   const topServices = services.slice(0, 3).map((s: { name: string }) => s.name).join(', ');
   const bookingHint = merchant.auto_booking_enabled
     ? (isEN ? 'Book online 24/7.' : 'Réservation en ligne 24h/24.')
     : '';
+  const loyaltyHint = isEN ? 'Loyalty program included.' : 'Programme de fidélité.';
   const description = isEN
-    ? `${merchant.shop_name}${merchant.shop_address ? ` in ${merchant.shop_address}` : ''}. ${topServices ? `Services: ${topServices}. ` : ''}${bookingHint} Schedule, photos and loyalty program.`
-    : `${merchant.shop_name}${location}. ${shopLabel}${topServices ? ` — ${topServices}.` : '.'} ${bookingHint} Horaires, photos et programme de fidélité.`;
+    ? `${shopLabelSeo}${city ? ` in ${city}` : ''}, ${merchant.shop_name}. ${bookingHint}${topServices ? ` ${topServices}.` : ''} ${loyaltyHint}`.replace(/\s+/g, ' ').trim()
+    : `${shopLabelSeo}${city ? ` à ${city}` : ''}, ${merchant.shop_name}. ${bookingHint}${topServices ? ` ${topServices}.` : ''} ${loyaltyHint}`.replace(/\s+/g, ' ').trim();
 
   return {
     title,

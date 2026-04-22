@@ -43,6 +43,17 @@ export function getCurrencyForCountry(country?: string): string {
   return COUNTRY_CURRENCY[country as MerchantCountry] || 'EUR';
 }
 
+/** Extract the city from a free-text address.
+ *  shop_address is unstructured (e.g. "12 rue de la Paix, 75002 Paris", "Paris 15", "1050 Bruxelles").
+ *  We take the last comma-separated chunk and strip a leading 4-5 digit postal code.
+ *  Keeps arrondissement suffix ("Paris 9") since it's more specific for local SEO. */
+export function extractCityFromAddress(address?: string | null): string | null {
+  if (!address) return null;
+  const lastChunk = address.split(',').pop()?.trim() ?? '';
+  const city = lastChunk.replace(/^\s*\d{4,5}\s+/, '').trim();
+  return city || null;
+}
+
 /** Currency symbol for display. */
 export function getCurrencySymbol(country?: string): string {
   const currency = getCurrencyForCountry(country);

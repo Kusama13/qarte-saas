@@ -10,7 +10,7 @@ import SimulatedCard from './SimulatedCard';
 import BookingModal from './BookingModal';
 import { useInView } from '@/hooks/useInView';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
-import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency, detectBookingPlatform, displayPhoneWithFlag, getTrialStatus } from '@/lib/utils';
+import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency, detectBookingPlatform, displayPhoneWithFlag, getTrialStatus, getCurrencyForCountry, extractCityFromAddress } from '@/lib/utils';
 import { trackCtaClick } from '@/lib/analytics';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
@@ -1248,10 +1248,15 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             })(),
             name: merchant.shop_name,
             ...(merchant.shop_address && {
-              address: {
-                '@type': 'PostalAddress',
-                streetAddress: merchant.shop_address,
-              },
+              address: (() => {
+                const city = extractCityFromAddress(merchant.shop_address);
+                return {
+                  '@type': 'PostalAddress',
+                  streetAddress: merchant.shop_address,
+                  ...(city && { addressLocality: city }),
+                  ...(merchant.country && { addressCountry: merchant.country }),
+                };
+              })(),
             }),
             ...(photos.length > 0 && {
               image: photos.map(ph => ph.url),
@@ -1293,7 +1298,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                   },
                   ...(s.price > 0 && {
                     price: s.price,
-                    priceCurrency: 'EUR',
+                    priceCurrency: getCurrencyForCountry(merchant.country),
                   }),
                 })),
               },
@@ -1312,29 +1317,6 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 },
               },
             }),
-          }),
-        }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'BreadcrumbList',
-            itemListElement: [
-              {
-                '@type': 'ListItem',
-                position: 1,
-                name: 'Qarte',
-                item: 'https://getqarte.com',
-              },
-              {
-                '@type': 'ListItem',
-                position: 2,
-                name: merchant.shop_name,
-                item: `https://getqarte.com/p/${merchant.slug}`,
-              },
-            ],
           }),
         }}
       />
