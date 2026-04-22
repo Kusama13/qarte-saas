@@ -166,13 +166,19 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // ── 2. WELCOME SMS (marketing) — 1er scan H+1 ──
+  // ── 2. WELCOME SMS (transactional — confirmation de creation de compte) ──
+  // Floor 8h local (courtoisie). Fenetre scan H-1 a H-4 pour couvrir les
+  // salons qui ouvrent a 8-9h (scan 8h verra son welcome a 9h, scan 7h30
+  // non couvert car le premier cron legal est a 8h, acceptable).
+  // Dedup via hasSmsLog empeche les doublons.
   for (const m of activeMerchants) {
     if (Date.now() - startedAt > 270_000) break;
     if (!m.welcome_sms_enabled) continue;
-    if (!isLegalSendTime(now, m.country || 'FR').ok) continue;
 
-    const minAgo = new Date(now.getTime() - 120 * 60 * 1000).toISOString();
+    const tz = getTimezoneForCountry(m.country || 'FR');
+    if (localHourFor(now, tz) < 8) continue;
+
+    const minAgo = new Date(now.getTime() - 240 * 60 * 1000).toISOString();
     const maxAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
 
     const { data: cards } = await supabase
@@ -211,7 +217,13 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // ── 3. REVIEW REQUEST SMS (marketing) — post-visite H+2 ──
+  // ── 3. REVIEW REQUEST SMS (marketing) — post-recompense H+2 ──
+  // Trigger : quand un client vient de recuperer sa recompense (palier 1 ou 2).
+  // Moment "peak happiness" = meilleur taux de conversion avis Google.
+  // Marketing → plancher legal 10h (isLegalSendTime). Fenetre [120, 300] min
+  // pour couvrir les redemptions du matin qui tombent avant 10h.
+  // Dedup LIFETIME par phone+merchant — un client ne recoit le SMS review
+  // qu'une seule fois dans sa vie chez ce merchant.
   for (const m of activeMerchants) {
     if (Date.now() - startedAt > 285_000) break;
     if (!m.post_visit_review_enabled) continue;
@@ -219,27 +231,25 @@ export async function GET(request: NextRequest) {
     if (!reviewLink) continue;
     if (!isLegalSendTime(now, m.country || 'FR').ok) continue;
 
-    const minAgo = new Date(now.getTime() - 180 * 60 * 1000).toISOString();
+    const minAgo = new Date(now.getTime() - 300 * 60 * 1000).toISOString();
     const maxAgo = new Date(now.getTime() - 120 * 60 * 1000).toISOString();
 
-    const { data: visits } = await supabase
-      .from('visits')
-      .select('id, customer_id, visited_at, customers(first_name, phone_number)')
+    const { data: redemptions } = await supabase
+      .from('redemptions')
+      .select('id, customer_id, redeemed_at, tier, customers(first_name, phone_number)')
       .eq('merchant_id', m.id)
-      .gte('visited_at', minAgo)
-      .lt('visited_at', maxAgo);
+      .gte('redeemed_at', minAgo)
+      .lt('redeemed_at', maxAgo);
 
-    if (!visits || visits.length === 0) continue;
+    if (!redemptions || redemptions.length === 0) continue;
     const optOuts = await fetchOptedOutPhones(supabase, m.id);
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
 
-    for (const v of visits) {
-      const customer = getEmbeddedCustomer(v);
+    for (const r of redemptions) {
+      const customer = getEmbeddedCustomer(r);
       const phone = customer?.phone_number;
       if (!phone || optOuts.has(phone)) continue;
 
-      if (await hasSmsLog(supabase, m.id, 'review_request', phone, todayStart.toISOString())) continue;
+      if (await hasSmsLog(supabase, m.id, 'review_request', phone)) continue;
 
       const locale = m.locale || 'fr';
       const first = customer?.first_name ? `${customer.first_name}, ` : '';
@@ -268,7 +278,9 @@ export async function GET(request: NextRequest) {
 
     const tz = getTimezoneForCountry(m.country || 'FR');
     const localHour = localHourFor(now, tz);
-    if (localHour !== 10) continue; // fire once per day at 10h local
+    // Fenetre 10h-11h au lieu de 10h pile : filet de securite si Vercel rate
+    // le run de 10h. Idempotence (events_sms_last_event_id) empeche doublon.
+    if (localHour < 10 || localHour > 11) continue;
 
     // Paris as neutral anchor for event detection (event dates fixed in FR cal).
     const nowParis = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
@@ -337,7 +349,7 @@ export async function GET(request: NextRequest) {
     if (!m.voucher_expiry_sms_enabled) continue;
 
     const tz = getTimezoneForCountry(m.country || 'FR');
-    if (localHourFor(now, tz) !== 10) continue;
+    { const lh = localHourFor(now, tz); if (lh < 10 || lh > 11) continue; }
     if (!isLegalSendTime(now, m.country || 'FR').ok) continue;
 
     const minExpires = new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString();
@@ -391,7 +403,7 @@ export async function GET(request: NextRequest) {
     if (!m.referral_program_enabled) continue;
 
     const tz = getTimezoneForCountry(m.country || 'FR');
-    if (localHourFor(now, tz) !== 10) continue;
+    { const lh = localHourFor(now, tz); if (lh < 10 || lh > 11) continue; }
     if (!isLegalSendTime(now, m.country || 'FR').ok) continue;
 
     const { data: merchantRefs } = await supabase
@@ -473,7 +485,7 @@ export async function GET(request: NextRequest) {
     if (!m.inactive_sms_enabled) continue;
 
     const tz = getTimezoneForCountry(m.country || 'FR');
-    if (localHourFor(now, tz) !== 10) continue;
+    { const lh = localHourFor(now, tz); if (lh < 10 || lh > 11) continue; }
     if (!isLegalSendTime(now, m.country || 'FR').ok) continue;
 
     const maxLookback = new Date(now.getTime() - (INACTIVE_MAX_DAYS + 15) * 24 * 60 * 60 * 1000).toISOString();
@@ -550,7 +562,7 @@ export async function GET(request: NextRequest) {
     if (!m.stamps_required || !m.reward_description) continue;
 
     const tz = getTimezoneForCountry(m.country || 'FR');
-    if (localHourFor(now, tz) !== 10) continue;
+    { const lh = localHourFor(now, tz); if (lh < 10 || lh > 11) continue; }
     if (!isLegalSendTime(now, m.country || 'FR').ok) continue;
 
     const cutoff = new Date(now.getTime() - NEAR_REWARD_MIN_DAYS_SINCE_VISIT * 24 * 60 * 60 * 1000)
@@ -614,17 +626,19 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // ── 9. BIRTHDAY SMS (transactional) — fallback à 10h local ──
-  // Dedup via sms_logs (sendBookingSms check phone+type+merchant même jour).
-  // Le voucher + email + push sont créés par /api/cron/morning-jobs à 7h UTC ; ici on ne gère que le SMS.
+  // ── 9. BIRTHDAY SMS (transactional) — fenetre 10h-11h local ──
+  // Voeu d'anniversaire personnalise + cadeau = transactionnel (client l'attend).
+  // Pas de check isLegalSendTime : on envoie meme dim/jour ferie sinon on rate
+  // ~14% des anniversaires (1 dim/7 + ~11 feries/an). Dedup via sendBookingSms
+  // (phone+type+merchant meme jour). Voucher + email + push crees par
+  // /api/cron/morning-jobs a 7h UTC ; ici uniquement le SMS.
   for (const m of activeMerchants) {
     if (Date.now() - startedAt > 295_000) break;
     if (!m.birthday_gift_enabled) continue;
 
     const tz = getTimezoneForCountry(m.country || 'FR');
     const localHour = localHourFor(now, tz);
-    if (localHour !== 10) continue;
-    if (!isLegalSendTime(now, m.country || 'FR').ok) continue;
+    if (localHour < 10 || localHour > 11) continue;
 
     const todayLocal = localDateFor(now, tz);
     const [, monthStr, dayStr] = todayLocal.split('-');
