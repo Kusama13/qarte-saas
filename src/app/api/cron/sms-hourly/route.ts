@@ -254,8 +254,8 @@ export async function GET(request: NextRequest) {
       const locale = m.locale || 'fr';
       const first = customer?.first_name ? `${customer.first_name}, ` : '';
       const body = locale === 'en'
-        ? `${first}thanks for your visit at ${m.shop_name}! A quick Google review would help a lot: ${reviewLink}. STOP SMS`
-        : `${first}merci pour votre visite chez ${m.shop_name} ! Un avis Google nous aiderait : ${reviewLink}. STOP SMS`;
+        ? `${first}congrats on your reward at ${m.shop_name}! A quick Google review would mean a lot: ${reviewLink}. STOP SMS`
+        : `${first}félicitations pour votre récompense chez ${m.shop_name} ! Votre avis Google ferait la différence : ${reviewLink}. STOP SMS`;
 
       const result = await sendMarketingSms(supabase, {
         merchantId: m.id,
@@ -305,10 +305,23 @@ export async function GET(request: NextRequest) {
     const offerText = m.events_sms_offer_text || '';
     let anySent = false;
 
+    // Dedup par-phone : protege contre un re-run du cron (timeout / crash
+    // mid-loop) avant que events_sms_last_event_id soit persiste. Pre-fetch
+    // les phones deja servis aujourd'hui pour ce type 'campaign'.
+    const todayStartIso = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString(); })();
+    const { data: sentToday } = await supabase
+      .from('sms_logs')
+      .select('phone_to')
+      .eq('merchant_id', m.id)
+      .eq('sms_type', 'campaign')
+      .gte('created_at', todayStartIso);
+    const alreadySentToday = new Set((sentToday || []).map((r: { phone_to: string }) => r.phone_to));
+
     for (const card of cards) {
       const customer = getEmbeddedCustomer(card);
       const phone = customer?.phone_number;
       if (!phone || optOuts.has(phone)) continue;
+      if (alreadySentToday.has(phone)) continue;
 
       const first = customer?.first_name ? `${customer.first_name}, ` : '';
       const intro = locale === 'en'
