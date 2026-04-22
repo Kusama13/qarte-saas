@@ -1163,10 +1163,10 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             <button
               type="button"
               aria-label={t('closeLightbox')}
-              className="absolute top-4 right-4 p-2 text-white/80 hover:text-white transition-colors z-10"
+              className="absolute top-4 right-4 p-3 text-white/80 hover:text-white transition-colors z-10"
               onClick={() => setLightboxIndex(null)}
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
 
             {photos.length > 1 && (
@@ -1174,24 +1174,24 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 <button
                   type="button"
                   aria-label={t('prevPhoto')}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white transition-colors z-10"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 p-3 text-white/60 hover:text-white transition-colors z-10"
                   onClick={(e) => {
                     e.stopPropagation();
                     setLightboxIndex(prev => prev === null ? null : (prev - 1 + photos.length) % photos.length);
                   }}
                 >
-                  <ChevronLeft className="w-8 h-8" />
+                  <ChevronLeft className="w-6 h-6" />
                 </button>
                 <button
                   type="button"
                   aria-label={t('nextPhoto')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white transition-colors z-10"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-3 text-white/60 hover:text-white transition-colors z-10"
                   onClick={(e) => {
                     e.stopPropagation();
                     setLightboxIndex(prev => prev === null ? null : (prev + 1) % photos.length);
                   }}
                 >
-                  <ChevronRight className="w-8 h-8" />
+                  <ChevronRight className="w-6 h-6" />
                 </button>
               </>
             )}

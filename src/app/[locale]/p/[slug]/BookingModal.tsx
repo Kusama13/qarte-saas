@@ -370,7 +370,7 @@ export default function BookingModal({
                               style={selected ? { backgroundColor: `${p}10`, borderColor: p } : undefined}
                             >
                               <div
-                                className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+                                className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-colors ${
                                   selected ? 'border-transparent' : 'border-gray-300'
                                 }`}
                                 style={selected ? { backgroundColor: p } : undefined}
@@ -629,7 +629,7 @@ export default function BookingModal({
                       value={firstName}
                       onChange={e => setFirstName(e.target.value)}
                       placeholder={t('firstNamePlaceholder')}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-sm transition-colors focus:outline-none focus:ring-2 focus:bg-white"
                       style={{ '--tw-ring-color': `${p}40` } as React.CSSProperties}
                       maxLength={100}
                     />
@@ -641,7 +641,7 @@ export default function BookingModal({
                       value={lastName}
                       onChange={e => setLastName(e.target.value)}
                       placeholder={t('lastNamePlaceholder')}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-sm transition-colors focus:outline-none focus:ring-2 focus:bg-white"
                       style={{ '--tw-ring-color': `${p}40` } as React.CSSProperties}
                       maxLength={100}
                     />
@@ -654,14 +654,14 @@ export default function BookingModal({
                       country={phoneCountry}
                       onCountryChange={setPhoneCountry}
                       countries={['FR', 'BE', 'CH']}
-                      className="px-4 py-2.5 text-sm border-gray-200 rounded-r-xl"
+                      className="px-4 py-2.5 text-sm border-transparent bg-gray-50 rounded-r-xl"
                     />
                   </div>
                 </div>
 
                 {/* Member benefit banner */}
                 {memberBenefit && (
-                  <div className="px-3 py-3 rounded-xl bg-indigo-50 border border-indigo-100 mb-4">
+                  <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-100 mb-4">
                     <div className="flex items-start gap-2.5">
                       <Crown className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
                       <div className="text-[12px] text-indigo-800 leading-relaxed">
