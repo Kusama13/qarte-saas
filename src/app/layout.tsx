@@ -1,12 +1,11 @@
 import type { Metadata, Viewport } from 'next';
-import { Plus_Jakarta_Sans, Playfair_Display, Poppins } from 'next/font/google';
+import { Figtree, Bodoni_Moda } from 'next/font/google';
 import { getLocale, getTranslations } from 'next-intl/server';
 import './globals.css';
 import { Analytics } from '@vercel/analytics/react';
 
-const plusJakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-inter' });
-const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
-const poppins = Poppins({ subsets: ['latin'], weight: ['600', '700', '800', '900'], variable: '--font-poppins' });
+const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' });
+const bodoni = Bodoni_Moda({ subsets: ['latin'], style: ['normal', 'italic'], variable: '--font-display' });
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
 
@@ -173,7 +172,7 @@ export default async function RootLayout({
   };
 
   return (
-    <html lang={locale} translate="no" className={`${plusJakarta.variable} ${playfair.variable} ${poppins.variable} notranslate`}>
+    <html lang={locale} translate="no" className={`${figtree.variable} ${bodoni.variable} notranslate`}>
       <head>
         {/* Disable auto-translate (Google Translate sur Chrome Android cause crash React #310 sur mobile) */}
         <meta name="google" content="notranslate" />

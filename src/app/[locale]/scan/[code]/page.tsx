@@ -1041,7 +1041,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     <span className="text-3xl font-black text-white">{merchant.shop_name[0]?.toUpperCase()}</span>
                   </div>
                 )}
-                <h2 className="text-2xl font-black text-gray-900 flex items-center justify-center gap-2" style={{ fontFamily: 'var(--font-poppins), sans-serif' }}>
+                <h2 className="text-2xl font-black text-gray-900 flex items-center justify-center gap-2" style={{ fontFamily: 'var(--font-sans), sans-serif' }}>
                   <Sparkles className="w-5 h-5" style={{ color: primaryColor }} />
                   {t('privileges')}
                   <Sparkles className="w-5 h-5" style={{ color: primaryColor }} />

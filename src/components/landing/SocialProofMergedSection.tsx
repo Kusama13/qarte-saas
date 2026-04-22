@@ -100,13 +100,13 @@ export function SocialProofMergedSection() {
   };
 
   return (
-    <section className="relative py-14 md:py-20 overflow-hidden bg-gray-50/80">
+    <section className="relative py-10 md:py-14 overflow-hidden bg-gray-50/80">
       <div ref={ref} className="relative max-w-6xl mx-auto px-6">
         {/* Single header */}
         <div className={`text-center mb-10 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-3xl md:text-5xl font-bold text-gray-900">
             {t('title')}{' '}
-            <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+            <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
               {t('titleBold')}
               <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
             </span>
@@ -194,7 +194,7 @@ export function SocialProofMergedSection() {
             {/* Hero metric */}
             <div className="shrink-0 flex items-center gap-3 md:flex-col md:items-end md:text-right">
               <div className="flex items-baseline gap-1.5">
-                <span className="text-4xl md:text-5xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-indigo-200">
+                <span className="text-4xl md:text-5xl font-black tracking-tight text-white">
                   +45%
                 </span>
                 <TrendingUp className="w-5 h-5 text-emerald-300" />

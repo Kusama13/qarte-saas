@@ -7,6 +7,7 @@ import {
   Heart,
   Gift,
   MessageSquare,
+  Star,
 } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
@@ -141,14 +142,14 @@ export function HeroSection() {
 
       {/* Animated Background & Particles - Light */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="animate-blob absolute top-20 left-20 w-96 h-96 bg-rose-200/50 rounded-full blur-3xl" />
-        <div className="animate-blob absolute bottom-20 right-20 w-96 h-96 bg-pink-200/50 rounded-full blur-3xl delay-200" style={{ animationDelay: '2s' }} />
-        <div className="animate-blob absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-pink-100/30 rounded-full blur-3xl" style={{ animationDelay: '4s' }} />
+        <div className="motion-safe:animate-blob absolute top-20 left-20 w-96 h-96 bg-rose-200/50 rounded-full blur-3xl" />
+        <div className="motion-safe:animate-blob absolute bottom-20 right-20 w-96 h-96 bg-pink-200/50 rounded-full blur-3xl delay-200" style={{ animationDelay: '2s' }} />
+        <div className="motion-safe:animate-blob absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-pink-100/30 rounded-full blur-3xl" style={{ animationDelay: '4s' }} />
 
         {/* Particles */}
-        <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-rose-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
-        <div className="absolute top-1/3 right-1/3 w-1.5 h-1.5 bg-pink-500 rounded-full animate-pulse delay-700 shadow-[0_0_8px_rgba(236,72,153,0.8)]" />
-        <div className="absolute bottom-1/4 left-1/2 w-1 h-1 bg-rose-400 rounded-full animate-pulse delay-1000 shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
+        <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-rose-500 rounded-full motion-safe:animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
+        <div className="absolute top-1/3 right-1/3 w-1.5 h-1.5 bg-pink-500 rounded-full motion-safe:animate-pulse delay-700 shadow-[0_0_8px_rgba(236,72,153,0.8)]" />
+        <div className="absolute bottom-1/4 left-1/2 w-1 h-1 bg-rose-400 rounded-full motion-safe:animate-pulse delay-1000 shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
       </div>
 
       <div ref={ref} className="relative z-10 max-w-7xl mx-auto px-6 pt-28 lg:pt-36 pb-14 lg:pb-20 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
@@ -158,7 +159,7 @@ export function HeroSection() {
             <div className="absolute -inset-x-20 -inset-y-10 bg-indigo-100/50 blur-[100px] rounded-full pointer-events-none" />
             <h1 className="relative text-[2.5rem] md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
               {t('titlePart1')}{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-violet-500">
+              <span className="text-rose-500">
                 {t('titlePart2')}
               </span>
             </h1>
@@ -167,6 +168,19 @@ export function HeroSection() {
           <p className="text-lg md:text-lg lg:text-xl text-gray-700 max-w-lg mx-auto lg:mx-0 leading-relaxed">
             {t('subtitle')}
           </p>
+
+          {/* Trust row — rating + reviews count */}
+          <div className="flex items-center justify-center lg:justify-start gap-2.5 text-sm">
+            <div className="flex items-center gap-0.5" aria-hidden="true">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" strokeWidth={0} />
+              ))}
+            </div>
+            <span className="font-semibold text-gray-900">{t('badgeGoogleScore')}</span>
+            <span className="text-gray-400">·</span>
+            <span className="text-gray-600">{t('badgeGoogleReviews')}</span>
+          </div>
+
           <div className="flex flex-col items-center lg:items-start gap-3 w-full sm:w-auto">
             <Link
               href="/auth/merchant/signup"
@@ -176,7 +190,7 @@ export function HeroSection() {
               <span className="relative z-10">{t('ctaPrimary')}</span>
               <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
             </Link>
-            <p className="text-[11px] text-gray-400 font-medium text-center">{t('ctaSubtext')}</p>
+            <p className="text-xs text-gray-600 font-medium text-center">{t('ctaSubtext')}</p>
           </div>
 
           {/* Included features badges */}
@@ -205,7 +219,7 @@ export function HeroSection() {
 
                 {/* Floating SMS reminder notification — centered above phone on mobile, sticks out left on desktop */}
                 <div
-                  className="absolute z-20 w-[210px] sm:w-[230px] bg-white rounded-2xl shadow-xl shadow-gray-900/15 border border-gray-100 p-3 animate-float-subtle
+                  className="absolute z-20 w-[210px] sm:w-[230px] bg-white rounded-2xl shadow-xl shadow-gray-900/15 border border-gray-100 p-3 motion-safe:animate-float-subtle
                              -top-12 left-1/2 -translate-x-1/2
                              sm:-top-6 sm:left-auto sm:-right-2 md:-right-4 lg:-left-44 lg:right-auto lg:translate-x-0"
                   style={{ animationDelay: '0.6s' }}
@@ -229,7 +243,7 @@ export function HeroSection() {
       </div>
 
       {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 motion-safe:animate-bounce">
         <ChevronDown className="w-8 h-8 text-gray-400" />
       </div>
     </section>

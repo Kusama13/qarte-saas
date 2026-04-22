@@ -38,7 +38,7 @@ export function FooterDark() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-12">
           {/* Col 1 : Logo + tagline */}
           <div className="md:col-span-1">
-            <Link href="/" className="inline-block text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400 mb-4">
+            <Link href="/" className="inline-block text-3xl font-extrabold tracking-tight text-indigo-300 mb-4">
               Qarte
             </Link>
             <p className="text-gray-400 text-base leading-relaxed">

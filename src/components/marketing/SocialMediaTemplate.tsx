@@ -118,7 +118,7 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
             <h1 className="text-white leading-none"
               style={{
                 fontSize: `${30 * s}px`, maxWidth: `${300 * s}px`,
-                fontFamily: 'var(--font-playfair), Playfair Display, Georgia, serif',
+                fontFamily: 'var(--font-display), Georgia, serif',
                 fontWeight: 700, fontStyle: 'italic',
               }}>
               {shopName}

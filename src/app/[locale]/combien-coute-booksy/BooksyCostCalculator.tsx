@@ -45,7 +45,7 @@ export default function BooksyCostCalculator() {
           </span>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-4">
             Combien te coûte vraiment{' '}
-            <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">
+            <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">
               Booksy
               <span className="absolute -bottom-1 left-0 right-0 h-3 bg-red-100/60 -skew-x-3 rounded-sm -z-10" />
             </span>{' '}
@@ -235,7 +235,7 @@ export default function BooksyCostCalculator() {
         <div className="max-w-3xl mx-auto px-6">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-10 text-center">
             Questions{' '}
-            <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+            <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
               fréquentes
               <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
             </span>

@@ -117,7 +117,7 @@ export function FAQSection() {
         <div className={`text-center mb-10 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             {t('title')}{' '}
-            <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+            <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
               {t('titleBold')}
               <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
             </span>

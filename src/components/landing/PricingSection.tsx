@@ -82,7 +82,7 @@ export function PricingSection() {
         <div className={`text-center mb-10 md:mb-12 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
             {t('title')}{' '}
-            <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+            <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
               {t('titleHighlight')}
               <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
             </span>
@@ -125,7 +125,7 @@ export function PricingSection() {
               <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('fidelityName')}</h3>
               <p className="text-[15px] text-gray-600 leading-snug">
                 {t.rich('fidelityTagline', {
-                  em: (chunks) => <em className="font-[family-name:var(--font-playfair)] italic text-gray-900">{chunks}</em>,
+                  em: (chunks) => <em className="font-[family-name:var(--font-display)] italic text-gray-900">{chunks}</em>,
                 })}
               </p>
             </div>
@@ -158,7 +158,7 @@ export function PricingSection() {
             >
               {t('ctaTrialFidelity')}
             </Link>
-            <p className="text-[11px] text-center text-gray-400 mt-3">{t('trustLine')}</p>
+            <p className="text-xs text-center text-gray-600 mt-3">{t('trustLine')}</p>
           </div>
 
           {/* ── Tout-en-un card (Recommended) ── */}
@@ -174,14 +174,14 @@ export function PricingSection() {
               <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('allInName')}</h3>
               <p className="text-[15px] text-gray-600 leading-snug">
                 {t.rich('allInTagline', {
-                  em: (chunks) => <em className="font-[family-name:var(--font-playfair)] italic text-indigo-600">{chunks}</em>,
+                  em: (chunks) => <em className="font-[family-name:var(--font-display)] italic text-indigo-600">{chunks}</em>,
                 })}
               </p>
             </div>
 
             <div className="mb-5">
               <div className="flex items-baseline gap-1.5">
-                <span className="text-5xl md:text-6xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-indigo-600 to-violet-600">{allInPrice}€</span>
+                <span className="text-5xl md:text-6xl font-extrabold tracking-tighter text-gray-900">{allInPrice}€</span>
                 <span className="text-base font-semibold text-gray-400">{t('perMonth')}</span>
               </div>
               <p className="text-xs text-gray-500 mt-1">
@@ -212,7 +212,7 @@ export function PricingSection() {
             >
               {t('ctaTrialAllIn')}
             </Link>
-            <p className="text-[11px] text-center text-gray-400 mt-3">{t('trustLine')}</p>
+            <p className="text-xs text-center text-gray-600 mt-3">{t('trustLine')}</p>
           </div>
         </div>
 
@@ -221,7 +221,7 @@ export function PricingSection() {
           <div className="text-center mb-8">
             <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
               {t('compareTitle')}{' '}
-              <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+              <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
                 {t('compareTitleHighlight')}
                 <span className="absolute -bottom-1 left-0 right-0 h-2.5 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
               </span>
@@ -232,7 +232,7 @@ export function PricingSection() {
           <div className="bg-white border border-gray-200 rounded-3xl shadow-sm overflow-hidden max-w-4xl mx-auto">
             <div className="grid grid-cols-4 border-b border-gray-100 bg-gray-50/80 text-xs md:text-sm font-semibold">
               <div className="px-3 py-3 md:px-5 md:py-4 text-gray-500" />
-              <div className="px-3 py-3 md:px-5 md:py-4 text-center text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">{t('compareColUs')}</div>
+              <div className="px-3 py-3 md:px-5 md:py-4 text-center text-indigo-600">{t('compareColUs')}</div>
               <div className="px-3 py-3 md:px-5 md:py-4 text-center text-gray-500">{t('compareColPlanity')}</div>
               <div className="px-3 py-3 md:px-5 md:py-4 text-center text-gray-500">{t('compareColBooksy')}</div>
             </div>

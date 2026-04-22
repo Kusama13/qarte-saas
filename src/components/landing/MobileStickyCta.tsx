@@ -14,8 +14,7 @@ export function MobileStickyCta() {
 
   useEffect(() => {
     const handleScroll = () => {
-      // Show after AI reengagement section (approx 2000px)
-      setIsVisible(window.scrollY > 2000);
+      setIsVisible(window.scrollY > 800);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });

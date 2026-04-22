@@ -43,7 +43,7 @@ function FeatureBlock({
       >
         <h3 className="text-2xl md:text-5xl font-bold text-gray-900 leading-tight mb-3 md:mb-5">
           {title}{' '}
-          <span className="font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500 font-extrabold">
+          <span className="font-[family-name:var(--font-display)] italic text-indigo-600 font-extrabold">
             {titleBold}
           </span>
         </h3>
@@ -116,7 +116,7 @@ function ScanMethodsVisual({ t }: { t: (key: string) => string }) {
         </div>
       </div>
 
-      <div className="absolute -top-3 -right-3 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 animate-float-subtle">
+      <div className="absolute -top-3 -right-3 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 motion-safe:animate-float-subtle">
         <span className="text-sm">{'\u2705'}</span>
         <span className="text-xs font-bold text-white">{t('scanBadge')}</span>
       </div>
@@ -191,7 +191,7 @@ function ProgramBrandVisual({ t }: { t: (key: string) => string }) {
         </div>
       </div>
 
-      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-violet-500 rounded-full px-3 py-1.5 shadow-lg shadow-violet-500/30 animate-float-subtle">
+      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-violet-500 rounded-full px-3 py-1.5 shadow-lg shadow-violet-500/30 motion-safe:animate-float-subtle">
         <span className="text-sm">{'\uD83D\uDC9C'}</span>
         <span className="text-xs font-bold text-white">{t('programBadge')}</span>
       </div>
@@ -243,7 +243,7 @@ function InactivityVisual({ t }: { t: (key: string) => string }) {
         ))}
       </div>
 
-      <div className="absolute -bottom-3 right-0 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 animate-float-subtle">
+      <div className="absolute -bottom-3 right-0 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 motion-safe:animate-float-subtle">
         <span className="text-sm">{'\uD83D\uDD14'}</span>
         <span className="text-xs font-bold text-white">{t('inactivityBadge')}</span>
       </div>
@@ -285,7 +285,7 @@ function AutoOffersVisual({ t }: { t: (key: string) => string }) {
         ))}
       </div>
 
-      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 animate-float-subtle">
+      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 motion-safe:animate-float-subtle">
         <span className="text-sm">{'\uD83D\uDC95'}</span>
         <span className="text-xs font-bold text-white">{t('autoBadge')}</span>
       </div>
@@ -347,7 +347,7 @@ function ReviewsVisual({ t }: { t: (key: string) => string }) {
         </motion.div>
       </div>
 
-      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-amber-500 rounded-full px-3 py-1.5 shadow-lg shadow-amber-500/30 animate-float-subtle">
+      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-amber-500 rounded-full px-3 py-1.5 shadow-lg shadow-amber-500/30 motion-safe:animate-float-subtle">
         <span className="text-sm">{'\u2B50'}</span>
         <span className="text-xs font-bold text-white">{t('reviewsBadge')}</span>
       </div>
@@ -424,7 +424,7 @@ function JournalVisual({ t }: { t: (key: string) => string }) {
         </motion.div>
       </div>
 
-      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-indigo-500 rounded-full px-3 py-1.5 shadow-lg shadow-indigo-500/30 animate-float-subtle">
+      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-indigo-500 rounded-full px-3 py-1.5 shadow-lg shadow-indigo-500/30 motion-safe:animate-float-subtle">
         <span className="text-sm">{'\uD83D\uDCCB'}</span>
         <span className="text-xs font-bold text-white">{t('journalBadge')}</span>
       </div>
@@ -490,7 +490,7 @@ function ContestVisual({ t }: { t: (key: string) => string }) {
         </motion.div>
       </div>
 
-      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-amber-500 rounded-full px-3 py-1.5 shadow-lg shadow-amber-500/30 animate-float-subtle">
+      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-amber-500 rounded-full px-3 py-1.5 shadow-lg shadow-amber-500/30 motion-safe:animate-float-subtle">
         <span className="text-sm">{'\uD83C\uDF89'}</span>
         <span className="text-xs font-bold text-white">{t('contestBadge')}</span>
       </div>
@@ -504,7 +504,7 @@ export function FideliteSection() {
   const t = useTranslations('fidelite');
 
   return (
-    <section className="relative py-14 md:py-20 bg-white overflow-hidden">
+    <section className="relative py-16 md:py-28 bg-white overflow-hidden">
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-100/40 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-violet-100/30 rounded-full blur-[120px] pointer-events-none" />
       {/* Subtle grain */}
@@ -523,7 +523,7 @@ export function FideliteSection() {
           </p>}
           <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-2 md:mb-4">
             {t('title')}{' '}
-            <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+            <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
               {t('titleBold')}
               <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
             </span>

@@ -127,7 +127,7 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
           <div className={`text-center mb-12 md:mb-16 ${tableInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
               {t('tableTitle')}{' '}
-              <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+              <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
                 {t('tableSubtitle')}
                 <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
               </span>
@@ -226,7 +226,7 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
           <div className={`text-center mb-12 md:mb-16 ${whyInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
               {t('whyTitle')}{' '}
-              <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+              <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
                 {t('whyTitleBold')}
                 <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
               </span>
@@ -284,7 +284,7 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
           <div className={`text-center ${pricingInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
               {t('pricingTitle')}{' '}
-              <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+              <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
                 {t('pricingTitleBold')}
                 <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
               </span>
@@ -327,7 +327,7 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
             <div className="text-center mb-10">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
                 {t('altMigrationTitle', { competitor: competitorName })}{' '}
-                <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+                <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
                   {t('altMigrationTitleBold')}
                   <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
                 </span>
@@ -357,7 +357,7 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
           <div className={`text-center mb-12 md:mb-16 ${faqInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
               {t('faqTitle')}{' '}
-              <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+              <span className="relative font-[family-name:var(--font-display)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
                 {t('faqTitleBold')}
                 <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
               </span>

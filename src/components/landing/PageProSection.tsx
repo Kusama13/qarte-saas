@@ -39,7 +39,7 @@ function FeatureBlock({
       >
         <h3 className="text-2xl md:text-5xl font-bold text-white leading-tight mb-3 md:mb-5">
           {title}{' '}
-          <span className="font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400 font-extrabold">
+          <span className="font-[family-name:var(--font-display)] italic text-indigo-300 font-extrabold">
             {titleBold}
           </span>
         </h3>
@@ -108,7 +108,7 @@ function PlanningVisual({ t, locale }: { t: (key: string) => string; locale: str
         </div>
       </div>
 
-      <div className="absolute -top-3 -right-3 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 animate-float-subtle">
+      <div className="absolute -top-3 -right-3 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 motion-safe:animate-float-subtle">
         <span className="text-sm">{'\u2705'}</span>
         <span className="text-xs font-bold text-white">{t('planningBadge')}</span>
       </div>
@@ -142,7 +142,7 @@ function PrestationsVisual({ t, locale }: { t: (key: string) => string; locale: 
         ))}
       </div>
 
-      <div className="absolute -top-3 -right-3 flex items-center gap-1.5 bg-rose-500 rounded-full px-3 py-1.5 shadow-lg shadow-rose-500/30 animate-float-subtle">
+      <div className="absolute -top-3 -right-3 flex items-center gap-1.5 bg-rose-500 rounded-full px-3 py-1.5 shadow-lg shadow-rose-500/30 motion-safe:animate-float-subtle">
         <span className="text-sm">{'\u2702\uFE0F'}</span>
         <span className="text-xs font-bold text-white">{t('servicesBadge')}</span>
       </div>
@@ -176,7 +176,7 @@ function AcompteVisual({ t }: { t: (key: string) => string }) {
         </motion.div>
       </div>
 
-      <div className="absolute -top-3 -right-3 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 animate-float-subtle">
+      <div className="absolute -top-3 -right-3 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 motion-safe:animate-float-subtle">
         <span className="text-sm">{'\uD83D\uDCB8'}</span>
         <span className="text-xs font-bold text-white">{t('acompteBadge')}</span>
       </div>
@@ -191,7 +191,7 @@ export function PageProSection() {
   const locale = useLocale();
 
   return (
-    <section className="relative py-14 md:py-20 bg-gray-950 overflow-hidden">
+    <section className="relative py-16 md:py-28 bg-gray-950 overflow-hidden">
       {/* Ambient glow */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-indigo-600/15 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-violet-600/10 rounded-full blur-[120px] pointer-events-none" />
@@ -217,7 +217,7 @@ export function PageProSection() {
           </p>}
           <h2 className="text-3xl md:text-5xl font-bold text-white">
             {t('title')}{' '}
-            <span className="font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">
+            <span className="font-[family-name:var(--font-display)] italic text-indigo-300">
               {t('titleBold')}
             </span>
           </h2>

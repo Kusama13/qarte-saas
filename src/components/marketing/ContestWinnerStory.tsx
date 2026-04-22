@@ -107,7 +107,7 @@ export const ContestWinnerStory = forwardRef<HTMLDivElement, ContestWinnerStoryP
           <h1 className="text-white text-center leading-none"
             style={{
               fontSize: `${28 * s}px`, maxWidth: `${320 * s}px`,
-              fontFamily: 'var(--font-playfair), Playfair Display, Georgia, serif',
+              fontFamily: 'var(--font-display), Georgia, serif',
               fontWeight: 700, fontStyle: 'italic',
               textShadow: `0 ${2 * s}px ${12 * s}px rgba(0,0,0,0.3)`,
               marginBottom: `${6 * s}px`,
@@ -161,7 +161,7 @@ export const ContestWinnerStory = forwardRef<HTMLDivElement, ContestWinnerStoryP
             {/* Winner name — big hero */}
             <p className="text-white" style={{
               fontSize: `${34 * s}px`, fontWeight: 800,
-              fontFamily: 'var(--font-playfair), Playfair Display, Georgia, serif',
+              fontFamily: 'var(--font-display), Georgia, serif',
               fontStyle: 'italic',
               lineHeight: 1.1,
               textShadow: `0 ${1 * s}px ${4 * s}px rgba(0,0,0,0.2)`,

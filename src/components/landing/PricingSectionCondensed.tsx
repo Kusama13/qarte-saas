@@ -8,13 +8,6 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { Star, ArrowRight, Check } from 'lucide-react';
 
-/**
- * Condensed pricing section for the landing page.
- * Typography aligned with bento sections (FideliteSection / PageProSection):
- *  - h2 title with Playfair italic accent
- *  - Card titles use the same scale as bento h3 (text-2xl md:text-3xl)
- *  - Body text matches bento content (text-base md:text-lg)
- */
 export function PricingSectionCondensed() {
   const { ref, isInView } = useInView();
   const t = useTranslations('pricing');
@@ -26,7 +19,7 @@ export function PricingSectionCondensed() {
         <div className={`text-center mb-12 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             {t('title')}{' '}
-            <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+            <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
               {t('titleHighlight')}
               <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
             </span>
@@ -43,7 +36,7 @@ export function PricingSectionCondensed() {
           <div className="relative bg-white border border-gray-200 rounded-3xl p-6 md:p-7 flex flex-col shadow-sm">
             <div className="mb-4">
               <h3 className="text-2xl md:text-2xl font-bold text-gray-900 mb-1">
-                <span className="font-[family-name:var(--font-playfair)] italic font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+                <span className="font-[family-name:var(--font-display)] italic font-extrabold text-indigo-600">
                   {t('fidelityName')}
                 </span>
               </h3>
@@ -87,7 +80,7 @@ export function PricingSectionCondensed() {
 
             <div className="mb-4">
               <h3 className="text-2xl md:text-2xl font-bold text-gray-900 mb-1">
-                <span className="font-[family-name:var(--font-playfair)] italic font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+                <span className="font-[family-name:var(--font-display)] italic font-extrabold text-indigo-600">
                   {t('allInName')}
                 </span>
               </h3>
@@ -95,7 +88,7 @@ export function PricingSectionCondensed() {
             </div>
 
             <div className="mb-1 flex items-baseline gap-1">
-              <span className="text-4xl md:text-5xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-indigo-600 to-violet-600 tabular-nums">24€</span>
+              <span className="text-4xl md:text-5xl font-extrabold tracking-tighter text-gray-900 tabular-nums">24€</span>
               <span className="text-sm font-semibold text-gray-400">{t('perMonth')}</span>
             </div>
             <p className="text-xs text-gray-400 mb-5">{t('condensedAllInAnnual')}</p>
@@ -128,7 +121,7 @@ export function PricingSectionCondensed() {
         </div>
 
         {/* Trust line */}
-        <p className={`text-xs md:text-sm text-center text-gray-400 mb-5 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.2s' }}>
+        <p className={`text-sm text-center text-gray-600 mb-5 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.2s' }}>
           {t('trustLine')}
         </p>
 

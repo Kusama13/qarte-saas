@@ -38,7 +38,7 @@ export default function LandingNav({ minimal = false }: LandingNavProps) {
       {/* Fixed Navbar - Light */}
       <nav className="fixed top-[36px] left-0 right-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
+          <Link href="/" className="text-4xl font-extrabold tracking-tight text-indigo-600">
             Qarte
           </Link>
 

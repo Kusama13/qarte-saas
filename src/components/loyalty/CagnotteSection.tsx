@@ -149,7 +149,7 @@ export default function CagnotteSection({
             })}
           </div>
 
-          <p className={`text-center text-sm font-medium italic ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-800' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}>
+          <p className={`text-center text-sm font-medium italic ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-800' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-display), Georgia, serif' }}>
             {rewardDescription || t('defaultReward')}
           </p>
         </div>
@@ -211,7 +211,7 @@ export default function CagnotteSection({
             })}
           </div>
 
-          <p className={`text-center text-sm font-medium italic ${isTier2Ready ? 'text-violet-800' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}>
+          <p className={`text-center text-sm font-medium italic ${isTier2Ready ? 'text-violet-800' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-display), Georgia, serif' }}>
             {tier2RewardDescription || t('defaultTier2Reward')}
           </p>
         </div>
@@ -273,7 +273,7 @@ export default function CagnotteSection({
         })}
       </div>
 
-      <p className={`text-center text-sm font-medium italic ${isRewardReady ? 'text-emerald-700' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}>
+      <p className={`text-center text-sm font-medium italic ${isRewardReady ? 'text-emerald-700' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-display), Georgia, serif' }}>
         {rewardDescription || t('defaultReward')}
       </p>
     </div>
