@@ -136,8 +136,13 @@ export async function GET(request: NextRequest) {
         const slotStartUtc = new Date(slotStart.getTime() - offsetMs);
         const minutesUntil = minutesBetween(slotStartUtc, now);
 
-        // Window: [120, 210] minutes = 2h → 3h30 before start → roughly H-3
-        if (minutesUntil < 120 || minutesUntil > 210) continue;
+        // Window: [30, 210] min before slot start.
+        // Combined with localHour >= 7 above, this means: fire at the first legal
+        // cron run after 7h that's <= 3h30 before the slot. So a 8h slot gets its
+        // SMS at 7h (60 min before) — best we can do given the 7h legal floor —
+        // while a 14h slot gets it at 11h (180 min before, H-3 ideal).
+        // Dedup on slot_id in sendBookingSms guarantees 1 SMS per slot.
+        if (minutesUntil < 30 || minutesUntil > 210) continue;
 
         const sent = await sendBookingSms(supabase, {
           merchantId: m.id,
