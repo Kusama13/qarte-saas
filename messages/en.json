@@ -387,7 +387,7 @@
   "featuresGrid": {
     "title": "Everything you need to",
     "titleHighlight": "fill your salon.",
-    "subtitle": "Qarte is an all-in-one tool for beauty salons, institutes, nail bars and barbershops. You get online booking with 0% commission, a digital loyalty program (stamps or cashback) and an online salon page visible on Google. Every client who books automatically receives their loyalty card.",
+    "subtitle": "Online booking, digital loyalty program, and a salon page visible on Google. Every client who books gets their loyalty card automatically.",
     "bookingTitle": "Your link for your bio.",
     "bookingDesc": "Replaces Insta DMs. Your clients click your link and book in 30 seconds.",
     "remindersTitle": "0% commission on deposits.",
@@ -1576,6 +1576,8 @@
     "svcAdd": "Add",
     "svcNoneInCat": "No services in this category",
     "svcOther": "Other",
+    "svcCatMoveUp": "Move category up",
+    "svcCatMoveDown": "Move category down",
     "svcNone": "No services",
     "svcNoneHint": "Add your services and prices below",
     "svcAddTitle": "Add a service",

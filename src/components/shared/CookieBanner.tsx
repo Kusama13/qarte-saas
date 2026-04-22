@@ -11,8 +11,9 @@ export default function CookieBanner() {
   const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
 
-  // No cookie banner on merchant public pages (no tracking pixels)
-  const isMerchantPage = /^\/[a-z]{2}\/p\//.test(pathname);
+  // No cookie banner on merchant public pages (no tracking pixels).
+  // Pathname can be `/p/slug` (FR = defaultLocale, no prefix) or `/{locale}/p/slug`.
+  const isMerchantPage = /^(\/[a-z]{2})?\/p\//.test(pathname);
 
   useEffect(() => {
     if (isMerchantPage) return;

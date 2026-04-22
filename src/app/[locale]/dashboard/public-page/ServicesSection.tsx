@@ -10,6 +10,8 @@ import {
   Euro,
   Pencil,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   Clock,
   LayoutList,
   Tag,
@@ -146,6 +148,31 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
       }
     } catch {
       // silent
+    }
+  };
+
+  const handleReorderCategory = async (id: string, direction: 'up' | 'down') => {
+    const idx = categories.findIndex(c => c.id === id);
+    if (idx === -1) return;
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= categories.length) return;
+
+    const prevCategories = categories;
+    const reordered = [...categories];
+    const [a, b] = [reordered[idx], reordered[targetIdx]];
+    reordered[idx] = { ...b, position: a.position };
+    reordered[targetIdx] = { ...a, position: b.position };
+    setCategories(reordered);
+
+    try {
+      const res = await fetch('/api/services', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'category_reorder', id, merchant_id: merchant.id, direction }),
+      });
+      if (!res.ok) setCategories(prevCategories);
+    } catch {
+      setCategories(prevCategories);
     }
   };
 
@@ -510,9 +537,11 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
 
             {/* Categories with their services */}
             <div className="space-y-4">
-              {categories.map((cat) => {
+              {categories.map((cat, catIdx) => {
                 const catServices = servicesByCategory[cat.id] || [];
                 const isCollapsed = collapsedCategories.has(cat.id);
+                const isFirst = catIdx === 0;
+                const isLast = catIdx === categories.length - 1;
                 return (
                   <div key={cat.id}>
                     {/* Category header */}
@@ -543,6 +572,20 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                             <span className="px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600 bg-indigo-50 rounded-md tabular-nums">{catServices.length}</span>
                           </div>
                           <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover/cat:opacity-100 transition-opacity">
+                            {(['up', 'down'] as const).map((dir) => {
+                              const Icon = dir === 'up' ? ChevronUp : ChevronDown;
+                              return (
+                                <button
+                                  key={dir}
+                                  onClick={() => handleReorderCategory(cat.id, dir)}
+                                  disabled={dir === 'up' ? isFirst : isLast}
+                                  aria-label={t(dir === 'up' ? 'svcCatMoveUp' : 'svcCatMoveDown')}
+                                  className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-400"
+                                >
+                                  <Icon className="w-3 h-3" />
+                                </button>
+                              );
+                            })}
                             <button
                               onClick={() => { setEditingCategory(cat.id); setEditCategoryName(cat.name); }}
                               className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"

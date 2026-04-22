@@ -183,6 +183,13 @@ const updateCategorySchema = z.object({
   name: z.string().min(1).max(100),
 });
 
+const reorderCategorySchema = z.object({
+  type: z.literal('category_reorder'),
+  id: z.string().uuid(),
+  merchant_id: z.string().uuid(),
+  direction: z.enum(['up', 'down']),
+});
+
 export async function PUT(request: NextRequest) {
   try {
     const supabase = await createRouteHandlerSupabaseClient();
@@ -193,6 +200,51 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
+
+    const reorderParsed = reorderCategorySchema.safeParse(body);
+    if (reorderParsed.success) {
+      const { id, merchant_id, direction } = reorderParsed.data;
+
+      if (!await verifyOwnership(supabase, merchant_id, user.id)) {
+        return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+      }
+
+      const { data: current, error: fetchError } = await supabase
+        .from('merchant_service_categories')
+        .select('id, position')
+        .eq('id', id)
+        .eq('merchant_id', merchant_id)
+        .single();
+
+      if (fetchError || !current) {
+        return NextResponse.json({ error: 'Catégorie introuvable' }, { status: 404 });
+      }
+
+      const isUp = direction === 'up';
+      const { data: neighbor } = await supabase
+        .from('merchant_service_categories')
+        .select('id, position')
+        .eq('merchant_id', merchant_id)
+        .filter('position', isUp ? 'lt' : 'gt', current.position)
+        .order('position', { ascending: !isUp })
+        .limit(1)
+        .maybeSingle();
+
+      if (!neighbor) {
+        return NextResponse.json({ ok: true, noop: true });
+      }
+
+      const [swap1, swap2] = await Promise.all([
+        supabase.from('merchant_service_categories').update({ position: neighbor.position }).eq('id', current.id).eq('merchant_id', merchant_id),
+        supabase.from('merchant_service_categories').update({ position: current.position }).eq('id', neighbor.id).eq('merchant_id', merchant_id),
+      ]);
+      if (swap1.error || swap2.error) {
+        logger.error('Reorder category error:', swap1.error || swap2.error);
+        return NextResponse.json({ error: 'Erreur lors de la réorganisation' }, { status: 500 });
+      }
+
+      return NextResponse.json({ ok: true });
+    }
 
     const categoryParsed = updateCategorySchema.safeParse(body);
     if (categoryParsed.success) {

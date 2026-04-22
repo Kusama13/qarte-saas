@@ -912,29 +912,29 @@ export default function BookingModal({
             {step === 'confirm' && bookingResult && (
               <motion.div key="confirm" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
                 {/* Success icon */}
-                <div className="flex justify-center mb-4">
+                <div className="flex justify-center mb-3">
                   <div
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                    className="w-12 h-12 rounded-xl flex items-center justify-center"
                     style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
                   >
                     {depositResult?.link ? (
-                      <Hourglass className="w-8 h-8 text-white" />
+                      <Hourglass className="w-6 h-6 text-white" />
                     ) : (
-                      <CalendarDays className="w-8 h-8 text-white" />
+                      <CalendarDays className="w-6 h-6 text-white" />
                     )}
                   </div>
                 </div>
 
-                <h3 className="text-center text-lg font-bold text-gray-900 mb-1">
+                <h3 className="text-center text-lg font-bold text-gray-900 mb-0.5">
                   {depositResult?.link ? t('bookingPending') : t('bookingConfirmed')}
                 </h3>
-                <p className="text-center text-xs text-gray-500 mb-4">{merchant.shop_name}</p>
+                <p className="text-center text-xs text-gray-500 mb-3">{merchant.shop_name}</p>
                 {depositResult?.link ? (
                   <>
-                    <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
+                    <p className="text-center text-[13px] text-gray-600 mb-1.5 px-2">
                       {t('depositPendingMessage')}
                     </p>
-                    <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
+                    <p className="text-center text-[13px] text-gray-600 mb-1.5 px-2">
                       {merchant.subscription_status !== 'trial' ? t('smsAfterDeposit') : t('depositPendingHintTrial')}
                     </p>
                   </>
@@ -949,12 +949,12 @@ export default function BookingModal({
                     </div>
                   </>
                 )}
-                <p className="text-center text-[11px] text-gray-500 mb-4 px-2">
+                <p className="text-center text-[11px] text-gray-500 mb-3 px-2">
                   {t('checkStatusHint')}
                 </p>
 
                 {/* Booking summary */}
-                <div className="rounded-xl bg-gray-50 px-4 py-3 mb-4 space-y-2">
+                <div className="rounded-xl bg-gray-50 px-4 py-2.5 mb-3 space-y-1.5">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">{t('date')}</span>
                     <span className="font-semibold text-gray-900 capitalize">{formattedDate}</span>
@@ -988,24 +988,24 @@ export default function BookingModal({
                     : [{ label: null, url: depositResult.link }];
                   return (
                   <div
-                    className="rounded-2xl p-4 mb-4"
+                    className="rounded-xl p-3.5 mb-3"
                     style={{ backgroundColor: `${p}0D`, border: `1px solid ${p}26` }}
                   >
-                    <div className="flex items-center gap-3 mb-3">
+                    <div className="flex items-center gap-2.5 mb-2.5">
                       <div
-                        className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
+                        className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
                         style={{ backgroundColor: `${p}1A` }}
                       >
-                        <CreditCard className="w-5 h-5" style={{ color: p }} />
+                        <CreditCard className="w-4 h-4" style={{ color: p }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-gray-500">
+                        <p className="text-[11px] font-semibold text-gray-500">
                           {depositResult.percent
                             ? t('depositRequired', { percent: depositResult.percent })
                             : t('depositFixedLabel')}
                         </p>
                         {depositResult.amount && (
-                          <p className="text-xl font-black text-gray-900 leading-tight">
+                          <p className="text-lg font-black text-gray-900 leading-tight">
                             {formatCurrency(depositResult.amount, country, locale)}
                           </p>
                         )}

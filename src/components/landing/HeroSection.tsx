@@ -3,6 +3,7 @@
 import {
   ChevronDown,
   CalendarCheck,
+  UserPlus,
   Heart,
   Gift,
   MessageSquare,
@@ -19,7 +20,7 @@ import LandingNav from './LandingNav';
 function LoyaltyCardMockup({ t }: { t: (key: string) => string }) {
   return (
     <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-white shadow-2xl shadow-gray-900/20 flex flex-col">
-      {/* 1. Header salon */}
+      {/* Header salon */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-rose-500 via-pink-500 to-violet-500" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.2),transparent)]" />
@@ -32,7 +33,7 @@ function LoyaltyCardMockup({ t }: { t: (key: string) => string }) {
         </div>
       </div>
 
-      {/* 2. Upcoming booking */}
+      {/* Upcoming booking */}
       <div className="px-4 pt-3 pb-1.5">
         <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-200/60 rounded-xl p-3 shadow-sm">
           <div className="flex items-center gap-2.5">
@@ -48,8 +49,23 @@ function LoyaltyCardMockup({ t }: { t: (key: string) => string }) {
         </div>
       </div>
 
-      {/* 3. Points section (hero feature) */}
-      <div className="px-4 pt-3 pb-2 flex-1">
+      {/* Referral */}
+      <div className="px-4 pt-1.5 pb-1.5">
+        <div className="bg-gradient-to-r from-violet-50 to-pink-50 border border-violet-200/60 rounded-xl p-3 shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-gradient-to-br from-violet-500 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
+              <UserPlus className="w-4 h-4 text-white" strokeWidth={2.5} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-extrabold text-gray-900 leading-tight">{t('mockupReferralTitle')}</p>
+              <p className="text-[9px] text-violet-600 font-semibold">{t('mockupReferralSub')}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Points section (hero feature) */}
+      <div className="px-4 pt-2 pb-2 flex-1">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('mockupMyLoyalty')}</span>
           <span className="text-sm font-extrabold text-rose-500">7/10</span>
@@ -78,7 +94,7 @@ function LoyaltyCardMockup({ t }: { t: (key: string) => string }) {
         </div>
       </div>
 
-      {/* 4. Reward card */}
+      {/* Reward card */}
       <div className="px-4 pb-4">
         <div className="bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200/60 rounded-xl p-3 shadow-sm">
           <div className="flex items-center gap-2.5">

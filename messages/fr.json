@@ -387,7 +387,7 @@
   "featuresGrid": {
     "title": "Tout ce qu'il te faut pour",
     "titleHighlight": "remplir ton salon.",
-    "subtitle": "Qarte est un outil tout-en-un pour salons de beauté, instituts, ongleries et barbiers. Tu as la réservation en ligne sans commission, un programme de fidélité digital (tampons ou cagnotte) et une vitrine en ligne visible sur Google. Chaque cliente qui réserve reçoit automatiquement sa carte de fidélité.",
+    "subtitle": "Réservation en ligne, fidélité digitale et page salon visible sur Google. Chaque cliente qui réserve reçoit sa carte de fidélité automatiquement.",
     "bookingTitle": "Ton lien à mettre en bio.",
     "bookingDesc": "Remplace les DMs Insta. Tes clientes cliquent sur ton lien et réservent en 30 secondes.",
     "remindersTitle": "0% commission sur les acomptes.",
@@ -1579,6 +1579,8 @@
     "svcAdd": "Ajouter",
     "svcNoneInCat": "Aucune prestation dans cette catégorie",
     "svcOther": "Autres",
+    "svcCatMoveUp": "Monter la catégorie",
+    "svcCatMoveDown": "Descendre la catégorie",
     "svcNone": "Aucune prestation",
     "svcNoneHint": "Ajoute tes services et tarifs ci-dessous",
     "svcAddTitle": "Ajouter une prestation",
