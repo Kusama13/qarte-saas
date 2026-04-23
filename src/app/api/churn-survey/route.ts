@@ -12,6 +12,7 @@ import {
   CHURN_PROMO_CODE,
 } from '@/lib/churn-survey-config';
 import { resend, EMAIL_FROM, EMAIL_HEADERS } from '@/lib/resend';
+import { sendPostSurveyFollowUpEmail } from '@/lib/email';
 import logger from '@/lib/logger';
 
 const surveySchema = z.object({
@@ -114,6 +115,14 @@ export async function POST(request: NextRequest) {
 
     const promoEligible = parsed.data.would_convince === 'lower_price';
     const demoRequested = parsed.data.would_convince === 'team_demo';
+
+    // Send immediate follow-up email to merchant (fire-and-forget)
+    sendPostSurveyFollowUpEmail(
+      merchant.email,
+      merchant.shop_name,
+      parsed.data.would_convince,
+      bonusDays,
+    ).catch(() => {});
 
     // Send admin alert for demo requests (fire-and-forget)
     if (demoRequested) {
