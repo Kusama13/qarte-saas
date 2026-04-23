@@ -10,7 +10,10 @@ import {
   TrendingUp,
   Bell,
   Users,
+  Calendar,
+  ChevronDown,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import {
   AreaChart,
   Area,
@@ -30,6 +33,24 @@ type TabKey = 'revenue' | 'funnel' | 'activation' | 'engagement' | 'automations'
 interface TrendPoint {
   date: string;
   count: number;
+}
+
+interface DayBreakdown {
+  date: string;
+  label: string;
+  signups: number;
+  trials: number;
+  paid: number;
+}
+
+interface WeeklyCohort {
+  key: string;
+  label: string;
+  signups: number;
+  trials: number;
+  paid: number;
+  conversionRate: number;
+  dailyBreakdown: DayBreakdown[];
 }
 
 interface AnalyticsData {
@@ -58,6 +79,7 @@ interface AnalyticsData {
     avgTimeToConvert: number;
     bySource: { source: string; count: number }[];
     signupTrend: TrendPoint[];
+    cohorts: WeeklyCohort[];
   };
   activation: {
     activationRate: number;
@@ -297,6 +319,8 @@ function RevenueTab({ data }: { data: AnalyticsData['revenue'] }) {
 /* ─── Funnel ─── */
 
 function FunnelTab({ data }: { data: AnalyticsData['funnel'] }) {
+  const [expandedCohort, setExpandedCohort] = useState<string | null>(null);
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -343,6 +367,63 @@ function FunnelTab({ data }: { data: AnalyticsData['funnel'] }) {
           </ResponsiveContainer>
         </ChartCard>
       </div>
+
+      {data.cohorts.length > 0 && (
+        <section>
+          <h2 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-[#4b0082]" />
+            Cohortes hebdomadaires
+          </h2>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="grid grid-cols-5 gap-2 px-5 py-3 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <span className="col-span-1">Semaine</span>
+              <span className="text-center">Inscrits</span>
+              <span className="text-center">En essai</span>
+              <span className="text-center">Payants</span>
+              <span className="text-center">Conversion</span>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {data.cohorts.map((cohort) => (
+                <div key={cohort.key}>
+                  <button
+                    onClick={() => setExpandedCohort(expandedCohort === cohort.key ? null : cohort.key)}
+                    className="w-full grid grid-cols-5 gap-2 px-5 py-3 hover:bg-gray-50 transition-colors items-center"
+                  >
+                    <span className="col-span-1 text-sm font-medium text-gray-700 text-left flex items-center gap-1.5">
+                      <ChevronDown className={cn('w-3.5 h-3.5 text-gray-400 transition-transform shrink-0', expandedCohort === cohort.key && 'rotate-180')} />
+                      {cohort.label}
+                    </span>
+                    <span className="text-sm font-bold text-gray-900 text-center">{cohort.signups}</span>
+                    <span className="text-sm text-amber-600 text-center">{cohort.trials}</span>
+                    <span className="text-sm text-emerald-600 font-semibold text-center">{cohort.paid}</span>
+                    <span className={cn(
+                      'text-sm font-bold text-center',
+                      cohort.conversionRate >= 50 ? 'text-emerald-600' : cohort.conversionRate >= 20 ? 'text-amber-600' : 'text-red-500',
+                    )}>
+                      {cohort.conversionRate}%
+                    </span>
+                  </button>
+                  {expandedCohort === cohort.key && (
+                    <div className="bg-gray-50/50 border-t border-gray-100">
+                      {cohort.dailyBreakdown.map((day) => (
+                        <div key={day.date} className="grid grid-cols-5 gap-2 px-5 py-2 pl-10">
+                          <span className="col-span-1 text-xs text-gray-500">{day.label}</span>
+                          <span className="text-xs text-gray-700 text-center">{day.signups || '-'}</span>
+                          <span className="text-xs text-amber-500 text-center">{day.trials || '-'}</span>
+                          <span className="text-xs text-emerald-600 text-center">{day.paid || '-'}</span>
+                          <span className="text-xs text-gray-400 text-center">
+                            {day.signups > 0 ? `${Math.round((day.paid / day.signups) * 100)}%` : '-'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

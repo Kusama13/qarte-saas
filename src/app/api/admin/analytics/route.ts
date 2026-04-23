@@ -316,6 +316,74 @@ export async function GET(request: NextRequest) {
       if (idx !== undefined) newPaidByMonth[idx].count++;
     }
 
+    type DayBreakdown = { date: string; label: string; signups: number; trials: number; paid: number };
+    type WeeklyCohort = { key: string; label: string; signups: number; trials: number; paid: number; conversionRate: number; dailyBreakdown: DayBreakdown[] };
+    const cohortsArr: WeeklyCohort[] = [];
+    // Pre-cache timestamps once — avoids repeated new Date() inside filter loops
+    const createdAtMs = new Map(merchants.map((m) => [m.id, new Date(m.created_at).getTime()]));
+    const earliestMs = merchants.reduce((min, m) => Math.min(min, createdAtMs.get(m.id)!), Infinity);
+    if (isFinite(earliestMs)) {
+      const windowStart = new Date(earliestMs);
+      windowStart.setHours(0, 0, 0, 0);
+      while (windowStart < now) {
+        const windowEnd = new Date(windowStart);
+        windowEnd.setDate(windowEnd.getDate() + 7);
+        const wsMs = windowStart.getTime();
+        const weMs = windowEnd.getTime();
+        const cohortM = merchants.filter((m) => {
+          const t = createdAtMs.get(m.id)!;
+          return t >= wsMs && t < weMs;
+        });
+        if (cohortM.length > 0) {
+          // Single pass over cohortM for all counts
+          let paidCount = 0, trialCount = 0;
+          for (const m of cohortM) {
+            if (isPaid(m.subscription_status)) paidCount++;
+            else if (m.subscription_status === 'trial') trialCount++;
+          }
+          const daily: DayBreakdown[] = [];
+          for (let d = 0; d < 7; d++) {
+            const dayStart = new Date(windowStart);
+            dayStart.setDate(dayStart.getDate() + d);
+            if (dayStart > now) break;
+            const dayEnd = new Date(dayStart);
+            dayEnd.setDate(dayEnd.getDate() + 1);
+            const dsMs = dayStart.getTime();
+            const deMs = dayEnd.getTime();
+            let dSignups = 0, dTrials = 0, dPaid = 0;
+            for (const m of cohortM) {
+              const t = createdAtMs.get(m.id)!;
+              if (t >= dsMs && t < deMs) {
+                dSignups++;
+                if (isPaid(m.subscription_status)) dPaid++;
+                else if (m.subscription_status === 'trial') dTrials++;
+              }
+            }
+            if (dSignups > 0) {
+              daily.push({
+                date: dayStart.toISOString().split('T')[0],
+                label: dayStart.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }),
+                signups: dSignups,
+                trials: dTrials,
+                paid: dPaid,
+              });
+            }
+          }
+          cohortsArr.push({
+            key: windowStart.toISOString().split('T')[0],
+            label: `${windowStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} — ${new Date(weMs - 86400000).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`,
+            signups: cohortM.length,
+            trials: trialCount,
+            paid: paidCount,
+            conversionRate: Math.round((paidCount / cohortM.length) * 100),
+            dailyBreakdown: daily,
+          });
+        }
+        windowStart.setDate(windowStart.getDate() + 7);
+      }
+      cohortsArr.reverse();
+    }
+
     // ── Helpers ──
     const toTrend = (rec: Record<string, number>) =>
       Object.entries(rec).map(([date, count]) => ({ date, count })).sort((a, b) => a.date.localeCompare(b.date));
@@ -348,6 +416,7 @@ export async function GET(request: NextRequest) {
         avgTimeToConvert,
         bySource: toArray(bySource),
         signupTrend: toTrend(signupByDate),
+        cohorts: cohortsArr,
       },
       activation: {
         activationRate,
