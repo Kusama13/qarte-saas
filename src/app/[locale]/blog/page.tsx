@@ -30,7 +30,7 @@ const articles: Article[] = [
     readTime: '10 min',
     category: 'Acquisition',
     date: '2026-04-16',
-    image: 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=800&q=80',
+    image: '/blog/social/article-4-cover.png',
   },
   {
     slug: 'eviter-no-show-salon-rendez-vous',
@@ -40,7 +40,7 @@ const articles: Article[] = [
     readTime: '8 min',
     category: 'Gestion',
     date: '2026-04-16',
-    image: 'https://images.unsplash.com/photo-1582095133179-bfd08e2fc6b3?auto=format&fit=crop&w=800&q=80',
+    image: '/blog/social/article-5-cover.png',
   },
   {
     slug: 'logiciel-reservation-en-ligne-salon-beaute',
@@ -50,7 +50,7 @@ const articles: Article[] = [
     readTime: '9 min',
     category: 'Outils',
     date: '2026-04-16',
-    image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
+    image: '/blog/social/article-6-cover.png',
   },
   {
     slug: 'clients-planity-booksy-ne-reviennent-jamais',
@@ -60,7 +60,7 @@ const articles: Article[] = [
     readTime: '5 min',
     category: 'Fidélisation',
     date: '2026-04-23',
-    image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80',
+    image: '/blog/social/article-1-cover.png',
   },
   {
     slug: 'ne-pas-mettre-lien-planity-bio-instagram',
@@ -70,7 +70,7 @@ const articles: Article[] = [
     readTime: '5 min',
     category: 'Stratégie',
     date: '2026-04-26',
-    image: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=800&q=80',
+    image: '/blog/social/article-2-cover.png',
   },
   {
     slug: 'avis-planity-booksy-ne-tappartiennent-pas',
@@ -80,7 +80,7 @@ const articles: Article[] = [
     readTime: '5 min',
     category: 'Réputation',
     date: '2026-04-29',
-    image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80',
+    image: '/blog/social/article-3-cover.png',
   },
 ];
 
