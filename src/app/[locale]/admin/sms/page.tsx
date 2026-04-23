@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { Fragment, useState, useEffect, useCallback } from 'react';
 import {
   Loader2,
   MessageSquare,
@@ -11,6 +11,9 @@ import {
   Calendar,
   Clock,
   AlertTriangle,
+  History,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 interface MerchantSms {
@@ -43,6 +46,64 @@ interface SmsFailure {
   error_message: string;
   created_at: string;
 }
+
+interface HistoryLog {
+  id: string;
+  source: 'sms' | 'essai';
+  merchant_id: string;
+  shop_name: string;
+  phone_to: string | null;
+  sms_type: string;
+  category: string;
+  message_body: string;
+  status: string;
+  error_message: string | null;
+  created_at: string;
+}
+
+const CATEGORY_CONFIG: Record<string, { label: string; pill: string }> = {
+  rappel:       { label: 'Rappel RDV',   pill: 'bg-indigo-100 text-indigo-700' },
+  confirmation: { label: 'Confirmation', pill: 'bg-blue-100 text-blue-700' },
+  fidelite:     { label: 'Fidélité',     pill: 'bg-rose-100 text-rose-700' },
+  conversion:   { label: 'Conversion',   pill: 'bg-amber-100 text-amber-700' },
+  avis:         { label: 'Avis',         pill: 'bg-emerald-100 text-emerald-700' },
+  campagne:     { label: 'Campagne',     pill: 'bg-violet-100 text-violet-700' },
+  essai:        { label: 'Essai',        pill: 'bg-orange-100 text-orange-700' },
+};
+
+const SMS_TYPE_LABELS: Record<string, string> = {
+  reminder_j1: 'J-1',
+  reminder_j0: 'J-0',
+  confirmation_no_deposit: 'Confirmation',
+  confirmation_deposit: 'Dépôt',
+  booking_moved: 'Déplacé',
+  booking_cancelled: 'Annulé',
+  birthday: 'Anniversaire',
+  referral_reward: 'Parrainage',
+  near_reward: 'Proche récomp.',
+  welcome: 'Bienvenue',
+  inactive_reminder: 'Relance',
+  voucher_expiry: 'Expiration',
+  referral_invite: 'Invitation',
+  review_request: 'Avis client',
+  campaign: 'Campagne',
+  celebration_fidelity: 'Fidélité',
+  celebration_planning: 'Planning',
+  celebration_vitrine: 'Vitrine',
+  trial_pre_loss: 'Pré-churn',
+  churn_survey: 'Sondage',
+};
+
+const CATEGORY_FILTERS = [
+  { key: 'all',          label: 'Tous' },
+  { key: 'rappel',       label: 'Rappel' },
+  { key: 'confirmation', label: 'Confirmation' },
+  { key: 'fidelite',     label: 'Fidélité' },
+  { key: 'conversion',   label: 'Conversion' },
+  { key: 'avis',         label: 'Avis' },
+  { key: 'campagne',     label: 'Campagne' },
+  { key: 'essai',        label: 'Essai' },
+];
 
 interface PendingCampaign {
   id: string;
@@ -100,7 +161,7 @@ function describeFilter(f: Record<string, unknown>): string {
 }
 
 export default function AdminSmsPage() {
-  const [tab, setTab] = useState<'overview' | 'review' | 'failures'>('overview');
+  const [tab, setTab] = useState<'overview' | 'review' | 'failures' | 'history'>('overview');
 
   const [data, setData] = useState<SmsData | null>(null);
   const [loadingOverview, setLoadingOverview] = useState(true);
@@ -113,6 +174,14 @@ export default function AdminSmsPage() {
   const [processing, setProcessing] = useState<string | null>(null);
   const [rejectNoteById, setRejectNoteById] = useState<Record<string, string>>({});
   const [showRejectFormFor, setShowRejectFormFor] = useState<string | null>(null);
+
+  const [historyLogs, setHistoryLogs] = useState<HistoryLog[]>([]);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyStats, setHistoryStats] = useState<Record<string, number>>({});
+  const [historyCategory, setHistoryCategory] = useState('all');
+  const [historyPage, setHistoryPage] = useState(0);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
   const fetchOverview = useCallback(async () => {
     const res = await fetch('/api/admin/sms');
@@ -146,8 +215,24 @@ export default function AdminSmsPage() {
     }
   }, []);
 
+  const fetchHistory = useCallback(async (cat: string, pg: number) => {
+    setLoadingHistory(true);
+    try {
+      const res = await fetch(`/api/admin/sms/history?category=${cat}&page=${pg}`);
+      if (res.ok) {
+        const body = await res.json();
+        setHistoryLogs(body.logs || []);
+        setHistoryTotal(body.total || 0);
+        setHistoryStats(body.stats || {});
+      }
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, []);
+
   useEffect(() => { fetchOverview(); fetchPending(); }, [fetchOverview, fetchPending]);
   useEffect(() => { if (tab === 'failures' && failures.length === 0 && !loadingFailures) fetchFailures(); }, [tab, failures.length, loadingFailures, fetchFailures]);
+  useEffect(() => { if (tab === 'history') fetchHistory(historyCategory, historyPage); }, [tab, historyCategory, historyPage, fetchHistory]);
 
   const handleApprove = async (id: string) => {
     if (processing) return;
@@ -235,6 +320,15 @@ export default function AdminSmsPage() {
               {data.totalFailed}
             </span>
           )}
+        </button>
+        <button
+          onClick={() => setTab('history')}
+          className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+            tab === 'history' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <History className="w-3.5 h-3.5" />
+          Historique
         </button>
       </div>
 
@@ -425,6 +519,175 @@ export default function AdminSmsPage() {
             ))}
           </div>
         )
+      )}
+
+      {tab === 'history' && (
+        <div>
+          {/* Category filters */}
+          <div className="flex gap-1.5 flex-wrap mb-4">
+            {CATEGORY_FILTERS.map(({ key, label }) => {
+              const count = historyStats[key] ?? 0;
+              const active = historyCategory === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => { setHistoryCategory(key); setHistoryPage(0); setExpandedLogId(null); }}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors border ${
+                    active
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                  }`}
+                >
+                  {label}
+                  {count > 0 && (
+                    <span className={`ml-1.5 ${active ? 'text-gray-300' : 'text-gray-400'}`}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {loadingHistory ? (
+            <div className="flex items-center justify-center min-h-[40vh]">
+              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            </div>
+          ) : historyLogs.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+              <MessageSquare className="w-10 h-10 text-gray-200 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-gray-700">Aucun SMS dans cette catégorie</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+                <p className="text-sm font-bold text-gray-800">
+                  {historyTotal} SMS
+                  {historyCategory !== 'all' && CATEGORY_CONFIG[historyCategory] && (
+                    <span className="ml-2 font-normal text-gray-400">— {CATEGORY_CONFIG[historyCategory].label}</span>
+                  )}
+                </p>
+                <p className="text-xs text-gray-400">
+                  Page {historyPage + 1} / {Math.max(1, Math.ceil(historyTotal / 50))}
+                </p>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="text-[11px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50">
+                      <th className="px-4 py-2 whitespace-nowrap">Date</th>
+                      <th className="px-4 py-2">Merchant</th>
+                      <th className="px-4 py-2">Catégorie</th>
+                      <th className="px-4 py-2">Type</th>
+                      <th className="px-4 py-2">Tél</th>
+                      <th className="px-4 py-2">Statut</th>
+                      <th className="px-4 py-2">Message</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historyLogs.map((log) => {
+                      const catCfg = CATEGORY_CONFIG[log.category];
+                      const isExpanded = expandedLogId === log.id;
+                      return (
+                        <Fragment key={log.id}>
+                          <tr
+                            className={`border-b border-gray-50 last:border-0 cursor-pointer ${
+                              isExpanded ? 'bg-gray-50' : 'hover:bg-gray-50/50'
+                            }`}
+                            onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
+                          >
+                            <td className="px-4 py-2.5 text-xs text-gray-400 whitespace-nowrap">
+                              {new Date(log.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
+                              {' '}
+                              <span className="text-gray-300">
+                                {new Date(log.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5 text-sm font-medium text-gray-700 max-w-[140px] truncate" title={log.shop_name}>
+                              {log.shop_name}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              {catCfg && (
+                                <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ${catCfg.pill}`}>
+                                  {catCfg.label}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-2.5 text-xs text-gray-500">
+                              {SMS_TYPE_LABELS[log.sms_type] || log.sms_type}
+                            </td>
+                            <td className="px-4 py-2.5 text-xs text-gray-500 tabular-nums">
+                              {log.phone_to || <span className="text-gray-300">—</span>}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                                log.status === 'failed'
+                                  ? 'bg-rose-100 text-rose-700'
+                                  : log.status === 'skipped'
+                                  ? 'bg-gray-100 text-gray-500'
+                                  : 'bg-emerald-100 text-emerald-700'
+                              }`}>
+                                {log.status === 'failed' ? 'Échec' : log.status === 'skipped' ? 'Ignoré' : 'Envoyé'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5 text-xs text-gray-600 max-w-[200px]">
+                              <div className="flex items-center gap-1">
+                                <span className="truncate">{log.message_body}</span>
+                                {isExpanded ? (
+                                  <ChevronUp className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                                ) : (
+                                  <ChevronDown className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                          {isExpanded && (
+                            <tr className="bg-gray-50 border-b border-gray-100">
+                              <td colSpan={7} className="px-4 py-3">
+                                <div className="bg-white rounded-xl border border-gray-100 p-3">
+                                  <p className="text-xs text-gray-800 whitespace-pre-wrap leading-relaxed">{log.message_body}</p>
+                                  {log.error_message && (
+                                    <p className="mt-2 text-xs text-rose-600 font-medium">
+                                      Erreur : {log.error_message}
+                                    </p>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {historyTotal > 50 && (
+                <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
+                  <button
+                    disabled={historyPage === 0}
+                    onClick={() => setHistoryPage((p) => p - 1)}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                  >
+                    ← Précédent
+                  </button>
+                  <span className="text-xs text-gray-400">
+                    {historyPage * 50 + 1}–{Math.min((historyPage + 1) * 50, historyTotal)} / {historyTotal}
+                  </span>
+                  <button
+                    disabled={(historyPage + 1) * 50 >= historyTotal}
+                    onClick={() => setHistoryPage((p) => p + 1)}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                  >
+                    Suivant →
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {tab === 'failures' && (
