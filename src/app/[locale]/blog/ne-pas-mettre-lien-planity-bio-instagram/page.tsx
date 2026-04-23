@@ -49,7 +49,7 @@ const jsonLd = {
       '@type': 'Article',
       headline: 'Pourquoi tu ne dois PAS mettre ton lien Planity, Booksy ou Treatwell dans ta bio Instagram',
       description: 'Mettre ton lien Planity en bio Instagram envoie tes abonnées chez la concurrente. Voici pourquoi et ce qu\'il faut faire à la place.',
-      image: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=1200&q=80',
+      image: 'https://getqarte.com/blog/ne-pas-mettre-lien-planity-hero.jpg',
       datePublished: '2026-04-26',
       dateModified: '2026-04-26',
       author: { '@type': 'Organization', name: 'Qarte', url: 'https://getqarte.com' },
@@ -156,10 +156,10 @@ export default function Page() {
 
             <div className="mt-8 rounded-2xl overflow-hidden">
               <Image
-                src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=1200&q=80"
+                src="/blog/ne-pas-mettre-lien-planity-hero.jpg"
                 alt="Téléphone avec profil Instagram pour salon de beauté"
-                width={1200}
-                height={675}
+                width={1408}
+                height={768}
                 className="w-full h-auto"
                 priority
               />

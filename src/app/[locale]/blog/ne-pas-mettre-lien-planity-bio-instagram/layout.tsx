@@ -44,9 +44,9 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'article',
       images: [
         {
-          url: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=1200&q=80',
-          width: 1200,
-          height: 630,
+          url: 'https://getqarte.com/blog/ne-pas-mettre-lien-planity-hero.jpg',
+          width: 1408,
+          height: 768,
           alt: isFr ? 'Téléphone avec profil Instagram pour salon de beauté' : 'Phone with Instagram profile for beauty salon',
         },
       ],

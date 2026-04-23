@@ -88,10 +88,68 @@ ARTICLES = [
         ],
         'platform_line': 'Planity  ·  Booksy  ·  Treatwell',
         'imagen_prompt': (
-            'Five glowing golden stars floating dramatically against a very dark background, '
-            'beauty salon counter softly visible behind with warm amber candlelight, '
-            'macro photography, golden bokeh, no text, high contrast, cinematic, '
-            '100mm f/2.8 macro, shallow depth of field, luxury editorial aesthetic'
+            'Close-up of elegant manicured hands holding a sleek smartphone, '
+            'screen softly glowing showing five golden stars on a dark surface, '
+            'luxury Parisian beauty salon interior beautifully blurred behind, '
+            'warm amber candlelight bokeh, dark rich tones, no text on screen, '
+            'editorial fashion photography, 85mm f/1.2 shallow depth of field, '
+            'golden hour tones, cinematic, ultra sharp'
+        ),
+    },
+    {
+        'id': 4,
+        'filename': 'article-4-cover.png',
+        'label': 'ACQUISITION',
+        'label_rgb': (16, 185, 129),     # emerald
+        'title_lines': [
+            '12 stratégies pour',
+            'attirer plus de',
+            'clientes en salon',
+        ],
+        'platform_line': 'Google Business  ·  Instagram  ·  Fidélité',
+        'imagen_prompt': (
+            'Warm vibrant French beauty salon interior, elegant white styling chairs all occupied, '
+            'cheerful hairstylists at work with tools, golden morning sunlight through large arched windows, '
+            'fresh pink roses on the reception desk, welcoming and lively atmosphere, no people faces visible, '
+            'no text, editorial lifestyle photography, wide 35mm, warm creamy tones, luxury modern Parisian decor'
+        ),
+    },
+    {
+        'id': 5,
+        'filename': 'article-5-cover.png',
+        'label': 'GESTION',
+        'label_rgb': (234, 88, 12),      # orange
+        'title_lines': [
+            'No-show : diviser',
+            'par 4 les rendez-',
+            'vous manqués',
+        ],
+        'platform_line': 'Acompte  ·  Rappel SMS  ·  Annulation',
+        'imagen_prompt': (
+            'Close-up of a leather-bound appointment book lying open on a luxury beauty salon reception desk, '
+            'a sleek pen crossing out a time slot, moody dramatic studio lighting, '
+            'cool slate and deep shadow tones with warm amber accents, '
+            'blurred salon chairs softly visible in background bokeh, no text readable, '
+            'editorial photography, 50mm f/1.8, cinematic, ultra sharp foreground'
+        ),
+    },
+    {
+        'id': 6,
+        'filename': 'article-6-cover.png',
+        'label': 'OUTILS',
+        'label_rgb': (99, 102, 241),     # indigo
+        'title_lines': [
+            'Planity, Treatwell,',
+            'Booksy, Qarte :',
+            'le comparatif 2026',
+        ],
+        'platform_line': 'Planity  ·  Treatwell  ·  Booksy  ·  Qarte',
+        'imagen_prompt': (
+            'Sleek silver MacBook laptop on a clean marble beauty salon reception desk, '
+            'screen softly glowing with a clean booking interface, no readable text on screen, '
+            'minimalist modern Parisian decor, blurred white styling chairs in background, '
+            'cool blue-grey ambient lighting with warm gold accents, '
+            'editorial photography, 50mm f/1.4, shallow depth of field, luxury clean aesthetic'
         ),
     },
 ]
