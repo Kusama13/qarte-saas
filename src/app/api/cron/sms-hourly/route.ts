@@ -162,7 +162,8 @@ export async function GET(request: NextRequest) {
         // Approximate: we assume start_time is already merchant-local wall clock.
         // Shift by tz offset to compare against UTC now.
         const offsetMs = slotStart.getTime() - new Date(slotStart.toLocaleString('en-US', { timeZone: tz })).getTime();
-        const slotStartUtc = new Date(slotStart.getTime() - offsetMs);
+        // offsetMs = -(tz offset in ms). Add (not subtract) to shift local→UTC.
+        const slotStartUtc = new Date(slotStart.getTime() + offsetMs);
         const minutesUntil = minutesBetween(slotStartUtc, now);
 
         // Window: [30, 210] min before slot start.
