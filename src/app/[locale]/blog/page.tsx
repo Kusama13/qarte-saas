@@ -85,6 +85,9 @@ const articles: Article[] = [
 ];
 
 export default function BlogPage() {
+  const today = new Date().toISOString().split('T')[0];
+  const visibleArticles = articles.filter((a) => a.date <= today);
+
   return (
     <>
       <FacebookPixel />
@@ -135,7 +138,7 @@ export default function BlogPage() {
         <section className="py-16">
           <div className="max-w-5xl mx-auto px-6">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {articles.map((article, index) => (
+              {visibleArticles.map((article, index) => (
                 <motion.article
                   key={article.slug}
                   initial="hidden"

@@ -16,7 +16,10 @@ from pathlib import Path
 from google import genai
 from google.genai import types
 
-API_KEY = "AIzaSyAC1UvUDc3n_L-jHC8r5mQzJKQLEo3ZtpU"
+API_KEY = os.environ.get('GEMINI_API_KEY')
+if not API_KEY:
+    print("Error: GEMINI_API_KEY env var not set. Add it to .env.local.")
+    sys.exit(1)
 client = genai.Client(api_key=API_KEY)
 
 def load_image(path: str) -> types.Part:

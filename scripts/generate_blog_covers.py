@@ -1,222 +1,232 @@
 #!/usr/bin/env python3
 """
-Generate social media cover images for Qarte blog articles.
-Pure Pillow — no external API needed.
+Generate Instagram-format (1080x1080) blog cover images.
+Uses Imagen 3 (Gemini API) for photographic backgrounds + Pillow for text overlay.
 
 Usage:
   python3 scripts/generate_blog_covers.py          # all 3 articles
   python3 scripts/generate_blog_covers.py 1        # article 1 only
+
+Requires: GEMINI_API_KEY in environment (from .env.local)
 """
 
+import io
+import os
 import sys
-import math
 from pathlib import Path
+
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
-OUT_DIR = Path(__file__).parent.parent / "public" / "blog" / "social"
+API_KEY = os.environ.get('GEMINI_API_KEY')
+if not API_KEY:
+    print("Error: GEMINI_API_KEY not set.\n"
+          "Run: export GEMINI_API_KEY=$(grep GEMINI_API_KEY .env.local | cut -d'\"' -f2)")
+    sys.exit(1)
+
+from google import genai
+from google.genai import types
+
+client = genai.Client(api_key=API_KEY)
+
+OUT_DIR = Path(__file__).parent.parent / 'public' / 'blog' / 'social'
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-SIZE = (1080, 1080)
+FONT_HEAVY  = '/System/Library/Fonts/HelveticaNeue.ttc'  # index 4 = Heavy/Black
+FONT_BOLD   = '/System/Library/Fonts/HelveticaNeue.ttc'  # index 1 = Bold
+FONT_REG    = '/System/Library/Fonts/HelveticaNeue.ttc'  # index 0 = Regular
 
-# Brand palette
-ROSE_600   = (219, 39, 119)
-ROSE_500   = (236, 72, 153)
-ROSE_100   = (252, 231, 243)
-ROSE_50    = (255, 241, 242)
-INDIGO_600 = (79, 70, 229)
-VIOLET_600 = (124, 58, 237)
-GRAY_900   = (17, 24, 39)
-GRAY_500   = (107, 114, 128)
-GRAY_300   = (209, 213, 219)
-WHITE      = (255, 255, 255)
-CREAM      = (255, 248, 244)
+def font(size: int, weight: str = 'regular') -> ImageFont.FreeTypeFont:
+    idx = {'heavy': 4, 'bold': 1, 'regular': 0}.get(weight, 0)
+    return ImageFont.truetype(FONT_HEAVY, size, index=idx)
 
 ARTICLES = [
     {
-        "id": 1,
-        "filename": "article-1-cover.png",
-        "tag": "Fidélisation",
-        "title_lines": ["Ces clientes qui réservent", "et ne reviennent jamais"],
-        "subtitle": "Planity · Booksy · Treatwell",
-        "bg_top": (255, 228, 236),   # blush pink
-        "bg_bot": (255, 245, 235),   # warm cream
-        "accent": ROSE_600,
-        "deco_circles": [
-            (900, 120, 260, (252, 200, 220, 60)),
-            (100, 960, 200, (255, 210, 180, 50)),
-            (1000, 600, 150, (219, 39, 119, 30)),
+        'id': 1,
+        'filename': 'article-1-cover.png',
+        'label': 'FIDÉLISATION',
+        'label_rgb': (236, 64, 122),     # rose vif
+        'title_lines': [
+            'Ces clientes qui',
+            'réservent et ne',
+            'reviennent jamais',
         ],
+        'platform_line': 'Planity  ·  Booksy  ·  Treatwell',
+        'imagen_prompt': (
+            'Luxury French beauty salon interior, warm golden hour sunlight through large windows, '
+            'elegant white styling chairs reflected in a backlit mirror, fresh pink roses on the vanity, '
+            'soft creamy bokeh, no people, no text, editorial fashion photography, '
+            'rose and warm amber tones, ultra sharp, cinematic 50mm f/1.4'
+        ),
     },
     {
-        "id": 2,
-        "filename": "article-2-cover.png",
-        "tag": "Stratégie Instagram",
-        "title_lines": ["Ton lien Planity en bio", "Instagram ? Grande erreur."],
-        "subtitle": "Planity · Booksy · Treatwell",
-        "bg_top": (230, 235, 255),   # soft indigo
-        "bg_bot": (255, 241, 250),   # rose tint
-        "accent": INDIGO_600,
-        "deco_circles": [
-            (950, 100, 280, (180, 190, 255, 60)),
-            (80, 950, 220, (255, 200, 230, 50)),
-            (1000, 650, 160, (79, 70, 229, 30)),
+        'id': 2,
+        'filename': 'article-2-cover.png',
+        'label': 'STRATÉGIE',
+        'label_rgb': (124, 58, 237),     # violet
+        'title_lines': [
+            'Ce lien en bio',
+            'envoie tes clientes',
+            'chez la concurrente',
         ],
+        'platform_line': 'Instagram  ·  Planity  ·  Booksy',
+        'imagen_prompt': (
+            "Close-up of a woman's manicured hand holding a sleek smartphone displaying the Instagram app, "
+            'luxurious beauty salon softly blurred behind, cool violet and indigo ambient lighting, '
+            'dark moody atmosphere, no text on screen, editorial photography, '
+            'cinematic violet color grade, 85mm f/1.2, shallow depth of field'
+        ),
     },
     {
-        "id": 3,
-        "filename": "article-3-cover.png",
-        "tag": "Réputation en ligne",
-        "title_lines": ["Tes avis sur Planity", "ne t'appartiennent pas"],
-        "subtitle": "Planity · Booksy · Treatwell",
-        "bg_top": (255, 248, 220),   # warm amber
-        "bg_bot": (255, 237, 245),   # soft rose
-        "accent": (202, 138, 4),     # amber-600
-        "deco_circles": [
-            (920, 110, 270, (255, 230, 150, 60)),
-            (90, 940, 210, (255, 200, 230, 50)),
-            (1010, 620, 155, (202, 138, 4, 30)),
+        'id': 3,
+        'filename': 'article-3-cover.png',
+        'label': 'RÉPUTATION',
+        'label_rgb': (217, 119, 6),      # amber
+        'title_lines': [
+            'Tes avis sur Planity',
+            "ne t'appartiennent",
+            'pas',
         ],
+        'platform_line': 'Planity  ·  Booksy  ·  Treatwell',
+        'imagen_prompt': (
+            'Five glowing golden stars floating dramatically against a very dark background, '
+            'beauty salon counter softly visible behind with warm amber candlelight, '
+            'macro photography, golden bokeh, no text, high contrast, cinematic, '
+            '100mm f/2.8 macro, shallow depth of field, luxury editorial aesthetic'
+        ),
     },
 ]
 
 
-def lerp_color(c1, c2, t):
-    return tuple(int(c1[i] + (c2[i] - c1[i]) * t) for i in range(3))
+def fetch_background(prompt: str) -> Image.Image:
+    print('  → Imagen 3 generating background...')
+    resp = client.models.generate_images(
+        model='imagen-4.0-ultra-generate-001',
+        prompt=prompt,
+        config=types.GenerateImagesConfig(
+            number_of_images=1,
+            aspect_ratio='1:1',
+            safety_filter_level='BLOCK_LOW_AND_ABOVE',
+            person_generation='ALLOW_ADULT',
+        ),
+    )
+    raw = resp.generated_images[0].image.image_bytes
+    return Image.open(io.BytesIO(raw)).resize((1080, 1080), Image.LANCZOS)
 
 
-def make_gradient(size, top_color, bot_color):
-    img = Image.new("RGB", size)
-    draw = ImageDraw.Draw(img)
-    w, h = size
-    for y in range(h):
-        t = y / h
-        color = lerp_color(top_color, bot_color, t)
-        draw.line([(0, y), (w, y)], fill=color)
-    return img
+def dark_overlay(img: Image.Image) -> Image.Image:
+    base = img.convert('RGBA')
+    mask = Image.new('RGBA', (1080, 1080), (0, 0, 0, 0))
+    d = ImageDraw.Draw(mask)
+    for y in range(1080):
+        # Transparent at top, 78% black at bottom
+        t = max(0.0, (y / 1080 - 0.25) / 0.75)
+        alpha = int(t ** 1.4 * 200)
+        d.rectangle([(0, y), (1080, y + 1)], fill=(0, 0, 0, alpha))
+    return Image.alpha_composite(base, mask)
 
 
-def draw_circle_rgba(base: Image.Image, cx, cy, r, color_rgba):
-    overlay = Image.new("RGBA", base.size, (0, 0, 0, 0))
-    d = ImageDraw.Draw(overlay)
-    d.ellipse([(cx - r, cy - r), (cx + r, cy + r)], fill=color_rgba)
-    blurred = overlay.filter(ImageFilter.GaussianBlur(radius=r // 3))
-    base_rgba = base.convert("RGBA")
-    return Image.alpha_composite(base_rgba, blurred).convert("RGB")
+def pill(draw: ImageDraw.Draw, text: str, rgb: tuple, x: int, y: int):
+    f = font(26, 'bold')
+    bbox = draw.textbbox((0, 0), text, font=f)
+    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    pad_x, pad_y = 22, 12
+    w, h = tw + pad_x * 2, th + pad_y * 2
+    # Draw pill on a temp RGBA layer so we can round corners
+    layer = Image.new('RGBA', (1080, 1080), (0, 0, 0, 0))
+    ld = ImageDraw.Draw(layer)
+    ld.rounded_rectangle([x, y, x + w, y + h], radius=h // 2, fill=(*rgb, 230))
+    draw._image.paste(Image.alpha_composite(draw._image.convert('RGBA'), layer).convert('RGBA'), (0, 0))
+    # Redraw text on top
+    draw.text((x + pad_x, y + pad_y - 1), text, font=f, fill=(255, 255, 255))
+    return h + 24  # vertical space consumed
 
 
-def get_font(size, bold=False):
-    candidates = [
-        "/System/Library/Fonts/HelveticaNeue.ttc",
-        "/System/Library/Fonts/Helvetica.ttc",
-        "/Library/Fonts/Arial Bold.ttf" if bold else "/Library/Fonts/Arial.ttf",
-        "/System/Library/Fonts/Supplemental/Arial Bold.ttf" if bold else "/System/Library/Fonts/Supplemental/Arial.ttf",
-    ]
-    for path in candidates:
-        try:
-            return ImageFont.truetype(path, size)
-        except Exception:
-            continue
-    return ImageFont.load_default()
+def compose(article: dict) -> Path:
+    print(f"\nArticle {article['id']}: {article['title_lines'][0]} ...")
 
-
-def draw_rounded_rect(draw, xy, radius, fill):
-    x0, y0, x1, y1 = xy
-    draw.rectangle([(x0 + radius, y0), (x1 - radius, y1)], fill=fill)
-    draw.rectangle([(x0, y0 + radius), (x1, y1 - radius)], fill=fill)
-    draw.ellipse([(x0, y0), (x0 + 2 * radius, y0 + 2 * radius)], fill=fill)
-    draw.ellipse([(x1 - 2 * radius, y0), (x1, y0 + 2 * radius)], fill=fill)
-    draw.ellipse([(x0, y1 - 2 * radius), (x0 + 2 * radius, y1)], fill=fill)
-    draw.ellipse([(x1 - 2 * radius, y1 - 2 * radius), (x1, y1)], fill=fill)
-
-
-def generate_cover(article: dict) -> Path:
-    print(f"  Article {article['id']}: {article['title_lines'][0]}...")
-
-    # Gradient background
-    img = make_gradient(SIZE, article["bg_top"], article["bg_bot"])
-
-    # Decorative blurred circles
-    for cx, cy, r, color in article["deco_circles"]:
-        img = draw_circle_rgba(img, cx, cy, r, color)
-
-    draw = ImageDraw.Draw(img)
-    accent = article["accent"]
-    W, H = SIZE
-
-    # ── Top bar (accent) ───────────────────────────────────────────────
-    draw.rectangle([(0, 0), (W, 8)], fill=accent)
-
-    # ── Qarte pill (top-left) ─────────────────────────────────────────
-    pill_x, pill_y, pill_w, pill_h = 52, 48, 148, 50
-    draw_rounded_rect(draw, (pill_x, pill_y, pill_x + pill_w, pill_y + pill_h), 25, accent)
-    f_brand = get_font(24, bold=True)
-    draw.text((pill_x + pill_w // 2, pill_y + pill_h // 2), "Qarte",
-              fill=WHITE, font=f_brand, anchor="mm")
-
-    # ── Series label (top-right) ──────────────────────────────────────
-    f_series = get_font(26)
-    draw.text((W - 52, 72), f"Article {article['id']} / 3",
-              fill=GRAY_500, font=f_series, anchor="rm")
-
-    # ── White card (lower 52%) ────────────────────────────────────────
-    card_top = int(H * 0.46)
-    card_radius = 0
-    card_overlay = Image.new("RGBA", SIZE, (0, 0, 0, 0))
-    cd = ImageDraw.Draw(card_overlay)
-    cd.rectangle([(0, card_top), (W, H)], fill=(255, 255, 255, 230))
-    img = Image.alpha_composite(img.convert("RGBA"), card_overlay).convert("RGB")
+    bg = fetch_background(article['imagen_prompt'])
+    img = dark_overlay(bg).convert('RGB')
     draw = ImageDraw.Draw(img)
 
-    # Accent bar on top of card
-    draw.rectangle([(0, card_top), (W, card_top + 7)], fill=accent)
+    label_rgb = article['label_rgb']
+    x_left = 72
 
-    # ── Tag label ─────────────────────────────────────────────────────
-    f_tag = get_font(28)
-    tag_x, tag_y = 60, card_top + 36
-    # small colored dot before tag
-    draw.ellipse([(tag_x, tag_y + 8), (tag_x + 12, tag_y + 20)], fill=accent)
-    draw.text((tag_x + 22, tag_y), article["tag"], fill=accent, font=f_tag)
+    # ── Label pill (bottom-left area, above title) ─────────────────────
+    title_block_h = len(article['title_lines']) * 90
+    platform_h = 48
+    sep_h = 32
+    brand_h = 50
+    total_content_h = 50 + title_block_h + platform_h + sep_h + brand_h + 60
+    content_top = 1080 - total_content_h
 
-    # ── Title ─────────────────────────────────────────────────────────
-    f_title = get_font(74, bold=True)
-    title_y = tag_y + 58
-    line_h = 88
-    for i, line in enumerate(article["title_lines"]):
-        draw.text((60, title_y + i * line_h), line, fill=GRAY_900, font=f_title)
+    pill_y = content_top
+    f_pill = font(26, 'bold')
+    bbox = draw.textbbox((0, 0), article['label'], font=f_pill)
+    pill_w = bbox[2] - bbox[0] + 44
+    pill_h = bbox[3] - bbox[1] + 24
 
-    # ── Subtitle (platform names) ──────────────────────────────────────
-    sub_y = title_y + len(article["title_lines"]) * line_h + 22
-    f_sub = get_font(32)
-    draw.text((60, sub_y), article["subtitle"], fill=GRAY_500, font=f_sub)
+    # Pill background (RGBA rounded)
+    pill_layer = Image.new('RGBA', (1080, 1080), (0, 0, 0, 0))
+    pd = ImageDraw.Draw(pill_layer)
+    pd.rounded_rectangle(
+        [x_left, pill_y, x_left + pill_w, pill_y + pill_h],
+        radius=pill_h // 2,
+        fill=(*label_rgb, 230),
+    )
+    img = Image.alpha_composite(img.convert('RGBA'), pill_layer).convert('RGB')
+    draw = ImageDraw.Draw(img)
+    draw.text((x_left + 22, pill_y + 12), article['label'], font=f_pill, fill=(255, 255, 255))
 
-    # ── Decorative short line ──────────────────────────────────────────
-    line_y = sub_y + 64
-    draw.rectangle([(60, line_y), (180, line_y + 4)], fill=accent)
-    draw.rectangle([(192, line_y), (240, line_y + 4)], fill=(*accent[:3], 80) if len(accent) == 3 else GRAY_300)
+    # ── Title lines ────────────────────────────────────────────────────
+    f_title = font(82, 'heavy')
+    title_y = pill_y + pill_h + 20
+    line_h = 96
+    for i, line in enumerate(article['title_lines']):
+        y = title_y + i * line_h
+        # Subtle text shadow
+        draw.text((x_left + 2, y + 3), line, font=f_title, fill=(0, 0, 0, 100))
+        draw.text((x_left, y), line, font=f_title, fill=(255, 255, 255))
 
-    # ── URL bottom-right ──────────────────────────────────────────────
-    f_url = get_font(30)
-    draw.text((W - 60, H - 56), "getqarte.com", fill=GRAY_500, font=f_url, anchor="rm")
+    # ── Platform line ──────────────────────────────────────────────────
+    f_plat = font(30, 'regular')
+    plat_y = title_y + len(article['title_lines']) * line_h + 14
+    draw.text((x_left, plat_y), article['platform_line'], font=f_plat, fill=(200, 200, 200))
 
-    # ── Small rose dot decoration bottom-left ─────────────────────────
-    draw.ellipse([(40, H - 76), (72, H - 44)], fill=(*accent, ) if len(accent) == 3 else accent)
+    # ── Separator ──────────────────────────────────────────────────────
+    sep_y = plat_y + 52
+    draw.line([(x_left, sep_y), (1080 - x_left, sep_y)], fill=(255, 255, 255, 60), width=1)
 
-    out_path = OUT_DIR / article["filename"]
-    img.save(out_path, "PNG", optimize=True)
-    print(f"     Saved → {out_path}")
-    return out_path
+    # ── Brand bar ──────────────────────────────────────────────────────
+    bar_y = sep_y + 22
+    f_brand = font(38, 'bold')
+    f_url = font(28, 'regular')
+
+    # Colored dot before "Qarte"
+    dot_r = 7
+    draw.ellipse(
+        [(x_left, bar_y + 16), (x_left + dot_r * 2, bar_y + 16 + dot_r * 2)],
+        fill=label_rgb,
+    )
+    draw.text((x_left + dot_r * 2 + 10, bar_y + 8), 'Qarte', font=f_brand, fill=(255, 255, 255))
+
+    url_bbox = draw.textbbox((0, 0), 'getqarte.com', font=f_url)
+    url_w = url_bbox[2] - url_bbox[0]
+    draw.text((1080 - x_left - url_w, bar_y + 13), 'getqarte.com', font=f_url, fill=(160, 160, 160))
+
+    out = OUT_DIR / article['filename']
+    img.save(out, 'PNG', optimize=True)
+    print(f'  ✓ Saved → {out}')
+    return out
 
 
 def main():
     target = int(sys.argv[1]) if len(sys.argv) > 1 else None
-    articles = [a for a in ARTICLES if target is None or a["id"] == target]
-
-    print(f"Generating {len(articles)} cover(s) → {OUT_DIR}\n")
-    for article in articles:
-        generate_cover(article)
-
-    print("\nDone.")
+    articles = [a for a in ARTICLES if target is None or a['id'] == target]
+    print(f'Generating {len(articles)} image(s)...')
+    for a in articles:
+        compose(a)
+    print('\nDone.')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
