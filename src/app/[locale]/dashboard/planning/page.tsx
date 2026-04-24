@@ -29,6 +29,16 @@ import PlanningModal, { ModalHeader, ModalFooter } from './PlanningModal';
 import PlanUpgradeCTA from '@/components/dashboard/PlanUpgradeCTA';
 import { getPlanFeatures } from '@/lib/plan-tiers';
 import { useToast } from '@/components/ui/Toast';
+import { Link } from '@/i18n/navigation';
+
+type OpeningHoursValue = Record<string, { open: string; close: string } | null> | null;
+/** True si au moins un jour de la semaine a des horaires `open`/`close` renseignes. */
+function hasValidOpeningHours(hours: OpeningHoursValue | undefined): boolean {
+  if (!hours || typeof hours !== 'object') return false;
+  return Object.values(hours).some(
+    (h) => !!h && typeof h === 'object' && 'open' in h && 'close' in h && !!h.open && !!h.close,
+  );
+}
 
 const VIEW_MODE_KEY = 'qarte_planning_view';
 const VIEW_MODES = ['day', '2day', 'week'] as const;
@@ -140,6 +150,8 @@ export default function PlanningDashboard() {
 
   // Mode choice (shown when planning is freshly enabled with no slots)
   const [showModeChoice, setShowModeChoice] = useState(false);
+  // Mode libre sans horaires d'ouverture : on bloque l'activation
+  const [missingHoursBlock, setMissingHoursBlock] = useState(false);
   // Auto-dismiss mode choice if real slots already exist
   useEffect(() => {
     if (showModeChoice && !loadingSlots && slots.some(s => !s.client_name)) {
@@ -292,6 +304,11 @@ export default function PlanningDashboard() {
   };
   const confirmModeSwitch = async () => {
     if (!modeSwitchTarget || !merchant) return;
+    if (modeSwitchTarget === 'free' && !hasValidOpeningHours(merchant.opening_hours)) {
+      setModeSwitchTarget(null);
+      setMissingHoursBlock(true);
+      return;
+    }
     setModeSwitchCleanup(true);
     try {
       if (modeSwitchTarget === 'free' && bookingMode === 'slots' && emptySlotIds.length > 0) {
@@ -492,6 +509,10 @@ export default function PlanningDashboard() {
 
   const handleModeChoice = async (mode: BookingMode) => {
     if (!merchant) return;
+    if (mode === 'free' && !hasValidOpeningHours(merchant.opening_hours)) {
+      setMissingHoursBlock(true);
+      return;
+    }
     setBookingMode(mode);
     const update: Record<string, unknown> = { booking_mode: mode };
     if (mode === 'free') {
@@ -2037,6 +2058,46 @@ export default function PlanningDashboard() {
               >
                 {t('delete')}
               </button>
+            </ModalFooter>
+          </PlanningModal>
+        )}
+      </AnimatePresence>
+
+      {/* ── BLOCK: Mode libre sans horaires d'ouverture ── */}
+      <AnimatePresence mode="wait">
+        {missingHoursBlock && (
+          <PlanningModal onClose={() => setMissingHoursBlock(false)} size="sm">
+            <ModalHeader
+              title="Configure d'abord tes horaires"
+              icon={<Clock className="w-4 h-4" />}
+              iconTint="amber"
+              onClose={() => setMissingHoursBlock(false)}
+            />
+            <div className="p-4 space-y-3">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                Le mode libre utilise tes horaires d&apos;ouverture pour proposer les bons créneaux à tes clientes. Renseigne-les d&apos;abord sur ta page publique, puis reviens activer le mode libre.
+              </p>
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-100">
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  Sans horaires, les clientes ne pourraient pas reserver — le mode libre serait inutilisable.
+                </p>
+              </div>
+            </div>
+            <ModalFooter>
+              <button
+                onClick={() => setMissingHoursBlock(false)}
+                className="w-full sm:flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 text-sm font-bold hover:bg-gray-200 transition-colors"
+              >
+                Plus tard
+              </button>
+              <Link
+                href="/dashboard/public-page"
+                onClick={() => setMissingHoursBlock(false)}
+                className="w-full sm:flex-[2] py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center gap-2"
+              >
+                Configurer mes horaires
+              </Link>
             </ModalFooter>
           </PlanningModal>
         )}
