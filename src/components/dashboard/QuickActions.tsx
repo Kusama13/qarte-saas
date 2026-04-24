@@ -13,6 +13,9 @@ import {
   UserX,
   ShieldAlert,
   Gift,
+  Star,
+  Hourglass,
+  Sunrise,
 } from 'lucide-react';
 import { safeFetchJson } from '@/lib/fetch';
 import { MarkAttendanceModal } from './MarkAttendanceModal';
@@ -33,6 +36,9 @@ const ICONS = {
   userX: UserX,
   shield: ShieldAlert,
   gift: Gift,
+  star: Star,
+  hourglass: Hourglass,
+  sunrise: Sunrise,
 } as const;
 
 const ACCENT_STYLES: Record<QuickAction['accent'], { icon: string; bg: string }> = {

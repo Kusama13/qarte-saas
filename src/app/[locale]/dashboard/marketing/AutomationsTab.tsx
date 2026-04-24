@@ -14,8 +14,10 @@ import {
   UserPlus,
   HeartHandshake,
   Award,
+  Sparkles,
   type LucideIcon,
 } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -23,6 +25,7 @@ interface AutomationsTabProps {
   merchantId?: string;
   shopName?: string;
   planTier?: 'fidelity' | 'all_in';
+  subscriptionStatus?: string | null;
 }
 
 // Fidélité : seules anniversaire (cron auto, sans toggle merchant) + récompense parrainage
@@ -173,7 +176,7 @@ function GroupLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function AutomationsTab({ merchantId, shopName, planTier = 'all_in' }: AutomationsTabProps) {
+export default function AutomationsTab({ merchantId, shopName, planTier = 'all_in', subscriptionStatus = null }: AutomationsTabProps) {
   const t = useTranslations('marketing.automations');
   const isFidelity = planTier === 'fidelity';
   const upgradeHint = isFidelity ? t('tierUpgradeHint') : undefined;
@@ -279,6 +282,27 @@ export default function AutomationsTab({ merchantId, shopName, planTier = 'all_i
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-amber-900">{t('fidelityBannerTitle')}</p>
             <p className="text-xs text-amber-800 mt-0.5 leading-snug">{t('fidelityBannerDesc')}</p>
+          </div>
+        </div>
+      )}
+
+      {subscriptionStatus === 'trial' && (
+        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-4 flex items-start gap-3">
+          <div className="w-9 h-9 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0">
+            <Sparkles className="w-4 h-4 text-indigo-500" strokeWidth={2.5} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-slate-900">Tu es en période d'essai</p>
+            <p className="text-xs text-slate-600 mt-0.5 leading-snug">
+              Active les SMS auto que tu veux — ils seront envoyés à tes clientes dès que tu passes sur un plan payant.
+            </p>
+            <Link
+              href="/dashboard/subscription"
+              className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+            >
+              Passer à l'abonnement
+              <span aria-hidden>→</span>
+            </Link>
           </div>
         </div>
       )}

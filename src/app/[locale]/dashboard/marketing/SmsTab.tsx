@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { useMerchant } from '@/contexts/MerchantContext';
 import {
   MessageSquareText,
@@ -244,6 +245,27 @@ export default function SmsTab() {
 
   return (
     <div className="space-y-4">
+      {merchant?.subscription_status === 'trial' && (
+        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-4 flex items-start gap-3">
+          <div className="w-9 h-9 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0">
+            <Sparkles className="w-4 h-4 text-indigo-500" strokeWidth={2.5} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-slate-900">Tu es en période d&apos;essai</p>
+            <p className="text-xs text-slate-600 mt-0.5 leading-snug">
+              Prépare tes campagnes dès maintenant — elles seront envoyées à tes clientes dès que tu passes sur un plan payant.
+            </p>
+            <Link
+              href="/dashboard/subscription"
+              className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+            >
+              Passer à l&apos;abonnement
+              <span aria-hidden>→</span>
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Composer */}
       <div className="rounded-2xl border border-gray-100 bg-white p-4 md:p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4">

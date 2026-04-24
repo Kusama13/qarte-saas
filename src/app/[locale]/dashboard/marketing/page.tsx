@@ -171,6 +171,7 @@ export default function MarketingPushPage() {
           merchantId={merchant?.id}
           shopName={merchant?.shop_name || 'Ton Salon'}
           planTier={getPlanTier(merchant)}
+          subscriptionStatus={merchant?.subscription_status ?? null}
         />
       )}
 
