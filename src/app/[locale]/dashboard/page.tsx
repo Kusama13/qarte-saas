@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { Link } from '@/i18n/navigation';
-import { Users, Gift, AlertTriangle, X, Eye, UserPlus, Sparkles } from 'lucide-react';
+import { Users, Gift, AlertTriangle, X, Eye, UserPlus, Sparkles, BarChart3 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime, getTodayForCountry, unwrapJoin } from '@/lib/utils';
@@ -11,6 +11,7 @@ import { safeFetchJson } from '@/lib/fetch';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { showPlanningUi } from '@/lib/plan-tiers';
+import { pickGreeting } from '@/lib/dashboard-greetings';
 
 const PendingPointsWidget = dynamic(() => import('@/components/dashboard/PendingPointsWidget'), { ssr: false });
 const PendingDepositsWidget = dynamic(() => import('@/components/dashboard/PendingDepositsWidget'), { ssr: false });
@@ -557,8 +558,7 @@ export default function DashboardPage() {
     );
   }
 
-  const MOTIVATION_KEYS = ['motivationSunday', 'motivationMonday', 'motivationTuesday', 'motivationWednesday', 'motivationThursday', 'motivationFriday', 'motivationSaturday'] as const;
-  const motivationKey = MOTIVATION_KEYS[new Date().getDay()];
+  const greeting = pickGreeting();
   const todayStrK = getTodayForCountry(merchant.country);
   const todayBookingsForHero = upcomingBookings
     .filter(b => b.slot_date === todayStrK)
@@ -609,7 +609,7 @@ export default function DashboardPage() {
           <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
             {t('greeting')} {merchant?.shop_name}
           </h1>
-          <p className="mt-0.5 text-xs md:text-sm text-slate-500">{t(motivationKey)}</p>
+          <p className="mt-0.5 text-xs md:text-sm text-slate-500">{greeting}</p>
         </div>
 
       <OnboardingChecklist />
@@ -651,6 +651,22 @@ export default function DashboardPage() {
         ]}
       />
 
+      {showPlanningUi(merchant) && (
+        <Link
+          href="/dashboard/stats"
+          className="block rounded-2xl border border-gray-100 bg-white shadow-sm p-4 active:scale-[0.99] transition-transform touch-manipulation hover:shadow-md"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
+              <BarChart3 className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-slate-900">Tes statistiques</p>
+              <p className="text-xs text-slate-500 mt-0.5">CA, remplissage, top prestations et fidélité</p>
+            </div>
+          </div>
+        </Link>
+      )}
 
       {stats.totalCustomers > 0 && (
         <PendingPointsWidget
