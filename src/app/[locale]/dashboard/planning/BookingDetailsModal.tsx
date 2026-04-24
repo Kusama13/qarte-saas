@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, History, BookOpen, ChevronDown, Camera, StickyNote, CalendarClock, CalendarPlus } from 'lucide-react';
+import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, History, BookOpen, ChevronDown, Camera, StickyNote, CalendarClock, CalendarPlus, UserCheck, UserX } from 'lucide-react';
 import SmsToggle from './SmsToggle';
 import { getTypeStyle } from '@/lib/note-styles';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
@@ -122,6 +122,32 @@ export default function BookingDetailsModal({
   const isPaid = subscriptionStatus === 'active' || subscriptionStatus === 'canceling' || subscriptionStatus === 'past_due';
   const [sendSms, setSendSms] = useState(false);
   const [depositSendSms, setDepositSendSms] = useState(false);
+
+  // Attendance tracking for past slots (no-show / came) — v1 manual only
+  const [attendanceStatus, setAttendanceStatus] = useState<'pending' | 'attended' | 'no_show' | 'cancelled' | null>(slot.attendance_status ?? null);
+  const [attendanceSaving, setAttendanceSaving] = useState(false);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const isPastSlot = slot.slot_date < todayStr && !!slot.client_name && slot.client_name !== '__blocked__';
+
+  const handleMarkAttendance = async (status: 'attended' | 'no_show') => {
+    if (attendanceSaving) return;
+    const next = attendanceStatus === status ? null : status;
+    setAttendanceSaving(true);
+    const prev = attendanceStatus;
+    setAttendanceStatus(next);
+    try {
+      const res = await fetch('/api/planning/attendance', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slot_id: slot.id, merchant_id: merchantId, attendance_status: next }),
+      });
+      if (!res.ok) setAttendanceStatus(prev);
+    } catch {
+      setAttendanceStatus(prev);
+    } finally {
+      setAttendanceSaving(false);
+    }
+  };
 
   const handleAddToCalendar = () => {
     const slotServices = services.filter(s => draft.serviceIds.includes(s.id));
@@ -483,6 +509,41 @@ export default function BookingDetailsModal({
         </div>
 
         <div className="p-4 space-y-3">
+          {/* ── Attendance tracking: past slot only (v1 manual) ── */}
+          {isPastSlot && (
+            <div className="flex items-center gap-2 rounded-xl bg-slate-50 border border-slate-100 p-2.5">
+              <p className="text-xs font-medium text-slate-600 flex-1">La cliente est-elle venue ?</p>
+              <button
+                type="button"
+                onClick={() => handleMarkAttendance('attended')}
+                disabled={attendanceSaving}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors active:scale-95 touch-manipulation disabled:opacity-50 ${
+                  attendanceStatus === 'attended'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50'
+                }`}
+                aria-pressed={attendanceStatus === 'attended'}
+              >
+                <UserCheck className="w-3.5 h-3.5" />
+                Venue
+              </button>
+              <button
+                type="button"
+                onClick={() => handleMarkAttendance('no_show')}
+                disabled={attendanceSaving}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors active:scale-95 touch-manipulation disabled:opacity-50 ${
+                  attendanceStatus === 'no_show'
+                    ? 'bg-rose-500 text-white'
+                    : 'bg-white text-rose-700 border border-rose-200 hover:bg-rose-50'
+                }`}
+                aria-pressed={attendanceStatus === 'no_show'}
+              >
+                <UserX className="w-3.5 h-3.5" />
+                Absente
+              </button>
+            </div>
+          )}
+
           {/* ── Client info: social + memo ── */}
           {customer && (customer.instagram_handle || customer.tiktok_handle || customer.facebook_url) && (
             <div className="flex items-center gap-2 flex-wrap">

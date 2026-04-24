@@ -210,6 +210,7 @@ export interface PlanningSlot {
   booked_at: string | null;
   primary_slot_id: string | null;
   total_duration_minutes: number | null;
+  attendance_status?: 'pending' | 'attended' | 'no_show' | 'cancelled' | null;
   created_at: string;
   planning_slot_services?: PlanningSlotService[];
   planning_slot_photos?: PlanningSlotPhoto[];
