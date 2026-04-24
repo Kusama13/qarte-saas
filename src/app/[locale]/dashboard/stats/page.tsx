@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { Link } from '@/i18n/navigation';
+
+const QuickActions = dynamic(() => import('@/components/dashboard/QuickActions'), { ssr: false });
 import {
   Euro,
   CalendarDays,
@@ -36,7 +39,11 @@ import {
 } from 'recharts';
 
 const MONTH_NAMES = ['Janv.', 'Févr.', 'Mars', 'Avril', 'Mai', 'Juin', 'Juill.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
+const MONTH_NAMES_FULL = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+// Jours de la semaine pour les labels pills (JS: 0=dim, 1=lun, ..., 6=sam)
+const WEEKDAYS_SHORT_JS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
+const WEEKDAYS_FULL_JS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 
 // Les statistiques ne remontent jamais avant avril 2026 — on n'avait pas encore
 // les donnees de planning en ligne etablies avant.
@@ -76,9 +83,8 @@ function availableMonths(): string[] {
 
 /**
  * Decoupe un mois en semaines civiles (lundi -> dimanche), clampees au mois.
- * Retourne une liste d'intervalles { from, to, label, dateRange }.
- * Ex. avril 2026 : Sem 1 = 01-05 (mer-dim), Sem 2 = 06-12, ...
- * dateRange = "1-5" ou "6-12" (jours du mois uniquement)
+ * Ex. avril 2026 : Sem 1 = mer 1 → dim 5, Sem 2 = lun 6 → dim 12, ...
+ * dateRange = "mer 1 → dim 5" (jour abrege + numero, jour dans le mois uniquement)
  */
 function weeksInMonth(monthKey: string): Array<{ idx: number; from: string; to: string; label: string; dateRange: string }> {
   const [y, m] = monthKey.split('-').map((n) => parseInt(n, 10));
@@ -98,7 +104,11 @@ function weeksInMonth(monthKey: string): Array<{ idx: number; from: string; to: 
     const weekTo = sunday > lastDay ? new Date(lastDay) : sunday;
     const fromDay = weekFrom.getDate();
     const toDay = weekTo.getDate();
-    const dateRange = fromDay === toDay ? `${fromDay}` : `${fromDay}–${toDay}`;
+    const fromDow = WEEKDAYS_SHORT_JS[weekFrom.getDay()];
+    const toDow = WEEKDAYS_SHORT_JS[weekTo.getDay()];
+    const dateRange = fromDay === toDay
+      ? `${fromDow} ${fromDay}`
+      : `${fromDow} ${fromDay}→${toDow} ${toDay}`;
     weeks.push({
       idx,
       from: isoDay(weekFrom),
@@ -120,6 +130,38 @@ function monthRangeForKey(monthKey: string): { from: string; to: string } {
   const to = `${y}-${pad2(m)}-${pad2(lastDay)}`;
   return { from, to };
 }
+
+/** "du mercredi 1 au dimanche 5 avril" — jour de la semaine + numero + mois. */
+function formatDateRange(from: string, to: string): string {
+  const [yF, mF, dF] = from.split('-').map((n) => parseInt(n, 10));
+  const [yT, mT, dT] = to.split('-').map((n) => parseInt(n, 10));
+  const nowYear = new Date().getFullYear();
+  const fromDow = WEEKDAYS_FULL_JS[new Date(yF, mF - 1, dF).getDay()];
+  const toDow = WEEKDAYS_FULL_JS[new Date(yT, mT - 1, dT).getDay()];
+  const mFName = MONTH_NAMES_FULL[mF - 1];
+  const mTName = MONTH_NAMES_FULL[mT - 1];
+  if (yF === yT && mF === mT) {
+    const suffix = yT !== nowYear ? ` ${yT}` : '';
+    return `du ${fromDow} ${dF} au ${toDow} ${dT} ${mTName}${suffix}`;
+  }
+  if (yF === yT) {
+    const suffix = yT !== nowYear ? ` ${yT}` : '';
+    return `du ${fromDow} ${dF} ${mFName} au ${toDow} ${dT} ${mTName}${suffix}`;
+  }
+  return `du ${fromDow} ${dF} ${mFName} ${yF} au ${toDow} ${dT} ${mTName} ${yT}`;
+}
+
+/** Abrege les nombres pour un Y-axis compact. 1200 -> "1,2k", 850 -> "850", 12500 -> "12k". */
+function compactNumber(n: number): string {
+  if (n >= 1000) {
+    const scaled = n / 1000;
+    const formatted = scaled >= 10 ? Math.round(scaled).toString() : scaled.toFixed(1).replace(/\.0$/, '');
+    return `${formatted.replace('.', ',')}k`;
+  }
+  return String(Math.round(n));
+}
+
+const Y_AXIS_WIDTH = 30;
 
 const TOOLTIP_STYLE = {
   fontSize: '12px',
@@ -213,7 +255,7 @@ function KpiCard({
         </p>
       </div>
       <div className="flex items-baseline flex-wrap gap-x-1.5 gap-y-0.5">
-        <h3 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-[-0.03em] tabular-nums leading-none">
+        <h3 className="text-xl md:text-2xl font-bold text-slate-900 tracking-[-0.02em] tabular-nums leading-none">
           {value}
         </h3>
         {delta !== undefined && <DeltaPill delta={delta} />}
@@ -277,10 +319,14 @@ export default function StatsPage() {
     return w ? { from: w.from, to: w.to } : monthRangeForKey(month);
   }, [month, weekIdx, weeks]);
 
-  // Reset week selection when month changes
-  useEffect(() => {
+  const selectMonth = useCallback((key: string) => {
+    setMonth(key);
     setWeekIdx(0);
-  }, [month]);
+  }, []);
+
+  const toggleWeek = useCallback((idx: number) => {
+    setWeekIdx((cur) => (cur === idx ? 0 : idx));
+  }, []);
 
   const fetchStats = useCallback(async () => {
     if (!merchant?.id) return;
@@ -319,18 +365,17 @@ export default function StatsPage() {
         <UpgradeLock />
       ) : (
         <>
-          {/* Mois + semaines du mois actif */}
+          {/* Ligne 1 : mois (clic = mois entier). Ligne 2 : semaines optionnelles (clic actif = deselect). */}
           <div className="space-y-2">
-            {/* Niveau 1 : mois */}
             <div className="-mx-4 px-4 overflow-x-auto scrollbar-none">
               <div className="flex gap-1.5 min-w-max">
                 {months.map((key) => {
-                  const active = month === key;
+                  const active = month === key && weekIdx === 0;
                   return (
                     <button
                       key={key}
                       type="button"
-                      onClick={() => setMonth(key)}
+                      onClick={() => selectMonth(key)}
                       className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors touch-manipulation whitespace-nowrap ${
                         active
                           ? 'bg-[#4b0082] text-white shadow-sm'
@@ -344,45 +389,34 @@ export default function StatsPage() {
               </div>
             </div>
 
-            {/* Niveau 2 : semaines du mois actif */}
             {weeks.length > 1 && (
-              <div className="-mx-4 px-4 overflow-x-auto scrollbar-none">
-                <div className="flex gap-1.5 min-w-max">
-                  <button
-                    type="button"
-                    onClick={() => setWeekIdx(0)}
-                    className={`px-3 py-1 rounded-full text-[11px] font-medium transition-colors touch-manipulation whitespace-nowrap ${
-                      weekIdx === 0
-                        ? 'bg-slate-900 text-white'
-                        : 'bg-transparent text-slate-500 hover:text-slate-900'
-                    }`}
-                  >
-                    Tout le mois
-                  </button>
-                  {weeks.map((w) => {
-                    const active = weekIdx === w.idx;
-                    return (
-                      <button
-                        key={w.idx}
-                        type="button"
-                        onClick={() => setWeekIdx(w.idx)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium transition-colors touch-manipulation whitespace-nowrap ${
-                          active
-                            ? 'bg-slate-900 text-white'
-                            : 'bg-transparent text-slate-500 hover:text-slate-900'
-                        }`}
-                      >
-                        <span>{w.label}</span>
-                        <span className={active ? 'text-white/70' : 'text-slate-400'}>
-                          {w.dateRange}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+              <div className="flex flex-wrap gap-1.5 items-stretch">
+                {weeks.map((w) => {
+                  const active = weekIdx === w.idx;
+                  return (
+                    <button
+                      key={w.idx}
+                      type="button"
+                      onClick={() => toggleWeek(w.idx)}
+                      aria-pressed={active}
+                      className={`flex flex-col items-center justify-center px-3 py-1 rounded-xl text-[11px] font-semibold transition-colors touch-manipulation whitespace-nowrap leading-tight border ${
+                        active
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-white hover:border-slate-300 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>{w.label}</span>
+                      <span className={`mt-0.5 text-[9px] font-medium tabular-nums ${active ? 'text-white/70' : 'text-slate-400'}`}>
+                        {w.dateRange}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
+
+          {merchant?.id && <QuickActions merchantId={merchant.id} />}
 
           {loading ? (
             <div className="flex items-center justify-center min-h-[40vh]">
@@ -392,6 +426,12 @@ export default function StatsPage() {
             <div className="rounded-2xl bg-rose-50 border border-rose-100 p-4 text-sm text-rose-700">{error}</div>
           ) : stats ? (
             <>
+              {weekIdx > 0 && (
+                <p className="px-1 -mt-1 text-[11px] font-medium text-slate-500 tabular-nums">
+                  {formatDateRange(range.from, range.to)}
+                </p>
+              )}
+
               {/* ─── Section Planning ─── */}
               <div>
                 <SectionLabel>Planning & réservation</SectionLabel>
@@ -400,14 +440,14 @@ export default function StatsPage() {
                     icon={Euro}
                     label="Chiffre d'affaires"
                     value={formatCurrency(stats.planning.revenue.current, merchant?.country)}
-                    delta={stats.planning.revenue.delta}
+                    delta={stats.planning.revenue.previous > 0 ? stats.planning.revenue.delta : undefined}
                     color="emerald"
                   />
                   <KpiCard
                     icon={CalendarDays}
                     label="Réservations"
                     value={String(stats.planning.bookings.current)}
-                    delta={stats.planning.bookings.delta}
+                    delta={stats.planning.bookings.previous > 0 ? stats.planning.bookings.delta : undefined}
                     color="cyan"
                   />
                   <KpiCard
@@ -451,7 +491,13 @@ export default function StatsPage() {
                             axisLine={false}
                             tickLine={false}
                           />
-                          <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                          <YAxis
+                            tick={{ fontSize: 10, fill: '#94a3b8' }}
+                            axisLine={false}
+                            tickLine={false}
+                            width={Y_AXIS_WIDTH}
+                            tickFormatter={(v: number) => compactNumber(v)}
+                          />
                           <Tooltip
                             contentStyle={TOOLTIP_STYLE}
                             formatter={(value: number) => [formatCurrency(value, merchant?.country), 'CA']}
@@ -486,6 +532,7 @@ export default function StatsPage() {
                           tick={{ fontSize: 10, fill: '#94a3b8' }}
                           axisLine={false}
                           tickLine={false}
+                          width={Y_AXIS_WIDTH}
                           tickFormatter={(v) => `${v}%`}
                         />
                         <Tooltip
@@ -538,7 +585,7 @@ export default function StatsPage() {
                     icon={UserPlus}
                     label="Nouvelles clientes"
                     value={String(stats.fidelite.newCustomers.current)}
-                    delta={stats.fidelite.newCustomers.delta}
+                    delta={stats.fidelite.newCustomers.previous > 0 ? stats.fidelite.newCustomers.delta : undefined}
                     color="emerald"
                   />
                   <KpiCard
@@ -552,7 +599,7 @@ export default function StatsPage() {
                     icon={Sparkles}
                     label="Récompenses utilisées"
                     value={String(stats.fidelite.vouchersRedeemed.current)}
-                    delta={stats.fidelite.vouchersRedeemed.delta}
+                    delta={stats.fidelite.vouchersRedeemed.previous > 0 ? stats.fidelite.vouchersRedeemed.delta : undefined}
                     color="amber"
                   />
                   <KpiCard
@@ -581,7 +628,7 @@ export default function StatsPage() {
                             axisLine={false}
                             tickLine={false}
                           />
-                          <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} allowDecimals={false} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} allowDecimals={false} axisLine={false} tickLine={false} width={Y_AXIS_WIDTH} />
                           <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: '#f8fafc' }} />
                           <Bar dataKey="count" fill="#10b981" radius={[6, 6, 0, 0]} />
                         </BarChart>
