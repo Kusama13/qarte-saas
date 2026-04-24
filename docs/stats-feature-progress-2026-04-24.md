@@ -61,40 +61,35 @@
 
 ---
 
-## 🟡 À faire ensemble (à la reprise post-compaction)
+## ✅ Quick Actions — Phase 1 + Phase 2 **shippé 2026-04-24**
 
-### 1. Quick Actions widget — **Phase 1** (les 3 priorités validées)
+Voir [changelog-2026-04-24.md §9](./changelog-2026-04-24.md) pour le détail complet.
 
-Position UI : après `HeroToday`, avant `ToSeeList` sur la home dashboard. Design : `rounded-2xl bg-white border-gray-100 shadow-sm`, rows cliquables avec icône feature-colored + copy courte, **zéro flèche**.
+- Widget placé sur `/dashboard/stats` (pas sur la home — décision prise en cours de route pour ne pas surcharger l'accueil).
+- API `GET /api/dashboard/quick-actions?merchantId=X` créée, retourne top 3 par priorité sur 10+ triggers.
+- 4 actions ont une **logique 2-états** selon auto-SMS on/off (anniversaire, proche récompense, inactifs, parrainage).
+- Cache-Control `private, max-age=60`.
 
-| # | Trigger (data) | Action |
-|---|---|---|
-| **1** | 2+ RDV passés non marqués présence | « Marque la présence de tes RDV d'hier » → modale liste rapide, 2 boutons Venue/Absente par row |
-| **5** | Cliente 10+ visites OU 2 récompenses atteintes (VIP signal) | « Offrir -5% permanents à {Marie} dans Membres Privilège » → lien vers `/dashboard/program/members` avec preselect |
-| **6** | 50+ clientes inscrites ET pas de campagne SMS lancée depuis 30j | « Envoyer une offre à tes {X} clientes » → lien vers `/dashboard/marketing?new_campaign=1` |
+Les 10+ triggers shippés :
+1. Marquer présence (2+ RDV non marqués)
+2. Nouveau client du jour
+3. Agenda vide demain
+4. Anniversaire cette semaine (2 states)
+5. Proche récompense (2 states)
+6. Récompenser VIP
+7. Clients inactifs (2 states)
+8. Suggérer acompte (no-show > 15 %)
+9. Activer rappel J-0
+10. Campagne SMS (50+ clients, 30j sans campagne)
+11. Booster parrainage (2 states)
+12. Activer SMS expiration voucher
+13. Activer SMS relance avis
 
-**API à créer** : `GET /api/dashboard/quick-actions?merchantId=X` → `[{id, icon, title, href, meta?}]` (max 3)
+## ✅ Pull-to-Refresh (PTR) — shippé 2026-04-24
 
-**Effort** : ~3h30
-- Widget component (~45 min)
-- API agrégée (~1h30)
-- Handler #1 « marquer présence » (modale ou page dédiée) (~30 min)
-- Handler #5 preselect client dans Membres Privilège (~20 min)
-- Handler #6 lien nouvelle campagne (~15 min)
+Voir [changelog-2026-04-24.md §16](./changelog-2026-04-24.md).
 
-### 2. Quick Actions — **Phase 2** (selon usage observé)
-
-Les 7 autres actions de la liste :
-
-| # | Trigger | Action |
-|---|---|---|
-| 2 | Cliente à 1 tampon de sa récompense | SMS motivation à {Marie} |
-| 3 | 3+ clientes inactives 60j | Relancer X clientes inactives |
-| 4 | Anniversaire cette semaine | Julie a son anniv mercredi |
-| 7 | Taux no-show > 15 % | Activer l'acompte ? |
-| 8 | Agenda vide demain | Publier ton lien résa sur Insta |
-| 9 | Parrainage activé, 0 conv 30j | Booster le parrainage |
-| 10 | 1er RDV nouvelle cliente aujourd'hui | Note ce qu'elle aime |
+PTR opt-in par page sur `/dashboard`, `/dashboard/planning`, `/dashboard/stats`. Touch only. Pas de lib externe.
 
 ### 3. Design review continue
 
