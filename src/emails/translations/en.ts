@@ -42,6 +42,7 @@ export const en = {
     firstBooking: '{shopName}, your 1st online booking',
     firstReward: '{shopName}, 1st reward unlocked',
     weeklyDigest: '{shopName} — your week',
+    blogDigest: '{shopName}, a blog article for you',
     day5Checkin: '{shopName}, your 1st week',
     tier2Upsell: 'Your best clients deserve more',
     firstClientScript: 'The exact phrase to say to your clients',

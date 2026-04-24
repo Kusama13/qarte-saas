@@ -19,6 +19,7 @@ export { FirstScanEmail } from './FirstScanEmail';
 export { FirstBookingEmail } from './FirstBookingEmail';
 export { FirstRewardEmail } from './FirstRewardEmail';
 export { WeeklyDigestEmail } from './WeeklyDigestEmail';
+export { BlogDigestEmail } from './BlogDigestEmail';
 export { Day5CheckinEmail } from './Day5CheckinEmail';
 export { Tier2UpsellEmail } from './Tier2UpsellEmail';
 export { SubscriptionReactivatedEmail } from './SubscriptionReactivatedEmail';

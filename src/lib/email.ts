@@ -22,6 +22,7 @@ import {
   FirstBookingEmail,
   FirstRewardEmail,
   WeeklyDigestEmail,
+  BlogDigestEmail,
   Day5CheckinEmail,
   Tier2UpsellEmail,
   SubscriptionReactivatedEmail,
@@ -683,6 +684,41 @@ export async function sendWeeklyDigestEmail(
   return sendEmail(to, subj(locale, 'weeklyDigest', { shopName }), WeeklyDigestEmail, { shopName, scansThisWeek, newCustomers, rewardsEarned, totalCustomers, locale }, {
     logLabel: 'Weekly digest email',
   });
+}
+
+export async function sendBlogDigestEmail(
+  to: string,
+  shopName: string,
+  article: {
+    title: string;
+    description: string;
+    category: string;
+    readTime: string;
+    imageUrl: string;
+    url: string;
+  },
+  merchantId: string,
+  locale: EmailLocale = 'fr',
+): Promise<SendEmailResult> {
+  return sendEmail(
+    to,
+    subj(locale, 'blogDigest', { shopName }),
+    BlogDigestEmail,
+    {
+      shopName,
+      articleTitle: article.title,
+      articleDescription: article.description,
+      articleCategory: article.category,
+      articleReadTime: article.readTime,
+      articleImageUrl: article.imageUrl,
+      articleUrl: article.url,
+      locale,
+    },
+    {
+      logLabel: 'Blog digest email',
+      merchantId,
+    },
+  );
 }
 
 export async function sendDay5CheckinEmail(
