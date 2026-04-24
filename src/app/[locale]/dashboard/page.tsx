@@ -654,15 +654,29 @@ export default function DashboardPage() {
       {showPlanningUi(merchant) && (
         <Link
           href="/dashboard/stats"
-          className="block rounded-2xl border border-gray-100 bg-white shadow-sm p-4 active:scale-[0.99] transition-transform touch-manipulation hover:shadow-md"
+          className="group relative block overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm hover:shadow-md active:scale-[0.99] transition-all touch-manipulation"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
-              <BarChart3 className="w-5 h-5 text-indigo-600" />
+          <div
+            aria-hidden
+            className="absolute -top-16 -right-16 w-48 h-48 rounded-full blur-3xl pointer-events-none opacity-70"
+            style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.18), rgba(139,92,246,0.08) 60%, transparent 80%)' }}
+          />
+          <div className="relative flex items-center gap-3.5 p-5">
+            <div
+              className="flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-xl shrink-0 shadow-md"
+              style={{
+                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                boxShadow: '0 4px 12px rgba(99,102,241,0.33)',
+              }}
+            >
+              <BarChart3 className="w-5 h-5 md:w-5.5 md:h-5.5 text-white" strokeWidth={2.5} />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-slate-900">Tes statistiques</p>
-              <p className="text-xs text-slate-500 mt-0.5">CA, remplissage, top prestations et fidélité</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">Analytics</p>
+              <p className="mt-0.5 text-base font-bold text-slate-900 tracking-[-0.01em] leading-tight">Tes statistiques</p>
+              <p className="text-xs text-slate-500 mt-1 leading-snug">
+                CA, remplissage, tops prestations et fidélité
+              </p>
             </div>
           </div>
         </Link>
