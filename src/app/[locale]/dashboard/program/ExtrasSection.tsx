@@ -3,7 +3,7 @@
 import {
   Star,
   Users,
-  Zap,
+  Flame,
   Cake,
   Gift,
 } from 'lucide-react';
@@ -203,7 +203,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex items-start gap-2 md:gap-3 min-w-0 flex-1">
               <div className="shrink-0 w-8 h-8 md:w-9 md:h-9 rounded-lg bg-amber-50 flex items-center justify-center">
-                <Zap className="w-4 h-4 text-amber-600" strokeWidth={2.25} />
+                <Flame className="w-4 h-4 text-amber-600" strokeWidth={2.25} />
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="text-sm md:text-base font-bold text-slate-900">{t('doubleDaysTitle')}</h3>

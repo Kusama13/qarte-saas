@@ -21,7 +21,7 @@ import {
   Cake,
   Clock,
   Target,
-  Sparkles,
+  Flower2,
   Ticket,
   UserCheck,
   X,
@@ -846,7 +846,7 @@ export default function CustomersPage() {
                       onClick={() => setActiveFilter(activeFilter === 'new7' ? 'all' : 'new7')}
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${activeFilter === 'new7' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
                     >
-                      <Sparkles className={`w-3.5 h-3.5 ${activeFilter === 'new7' ? 'text-white' : 'text-emerald-500'}`} />
+                      <Flower2 className={`w-3.5 h-3.5 ${activeFilter === 'new7' ? 'text-white' : 'text-emerald-500'}`} />
                       <span>{t('filterNew7')}</span>
                       <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${activeFilter === 'new7' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-700'}`}>{new7Count}</span>
                     </button>
@@ -920,7 +920,7 @@ export default function CustomersPage() {
                           onClick={() => setFilterWelcome(!filterWelcome)}
                           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${filterWelcome ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
                         >
-                          <Sparkles className={`w-3.5 h-3.5 ${filterWelcome ? 'text-white' : 'text-sky-500'}`} />
+                          <Flower2 className={`w-3.5 h-3.5 ${filterWelcome ? 'text-white' : 'text-sky-500'}`} />
                           <span>{t('filterWelcome')}</span>
                           <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${filterWelcome ? 'bg-white/20 text-white' : 'bg-sky-100 text-sky-700'}`}>{welcomeCount}</span>
                         </button>

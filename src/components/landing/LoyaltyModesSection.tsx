@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Sparkles, Star, UserPlus, Search, Gift, Share2, ArrowRight } from 'lucide-react';
+import { Flower2, Star, UserPlus, Search, Gift, Share2, ArrowRight } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
@@ -49,7 +49,7 @@ function WelcomeOfferCard({ t }: { t: (key: string) => string }) {
   return (
     <div className="relative bg-gradient-to-br from-violet-50 to-pink-50 rounded-2xl border border-violet-100 shadow-xl shadow-violet-100/30 p-6 flex flex-col h-full">
       <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center mb-4 shadow-lg shadow-violet-200/50">
-        <Sparkles className="w-5 h-5 text-white" />
+        <Flower2 className="w-5 h-5 text-white" />
       </div>
       <h3 className="text-lg font-bold text-gray-900 mb-1">{t('welcomeTitle')}</h3>
       <p className="text-sm text-gray-500 leading-relaxed mb-5">
@@ -59,7 +59,7 @@ function WelcomeOfferCard({ t }: { t: (key: string) => string }) {
       {/* Mini mockup: Offer card */}
       <div className="bg-white/80 rounded-xl p-4 mt-auto">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-violet-500" />
+          <Flower2 className="w-4 h-4 text-violet-500" />
           <span className="text-[10px] font-bold text-violet-500 uppercase tracking-wider">{t('welcomeTitle')}</span>
         </div>
         <p className="text-sm font-bold text-gray-800 mb-3">{t('welcomeOffer')}</p>

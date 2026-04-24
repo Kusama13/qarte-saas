@@ -1,6 +1,6 @@
 import {
-  Zap,
-  Sparkles,
+  Flame,
+  Flower2,
   Megaphone,
   PartyPopper,
   Crown,
@@ -66,8 +66,8 @@ export { FORBIDDEN_WORDS } from '@/lib/content-moderation';
 type TranslateFunction = (key: string) => string;
 
 const TEMPLATE_DEFS = [
-  { id: 'last_minute', titleKey: 'lastMinuteTitle', bodyKey: 'lastMinuteBody', offerDescriptionKey: 'lastMinuteOffer', icon: Zap, color: 'orange' },
-  { id: 'new_service', titleKey: 'newServiceTitle', bodyKey: 'newServiceBody', offerDescriptionKey: 'newServiceOffer', icon: Sparkles, color: 'violet' },
+  { id: 'last_minute', titleKey: 'lastMinuteTitle', bodyKey: 'lastMinuteBody', offerDescriptionKey: 'lastMinuteOffer', icon: Flame, color: 'orange' },
+  { id: 'new_service', titleKey: 'newServiceTitle', bodyKey: 'newServiceBody', offerDescriptionKey: 'newServiceOffer', icon: Flower2, color: 'violet' },
   { id: 'promo_beaute', titleKey: 'promoTitle', bodyKey: 'promoBody', offerDescriptionKey: 'promoOffer', icon: Megaphone, color: 'pink' },
   { id: 'duo', titleKey: 'duoTitle', bodyKey: 'duoBody', offerDescriptionKey: 'duoOffer', icon: PartyPopper, color: 'yellow' },
   { id: 'dernieres_dispos', titleKey: 'lastAvailTitle', bodyKey: 'lastAvailBody', offerDescriptionKey: 'lastAvailOffer', icon: Crown, color: 'amber' },

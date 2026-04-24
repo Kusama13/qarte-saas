@@ -1,6 +1,6 @@
 'use client';
 
-import { Gift, Heart, Trophy, Zap, Crown } from 'lucide-react';
+import { Gift, Heart, Trophy, Flame, Crown } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { parseDoubleDays, formatDoubleDays } from '@/lib/utils';
@@ -239,7 +239,7 @@ export default function StampsSection({
 
         {showDoubleDaysHint && (
           <div className="flex items-center justify-center gap-1.5 pt-1">
-            <Zap className="w-3 h-3 text-amber-400 shrink-0" />
+            <Flame className="w-3 h-3 text-amber-400 shrink-0" />
             <span className="text-[11px] text-gray-500 font-medium">
               {t('doubleDaysHint', { days: formattedDoubleDays })}
             </span>
@@ -264,7 +264,7 @@ export default function StampsSection({
           </motion.div>
         ) : tier1Required - currentStamps <= 2 ? (
           <motion.div animate={{ x: [0, -2, 2, 0] }} transition={{ repeat: Infinity, duration: 0.5, repeatDelay: 1.5 }} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500 text-white shadow-lg shadow-amber-200">
-            <Zap className="w-3.5 h-3.5" />
+            <Flame className="w-3.5 h-3.5" />
             <span className="text-xs font-black">{t('onlyLeft', { count: tier1Required - currentStamps })}</span>
           </motion.div>
         ) : null}
@@ -305,7 +305,7 @@ export default function StampsSection({
 
       {showDoubleDaysHint && (
         <div className="flex items-center justify-center gap-1.5">
-          <Zap className="w-3 h-3 text-amber-400 shrink-0" />
+          <Flame className="w-3 h-3 text-amber-400 shrink-0" />
           <span className="text-[11px] text-gray-500 font-medium">
             {t('doubleDaysHint', { days: formattedDoubleDays })}
           </span>

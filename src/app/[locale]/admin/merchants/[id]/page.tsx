@@ -33,7 +33,7 @@ import {
   StickyNote,
   Smartphone,
   Loader2 as Loader2Icon,
-  Zap,
+  Flame,
   Wallet,
   Image,
   Scissors,
@@ -937,9 +937,9 @@ export default function MerchantDetailPage() {
           <FeatureBadge active={merchant.student_offer_enabled} icon={<GraduationCap className="w-3 h-3" />} label="Offre étudiant" />
           <FeatureBadge active={merchant.contest_enabled} icon={<Trophy className="w-3 h-3" />} label="Jeu concours" />
           <FeatureBadge active={merchant.shield_enabled} icon={<Shield className="w-3 h-3" />} label="Shield" />
-          <FeatureBadge active={merchant.tier2_enabled} icon={<Zap className="w-3 h-3" />} label="Palier 2" />
+          <FeatureBadge active={merchant.tier2_enabled} icon={<Flame className="w-3 h-3" />} label="Palier 2" />
           {merchant.double_days_enabled && (
-            <FeatureBadge active icon={<Zap className="w-3 h-3" />} label={`Jours x2 : ${formatDoubleDays(merchant.double_days_of_week) || '—'}`} />
+            <FeatureBadge active icon={<Flame className="w-3 h-3" />} label={`Jours x2 : ${formatDoubleDays(merchant.double_days_of_week) || '—'}`} />
           )}
         </div>
 
@@ -956,7 +956,7 @@ export default function MerchantDetailPage() {
             </div>
           </div>
           <div className="flex items-start gap-3 px-3 py-2.5">
-            <Zap className={cn("w-4 h-4 mt-0.5 flex-shrink-0", merchant.tier2_enabled ? "text-amber-600" : "text-gray-300")} />
+            <Flame className={cn("w-4 h-4 mt-0.5 flex-shrink-0", merchant.tier2_enabled ? "text-amber-600" : "text-gray-300")} />
             <div className="min-w-0 flex-1">
               <span className={cn("font-semibold", merchant.tier2_enabled ? "text-gray-900" : "text-gray-400")}>Palier 2</span>
               {merchant.tier2_enabled && merchant.tier2_stamps_required ? (
@@ -1081,7 +1081,7 @@ export default function MerchantDetailPage() {
           <FeatureBadge active={merchant.auto_booking_enabled} icon={<CalendarDays className="w-3 h-3" />} label="Resa en ligne" />
           <FeatureBadge active={merchant.welcome_offer_enabled} icon={<Gift className="w-3 h-3" />} label="Nouveaux clients" />
           <FeatureBadge active={merchant.show_public_page_on_card} icon={<Globe className="w-3 h-3" />} label="Lien sur carte" />
-          {merchant.booking_mode && <FeatureBadge active icon={<Zap className="w-3 h-3" />} label={merchant.booking_mode === 'free' ? 'Mode Libre' : 'Mode Creneaux'} />}
+          {merchant.booking_mode && <FeatureBadge active icon={<Flame className="w-3 h-3" />} label={merchant.booking_mode === 'free' ? 'Mode Libre' : 'Mode Creneaux'} />}
           {Number(merchant.buffer_minutes || 0) > 0 && <FeatureBadge active icon={<Clock className="w-3 h-3" />} label={`Buffer ${merchant.buffer_minutes}min`} />}
           {merchant.allow_customer_cancel && <FeatureBadge active icon={<XCircle className="w-3 h-3" />} label={`Annulation J-${merchant.cancel_deadline_days || 0}`} />}
           {merchant.allow_customer_reschedule && <FeatureBadge active icon={<CalendarDays className="w-3 h-3" />} label={`Modif J-${merchant.reschedule_deadline_days || 0}`} />}

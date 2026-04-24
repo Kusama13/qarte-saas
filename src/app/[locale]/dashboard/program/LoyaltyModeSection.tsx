@@ -6,12 +6,12 @@ import {
   Check,
   AlertTriangle,
   Gift,
-  Zap,
+  Flame,
   Euro,
   Stamp,
   HelpCircle,
   X,
-  Sparkles,
+  Flower2,
   Target,
   Trophy,
 } from 'lucide-react';
@@ -163,7 +163,7 @@ export function LoyaltyModeSection({
             />
             <div className="space-y-2.5 mt-4">
               <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-indigo-500" />
+                <Flame className="w-4 h-4 text-indigo-500" />
                 {t('cagnottePercentLabel')}
               </label>
               <div className="relative w-fit">
@@ -262,7 +262,7 @@ export function LoyaltyModeSection({
           <div className="space-y-5 pt-4 border-t border-violet-100">
             <div className="p-4 rounded-xl bg-violet-50/50 border border-violet-100">
               <p className="text-sm text-violet-700 flex items-start gap-2">
-                <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <Flower2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 {formData.loyaltyMode === 'cagnotte' ? (
                   <span>{t.rich('tier2HowCagnotte', { stamps: formData.stampsRequired, percent: formData.cagnottePercent, tier2Stamps: formData.tier2StampsRequired || '?', tier2Percent: formData.cagnotteTier2Percent, b: (chunks) => <strong>{chunks}</strong> })}</span>
                 ) : (
@@ -320,7 +320,7 @@ export function LoyaltyModeSection({
             {formData.loyaltyMode === 'cagnotte' ? (
               <div className="space-y-2.5">
                 <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-violet-500" />
+                  <Flame className="w-4 h-4 text-violet-500" />
                   {t('tier2CagnotteLabel')}
                 </label>
                 <div className="relative w-fit">

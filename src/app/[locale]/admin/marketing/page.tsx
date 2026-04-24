@@ -9,7 +9,7 @@ import {
   Scissors,
   ShoppingBag,
   UtensilsCrossed,
-  Sparkles,
+  Flower2,
   Copy,
   Check,
   ChevronDown,
@@ -19,7 +19,7 @@ import {
   Award,
   Users,
   Star,
-  Wand2,
+  Palette,
   ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -32,7 +32,7 @@ const commerceTypes: { id: CommerceType; label: string; icon: React.ElementType;
   { id: 'hairdresser', label: 'Coiffeur', icon: Scissors, emoji: '✂️' },
   { id: 'boutique', label: 'Boutique', icon: ShoppingBag, emoji: '🛍️' },
   { id: 'cafe', label: 'Café / Bar', icon: Coffee, emoji: '☕' },
-  { id: 'beauty', label: 'Institut beauté', icon: Sparkles, emoji: '💅' },
+  { id: 'beauty', label: 'Institut beauté', icon: Flower2, emoji: '💅' },
 ];
 
 interface EmailTemplate {
@@ -594,7 +594,7 @@ function PromptCard({ prompt, tips, title }: { prompt: string; tips: string[]; t
     <div className="border border-gray-200 rounded-lg overflow-hidden">
       <div className="bg-gradient-to-r from-violet-500 to-indigo-600 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Wand2 className="w-4 h-4 text-white" />
+          <Palette className="w-4 h-4 text-white" />
           <h3 className="font-semibold text-white">{title}</h3>
         </div>
         <CopyButton text={prompt} />
@@ -640,7 +640,7 @@ export default function MarketingPage() {
       <div className="bg-gradient-to-br from-violet-50 to-indigo-50 rounded-lg p-6 border border-violet-100">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-lg flex items-center justify-center">
-            <Wand2 className="w-5 h-5 text-white" />
+            <Palette className="w-5 h-5 text-white" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Générateurs d&apos;images IA</h2>

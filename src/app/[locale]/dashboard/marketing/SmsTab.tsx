@@ -7,7 +7,8 @@ import { useMerchant } from '@/contexts/MerchantContext';
 import {
   MessageSquareText,
   Send,
-  Sparkles,
+  Gem,
+  Lightbulb,
   Users,
   Calendar,
   Loader2,
@@ -248,7 +249,7 @@ export default function SmsTab() {
       {merchant?.subscription_status === 'trial' && (
         <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-4 flex items-start gap-3">
           <div className="w-9 h-9 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4 text-indigo-500" strokeWidth={2.5} />
+            <Gem className="w-4 h-4 text-indigo-500" strokeWidth={2.5} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-slate-900">Tu es en période d&apos;essai</p>
@@ -284,7 +285,7 @@ export default function SmsTab() {
                 : 'border-gray-200 bg-white hover:bg-gray-50'
             }`}
           >
-            <Sparkles className="w-4 h-4 text-[#4b0082] shrink-0" />
+            <Lightbulb className="w-4 h-4 text-[#4b0082] shrink-0" />
             <span className="flex-1 text-left text-xs font-semibold text-gray-700">{t('suggestions')}</span>
             <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${showSuggestions ? 'rotate-180' : ''}`} />
           </button>

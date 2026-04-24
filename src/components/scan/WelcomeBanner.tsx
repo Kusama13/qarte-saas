@@ -1,6 +1,6 @@
 'use client';
 
-import { Gift, Sparkles, Trophy } from 'lucide-react';
+import { Gift, Flower2, Trophy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Merchant } from '@/types';
 
@@ -70,11 +70,11 @@ export default function WelcomeBanner({ merchant, primaryColor, secondaryColor }
           </h2>
 
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Sparkles className="w-4 h-4" style={{ color: primaryColor }} />
+            <Flower2 className="w-4 h-4" style={{ color: primaryColor }} />
             <p className="text-lg font-extrabold text-gray-900 tracking-tight">
               {t('rewardLoyalty')}
             </p>
-            <Sparkles className="w-4 h-4" style={{ color: primaryColor }} />
+            <Flower2 className="w-4 h-4" style={{ color: primaryColor }} />
           </div>
 
           {/* Reward Badges */}

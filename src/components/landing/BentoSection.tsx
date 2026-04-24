@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import {
-  Globe, Heart, CalendarDays, Gift, Bell, Star, Sparkles, ArrowRight,
+  Globe, Heart, CalendarDays, Gift, Bell, Star, Flower2, ArrowRight,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
@@ -90,7 +90,7 @@ export function BentoSection() {
                   <div className="mt-5 flex flex-wrap gap-2">
                     {[1, 2, 3].map((n) => (
                       <span key={n} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100 text-xs font-medium text-gray-600">
-                        <Sparkles className="w-3 h-3 text-gray-400" />
+                        <Flower2 className="w-3 h-3 text-gray-400" />
                         {t(`${key}Tag${n}`)}
                       </span>
                     ))}

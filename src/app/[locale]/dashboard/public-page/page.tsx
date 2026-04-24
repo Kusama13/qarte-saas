@@ -8,7 +8,7 @@ import {
   ExternalLink,
   Copy,
   Check,
-  Sparkles,
+  Flower2,
   HelpCircle,
   X,
   Pencil,
@@ -166,7 +166,7 @@ export default function PublicPageDashboard() {
 
             <div className="flex items-center gap-2.5 mb-4">
               <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-violet-600" />
+                <Flower2 className="w-5 h-5 text-violet-600" />
               </div>
               <h3 className="text-lg font-bold text-gray-900">{t('helpTitle')}</h3>
             </div>
@@ -386,7 +386,7 @@ export default function PublicPageDashboard() {
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center shadow-sm">
-                  <Sparkles className="w-5 h-5 text-violet-600" />
+                  <Flower2 className="w-5 h-5 text-violet-600" />
                 </div>
                 <div className="text-left">
                   <h2 className="text-base font-extrabold text-gray-900">{t('acquisitionSection')}</h2>

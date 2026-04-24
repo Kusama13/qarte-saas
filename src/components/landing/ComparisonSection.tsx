@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowRight, Heart, Sparkles, Gift, CalendarDays, MessageCircle, Star, Globe, Send } from 'lucide-react';
+import { ArrowRight, Heart, Flower2, Gift, CalendarDays, MessageCircle, Star, Globe, Send } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { trackCtaClick } from '@/lib/analytics';
@@ -12,7 +12,7 @@ const EASE: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
 const COL_A_ITEMS = [
   { key: 'colA1', icon: Heart, color: 'text-pink-500', bg: 'bg-pink-50' },
-  { key: 'colA2', icon: Sparkles, color: 'text-amber-500', bg: 'bg-amber-50' },
+  { key: 'colA2', icon: Flower2, color: 'text-amber-500', bg: 'bg-amber-50' },
   { key: 'colA3', icon: Globe, color: 'text-blue-500', bg: 'bg-blue-50' },
   { key: 'colA4', icon: Gift, color: 'text-violet-500', bg: 'bg-violet-50' },
 ] as const;

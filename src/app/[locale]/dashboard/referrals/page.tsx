@@ -12,7 +12,7 @@ import {
   UserPlus,
   HelpCircle,
   X,
-  Sparkles,
+  Flower2,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
@@ -186,7 +186,7 @@ export default function ReferralsPage() {
         {enabled && (
           <div className="space-y-4 pt-4 border-t border-gray-100">
             <div className="flex gap-3 p-3.5 rounded-xl bg-amber-50 border border-amber-100">
-              <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+              <Flower2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-800 leading-relaxed">
                 <span className="font-semibold">{t('tip')}</span> {t('tipDesc')}
               </p>

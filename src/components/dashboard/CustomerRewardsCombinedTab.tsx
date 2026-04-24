@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Gift,
-  Sparkles,
+  Flower2,
   Check,
   Loader2,
   Trash2,
@@ -299,7 +299,7 @@ export function CustomerRewardsCombinedTab({
               <div key={v.id} className={`p-3 sm:p-4 rounded-xl border ${v.source === 'birthday' ? 'border-pink-100 bg-pink-50/50' : 'border-emerald-100 bg-emerald-50/50'}`}>
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${v.source === 'birthday' ? 'bg-pink-100' : 'bg-emerald-100'}`}>
-                    {v.source === 'welcome' ? <Sparkles className="w-5 h-5 text-emerald-600" /> : v.source === 'birthday' ? <Cake className="w-5 h-5 text-pink-600" /> : <Gift className="w-5 h-5 text-emerald-600" />}
+                    {v.source === 'welcome' ? <Flower2 className="w-5 h-5 text-emerald-600" /> : v.source === 'birthday' ? <Cake className="w-5 h-5 text-pink-600" /> : <Gift className="w-5 h-5 text-emerald-600" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">{v.reward_description}</p>
@@ -416,7 +416,7 @@ export function CustomerRewardsCombinedTab({
               <div className={`p-3 sm:p-4 rounded-xl border ${welcomeEnabled ? 'border-violet-100 bg-violet-50/50' : 'border-gray-100 bg-gray-50/50 opacity-60'}`}>
                 <div className="flex items-start gap-3">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${welcomeEnabled ? 'bg-violet-100' : 'bg-gray-200'}`}>
-                    <Sparkles className={`w-5 h-5 ${welcomeEnabled ? 'text-violet-600' : 'text-gray-400'}`} />
+                    <Flower2 className={`w-5 h-5 ${welcomeEnabled ? 'text-violet-600' : 'text-gray-400'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`text-xs font-bold uppercase tracking-wider mb-0.5 ${welcomeEnabled ? 'text-violet-600' : 'text-gray-400'}`}>{to('welcomeOffer')}</p>

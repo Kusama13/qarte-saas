@@ -18,7 +18,7 @@ import {
   Scissors,
   Crown,
   Lock,
-  Sparkles,
+  Flower2,
   BarChart3,
   type LucideIcon,
 } from 'lucide-react';
@@ -596,7 +596,7 @@ export default function StatsPage() {
                     color="rose"
                   />
                   <KpiCard
-                    icon={Sparkles}
+                    icon={Flower2}
                     label="Récompenses utilisées"
                     value={String(stats.fidelite.vouchersRedeemed.current)}
                     delta={stats.fidelite.vouchersRedeemed.previous > 0 ? stats.fidelite.vouchersRedeemed.delta : undefined}

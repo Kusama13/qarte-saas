@@ -14,7 +14,8 @@ import {
   UserPlus,
   HeartHandshake,
   Award,
-  Sparkles,
+  Flower2,
+  Gem,
   type LucideIcon,
 } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
@@ -289,7 +290,7 @@ export default function AutomationsTab({ merchantId, shopName, planTier = 'all_i
       {subscriptionStatus === 'trial' && (
         <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-4 flex items-start gap-3">
           <div className="w-9 h-9 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4 text-indigo-500" strokeWidth={2.5} />
+            <Gem className="w-4 h-4 text-indigo-500" strokeWidth={2.5} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-slate-900">Tu es en période d'essai</p>

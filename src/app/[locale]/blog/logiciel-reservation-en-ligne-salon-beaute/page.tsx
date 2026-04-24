@@ -11,10 +11,10 @@ import {
   XCircle,
   BookOpen,
   Scale,
-  Zap,
+  Flame,
   Target,
   Scissors,
-  Sparkles,
+  Flower2,
 } from 'lucide-react';
 import { FacebookPixel } from '@/components/analytics/FacebookPixel';
 
@@ -565,7 +565,7 @@ export default function Page() {
 
               <div className="border-l-4 border-indigo-400 bg-indigo-50/50 p-6 rounded-r-xl">
                 <div className="flex items-center gap-3 mb-3">
-                  <Sparkles className="w-6 h-6 text-indigo-600" />
+                  <Flower2 className="w-6 h-6 text-indigo-600" />
                   <h3 className="text-lg font-bold text-gray-900">Institut de beauté / onglerie établi</h3>
                 </div>
                 <p className="text-sm text-gray-700 leading-relaxed">
@@ -578,7 +578,7 @@ export default function Page() {
 
               <div className="border-l-4 border-indigo-400 bg-indigo-50/50 p-6 rounded-r-xl">
                 <div className="flex items-center gap-3 mb-3">
-                  <Zap className="w-6 h-6 text-indigo-600" />
+                  <Flame className="w-6 h-6 text-indigo-600" />
                   <h3 className="text-lg font-bold text-gray-900">Barbershop ou indépendant(e)</h3>
                 </div>
                 <p className="text-sm text-gray-700 leading-relaxed">
@@ -590,7 +590,7 @@ export default function Page() {
 
               <div className="border-l-4 border-indigo-400 bg-indigo-50/50 p-6 rounded-r-xl">
                 <div className="flex items-center gap-3 mb-3">
-                  <Sparkles className="w-6 h-6 text-indigo-600" />
+                  <Flower2 className="w-6 h-6 text-indigo-600" />
                   <h3 className="text-lg font-bold text-gray-900">Spa premium ou institut luxe</h3>
                 </div>
                 <p className="text-sm text-gray-700 leading-relaxed">

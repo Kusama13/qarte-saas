@@ -1,6 +1,6 @@
 'use client';
 
-import { Sparkles } from 'lucide-react';
+import { Flower2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 
@@ -22,7 +22,7 @@ export default function HowItWorks({ show }: HowItWorksProps) {
         >
           <div className="p-4 bg-indigo-50/60 rounded-xl border border-indigo-100">
             <div className="flex items-start gap-2.5">
-              <Sparkles className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+              <Flower2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
               <div className="text-sm text-gray-600 leading-relaxed space-y-1">
                 <p>{t('helpDesc1')}</p>
                 <p>{t('helpDesc2')}</p>

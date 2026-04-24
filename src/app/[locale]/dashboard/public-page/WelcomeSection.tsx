@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import {
-  Sparkles,
+  Flower2,
   HelpCircle,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
@@ -61,7 +61,7 @@ const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(fun
     <div className="pb-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-violet-500" />
+          <Flower2 className="w-4 h-4 text-violet-500" />
           <span className="text-sm font-semibold text-gray-700">{t('welcomeOfferLabel')}</span>
           {welcomeEnabled && onShowHelp && (
             <button

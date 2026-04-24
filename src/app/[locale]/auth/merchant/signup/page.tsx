@@ -8,7 +8,7 @@ import {
   EyeOff,
   ArrowRight,
   Clock,
-  Sparkles,
+  Flower2,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
@@ -140,7 +140,7 @@ export default function MerchantSignupPage() {
           {affiliateName && (
             <div className="mb-4 flex items-center gap-3 px-5 py-3.5 bg-indigo-50/80 backdrop-blur-sm border border-indigo-100 rounded-2xl">
               <div className="p-2 rounded-xl bg-indigo-100">
-                <Sparkles className="w-4 h-4 text-indigo-600" />
+                <Flower2 className="w-4 h-4 text-indigo-600" />
               </div>
               <p className="text-sm text-gray-700">
                 <strong className="text-indigo-700">{affiliateName}</strong> {t('affiliateRecommends')}

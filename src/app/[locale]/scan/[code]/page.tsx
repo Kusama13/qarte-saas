@@ -17,7 +17,7 @@ import {
   UserPlus,
   CheckCircle2,
   PartyPopper,
-  Sparkles,
+  Flower2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sparkleGrand } from '@/lib/sparkles';
@@ -259,7 +259,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     autoLogin();
   }, [loading, merchant, step, autoLoginAttempted, code, submitting]);
 
-  const triggerSparkles = useCallback(() => {
+  const triggerSparkle = useCallback(() => {
     if (!merchant) return;
     const colors = [merchant.primary_color, merchant.secondary_color || '#FFD700', '#FFB6C1', '#FFFFFF'];
 
@@ -322,7 +322,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             const welcomeData = await res.json();
             if (res.ok && welcomeData.success) {
               setCustomer(data.customer);
-              triggerSparkles();
+              triggerSparkle();
               setStep('referral-success');
             } else {
               setError(welcomeData.error || t('welcomeClaimError'));
@@ -352,7 +352,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 merchant_id: claimData.merchant_id,
               });
               setCustomer(data.customer);
-              triggerSparkles();
+              triggerSparkle();
               setStep('referral-success');
             } else {
               setError(claimData.error || t('offerClaimError'));
@@ -460,7 +460,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             merchant_id: data.merchant_id,
           });
           setCustomer({ id: data.customer_id } as Customer);
-          triggerSparkles();
+          triggerSparkle();
           setStep('referral-success');
         } else {
           setError(data.error || t('signupError'));
@@ -488,7 +488,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             merchant_id: data.merchant_id,
           });
           setCustomer({ id: data.customer_id } as Customer);
-          triggerSparkles();
+          triggerSparkle();
           setStep('referral-success');
         } else {
           setError(data.error || t('signupError'));
@@ -516,7 +516,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             merchant_id: data.merchant_id,
           });
           setCustomer({ id: data.customer_id } as Customer);
-          triggerSparkles();
+          triggerSparkle();
           setStep('referral-success');
         } else {
           setError(data.error || t('referralSignupError'));
@@ -688,7 +688,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
       // Confirmed - normal flow
       if (data.reward_unlocked) {
-        triggerSparkles();
+        triggerSparkle();
         setStep('reward');
       } else {
         // Show animated success screen (auto-redirects to card after 3s)
@@ -841,7 +841,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                       className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
                       style={{ backgroundColor: `${primaryColor}20` }}
                     >
-                      <Sparkles className="w-5 h-5" style={{ color: primaryColor }} />
+                      <Flower2 className="w-5 h-5" style={{ color: primaryColor }} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-gray-900 text-sm">
@@ -1042,9 +1042,9 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   </div>
                 )}
                 <h2 className="text-2xl font-black text-gray-900 flex items-center justify-center gap-2" style={{ fontFamily: 'var(--font-sans), sans-serif' }}>
-                  <Sparkles className="w-5 h-5" style={{ color: primaryColor }} />
+                  <Flower2 className="w-5 h-5" style={{ color: primaryColor }} />
                   {t('privileges')}
-                  <Sparkles className="w-5 h-5" style={{ color: primaryColor }} />
+                  <Flower2 className="w-5 h-5" style={{ color: primaryColor }} />
                 </h2>
                 <p className="mt-2 text-gray-500 text-sm">
                   {referralInfo
@@ -1294,7 +1294,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 style={{ backgroundColor: `${primaryColor}15` }}
               >
                 {(welcomeResult || offerResult) ? (
-                  <Sparkles className="w-10 h-10" style={{ color: primaryColor }} />
+                  <Flower2 className="w-10 h-10" style={{ color: primaryColor }} />
                 ) : (
                   <PartyPopper className="w-10 h-10" style={{ color: primaryColor }} />
                 )}

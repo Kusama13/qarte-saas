@@ -11,7 +11,7 @@ import {
   Hourglass,
   Shield,
   Bell,
-  Sparkles,
+  Flower2,
   Crown,
   Eye,
   QrCode,
@@ -672,7 +672,7 @@ export default function CustomerCardPage({
     return redemptions.length;
   }, [redemptions, card?.merchant?.tier2_enabled, card?.merchant?.tier2_stamps_required]);
 
-  const triggerSparkles = useCallback(() => {
+  const triggerSparkle = useCallback(() => {
     const m = card?.merchant;
     const colors = m
       ? [m.primary_color, m.secondary_color || '#FFD700', '#FFB6C1', '#FFFFFF']
@@ -720,7 +720,7 @@ export default function CustomerCardPage({
           setTier1RedeemedInCycle(false);
         }
         setRedeemSuccess(true);
-        triggerSparkles();
+        triggerSparkle();
       } else {
         console.error('Redeem failed:', data);
         setRedeemError(data.error || t('redeemDefaultError'));

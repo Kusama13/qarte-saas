@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Sparkles, CreditCard } from 'lucide-react';
+import { Check, Gem, CreditCard } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 type PlanTier = 'fidelity' | 'all_in';
@@ -56,7 +56,7 @@ export default function PlanCard({
       {isRecommended && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
           <span className="inline-flex items-center gap-1 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white rounded-full bg-[#4b0082]">
-            <Sparkles className="w-3 h-3" strokeWidth={2.25} />
+            <Gem className="w-3 h-3" strokeWidth={2.25} />
             {t('recommended')}
           </span>
         </div>

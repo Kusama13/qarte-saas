@@ -8,7 +8,7 @@ import {
   Gift,
   Check,
   ChevronRight,
-  Sparkles,
+  Flower2,
   Cake,
   CalendarHeart,
   MousePointer2,
@@ -216,7 +216,7 @@ function InactivityVisual({ t }: { t: (key: string) => string }) {
       subtitle: t('inactivityNotif1Sub'),
       time: t('inactivityNotif1Time'),
       color: 'bg-indigo-500',
-      icon: <Sparkles className="w-5 h-5 text-white" />,
+      icon: <Flower2 className="w-5 h-5 text-white" />,
     },
     {
       title: t('inactivityNotif2Title'),

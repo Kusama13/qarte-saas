@@ -9,7 +9,7 @@ import {
   Undo2,
   Plus,
   Minus,
-  Sparkles,
+  Flower2,
   AlertCircle,
   Loader2,
 } from 'lucide-react';
@@ -63,7 +63,7 @@ export function ClientScanView({
     return () => clearInterval(interval);
   }, [canUndo, undoTimer]);
 
-  const triggerSparkles = useCallback(() => {
+  const triggerSparkle = useCallback(() => {
     const colors = [merchant.primary_color, merchant.secondary_color || '#FFD700', '#FFB6C1', '#FFFFFF'];
     sparkleMedium(colors);
   }, [merchant.primary_color, merchant.secondary_color]);
@@ -86,7 +86,7 @@ export function ClientScanView({
 
         if (result.voucherCreated) {
           setVoucherUnlocked(true);
-          triggerSparkles();
+          triggerSparkle();
         }
 
         // Start undo timer
@@ -211,7 +211,7 @@ export function ClientScanView({
               {merchant.reward_description}
             </p>
             <div className="mt-4 flex items-center justify-center gap-2">
-              <Sparkles className="w-5 h-5" />
+              <Flower2 className="w-5 h-5" />
               <span className="text-sm opacity-80">{t('voucherCreated')}</span>
             </div>
           </motion.div>

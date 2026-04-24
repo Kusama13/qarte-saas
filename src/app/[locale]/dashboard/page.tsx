@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { Link } from '@/i18n/navigation';
-import { Users, Gift, AlertTriangle, X, Eye, UserPlus, Sparkles, BarChart3 } from 'lucide-react';
+import { Users, Gift, AlertTriangle, X, Eye, UserPlus, Flower2, BarChart3 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime, getTodayForCountry, unwrapJoin } from '@/lib/utils';
@@ -74,7 +74,7 @@ const EVENT_CONFIG: Record<ActivityEvent['type'], { icon: React.ElementType; hre
   scan:     { icon: Eye,      href: '/dashboard/customers', color: 'text-emerald-500' },
   reward:   { icon: Gift,     href: '/dashboard/customers', color: 'text-pink-500' },
   referral: { icon: UserPlus, href: '/dashboard/referrals', color: 'text-blue-500' },
-  welcome:  { icon: Sparkles, href: '/dashboard/customers', color: 'text-amber-500' },
+  welcome:  { icon: Flower2, href: '/dashboard/customers', color: 'text-amber-500' },
 };
 
 export default function DashboardPage() {

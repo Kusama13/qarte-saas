@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import {
   Send,
   MessageSquareText,
-  Zap,
+  Flame,
   HelpCircle,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -107,7 +107,7 @@ export default function MarketingPushPage() {
               : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
           }`}
         >
-          <Zap className="w-4 h-4 shrink-0" />
+          <Flame className="w-4 h-4 shrink-0" />
           <span className="truncate"><span className="sm:hidden">Auto SMS</span><span className="hidden sm:inline">{t('tabAutomations')}</span></span>
         </button>
       </div>

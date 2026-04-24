@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Clock, Cake, CalendarHeart, Sparkles } from 'lucide-react';
+import { Clock, Cake, CalendarHeart, Flower2 } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 import { useTranslations } from 'next-intl';
 
@@ -215,7 +215,7 @@ export function AIReengagementSection() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full mb-8"
             >
-              <Sparkles className="w-4 h-4 text-indigo-500" />
+              <Flower2 className="w-4 h-4 text-indigo-500" />
               <span className="text-sm font-semibold text-indigo-600 tracking-wide">{t('badge')}</span>
             </motion.div>
 

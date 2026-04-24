@@ -20,7 +20,7 @@ import {
   EyeOff,
   Upload,
   CalendarDays,
-  Sparkles,
+  Lightbulb,
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -176,7 +176,7 @@ export default function PushTab(props: PushTabProps) {
                 : 'border-gray-200 bg-white hover:bg-gray-50'
             }`}
           >
-            <Sparkles className="w-4 h-4 text-indigo-500 shrink-0" />
+            <Lightbulb className="w-4 h-4 text-indigo-500 shrink-0" />
             <span className="flex-1 text-left text-xs font-semibold text-gray-700">{t('quickTemplates')}</span>
             <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${showTemplates ? 'rotate-180' : ''}`} />
           </button>

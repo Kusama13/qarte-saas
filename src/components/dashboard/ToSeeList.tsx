@@ -2,13 +2,13 @@
 
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { ChevronRight, Cake, UserPlus, Sparkles } from 'lucide-react';
+import { ChevronRight, Cake, UserPlus, Flower2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ICONS = {
   cake: Cake,
   userPlus: UserPlus,
-  sparkles: Sparkles,
+  sparkles: Flower2,
 };
 
 const ICON_COLORS: Record<keyof typeof ICONS, string> = {

@@ -6,7 +6,7 @@ import {
   BarChart3,
   Euro,
   Filter,
-  Zap,
+  Flame,
   TrendingUp,
   Bell,
   Users,
@@ -163,7 +163,7 @@ function ChartCard({
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: 'revenue', label: 'Revenue', icon: Euro },
   { key: 'funnel', label: 'Funnel', icon: Filter },
-  { key: 'activation', label: 'Activation', icon: Zap },
+  { key: 'activation', label: 'Activation', icon: Flame },
   { key: 'engagement', label: 'Engagement', icon: TrendingUp },
   { key: 'automations', label: 'Automations', icon: Bell },
   { key: 'growth', label: 'Growth', icon: Users },

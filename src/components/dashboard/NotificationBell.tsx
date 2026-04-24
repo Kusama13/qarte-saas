@@ -10,7 +10,7 @@ import {
   AlertTriangle,
   Cake,
   Trophy,
-  Sparkles,
+  Flower2,
   CalendarDays,
   CalendarRange,
   type LucideIcon,
@@ -44,7 +44,7 @@ const ICON_MAP: Record<string, IconTint> = {
   weekly_recap: { icon: CalendarRange, bg: 'bg-violet-50', fg: 'text-violet-600' },
   trial_reminder: { icon: AlertTriangle, bg: 'bg-amber-50', fg: 'text-amber-600' },
 };
-const ONBOARDING_ICON: IconTint = { icon: Sparkles, bg: 'bg-violet-50', fg: 'text-violet-600' };
+const ONBOARDING_ICON: IconTint = { icon: Flower2, bg: 'bg-violet-50', fg: 'text-violet-600' };
 const DEFAULT_ICON: IconTint = { icon: Bell, bg: 'bg-gray-100', fg: 'text-gray-500' };
 
 function getIcon(type: string): IconTint {

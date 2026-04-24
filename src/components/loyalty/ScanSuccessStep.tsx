@@ -151,7 +151,7 @@ export default function ScanSuccessStep({
     : stampsRequired;
 
   // Sparkle intensity varies by context
-  const triggerSparkles = useCallback(() => {
+  const triggerSparkle = useCallback(() => {
     const colors = [primaryColor, secondaryColor || '#FFD700', '#FFB6C1', '#FFFFFF'];
     const remaining = stampsRequired - currentStamps;
 
@@ -176,7 +176,7 @@ export default function ScanSuccessStep({
     // 0.6s — reveal content + sparkles
     const t1 = setTimeout(() => {
       setShowContent(true);
-      triggerSparkles();
+      triggerSparkle();
     }, 600);
 
     // 1.1s — animate counter old → new

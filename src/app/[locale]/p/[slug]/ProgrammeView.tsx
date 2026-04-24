@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Zap, Trophy, CalendarDays, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard } from 'lucide-react';
+import { Gift, Users, Flame, Trophy, CalendarDays, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import { SuspendedBanner } from '@/components/shared/SuspendedBanner';
@@ -1035,7 +1035,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               {merchant.double_days_enabled && (
                 <div className="px-5 py-4 flex items-center gap-3.5">
                   <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-                    <Zap className="w-4 h-4 text-amber-500" />
+                    <Flame className="w-4 h-4 text-amber-500" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-[13px] font-bold text-gray-800 leading-tight">{t('bonusDays')}</p>

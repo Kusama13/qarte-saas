@@ -4,11 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Loader2,
   CheckCircle2,
-  Sparkles,
+  Flower2,
   Clock,
   CalendarDays,
   Gift,
-  Zap,
+  Flame,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -140,7 +140,7 @@ export default function PushAutomations({ merchantId }: PushAutomationsProps) {
   return (
     <div className="space-y-3 mt-4">
       <div className="flex items-center gap-2 px-1">
-        <Zap className="w-4 h-4 text-gray-400" />
+        <Flame className="w-4 h-4 text-gray-400" />
         <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t('pushAutomationsHeader')}</h2>
       </div>
 
@@ -345,7 +345,7 @@ export default function PushAutomations({ merchantId }: PushAutomationsProps) {
 
       <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
         <p className="text-xs text-slate-600 flex items-center gap-2">
-          <Sparkles className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={2.25} />
+          <Flower2 className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={2.25} />
           {t('infoAutoRun')}
         </p>
       </div>

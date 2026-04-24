@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, ArrowUpDown, Zap } from 'lucide-react';
+import { Check, ArrowUpDown, Flame } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 interface PaidStatusCardProps {
@@ -40,7 +40,7 @@ export default function PaidStatusCard({
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <div className="shrink-0 w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
-            <Zap className="w-5 h-5 text-indigo-600" strokeWidth={2.25} />
+            <Flame className="w-5 h-5 text-indigo-600" strokeWidth={2.25} />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-base md:text-lg font-bold text-slate-900 truncate">

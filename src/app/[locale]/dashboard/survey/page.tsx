@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Loader2, ArrowRight, Copy, Tag, Sparkles } from 'lucide-react';
+import { Check, Loader2, ArrowRight, Copy, Tag, Flower2 } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getTrialStatus } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
@@ -409,7 +409,7 @@ export default function ChurnSurveyPage() {
                   >
                     <div>
                       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 mb-3">
-                        <Sparkles className="w-3.5 h-3.5" />
+                        <Flower2 className="w-3.5 h-3.5" />
                         <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider">
                           {t('promoBadge')}
                         </span>

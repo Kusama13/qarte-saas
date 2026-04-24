@@ -1,6 +1,6 @@
 'use client';
 
-import { Gift, Trophy, Zap, Heart, Crown } from 'lucide-react';
+import { Gift, Trophy, Flame, Heart, Crown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 
@@ -234,7 +234,7 @@ export default function CagnotteSection({
           </motion.div>
         ) : tier1Required - currentStamps <= 2 ? (
           <motion.div animate={{ x: [0, -2, 2, 0] }} transition={{ repeat: Infinity, duration: 0.5, repeatDelay: 1.5 }} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500 text-white shadow-lg shadow-amber-200">
-            <Zap className="w-3.5 h-3.5" />
+            <Flame className="w-3.5 h-3.5" />
             <span className="text-xs font-black">{t('onlyLeft', { count: tier1Required - currentStamps })}</span>
           </motion.div>
         ) : null}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Clock, ChevronDown, Sparkles } from 'lucide-react';
+import { Clock, ChevronDown, Flower2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toBCP47 } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -54,7 +54,7 @@ export default function ExclusiveOffer({ offer, merchantColor, isPreview }: Excl
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <div className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/20 flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3 text-white" />
+                  <Flower2 className="w-3 h-3 text-white" />
                   <span className="text-[10px] font-bold uppercase tracking-wider text-white">{t('exclusiveOffer')}</span>
                 </div>
               </div>

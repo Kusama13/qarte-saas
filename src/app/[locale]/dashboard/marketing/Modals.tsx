@@ -8,7 +8,7 @@ import {
   EyeOff,
   Send,
   MessageSquareText,
-  Zap,
+  Flame,
   ShoppingCart,
   Clock,
   ShieldCheck,
@@ -93,7 +93,7 @@ export function HowItWorksModal({ show, onClose }: HowItWorksModalProps) {
               {/* Automatisations */}
               <section className="rounded-xl border border-sky-100 bg-sky-50/50 p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Zap className="w-4 h-4 text-sky-600" />
+                  <Flame className="w-4 h-4 text-sky-600" />
                   <h3 className="text-sm font-bold text-sky-900">{t('autoTitle')}</h3>
                 </div>
                 <p className="text-xs text-gray-700 leading-relaxed mb-2">{t('autoDesc')}</p>

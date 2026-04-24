@@ -5,7 +5,7 @@ import { Link } from '@/i18n/navigation';
 import {
   CalendarCheck,
   Crown,
-  Sparkles,
+  Flower2,
   UserPlus,
   Share2,
   Cake,
@@ -28,7 +28,7 @@ interface Props {
 const ICONS = {
   calendar: CalendarCheck,
   crown: Crown,
-  sparkles: Sparkles,
+  sparkles: Flower2,
   userPlus: UserPlus,
   share: Share2,
   cake: Cake,

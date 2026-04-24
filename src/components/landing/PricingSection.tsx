@@ -7,7 +7,7 @@ import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { Check, Sparkles, Star } from 'lucide-react';
+import { Check, Flower2, Star } from 'lucide-react';
 
 type Billing = 'monthly' | 'annual';
 
@@ -63,7 +63,7 @@ export function PricingSection() {
           }`}
         >
           {f.highlighted ? (
-            <Sparkles className={`w-4 h-4 ${accentClass} shrink-0 mt-0.5 fill-current`} />
+            <Flower2 className={`w-4 h-4 ${accentClass} shrink-0 mt-0.5 fill-current`} />
           ) : (
             <Check className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
           )}

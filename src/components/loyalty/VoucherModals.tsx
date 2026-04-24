@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Gift, Cake, Loader2, PartyPopper, Sparkles } from 'lucide-react';
+import { Check, Gift, Cake, Loader2, PartyPopper, Flower2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toBCP47 } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -259,7 +259,7 @@ export default function VoucherModals({
                   transition={{ delay: 0.6 }}
                   className="flex items-center justify-center gap-2 mb-4 text-sm text-gray-500"
                 >
-                  <Sparkles className="w-4 h-4" style={{ color: merchant.primary_color }} />
+                  <Flower2 className="w-4 h-4" style={{ color: merchant.primary_color }} />
                   <span>{t('bonusStampAdded')}</span>
                 </motion.div>
               )}

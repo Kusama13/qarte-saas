@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import {
-  Check, Sparkles, X, CalendarDays,
+  Check, Flower2, X, CalendarDays,
   Gift, ImageIcon, Share2, MapPin, Camera, QrCode,
   Users, UserPlus, Cake, Calendar, ChevronDown, ArrowRight,
   Scissors, FileText, CreditCard, MessageSquare,
@@ -304,7 +304,7 @@ export default function OnboardingChecklist() {
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4 md:px-6 md:pt-5">
         <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#4b0082]/10 shrink-0">
-          <Sparkles className="w-5 h-5 text-[#4b0082]" />
+          <Flower2 className="w-5 h-5 text-[#4b0082]" />
         </div>
         {confirmingDismiss && !allDone ? (
           <div className="flex-1 flex items-center gap-2 min-w-0">
