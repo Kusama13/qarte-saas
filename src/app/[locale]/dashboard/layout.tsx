@@ -139,7 +139,9 @@ function DashboardLayoutContent({
   }, [shouldRedirectSurvey, shouldRedirectSubscription, router]);
 
 
-  if (!hasMounted || loading) {
+  // Block only on hasMounted (hydration mismatch). Don't gate on `loading` —
+  // it leaves nav buttons un-tappable during the merchant fetch on PWA cold start.
+  if (!hasMounted) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
