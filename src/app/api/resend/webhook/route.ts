@@ -26,8 +26,14 @@ type ResendEvent = {
 function verifySignature(payload: string, headers: Headers): boolean {
   const signingSecret = process.env.RESEND_WEBHOOK_SECRET;
   if (!signingSecret) {
-    logger.warn('[resend-webhook] RESEND_WEBHOOK_SECRET not configured, skipping verification');
-    return true; // Allow in dev
+    // Dev-only escape hatch. In prod, refuse the webhook outright — a missing
+    // secret would let anyone POST email.complained events to unsubscribe merchants.
+    if (process.env.NODE_ENV === 'production') {
+      logger.error('[resend-webhook] RESEND_WEBHOOK_SECRET missing in production — rejecting');
+      return false;
+    }
+    logger.warn('[resend-webhook] RESEND_WEBHOOK_SECRET not configured, skipping verification (dev only)');
+    return true;
   }
 
   const svixId = headers.get('svix-id');
