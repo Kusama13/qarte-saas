@@ -8,13 +8,13 @@ import { cn } from '@/lib/utils';
 const ICONS = {
   cake: Cake,
   userPlus: UserPlus,
-  sparkles: Flower2,
+  flower: Flower2,
 };
 
 const ICON_COLORS: Record<keyof typeof ICONS, string> = {
   cake: 'text-pink-500',
   userPlus: 'text-blue-500',
-  sparkles: 'text-amber-500',
+  flower: 'text-amber-500',
 };
 
 export interface ToSeeItem {

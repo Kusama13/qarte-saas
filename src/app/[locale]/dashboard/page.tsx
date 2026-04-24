@@ -596,7 +596,7 @@ export default function DashboardPage() {
   if (welcomeVouchers > 0) {
     toSeeItems.push({
       key: 'welcome',
-      icon: 'sparkles',
+      icon: 'flower',
       label: t('toSeeWelcome', { count: welcomeVouchers }),
       count: welcomeVouchers,
       href: '/dashboard/customers',

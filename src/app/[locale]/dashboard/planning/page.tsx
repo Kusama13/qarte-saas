@@ -30,15 +30,7 @@ import PlanUpgradeCTA from '@/components/dashboard/PlanUpgradeCTA';
 import { getPlanFeatures } from '@/lib/plan-tiers';
 import { useToast } from '@/components/ui/Toast';
 import { Link } from '@/i18n/navigation';
-
-type OpeningHoursValue = Record<string, { open: string; close: string } | null> | null;
-/** True si au moins un jour de la semaine a des horaires `open`/`close` renseignes. */
-function hasValidOpeningHours(hours: OpeningHoursValue | undefined): boolean {
-  if (!hours || typeof hours !== 'object') return false;
-  return Object.values(hours).some(
-    (h) => !!h && typeof h === 'object' && 'open' in h && 'close' in h && !!h.open && !!h.close,
-  );
-}
+import { hasValidOpeningHours } from '@/lib/opening-hours';
 
 const VIEW_MODE_KEY = 'qarte_planning_view';
 const VIEW_MODES = ['day', '2day', 'week'] as const;
@@ -150,7 +142,6 @@ export default function PlanningDashboard() {
 
   // Mode choice (shown when planning is freshly enabled with no slots)
   const [showModeChoice, setShowModeChoice] = useState(false);
-  // Mode libre sans horaires d'ouverture : on bloque l'activation
   const [missingHoursBlock, setMissingHoursBlock] = useState(false);
   // Auto-dismiss mode choice if real slots already exist
   useEffect(() => {
@@ -2068,19 +2059,19 @@ export default function PlanningDashboard() {
         {missingHoursBlock && (
           <PlanningModal onClose={() => setMissingHoursBlock(false)} size="sm">
             <ModalHeader
-              title="Configure d'abord tes horaires"
+              title={t('missingHoursTitle')}
               icon={<Clock className="w-4 h-4" />}
               iconTint="amber"
               onClose={() => setMissingHoursBlock(false)}
             />
             <div className="p-4 space-y-3">
               <p className="text-sm text-gray-700 leading-relaxed">
-                Le mode libre utilise tes horaires d&apos;ouverture pour proposer les bons créneaux à tes clientes. Renseigne-les d&apos;abord sur ta page publique, puis reviens activer le mode libre.
+                {t('missingHoursBody')}
               </p>
               <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-100">
                 <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                 <p className="text-xs text-amber-800 leading-relaxed">
-                  Sans horaires, les clientes ne pourraient pas reserver — le mode libre serait inutilisable.
+                  {t('missingHoursWarning')}
                 </p>
               </div>
             </div>
@@ -2089,14 +2080,14 @@ export default function PlanningDashboard() {
                 onClick={() => setMissingHoursBlock(false)}
                 className="w-full sm:flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 text-sm font-bold hover:bg-gray-200 transition-colors"
               >
-                Plus tard
+                {t('missingHoursLater')}
               </button>
               <Link
                 href="/dashboard/public-page"
                 onClick={() => setMissingHoursBlock(false)}
                 className="w-full sm:flex-[2] py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center gap-2"
               >
-                Configurer mes horaires
+                {t('missingHoursCta')}
               </Link>
             </ModalFooter>
           </PlanningModal>

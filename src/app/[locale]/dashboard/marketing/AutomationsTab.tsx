@@ -14,7 +14,6 @@ import {
   UserPlus,
   HeartHandshake,
   Award,
-  Flower2,
   Gem,
   type LucideIcon,
 } from 'lucide-react';

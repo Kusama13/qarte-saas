@@ -28,7 +28,7 @@ interface Props {
 const ICONS = {
   calendar: CalendarCheck,
   crown: Crown,
-  sparkles: Flower2,
+  flower: Flower2,
   userPlus: UserPlus,
   share: Share2,
   cake: Cake,

@@ -22,7 +22,7 @@ export type QuickActionId =
 export type QuickActionIcon =
   | 'calendar'
   | 'crown'
-  | 'sparkles'
+  | 'flower'
   | 'userPlus'
   | 'share'
   | 'cake'
@@ -513,7 +513,7 @@ export async function GET(request: NextRequest) {
               ? 'Tu n’as encore jamais lancé de campagne'
               : `Dernière campagne il y a ${daysSince} jours`,
           href: '/dashboard/marketing?tab=sms',
-          icon: 'sparkles',
+          icon: 'flower',
           accent: 'rose',
         });
       }
