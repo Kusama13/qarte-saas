@@ -2210,6 +2210,8 @@
     "toastBookingCreated": "Booked, {name} is confirmed",
     "toastBookingMoved": "Booking moved",
     "toastBookingCancelled": "Booking cancelled",
+    "toastAttendanceAttended": "Marked as attended",
+    "toastAttendanceNoShow": "Marked as no-show",
     "toastDepositConfirmed": "Deposit confirmed",
     "toastBringBackSuccess": "Booking restored",
     "toastCustomerCreated": "{name} added to your customers"

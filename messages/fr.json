@@ -2190,6 +2190,8 @@
     "toastBookingCreated": "Superbe, {name} est réservée",
     "toastBookingMoved": "Réservation déplacée",
     "toastBookingCancelled": "Réservation annulée",
+    "toastAttendanceAttended": "Venue enregistrée",
+    "toastAttendanceNoShow": "Absence enregistrée",
     "toastDepositConfirmed": "Acompte confirmé",
     "toastBringBackSuccess": "Réservation restaurée",
     "toastCustomerCreated": "{name} ajoutée à tes clientes"

@@ -7,6 +7,7 @@ import SmsToggle from './SmsToggle';
 import { getTypeStyle } from '@/lib/note-styles';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
 import { useTranslations } from 'next-intl';
+import { useToast } from '@/components/ui/Toast';
 import type { PlanningSlot, CustomerSearchResult, BookingMode } from '@/types';
 import { formatTime, formatCurrency, toBCP47, getTimezoneForCountry, displayPhoneNumber, detectPhoneCountry } from '@/lib/utils';
 import { downloadIcs } from '@/lib/ics';
@@ -101,6 +102,7 @@ export default function BookingDetailsModal({
   onFetchClientHistory,
 }: BookingDetailsModalProps) {
   const t = useTranslations('planning');
+  const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState<'photos' | 'notes' | 'history' | null>(null);
   const [localPhotos, setLocalPhotos] = useState(slot.planning_slot_photos || []);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -141,7 +143,12 @@ export default function BookingDetailsModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slot_id: slot.id, merchant_id: merchantId, attendance_status: next }),
       });
-      if (!res.ok) setAttendanceStatus(prev);
+      if (!res.ok) {
+        setAttendanceStatus(prev);
+        return;
+      }
+      if (next === 'attended') addToast(t('toastAttendanceAttended'), 'success');
+      else if (next === 'no_show') addToast(t('toastAttendanceNoShow'), 'info');
     } catch {
       setAttendanceStatus(prev);
     } finally {

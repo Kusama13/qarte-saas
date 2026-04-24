@@ -232,19 +232,32 @@ export async function PATCH(request: NextRequest) {
 
     const supabaseAdmin = getSupabaseAdmin();
     const trimmedName = client_name?.trim() || null;
+
+    // Fetch previous state to detect create vs edit — evite de reset booked_at
+    // a chaque edit (regression : sinon les "nouvelles resa" apparaissent a la
+    // mauvaise date cote tracking / HeroToday).
+    const { data: existingSlot } = await supabaseAdmin
+      .from('merchant_planning_slots')
+      .select('client_name, booked_at')
+      .eq('id', slotId)
+      .eq('merchant_id', merchantId)
+      .maybeSingle();
+    const wasBooked = !!existingSlot?.client_name;
+
     const updateData: Record<string, unknown> = {
       client_name: trimmedName,
     };
-    if (trimmedName) {
-      // Manual booking: mark booked_at; booked_online left as-is (true if from /book, false otherwise)
+    if (trimmedName && !wasBooked) {
+      // Transition empty -> booked : timestamp le moment de la prise du RDV
       updateData.booked_at = new Date().toISOString();
-    } else {
-      // Clearing the slot: also reset booking metadata so the slot is truly available again
+    } else if (!trimmedName) {
+      // Clearing the slot: reset booking metadata so the slot is truly available again
       updateData.booked_online = false;
       updateData.booked_at = null;
       updateData.deposit_confirmed = null;
       updateData.deposit_deadline_at = null;
     }
+    // else : edition d'une resa existante, on preserve booked_at
     if (client_phone !== undefined) {
       if (client_phone) {
         // Format phone to E.164 using merchant country
