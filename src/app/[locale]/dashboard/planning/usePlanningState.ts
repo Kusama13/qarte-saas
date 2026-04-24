@@ -238,9 +238,10 @@ export function usePlanningState() {
   }, [merchant, addToast, t]);
 
   // Fetch slots
-  const fetchSlots = useCallback(async () => {
+  const fetchSlots = useCallback(async (opts?: { silent?: boolean }) => {
     if (!merchant) return;
-    setLoadingSlots(true);
+    const silent = opts?.silent === true;
+    if (!silent) setLoadingSlots(true);
     try {
       const res = await fetch(`/api/planning?merchantId=${merchant.id}&from=${formatDate(weekStart)}&to=${formatDate(weekEnd)}`);
       const data = await res.json();
@@ -248,7 +249,7 @@ export function usePlanningState() {
     } catch {
       setSlots([]);
     } finally {
-      setLoadingSlots(false);
+      if (!silent) setLoadingSlots(false);
     }
   }, [merchant, weekStart, weekEnd]);
 

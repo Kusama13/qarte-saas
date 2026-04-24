@@ -12,6 +12,7 @@ import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { showPlanningUi } from '@/lib/plan-tiers';
 import { pickGreeting } from '@/lib/dashboard-greetings';
+import { usePullToRefreshRegister } from '@/components/shared/PullToRefresh';
 
 const PendingPointsWidget = dynamic(() => import('@/components/dashboard/PendingPointsWidget'), { ssr: false });
 const PendingDepositsWidget = dynamic(() => import('@/components/dashboard/PendingDepositsWidget'), { ssr: false });
@@ -194,11 +195,12 @@ export default function DashboardPage() {
     }
   }, [merchant, supabase, refetch]);
 
-  useEffect(() => {
-    if (merchantLoading) return;
+  const fetchData = useCallback(async (opts?: { silent?: boolean }) => {
     if (!merchant) return;
-
-    const fetchData = async () => {
+    const silent = opts?.silent === true;
+    if (silent) {
+      try { localStorage.removeItem(`${STATS_CACHE_KEY}_${merchant.id}`); } catch {}
+    }
       try {
         // Use merchant timezone for all date calculations
         const todayStr = getTodayForCountry(merchant.country);
@@ -455,13 +457,18 @@ export default function DashboardPage() {
         console.error('Dashboard error:', err);
         setError(t('errorLoading'));
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
-    };
-
-    fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [merchant, merchantLoading]);
+  }, [merchant]);
+
+  useEffect(() => {
+    if (merchantLoading) return;
+    if (!merchant) return;
+    fetchData();
+  }, [merchant, merchantLoading, fetchData]);
+
+  usePullToRefreshRegister(() => fetchData({ silent: true }));
 
   // Milestone celebration detection (trial only)
   useEffect(() => {

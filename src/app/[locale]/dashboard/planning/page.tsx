@@ -30,6 +30,7 @@ import PlanUpgradeCTA from '@/components/dashboard/PlanUpgradeCTA';
 import { getPlanFeatures } from '@/lib/plan-tiers';
 import { useToast } from '@/components/ui/Toast';
 import { Link } from '@/i18n/navigation';
+import { usePullToRefreshRegister } from '@/components/shared/PullToRefresh';
 import { hasValidOpeningHours } from '@/lib/opening-hours';
 
 const VIEW_MODE_KEY = 'qarte_planning_view';
@@ -109,6 +110,11 @@ export default function PlanningDashboard() {
     setViewMode(mode);
     try { localStorage.setItem(VIEW_MODE_KEY, mode); } catch { /* storage disabled */ }
   };
+
+  usePullToRefreshRegister(async () => {
+    invalidateUpcoming();
+    await fetchSlots({ silent: true });
+  });
 
   // Handle ?slot= deep link from dashboard
   const searchParams = useSearchParams();

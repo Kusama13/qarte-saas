@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { getPlanFeatures, getPlanTier } from '@/lib/plan-tiers';
 import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
 import { ToastProvider } from '@/components/ui/Toast';
+import { PullToRefreshProvider } from '@/components/shared/PullToRefresh';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import InstallAppBanner from '@/components/dashboard/InstallAppBanner';
 import AdminAnnouncementBanner from '@/components/dashboard/AdminAnnouncementBanner';
@@ -447,7 +448,9 @@ export default function DashboardLayout({
   return (
     <MerchantProvider>
       <ToastProvider>
-        <DashboardLayoutContent>{children}</DashboardLayoutContent>
+        <PullToRefreshProvider>
+          <DashboardLayoutContent>{children}</DashboardLayoutContent>
+        </PullToRefreshProvider>
       </ToastProvider>
     </MerchantProvider>
   );

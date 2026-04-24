@@ -26,6 +26,7 @@ import { useMerchant } from '@/contexts/MerchantContext';
 import { safeFetchJson } from '@/lib/fetch';
 import { formatCurrency } from '@/lib/utils';
 import { getPlanFeatures } from '@/lib/plan-tiers';
+import { usePullToRefreshRegister } from '@/components/shared/PullToRefresh';
 import {
   AreaChart,
   Area,
@@ -328,9 +329,10 @@ export default function StatsPage() {
     setWeekIdx((cur) => (cur === idx ? 0 : idx));
   }, []);
 
-  const fetchStats = useCallback(async () => {
+  const fetchStats = useCallback(async (opts?: { silent?: boolean }) => {
     if (!merchant?.id) return;
-    setLoading(true);
+    const silent = opts?.silent === true;
+    if (!silent) setLoading(true);
     setError(null);
     const data = await safeFetchJson<StatsResponse>(`/api/dashboard/stats?merchantId=${merchant.id}&from=${range.from}&to=${range.to}`);
     if (!data) {
@@ -338,13 +340,15 @@ export default function StatsPage() {
     } else {
       setStats(data);
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   }, [merchant?.id, range.from, range.to]);
 
   useEffect(() => {
     if (hasAccess) fetchStats();
     else setLoading(false);
   }, [hasAccess, fetchStats]);
+
+  usePullToRefreshRegister(() => fetchStats({ silent: true }));
 
   if (merchantLoading) {
     return (
