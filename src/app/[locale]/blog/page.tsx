@@ -82,13 +82,13 @@ export default function BlogPage() {
                     className="group block h-full"
                   >
                     <div className="h-full border border-gray-100 rounded-2xl overflow-hidden hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300">
-                      <div className="relative aspect-[16/9] overflow-hidden bg-gray-100">
+                      <div className="relative aspect-[16/9] overflow-hidden bg-gray-50">
                         <Image
                           src={article.image}
                           alt={article.title}
                           fill
                           sizes="(max-width: 768px) 100vw, 50vw"
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          className="object-contain group-hover:scale-[1.03] transition-transform duration-500"
                         />
                       </div>
                       <div className="p-6">
