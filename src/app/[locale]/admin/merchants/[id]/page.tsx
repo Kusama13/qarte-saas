@@ -70,7 +70,6 @@ interface Merchant extends BaseMerchant {
   inactive_sms_enabled?: boolean;
   voucher_expiry_sms_enabled?: boolean;
   events_sms_enabled?: boolean;
-  sms_pack_balance?: number;
 }
 
 interface Stats {
@@ -400,6 +399,7 @@ export default function MerchantDetailPage() {
     servicesCount: 0, photosCount: 0, welcomeVouchers: 0, offerVouchers: 0, planningSlotsCount: 0, planningBookingsCount: 0, pendingDepositsCount: 0, onlineBookingsCount: 0,
   });
   const [memberPrograms, setMemberPrograms] = useState<MemberProgram[]>([]);
+  const [smsCredit, setSmsCredit] = useState<{ sent: number; quota: number; packBalance: number; totalAvailable: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
@@ -423,6 +423,7 @@ export default function MerchantDetailPage() {
         setStats(data.stats);
         setMemberPrograms(data.memberPrograms || []);
         setEmailTrackings(data.emailTrackings || []);
+        setSmsCredit(data.smsCredit || null);
         if (data.userEmail) setUserEmail(data.userEmail);
       } catch (error) {
         console.error('Error fetching merchant data:', error);
@@ -1262,10 +1263,22 @@ export default function MerchantDetailPage() {
                 );
               })}
             </div>
-            <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-100">
-              <span className="text-xs text-gray-500">Crédit SMS restant</span>
-              <span className="text-sm font-bold text-gray-900">{merchant.sms_pack_balance ?? 0}</span>
-            </div>
+            {smsCredit && (
+              <div className="pt-2 border-t border-gray-100 space-y-1.5">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs text-gray-500">Crédit SMS restant</span>
+                  <span className="text-sm font-bold text-gray-900">{smsCredit.totalAvailable}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3 text-[11px] text-gray-400">
+                  <span>Quota cycle (envoyés / inclus)</span>
+                  <span>{smsCredit.sent} / {smsCredit.quota}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3 text-[11px] text-gray-400">
+                  <span>Pack acheté en sus</span>
+                  <span>{smsCredit.packBalance}</span>
+                </div>
+              </div>
+            )}
           </CollapsibleCard>
         );
       })()}

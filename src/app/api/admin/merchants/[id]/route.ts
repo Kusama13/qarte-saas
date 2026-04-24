@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authorizeAdmin } from '@/lib/api-helpers';
 import logger from '@/lib/logger';
 import { z } from 'zod';
+import { getSmsUsageThisMonth, getEffectiveQuota } from '@/lib/sms';
 
 const patchSchema = z.union([
   z.object({ action: z.literal('restore') }),
@@ -156,9 +157,22 @@ export async function GET(
       }
     }
 
+    // Compute SMS credit (cycle quota - sent + pack balance)
+    const smsUsage = await getSmsUsageThisMonth(supabaseAdmin, merchantId, merchant.billing_period_start);
+    const smsQuota = getEffectiveQuota(merchant, smsUsage.periodStart);
+    const smsPackBalance = Number(merchant.sms_pack_balance || 0);
+    const smsCredit = {
+      sent: smsUsage.sent,
+      quota: smsQuota,
+      packBalance: smsPackBalance,
+      totalAvailable: Math.max(0, smsQuota - smsUsage.sent) + smsPackBalance,
+      periodStart: smsUsage.periodStart,
+    };
+
     return NextResponse.json({
       merchant,
       userEmail,
+      smsCredit,
       stats: {
         totalCustomers: totalCustomersRes.count || 0,
         activeCustomers: activeCustomersRes.count || 0,
