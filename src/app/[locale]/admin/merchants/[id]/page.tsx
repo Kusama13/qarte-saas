@@ -60,6 +60,17 @@ interface Merchant extends BaseMerchant {
   offer_description: string | null;
   offer_expires_at: string | null;
   offer_created_at: string | null;
+  reminder_j1_enabled?: boolean;
+  reminder_j0_enabled?: boolean;
+  welcome_sms_enabled?: boolean;
+  near_reward_sms_enabled?: boolean;
+  post_visit_review_enabled?: boolean;
+  referral_reward_sms_enabled?: boolean;
+  referral_invite_sms_enabled?: boolean;
+  inactive_sms_enabled?: boolean;
+  voucher_expiry_sms_enabled?: boolean;
+  events_sms_enabled?: boolean;
+  sms_pack_balance?: number;
 }
 
 interface Stats {
@@ -398,6 +409,7 @@ export default function MerchantDetailPage() {
   const [qrOpen, setQrOpen] = useState(false);
   const [loyaltyOpen, setLoyaltyOpen] = useState(true);
   const [vitrineOpen, setVitrineOpen] = useState(true);
+  const [smsAutomationsOpen, setSmsAutomationsOpen] = useState(false);
   const [emailsOpen, setEmailsOpen] = useState(false);
   const [bioOpen, setBioOpen] = useState(false);
 
@@ -1181,6 +1193,82 @@ export default function MerchantDetailPage() {
           </div>
         )}
       </CollapsibleCard>
+
+      {/* ═══════════ AUTOMATISATIONS SMS ═══════════ */}
+      {(() => {
+        const isTrial = merchant.subscription_status === 'trial';
+        type SmsGroup = 'transac' | 'fid' | 'avis' | 'parr' | 'conv';
+        const smsToggles: { key: string; label: string; active: boolean; group: SmsGroup }[] = [
+          { key: 'reminder_j1', label: 'Rappel J-1', active: !!merchant.reminder_j1_enabled, group: 'transac' },
+          { key: 'reminder_j0', label: 'Rappel J-0', active: !!merchant.reminder_j0_enabled, group: 'transac' },
+          { key: 'welcome_sms', label: 'Bienvenue', active: !!merchant.welcome_sms_enabled, group: 'fid' },
+          { key: 'near_reward', label: 'Proche récompense', active: !!merchant.near_reward_sms_enabled, group: 'fid' },
+          { key: 'birthday_sms', label: 'Anniversaire', active: !!merchant.birthday_gift_enabled, group: 'fid' },
+          { key: 'review_sms', label: 'Avis Google', active: !!merchant.post_visit_review_enabled, group: 'avis' },
+          { key: 'referral_reward', label: 'Récompense parrainage', active: !!merchant.referral_reward_sms_enabled, group: 'parr' },
+          { key: 'referral_invite', label: 'Invitation parrainage', active: !!merchant.referral_invite_sms_enabled, group: 'parr' },
+          { key: 'inactive_sms', label: 'Relance inactifs', active: !!merchant.inactive_sms_enabled, group: 'conv' },
+          { key: 'voucher_expiry', label: 'Expiration voucher', active: !!merchant.voucher_expiry_sms_enabled, group: 'conv' },
+          { key: 'events_sms', label: 'Événements', active: !!merchant.events_sms_enabled, group: 'conv' },
+        ];
+        const activeCount = smsToggles.filter(t => t.active).length;
+        const groups: Record<SmsGroup, { label: string; iconColor: string }> = {
+          transac: { label: 'Transactionnel', iconColor: 'text-indigo-600' },
+          fid:     { label: 'Fidélisation',   iconColor: 'text-rose-600' },
+          avis:    { label: 'Avis',           iconColor: 'text-emerald-600' },
+          parr:    { label: 'Parrainage',     iconColor: 'text-violet-600' },
+          conv:    { label: 'Conversion',     iconColor: 'text-amber-600' },
+        };
+        return (
+          <CollapsibleCard
+            icon={<MessageCircle className="w-4 h-4 text-[#5167fc]" />}
+            title="Automatisations SMS"
+            badge={
+              <span className="flex items-center gap-2">
+                <span className="text-sm font-normal text-gray-500">({activeCount}/{smsToggles.length})</span>
+                {isTrial && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-700 rounded-full">
+                    Essai · inactif
+                  </span>
+                )}
+              </span>
+            }
+            isOpen={smsAutomationsOpen}
+            onToggle={() => setSmsAutomationsOpen(!smsAutomationsOpen)}
+          >
+            {isTrial && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 leading-relaxed">
+                Compte en essai : les SMS marketing ne partent pas. Les toggles ci-dessous reflètent la configuration choisie par le merchant ; ils s&apos;activeront dès l&apos;abonnement.
+              </div>
+            )}
+            <div className="space-y-3">
+              {Object.entries(groups).map(([groupKey, groupCfg]) => {
+                const items = smsToggles.filter(t => t.group === groupKey);
+                if (items.length === 0) return null;
+                return (
+                  <div key={groupKey}>
+                    <p className={cn("text-[11px] font-bold uppercase tracking-wide mb-1.5", groupCfg.iconColor)}>{groupCfg.label}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {items.map(t => (
+                        <FeatureBadge
+                          key={t.key}
+                          active={t.active && !isTrial}
+                          icon={<MessageCircle className="w-3 h-3" />}
+                          label={t.label}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-100">
+              <span className="text-xs text-gray-500">Crédit SMS restant</span>
+              <span className="text-sm font-bold text-gray-900">{merchant.sms_pack_balance ?? 0}</span>
+            </div>
+          </CollapsibleCard>
+        );
+      })()}
 
       <CollapsibleCard
         icon={<Mail className="w-4 h-4 text-[#5167fc]" />}

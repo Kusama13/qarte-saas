@@ -15,6 +15,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import { displayPhoneWithFlag } from '@/lib/utils';
 
 interface MerchantSms {
   merchant_id: string;
@@ -67,7 +68,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; pill: string }> = {
   fidelite:     { label: 'Fidélité',     pill: 'bg-rose-100 text-rose-700' },
   conversion:   { label: 'Conversion',   pill: 'bg-amber-100 text-amber-700' },
   avis:         { label: 'Avis',         pill: 'bg-emerald-100 text-emerald-700' },
-  campagne:     { label: 'Campagne',     pill: 'bg-violet-100 text-violet-700' },
+  campagne:     { label: 'Marketing',    pill: 'bg-violet-100 text-violet-700' },
   essai:        { label: 'Essai',        pill: 'bg-orange-100 text-orange-700' },
 };
 
@@ -86,7 +87,7 @@ const SMS_TYPE_LABELS: Record<string, string> = {
   voucher_expiry: 'Expiration',
   referral_invite: 'Invitation',
   review_request: 'Avis client',
-  campaign: 'Campagne',
+  campaign: 'Marketing',
   celebration_fidelity: 'Check-in fidélité',
   celebration_planning: 'Check-in planning',
   celebration_vitrine: 'Check-in vitrine',
@@ -96,14 +97,22 @@ const SMS_TYPE_LABELS: Record<string, string> = {
   churn_survey: 'Sondage',
 };
 
-const CATEGORY_FILTERS = [
+type FilterItem = { key: string; label: string } | { separator: true };
+
+const CATEGORY_FILTERS: FilterItem[] = [
   { key: 'all',          label: 'Tous' },
+  { separator: true },
+  // Transactionnel (déclenché par un RDV)
   { key: 'rappel',       label: 'Rappel' },
   { key: 'confirmation', label: 'Confirmation' },
+  { separator: true },
+  // Marketing (relations clients)
   { key: 'fidelite',     label: 'Fidélité' },
-  { key: 'conversion',   label: 'Conversion' },
   { key: 'avis',         label: 'Avis' },
-  { key: 'campagne',     label: 'Campagne' },
+  { key: 'campagne',     label: 'Marketing' },
+  { key: 'conversion',   label: 'Conversion' },
+  { separator: true },
+  // Interne (Qarte → merchant en essai)
   { key: 'essai',        label: 'Essai' },
 ];
 
@@ -525,9 +534,13 @@ export default function AdminSmsPage() {
 
       {tab === 'history' && (
         <div>
-          {/* Category filters */}
-          <div className="flex gap-1.5 flex-wrap mb-4">
-            {CATEGORY_FILTERS.map(({ key, label }) => {
+          {/* Category filters — grouped by usage (transactionnel · marketing · interne) */}
+          <div className="flex items-center gap-1.5 flex-wrap mb-4">
+            {CATEGORY_FILTERS.map((item, idx) => {
+              if ('separator' in item) {
+                return <span key={`sep-${idx}`} className="h-5 w-px bg-gray-200 mx-1" aria-hidden />;
+              }
+              const { key, label } = item;
               const count = historyStats[key] ?? 0;
               const active = historyCategory === key;
               return (
@@ -619,8 +632,11 @@ export default function AdminSmsPage() {
                             <td className="px-4 py-2.5 text-xs text-gray-500">
                               {SMS_TYPE_LABELS[log.sms_type] || log.sms_type}
                             </td>
-                            <td className="px-4 py-2.5 text-xs text-gray-500 tabular-nums">
-                              {log.phone_to || <span className="text-gray-300">—</span>}
+                            <td className="px-4 py-2.5 text-xs text-gray-500 tabular-nums whitespace-nowrap">
+                              {log.phone_to ? (() => {
+                                const { flag, display } = displayPhoneWithFlag(log.phone_to);
+                                return <span><span className="mr-1">{flag}</span>{display}</span>;
+                              })() : <span className="text-gray-300">—</span>}
                             </td>
                             <td className="px-4 py-2.5">
                               <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ${

@@ -87,23 +87,26 @@ export async function GET(request: NextRequest) {
 
     const merchantIds = Array.from(new Set((data || []).map((r) => r.merchant_id as string).filter(Boolean)));
     const { data: merchantsData } = merchantIds.length
-      ? await supabaseAdmin.from('merchants').select('id, shop_name').in('id', merchantIds)
-      : { data: [] as { id: string; shop_name: string | null }[] };
-    const merchantMap = new Map((merchantsData || []).map((m) => [m.id, m.shop_name || 'Inconnu']));
+      ? await supabaseAdmin.from('merchants').select('id, shop_name, phone').in('id', merchantIds)
+      : { data: [] as { id: string; shop_name: string | null; phone: string | null }[] };
+    const merchantMap = new Map((merchantsData || []).map((m) => [m.id, { shop_name: m.shop_name || 'Inconnu', phone: m.phone }]));
 
-    logs = (data || []).map((row) => ({
-      id: row.id as string,
-      source: 'essai',
-      merchant_id: row.merchant_id as string,
-      shop_name: merchantMap.get(row.merchant_id as string) || '—',
-      phone_to: null,
-      sms_type: row.sms_type as string,
-      category: 'essai',
-      message_body: row.body as string,
-      status: row.status as string,
-      error_message: (row.error_message as string | null) ?? null,
-      created_at: row.sent_at as string,
-    }));
+    logs = (data || []).map((row) => {
+      const m = merchantMap.get(row.merchant_id as string);
+      return {
+        id: row.id as string,
+        source: 'essai',
+        merchant_id: row.merchant_id as string,
+        shop_name: m?.shop_name || '—',
+        phone_to: m?.phone ?? null,
+        sms_type: row.sms_type as string,
+        category: 'essai',
+        message_body: row.body as string,
+        status: row.status as string,
+        error_message: (row.error_message as string | null) ?? null,
+        created_at: row.sent_at as string,
+      };
+    });
     total = count || 0;
 
   } else if (category === 'all') {
@@ -151,23 +154,28 @@ export async function GET(request: NextRequest) {
 
     const merchantIds = Array.from(new Set(paged.map((r) => r.merchant_id).filter(Boolean)));
     const { data: merchantsData } = merchantIds.length
-      ? await supabaseAdmin.from('merchants').select('id, shop_name').in('id', merchantIds)
-      : { data: [] as { id: string; shop_name: string | null }[] };
-    const merchantMap = new Map((merchantsData || []).map((m) => [m.id, m.shop_name || 'Inconnu']));
+      ? await supabaseAdmin.from('merchants').select('id, shop_name, phone').in('id', merchantIds)
+      : { data: [] as { id: string; shop_name: string | null; phone: string | null }[] };
+    const merchantMap = new Map((merchantsData || []).map((m) => [m.id, { shop_name: m.shop_name || 'Inconnu', phone: m.phone }]));
 
-    logs = paged.map((row) => ({
-      id: row.id,
-      source: row._source,
-      merchant_id: row.merchant_id,
-      shop_name: merchantMap.get(row.merchant_id) || '—',
-      phone_to: row.phone_to,
-      sms_type: row.sms_type,
-      category: getCategory(row.sms_type),
-      message_body: row.message_body,
-      status: row.status,
-      error_message: row.error_message,
-      created_at: row.created_at,
-    }));
+    logs = paged.map((row) => {
+      const m = merchantMap.get(row.merchant_id);
+      // Trial marketing SMS go to the merchant's phone (not stored on the row)
+      const phoneTo = row._source === 'essai' ? (m?.phone ?? null) : row.phone_to;
+      return {
+        id: row.id,
+        source: row._source,
+        merchant_id: row.merchant_id,
+        shop_name: m?.shop_name || '—',
+        phone_to: phoneTo,
+        sms_type: row.sms_type,
+        category: getCategory(row.sms_type),
+        message_body: row.message_body,
+        status: row.status,
+        error_message: row.error_message,
+        created_at: row.created_at,
+      };
+    });
 
   } else {
     // Specific category (sms_logs only)
@@ -183,15 +191,15 @@ export async function GET(request: NextRequest) {
 
     const merchantIds = Array.from(new Set((data || []).map((r) => r.merchant_id as string).filter(Boolean)));
     const { data: merchantsData } = merchantIds.length
-      ? await supabaseAdmin.from('merchants').select('id, shop_name').in('id', merchantIds)
-      : { data: [] as { id: string; shop_name: string | null }[] };
-    const merchantMap = new Map((merchantsData || []).map((m) => [m.id, m.shop_name || 'Inconnu']));
+      ? await supabaseAdmin.from('merchants').select('id, shop_name, phone').in('id', merchantIds)
+      : { data: [] as { id: string; shop_name: string | null; phone: string | null }[] };
+    const merchantMap = new Map((merchantsData || []).map((m) => [m.id, { shop_name: m.shop_name || 'Inconnu', phone: m.phone }]));
 
     logs = (data || []).map((row) => ({
       id: row.id as string,
       source: 'sms',
       merchant_id: row.merchant_id as string,
-      shop_name: merchantMap.get(row.merchant_id as string) || '—',
+      shop_name: merchantMap.get(row.merchant_id as string)?.shop_name || '—',
       phone_to: row.phone_to as string | null,
       sms_type: row.sms_type as string,
       category: getCategory(row.sms_type as string),
