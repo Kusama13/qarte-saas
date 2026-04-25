@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import { MAX_SURVEY_SKIPS_BEFORE_AUTO_SEEN } from '@/lib/churn-survey-config';
 import logger from '@/lib/logger';
-
-const MAX_SKIPS_BEFORE_AUTO_SEEN = 3;
 
 export async function POST() {
   try {
@@ -12,32 +11,20 @@ export async function POST() {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const { data: m } = await supabase
-      .from('merchants')
-      .select('churn_survey_skip_count, churn_survey_seen_at')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!m) return NextResponse.json({ error: 'Merchant introuvable' }, { status: 404 });
-    if (m.churn_survey_seen_at) return NextResponse.json({ ok: true, already_seen: true });
-
-    const next = (m.churn_survey_skip_count ?? 0) + 1;
-    const autoSeen = next >= MAX_SKIPS_BEFORE_AUTO_SEEN;
-
-    const update: Record<string, unknown> = { churn_survey_skip_count: next };
-    if (autoSeen) update.churn_survey_seen_at = new Date().toISOString();
-
-    const { error } = await supabase
-      .from('merchants')
-      .update(update)
-      .eq('user_id', user.id);
+    const { data, error } = await supabase.rpc('increment_churn_survey_skip', {
+      p_user_id: user.id,
+      p_max: MAX_SURVEY_SKIPS_BEFORE_AUTO_SEEN,
+    });
 
     if (error) {
-      logger.error('survey-skip save failed', { userId: user.id, error });
+      logger.error('survey-skip rpc failed', { userId: user.id, error });
       return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
-    return NextResponse.json({ ok: true, skip_count: next, auto_seen: autoSeen });
+    const row = Array.isArray(data) ? data[0] : null;
+    if (!row) return NextResponse.json({ ok: true, already_seen: true });
+
+    return NextResponse.json({ ok: true, skip_count: row.skip_count, auto_seen: row.auto_seen });
   } catch (err) {
     logger.error('survey-skip route error', err);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });

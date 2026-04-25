@@ -110,3 +110,8 @@ export const CHURN_BONUS_DAYS_BY_CONVINCE: Record<ChurnConvince, number> = {
   fidelity_tier_ok: 5,
   nothing: 2,
 };
+
+// Apres N skips de la survey, on auto-marque churn_survey_seen_at
+// pour stopper la re-redirection forcee depuis le dashboard layout.
+// Utilise par /api/merchant/survey-skip.
+export const MAX_SURVEY_SKIPS_BEFORE_AUTO_SEEN = 3;

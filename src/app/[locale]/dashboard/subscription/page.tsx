@@ -27,6 +27,7 @@ import type { Merchant } from '@/types';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
+import { CANCELLATION_REASONS, type CancellationReason } from '@/lib/cancellation-reasons';
 
 interface PaymentMethod {
   brand: string;
@@ -121,7 +122,7 @@ export default function SubscriptionPage() {
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [showNfcModal, setShowNfcModal] = useState(false);
   const [showSaveOffer, setShowSaveOffer] = useState(false);
-  const [cancelReason, setCancelReason] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState<CancellationReason | null>(null);
   const [showPromoCode, setShowPromoCode] = useState(false);
   const [promoCopied, setPromoCopied] = useState(false);
   const [showFinalCancelConfirm, setShowFinalCancelConfirm] = useState(false);
@@ -313,18 +314,20 @@ export default function SubscriptionPage() {
     }
   }, []);
 
-  const handleSelectCancelReason = (reason: string) => {
+  const handleSelectCancelReason = (reason: CancellationReason) => {
     setCancelReason(reason);
     fetch('/api/merchant/cancellation-reason', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reason }),
     }).catch(() => {});
-    fbEvents.cancelIntent(reason);
-    ttEvents.cancelIntent(reason);
   };
 
   const handleConfirmCancel = () => {
+    if (cancelReason) {
+      fbEvents.cancelIntent(cancelReason);
+      ttEvents.cancelIntent(cancelReason);
+    }
     setShowSaveOffer(false);
     setShowFinalCancelConfirm(false);
     setCancelReason(null);
@@ -844,7 +847,7 @@ export default function SubscriptionPage() {
               )}
 
               <div className="space-y-2">
-                {['too_expensive', 'not_using', 'missing_feature', 'switching', 'temporary', 'other'].map(reason => (
+                {CANCELLATION_REASONS.map(reason => (
                   <button
                     key={reason}
                     onClick={() => handleSelectCancelReason(reason)}

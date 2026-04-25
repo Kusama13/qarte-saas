@@ -4,13 +4,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendBlogDigestEmail } from '@/lib/email';
 import { verifyCronAuth, batchGetUserEmails, canEmail, rateLimitDelay } from '@/lib/cron-helpers';
+import { PAID_STATUSES } from '@/lib/sms';
 import { BLOG_ARTICLES } from '@/data/blog-articles';
 import type { EmailLocale } from '@/emails/translations';
 import logger from '@/lib/logger';
 
 const MIN_DAYS_BETWEEN_DISPATCHES = 3;
 const RECENT_TRIAL_SIGNUP_DAYS = 21;
-const PAID_STATUSES = ['active', 'canceling', 'past_due'] as const;
+const SEND_BATCH_SIZE = 10;
 const SITE_ORIGIN = 'https://getqarte.com';
 
 const supabase = createClient(
@@ -109,10 +110,12 @@ export async function GET(request: NextRequest) {
   let errors = 0;
   const successfulRecipients: { article_slug: string; merchant_id: string }[] = [];
 
-  for (const merchant of eligible) {
-    const email = emailMap.get(merchant.user_id);
-    if (!email) continue;
-    try {
+  // Batch parallele : N envois concurrents, delai inter-batch pour le rate limit Resend
+  for (let i = 0; i < eligible.length; i += SEND_BATCH_SIZE) {
+    const batch = eligible.slice(i, i + SEND_BATCH_SIZE);
+    const results = await Promise.allSettled(batch.map(async (merchant) => {
+      const email = emailMap.get(merchant.user_id);
+      if (!email) return { merchant, sent: false };
       const result = await sendBlogDigestEmail(
         email,
         merchant.shop_name || 'Ton salon',
@@ -120,17 +123,20 @@ export async function GET(request: NextRequest) {
         merchant.id,
         (merchant.locale as EmailLocale) || 'fr',
       );
-      if (result.success) {
+      return { merchant, sent: result.success };
+    }));
+    for (const r of results) {
+      if (r.status === 'fulfilled' && r.value.sent) {
         sent++;
-        successfulRecipients.push({ article_slug: nextArticle.slug, merchant_id: merchant.id });
+        successfulRecipients.push({ article_slug: nextArticle.slug, merchant_id: r.value.merchant.id });
       } else {
         errors++;
+        if (r.status === 'rejected') {
+          logger.error('blog-digest send error', r.reason);
+        }
       }
-    } catch (err) {
-      errors++;
-      logger.error('blog-digest send error', { merchantId: merchant.id, err });
     }
-    await rateLimitDelay();
+    if (i + SEND_BATCH_SIZE < eligible.length) await rateLimitDelay();
   }
 
   // 6. Bulk upsert des recipients (ON CONFLICT DO NOTHING via ignoreDuplicates)

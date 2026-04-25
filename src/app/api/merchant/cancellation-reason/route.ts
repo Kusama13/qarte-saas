@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
 import logger from '@/lib/logger';
-
-const REASONS = ['too_expensive', 'not_using', 'missing_feature', 'switching', 'temporary', 'other'] as const;
+import { CANCELLATION_REASONS } from '@/lib/cancellation-reasons';
 
 const schema = z.object({
-  reason: z.enum(REASONS),
+  reason: z.enum(CANCELLATION_REASONS),
 });
 
 export async function POST(request: NextRequest) {
