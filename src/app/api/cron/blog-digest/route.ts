@@ -9,6 +9,7 @@ import type { EmailLocale } from '@/emails/translations';
 import logger from '@/lib/logger';
 
 const MIN_DAYS_BETWEEN_DISPATCHES = 3;
+const RECENT_SIGNUP_DAYS = 21;
 const SITE_ORIGIN = 'https://getqarte.com';
 
 const supabase = createClient(
@@ -55,10 +56,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ skipped: 'no_unsent_articles' });
   }
 
-  // 3. Fetch les merchants eligibles (actifs + canEmail)
+  // 3. Fetch les merchants eligibles : inscrits depuis < 21 jours uniquement
+  // (onboarding educatif, on n'arrose pas toute la base — quota Resend + pertinence)
+  const recentSignupCutoff = new Date(Date.now() - RECENT_SIGNUP_DAYS * 86_400_000).toISOString();
   const { data: allMerchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, user_id, locale, subscription_status, no_contact, email_bounced_at, email_unsubscribed_at');
+    .select('id, shop_name, user_id, locale, subscription_status, no_contact, email_bounced_at, email_unsubscribed_at, created_at')
+    .gte('created_at', recentSignupCutoff);
 
   const eligible = (allMerchants ?? []).filter(
     (m) => ['trial', 'active', 'canceling', 'past_due'].includes(m.subscription_status ?? '') && canEmail(m),
@@ -118,6 +122,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     article_slug: nextArticle.slug,
     article_title: nextArticle.title,
+    audience: `signed_up_within_${RECENT_SIGNUP_DAYS}_days`,
     eligible: eligible.length,
     sent,
     errors,
