@@ -1803,7 +1803,11 @@
     "saveOfferLossClients": "{count} clientes inscrites",
     "saveOfferLossVisits": "{count} passages enregistres",
     "saveOfferKeep": "Je reste",
-    "saveOfferContinueCancel": "Continuer"
+    "saveOfferContinueCancel": "Continuer",
+    "finalCancelTitle": "Confirmer l'annulation",
+    "finalCancelBody": "Tu vas être redirigé(e) vers Stripe pour finaliser l'annulation. Ton abonnement reste actif jusqu'à la fin de la période en cours, puis tes données seront archivées.",
+    "finalCancelConfirm": "Oui, annuler définitivement",
+    "finalCancelBack": "Non, je reviens"
   },
   "customers": {
     "title": "Gestion",

@@ -168,7 +168,9 @@ export default function ChurnSurveyPage() {
   };
 
   const confirmSkip = () => {
-    // No API call — skip is not persisted. Merchant will see survey again on next visit.
+    // Increment skip_count en DB. A 3 skips, l'API marque churn_survey_seen_at
+    // pour stopper la re-redirection forcee depuis le dashboard layout.
+    fetch('/api/merchant/survey-skip', { method: 'POST' }).catch(() => {});
     router.push('/dashboard/subscription');
   };
 

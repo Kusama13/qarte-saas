@@ -124,6 +124,7 @@ export default function SubscriptionPage() {
   const [cancelReason, setCancelReason] = useState<string | null>(null);
   const [showPromoCode, setShowPromoCode] = useState(false);
   const [promoCopied, setPromoCopied] = useState(false);
+  const [showFinalCancelConfirm, setShowFinalCancelConfirm] = useState(false);
   const [cancelStats, setCancelStats] = useState<{ customers: number; visits: number } | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [polling, setPolling] = useState(() => {
@@ -311,6 +312,24 @@ export default function SubscriptionPage() {
       setLoadingPayment(false);
     }
   }, []);
+
+  const handleSelectCancelReason = (reason: string) => {
+    setCancelReason(reason);
+    fetch('/api/merchant/cancellation-reason', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason }),
+    }).catch(() => {});
+    fbEvents.cancelIntent(reason);
+    ttEvents.cancelIntent(reason);
+  };
+
+  const handleConfirmCancel = () => {
+    setShowSaveOffer(false);
+    setShowFinalCancelConfirm(false);
+    setCancelReason(null);
+    handleOpenPortal();
+  };
 
   const handleOpenPortal = async () => {
     setLoadingPortal(true);
@@ -828,7 +847,7 @@ export default function SubscriptionPage() {
                 {['too_expensive', 'not_using', 'missing_feature', 'switching', 'temporary', 'other'].map(reason => (
                   <button
                     key={reason}
-                    onClick={() => setCancelReason(reason)}
+                    onClick={() => handleSelectCancelReason(reason)}
                     className={`w-full text-left px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
                       cancelReason === reason
                         ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
@@ -867,8 +886,7 @@ export default function SubscriptionPage() {
                 <Button
                   variant="outline"
                   className="flex-1 h-10 rounded-xl text-sm font-medium text-gray-400 border-gray-200"
-                  onClick={() => { setShowSaveOffer(false); setCancelReason(null); handleOpenPortal(); }}
-                  loading={loadingPortal}
+                  onClick={() => { setShowSaveOffer(false); setShowFinalCancelConfirm(true); }}
                 >
                   {t('saveOfferContinueCancel')}
                 </Button>
@@ -899,6 +917,42 @@ export default function SubscriptionPage() {
               </Button>
             </div>
           )}
+        </div>
+      </Modal>
+
+      {/* Final cancel confirmation — point of no return avant Stripe portal */}
+      <Modal isOpen={showFinalCancelConfirm} onClose={() => setShowFinalCancelConfirm(false)} size="sm">
+        <div className="space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-full bg-red-50 flex items-center justify-center">
+            <AlertTriangle className="w-6 h-6 text-red-600" strokeWidth={2.25} />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900 text-center">{t('finalCancelTitle')}</h3>
+          <p className="text-sm text-gray-600 text-center">{t('finalCancelBody')}</p>
+          {cancelStats && (cancelStats.customers > 0 || cancelStats.visits > 0) && (
+            <div className="p-3 bg-red-50 rounded-xl border border-red-200">
+              <p className="text-xs text-red-700 text-center font-medium">
+                {cancelStats.customers > 0 && t('saveOfferLossClients', { count: cancelStats.customers })}
+                {cancelStats.customers > 0 && cancelStats.visits > 0 && ' · '}
+                {cancelStats.visits > 0 && t('saveOfferLossVisits', { count: cancelStats.visits })}
+              </p>
+            </div>
+          )}
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              className="flex-1 h-10 rounded-xl text-sm font-bold"
+              onClick={() => { setShowFinalCancelConfirm(false); setShowSaveOffer(true); }}
+            >
+              {t('finalCancelBack')}
+            </Button>
+            <Button
+              className="flex-1 h-10 rounded-xl text-sm font-bold bg-red-600 hover:bg-red-700"
+              onClick={handleConfirmCancel}
+              loading={loadingPortal}
+            >
+              {t('finalCancelConfirm')}
+            </Button>
+          </div>
         </div>
       </Modal>
 

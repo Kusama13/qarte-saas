@@ -62,6 +62,7 @@ export const fbEvents = {
     ),
   scrollDepth: (percent: number) => trackFBEvent("ScrollDepth", { percent }),
   initiateCheckout: () => trackFBEvent("InitiateCheckout"), // Clic signup
+  cancelIntent: (reason?: string) => trackFBEvent("CancelSubscriptionIntent", reason ? { reason } : undefined),
 };
 
 // Scroll depth tracking component

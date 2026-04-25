@@ -1824,7 +1824,11 @@
     "saveOfferLossClients": "{count} registered clients",
     "saveOfferLossVisits": "{count} recorded visits",
     "saveOfferKeep": "I'll stay",
-    "saveOfferContinueCancel": "Continue"
+    "saveOfferContinueCancel": "Continue",
+    "finalCancelTitle": "Confirm cancellation",
+    "finalCancelBody": "You'll be redirected to Stripe to finalize the cancellation. Your subscription stays active until the end of the current period, then your data will be archived.",
+    "finalCancelConfirm": "Yes, cancel for good",
+    "finalCancelBack": "No, take me back"
   },
   "customers": {
     "title": "Client",

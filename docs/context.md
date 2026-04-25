@@ -626,6 +626,12 @@ SubscriptionConfirmedEmail, PaymentFailedEmail (4 steps dunning: J+0 webhook, J+
 ### Cancel flow — Save offer
 Modal dans `/dashboard/subscription` : quand le merchant clique sur le lien discret "Annuler mon abonnement", questionnaire raison d'annulation (6 choix). Si "trop cher" → offre **-25% pendant 2 mois** avec code `2MOISQARTEPRO25`. Churn survey post-expiration → **-25% pendant 3 mois** avec code `3MOISQARTEPRO25` (remplace QARTEPRO10). Les 2 codes sont des coupons Stripe `percent_off=25, duration=repeating, duration_in_months=2|3` a creer manuellement dans le dashboard Stripe.
 
+**Tracking churn (mig 127, avril 2026)** : la raison cliquee est POST-ee a `/api/merchant/cancellation-reason` au moment du select (avant meme l'eventuel passage en portail Stripe), persistee dans `merchants.cancellation_reason` + `cancellation_reason_at` (CHECK constraint sur les 6 valeurs). Pixels FB + TikTok firent un event `cancelIntent(reason)` au meme moment pour optimisation des audiences ads. Modal de confirmation finale ajoutee entre le bouton "Continuer" du save-offer et le portail Stripe (point de non-retour) : copy `finalCancel*` (FR/EN), bouton rouge "Oui, annuler definitivement" + retour possible vers le save-offer.
+
+**Survey skip (mig 127)** : `/api/merchant/survey-skip` POST increment `merchants.churn_survey_skip_count` a chaque skip. A 3 skips, l'API marque `churn_survey_seen_at = NOW()` automatiquement, ce qui stoppe la re-redirection forcee depuis le dashboard layout.
+
+**Demo team requested (mig 127)** : si Q4 = `team_demo`, `merchants.team_demo_requested_at` est mis a jour cote `/api/churn-survey` POST. Visible cote admin pour suivi follow-up (l'email `PostSurveyFollowUpEmail.teamDemo` envoye au merchant dit "notre equipe va te contacter sous 24h" — process manuel cote ops).
+
 ### Autres
 BirthdayNotificationEmail, GracePeriodSetupEmail, ProductUpdateEmail, AnnouncementMaPageEmail, WinBackEmail (envoi manuel admin), BookingNotificationEmail (transactionnel), SlotReleasedEmail (acompte non recu — cron horaire `deposit-expiration`, mentionne la possibilite de recuperer la resa depuis le dashboard), **BlogDigestEmail** (avril 2026 — envoie 1 article de blog tous les 3+ jours, source `src/data/blog-articles.ts`, cron `/api/cron/blog-digest`, idempotence via table `blog_email_dispatches` mig 125)
 

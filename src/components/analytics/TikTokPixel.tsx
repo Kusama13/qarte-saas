@@ -123,4 +123,11 @@ export const ttEvents = {
         content_name: contentName,
       }],
     }),
+  cancelIntent: (reason?: string) =>
+    trackTTEvent('ClickButton', {
+      ...qarteContent(),
+      value: 0,
+      currency: 'EUR',
+      ...(reason ? { description: `cancel_intent_${reason}` } : { description: 'cancel_intent' }),
+    }),
 };

@@ -100,12 +100,17 @@ export async function POST(request: NextRequest) {
     const base = currentEnd.getTime() > now.getTime() ? currentEnd : now;
     const newTrialEnd = new Date(base.getTime() + bonusDays * 24 * 60 * 60 * 1000);
 
+    const merchantUpdate: Record<string, unknown> = {
+      trial_ends_at: newTrialEnd.toISOString(),
+      churn_survey_seen_at: new Date().toISOString(),
+    };
+    if (parsed.data.would_convince === 'team_demo') {
+      merchantUpdate.team_demo_requested_at = new Date().toISOString();
+    }
+
     const { error: updateError } = await supabaseAdmin
       .from('merchants')
-      .update({
-        trial_ends_at: newTrialEnd.toISOString(),
-        churn_survey_seen_at: new Date().toISOString(),
-      })
+      .update(merchantUpdate)
       .eq('id', merchant.id);
 
     if (updateError) {

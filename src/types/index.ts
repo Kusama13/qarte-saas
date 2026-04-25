@@ -92,6 +92,10 @@ export interface Merchant {
   tier2_reward_description: string | null;
   trial_ends_at: string;
   churn_survey_seen_at: string | null;
+  churn_survey_skip_count: number;
+  cancellation_reason: 'too_expensive' | 'not_using' | 'missing_feature' | 'switching' | 'temporary' | 'other' | null;
+  cancellation_reason_at: string | null;
+  team_demo_requested_at: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   billing_interval: 'monthly' | 'annual';
