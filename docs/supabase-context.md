@@ -1223,6 +1223,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 123 | sms_logs_dedup_index | Index composite `sms_logs(merchant_id, sms_type, created_at DESC)` pour accelerer les dedup anti-spam (`hasSentRecentSms()`) et les requetes de quota SMS dashboard |
 | 124 | slot_attendance_status | `merchant_planning_slots.attendance_status VARCHAR(12) CHECK IN ('pending','attended','no_show','cancelled') DEFAULT 'pending'`. Index partiel `WHERE attendance_status != 'pending'`. Backfill : slots passes avec client → `attended`. Utilise par `/dashboard/stats` (no-show rate) et boutons Venue/Absente sur `BookingDetailsModal`. Route `PATCH /api/planning/attendance` |
 | 125 | blog_email_dispatches | Table `blog_email_dispatches` pour idempotence du cron blog-digest : `article_slug TEXT PK`, `sent_at TIMESTAMPTZ DEFAULT NOW()`, `recipient_count INTEGER`. Index `sent_at DESC`. RLS enable, service_role only. Le cron choisit le plus ancien article non encore envoye si au moins 3 jours depuis le dernier envoi global |
+| 126 | blog_email_recipients | Table `blog_email_recipients` pour dedup per-merchant du cron blog-digest : `(article_slug TEXT, merchant_id UUID FK ON DELETE CASCADE) PRIMARY KEY`, `sent_at TIMESTAMPTZ DEFAULT NOW()`. Index `merchant_id`. RLS enable, service_role only. Garantit qu'un merchant ne recoit jamais 2 fois le meme article (utile depuis l'extension audience aux abonnes payants tous millesimes). Bulk upsert avec `ignoreDuplicates: true` apres chaque batch d'envoi |
 
 ---
 

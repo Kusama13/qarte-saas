@@ -9,7 +9,8 @@ import type { EmailLocale } from '@/emails/translations';
 import logger from '@/lib/logger';
 
 const MIN_DAYS_BETWEEN_DISPATCHES = 3;
-const RECENT_SIGNUP_DAYS = 21;
+const RECENT_TRIAL_SIGNUP_DAYS = 21;
+const PAID_STATUSES = ['active', 'canceling', 'past_due'] as const;
 const SITE_ORIGIN = 'https://getqarte.com';
 
 const supabase = createClient(
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // 1. Check si on a le droit d'envoyer (>= 3j depuis le dernier dispatch)
+  // 1. Throttle global : >= 3 jours depuis le dernier dispatch tous articles confondus
   const { data: recent } = await supabase
     .from('blog_email_dispatches')
     .select('sent_at, article_slug')
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 2. Pick le prochain article : publie, non-dispatche, plus ancien en premier
+  // 2. Pick le prochain article : publie, non-dispatche globalement, plus ancien en premier
   const { data: dispatched } = await supabase
     .from('blog_email_dispatches')
     .select('article_slug');
@@ -56,25 +57,45 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ skipped: 'no_unsent_articles' });
   }
 
-  // 3. Fetch les merchants eligibles : inscrits depuis < 21 jours uniquement
-  // (onboarding educatif, on n'arrose pas toute la base — quota Resend + pertinence)
-  const recentSignupCutoff = new Date(Date.now() - RECENT_SIGNUP_DAYS * 86_400_000).toISOString();
+  // 3. Audience cible :
+  //    - Tous les abonnes payants (active/canceling/past_due) — y compris signups anciens (fevrier+)
+  //    - Trials uniquement si inscrits depuis < 21 jours (onboarding educatif)
+  const recentTrialCutoff = new Date(Date.now() - RECENT_TRIAL_SIGNUP_DAYS * 86_400_000);
   const { data: allMerchants } = await supabase
     .from('merchants')
     .select('id, shop_name, user_id, locale, subscription_status, no_contact, email_bounced_at, email_unsubscribed_at, created_at')
-    .gte('created_at', recentSignupCutoff);
+    .in('subscription_status', ['trial', ...PAID_STATUSES]);
 
-  const eligible = (allMerchants ?? []).filter(
-    (m) => ['trial', 'active', 'canceling', 'past_due'].includes(m.subscription_status ?? '') && canEmail(m),
-  );
+  const candidates = (allMerchants ?? []).filter((m) => {
+    if (!canEmail(m)) return false;
+    if (m.subscription_status === 'trial') {
+      return m.created_at && new Date(m.created_at) >= recentTrialCutoff;
+    }
+    return true;
+  });
+
+  // 4. Dedup per-article : on retire ceux qui ont deja recu ce slug (mig 126).
+  // Garde-fou contre retry/crash mid-loop ou run manuel duplique.
+  const { data: alreadyRecipients } = await supabase
+    .from('blog_email_recipients')
+    .select('merchant_id')
+    .eq('article_slug', nextArticle.slug);
+  const alreadyIds = new Set((alreadyRecipients ?? []).map((r) => r.merchant_id as string));
+  const eligible = candidates.filter((m) => !alreadyIds.has(m.id));
 
   if (eligible.length === 0) {
-    return NextResponse.json({ article_slug: nextArticle.slug, sent: 0, skipped: 'no_eligible_merchants' });
+    return NextResponse.json({
+      article_slug: nextArticle.slug,
+      sent: 0,
+      skipped: 'no_eligible_merchants_or_all_received',
+      candidates: candidates.length,
+      already_received: alreadyIds.size,
+    });
   }
 
   const emailMap = await batchGetUserEmails(supabase, [...new Set(eligible.map((m) => m.user_id))]);
 
-  // 4. Send + track
+  // 5. Send + record per-recipient (idempotent via upsert)
   const articlePayload = {
     title: nextArticle.title,
     description: nextArticle.description,
@@ -86,6 +107,8 @@ export async function GET(request: NextRequest) {
 
   let sent = 0;
   let errors = 0;
+  const successfulRecipients: { article_slug: string; merchant_id: string }[] = [];
+
   for (const merchant of eligible) {
     const email = emailMap.get(merchant.user_id);
     if (!email) continue;
@@ -99,6 +122,7 @@ export async function GET(request: NextRequest) {
       );
       if (result.success) {
         sent++;
+        successfulRecipients.push({ article_slug: nextArticle.slug, merchant_id: merchant.id });
       } else {
         errors++;
       }
@@ -109,7 +133,20 @@ export async function GET(request: NextRequest) {
     await rateLimitDelay();
   }
 
-  // 5. Record le dispatch (une seule ligne par article)
+  // 6. Bulk upsert des recipients (ON CONFLICT DO NOTHING via ignoreDuplicates)
+  if (successfulRecipients.length > 0) {
+    const { error: recipError } = await supabase
+      .from('blog_email_recipients')
+      .upsert(successfulRecipients, {
+        onConflict: 'article_slug,merchant_id',
+        ignoreDuplicates: true,
+      });
+    if (recipError) {
+      logger.error('blog-digest recipients record failed', recipError);
+    }
+  }
+
+  // 7. Record le dispatch global (throttle inter-articles)
   const { error: insertError } = await supabase.from('blog_email_dispatches').insert({
     article_slug: nextArticle.slug,
     sent_at: new Date().toISOString(),
@@ -122,7 +159,9 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     article_slug: nextArticle.slug,
     article_title: nextArticle.title,
-    audience: `signed_up_within_${RECENT_SIGNUP_DAYS}_days`,
+    audience: 'paid_subscribers + trials_within_21_days',
+    candidates: candidates.length,
+    already_received: alreadyIds.size,
     eligible: eligible.length,
     sent,
     errors,
