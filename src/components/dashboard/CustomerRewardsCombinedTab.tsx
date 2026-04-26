@@ -351,7 +351,7 @@ export function CustomerRewardsCombinedTab({
                       <Button
                         variant="outline"
                         size="sm"
-                        className={`${ROLES.danger.icon} ${ROLES.danger.border} hover:${ROLES.danger.bg}`}
+                        className={`${ROLES.danger.icon} ${ROLES.danger.border} ${ROLES.danger.hoverBg}`}
                         onClick={() => setConfirmRemoveId(v.id)}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -489,7 +489,7 @@ export function CustomerRewardsCombinedTab({
                         size="sm"
                         className={`w-full ${
                           granted
-                            ? `${ROLES.success.bg} ${ROLES.success.text} hover:${ROLES.success.bg} cursor-default`
+                            ? `${ROLES.success.bg} ${ROLES.success.text} ${ROLES.success.hoverBg} cursor-default`
                             : `${ROLES.primary.solid} focus:ring-indigo-500`
                         }`}
                         disabled={granted}
@@ -554,7 +554,7 @@ export function CustomerRewardsCombinedTab({
               loading={cancelLoading}
               disabled={!cancelConfirm}
               variant="outline"
-              className={`w-full text-sm ${ROLES.warning.border} ${ROLES.warning.text} hover:${ROLES.warning.bgSolid}`}
+              className={`w-full text-sm ${ROLES.warning.border} ${ROLES.warning.text} ${ROLES.warning.hoverBgSolid}`}
             >
               <Undo2 className="w-4 h-4 mr-1.5" />
               {isCagnotte ? tr('cancelCagnotte') : tr('cancelReward')}

@@ -288,15 +288,15 @@ export function CustomerHistoryTab({
     const r = ROLES[role];
 
     const getIcon = () => {
-      if (isAppointment) return <Calendar className={`w-4 h-4 ${r.icon}`} />;
-      if (isVoucherUsed) return <Ticket className={`w-4 h-4 ${r.icon}`} />;
+      if (isAppointment) return <Calendar className={`w-5 h-5 ${r.icon}`} />;
+      if (isVoucherUsed) return <Ticket className={`w-5 h-5 ${r.icon}`} />;
       if (isRedemption) {
         return item.tier === 2
-          ? <Trophy className={`w-4 h-4 ${r.icon}`} />
-          : <Gift className={`w-4 h-4 ${r.icon}`} />;
+          ? <Trophy className={`w-5 h-5 ${r.icon}`} />
+          : <Gift className={`w-5 h-5 ${r.icon}`} />;
       }
-      if (isAdjustment) return <SlidersHorizontal className={`w-4 h-4 ${r.icon}`} />;
-      return <Check className={`w-4 h-4 ${r.icon}`} />;
+      if (isAdjustment) return <SlidersHorizontal className={`w-5 h-5 ${r.icon}`} />;
+      return <Check className={`w-5 h-5 ${r.icon}`} />;
     };
 
     const getLabel = () => {
@@ -376,12 +376,12 @@ export function CustomerHistoryTab({
     return (
       <li
         key={item.id}
-        className={`flex items-center justify-between p-2 rounded-lg ${r.bg} ${isVisit ? 'cursor-pointer hover:ring-1 hover:ring-indigo-200 transition-shadow' : ''}`}
+        className={`flex items-center justify-between p-2.5 sm:p-3 rounded-lg ${r.bg} ${isVisit ? 'cursor-pointer hover:ring-1 hover:ring-indigo-200 transition-shadow' : ''}`}
         onClick={isVisit ? () => startEdit({ id: item.id, points: item.points, amount_spent: item.amount_spent ?? null }) : undefined}
         title={isVisit ? t('tapToEdit') : undefined}
       >
-        <div className="flex items-center gap-2 min-w-0">
-          <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${r.bgSolid}`}>{getIcon()}</div>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${r.bgSolid}`}>{getIcon()}</div>
           <div className="min-w-0">
             <p className={`text-sm font-medium truncate ${isRedemption ? r.text : 'text-gray-900'}`}>{getLabel()}</p>
             <p className="text-xs text-gray-500 flex items-center gap-1">
@@ -466,7 +466,7 @@ export function CustomerHistoryTab({
           {hasMore && (
             <button
               onClick={() => setVisibleCount(c => c * 2)}
-              className={`w-full py-2 mt-1 text-xs font-semibold rounded-lg transition-colors ${ROLES.primary.bg} ${ROLES.primary.text} hover:${ROLES.primary.bgSolid}`}
+              className={`w-full py-2 mt-1 text-xs font-semibold rounded-lg transition-colors ${ROLES.primary.bg} ${ROLES.primary.text} ${ROLES.primary.hoverBgSolid}`}
             >
               {t('viewMore', { count: remainingCount })}
             </button>

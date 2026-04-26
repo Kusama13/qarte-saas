@@ -246,7 +246,7 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
                 onClick={() => { if (confirm(t('deleteConfirm'))) handleDelete(note.id); }}
                 className="p-1 rounded hover:bg-red-50"
               >
-                <Trash2 className={`w-3.5 h-3.5 text-gray-400 hover:${ROLES.danger.icon}`} />
+                <Trash2 className={`w-3.5 h-3.5 text-gray-400 ${ROLES.danger.hoverIcon}`} />
               </button>
             </div>
           )}

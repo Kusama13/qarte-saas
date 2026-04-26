@@ -24,6 +24,12 @@ export interface RoleStyle {
   bar: string;
   /** text-{color}-600 — icônes */
   icon: string;
+  /** hover:bg-{color}-50 — hover léger (full literal, Tailwind JIT compatible) */
+  hoverBg: string;
+  /** hover:bg-{color}-100 — hover plus saturé */
+  hoverBgSolid: string;
+  /** hover:text-{color}-600 — hover sur icône */
+  hoverIcon: string;
 }
 
 export const ROLES: Record<Role, RoleStyle> = {
@@ -36,6 +42,9 @@ export const ROLES: Record<Role, RoleStyle> = {
     solid: 'bg-indigo-600 hover:bg-indigo-700',
     bar: 'bg-indigo-500',
     icon: 'text-indigo-600',
+    hoverBg: 'hover:bg-indigo-50',
+    hoverBgSolid: 'hover:bg-indigo-100',
+    hoverIcon: 'hover:text-indigo-600',
   },
   // Vouchers actifs, redemption tier1, points gagnés, validation
   success: {
@@ -46,6 +55,9 @@ export const ROLES: Record<Role, RoleStyle> = {
     solid: 'bg-emerald-600 hover:bg-emerald-700',
     bar: 'bg-emerald-500',
     icon: 'text-emerald-600',
+    hoverBg: 'hover:bg-emerald-50',
+    hoverBgSolid: 'hover:bg-emerald-100',
+    hoverIcon: 'hover:text-emerald-600',
   },
   // Tier 2 stamps + redemption + reward card. Réservé strictement à tier2 et formula (Journal).
   premium: {
@@ -56,6 +68,9 @@ export const ROLES: Record<Role, RoleStyle> = {
     solid: 'bg-violet-600 hover:bg-violet-700',
     bar: 'bg-violet-500',
     icon: 'text-violet-600',
+    hoverBg: 'hover:bg-violet-50',
+    hoverBgSolid: 'hover:bg-violet-100',
+    hoverIcon: 'hover:text-violet-600',
   },
   // Annulation de récompense, ajustement manuel (action de modification réversible)
   warning: {
@@ -66,6 +81,9 @@ export const ROLES: Record<Role, RoleStyle> = {
     solid: 'bg-amber-600 hover:bg-amber-700',
     bar: 'bg-amber-500',
     icon: 'text-amber-600',
+    hoverBg: 'hover:bg-amber-50',
+    hoverBgSolid: 'hover:bg-amber-100',
+    hoverIcon: 'hover:text-amber-600',
   },
   // Allergies, contre-indications, delete, erreurs
   danger: {
@@ -76,6 +94,9 @@ export const ROLES: Record<Role, RoleStyle> = {
     solid: 'bg-red-600 hover:bg-red-700',
     bar: 'bg-red-500',
     icon: 'text-red-600',
+    hoverBg: 'hover:bg-red-50',
+    hoverBgSolid: 'hover:bg-red-100',
+    hoverIcon: 'hover:text-red-600',
   },
   // Voucher déjà consommé, observation neutre, note general, bordures, texte secondaire
   neutral: {
@@ -86,6 +107,9 @@ export const ROLES: Record<Role, RoleStyle> = {
     solid: 'bg-gray-600 hover:bg-gray-700',
     bar: 'bg-gray-400',
     icon: 'text-gray-500',
+    hoverBg: 'hover:bg-gray-50',
+    hoverBgSolid: 'hover:bg-gray-100',
+    hoverIcon: 'hover:text-gray-600',
   },
   // Single-purpose : anniversaire (header pill + birthday voucher)
   birthday: {
@@ -96,6 +120,9 @@ export const ROLES: Record<Role, RoleStyle> = {
     solid: 'bg-pink-600 hover:bg-pink-700',
     bar: 'bg-pink-500',
     icon: 'text-pink-600',
+    hoverBg: 'hover:bg-pink-50',
+    hoverBgSolid: 'hover:bg-pink-100',
+    hoverIcon: 'hover:text-pink-600',
   },
 };
 

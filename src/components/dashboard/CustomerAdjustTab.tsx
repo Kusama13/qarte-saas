@@ -136,9 +136,9 @@ export function CustomerAdjustTab({
   const canSubmit = adjustment !== 0 || (isCagnotte && parsedAmountAdj !== 0);
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div className="space-y-6 sm:space-y-7">
       {/* ── Status : cagnotte + progress bars ── */}
-      <div className={`rounded-xl border ${ROLES.neutral.border} ${ROLES.neutral.bg} p-4 sm:p-5 space-y-4 sm:space-y-5`}>
+      <div className={`rounded-xl border ${ROLES.neutral.border} ${ROLES.neutral.bg} p-5 sm:p-6 space-y-5 sm:space-y-6`}>
         {isCagnotte && (() => {
           const activePercent = (tier2Reached || (tier1Redeemed && tier2Enabled)) ? (cagnotteTier2Percent || cagnottePercent) : cagnottePercent;
           const activeValue = formatCurrency(calculateCashback(currentAmount, activePercent), country);
@@ -209,8 +209,8 @@ export function CustomerAdjustTab({
       </div>
 
       {/* ── Stepper passages ── */}
-      <div>
-        <label className="block mb-2.5 text-sm sm:text-base font-medium text-gray-700 text-center">{t('stampsLabel')}</label>
+      <div className="py-2">
+        <label className="block mb-3 text-base sm:text-lg font-semibold text-gray-800 text-center">{t('stampsLabel')}</label>
         <div className="flex items-center gap-3 sm:gap-4 max-w-sm mx-auto">
           <button
             onClick={() => tweakBy(-1)}
