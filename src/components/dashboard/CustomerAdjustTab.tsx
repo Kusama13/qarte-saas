@@ -136,7 +136,7 @@ export function CustomerAdjustTab({
   const canSubmit = adjustment !== 0 || (isCagnotte && parsedAmountAdj !== 0);
 
   return (
-    <div className="space-y-6 sm:space-y-7">
+    <div className="min-h-full flex flex-col justify-center space-y-6 sm:space-y-7">
       {/* ── Status : cagnotte + progress bars ── */}
       <div className={`rounded-xl border ${ROLES.neutral.border} ${ROLES.neutral.bg} p-5 sm:p-6 space-y-5 sm:space-y-6`}>
         {isCagnotte && (() => {
