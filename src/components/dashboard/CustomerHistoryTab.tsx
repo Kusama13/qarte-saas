@@ -67,7 +67,6 @@ export interface CustomerHistoryTabProps {
 }
 
 type ItemType = 'visit' | 'adjustment' | 'redemption' | 'voucher' | 'appointment';
-type FilterKey = 'all' | 'visit' | 'redemption' | 'voucher' | 'appointment' | 'adjustment';
 type BucketKey = 'today' | 'week' | 'month' | 'older';
 
 const DAY_MS = 86400000;
@@ -109,7 +108,6 @@ export function CustomerHistoryTab({
   const [usedVouchers, setUsedVouchers] = useState<UsedVoucher[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [filter, setFilter] = useState<FilterKey>('all');
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
 
   // Edit state
@@ -218,22 +216,12 @@ export function CustomerHistoryTab({
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
   [visits, adjustments, redemptions, usedVouchers, appointments]);
 
-  const filteredItems = useMemo(
-    () => filter === 'all' ? historyItems : historyItems.filter(it => it.type === filter),
-    [historyItems, filter],
-  );
-
-  // Reset visibleCount quand le filtre change pour repartir d'une vue propre.
-  useEffect(() => {
-    setVisibleCount(INITIAL_VISIBLE_COUNT);
-  }, [filter]);
-
   const visibleItems = useMemo(
-    () => filteredItems.slice(0, visibleCount),
-    [filteredItems, visibleCount],
+    () => historyItems.slice(0, visibleCount),
+    [historyItems, visibleCount],
   );
-  const hasMore = filteredItems.length > visibleCount;
-  const remainingCount = filteredItems.length - visibleCount;
+  const hasMore = historyItems.length > visibleCount;
+  const remainingCount = historyItems.length - visibleCount;
 
   const grouped = useMemo(() => {
     const now = Date.now();
@@ -241,22 +229,6 @@ export function CustomerHistoryTab({
     for (const it of visibleItems) out[bucketFor(it.date, now)].push(it);
     return out;
   }, [visibleItems]);
-
-  // Counts per filter (for chip badges)
-  const counts = useMemo(() => {
-    const c: Record<FilterKey, number> = { all: historyItems.length, visit: 0, redemption: 0, voucher: 0, appointment: 0, adjustment: 0 };
-    for (const it of historyItems) c[it.type as FilterKey]++;
-    return c;
-  }, [historyItems]);
-
-  const FILTER_PILLS: { key: FilterKey; label: string }[] = [
-    { key: 'all', label: t('filterAll') },
-    { key: 'visit', label: t('filterVisits') },
-    { key: 'redemption', label: t('filterRewards') },
-    { key: 'voucher', label: t('filterVouchers') },
-    { key: 'appointment', label: t('filterAppointments') },
-    { key: 'adjustment', label: t('filterAdjustments') },
-  ];
 
   if (historyLoading) {
     return (
@@ -425,53 +397,24 @@ export function CustomerHistoryTab({
 
   return (
     <div className="space-y-3">
-      {/* Filter pills */}
-      <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
-        {FILTER_PILLS.map(p => {
-          const active = filter === p.key;
-          const count = counts[p.key];
-          if (p.key !== 'all' && count === 0) return null;
-          return (
-            <button
-              key={p.key}
-              onClick={() => setFilter(p.key)}
-              className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
-                active
-                  ? `${ROLES.primary.solid} text-white`
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {p.label}
-              <span className={`ml-1 ${active ? 'text-white/80' : 'text-gray-400'}`}>{count}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {filteredItems.length === 0 ? (
-        <p className="text-center text-sm text-gray-400 py-4">{t('noResultsForFilter')}</p>
-      ) : (
-        <>
-          {BUCKET_ORDER.filter(b => grouped[b].length > 0).map(b => (
-            <div key={b}>
-              <div className="flex items-center gap-2 mb-1.5 px-1">
-                <span className="w-1 h-3 rounded-full bg-gray-300" />
-                <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider">{t(`bucket_${b}` as 'bucket_today')}</p>
-              </div>
-              <ul className="space-y-1.5">
-                {grouped[b].map(renderItem)}
-              </ul>
-            </div>
-          ))}
-          {hasMore && (
-            <button
-              onClick={() => setVisibleCount(c => c * 2)}
-              className={`w-full py-2 mt-1 text-xs font-semibold rounded-lg transition-colors ${ROLES.primary.bg} ${ROLES.primary.text} ${ROLES.primary.hoverBgSolid}`}
-            >
-              {t('viewMore', { count: remainingCount })}
-            </button>
-          )}
-        </>
+      {BUCKET_ORDER.filter(b => grouped[b].length > 0).map(b => (
+        <div key={b}>
+          <div className="flex items-center gap-2 mb-1.5 px-1">
+            <span className="w-1 h-3 rounded-full bg-gray-300" />
+            <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider">{t(`bucket_${b}` as 'bucket_today')}</p>
+          </div>
+          <ul className="space-y-1.5">
+            {grouped[b].map(renderItem)}
+          </ul>
+        </div>
+      ))}
+      {hasMore && (
+        <button
+          onClick={() => setVisibleCount(c => c * 2)}
+          className={`w-full py-2 mt-1 text-xs font-semibold rounded-lg transition-colors ${ROLES.primary.bg} ${ROLES.primary.text} ${ROLES.primary.hoverBgSolid}`}
+        >
+          {t('viewMore', { count: remainingCount })}
+        </button>
       )}
     </div>
   );
