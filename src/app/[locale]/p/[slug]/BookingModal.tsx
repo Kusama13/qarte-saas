@@ -453,8 +453,6 @@ export default function BookingModal({
                           const catKey = category?.id || '__uncategorized__';
                           const isOpen = openCategories.has(catKey);
                           const catName = category?.name || t('otherServices');
-                          const prices = catServices.map(s => Number(s.price || 0));
-                          const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
                           const selectedInCat = catServices.filter(s => selectedServiceIds.has(s.id)).length;
                           const dotColor = category
                             ? CATEGORY_COLORS[idx % CATEGORY_COLORS.length]
@@ -480,7 +478,7 @@ export default function BookingModal({
                                     )}
                                   </div>
                                   <p className="text-[11px] text-gray-500 mt-0.5">
-                                    {t('categoryServicesCount', { count: catServices.length })} · {t('from')} {formatCurrency(minPrice, country, locale)}
+                                    {t('categoryServicesCount', { count: catServices.length })}
                                   </p>
                                 </div>
                                 <ChevronDown
