@@ -192,7 +192,7 @@ export function CustomerAdjustTab({
         })()}
 
         {tier2Enabled && tier2StampsRequired ? (
-          <div className="space-y-4 sm:space-y-5">
+          <div className="space-y-6 sm:space-y-8">
             <CompactProgressRow
               icon={<Gift className={`w-5 h-5 sm:w-6 sm:h-6 ${tier1Reached ? ROLES.success.icon : ROLES.primary.icon}`} />}
               tierLabel={t('tier1')}
