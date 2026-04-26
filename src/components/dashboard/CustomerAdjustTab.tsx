@@ -10,28 +10,58 @@ import { ROLES } from '@/lib/customer-modal-styles';
 interface CompactProgressRowProps {
   icon: React.ReactNode;
   label: string;
+  tierLabel?: string;
   current: number;
+  preview?: number;
   required: number;
   reached: boolean;
   barClass: string;
   textClass: string;
 }
 
-function CompactProgressRow({ icon, label, current, required, reached, barClass, textClass }: CompactProgressRowProps) {
+function CompactProgressRow({ icon, label, tierLabel, current, preview, required, reached, barClass, textClass }: CompactProgressRowProps) {
+  const previewVal = preview ?? current;
+  const delta = previewVal - current;
+  const showDelta = delta !== 0;
+  const filledCount = Math.min(current, previewVal);
+  const filledPercent = Math.min((filledCount / required) * 100, 100);
+  const deltaPercent = Math.min((Math.abs(delta) / required) * 100, 100 - filledPercent);
+  const isPositive = delta > 0;
+
   return (
     <div className="flex items-center gap-4 sm:gap-5">
       <div className="shrink-0">{icon}</div>
       <div className="flex-1 min-w-0">
+        {tierLabel && (
+          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.14em] text-gray-400 mb-1">
+            {tierLabel}
+          </p>
+        )}
         <div className="flex items-baseline justify-between mb-2 sm:mb-2.5">
           <span className={`text-sm sm:text-base font-bold tracking-tight truncate ${reached ? textClass : 'text-gray-700'}`}>
             {label}
           </span>
-          <span className={`text-base sm:text-lg font-bold tabular-nums shrink-0 ml-2 ${reached ? textClass : 'text-gray-900'}`}>
-            {current}/{required}
+          <span className="text-base sm:text-lg font-bold tabular-nums shrink-0 ml-2">
+            {showDelta ? (
+              <>
+                <span className="text-gray-400">{current}</span>
+                <span className="text-gray-400 mx-1">→</span>
+                <span className={isPositive ? 'text-emerald-600' : 'text-red-600'}>{previewVal}</span>
+                <span className="text-gray-400">/{required}</span>
+              </>
+            ) : (
+              <span className={reached ? textClass : 'text-gray-900'}>{current}/{required}</span>
+            )}
           </span>
         </div>
-        <div className="h-2.5 sm:h-3 bg-gray-100 rounded-full overflow-hidden">
-          <div className={`h-full rounded-full transition-all ${barClass}`} style={{ width: `${Math.min((current / required) * 100, 100)}%` }} />
+        <div className="h-2.5 sm:h-3 bg-gray-100 rounded-full overflow-hidden relative">
+          <div className={`absolute inset-y-0 left-0 transition-all ${barClass}`} style={{ width: `${filledPercent}%` }} />
+          {showDelta && (
+            <div
+              className={`absolute inset-y-0 transition-all ${isPositive ? 'bg-emerald-400/80' : 'bg-red-400/80'} ${isPositive ? 'animate-pulse' : ''}`}
+              style={{ left: `${filledPercent}%`, width: `${deltaPercent}%` }}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -165,8 +195,10 @@ export function CustomerAdjustTab({
           <div className="space-y-4 sm:space-y-5">
             <CompactProgressRow
               icon={<Gift className={`w-5 h-5 sm:w-6 sm:h-6 ${tier1Reached ? ROLES.success.icon : ROLES.primary.icon}`} />}
-              label={rewardDescription || t('tier1')}
+              tierLabel={t('tier1')}
+              label={rewardDescription || t('reward')}
               current={Math.min(currentStamps, stampsRequired)}
+              preview={Math.min(newStamps, stampsRequired)}
               required={stampsRequired}
               reached={tier1Reached}
               barClass={tier1Reached ? ROLES.success.bar : ROLES.primary.bar}
@@ -174,8 +206,10 @@ export function CustomerAdjustTab({
             />
             <CompactProgressRow
               icon={<Trophy className={`w-5 h-5 sm:w-6 sm:h-6 ${tier2Reached ? ROLES.premium.icon : 'text-gray-400'}`} />}
-              label={tier2RewardDescription || t('tier2')}
+              tierLabel={t('tier2')}
+              label={tier2RewardDescription || t('rewardTier2')}
               current={Math.max(0, Math.min(currentStamps - stampsRequired, tier2StampsRequired - stampsRequired))}
+              preview={Math.max(0, Math.min(newStamps - stampsRequired, tier2StampsRequired - stampsRequired))}
               required={tier2StampsRequired - stampsRequired}
               reached={tier2Reached}
               barClass={tier2Reached ? ROLES.premium.bar : 'bg-gray-300'}
@@ -184,27 +218,15 @@ export function CustomerAdjustTab({
           </div>
         ) : (
           <CompactProgressRow
-            icon={<Gift className={`w-4 h-4 sm:w-5 sm:h-5 ${tier1Reached ? ROLES.success.icon : ROLES.primary.icon}`} />}
+            icon={<Gift className={`w-5 h-5 sm:w-6 sm:h-6 ${tier1Reached ? ROLES.success.icon : ROLES.primary.icon}`} />}
             label={rewardDescription || t('reward')}
             current={Math.min(currentStamps, stampsRequired)}
+            preview={Math.min(newStamps, stampsRequired)}
             required={stampsRequired}
             reached={tier1Reached}
             barClass={tier1Reached ? ROLES.success.bar : ROLES.primary.bar}
             textClass={ROLES.success.text}
           />
-        )}
-
-        {adjustment !== 0 && (
-          <div className="text-xs sm:text-sm flex items-center justify-between pt-2 border-t border-gray-200/70">
-            <span className="text-gray-500">{t('afterAdjust')}</span>
-            <span className="font-bold tabular-nums">
-              <span className="text-gray-400">{currentStamps}</span>
-              <span className="text-gray-400 mx-1">→</span>
-              <span className={adjustment > 0 ? ROLES.success.text : ROLES.danger.text}>{newStamps}</span>
-              <span className="text-gray-400 ml-1">/ {effectiveMax}</span>
-              <span className={`ml-2 ${adjustment > 0 ? ROLES.success.text : ROLES.danger.text}`}>({adjustment > 0 ? '+' : ''}{adjustment})</span>
-            </span>
-          </div>
         )}
       </div>
 
