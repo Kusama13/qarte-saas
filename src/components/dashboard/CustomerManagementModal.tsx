@@ -212,8 +212,8 @@ export function CustomerManagementModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-      <div className="relative w-full max-w-lg lg:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-xl h-[92vh] sm:h-[680px] sm:max-h-[85vh] overflow-hidden flex flex-col sm:mx-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4">
+      <div className="relative w-full max-w-lg lg:max-w-2xl bg-white rounded-2xl shadow-2xl h-[680px] max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
         <div className="absolute top-2 right-2 z-10 flex items-center gap-1" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(o => !o)}
