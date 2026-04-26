@@ -2631,6 +2631,8 @@
     "returningShortcutSubtitle": "Find your appointments and your loyalty card",
     "hours": "Hours",
     "closed": "Closed",
+    "openNow": "Open",
+    "closedNow": "Closed",
     "conditions": "Conditions",
     "availability": "Availability",
     "planningManualHint": "Get in touch to discuss your needs — we'll book the slot together.",

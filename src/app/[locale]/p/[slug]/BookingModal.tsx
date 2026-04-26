@@ -312,11 +312,7 @@ export default function BookingModal({
   }, [services, serviceCategories]);
 
   const useAccordion = categorizedServices.length >= 2;
-  const [openCategories, setOpenCategories] = useState<Set<string>>(() => {
-    const first = categorizedServices[0];
-    if (!first) return new Set();
-    return new Set([first.category?.id || '__uncategorized__']);
-  });
+  const [openCategories, setOpenCategories] = useState<Set<string>>(() => new Set());
   const toggleCategory = (key: string) => {
     setOpenCategories(prev => {
       const next = new Set(prev);

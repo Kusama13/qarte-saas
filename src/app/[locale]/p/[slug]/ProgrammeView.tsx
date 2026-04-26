@@ -15,7 +15,24 @@ import { trackCtaClick } from '@/lib/analytics';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import type { Merchant } from '@/types';
+import type { OpeningHours } from '@/lib/opening-hours';
 import { getPlanFeatures } from '@/lib/plan-tiers';
+
+type DaySlot = OpeningHours[string];
+
+// Pure: structural signature of a day. Two days merge in the grouped view
+// only when their full signature matches (break diffs must NOT collapse).
+function slotSignature(slot: DaySlot): string {
+  if (!slot) return 'CLOSED';
+  return `OPEN|${slot.open}|${slot.close}|${slot.break_start || ''}|${slot.break_end || ''}`;
+}
+
+function isOpenNow(slot: DaySlot, nowHHMM: string): boolean {
+  if (!slot) return false;
+  if (nowHHMM < slot.open || nowHHMM >= slot.close) return false;
+  if (slot.break_start && slot.break_end && nowHHMM >= slot.break_start && nowHHMM < slot.break_end) return false;
+  return true;
+}
 
 type Photo = { id: string; url: string; position: number };
 type ServiceCategory = { id: string; name: string; position: number };
@@ -125,7 +142,35 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const merchantTz = getTimezoneForCountry(merchant.country);
   const merchantLocalDate = new Date(new Date().toLocaleString('en-US', { timeZone: merchantTz }));
   const todayIndex = merchantLocalDate.getDay(); // 0=dim, 1=lun...
-  const todayKey = todayIndex === 0 ? '7' : String(todayIndex); // 1-7, 1=lundi
+  const todayDayNum = todayIndex === 0 ? 7 : todayIndex; // 1-7, 1=lundi
+  const todayKey = String(todayDayNum);
+  const merchantNowHHMM = `${String(merchantLocalDate.getHours()).padStart(2, '0')}:${String(merchantLocalDate.getMinutes()).padStart(2, '0')}`;
+
+  const formatSlotHours = (slot: DaySlot): string => {
+    if (!slot) return t('closed');
+    if (slot.break_start && slot.break_end) {
+      return `${slot.open}–${slot.break_start}, ${slot.break_end}–${slot.close}`;
+    }
+    return `${slot.open}–${slot.close}`;
+  };
+  const formatGroupLabel = (days: number[]): string => {
+    if (days.length === 1) return DAY_LABELS_SHORT[days[0] - 1];
+    return `${DAY_LABELS_SHORT[days[0] - 1]}–${DAY_LABELS_SHORT[days[days.length - 1] - 1]}`;
+  };
+  const groupedHours = useMemo(() => {
+    if (!hours) return [] as { days: number[]; slot: DaySlot }[];
+    const out: { days: number[]; slot: DaySlot; sig: string }[] = [];
+    for (let d = 1; d <= 7; d++) {
+      const slot = hours[String(d)] ?? null;
+      const sig = slotSignature(slot);
+      const last = out[out.length - 1];
+      if (last && last.sig === sig) last.days.push(d);
+      else out.push({ days: [d], slot, sig });
+    }
+    return out.map(({ days, slot }) => ({ days, slot }));
+  }, [hours]);
+  const todaySlot = hours?.[todayKey] ?? null;
+  const openNow = isOpenNow(todaySlot, merchantNowHHMM);
 
   // Fetch active promo offer (or use demo data)
   useEffect(() => {
@@ -425,37 +470,44 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             transition={{ delay: 0.28, duration: 0.4 }}
             className={`${glassCard} p-5`}
           >
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.14em] mb-2.5">
-              {t('hours')}
-            </p>
-            <div className="grid grid-cols-7 gap-0.5">
-              {DAY_LABELS_SHORT.map((label, i) => {
-                const dayKey = String(i + 1);
-                const slot = hours![dayKey];
-                const isToday = dayKey === todayKey;
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.14em]">
+                {t('hours')}
+              </p>
+              <span
+                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                  openNow ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${openNow ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+                {openNow ? t('openNow') : t('closedNow')}
+              </span>
+            </div>
+            <div className="space-y-0.5">
+              {groupedHours.map((group) => {
+                const isTodayGroup = group.days.includes(todayDayNum);
                 return (
                   <div
-                    key={dayKey}
-                    className={`text-center rounded-lg py-1.5 px-0.5 overflow-hidden transition-colors ${
-                      slot ? 'bg-gray-50' : 'bg-gray-50/50 opacity-50'
-                    }`}
-                    style={isToday ? { boxShadow: `0 0 0 1px ${p}`, backgroundColor: `${p}08` } : undefined}
+                    key={group.days.join('-')}
+                    className="flex items-baseline justify-between gap-3 px-2 py-1.5 rounded-lg"
+                    style={isTodayGroup ? { backgroundColor: `${p}0F` } : undefined}
                   >
-                    <p className={`text-[10px] font-bold mb-0.5 ${isToday ? '' : 'text-gray-500'}`} style={isToday ? { color: p } : undefined}>
-                      {label}
-                    </p>
-                    {slot ? (
-                      slot.break_start && slot.break_end ? (
-                        <>
-                          <p className="text-[10px] text-gray-600 font-medium leading-tight">{slot.open}–{slot.break_start}</p>
-                          <p className="text-[10px] text-gray-600 font-medium leading-tight">{slot.break_end}–{slot.close}</p>
-                        </>
-                      ) : (
-                        <p className="text-[10px] text-gray-600 font-medium leading-tight">{slot.open}–{slot.close}</p>
-                      )
-                    ) : (
-                      <p className="text-[10px] text-gray-500 font-medium">{t('closed')}</p>
-                    )}
+                    <span
+                      className={`text-[12.5px] shrink-0 ${isTodayGroup ? 'font-bold' : 'font-semibold text-gray-700'}`}
+                      style={isTodayGroup ? { color: p } : undefined}
+                    >
+                      {formatGroupLabel(group.days)}
+                    </span>
+                    <span
+                      className={`text-[12.5px] text-right tabular-nums ${
+                        group.slot
+                          ? isTodayGroup ? 'font-semibold' : 'font-medium text-gray-700'
+                          : 'font-medium text-gray-400'
+                      }`}
+                      style={isTodayGroup && group.slot ? { color: p } : undefined}
+                    >
+                      {formatSlotHours(group.slot)}
+                    </span>
                   </div>
                 );
               })}

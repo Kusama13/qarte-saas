@@ -2623,6 +2623,8 @@
     "returningShortcutSubtitle": "Retrouve tes réservations et ta carte de fidélité",
     "hours": "Horaires",
     "closed": "Fermé",
+    "openNow": "Ouvert",
+    "closedNow": "Fermé",
     "conditions": "Conditions",
     "availability": "Disponibilités",
     "planningManualHint": "Contactez-nous pour discuter de vos envies, on bloque le créneau ensemble.",
