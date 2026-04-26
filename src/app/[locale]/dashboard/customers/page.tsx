@@ -25,6 +25,7 @@ import {
   Ticket,
   UserCheck,
   X,
+  AlertTriangle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Modal } from '@/components/ui';
@@ -83,6 +84,7 @@ export default function CustomersPage() {
   const [filterPromo, setFilterPromo] = useState(false);
   const [welcomeVoucherCustomerIds, setWelcomeVoucherCustomerIds] = useState<Set<string>>(new Set());
   const [offerVoucherCustomerIds, setOfferVoucherCustomerIds] = useState<Set<string>>(new Set());
+  const [allergyCustomerIds, setAllergyCustomerIds] = useState<Set<string>>(new Set());
   const [tier1RedeemedCards, setTier1RedeemedCards] = useState<Set<string>>(new Set());
   const [displayCount, setDisplayCount] = useState(50);
   const [activeFilter, setActiveFilter] = useState<'all' | 'new7' | 'active30' | 'inactive60' | 'close' | 'reward' | 'birthday_month'>('all');
@@ -109,8 +111,8 @@ export default function CustomersPage() {
   const fetchData = useCallback(async () => {
     if (!merchant) return;
 
-    // Parallel fetch: cards + push subscribers + vouchers + loyalty counts
-    const [cardsResult, pushResult, vouchersResult, rewardsCount] = await Promise.all([
+    // Parallel fetch: cards + push subscribers + vouchers + loyalty counts + sensitive flags
+    const [cardsResult, pushResult, vouchersResult, rewardsCount, flagsResult] = await Promise.all([
       supabase
         .from('loyalty_cards')
         .select(`
@@ -131,7 +133,19 @@ export default function CustomersPage() {
         .in('source', ['welcome', 'offer']),
 
       supabase.from('redemptions').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
+
+      supabase
+        .from('customer_notes')
+        .select('customer_id')
+        .eq('merchant_id', merchant.id)
+        .in('note_type', ['allergy', 'contraindication']),
     ]);
+
+    const allergySet = new Set<string>();
+    for (const n of (flagsResult.data || []) as Array<{ customer_id: string }>) {
+      allergySet.add(n.customer_id);
+    }
+    setAllergyCustomerIds(allergySet);
 
     setStatRewards(rewardsCount.count ?? 0);
 
@@ -548,6 +562,9 @@ export default function CustomersPage() {
                         <p className="text-sm font-semibold text-gray-900 truncate">
                           {card.customer?.first_name} {card.customer?.last_name}
                         </p>
+                        {allergyCustomerIds.has(card.customer_id) && (
+                          <AlertTriangle className="w-3 h-3 text-red-500 shrink-0" aria-label={t('hasSensitiveFlag')} />
+                        )}
                         {isPushSubscriber && (
                           <Bell className="w-3 h-3 text-amber-500 shrink-0" />
                         )}
@@ -678,6 +695,9 @@ export default function CustomersPage() {
                                 <p className="font-semibold text-gray-900">
                                   {card.customer?.first_name} {card.customer?.last_name}
                                 </p>
+                                {allergyCustomerIds.has(card.customer_id) && (
+                                  <AlertTriangle className="w-3.5 h-3.5 text-red-500" aria-label={t('hasSensitiveFlag')} />
+                                )}
                                 {isPushSubscriber && (
                                   <Bell className="w-3.5 h-3.5 text-amber-500" />
                                 )}

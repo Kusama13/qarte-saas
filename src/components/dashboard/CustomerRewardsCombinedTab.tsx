@@ -293,7 +293,11 @@ export function CustomerRewardsCombinedTab({
       {/* ── Section 1: Bons actifs ── */}
       {existingVouchers.length > 0 && (
         <div>
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{tr('sectionActiveVouchers')}</p>
+          <div className="flex items-center gap-2 mb-2.5">
+            <span className="w-1 h-3.5 rounded-full bg-emerald-500" />
+            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">{tr('sectionActiveVouchers')}</p>
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">{existingVouchers.length}</span>
+          </div>
           <div className="space-y-2">
             {existingVouchers.map((v) => (
               <div key={v.id} className={`p-3 sm:p-4 rounded-xl border ${v.source === 'birthday' ? 'border-pink-100 bg-pink-50/50' : 'border-emerald-100 bg-emerald-50/50'}`}>
@@ -358,7 +362,10 @@ export function CustomerRewardsCombinedTab({
       {/* ── Section 2: Recompenses ── */}
       {hasRedeemable ? (
         <div>
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{tr('sectionRewards')}</p>
+          <div className="flex items-center gap-2 mb-2.5">
+            <span className="w-1 h-3.5 rounded-full bg-indigo-500" />
+            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">{tr('sectionRewards')}</p>
+          </div>
           <div className="space-y-2.5">
             {canRedeemTier1 && (
               <div className="p-3 rounded-xl border border-emerald-200 bg-emerald-50">
@@ -409,7 +416,10 @@ export function CustomerRewardsCombinedTab({
       {/* ── Section 3: Offrir ── */}
       {(merchant?.welcome_offer_description || hasOffers) && (
         <div>
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{tr('sectionGrant')}</p>
+          <div className="flex items-center gap-2 mb-2.5">
+            <span className="w-1 h-3.5 rounded-full bg-violet-500" />
+            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">{tr('sectionGrant')}</p>
+          </div>
           <div className="space-y-2">
             {/* Welcome offer */}
             {merchant?.welcome_offer_description && (
@@ -499,10 +509,11 @@ export function CustomerRewardsCombinedTab({
 
       {/* ── Section 4: Derniere recompense (annulation) ── */}
       {lastRedemption && (
-        <div className="border-t border-gray-100 pt-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            {isCagnotte ? tr('lastCagnotte') : tr('lastReward')}
-          </p>
+        <div className="border-t border-gray-100 pt-4">
+          <div className="flex items-center gap-2 mb-2.5">
+            <span className="w-1 h-3.5 rounded-full bg-amber-500" />
+            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">{isCagnotte ? tr('lastCagnotte') : tr('lastReward')}</p>
+          </div>
           <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-100">
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-1.5">

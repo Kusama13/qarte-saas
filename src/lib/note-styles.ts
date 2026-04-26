@@ -1,7 +1,8 @@
-import { AlertTriangle, Beaker, Heart, Eye, StickyNote } from 'lucide-react';
+import { AlertTriangle, Beaker, Heart, Eye, StickyNote, Ban } from 'lucide-react';
 
 export const TYPE_STYLE: Record<string, { color: string; bgColor: string; pillBg: string; pillText: string; icon: typeof AlertTriangle }> = {
   allergy: { color: 'text-red-700', bgColor: 'bg-red-50 border-red-200', pillBg: 'bg-red-100', pillText: 'text-red-700', icon: AlertTriangle },
+  contraindication: { color: 'text-orange-700', bgColor: 'bg-orange-50 border-orange-200', pillBg: 'bg-orange-100', pillText: 'text-orange-700', icon: Ban },
   formula: { color: 'text-violet-700', bgColor: 'bg-violet-50 border-violet-200', pillBg: 'bg-violet-100', pillText: 'text-violet-700', icon: Beaker },
   preference: { color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200', pillBg: 'bg-blue-100', pillText: 'text-blue-700', icon: Heart },
   observation: { color: 'text-amber-700', bgColor: 'bg-amber-50 border-amber-200', pillBg: 'bg-amber-100', pillText: 'text-amber-700', icon: Eye },

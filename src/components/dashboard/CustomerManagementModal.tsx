@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   X,
@@ -15,6 +15,9 @@ import {
   Pencil,
   Award,
   BookOpen,
+  MoreVertical,
+  Trash2,
+  Ban,
 } from 'lucide-react';
 import { formatPhoneLabel } from '@/lib/utils';
 import { CustomerAdjustTab } from './CustomerAdjustTab';
@@ -49,7 +52,8 @@ interface CustomerManagementModalProps {
   country?: string;
 }
 
-type Tab = 'adjust' | 'rewards' | 'history' | 'journal' | 'danger';
+type Tab = 'adjust' | 'rewards' | 'history' | 'journal';
+type DangerAction = 'delete' | 'ban' | null;
 
 export function CustomerManagementModal({
   isOpen,
@@ -79,6 +83,40 @@ export function CustomerManagementModal({
   const t = useTranslations('customerModal');
   const [activeTab, setActiveTab] = useState<Tab>('adjust');
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Allergies + contraindications header banner — refetched on each Journal mutation
+  const [flagAlerts, setFlagAlerts] = useState<{ allergies: string[]; contraindications: string[] }>({
+    allergies: [],
+    contraindications: [],
+  });
+  const [flagsRefreshKey, setFlagsRefreshKey] = useState(0);
+  useEffect(() => {
+    if (!isOpen) return;
+    let aborted = false;
+    fetch(`/api/customer-notes?customerId=${customerId}&merchantId=${merchantId}`)
+      .then(r => r.ok ? r.json() : { notes: [] })
+      .then((data: { notes: Array<{ note_type: string; content: string }> }) => {
+        if (aborted) return;
+        const allergies = data.notes.filter(n => n.note_type === 'allergy').map(n => n.content);
+        const contraindications = data.notes.filter(n => n.note_type === 'contraindication').map(n => n.content);
+        setFlagAlerts({ allergies, contraindications });
+      })
+      .catch(() => {});
+    return () => { aborted = true; };
+  }, [isOpen, customerId, merchantId, flagsRefreshKey]);
+
+  // Kebab menu (replaces former 'danger' tab)
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [dangerAction, setDangerAction] = useState<DangerAction>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
 
   // Name edit state
   const [editingName, setEditingName] = useState(false);
@@ -171,18 +209,45 @@ export function CustomerManagementModal({
     { key: 'rewards', label: t('tabRewards'), icon: <Award className="w-4 h-4" />, activeColor: 'text-emerald-600 border-emerald-600' },
     { key: 'history', label: t('tabHistory'), icon: <History className="w-4 h-4" />, activeColor: 'text-indigo-600 border-indigo-600' },
     { key: 'journal', label: t('tabJournal'), icon: <BookOpen className="w-4 h-4" />, activeColor: 'text-teal-600 border-teal-600' },
-    { key: 'danger', label: t('tabDelete'), icon: <AlertTriangle className="w-4 h-4" />, activeColor: 'text-red-600 border-red-600' },
   ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-      <div className="relative w-full max-w-lg lg:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[92vh] sm:max-h-[85vh] overflow-hidden flex flex-col sm:mx-4">
-        <button
-          onClick={handleClose}
-          className="absolute p-2.5 transition-colors rounded-lg top-2 right-2 hover:bg-gray-100 z-10"
-        >
-          <X className="w-4 h-4 text-gray-500" />
-        </button>
+      <div className="relative w-full max-w-lg lg:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-xl h-[92vh] sm:h-[680px] sm:max-h-[85vh] overflow-hidden flex flex-col sm:mx-4">
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-1" ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label={t('moreActions')}
+            className="p-2.5 transition-colors rounded-lg hover:bg-gray-100"
+          >
+            <MoreVertical className="w-4 h-4 text-gray-500" />
+          </button>
+          <button
+            onClick={handleClose}
+            aria-label={t('close')}
+            className="p-2.5 transition-colors rounded-lg hover:bg-gray-100"
+          >
+            <X className="w-4 h-4 text-gray-500" />
+          </button>
+          {menuOpen && (
+            <div className="absolute top-12 right-0 w-52 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden">
+              <button
+                onClick={() => { setMenuOpen(false); setDangerAction('delete'); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
+              >
+                <Trash2 className="w-4 h-4 text-red-500 shrink-0" />
+                {t('deleteCustomer')}
+              </button>
+              <button
+                onClick={() => { setMenuOpen(false); setDangerAction('ban'); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 transition-colors text-left border-t border-gray-50"
+              >
+                <Ban className="w-4 h-4 text-orange-500 shrink-0" />
+                {t('banNumber')}
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Header */}
         <div className="px-5 pt-5 pb-4 border-b border-gray-100">
@@ -299,6 +364,32 @@ export function CustomerManagementModal({
           </div>
         </div>
 
+        {/* Allergies / contraindications banner — visible on all tabs */}
+        {(flagAlerts.allergies.length > 0 || flagAlerts.contraindications.length > 0) && (
+          <button
+            onClick={() => setActiveTab('journal')}
+            className="w-full px-5 py-2 bg-red-50 border-b border-red-100 hover:bg-red-100 transition-colors text-left"
+          >
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+              <div className="flex-1 min-w-0 text-xs">
+                {flagAlerts.allergies.length > 0 && (
+                  <p className="text-red-700">
+                    <span className="font-bold">{t('allergiesLabel', { count: flagAlerts.allergies.length })}</span>
+                    <span className="text-red-600"> · {flagAlerts.allergies.join(', ')}</span>
+                  </p>
+                )}
+                {flagAlerts.contraindications.length > 0 && (
+                  <p className="text-orange-700 mt-0.5">
+                    <span className="font-bold">{t('contraindicationsLabel', { count: flagAlerts.contraindications.length })}</span>
+                    <span className="text-orange-600"> · {flagAlerts.contraindications.join(', ')}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+          </button>
+        )}
+
         {/* Tabs */}
         <div className="flex border-b border-gray-100 overflow-x-auto">
           {tabs.map((tab) => (
@@ -381,20 +472,40 @@ export function CustomerManagementModal({
                 <CustomerJournalTab
                   customerId={customerId}
                   merchantId={merchantId}
-                  onSuccess={showSuccess}
-                />
-              )}
-
-              {activeTab === 'danger' && (
-                <CustomerDangerZone
-                  loyaltyCardId={loyaltyCardId}
-                  phoneNumber={phoneNumber}
-                  customerName={customerName}
-                  onSuccess={showSuccessAndClose}
+                  onSuccess={(msg) => { showSuccess(msg); setFlagsRefreshKey(k => k + 1); }}
                 />
               )}
         </div>
       </div>
+
+      {dangerAction && (
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4">
+          <div className="w-full max-w-sm bg-white rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden">
+            <div className="px-5 pt-5 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${dangerAction === 'delete' ? 'bg-red-100' : 'bg-orange-100'}`}>
+                  {dangerAction === 'delete'
+                    ? <Trash2 className="w-4 h-4 text-red-600" />
+                    : <Ban className="w-4 h-4 text-orange-600" />}
+                </div>
+                <h3 className="text-base font-bold text-gray-900">
+                  {dangerAction === 'delete' ? t('deleteCustomer') : t('banNumber')}
+                </h3>
+              </div>
+            </div>
+            <div className="px-5 pb-5">
+              <CustomerDangerZone
+                mode={dangerAction}
+                loyaltyCardId={loyaltyCardId}
+                phoneNumber={phoneNumber}
+                customerName={customerName}
+                onCancel={() => setDangerAction(null)}
+                onSuccess={showSuccessAndClose}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
