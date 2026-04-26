@@ -18,6 +18,7 @@ import { Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { formatDateTime } from '@/lib/utils';
 import type { MerchantOffer } from '@/types';
+import { ROLES } from '@/lib/customer-modal-styles';
 
 interface ExistingVoucher {
   id: string;
@@ -294,67 +295,72 @@ export function CustomerRewardsCombinedTab({
       {existingVouchers.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2.5">
-            <span className="w-1 h-3.5 rounded-full bg-emerald-500" />
+            <span className={`w-1 h-3.5 rounded-full ${ROLES.success.bar}`} />
             <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">{tr('sectionActiveVouchers')}</p>
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">{existingVouchers.length}</span>
+            <span className={`text-[10px] font-bold ${ROLES.success.text} ${ROLES.success.bg} px-1.5 py-0.5 rounded-full`}>{existingVouchers.length}</span>
           </div>
-          <div className="space-y-2">
-            {existingVouchers.map((v) => (
-              <div key={v.id} className={`p-3 sm:p-4 rounded-xl border ${v.source === 'birthday' ? 'border-pink-100 bg-pink-50/50' : 'border-emerald-100 bg-emerald-50/50'}`}>
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${v.source === 'birthday' ? 'bg-pink-100' : 'bg-emerald-100'}`}>
-                    {v.source === 'welcome' ? <Flower2 className="w-5 h-5 text-emerald-600" /> : v.source === 'birthday' ? <Cake className="w-5 h-5 text-pink-600" /> : <Gift className="w-5 h-5 text-emerald-600" />}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+            {existingVouchers.map((v) => {
+              const isBirthday = v.source === 'birthday';
+              const r = isBirthday ? ROLES.birthday : ROLES.success;
+              const Icon = v.source === 'welcome' ? Flower2 : v.source === 'birthday' ? Cake : Gift;
+              return (
+                <div key={v.id} className={`p-3 rounded-xl border ${r.border} ${r.bg}`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${r.bgSolid}`}>
+                      <Icon className={`w-5 h-5 ${r.icon}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{v.reward_description}</p>
+                      <p className="text-[11px] text-gray-400">{v.source === 'welcome' ? to('welcomeOffer') : v.source === 'birthday' ? to('birthdayGift') : to('promoOffer')}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{v.reward_description}</p>
-                    <p className="text-[11px] text-gray-400">{v.source === 'welcome' ? to('welcomeOffer') : v.source === 'birthday' ? to('birthdayGift') : to('promoOffer')}</p>
-                  </div>
-                </div>
 
-                {confirmRemoveId === v.id ? (
-                  <div className="mt-3 flex gap-2">
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      className="flex-1"
-                      loading={acting === v.id}
-                      onClick={() => handleRemoveVoucher(v.id)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                      {to('confirmRemove')}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => setConfirmRemoveId(null)}
-                    >
-                      {to('cancel')}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="mt-3 flex gap-2">
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
-                      loading={acting === v.id}
-                      onClick={() => handleUseVoucher(v.id)}
-                    >
-                      <ShoppingBag className="w-3.5 h-3.5 mr-1.5" />
-                      {to('useVoucher')}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-500 border-red-200 hover:bg-red-50"
-                      onClick={() => setConfirmRemoveId(v.id)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))}
+                  {confirmRemoveId === v.id ? (
+                    <div className="mt-3 flex gap-2">
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        className="flex-1"
+                        loading={acting === v.id}
+                        onClick={() => handleRemoveVoucher(v.id)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                        {to('confirmRemove')}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => setConfirmRemoveId(null)}
+                      >
+                        {to('cancel')}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="mt-3 flex gap-2">
+                      <Button
+                        size="sm"
+                        className={`flex-1 ${ROLES.success.solid} focus:ring-emerald-500`}
+                        loading={acting === v.id}
+                        onClick={() => handleUseVoucher(v.id)}
+                      >
+                        <ShoppingBag className="w-3.5 h-3.5 mr-1.5" />
+                        {to('useVoucher')}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={`${ROLES.danger.icon} ${ROLES.danger.border} hover:${ROLES.danger.bg}`}
+                        onClick={() => setConfirmRemoveId(v.id)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -363,14 +369,14 @@ export function CustomerRewardsCombinedTab({
       {hasRedeemable ? (
         <div>
           <div className="flex items-center gap-2 mb-2.5">
-            <span className="w-1 h-3.5 rounded-full bg-indigo-500" />
+            <span className={`w-1 h-3.5 rounded-full ${ROLES.success.bar}`} />
             <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">{tr('sectionRewards')}</p>
           </div>
-          <div className="space-y-2.5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
             {canRedeemTier1 && (
-              <div className="p-3 rounded-xl border border-emerald-200 bg-emerald-50">
+              <div className={`p-3 rounded-xl border ${ROLES.success.border} ${ROLES.success.bg}`}>
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <Gift className="w-3.5 h-3.5 text-emerald-600" />
+                  <Gift className={`w-3.5 h-3.5 ${ROLES.success.icon}`} />
                   <span className="text-sm font-semibold text-gray-900">
                     {tier2Enabled ? tr('tier1') : (isCagnotte ? tr('cagnotte') : tr('reward'))}
                   </span>
@@ -379,7 +385,7 @@ export function CustomerRewardsCombinedTab({
                 <Button
                   onClick={() => handleRedeem(1)}
                   loading={redeemLoading}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-sm"
+                  className={`w-full ${ROLES.success.solid} text-sm`}
                 >
                   <Gift className="w-4 h-4 mr-1.5" />
                   {isCagnotte ? tr('redeemCagnotte') : tr('redeemReward')}
@@ -388,16 +394,16 @@ export function CustomerRewardsCombinedTab({
             )}
 
             {canRedeemTier2 && (
-              <div className="p-3 rounded-xl border border-violet-200 bg-violet-50">
+              <div className={`p-3 rounded-xl border ${ROLES.premium.border} ${ROLES.premium.bg}`}>
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <Trophy className="w-3.5 h-3.5 text-violet-600" />
+                  <Trophy className={`w-3.5 h-3.5 ${ROLES.premium.icon}`} />
                   <span className="text-sm font-semibold text-gray-900">{tr('tier2')}</span>
                 </div>
                 <p className="text-xs text-gray-500 mb-2.5">{tier2RewardDescription || (isCagnotte ? tr('cagnotteTier2') : tr('rewardTier2'))}</p>
                 <Button
                   onClick={() => handleRedeem(2)}
                   loading={redeemLoading}
-                  className="w-full bg-violet-600 hover:bg-violet-700 text-sm"
+                  className={`w-full ${ROLES.premium.solid} text-sm`}
                 >
                   <Trophy className="w-4 h-4 mr-1.5" />
                   {isCagnotte ? tr('redeemCagnotteTier2') : tr('redeemRewardTier2')}
@@ -417,19 +423,19 @@ export function CustomerRewardsCombinedTab({
       {(merchant?.welcome_offer_description || hasOffers) && (
         <div>
           <div className="flex items-center gap-2 mb-2.5">
-            <span className="w-1 h-3.5 rounded-full bg-violet-500" />
+            <span className={`w-1 h-3.5 rounded-full ${ROLES.primary.bar}`} />
             <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">{tr('sectionGrant')}</p>
           </div>
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
             {/* Welcome offer */}
             {merchant?.welcome_offer_description && (
-              <div className={`p-3 sm:p-4 rounded-xl border ${welcomeEnabled ? 'border-violet-100 bg-violet-50/50' : 'border-gray-100 bg-gray-50/50 opacity-60'}`}>
+              <div className={`p-3 rounded-xl border ${welcomeEnabled ? `${ROLES.primary.border} ${ROLES.primary.bg}` : 'border-gray-100 bg-gray-50/50 opacity-60'}`}>
                 <div className="flex items-start gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${welcomeEnabled ? 'bg-violet-100' : 'bg-gray-200'}`}>
-                    <Flower2 className={`w-5 h-5 ${welcomeEnabled ? 'text-violet-600' : 'text-gray-400'}`} />
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${welcomeEnabled ? ROLES.primary.bgSolid : 'bg-gray-200'}`}>
+                    <Flower2 className={`w-5 h-5 ${welcomeEnabled ? ROLES.primary.icon : 'text-gray-400'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-xs font-bold uppercase tracking-wider mb-0.5 ${welcomeEnabled ? 'text-violet-600' : 'text-gray-400'}`}>{to('welcomeOffer')}</p>
+                    <p className={`text-xs font-bold uppercase tracking-wider mb-0.5 ${welcomeEnabled ? ROLES.primary.text : 'text-gray-400'}`}>{to('welcomeOffer')}</p>
                     <p className={`text-sm ${welcomeEnabled ? 'text-gray-700' : 'text-gray-400'}`}>{merchant.welcome_offer_description}</p>
                   </div>
                 </div>
@@ -440,7 +446,7 @@ export function CustomerRewardsCombinedTab({
                       className={`w-full ${
                         grantedWelcome || currentStamps > 0
                           ? 'bg-gray-50 text-gray-400 hover:bg-gray-50 cursor-default'
-                          : 'bg-violet-600 hover:bg-violet-700 focus:ring-violet-500'
+                          : `${ROLES.primary.solid} focus:ring-indigo-500`
                       }`}
                       disabled={grantedWelcome || currentStamps > 0}
                       loading={granting === 'welcome'}
@@ -467,10 +473,10 @@ export function CustomerRewardsCombinedTab({
               const isActive = offer.active && (!offer.expires_at || new Date(offer.expires_at) > new Date());
 
               return (
-                <div key={offer.id} className={`p-3 sm:p-4 rounded-xl border ${isActive ? 'border-amber-100 bg-amber-50/50' : 'border-gray-100 bg-gray-50/50 opacity-60'}`}>
+                <div key={offer.id} className={`p-3 rounded-xl border ${isActive ? `${ROLES.primary.border} ${ROLES.primary.bg}` : 'border-gray-100 bg-gray-50/50 opacity-60'}`}>
                   <div className="flex items-start gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isActive ? 'bg-amber-100' : 'bg-gray-200'}`}>
-                      <Gift className={`w-5 h-5 ${isActive ? 'text-amber-600' : 'text-gray-400'}`} />
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isActive ? ROLES.primary.bgSolid : 'bg-gray-200'}`}>
+                      <Gift className={`w-5 h-5 ${isActive ? ROLES.primary.icon : 'text-gray-400'}`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-bold ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>{offer.title}</p>
@@ -483,8 +489,8 @@ export function CustomerRewardsCombinedTab({
                         size="sm"
                         className={`w-full ${
                           granted
-                            ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-50 cursor-default'
-                            : 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500'
+                            ? `${ROLES.success.bg} ${ROLES.success.text} hover:${ROLES.success.bg} cursor-default`
+                            : `${ROLES.primary.solid} focus:ring-indigo-500`
                         }`}
                         disabled={granted}
                         loading={granting === offer.id}
@@ -511,16 +517,16 @@ export function CustomerRewardsCombinedTab({
       {lastRedemption && (
         <div className="border-t border-gray-100 pt-4">
           <div className="flex items-center gap-2 mb-2.5">
-            <span className="w-1 h-3.5 rounded-full bg-amber-500" />
+            <span className={`w-1 h-3.5 rounded-full ${ROLES.warning.bar}`} />
             <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">{isCagnotte ? tr('lastCagnotte') : tr('lastReward')}</p>
           </div>
-          <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-100">
+          <div className={`p-2.5 rounded-xl ${ROLES.warning.bg} border ${ROLES.warning.border}`}>
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-1.5">
                 {lastRedemption.tier === 2 ? (
-                  <Trophy className="w-4 h-4 text-violet-600" />
+                  <Trophy className={`w-4 h-4 ${ROLES.premium.icon}`} />
                 ) : (
-                  <Gift className="w-4 h-4 text-emerald-600" />
+                  <Gift className={`w-4 h-4 ${ROLES.success.icon}`} />
                 )}
                 <span className="text-sm font-medium text-gray-900">
                   {tier2Enabled ? `${lastRedemption.tier === 2 ? tr('tier2') : tr('tier1')}` : (isCagnotte ? tr('cagnotte') : tr('reward'))}
@@ -536,9 +542,9 @@ export function CustomerRewardsCombinedTab({
                 type="checkbox"
                 checked={cancelConfirm}
                 onChange={(e) => setCancelConfirm(e.target.checked)}
-                className="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                className={`w-4 h-4 rounded ${ROLES.warning.border} ${ROLES.warning.icon} focus:ring-amber-500`}
               />
-              <span className="text-xs text-amber-700">
+              <span className={`text-xs ${ROLES.warning.text}`}>
                 {tr('confirmCancel')}
               </span>
             </label>
@@ -548,7 +554,7 @@ export function CustomerRewardsCombinedTab({
               loading={cancelLoading}
               disabled={!cancelConfirm}
               variant="outline"
-              className="w-full text-sm border-amber-200 text-amber-700 hover:bg-amber-100"
+              className={`w-full text-sm ${ROLES.warning.border} ${ROLES.warning.text} hover:${ROLES.warning.bgSolid}`}
             >
               <Undo2 className="w-4 h-4 mr-1.5" />
               {isCagnotte ? tr('cancelCagnotte') : tr('cancelReward')}

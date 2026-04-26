@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatDateTime, formatCurrency, formatTime } from '@/lib/utils';
+import { ROLES, type Role } from '@/lib/customer-modal-styles';
+
+const INITIAL_VISIBLE_COUNT = 8;
 
 interface Visit {
   id: string;
@@ -80,6 +83,16 @@ function bucketFor(dateStr: string, now: number): BucketKey {
 
 const BUCKET_ORDER: BucketKey[] = ['today', 'week', 'month', 'older'];
 
+// Mapping sémantique : item type → rôle de couleur du modal.
+// Pour `redemption`, on bascule sur `premium` quand tier === 2 (cf. logique inline).
+const ITEM_TYPE_TO_ROLE: Record<ItemType, Role> = {
+  visit: 'primary',
+  appointment: 'primary',
+  redemption: 'success',
+  voucher: 'neutral',
+  adjustment: 'warning',
+};
+
 export function CustomerHistoryTab({
   loyaltyCardId,
   merchantId,
@@ -97,6 +110,7 @@ export function CustomerHistoryTab({
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [filter, setFilter] = useState<FilterKey>('all');
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -209,12 +223,24 @@ export function CustomerHistoryTab({
     [historyItems, filter],
   );
 
+  // Reset visibleCount quand le filtre change pour repartir d'une vue propre.
+  useEffect(() => {
+    setVisibleCount(INITIAL_VISIBLE_COUNT);
+  }, [filter]);
+
+  const visibleItems = useMemo(
+    () => filteredItems.slice(0, visibleCount),
+    [filteredItems, visibleCount],
+  );
+  const hasMore = filteredItems.length > visibleCount;
+  const remainingCount = filteredItems.length - visibleCount;
+
   const grouped = useMemo(() => {
     const now = Date.now();
     const out: Record<BucketKey, HistoryItem[]> = { today: [], week: [], month: [], older: [] };
-    for (const it of filteredItems) out[bucketFor(it.date, now)].push(it);
+    for (const it of visibleItems) out[bucketFor(it.date, now)].push(it);
     return out;
-  }, [filteredItems]);
+  }, [visibleItems]);
 
   // Counts per filter (for chip badges)
   const counts = useMemo(() => {
@@ -257,32 +283,20 @@ export function CustomerHistoryTab({
     const isVisit = item.type === 'visit';
     const isEditing = editingId === item.id;
 
-    const getBgColor = () => {
-      if (isAppointment) return 'bg-purple-50';
-      if (isVoucherUsed) return 'bg-orange-50';
-      if (isRedemption) return item.tier === 2 ? 'bg-violet-50' : 'bg-emerald-50';
-      if (isAdjustment) return 'bg-amber-50';
-      return 'bg-indigo-50';
-    };
-
-    const getIconBgColor = () => {
-      if (isAppointment) return 'bg-purple-100';
-      if (isVoucherUsed) return 'bg-orange-100';
-      if (isRedemption) return item.tier === 2 ? 'bg-violet-100' : 'bg-emerald-100';
-      if (isAdjustment) return 'bg-amber-100';
-      return 'bg-indigo-100';
-    };
+    // Tier 2 redemption bascule en `premium`, sinon utilise le mapping standard.
+    const role: Role = isRedemption && item.tier === 2 ? 'premium' : ITEM_TYPE_TO_ROLE[item.type];
+    const r = ROLES[role];
 
     const getIcon = () => {
-      if (isAppointment) return <Calendar className="w-4 h-4 text-purple-600" />;
-      if (isVoucherUsed) return <Ticket className="w-4 h-4 text-orange-600" />;
+      if (isAppointment) return <Calendar className={`w-4 h-4 ${r.icon}`} />;
+      if (isVoucherUsed) return <Ticket className={`w-4 h-4 ${r.icon}`} />;
       if (isRedemption) {
         return item.tier === 2
-          ? <Trophy className="w-4 h-4 text-violet-600" />
-          : <Gift className="w-4 h-4 text-emerald-600" />;
+          ? <Trophy className={`w-4 h-4 ${r.icon}`} />
+          : <Gift className={`w-4 h-4 ${r.icon}`} />;
       }
-      if (isAdjustment) return <SlidersHorizontal className="w-4 h-4 text-amber-600" />;
-      return <Check className="w-4 h-4 text-indigo-600" />;
+      if (isAdjustment) return <SlidersHorizontal className={`w-4 h-4 ${r.icon}`} />;
+      return <Check className={`w-4 h-4 ${r.icon}`} />;
     };
 
     const getLabel = () => {
@@ -310,7 +324,7 @@ export function CustomerHistoryTab({
       return (
         <li key={item.id} className="p-2.5 rounded-lg bg-indigo-50 border border-indigo-200 space-y-2">
           <div className="flex items-center gap-2">
-            <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${getIconBgColor()}`}>{getIcon()}</div>
+            <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${r.bgSolid}`}>{getIcon()}</div>
             <p className="text-xs text-gray-500 flex items-center gap-1">
               <Clock className="w-3 h-3 flex-shrink-0" />
               {formatDateTime(item.date)}
@@ -362,14 +376,14 @@ export function CustomerHistoryTab({
     return (
       <li
         key={item.id}
-        className={`flex items-center justify-between p-2 rounded-lg ${getBgColor()} ${isVisit ? 'cursor-pointer hover:ring-1 hover:ring-indigo-200 transition-shadow' : ''}`}
+        className={`flex items-center justify-between p-2.5 sm:p-3 rounded-lg ${r.bg} ${isVisit ? 'cursor-pointer hover:ring-1 hover:ring-indigo-200 transition-shadow' : ''}`}
         onClick={isVisit ? () => startEdit({ id: item.id, points: item.points, amount_spent: item.amount_spent ?? null }) : undefined}
         title={isVisit ? t('tapToEdit') : undefined}
       >
-        <div className="flex items-center gap-2 min-w-0">
-          <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${getIconBgColor()}`}>{getIcon()}</div>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${r.bgSolid}`}>{getIcon()}</div>
           <div className="min-w-0">
-            <p className={`text-sm font-medium truncate ${isRedemption ? 'text-emerald-700' : 'text-gray-900'}`}>{getLabel()}</p>
+            <p className={`text-sm font-medium truncate ${isRedemption ? r.text : 'text-gray-900'}`}>{getLabel()}</p>
             <p className="text-xs text-gray-500 flex items-center gap-1">
               <Clock className="w-3 h-3 flex-shrink-0" />
               {formatDateTime(item.date)}
@@ -391,15 +405,15 @@ export function CustomerHistoryTab({
         </div>
         <div className="flex items-center gap-1 flex-shrink-0 ml-2">
           {isAppointment ? (
-            <span className="text-sm font-bold px-2 py-1 rounded-lg text-purple-700 bg-purple-100">
+            <span className={`text-sm font-bold px-2 py-1 rounded-lg ${r.text} ${r.bgSolid}`}>
               <Calendar className="w-3.5 h-3.5" />
             </span>
           ) : !isRedemption && !isVoucherUsed ? (
-            <span className={`text-sm font-bold px-2 py-1 rounded-lg ${item.points > 0 ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'}`}>
+            <span className={`text-sm font-bold px-2 py-1 rounded-lg ${item.points > 0 ? `${ROLES.success.text} ${ROLES.success.bgSolid}` : `${ROLES.danger.text} ${ROLES.danger.bgSolid}`}`}>
               {item.points > 0 ? '+' : ''}{item.points}
             </span>
           ) : (
-            <span className={`text-sm font-bold px-2 py-1 rounded-lg ${isVoucherUsed ? 'text-orange-700 bg-orange-100' : item.tier === 2 ? 'text-violet-700 bg-violet-100' : 'text-emerald-700 bg-emerald-100'}`}>
+            <span className={`text-sm font-bold px-2 py-1 rounded-lg ${r.text} ${r.bgSolid}`}>
               ✓
             </span>
           )}
@@ -423,7 +437,7 @@ export function CustomerHistoryTab({
               onClick={() => setFilter(p.key)}
               className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
                 active
-                  ? 'bg-indigo-600 text-white'
+                  ? `${ROLES.primary.solid} text-white`
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -437,14 +451,27 @@ export function CustomerHistoryTab({
       {filteredItems.length === 0 ? (
         <p className="text-center text-sm text-gray-400 py-4">{t('noResultsForFilter')}</p>
       ) : (
-        BUCKET_ORDER.filter(b => grouped[b].length > 0).map(b => (
-          <div key={b}>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 px-1">{t(`bucket_${b}` as 'bucket_today')}</p>
-            <ul className="space-y-1.5">
-              {grouped[b].map(renderItem)}
-            </ul>
-          </div>
-        ))
+        <>
+          {BUCKET_ORDER.filter(b => grouped[b].length > 0).map(b => (
+            <div key={b}>
+              <div className="flex items-center gap-2 mb-1.5 px-1">
+                <span className="w-1 h-3 rounded-full bg-gray-300" />
+                <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider">{t(`bucket_${b}` as 'bucket_today')}</p>
+              </div>
+              <ul className="space-y-1.5">
+                {grouped[b].map(renderItem)}
+              </ul>
+            </div>
+          ))}
+          {hasMore && (
+            <button
+              onClick={() => setVisibleCount(c => c * 2)}
+              className={`w-full py-2 mt-1 text-xs font-semibold rounded-lg transition-colors ${ROLES.primary.bg} ${ROLES.primary.text} hover:${ROLES.primary.bgSolid}`}
+            >
+              {t('viewMore', { count: remainingCount })}
+            </button>
+          )}
+        </>
       )}
     </div>
   );

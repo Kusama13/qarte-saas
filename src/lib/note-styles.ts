@@ -1,16 +1,55 @@
 import { AlertTriangle, Beaker, Heart, Eye, StickyNote, Ban } from 'lucide-react';
+import { ROLES, type Role } from '@/lib/customer-modal-styles';
 
-export const TYPE_STYLE: Record<string, { color: string; bgColor: string; pillBg: string; pillText: string; icon: typeof AlertTriangle }> = {
-  allergy: { color: 'text-red-700', bgColor: 'bg-red-50 border-red-200', pillBg: 'bg-red-100', pillText: 'text-red-700', icon: AlertTriangle },
-  contraindication: { color: 'text-orange-700', bgColor: 'bg-orange-50 border-orange-200', pillBg: 'bg-orange-100', pillText: 'text-orange-700', icon: Ban },
-  formula: { color: 'text-violet-700', bgColor: 'bg-violet-50 border-violet-200', pillBg: 'bg-violet-100', pillText: 'text-violet-700', icon: Beaker },
-  preference: { color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200', pillBg: 'bg-blue-100', pillText: 'text-blue-700', icon: Heart },
-  observation: { color: 'text-amber-700', bgColor: 'bg-amber-50 border-amber-200', pillBg: 'bg-amber-100', pillText: 'text-amber-700', icon: Eye },
-  general: { color: 'text-gray-700', bgColor: 'bg-gray-50 border-gray-200', pillBg: 'bg-gray-100', pillText: 'text-gray-700', icon: StickyNote },
+/**
+ * Style appliqué à chaque type de note customer (Journal).
+ * Mappe `note_type` → rôle du modal pour cohérence sémantique cross-tabs.
+ *
+ * Choix sémantiques :
+ * - allergy + contraindication = danger (risque médical, code rouge)
+ * - preference = primary (le souhait du client guide l'action merchant)
+ * - formula = premium (formule = recette VIP, valeur métier élevée)
+ * - observation + general = neutral (information passive)
+ */
+const NOTE_TYPE_TO_ROLE: Record<string, Role> = {
+  allergy: 'danger',
+  contraindication: 'danger',
+  preference: 'primary',
+  formula: 'premium',
+  observation: 'neutral',
+  general: 'neutral',
 };
 
-const DEFAULT_STYLE = { color: 'text-teal-700', bgColor: 'bg-teal-50 border-teal-200', pillBg: 'bg-teal-100', pillText: 'text-teal-700', icon: StickyNote };
+const NOTE_TYPE_TO_ICON: Record<string, typeof AlertTriangle> = {
+  allergy: AlertTriangle,
+  contraindication: Ban,
+  preference: Heart,
+  formula: Beaker,
+  observation: Eye,
+  general: StickyNote,
+};
 
-export function getTypeStyle(noteType: string) {
-  return TYPE_STYLE[noteType] || DEFAULT_STYLE;
+interface NoteStyle {
+  /** Texte principal (titre du type, label) */
+  color: string;
+  /** Fond + bordure d'une card de note pinned */
+  bgColor: string;
+  /** Fond d'une pill de type sélectionnée */
+  pillBg: string;
+  /** Texte d'une pill de type sélectionnée */
+  pillText: string;
+  /** Icône du type */
+  icon: typeof AlertTriangle;
+}
+
+export function getTypeStyle(noteType: string): NoteStyle {
+  const role: Role = NOTE_TYPE_TO_ROLE[noteType] ?? 'neutral';
+  const r = ROLES[role];
+  return {
+    color: r.text,
+    bgColor: `${r.bg} ${r.border}`,
+    pillBg: r.bgSolid,
+    pillText: r.text,
+    icon: NOTE_TYPE_TO_ICON[noteType] ?? StickyNote,
+  };
 }

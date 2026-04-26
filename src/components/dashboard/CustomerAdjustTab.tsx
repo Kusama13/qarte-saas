@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Gift, Trophy, Coins, Minus, Plus } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { formatCurrency, calculateCashback } from '@/lib/utils';
+import { ROLES } from '@/lib/customer-modal-styles';
 
 interface CompactProgressRowProps {
   icon: React.ReactNode;
@@ -18,18 +19,18 @@ interface CompactProgressRowProps {
 
 function CompactProgressRow({ icon, label, current, required, reached, barClass, textClass }: CompactProgressRowProps) {
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex items-center gap-3">
       <div className="shrink-0">{icon}</div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-baseline justify-between mb-0.5">
-          <span className={`text-[11px] font-bold uppercase tracking-wider ${reached ? textClass : 'text-gray-500'}`}>
+        <div className="flex items-baseline justify-between mb-1">
+          <span className={`text-[11px] sm:text-xs font-bold uppercase tracking-wider truncate ${reached ? textClass : 'text-gray-500'}`}>
             {label}
           </span>
-          <span className={`text-xs font-bold tabular-nums ${reached ? textClass : 'text-gray-700'}`}>
+          <span className={`text-xs sm:text-sm font-bold tabular-nums shrink-0 ml-2 ${reached ? textClass : 'text-gray-700'}`}>
             {current}/{required}
           </span>
         </div>
-        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-1.5 sm:h-2 bg-gray-100 rounded-full overflow-hidden">
           <div className={`h-full rounded-full transition-all ${barClass}`} style={{ width: `${Math.min((current / required) * 100, 100)}%` }} />
         </div>
       </div>
@@ -93,7 +94,6 @@ export function CustomerAdjustTab({
 
   const tier1Reached = currentStamps >= stampsRequired;
   const tier2Reached = !!(tier2Enabled && tier2StampsRequired && currentStamps >= tier2StampsRequired);
-  const showLargeQuickStep = effectiveMax >= 8; // skip ±5 on small programs
 
   const tweakBy = (delta: number) => {
     const next = adjustment + delta;
@@ -133,182 +133,158 @@ export function CustomerAdjustTab({
     }
   };
 
+  const canSubmit = adjustment !== 0 || (isCagnotte && parsedAmountAdj !== 0);
+
   return (
-    <div className="space-y-3.5">
-      {/* Status condensé : 1 carte avec cagnotte (si applicable) + progressions */}
-      <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3 space-y-2.5">
+    <div className="flex flex-col h-full gap-4">
+      {/* ── Status condensé : cagnotte + progress bars ── */}
+      <div className={`rounded-xl border ${ROLES.neutral.border} ${ROLES.neutral.bg} p-3 sm:p-4 space-y-3 shrink-0`}>
         {isCagnotte && (() => {
           const activePercent = (tier2Reached || (tier1Redeemed && tier2Enabled)) ? (cagnotteTier2Percent || cagnottePercent) : cagnottePercent;
           const activeValue = formatCurrency(calculateCashback(currentAmount, activePercent), country);
           return (
-            <div className="flex items-baseline justify-between pb-2 border-b border-gray-200/70">
+            <div className="flex items-baseline justify-between pb-2.5 border-b border-gray-200/70">
               <div className="flex items-center gap-1.5">
-                <Coins className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">{t('cagnotte')}</span>
+                <Coins className={`w-4 h-4 ${ROLES.success.icon}`} />
+                <span className={`text-[11px] sm:text-xs font-bold uppercase tracking-wider ${ROLES.success.text}`}>{t('cagnotte')}</span>
                 {tier1Reached && (
-                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${tier2Reached ? 'text-violet-600 bg-violet-100' : 'text-emerald-600 bg-emerald-100'}`}>
+                  <span className={`text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded ${tier2Reached ? `${ROLES.premium.text} ${ROLES.premium.bgSolid}` : `${ROLES.success.text} ${ROLES.success.bgSolid}`}`}>
                     {tier2Reached ? t('tier2Reached') : t('tier1Reached')}
                   </span>
                 )}
               </div>
               <div className="text-right">
-                <p className="text-base font-bold text-emerald-700">{activeValue} <span className="text-[11px] font-bold text-emerald-500">({activePercent}%)</span></p>
-                <p className="text-[10px] text-gray-500">{t('totalSpent', { amount: formatCurrency(currentAmount, country) })}</p>
+                <p className={`text-base sm:text-xl font-bold ${ROLES.success.text}`}>{activeValue} <span className="text-[11px] sm:text-xs font-bold opacity-70">({activePercent}%)</span></p>
+                <p className="text-[10px] sm:text-[11px] text-gray-500">{t('totalSpent', { amount: formatCurrency(currentAmount, country) })}</p>
               </div>
             </div>
           );
         })()}
 
         {tier2Enabled && tier2StampsRequired ? (
-          <>
+          <div className="space-y-3">
             <CompactProgressRow
-              icon={<Gift className={`w-4 h-4 ${tier1Reached ? 'text-emerald-500' : 'text-indigo-500'}`} />}
+              icon={<Gift className={`w-4 h-4 sm:w-5 sm:h-5 ${tier1Reached ? ROLES.success.icon : ROLES.primary.icon}`} />}
               label={rewardDescription || t('tier1')}
               current={Math.min(currentStamps, stampsRequired)}
               required={stampsRequired}
               reached={tier1Reached}
-              barClass={tier1Reached ? 'bg-emerald-500' : 'bg-indigo-500'}
-              textClass="text-emerald-600"
+              barClass={tier1Reached ? ROLES.success.bar : ROLES.primary.bar}
+              textClass={ROLES.success.text}
             />
             <CompactProgressRow
-              icon={<Trophy className={`w-4 h-4 ${tier2Reached ? 'text-violet-500' : 'text-gray-400'}`} />}
+              icon={<Trophy className={`w-4 h-4 sm:w-5 sm:h-5 ${tier2Reached ? ROLES.premium.icon : 'text-gray-400'}`} />}
               label={tier2RewardDescription || t('tier2')}
               current={Math.max(0, Math.min(currentStamps - stampsRequired, tier2StampsRequired - stampsRequired))}
               required={tier2StampsRequired - stampsRequired}
               reached={tier2Reached}
-              barClass={tier2Reached ? 'bg-violet-500' : 'bg-gray-300'}
-              textClass="text-violet-600"
+              barClass={tier2Reached ? ROLES.premium.bar : 'bg-gray-300'}
+              textClass={ROLES.premium.text}
             />
-          </>
+          </div>
         ) : (
           <CompactProgressRow
-            icon={<Gift className={`w-4 h-4 ${tier1Reached ? 'text-emerald-500' : 'text-indigo-500'}`} />}
+            icon={<Gift className={`w-4 h-4 sm:w-5 sm:h-5 ${tier1Reached ? ROLES.success.icon : ROLES.primary.icon}`} />}
             label={rewardDescription || t('reward')}
             current={Math.min(currentStamps, stampsRequired)}
             required={stampsRequired}
             reached={tier1Reached}
-            barClass={tier1Reached ? 'bg-emerald-500' : 'bg-indigo-500'}
-            textClass="text-emerald-600"
+            barClass={tier1Reached ? ROLES.success.bar : ROLES.primary.bar}
+            textClass={ROLES.success.text}
           />
         )}
 
         {adjustment !== 0 && (
-          <div className="text-xs flex items-center justify-between pt-1.5 border-t border-gray-200/70">
+          <div className="text-xs sm:text-sm flex items-center justify-between pt-2 border-t border-gray-200/70">
             <span className="text-gray-500">{t('afterAdjust')}</span>
             <span className="font-bold tabular-nums">
               <span className="text-gray-400">{currentStamps}</span>
               <span className="text-gray-400 mx-1">→</span>
-              <span className={adjustment > 0 ? 'text-emerald-600' : 'text-red-600'}>{newStamps}</span>
+              <span className={adjustment > 0 ? ROLES.success.text : ROLES.danger.text}>{newStamps}</span>
               <span className="text-gray-400 ml-1">/ {effectiveMax}</span>
-              <span className={`ml-1.5 ${adjustment > 0 ? 'text-emerald-600' : 'text-red-600'}`}>({adjustment > 0 ? '+' : ''}{adjustment})</span>
+              <span className={`ml-2 ${adjustment > 0 ? ROLES.success.text : ROLES.danger.text}`}>({adjustment > 0 ? '+' : ''}{adjustment})</span>
             </span>
           </div>
         )}
       </div>
 
-      {error && (
-        <div className="p-2.5 text-xs text-red-700 bg-red-50 rounded-lg">{error}</div>
-      )}
-
-      {/* Ajustement passages */}
-      <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <label className="text-sm font-medium text-gray-700">{t('stampsLabel')}</label>
-          {/* Quick step buttons */}
-          <div className="flex items-center gap-1">
-            {showLargeQuickStep && (
-              <button
-                onClick={() => tweakBy(-5)}
-                disabled={adjustment - 5 < minAdjustment}
-                className="px-2 py-0.5 rounded-md text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-30 transition-colors"
-              >−5</button>
-            )}
+      {/* ── Stepper centré (prend l'espace vertical disponible) ── */}
+      <div className="flex-1 flex flex-col justify-center gap-4 min-h-0">
+        <div>
+          <label className="block mb-2 text-sm font-medium text-gray-700 text-center">{t('stampsLabel')}</label>
+          <div className="flex items-center gap-3 max-w-xs mx-auto">
             <button
               onClick={() => tweakBy(-1)}
-              disabled={adjustment - 1 < minAdjustment}
-              className="px-2 py-0.5 rounded-md text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-30 transition-colors"
-            >−1</button>
+              disabled={adjustment <= minAdjustment}
+              className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0"
+              aria-label="-1"
+            >
+              <Minus className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+            </button>
+            <Input
+              type="number"
+              placeholder="0"
+              value={adjustment === 0 ? '' : adjustment}
+              onChange={(e) => {
+                let val = parseInt(e.target.value) || 0;
+                if (val < minAdjustment) val = minAdjustment;
+                if (val > maxAdjustment) val = maxAdjustment;
+                setAdjustment(val);
+              }}
+              className="text-center text-2xl sm:text-3xl font-bold h-12 sm:h-14"
+            />
             <button
               onClick={() => tweakBy(1)}
-              disabled={adjustment + 1 > maxAdjustment}
-              className="px-2 py-0.5 rounded-md text-xs font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-30 transition-colors"
-            >+1</button>
-            {showLargeQuickStep && (
-              <button
-                onClick={() => tweakBy(5)}
-                disabled={adjustment + 5 > maxAdjustment}
-                className="px-2 py-0.5 rounded-md text-xs font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-30 transition-colors"
-              >+5</button>
-            )}
+              disabled={adjustment >= maxAdjustment}
+              className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0"
+              aria-label="+1"
+            >
+              <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => tweakBy(-1)}
-            disabled={adjustment <= minAdjustment}
-            className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0"
-            aria-label="-1"
-          >
-            <Minus className="w-4 h-4 text-gray-600" />
-          </button>
-          <Input
-            type="number"
-            placeholder="0"
-            value={adjustment === 0 ? '' : adjustment}
-            onChange={(e) => {
-              let val = parseInt(e.target.value) || 0;
-              if (val < minAdjustment) val = minAdjustment;
-              if (val > maxAdjustment) val = maxAdjustment;
-              setAdjustment(val);
-            }}
-            className="text-center text-lg font-semibold"
-          />
-          <button
-            onClick={() => tweakBy(1)}
-            disabled={adjustment >= maxAdjustment}
-            className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0"
-            aria-label="+1"
-          >
-            <Plus className="w-4 h-4 text-gray-600" />
-          </button>
-        </div>
+
+        {isCagnotte && (
+          <div>
+            <label className="block mb-1.5 text-sm font-medium text-gray-700 text-center">{t('adjustAmountLabel')}</label>
+            <Input
+              type="text"
+              inputMode="decimal"
+              placeholder={t('adjustAmountPlaceholder')}
+              value={amountAdjustment}
+              onChange={(e) => setAmountAdjustment(e.target.value)}
+              className="text-center text-lg max-w-xs mx-auto"
+            />
+            {parsedAmountAdj !== 0 && (
+              <div className="mt-2 text-xs text-center text-gray-500 space-y-0.5">
+                <p>{t('newTotal')} : <span className="font-semibold">{formatCurrency(newAmount, country)}</span></p>
+                <p>
+                  {t('newCagnotte')} : <span className={`font-semibold ${ROLES.success.text}`}>{formatCurrency(calculateCashback(newAmount, cagnottePercent), country)} ({cagnottePercent}%)</span>
+                  {cagnotteTier2Percent && tier1Redeemed && <span className={`${ROLES.premium.text} ml-1`}>/ {formatCurrency(calculateCashback(newAmount, cagnotteTier2Percent), country)} ({cagnotteTier2Percent}%)</span>}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        <Input
+          placeholder={t('reasonPlaceholder')}
+          value={reason}
+          onChange={(e) => setReason(e.target.value.slice(0, 100))}
+          className="text-sm"
+        />
       </div>
 
-      {/* Cagnotte amount adjustment */}
-      {isCagnotte && (
-        <div>
-          <label className="block mb-1.5 text-sm font-medium text-gray-700">{t('adjustAmountLabel')}</label>
-          <Input
-            type="text"
-            inputMode="decimal"
-            placeholder={t('adjustAmountPlaceholder')}
-            value={amountAdjustment}
-            onChange={(e) => setAmountAdjustment(e.target.value)}
-            className="text-center text-lg"
-          />
-          {parsedAmountAdj !== 0 && (
-            <div className="mt-1 text-xs text-gray-500 space-y-0.5">
-              <p>{t('newTotal')} : <span className="font-semibold">{formatCurrency(newAmount, country)}</span></p>
-              <p>{t('newCagnotte')} : <span className="font-semibold text-emerald-600">{formatCurrency(calculateCashback(newAmount, cagnottePercent), country)} ({cagnottePercent}%)</span>
-                {cagnotteTier2Percent && tier1Redeemed ? <span className="text-violet-600 ml-1">/ {formatCurrency(calculateCashback(newAmount, cagnotteTier2Percent), country)} ({cagnotteTier2Percent}%)</span> : ''}
-              </p>
-            </div>
-          )}
-        </div>
+      {error && (
+        <div className={`p-2.5 text-xs ${ROLES.danger.text} ${ROLES.danger.bg} rounded-lg shrink-0`}>{error}</div>
       )}
 
-      <Input
-        placeholder={t('reasonPlaceholder')}
-        value={reason}
-        onChange={(e) => setReason(e.target.value.slice(0, 100))}
-        className="text-sm"
-      />
-
-      <div className="flex gap-3">
+      {/* ── Footer sticky ── */}
+      <div className="flex gap-3 shrink-0 mt-auto pt-2 border-t border-gray-100">
         <Button variant="ghost" onClick={onClose} className="flex-1" disabled={loading}>
           {t('cancel')}
         </Button>
-        <Button onClick={handleSubmit} loading={loading} disabled={adjustment === 0 && (!isCagnotte || parsedAmountAdj === 0)} className="flex-1">
+        <Button onClick={handleSubmit} loading={loading} disabled={!canSubmit} className="flex-1">
           {t('validate')}
         </Button>
       </div>
