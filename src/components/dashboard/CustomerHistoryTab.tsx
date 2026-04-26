@@ -19,7 +19,7 @@ import { supabase } from '@/lib/supabase';
 import { formatDateTime, formatCurrency, formatTime } from '@/lib/utils';
 import { ROLES, type Role } from '@/lib/customer-modal-styles';
 
-const INITIAL_VISIBLE_COUNT = 8;
+const INITIAL_VISIBLE_COUNT = 5;
 
 interface Visit {
   id: string;
@@ -376,12 +376,12 @@ export function CustomerHistoryTab({
     return (
       <li
         key={item.id}
-        className={`flex items-center justify-between p-2.5 sm:p-3 rounded-lg ${r.bg} ${isVisit ? 'cursor-pointer hover:ring-1 hover:ring-indigo-200 transition-shadow' : ''}`}
+        className={`flex items-center justify-between p-2 rounded-lg ${r.bg} ${isVisit ? 'cursor-pointer hover:ring-1 hover:ring-indigo-200 transition-shadow' : ''}`}
         onClick={isVisit ? () => startEdit({ id: item.id, points: item.points, amount_spent: item.amount_spent ?? null }) : undefined}
         title={isVisit ? t('tapToEdit') : undefined}
       >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${r.bgSolid}`}>{getIcon()}</div>
+        <div className="flex items-center gap-2 min-w-0">
+          <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${r.bgSolid}`}>{getIcon()}</div>
           <div className="min-w-0">
             <p className={`text-sm font-medium truncate ${isRedemption ? r.text : 'text-gray-900'}`}>{getLabel()}</p>
             <p className="text-xs text-gray-500 flex items-center gap-1">

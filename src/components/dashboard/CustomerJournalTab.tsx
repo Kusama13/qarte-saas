@@ -192,16 +192,16 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
     const isEditing = editingId === note.id;
 
     return (
-      <div key={note.id} className={`border rounded-xl p-3 ${note.pinned ? style.bgColor : 'border-gray-100 bg-white'}`}>
-        <div className="flex items-start gap-2.5">
-          <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${style.color}`} />
+      <div key={note.id} className={`border rounded-xl p-3.5 sm:p-4 ${note.pinned ? style.bgColor : 'border-gray-100 bg-white'}`}>
+        <div className="flex items-start gap-3">
+          <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${style.color}`} />
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className={`text-[10px] font-bold uppercase tracking-wider ${style.color}`}>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className={`text-[11px] sm:text-xs font-bold uppercase tracking-wider ${style.color}`}>
                 {getTypeLabel(note.note_type)}
               </span>
               {note.pinned && <Pin className="w-3 h-3 text-amber-500" />}
-              <span className="text-[10px] text-gray-400 ml-auto">{formatNoteDate(note.created_at)}</span>
+              <span className="text-[11px] text-gray-400 ml-auto">{formatNoteDate(note.created_at)}</span>
             </div>
             {isEditing ? (
               <div className="space-y-2">
@@ -228,7 +228,7 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{note.content}</p>
+              <p className="text-sm sm:text-base text-gray-700 whitespace-pre-wrap leading-relaxed">{note.content}</p>
             )}
           </div>
           {!isEditing && (
@@ -264,19 +264,19 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 sm:space-y-6">
       {/* ── Add note form (en haut, action principale) ── */}
-      <div className="border border-dashed border-gray-200 rounded-xl p-3 space-y-2.5">
+      <div className="border border-dashed border-gray-200 rounded-xl p-4 sm:p-5 space-y-3">
         <textarea
           value={newContent}
           onChange={(e) => setNewContent(e.target.value)}
           placeholder={placeholderForType(newType)}
-          className="input text-sm h-auto resize-none w-full"
-          rows={2}
+          className="input text-sm sm:text-base h-auto resize-none w-full"
+          rows={3}
           maxLength={2000}
         />
         {/* Palette colorée des types */}
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {allTypes.map(nt => {
             const s = getTypeStyle(nt);
             const active = newType === nt;
@@ -284,7 +284,7 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
               <button
                 key={nt}
                 onClick={() => setNewType(nt)}
-                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full transition-all ${
+                className={`text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full transition-all ${
                   active
                     ? `${s.pillBg} ${s.pillText} ring-1 ring-current`
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -364,23 +364,23 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
         <p className="text-center text-sm text-gray-400 py-2">{t('noNotes')}</p>
       )}
 
-      {/* ── Photos résultats — toujours visibles (pas d'accordéon) si présentes ── */}
+      {/* ── Photos résultats — toujours visibles si présentes ── */}
       {photosLoaded && resultPhotos.length > 0 && (
-        <div className="space-y-2 pt-2 border-t border-gray-100">
+        <div className="space-y-3 pt-3 border-t border-gray-100">
           <div className="flex items-center gap-2 px-1">
-            <span className={`w-1 h-3 rounded-full ${ROLES.premium.bar}`} />
-            <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider">{t('resultPhotos')}</p>
+            <span className={`w-1 h-3.5 rounded-full ${ROLES.premium.bar}`} />
+            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">{t('resultPhotos')}</p>
             <span className={`text-[10px] font-bold ${ROLES.premium.text} ${ROLES.premium.bg} px-1.5 py-0.5 rounded-full`}>{resultPhotos.length}</span>
           </div>
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {resultPhotos.map((photo, i) => (
               <div key={i} className="relative group">
                 <img
                   src={photo.url}
                   alt=""
-                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
+                  className="w-full aspect-square object-cover rounded-xl border border-gray-100 shadow-sm"
                 />
-                <span className="absolute bottom-1 left-1 text-[9px] bg-black/60 text-white px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="absolute bottom-1.5 left-1.5 text-[10px] bg-black/60 text-white px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                   {photo.slot_date}
                 </span>
               </div>
