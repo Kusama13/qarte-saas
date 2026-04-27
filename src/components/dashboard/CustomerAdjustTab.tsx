@@ -166,9 +166,8 @@ export function CustomerAdjustTab({
   const canSubmit = adjustment !== 0 || (isCagnotte && parsedAmountAdj !== 0);
 
   return (
-    <div className="min-h-full flex flex-col justify-center space-y-6 sm:space-y-7">
-      {/* ── Status : cagnotte + progress bars ── */}
-      <div className={`rounded-xl border ${ROLES.neutral.border} ${ROLES.neutral.bg} p-5 sm:p-6 space-y-5 sm:space-y-6`}>
+    <div className="min-h-full flex flex-col justify-center space-y-5 sm:space-y-6">
+      <div className={`rounded-xl border ${ROLES.neutral.border} ${ROLES.neutral.bg} p-4 sm:p-5 space-y-4 sm:space-y-5`}>
         {isCagnotte && (() => {
           const activePercent = (tier2Reached || (tier1Redeemed && tier2Enabled)) ? (cagnotteTier2Percent || cagnottePercent) : cagnottePercent;
           const activeValue = formatCurrency(calculateCashback(currentAmount, activePercent), country);
@@ -192,7 +191,7 @@ export function CustomerAdjustTab({
         })()}
 
         {tier2Enabled && tier2StampsRequired ? (
-          <div className="space-y-6 sm:space-y-8">
+          <div className="space-y-5 sm:space-y-6">
             <CompactProgressRow
               icon={<Gift className={`w-5 h-5 sm:w-6 sm:h-6 ${tier1Reached ? ROLES.success.icon : ROLES.primary.icon}`} />}
               tierLabel={t('tier1')}
@@ -204,6 +203,7 @@ export function CustomerAdjustTab({
               barClass={tier1Reached ? ROLES.success.bar : ROLES.primary.bar}
               textClass={ROLES.success.text}
             />
+            <div className="border-t border-gray-200/70" />
             <CompactProgressRow
               icon={<Trophy className={`w-5 h-5 sm:w-6 sm:h-6 ${tier2Reached ? ROLES.premium.icon : 'text-gray-400'}`} />}
               tierLabel={t('tier2')}
@@ -230,17 +230,16 @@ export function CustomerAdjustTab({
         )}
       </div>
 
-      {/* ── Stepper passages ── */}
-      <div className="py-2">
-        <label className="block mb-3 text-base sm:text-lg font-semibold text-gray-800 text-center">{t('stampsLabel')}</label>
-        <div className="flex items-center gap-3 sm:gap-4 max-w-sm mx-auto">
+      <div>
+        <label className="block mb-2.5 text-sm sm:text-base font-semibold text-gray-800 text-center">{t('stampsLabel')}</label>
+        <div className="flex items-center gap-2.5 sm:gap-3 max-w-sm mx-auto">
           <button
             onClick={() => tweakBy(-1)}
             disabled={adjustment <= minAdjustment}
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0"
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0"
             aria-label="-1"
           >
-            <Minus className="w-6 h-6 sm:w-7 sm:h-7 text-gray-700" />
+            <Minus className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
           </button>
           <Input
             type="number"
@@ -252,15 +251,15 @@ export function CustomerAdjustTab({
               if (val > maxAdjustment) val = maxAdjustment;
               setAdjustment(val);
             }}
-            className="text-center text-3xl sm:text-4xl font-bold h-14 sm:h-16"
+            className="text-center text-2xl sm:text-3xl font-bold h-12 sm:h-14"
           />
           <button
             onClick={() => tweakBy(1)}
             disabled={adjustment >= maxAdjustment}
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0"
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0"
             aria-label="+1"
           >
-            <Plus className="w-6 h-6 sm:w-7 sm:h-7 text-gray-700" />
+            <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
           </button>
         </div>
       </div>

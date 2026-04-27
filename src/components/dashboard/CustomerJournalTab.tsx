@@ -11,68 +11,61 @@ import {
   Loader2,
 } from 'lucide-react';
 import type { CustomerNote } from '@/types';
-import { getTypeStyle } from '@/lib/note-styles';
+import { getTypeStyle, NOTE_TYPES, NOTE_TYPE_GENERAL, isCriticalNoteType } from '@/lib/note-styles';
 import { ROLES } from '@/lib/customer-modal-styles';
+import { SectionHeader } from './customer-modal/SectionHeader';
 
-const BUILTIN_TYPES = ['allergy', 'contraindication', 'preference', 'formula', 'observation', 'general'] as const;
-const ALL_BUILTIN_HINTS: Set<string> = new Set(BUILTIN_TYPES);
+const BUILTIN_TYPE_SET: Set<string> = new Set(NOTE_TYPES);
 
 interface CustomerJournalTabProps {
   customerId: string;
   merchantId: string;
+  /** Owned by the parent modal so the allergies banner stays in sync without a duplicate fetch. */
+  notes: CustomerNote[];
+  refetchNotes: () => Promise<void>;
   onSuccess: (message: string) => void;
 }
 
-export function CustomerJournalTab({ customerId, merchantId, onSuccess }: CustomerJournalTabProps) {
+export function CustomerJournalTab({ customerId, merchantId, notes, refetchNotes, onSuccess }: CustomerJournalTabProps) {
   const t = useTranslations('customerJournal');
   const locale = useLocale();
 
-  const [notes, setNotes] = useState<CustomerNote[]>([]);
-  const [loading, setLoading] = useState(true);
   const [resultPhotos, setResultPhotos] = useState<Array<{ url: string; slot_date: string }>>([]);
   const [photosLoaded, setPhotosLoaded] = useState(false);
 
-  // Add note form
   const [newContent, setNewContent] = useState('');
-  const [newType, setNewType] = useState<string>('general');
+  const [newType, setNewType] = useState<string>(NOTE_TYPE_GENERAL);
   const [newPinned, setNewPinned] = useState(false);
   const [saving, setSaving] = useState(false);
   const [customTag, setCustomTag] = useState('');
   const [customTypes, setCustomTypes] = useState<string[]>([]);
 
-  // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
-  const [editType, setEditType] = useState('general');
+  const [editType, setEditType] = useState<string>(NOTE_TYPE_GENERAL);
 
   const pinnedNotes = useMemo(() => notes.filter(n => n.pinned), [notes]);
   const unpinnedNotes = useMemo(() => notes.filter(n => !n.pinned), [notes]);
 
   // Liste des types disponibles (builtin + custom existants)
   const allTypes = useMemo(() => {
-    const set = new Set<string>(BUILTIN_TYPES);
+    const set = new Set<string>(NOTE_TYPES);
     for (const note of notes) set.add(note.note_type);
     for (const ct of customTypes) set.add(ct);
     return [...set];
   }, [notes, customTypes]);
 
-  const fetchNotes = async () => {
-    try {
-      const res = await fetch(`/api/customer-notes?customerId=${customerId}&merchantId=${merchantId}`);
-      if (res.ok) {
+  useEffect(() => {
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/planning?merchantId=${merchantId}&customerId=${customerId}&booked=true`,
+          { signal: controller.signal },
+        );
+        if (!res.ok) return;
         const data = await res.json();
-        setNotes(data.notes || []);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchPhotos = async () => {
-    try {
-      const res = await fetch(`/api/planning?merchantId=${merchantId}&customerId=${customerId}&booked=true`);
-      if (res.ok) {
-        const data = await res.json();
+        if (controller.signal.aborted) return;
         const photos: Array<{ url: string; slot_date: string }> = [];
         for (const slot of data.slots || []) {
           for (const photo of slot.planning_slot_result_photos || []) {
@@ -80,15 +73,13 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
           }
         }
         setResultPhotos(photos);
+      } catch {
+        // ignore (abort or network)
+      } finally {
+        if (!controller.signal.aborted) setPhotosLoaded(true);
       }
-    } finally {
-      setPhotosLoaded(true);
-    }
-  };
-
-  useEffect(() => {
-    fetchNotes();
-    fetchPhotos();
+    })();
+    return () => controller.abort();
   }, [customerId, merchantId]);
 
   const handleAdd = async () => {
@@ -103,16 +94,16 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
           merchant_id: merchantId,
           content: newContent,
           note_type: newType,
-          // Allergies + contre-indications épinglées par défaut (visibilité critique)
-          pinned: newPinned || newType === 'allergy' || newType === 'contraindication',
+          // Critical types (allergy, contraindication) auto-pinned: medical risk must always be visible.
+          pinned: newPinned || isCriticalNoteType(newType),
         }),
       });
       if (res.ok) {
         setNewContent('');
-        setNewType('general');
+        setNewType(NOTE_TYPE_GENERAL);
         setNewPinned(false);
         onSuccess(t('noteAdded'));
-        await fetchNotes();
+        await refetchNotes();
       }
     } finally {
       setSaving(false);
@@ -130,7 +121,7 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
       if (res.ok) {
         setEditingId(null);
         onSuccess(t('noteUpdated'));
-        await fetchNotes();
+        await refetchNotes();
       }
     } catch {
       // ignore
@@ -144,7 +135,7 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ note_id: note.id, merchant_id: merchantId, pinned: !note.pinned }),
       });
-      await fetchNotes();
+      await refetchNotes();
     } catch {
       // ignore
     }
@@ -159,7 +150,7 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
       });
       if (res.ok) {
         onSuccess(t('noteDeleted'));
-        await fetchNotes();
+        await refetchNotes();
       }
     } catch {
       // ignore
@@ -171,16 +162,8 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
     return d.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-      </div>
-    );
-  }
-
   const getTypeLabel = (type: string) => {
-    if (ALL_BUILTIN_HINTS.has(type)) {
+    if (BUILTIN_TYPE_SET.has(type)) {
       return t(`type${type.charAt(0).toUpperCase() + type.slice(1)}` as 'typeGeneral');
     }
     return type;
@@ -265,7 +248,6 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      {/* ── Add note form (en haut, action principale) ── */}
       <div className="border border-dashed border-gray-200 rounded-xl p-4 sm:p-5 space-y-3">
         <textarea
           value={newContent}
@@ -275,7 +257,6 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
           rows={3}
           maxLength={2000}
         />
-        {/* Palette colorée des types */}
         <div className="flex flex-wrap gap-2">
           {allTypes.map(nt => {
             const s = getTypeStyle(nt);
@@ -294,7 +275,6 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
               </button>
             );
           })}
-          {/* Custom tag input */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -317,7 +297,6 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
             />
           </form>
         </div>
-        {/* Actions row */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setNewPinned(p => !p)}
@@ -337,25 +316,16 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
         </div>
       </div>
 
-      {/* ── Notes pinned (allergies/contre-indic auto-pinned + manuel) ── */}
       {pinnedNotes.length > 0 && (
         <div className="space-y-2">
-          <div className="flex items-center gap-2 px-1">
-            <span className={`w-1 h-3 rounded-full ${ROLES.warning.bar}`} />
-            <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider">{t('pinnedSection')}</p>
-            <span className={`text-[10px] font-bold ${ROLES.warning.text} ${ROLES.warning.bg} px-1.5 py-0.5 rounded-full`}>{pinnedNotes.length}</span>
-          </div>
+          <SectionHeader role="warning" label={t('pinnedSection')} count={pinnedNotes.length} />
           {pinnedNotes.map(renderNote)}
         </div>
       )}
 
-      {/* ── Toutes les autres notes ── */}
       {unpinnedNotes.length > 0 && (
         <div className="space-y-2">
-          <div className="flex items-center gap-2 px-1">
-            <span className={`w-1 h-3 rounded-full ${ROLES.neutral.bar}`} />
-            <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider">{t('allNotes')}</p>
-          </div>
+          <SectionHeader role="neutral" label={t('allNotes')} />
           {unpinnedNotes.map(renderNote)}
         </div>
       )}
@@ -364,20 +334,17 @@ export function CustomerJournalTab({ customerId, merchantId, onSuccess }: Custom
         <p className="text-center text-sm text-gray-400 py-2">{t('noNotes')}</p>
       )}
 
-      {/* ── Photos résultats — toujours visibles si présentes ── */}
       {photosLoaded && resultPhotos.length > 0 && (
         <div className="space-y-3 pt-3 border-t border-gray-100">
-          <div className="flex items-center gap-2 px-1">
-            <span className={`w-1 h-3.5 rounded-full ${ROLES.premium.bar}`} />
-            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">{t('resultPhotos')}</p>
-            <span className={`text-[10px] font-bold ${ROLES.premium.text} ${ROLES.premium.bg} px-1.5 py-0.5 rounded-full`}>{resultPhotos.length}</span>
-          </div>
+          <SectionHeader role="premium" label={t('resultPhotos')} count={resultPhotos.length} />
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {resultPhotos.map((photo, i) => (
               <div key={i} className="relative group">
                 <img
                   src={photo.url}
                   alt=""
+                  loading="lazy"
+                  decoding="async"
                   className="w-full aspect-square object-cover rounded-xl border border-gray-100 shadow-sm"
                 />
                 <span className="absolute bottom-1.5 left-1.5 text-[10px] bg-black/60 text-white px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import {
   Loader2,
@@ -18,6 +18,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { formatDateTime, formatCurrency, formatTime } from '@/lib/utils';
 import { ROLES, type Role } from '@/lib/customer-modal-styles';
+import { SectionHeader } from './customer-modal/SectionHeader';
 
 const INITIAL_VISIBLE_COUNT = 5;
 
@@ -110,21 +111,16 @@ export function CustomerHistoryTab({
   const [historyLoading, setHistoryLoading] = useState(false);
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
 
-  // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPoints, setEditPoints] = useState('');
   const [editAmount, setEditAmount] = useState('');
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchHistory();
-  }, [loyaltyCardId, customerId]);
-
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async (signal?: AbortSignal) => {
     setHistoryLoading(true);
     try {
       const appointmentsPromise = customerId
-        ? fetch(`/api/planning?merchantId=${merchantId}&customerId=${customerId}&booked=true`)
+        ? fetch(`/api/planning?merchantId=${merchantId}&customerId=${customerId}&booked=true`, { signal })
             .then(r => r.ok ? r.json() : { slots: [] })
         : Promise.resolve({ slots: [] });
 
@@ -136,17 +132,24 @@ export function CustomerHistoryTab({
         appointmentsPromise,
       ]);
 
+      if (signal?.aborted) return;
       setVisits(visitsResult.data || []);
       setAdjustments(adjustmentsResult.data || []);
       setRedemptions(redemptionsResult.data || []);
       setUsedVouchers((vouchersResult.data || []) as UsedVoucher[]);
       setAppointments((appointmentsResult.slots || []) as Appointment[]);
     } catch {
-      // ignore
+      // ignore (abort or network)
     } finally {
-      setHistoryLoading(false);
+      if (!signal?.aborted) setHistoryLoading(false);
     }
-  };
+  }, [loyaltyCardId, customerId, merchantId]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchHistory(controller.signal);
+    return () => controller.abort();
+  }, [fetchHistory]);
 
   const startEdit = (item: { id: string; points: number; amount_spent: number | null }) => {
     setEditingId(item.id);
@@ -223,12 +226,11 @@ export function CustomerHistoryTab({
   const hasMore = historyItems.length > visibleCount;
   const remainingCount = historyItems.length - visibleCount;
 
-  const grouped = useMemo(() => {
-    const now = Date.now();
-    const out: Record<BucketKey, HistoryItem[]> = { today: [], week: [], month: [], older: [] };
-    for (const it of visibleItems) out[bucketFor(it.date, now)].push(it);
-    return out;
-  }, [visibleItems]);
+  // Recompute every render so bucket labels stay accurate across midnight crossings.
+  // Cost is O(visibleCount) ≤ ~32 — cheaper than a useMemo with stale `now` capture.
+  const now = Date.now();
+  const grouped: Record<BucketKey, HistoryItem[]> = { today: [], week: [], month: [], older: [] };
+  for (const it of visibleItems) grouped[bucketFor(it.date, now)].push(it);
 
   if (historyLoading) {
     return (
@@ -369,7 +371,7 @@ export function CustomerHistoryTab({
             {isAppointment && item.resultPhotos && item.resultPhotos.length > 0 && (
               <div className="flex gap-1 mt-1">
                 {item.resultPhotos.map(p => (
-                  <img key={p.id} src={p.url} className="w-6 h-6 rounded object-cover" alt="" />
+                  <img key={p.id} src={p.url} loading="lazy" decoding="async" className="w-6 h-6 rounded object-cover" alt="" />
                 ))}
               </div>
             )}
@@ -399,10 +401,7 @@ export function CustomerHistoryTab({
     <div className="space-y-3">
       {BUCKET_ORDER.filter(b => grouped[b].length > 0).map(b => (
         <div key={b}>
-          <div className="flex items-center gap-2 mb-1.5 px-1">
-            <span className="w-1 h-3 rounded-full bg-gray-300" />
-            <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider">{t(`bucket_${b}` as 'bucket_today')}</p>
-          </div>
+          <SectionHeader role="neutral" label={t(`bucket_${b}` as 'bucket_today')} />
           <ul className="space-y-1.5">
             {grouped[b].map(renderItem)}
           </ul>

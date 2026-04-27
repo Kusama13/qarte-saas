@@ -499,11 +499,24 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 ### Journal de suivi client
 - `GET/POST/PATCH/DELETE /api/customer-notes` — CRUD notes client (auth merchant, Zod)
 - Table `customer_notes` (mig 080) : content, note_type (string libre), pinned, slot_id optionnel
-- Types predefinis : general, allergy, preference, formula, observation + tags custom
-- 5e onglet "Journal" dans CustomerManagementModal (BookOpen icon teal)
+- Types predefinis (constantes exportees depuis `src/lib/note-styles.ts`) : `general`, `allergy`, `contraindication`, `preference`, `formula`, `observation` + tags custom. Helper `isCriticalNoteType()` pour `allergy`/`contraindication`
+- Onglet "Journal" dans CustomerManagementModal (BookOpen icon teal)
+- Allergies + contre-indications **auto-pinned** a la creation (visibilite critique) + bandeau rouge persistant en haut du modal sur tous les onglets
+- Badge `AlertTriangle` rouge sur la liste clients pour les clients ayant une allergie/contre-indication
 - Notes epinglees visibles comme "Memo client" dans BookingDetailsModal avant chaque RDV
-- Photos resultat agglomerees depuis tous les RDV passes (lazy-loaded)
-- Styles types partages via `src/lib/note-styles.ts` (getTypeStyle)
+- Photos resultat agglomerees depuis tous les RDV passes du client (`<img loading="lazy">`)
+- Styles types partages via `src/lib/note-styles.ts` (`getTypeStyle`) qui consomme les tokens `ROLES` de `src/lib/customer-modal-styles.ts`
+
+### Modal de gestion client (`CustomerManagementModal`)
+- Modal flottant centre, hauteur fixe 640px desktop / `max-h-[calc(100vh-2rem)]`
+- 4 onglets : Adjust (points/cagnotte) / Rewards (vouchers + redeem + offrir) / History / Journal
+- Actions destructives (supprimer client, bannir numero) deplacees dans menu kebab `•••` du header (plus d'onglet "Danger") → modal overlay confirmation
+- Single source of truth pour les notes : le shell fetch `/api/customer-notes`, derive le bandeau allergies, et passe `notes + refetchNotes` en prop a `CustomerJournalTab` (evite double fetch)
+- Composant partage `<SectionHeader role label count />` dans `src/components/dashboard/customer-modal/SectionHeader.tsx` — utilise dans les 4 tabs pour une hierarchie visuelle uniforme
+- Tokens couleurs centralises dans `src/lib/customer-modal-styles.ts` — 7 ROLES (primary/success/premium/warning/danger/neutral/birthday) avec champs `bg`/`bgSolid`/`bar`/`text`/`icon`/`solid`/`hoverBg`/`hoverBgSolid`/`hoverIcon` (full literal classes pour Tailwind JIT)
+- AdjustTab : jauge dynamique avec preview live de l'ajustement (segment delta emerald/red superpose), labels `Palier 1` / `Palier 2` explicites, divider entre les 2 paliers
+- HistoryTab : groupement par bucket (`Aujourd'hui` / `Cette semaine` / `Ce mois` / `Plus ancien`), limite 5 items + bouton "Voir plus" (×2 a chaque clic)
+- RewardsTab : 3 sections (Bons actifs / Recompenses / Offrir) en grid 2 cols desktop, refetch via `loadVouchers()` apres grant (evite UUID synthetique fantome)
 
 ### Jeu concours mensuel
 - `GET /api/contest?merchantId=` — Historique tirages (auth, 12 derniers)

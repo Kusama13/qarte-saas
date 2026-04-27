@@ -19,6 +19,12 @@ import { supabase } from '@/lib/supabase';
 import { formatDateTime } from '@/lib/utils';
 import type { MerchantOffer } from '@/types';
 import { ROLES } from '@/lib/customer-modal-styles';
+import { SectionHeader } from './customer-modal/SectionHeader';
+
+const VOUCHER_SOURCE_ICONS: Record<string, typeof Gift> = {
+  welcome: Flower2,
+  birthday: Cake,
+};
 
 interface ExistingVoucher {
   id: string;
@@ -94,20 +100,33 @@ export function CustomerRewardsCombinedTab({
   const canRedeemTier2 = tier2Enabled && tier2StampsRequired ? currentStamps >= tier2StampsRequired : false;
   const hasRedeemable = canRedeemTier1 || canRedeemTier2;
 
+  const loadVouchers = async (signal?: AbortSignal): Promise<void> => {
+    const res = await fetch(`/api/vouchers/grant?customer_id=${customerId}&merchant_id=${merchantId}`, { signal });
+    if (!res.ok) return;
+    const data = await res.json();
+    const vouchers = (data.vouchers || []) as ExistingVoucher[];
+    setExistingVouchers(vouchers.filter(v => v.source === 'welcome' || v.source === 'offer' || v.source === 'birthday'));
+  };
+
+  const loadLastRedemption = async (): Promise<void> => {
+    const { data } = await supabase
+      .from('redemptions')
+      .select('id, redeemed_at, stamps_used, tier')
+      .eq('loyalty_card_id', loyaltyCardId)
+      .order('redeemed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setLastRedemption(data);
+  };
+
   useEffect(() => {
     const controller = new AbortController();
     const fetchAll = async () => {
       try {
-        const [offersRes, vouchersRes, redemptionResult] = await Promise.all([
+        const [offersRes] = await Promise.all([
           fetch(`/api/merchant-offers?merchantId=${merchantId}`, { signal: controller.signal }),
-          fetch(`/api/vouchers/grant?customer_id=${customerId}&merchant_id=${merchantId}`, { signal: controller.signal }),
-          supabase
-            .from('redemptions')
-            .select('id, redeemed_at, stamps_used, tier')
-            .eq('loyalty_card_id', loyaltyCardId)
-            .order('redeemed_at', { ascending: false })
-            .limit(1)
-            .maybeSingle(),
+          loadVouchers(controller.signal),
+          loadLastRedemption(),
         ]);
 
         if (controller.signal.aborted) return;
@@ -116,14 +135,6 @@ export function CustomerRewardsCombinedTab({
           const data = await offersRes.json();
           setOffers(data.offers || []);
         }
-
-        if (vouchersRes.ok) {
-          const data = await vouchersRes.json();
-          const vouchers = (data.vouchers || []) as ExistingVoucher[];
-          setExistingVouchers(vouchers.filter(v => v.source === 'welcome' || v.source === 'offer' || v.source === 'birthday'));
-        }
-
-        setLastRedemption(redemptionResult.data);
       } catch {
         // ignore — UI shows empty state
       } finally {
@@ -136,21 +147,6 @@ export function CustomerRewardsCombinedTab({
   }, [customerId, merchantId, loyaltyCardId]);
 
   // ── Rewards handlers ──
-
-  const fetchLastRedemption = async () => {
-    try {
-      const { data } = await supabase
-        .from('redemptions')
-        .select('id, redeemed_at, stamps_used, tier')
-        .eq('loyalty_card_id', loyaltyCardId)
-        .order('redeemed_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      setLastRedemption(data);
-    } catch {
-      // ignore
-    }
-  };
 
   const handleRedeem = async (tier: 1 | 2) => {
     setRedeemLoading(true);
@@ -165,7 +161,7 @@ export function CustomerRewardsCombinedTab({
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || tr('redeemError'));
       const label = isCagnotte ? tr('cagnotte') : tr('reward');
-      fetchLastRedemption();
+      loadLastRedemption();
       onSuccess(tier2Enabled ? tr('redeemSuccessTiered', { label, tier }) : tr('redeemSuccess', { label }));
     } catch (err) {
       setError(err instanceof Error ? err.message : tr('redeemError'));
@@ -190,7 +186,7 @@ export function CustomerRewardsCombinedTab({
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || tr('cancelError'));
       setCancelConfirm(false);
-      fetchLastRedemption();
+      loadLastRedemption();
       onSuccess(isCagnotte ? tr('cancelledCagnotte') : tr('cancelledReward'));
     } catch (err) {
       setError(err instanceof Error ? err.message : tr('cancelError'));
@@ -198,8 +194,6 @@ export function CustomerRewardsCombinedTab({
       setCancelLoading(false);
     }
   };
-
-  // ── Offers handlers ──
 
   const handleGrant = async (type: 'welcome' | 'offer', offerId?: string) => {
     setGranting(type === 'welcome' ? 'welcome' : offerId || '');
@@ -211,16 +205,13 @@ export function CustomerRewardsCombinedTab({
         body: JSON.stringify({ customer_id: customerId, merchant_id: merchantId, type, offer_id: offerId }),
       });
       if (res.ok) {
-        const synthetic: ExistingVoucher = { id: crypto.randomUUID(), source: type === 'welcome' ? 'welcome' : 'offer', offer_id: offerId || null, reward_description: '', created_at: new Date().toISOString() };
-        setExistingVouchers(prev => [...prev, synthetic]);
+        // Refetch to get the real voucher row (id used by handleUseVoucher/handleRemoveVoucher PATCH/DELETE).
+        await loadVouchers();
         onSuccess(to('grantSuccess'));
       } else {
         const data = await res.json();
-        if (data.error === 'already_granted') {
-          // Already tracked — no-op
-        } else {
-          setError(data.error || to('grantError'));
-        }
+        // 'already_granted' = silent no-op (UI is in sync via loadVouchers refresh on next mount).
+        if (data.error !== 'already_granted') setError(data.error || to('grantError'));
       }
     } catch {
       setError(to('grantError'));
@@ -284,26 +275,22 @@ export function CustomerRewardsCombinedTab({
     );
   }
 
+  const showEmptyState = !hasRedeemable && existingVouchers.length === 0 && !merchant?.welcome_offer_description && !hasOffers;
+
   return (
     <div className="space-y-5">
-      {/* Error banner */}
       {error && (
         <div className="p-3 text-sm text-red-700 bg-red-50 rounded-xl">{error}</div>
       )}
 
-      {/* ── Section 1: Bons actifs ── */}
       {existingVouchers.length > 0 && (
         <div>
-          <div className="flex items-center gap-2 mb-2.5">
-            <span className={`w-1 h-3.5 rounded-full ${ROLES.success.bar}`} />
-            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">{tr('sectionActiveVouchers')}</p>
-            <span className={`text-[10px] font-bold ${ROLES.success.text} ${ROLES.success.bg} px-1.5 py-0.5 rounded-full`}>{existingVouchers.length}</span>
-          </div>
+          <SectionHeader role="success" label={tr('sectionActiveVouchers')} count={existingVouchers.length} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
             {existingVouchers.map((v) => {
               const isBirthday = v.source === 'birthday';
               const r = isBirthday ? ROLES.birthday : ROLES.success;
-              const Icon = v.source === 'welcome' ? Flower2 : v.source === 'birthday' ? Cake : Gift;
+              const Icon = (v.source && VOUCHER_SOURCE_ICONS[v.source]) || Gift;
               return (
                 <div key={v.id} className={`p-3 rounded-xl border ${r.border} ${r.bg}`}>
                   <div className="flex items-center gap-3">
@@ -365,13 +352,9 @@ export function CustomerRewardsCombinedTab({
         </div>
       )}
 
-      {/* ── Section 2: Recompenses ── */}
       {hasRedeemable ? (
         <div>
-          <div className="flex items-center gap-2 mb-2.5">
-            <span className={`w-1 h-3.5 rounded-full ${ROLES.success.bar}`} />
-            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">{tr('sectionRewards')}</p>
-          </div>
+          <SectionHeader role="success" label={tr('sectionRewards')} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
             {canRedeemTier1 && (
               <div className={`p-3 rounded-xl border ${ROLES.success.border} ${ROLES.success.bg}`}>
@@ -412,22 +395,17 @@ export function CustomerRewardsCombinedTab({
             )}
           </div>
         </div>
-      ) : existingVouchers.length === 0 && !merchant?.welcome_offer_description && !hasOffers ? (
+      ) : showEmptyState ? (
         <div className="text-center py-4">
           <Gift className="w-8 h-8 text-gray-200 mx-auto mb-2" />
           <p className="text-sm text-gray-400">{isCagnotte ? tr('noCagnotte') : tr('noReward')}</p>
         </div>
       ) : null}
 
-      {/* ── Section 3: Offrir ── */}
       {(merchant?.welcome_offer_description || hasOffers) && (
         <div>
-          <div className="flex items-center gap-2 mb-2.5">
-            <span className={`w-1 h-3.5 rounded-full ${ROLES.primary.bar}`} />
-            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">{tr('sectionGrant')}</p>
-          </div>
+          <SectionHeader role="primary" label={tr('sectionGrant')} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-            {/* Welcome offer */}
             {merchant?.welcome_offer_description && (
               <div className={`p-3 rounded-xl border ${welcomeEnabled ? `${ROLES.primary.border} ${ROLES.primary.bg}` : 'border-gray-100 bg-gray-50/50 opacity-60'}`}>
                 <div className="flex items-start gap-3">
@@ -467,7 +445,6 @@ export function CustomerRewardsCombinedTab({
               </div>
             )}
 
-            {/* Promo offers */}
             {offers.map((offer) => {
               const granted = grantedOfferIds.has(offer.id);
               const isActive = offer.active && (!offer.expires_at || new Date(offer.expires_at) > new Date());
@@ -513,13 +490,9 @@ export function CustomerRewardsCombinedTab({
         </div>
       )}
 
-      {/* ── Section 4: Derniere recompense (annulation) ── */}
       {lastRedemption && (
         <div className="border-t border-gray-100 pt-4">
-          <div className="flex items-center gap-2 mb-2.5">
-            <span className={`w-1 h-3.5 rounded-full ${ROLES.warning.bar}`} />
-            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">{isCagnotte ? tr('lastCagnotte') : tr('lastReward')}</p>
-          </div>
+          <SectionHeader role="warning" label={isCagnotte ? tr('lastCagnotte') : tr('lastReward')} />
           <div className={`p-2.5 rounded-xl ${ROLES.warning.bg} border ${ROLES.warning.border}`}>
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-1.5">

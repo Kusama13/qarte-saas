@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
+import type { CustomerNote } from '@/types';
+import { NOTE_TYPE_ALLERGY, NOTE_TYPE_CONTRAINDICATION } from '@/lib/note-styles';
 import {
   X,
   Loader2,
@@ -84,26 +86,23 @@ export function CustomerManagementModal({
   const [activeTab, setActiveTab] = useState<Tab>('adjust');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Allergies + contraindications header banner — refetched on each Journal mutation
-  const [flagAlerts, setFlagAlerts] = useState<{ allergies: string[]; contraindications: string[] }>({
-    allergies: [],
-    contraindications: [],
-  });
-  const [flagsRefreshKey, setFlagsRefreshKey] = useState(0);
+  // Single source of truth for customer notes — also feeds the allergies/contra banner.
+  // JournalTab consumes notes + refetchNotes via props (avoids a duplicate fetch).
+  const [notes, setNotes] = useState<CustomerNote[]>([]);
+  const refetchNotes = useCallback(async () => {
+    const res = await fetch(`/api/customer-notes?customerId=${customerId}&merchantId=${merchantId}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    setNotes(data.notes || []);
+  }, [customerId, merchantId]);
   useEffect(() => {
     if (!isOpen) return;
-    let aborted = false;
-    fetch(`/api/customer-notes?customerId=${customerId}&merchantId=${merchantId}`)
-      .then(r => r.ok ? r.json() : { notes: [] })
-      .then((data: { notes: Array<{ note_type: string; content: string }> }) => {
-        if (aborted) return;
-        const allergies = data.notes.filter(n => n.note_type === 'allergy').map(n => n.content);
-        const contraindications = data.notes.filter(n => n.note_type === 'contraindication').map(n => n.content);
-        setFlagAlerts({ allergies, contraindications });
-      })
-      .catch(() => {});
-    return () => { aborted = true; };
-  }, [isOpen, customerId, merchantId, flagsRefreshKey]);
+    refetchNotes();
+  }, [isOpen, refetchNotes]);
+  const flagAlerts = useMemo(() => ({
+    allergies: notes.filter(n => n.note_type === NOTE_TYPE_ALLERGY).map(n => n.content),
+    contraindications: notes.filter(n => n.note_type === NOTE_TYPE_CONTRAINDICATION).map(n => n.content),
+  }), [notes]);
 
   // Kebab menu (replaces former 'danger' tab)
   const [menuOpen, setMenuOpen] = useState(false);
@@ -135,15 +134,18 @@ export function CustomerManagementModal({
 
   const customerName = `${editFirstName} ${editLastName}`.trim();
 
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (successTimerRef.current) clearTimeout(successTimerRef.current);
+  }, []);
   const showSuccess = (message: string) => {
     setSuccessMessage(message);
     onSuccess();
-    setTimeout(() => {
-      setSuccessMessage('');
-    }, 2000);
+    if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    successTimerRef.current = setTimeout(() => setSuccessMessage(''), 2000);
   };
 
-  const showSuccessAndClose = (message: string) => {
+  const closeAfterMutation = () => {
     onSuccess();
     handleClose();
   };
@@ -213,107 +215,117 @@ export function CustomerManagementModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4">
-      <div className="relative w-full max-w-lg lg:max-w-2xl bg-white rounded-2xl shadow-2xl h-[680px] max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
-        <div className="absolute top-2 right-2 z-10 flex items-center gap-1" ref={menuRef}>
-          <button
-            onClick={() => setMenuOpen(o => !o)}
-            aria-label={t('moreActions')}
-            className="p-2.5 transition-colors rounded-lg hover:bg-gray-100"
-          >
-            <MoreVertical className="w-4 h-4 text-gray-500" />
-          </button>
-          <button
-            onClick={handleClose}
-            aria-label={t('close')}
-            className="p-2.5 transition-colors rounded-lg hover:bg-gray-100"
-          >
-            <X className="w-4 h-4 text-gray-500" />
-          </button>
-          {menuOpen && (
-            <div className="absolute top-12 right-0 w-52 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden">
-              <button
-                onClick={() => { setMenuOpen(false); setDangerAction('delete'); }}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
-              >
-                <Trash2 className="w-4 h-4 text-red-500 shrink-0" />
-                {t('deleteCustomer')}
-              </button>
-              <button
-                onClick={() => { setMenuOpen(false); setDangerAction('ban'); }}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 transition-colors text-left border-t border-gray-50"
-              >
-                <Ban className="w-4 h-4 text-orange-500 shrink-0" />
-                {t('banNumber')}
-              </button>
-            </div>
-          )}
-        </div>
+      <div className="relative w-full max-w-lg lg:max-w-2xl bg-white rounded-2xl shadow-2xl h-[640px] max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
+        <button
+          onClick={handleClose}
+          aria-label={t('close')}
+          className="absolute top-2.5 right-2.5 z-20 p-2 transition-colors rounded-lg hover:bg-gray-100"
+        >
+          <X className="w-4 h-4 text-gray-500" />
+        </button>
 
-        {/* Header */}
         <div className="px-5 pt-5 pb-4 border-b border-gray-100">
-          <div className="flex items-start gap-3.5 pr-7">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-sm">
-              <span className="text-sm font-bold text-white">
-                {customerName.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div className="min-w-0 flex-1 space-y-2">
-              {/* Name */}
-              {!editingName ? (
-                <button
-                  onClick={() => { setEditFirstName(firstName); setEditLastName(lastName); setEditingName(true); }}
-                  className="flex items-center gap-1.5 group -mt-0.5"
-                >
-                  <h2 className="text-lg font-bold text-gray-900 truncate leading-tight">{customerName}</h2>
-                  <Pencil className="w-3 h-3 text-gray-300 group-hover:text-indigo-500 transition-colors flex-shrink-0" />
-                </button>
-              ) : (
-                <div className="flex items-center gap-1.5 -mt-0.5">
-                  <input
-                    value={editFirstName}
-                    onChange={(e) => setEditFirstName(e.target.value)}
-                    placeholder={t('firstNamePlaceholder')}
-                    className="flex-1 min-w-0 px-2 py-1 rounded-lg border border-gray-200 text-sm font-medium bg-white focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20 focus:outline-none transition-shadow"
-                  />
-                  <input
-                    value={editLastName}
-                    onChange={(e) => setEditLastName(e.target.value)}
-                    placeholder={t('lastNamePlaceholder')}
-                    className="flex-1 min-w-0 px-2 py-1 rounded-lg border border-gray-200 text-sm font-medium bg-white focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20 focus:outline-none transition-shadow"
-                  />
+          <div className="flex items-start gap-3 pr-10">
+            <div className="min-w-0 flex-1 space-y-3">
+              <div className="flex items-center gap-2">
+                {!editingName ? (
                   <button
-                    onClick={handleSaveName}
-                    disabled={savingName || !editFirstName.trim()}
-                    className="p-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:opacity-50 transition-colors"
+                    onClick={() => { setEditFirstName(firstName); setEditLastName(lastName); setEditingName(true); }}
+                    className="flex items-center gap-2 group min-w-0 flex-1 -mt-0.5"
                   >
-                    {savingName ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate leading-tight">{customerName}</h2>
+                    <Pencil className="w-3.5 h-3.5 text-gray-300 group-hover:text-indigo-500 transition-colors flex-shrink-0" />
                   </button>
-                  <button
-                    onClick={() => setEditingName(false)}
-                    className="p-1.5 bg-gray-100 text-gray-500 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
+                ) : (
+                  <div className="flex-1 space-y-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input
+                        value={editFirstName}
+                        onChange={(e) => setEditFirstName(e.target.value)}
+                        placeholder={t('firstNamePlaceholder')}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-base font-medium bg-white focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20 focus:outline-none transition-shadow"
+                        autoFocus
+                      />
+                      <input
+                        value={editLastName}
+                        onChange={(e) => setEditLastName(e.target.value)}
+                        placeholder={t('lastNamePlaceholder')}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-base font-medium bg-white focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20 focus:outline-none transition-shadow"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => setEditingName(false)}
+                        className="px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                      >
+                        {t('close')}
+                      </button>
+                      <button
+                        onClick={handleSaveName}
+                        disabled={savingName || !editFirstName.trim()}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg disabled:opacity-50 transition-colors"
+                      >
+                        {savingName ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-              {/* Info pills */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 text-xs font-medium text-gray-600">
-                  <Phone className="w-3 h-3 text-gray-400" />
+                {/* Hide kebab while editing — focused interaction, no distractions */}
+                {!editingName && (
+                  <div className="relative shrink-0" ref={menuRef}>
+                    <button
+                      onClick={() => setMenuOpen(o => !o)}
+                      aria-label={t('moreActions')}
+                      className={`flex items-center gap-1 px-2 py-1.5 rounded-lg border transition-colors ${
+                        menuOpen
+                          ? 'bg-gray-100 border-gray-300 text-gray-700'
+                          : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 hover:border-gray-300'
+                      }`}
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+                    {menuOpen && (
+                      <div className="absolute top-full mt-1.5 right-0 w-52 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden z-30">
+                        <button
+                          onClick={() => { setMenuOpen(false); setDangerAction('delete'); }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500 shrink-0" />
+                          {t('deleteCustomer')}
+                        </button>
+                        <button
+                          onClick={() => { setMenuOpen(false); setDangerAction('ban'); }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 transition-colors text-left border-t border-gray-50"
+                        >
+                          <Ban className="w-4 h-4 text-orange-500 shrink-0" />
+                          {t('banNumber')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href={`tel:+${phoneNumber}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
+                >
+                  <Phone className="w-3.5 h-3.5 text-indigo-500" />
                   {formatPhoneLabel(phoneNumber)}
-                </span>
+                </a>
 
                 {!editingBirthday ? (
                   <button
                     onClick={() => setEditingBirthday(true)}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
                       birthMonth && birthDay
-                        ? 'bg-pink-50 text-pink-600 hover:bg-pink-100'
+                        ? 'bg-pink-50 text-pink-700 hover:bg-pink-100'
                         : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
                     }`}
                   >
-                    <Cake className="w-3 h-3" />
+                    <Cake className="w-3.5 h-3.5" />
                     {birthMonth && birthDay
                       ? `${birthDay} ${MONTHS_SHORT[birthMonth - 1]}`
                       : t('birthday')}
@@ -364,7 +376,7 @@ export function CustomerManagementModal({
           </div>
         </div>
 
-        {/* Allergies / contraindications banner — visible on all tabs */}
+        {/* Banner persists across all tabs so allergies stay visible whatever the user opens. */}
         {(flagAlerts.allergies.length > 0 || flagAlerts.contraindications.length > 0) && (
           <button
             onClick={() => setActiveTab('journal')}
@@ -390,7 +402,6 @@ export function CustomerManagementModal({
           </button>
         )}
 
-        {/* Tabs */}
         <div className="flex border-b border-gray-100 overflow-x-auto">
           {tabs.map((tab) => (
             <button
@@ -409,7 +420,6 @@ export function CustomerManagementModal({
           ))}
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
           {successMessage && (
             <div className="flex items-center gap-2 p-2.5 mb-3 rounded-xl bg-green-50 border border-green-100 animate-in fade-in duration-200">
@@ -472,7 +482,9 @@ export function CustomerManagementModal({
                 <CustomerJournalTab
                   customerId={customerId}
                   merchantId={merchantId}
-                  onSuccess={(msg) => { showSuccess(msg); setFlagsRefreshKey(k => k + 1); }}
+                  notes={notes}
+                  refetchNotes={refetchNotes}
+                  onSuccess={showSuccess}
                 />
               )}
         </div>
@@ -500,7 +512,7 @@ export function CustomerManagementModal({
                 phoneNumber={phoneNumber}
                 customerName={customerName}
                 onCancel={() => setDangerAction(null)}
-                onSuccess={showSuccessAndClose}
+                onSuccess={closeAfterMutation}
               />
             </div>
           </div>

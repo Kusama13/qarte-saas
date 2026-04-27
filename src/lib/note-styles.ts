@@ -1,6 +1,34 @@
 import { AlertTriangle, Beaker, Heart, Eye, StickyNote, Ban } from 'lucide-react';
 import { ROLES, type Role } from '@/lib/customer-modal-styles';
 
+export const NOTE_TYPE_ALLERGY = 'allergy';
+export const NOTE_TYPE_CONTRAINDICATION = 'contraindication';
+export const NOTE_TYPE_PREFERENCE = 'preference';
+export const NOTE_TYPE_FORMULA = 'formula';
+export const NOTE_TYPE_OBSERVATION = 'observation';
+export const NOTE_TYPE_GENERAL = 'general';
+
+export const NOTE_TYPES = [
+  NOTE_TYPE_ALLERGY,
+  NOTE_TYPE_CONTRAINDICATION,
+  NOTE_TYPE_PREFERENCE,
+  NOTE_TYPE_FORMULA,
+  NOTE_TYPE_OBSERVATION,
+  NOTE_TYPE_GENERAL,
+] as const;
+export type BuiltinNoteType = (typeof NOTE_TYPES)[number];
+
+/**
+ * Note types that surface in the modal's persistent allergies/contraindications banner.
+ * Read by `CustomerManagementModal` (banner derivation) and `CustomerJournalTab`
+ * (auto-pin on creation) — keep both in sync via this single source.
+ */
+export const CRITICAL_NOTE_TYPES = [NOTE_TYPE_ALLERGY, NOTE_TYPE_CONTRAINDICATION] as const;
+
+export function isCriticalNoteType(type: string): boolean {
+  return (CRITICAL_NOTE_TYPES as readonly string[]).includes(type);
+}
+
 /**
  * Style appliqué à chaque type de note customer (Journal).
  * Mappe `note_type` → rôle du modal pour cohérence sémantique cross-tabs.

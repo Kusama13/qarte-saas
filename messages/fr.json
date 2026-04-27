@@ -2487,6 +2487,7 @@
     "tabDelete": "Supprimer",
     "moreActions": "Plus d'actions",
     "close": "Fermer",
+    "cancel": "Annuler",
     "deleteCustomer": "Supprimer le client",
     "banNumber": "Bannir ce numéro",
     "allergiesLabel": "{count, plural, =1 {Allergie} other {Allergies (#)}}",

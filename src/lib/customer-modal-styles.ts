@@ -126,12 +126,3 @@ export const ROLES: Record<Role, RoleStyle> = {
   },
 };
 
-/**
- * Header de section uniforme : barre verticale colorée + label uppercase + count optionnel.
- * Utilisé dans Rewards/History/Journal pour une hiérarchie visuelle cohérente entre tabs.
- */
-export interface SectionHeaderProps {
-  role: Role;
-  label: string;
-  count?: number | null;
-}
