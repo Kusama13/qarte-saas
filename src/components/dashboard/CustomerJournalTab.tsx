@@ -43,6 +43,7 @@ export function CustomerJournalTab({ customerId, merchantId, notes, refetchNotes
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [editType, setEditType] = useState<string>(NOTE_TYPE_GENERAL);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const pinnedNotes = useMemo(() => notes.filter(n => n.pinned), [notes]);
   const unpinnedNotes = useMemo(() => notes.filter(n => !n.pinned), [notes]);
@@ -149,6 +150,7 @@ export function CustomerJournalTab({ customerId, merchantId, notes, refetchNotes
         body: JSON.stringify({ note_id: noteId, merchant_id: merchantId }),
       });
       if (res.ok) {
+        setConfirmDeleteId(null);
         onSuccess(t('noteDeleted'));
         await refetchNotes();
       }
@@ -173,9 +175,10 @@ export function CustomerJournalTab({ customerId, merchantId, notes, refetchNotes
     const style = getTypeStyle(note.note_type);
     const Icon = style.icon;
     const isEditing = editingId === note.id;
+    const isConfirmingDelete = confirmDeleteId === note.id;
 
     return (
-      <div key={note.id} className={`border rounded-xl p-3.5 sm:p-4 ${note.pinned ? style.bgColor : 'border-gray-100 bg-white'}`}>
+      <div key={note.id} className={`relative border rounded-xl p-3.5 sm:p-4 ${note.pinned ? style.bgColor : 'border-gray-100 bg-white'}`}>
         <div className="flex items-start gap-3">
           <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${style.color}`} />
           <div className="flex-1 min-w-0">
@@ -214,7 +217,7 @@ export function CustomerJournalTab({ customerId, merchantId, notes, refetchNotes
               <p className="text-sm sm:text-base text-gray-700 whitespace-pre-wrap leading-relaxed">{note.content}</p>
             )}
           </div>
-          {!isEditing && (
+          {!isEditing && !isConfirmingDelete && (
             <div className="flex items-center gap-0.5 shrink-0">
               <button onClick={() => handleTogglePin(note)} className="p-1 rounded hover:bg-gray-100" title={note.pinned ? t('unpin') : t('pin')}>
                 {note.pinned ? <PinOff className="w-3.5 h-3.5 text-gray-400" /> : <Pin className="w-3.5 h-3.5 text-gray-400" />}
@@ -226,7 +229,7 @@ export function CustomerJournalTab({ customerId, merchantId, notes, refetchNotes
                 <Pencil className="w-3.5 h-3.5 text-gray-400" />
               </button>
               <button
-                onClick={() => { if (confirm(t('deleteConfirm'))) handleDelete(note.id); }}
+                onClick={() => setConfirmDeleteId(note.id)}
                 className="p-1 rounded hover:bg-red-50"
               >
                 <Trash2 className={`w-3.5 h-3.5 text-gray-400 ${ROLES.danger.hoverIcon}`} />
@@ -234,6 +237,27 @@ export function CustomerJournalTab({ customerId, merchantId, notes, refetchNotes
             </div>
           )}
         </div>
+
+        {isConfirmingDelete && (
+          <div className="mt-3 flex items-center justify-between gap-2 pt-3 border-t border-red-100">
+            <p className="text-xs font-medium text-red-700 flex-1 min-w-0">{t('deleteConfirm')}</p>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                className="px-2.5 py-1 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                onClick={() => handleDelete(note.id)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                <Trash2 className="w-3 h-3" />
+                {t('deleteNote')}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   };

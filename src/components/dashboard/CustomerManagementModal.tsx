@@ -488,36 +488,44 @@ export function CustomerManagementModal({
                 />
               )}
         </div>
-      </div>
 
-      {dangerAction && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4">
-          <div className="w-full max-w-sm bg-white rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden">
-            <div className="px-5 pt-5 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${dangerAction === 'delete' ? 'bg-red-100' : 'bg-orange-100'}`}>
-                  {dangerAction === 'delete'
-                    ? <Trash2 className="w-4 h-4 text-red-600" />
-                    : <Ban className="w-4 h-4 text-orange-600" />}
+        {/* Confirmation contained inside the modal panel — no full-screen overlay that detaches from the customer context. */}
+        {dangerAction && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/80 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+            <div className="w-full max-w-sm bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden">
+              <div className="flex items-center justify-between px-4 sm:px-5 pt-4 sm:pt-5 pb-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${dangerAction === 'delete' ? 'bg-red-100' : 'bg-orange-100'}`}>
+                    {dangerAction === 'delete'
+                      ? <Trash2 className="w-4 h-4 text-red-600" />
+                      : <Ban className="w-4 h-4 text-orange-600" />}
+                  </div>
+                  <h3 className="text-sm sm:text-base font-bold text-gray-900 truncate">
+                    {dangerAction === 'delete' ? t('deleteCustomer') : t('banNumber')}
+                  </h3>
                 </div>
-                <h3 className="text-base font-bold text-gray-900">
-                  {dangerAction === 'delete' ? t('deleteCustomer') : t('banNumber')}
-                </h3>
+                <button
+                  onClick={() => setDangerAction(null)}
+                  aria-label={t('close')}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors shrink-0"
+                >
+                  <X className="w-4 h-4 text-gray-400" />
+                </button>
+              </div>
+              <div className="px-4 sm:px-5 pb-4 sm:pb-5">
+                <CustomerDangerZone
+                  mode={dangerAction}
+                  loyaltyCardId={loyaltyCardId}
+                  phoneNumber={phoneNumber}
+                  customerName={customerName}
+                  onCancel={() => setDangerAction(null)}
+                  onSuccess={closeAfterMutation}
+                />
               </div>
             </div>
-            <div className="px-5 pb-5">
-              <CustomerDangerZone
-                mode={dangerAction}
-                loyaltyCardId={loyaltyCardId}
-                phoneNumber={phoneNumber}
-                customerName={customerName}
-                onCancel={() => setDangerAction(null)}
-                onSuccess={closeAfterMutation}
-              />
-            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
