@@ -8,6 +8,10 @@ import type { PlanTier, SubscriptionStatus } from '@/types';
 
 type SmsProvider = 'ovh' | 'sms_partner';
 
+/** Tolere "true ", " TRUE", "True" — un espace invisible dans une env var Vercel
+ *  faisait silencieusement tomber tout le routage SMS Partner sur OVH. */
+const SMS_PARTNER_ENABLED = (process.env.SMS_PARTNER_ENABLED || '').trim().toLowerCase() === 'true';
+
 /**
  * Décide quel provider utiliser pour un SMS transactionnel selon le pays détecté.
  * - SMS Partner : transactionnel FR/BE (si flag activé)
@@ -15,7 +19,7 @@ type SmsProvider = 'ovh' | 'sms_partner';
  * Marketing reste 100% OVH (voir sendMarketingSms ci-dessous).
  */
 function selectTransactionalProvider(phone: string): SmsProvider {
-  if (process.env.SMS_PARTNER_ENABLED !== 'true') return 'ovh';
+  if (!SMS_PARTNER_ENABLED) return 'ovh';
   const country = detectPhoneCountry(phone);
   return (country === 'FR' || country === 'BE') ? 'sms_partner' : 'ovh';
 }

@@ -1,6 +1,11 @@
 const API_KEY = (process.env.SMS_PARTNER_API_KEY || '').trim();
-const SMS_SENDER = (process.env.SMS_PARTNER_SENDER || process.env.OVH_SMS_SENDER || 'Qarte').trim();
-const SANDBOX = process.env.SMS_PARTNER_SANDBOX === 'true';
+// Trim d'abord, fallback après — sinon une env var Vercel à "\n" passe le `||` et donne ""
+// après trim (cf. cas équivalent corrigé dans ovh-sms.ts).
+const SMS_SENDER =
+  ((process.env.SMS_PARTNER_SENDER || '').trim()) ||
+  ((process.env.OVH_SMS_SENDER || '').trim()) ||
+  'Qarte';
+const SANDBOX = (process.env.SMS_PARTNER_SANDBOX || '').trim().toLowerCase() === 'true';
 
 const SMS_PARTNER_ENDPOINT = 'https://api.smspartner.fr/v1/send';
 
