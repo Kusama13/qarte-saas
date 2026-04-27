@@ -142,7 +142,7 @@ export default function BringBackBookingModal({ failure, services, merchantCount
           <button
             onClick={handleConfirm}
             disabled={saving}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 py-3 sm:py-2.5 px-4 rounded-xl text-sm font-bold bg-[#4b0082] hover:bg-violet-800 text-white transition-colors disabled:opacity-50 shadow-sm"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 py-3 sm:py-2.5 px-4 rounded-xl text-sm font-bold bg-violet-600 hover:bg-violet-700 text-white transition-colors disabled:opacity-50 shadow-sm"
           >
             <Undo2 className="w-4 h-4" />
             {saving ? t('saving') : t('bringBackConfirm')}

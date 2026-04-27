@@ -18,7 +18,12 @@ export default function CopyWeekModal({ weekOffset, saving, onCopyWeek, onClose 
   return (
     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden mb-4">
       <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-3">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">{t('copyToWhichWeek')}</p>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">{t('copyToWhichWeek')}</p>
+          <button onClick={onClose} className="text-[11px] font-semibold text-gray-400 hover:text-gray-600 transition-colors">
+            {t('cancel')}
+          </button>
+        </div>
         <div className="flex flex-wrap gap-2">
           {[1, 2, 3, 4].map(offset => (
             <button
@@ -30,9 +35,6 @@ export default function CopyWeekModal({ weekOffset, saving, onCopyWeek, onClose 
               {getWeekStart(weekOffset + offset).toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })}
             </button>
           ))}
-          <button onClick={onClose} className="px-3 py-1.5 text-xs font-bold text-gray-500 hover:text-gray-700">
-            {t('cancel')}
-          </button>
         </div>
       </div>
     </motion.div>

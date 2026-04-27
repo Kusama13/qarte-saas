@@ -106,7 +106,9 @@ export default function AddSlotsModal({
         </div>
 
         {atLimit && (
-          <p className="text-xs text-amber-600">{t('maxSlotsReached', { max: MAX_SLOTS_PER_BATCH })}</p>
+          <div className="px-3 py-2 rounded-lg bg-amber-50 border border-amber-100 text-xs text-amber-700">
+            {t('maxSlotsReached', { max: MAX_SLOTS_PER_BATCH })}
+          </div>
         )}
 
         {selectedTimes.length > 0 && (

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, History, BookOpen, ChevronDown, Camera, StickyNote, CalendarClock, CalendarPlus, UserCheck, UserX } from 'lucide-react';
+import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, BookOpen, ChevronDown, CalendarClock, CalendarPlus, UserCheck, UserX } from 'lucide-react';
 import SmsToggle from './SmsToggle';
 import { getTypeStyle } from '@/lib/note-styles';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
@@ -15,10 +15,9 @@ import { compressOfferImage } from '@/lib/image-compression';
 import { timeToMinutes, minutesToTime, roundUp5, formatDuration, getSlotServiceIds, colorBorderStyle, computeDepositAmount } from './utils';
 import type { BookingDraft, ServiceWithDuration } from './usePlanningState';
 
-function TabButton({ active, onClick, icon, label, badge }: {
+function TabButton({ active, onClick, label, badge }: {
   active: boolean;
   onClick: () => void;
-  icon: React.ReactNode;
   label: string;
   badge?: React.ReactNode;
 }) {
@@ -28,7 +27,6 @@ function TabButton({ active, onClick, icon, label, badge }: {
       onClick={onClick}
       className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 transition-colors ${active ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-50'}`}
     >
-      {icon}
       <span className="text-xs font-semibold">{label}</span>
       {badge}
     </button>
@@ -668,9 +666,15 @@ export default function BookingDetailsModal({
                   </div>
                   {slot.deposit_confirmed !== null && totalPrice !== null && (() => {
                     const depAmt = computeDepositAmount(totalPrice, depositFixed, depositPercent);
-                    return depAmt ? (
-                      <div className="px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-100">
-                        <p className="text-[11px] text-amber-700 font-medium">
+                    if (!depAmt) return null;
+                    const isPaid = slot.deposit_confirmed === true;
+                    const bandeauClass = isPaid
+                      ? 'bg-emerald-50/60 border-emerald-100'
+                      : 'bg-amber-50 border-amber-100';
+                    const textClass = isPaid ? 'text-emerald-800' : 'text-amber-700';
+                    return (
+                      <div className={`px-2.5 py-1.5 rounded-lg border ${bandeauClass}`}>
+                        <p className={`text-[11px] font-medium ${textClass}`}>
                           {depAmt >= totalPrice
                             ? t('depositFullPaymentRecap', { deposit: formatCurrency(depAmt, merchantCountry, locale) })
                             : t('depositRecap', { deposit: formatCurrency(depAmt, merchantCountry, locale), remaining: formatCurrency(totalPrice - depAmt, merchantCountry, locale) })}
@@ -685,9 +689,25 @@ export default function BookingDetailsModal({
                             )}
                           </div>
                         )}
-                        {slot.deposit_confirmed === true && <span className="inline-block mt-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">{t('depositConfirmed')}</span>}
+                        {isPaid && (
+                          <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-0.5">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                              <Check className="w-2.5 h-2.5" />
+                              {t('depositConfirmed')}
+                            </span>
+                            {onCancelDeposit && (
+                              <button
+                                type="button"
+                                onClick={() => { onCancelDeposit(slot); onClose(); }}
+                                className="text-[10px] font-medium text-gray-400 hover:text-orange-600 underline-offset-2 hover:underline transition-colors"
+                              >
+                                {t('cancelDeposit')}
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    ) : null;
+                    );
                   })()}
                 </div>
               )}
@@ -697,18 +717,18 @@ export default function BookingDetailsModal({
 
           {/* Overlap warning */}
           {overlap && (
-            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200">
+            <div className="p-3 rounded-xl bg-orange-50 border border-orange-200">
               <div className="flex items-start gap-2 mb-2">
-                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-800 font-medium">
+                <AlertTriangle className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-orange-800 font-medium">
                   {t('overlapWarning', { endTime: overlap.endTime, nextTime: formatTime(overlap.nextSlot.start_time, locale) })}
                 </p>
               </div>
-              <div className="flex gap-2 ml-6">
-                <button onClick={() => onShiftSlot(overlap.nextSlot.id, overlap.suggestedTime)} disabled={saving} className="px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-colors disabled:opacity-50">
+              <div className="flex flex-wrap gap-2 ml-6">
+                <button onClick={() => onShiftSlot(overlap.nextSlot.id, overlap.suggestedTime)} disabled={saving} className="px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50">
                   {t('shiftNextSlot', { newTime: formatTime(overlap.suggestedTime, locale) })}
                 </button>
-                <button onClick={() => onDelete(overlap.nextSlot.id)} disabled={saving} className="px-3 py-1.5 rounded-lg bg-red-100 text-red-600 text-xs font-semibold hover:bg-red-200 transition-colors disabled:opacity-50">
+                <button onClick={() => onDelete(overlap.nextSlot.id)} disabled={saving} className="px-3 py-1.5 rounded-lg bg-white text-orange-700 border border-orange-200 text-xs font-semibold hover:bg-orange-100 transition-colors disabled:opacity-50">
                   {t('deleteNextSlot')}
                 </button>
               </div>
@@ -721,7 +741,6 @@ export default function BookingDetailsModal({
               <TabButton
                 active={activeTab === 'photos'}
                 onClick={() => setActiveTab(prev => prev === 'photos' ? null : 'photos')}
-                icon={<Camera className="w-3.5 h-3.5" />}
                 label={t('photosSection')}
                 badge={(photoSuccess || resultPhotoSuccess) ? (
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
@@ -732,16 +751,14 @@ export default function BookingDetailsModal({
               <TabButton
                 active={activeTab === 'notes'}
                 onClick={() => setActiveTab(prev => prev === 'notes' ? null : 'notes')}
-                icon={<StickyNote className="w-3.5 h-3.5" />}
-                label={t('notesLabel')}
+                label={t('notesTab')}
                 badge={draft.notes?.trim() ? <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" /> : null}
               />
               {draft.customerId && (
                 <TabButton
                   active={activeTab === 'history'}
                   onClick={() => setActiveTab(prev => prev === 'history' ? null : 'history')}
-                  icon={<History className="w-3.5 h-3.5" />}
-                  label={t('clientHistory')}
+                  label={t('historyTab')}
                 />
               )}
             </div>
@@ -895,17 +912,6 @@ export default function BookingDetailsModal({
                   {t('confirmDeposit')}
                 </button>
               </div>
-            </div>
-          )}
-          {slot.deposit_confirmed === true && onCancelDeposit && (
-            <div className="flex justify-center">
-              <button
-                onClick={() => { onCancelDeposit(slot); onClose(); }}
-                className="flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-orange-50 text-orange-600 text-xs font-semibold hover:bg-orange-100 transition-colors"
-              >
-                <X className="w-3.5 h-3.5" />
-                {t('cancelDeposit')}
-              </button>
             </div>
           )}
           {slot.deposit_confirmed !== false && (

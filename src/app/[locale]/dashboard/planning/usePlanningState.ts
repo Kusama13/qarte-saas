@@ -357,6 +357,7 @@ export function usePlanningState() {
 
   const handleDeleteSlot = async (slotId: string) => {
     if (!merchant) return;
+    const wasBlock = slots.find(s => s.id === slotId)?.client_name === '__blocked__';
     let ok = false;
     try {
       const res = await fetch('/api/planning', {
@@ -369,13 +370,17 @@ export function usePlanningState() {
       invalidateUpcoming();
     } catch { /* */ }
     setModalState({ type: 'closed' });
-    if (ok) addToast(t('toastSlotDeleted'), 'info');
+    if (ok) addToast(t(wasBlock ? 'toastBlockDeleted' : 'toastSlotDeleted'), 'info');
   };
 
   const handleBulkDeleteSlots = async (slotIds: string[]) => {
     if (!merchant || slotIds.length === 0) return;
     setSaving(true);
     const count = slotIds.length;
+    const targeted = slots.filter(s => slotIds.includes(s.id));
+    const blockCount = targeted.filter(s => s.client_name === '__blocked__').length;
+    const allBlocks = blockCount === count;
+    const allSlots = blockCount === 0;
     let ok = false;
     try {
       // Batch by 200 (API limit)
@@ -393,7 +398,14 @@ export function usePlanningState() {
     } catch { /* */ }
     setSaving(false);
     setModalState({ type: 'closed' });
-    if (ok) addToast(t(count > 1 ? 'toastSlotsDeleted' : 'toastSlotDeleted', { count }), 'info');
+    if (ok) {
+      const key = allBlocks
+        ? (count > 1 ? 'toastBlocksDeleted' : 'toastBlockDeleted')
+        : allSlots
+          ? (count > 1 ? 'toastSlotsDeleted' : 'toastSlotDeleted')
+          : 'toastMixedDeleted';
+      addToast(t(key, { count }), 'info');
+    }
   };
 
   const handleMoveSlot = async (slotId: string, newTime: string, newDate?: string, force?: boolean, sendSms?: boolean): Promise<{ success: boolean; error?: string }> => {
