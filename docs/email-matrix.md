@@ -7,7 +7,7 @@
 
 ## Plan v2 trial emails+SMS — STATUT 2026-04-19
 
-> **Implémentation livrée** (non commit poussé). Voir [`docs/email-sms-trial-plan.md`](./email-sms-trial-plan.md) pour détails.
+> **Implémentation livrée** — détails ci-dessous.
 
 ### ✅ Livré
 

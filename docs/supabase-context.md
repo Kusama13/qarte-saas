@@ -892,7 +892,7 @@ Index partiel : `idx_merchants_sms_marketing_eligible ON (subscription_status, m
 
 SMS marketing trial envoyés au merchant (Qarte → merchant). **Distinct de `sms_logs`** qui tracke merchant → clients.
 
-Voir [docs/email-sms-trial-plan.md](./email-sms-trial-plan.md) §5 pour la stratégie.
+Voir [`docs/email-matrix.md`](./email-matrix.md) section "Plan v2 trial emails+SMS" pour la stratégie.
 
 | Colonne | Type | Default | Contrainte |
 |---------|------|---------|------------|
