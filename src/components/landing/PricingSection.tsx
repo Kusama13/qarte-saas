@@ -8,6 +8,7 @@ import { ttEvents } from '@/components/analytics/TikTokPixel';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { Check, Flower2, Star } from 'lucide-react';
+import { PLAN_PRICES } from '@/lib/landing-pricing';
 
 type Billing = 'monthly' | 'annual';
 
@@ -18,9 +19,7 @@ interface Feature {
 
 const PLANS = {
   fidelity: {
-    monthly: 19,
-    annual: 190,
-    monthlyEquiv: 16,
+    ...PLAN_PRICES.fidelity,
     features: [
       { key: 'fidelityFeature1', highlighted: true },
       { key: 'fidelityFeature2', highlighted: true },
@@ -31,9 +30,7 @@ const PLANS = {
     ] as Feature[],
   },
   all_in: {
-    monthly: 24,
-    annual: 240,
-    monthlyEquiv: 20,
+    ...PLAN_PRICES.all_in,
     features: [
       { key: 'allInFeature1', highlighted: true },
       { key: 'allInFeature2', highlighted: true },

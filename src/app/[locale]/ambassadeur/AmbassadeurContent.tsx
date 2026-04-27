@@ -21,9 +21,12 @@ import {
   Loader2,
   CheckCircle,
 } from 'lucide-react';
+import { PLAN_PRICES, AMBASSADOR_COMMISSION, formatCommission } from '@/lib/landing-pricing';
 
-const PRICE_PER_MONTH = 24;
-const COMMISSION_RATE = 0.20;
+const PRICE_MIN = PLAN_PRICES.fidelity.monthly;
+const PRICE_MAX = PLAN_PRICES.all_in.monthly;
+const COMMISSION_MIN = AMBASSADOR_COMMISSION.fidelity;
+const COMMISSION_MAX = AMBASSADOR_COMMISSION.all_in;
 
 const CTA_CLASS = 'group relative inline-flex items-center justify-center gap-2 px-10 py-5 bg-gradient-to-r from-indigo-600/90 to-violet-600/90 backdrop-blur-md text-white font-bold text-base sm:text-lg rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] border border-white/20';
 const INPUT_CLASS = 'w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 bg-white';
@@ -70,7 +73,8 @@ function AmbassadeurForm() {
     phone: '', profile_type: '', message: '', requested_slug: '',
   });
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setFormError('');
     if (!form.first_name.trim() || !form.last_name.trim() || !form.email.trim() || !form.profile_type || form.message.trim().length < 20) {
       setFormError(t('errorValidation'));
@@ -118,7 +122,7 @@ function AmbassadeurForm() {
   return (
     <div className="relative group">
       <div className="absolute -inset-4 bg-gradient-to-br from-indigo-200/40 via-violet-200/30 to-emerald-200/40 rounded-[3rem] blur-2xl opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
-      <div className="relative bg-white/70 backdrop-blur-xl border border-white/80 rounded-3xl shadow-xl shadow-indigo-100/30 p-6 md:p-10">
+      <form onSubmit={handleSubmit} className="relative bg-white/70 backdrop-blur-xl border border-white/80 rounded-3xl shadow-xl shadow-indigo-100/30 p-6 md:p-10">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -229,7 +233,7 @@ function AmbassadeurForm() {
           )}
 
           <button
-            onClick={handleSubmit}
+            type="submit"
             disabled={submitting}
             className={`${CTA_CLASS} w-full justify-center disabled:opacity-50`}
           >
@@ -244,7 +248,7 @@ function AmbassadeurForm() {
             <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
@@ -252,8 +256,10 @@ function AmbassadeurForm() {
 function EarningsSimulator() {
   const t = useTranslations('ambassador');
   const [referrals, setReferrals] = useState(5);
-  const monthly = Math.round(referrals * PRICE_PER_MONTH * COMMISSION_RATE);
-  const yearly = monthly * 12;
+  const monthlyMin = Math.round(referrals * COMMISSION_MIN);
+  const monthlyMax = Math.round(referrals * COMMISSION_MAX);
+  const yearlyMin = monthlyMin * 12;
+  const yearlyMax = monthlyMax * 12;
 
   return (
     <div className="bg-white/70 backdrop-blur-xl border border-white/80 rounded-3xl shadow-xl shadow-indigo-100/30 p-6 md:p-10">
@@ -263,11 +269,12 @@ function EarningsSimulator() {
       </div>
 
       <div className="max-w-md mx-auto mb-8">
-        <label className="block text-sm font-semibold text-gray-700 mb-3">
+        <label htmlFor="amb-referrals" className="block text-sm font-semibold text-gray-700 mb-3">
           {t('simulatorLabel')}
         </label>
         <div className="flex items-center gap-4">
           <input
+            id="amb-referrals"
             type="range"
             min={1}
             max={50}
@@ -282,15 +289,19 @@ function EarningsSimulator() {
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 rounded-2xl p-5 text-center">
           <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-1">{t('simulatorMonthly')}</p>
-          <p className="text-3xl md:text-4xl font-black text-gray-900">{monthly}&euro;</p>
+          <p className="text-2xl md:text-3xl font-black text-gray-900 tabular-nums">{monthlyMin}–{monthlyMax}&euro;</p>
           <p className="text-xs text-gray-400 mt-1">{t('simulatorPerMonth')}</p>
         </div>
         <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-5 text-center">
           <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">{t('simulatorYearly')}</p>
-          <p className="text-3xl md:text-4xl font-black text-gray-900">{yearly}&euro;</p>
+          <p className="text-2xl md:text-3xl font-black text-gray-900 tabular-nums">{yearlyMin}–{yearlyMax}&euro;</p>
           <p className="text-xs text-gray-400 mt-1">{t('simulatorPerYear')}</p>
         </div>
       </div>
+
+      <p className="text-[11px] text-gray-400 text-center mt-4 max-w-sm mx-auto leading-relaxed">
+        {t('simulatorRangeNote')}
+      </p>
     </div>
   );
 }
@@ -508,11 +519,11 @@ export default function AmbassadeurContent() {
                 <p className="text-indigo-200 text-sm font-medium">{t('stat1')}</p>
               </div>
               <div>
-                <p className="text-5xl md:text-6xl font-black text-white mb-1">{PRICE_PER_MONTH}&euro;</p>
+                <p className="text-4xl md:text-5xl font-black text-white mb-1 tabular-nums">{PRICE_MIN}–{PRICE_MAX}&euro;</p>
                 <p className="text-indigo-200 text-sm font-medium">{t('stat2')}</p>
               </div>
               <div>
-                <p className="text-5xl md:text-6xl font-black text-white mb-1">{(PRICE_PER_MONTH * COMMISSION_RATE).toFixed(2).replace('.', ',')}&euro;</p>
+                <p className="text-4xl md:text-5xl font-black text-white mb-1 tabular-nums">{formatCommission(COMMISSION_MIN)}–{formatCommission(COMMISSION_MAX)}&euro;</p>
                 <p className="text-indigo-200 text-sm font-medium">{t('stat3')}</p>
               </div>
             </div>
