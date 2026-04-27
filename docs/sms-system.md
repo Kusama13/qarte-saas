@@ -112,6 +112,17 @@ Validité : valable pendant l'abonnement actif. Perdus à la résiliation. Strip
 
 **Règle simple** : SMS Partner = transactionnel FR/BE uniquement. OVH = tout le reste (marketing global + transactionnel CH + tout transactionnel si feature flag à `false`).
 
+#### Canal séparé : SMS marketing aux merchants en essai (Qarte → prospects)
+
+Catégorie distincte des SMS client-facing ci-dessus, **non concernée par le routage SMS Partner** :
+
+- **Cible** : le merchant prospect Qarte pendant son essai (pas son client final)
+- **Pipeline** : [`src/lib/sms-trial-marketing.ts`](../src/lib/sms-trial-marketing.ts) → import direct de `sendSms` depuis `./ovh-sms` → **toujours OVH**, tous pays
+- **Table de log** : `merchant_marketing_sms_logs` (séparée de `sms_logs`, pas de colonne `provider`)
+- **Quota** : **n'impacte pas le quota merchant** — coût absorbé par Qarte (logué dans `cost_euro` pour billing interne uniquement)
+- **Cron** : [`/api/cron/sms-trial-marketing/route.ts`](../src/app/api/cron/sms-trial-marketing/route.ts)
+- **Pourquoi OVH et pas SMS Partner** : c'est du marketing par nature (Qarte → prospects), donc cohérent avec la règle générale "tout marketing → OVH". Pas de raison d'étendre le scope SMS Partner ici.
+
 #### Mécanique d'implémentation
 
 - **Détection pays** : `detectPhoneCountry()` dans [`utils.ts`](../src/lib/utils.ts) lit le préfixe E.164 du `client_phone` stocké (`33` → FR, `32` → BE, `41` → CH). Default `FR` si préfixe inconnu.

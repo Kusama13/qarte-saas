@@ -26,9 +26,9 @@ export default function MarketingPushPage() {
 
   const initialTab = ((): 'push' | 'sms' | 'automations' => {
     const t = searchParams.get('tab');
-    if (t === 'automations') return 'automations';
+    if (t === 'push') return 'push';
     if (t === 'sms') return 'sms';
-    return 'push';
+    return 'automations';
   })();
   const [activeTab, setActiveTab] = useState<'push' | 'sms' | 'automations'>(initialTab);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
@@ -78,15 +78,15 @@ export default function MarketingPushPage() {
       {/* Tab Bar */}
       <div className="flex gap-1.5 sm:gap-2 mb-4">
         <button
-          onClick={() => setActiveTab('push')}
+          onClick={() => setActiveTab('automations')}
           className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-2 rounded-xl font-bold text-[13px] sm:text-sm transition-all ${
-            activeTab === 'push'
+            activeTab === 'automations'
               ? 'bg-slate-900 text-white'
               : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
           }`}
         >
-          <Send className="w-4 h-4 shrink-0" />
-          <span className="truncate">{t('tabPush')}</span>
+          <Flame className="w-4 h-4 shrink-0" />
+          <span className="truncate"><span className="sm:hidden">Auto SMS</span><span className="hidden sm:inline">{t('tabAutomations')}</span></span>
         </button>
         <button
           onClick={() => setActiveTab('sms')}
@@ -100,15 +100,15 @@ export default function MarketingPushPage() {
           <span className="truncate">{t('tabSms')}</span>
         </button>
         <button
-          onClick={() => setActiveTab('automations')}
+          onClick={() => setActiveTab('push')}
           className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-2 rounded-xl font-bold text-[13px] sm:text-sm transition-all ${
-            activeTab === 'automations'
+            activeTab === 'push'
               ? 'bg-slate-900 text-white'
               : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
           }`}
         >
-          <Flame className="w-4 h-4 shrink-0" />
-          <span className="truncate"><span className="sm:hidden">Auto SMS</span><span className="hidden sm:inline">{t('tabAutomations')}</span></span>
+          <Send className="w-4 h-4 shrink-0" />
+          <span className="truncate">{t('tabPush')}</span>
         </button>
       </div>
 
