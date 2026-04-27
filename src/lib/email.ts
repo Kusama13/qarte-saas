@@ -415,6 +415,98 @@ export async function sendNewMerchantNotification(
   }
 }
 
+// Notification interne nouvelle campagne SMS soumise (always FR — internal)
+export async function sendNewSmsCampaignNotification(
+  shopName: string,
+  recipientCount: number,
+  smsCount: number,
+  costCents: number,
+  body: string,
+  scheduledAt: string,
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const costEur = (costCents / 100).toFixed(2);
+    const scheduledFr = new Date(scheduledAt).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });
+    const htmlContent = `
+      <h2>Nouvelle campagne SMS soumise pour validation</h2>
+      <p><strong>Commerce :</strong> ${esc(shopName)}</p>
+      <p><strong>Destinataires :</strong> ${recipientCount}</p>
+      <p><strong>SMS par destinataire :</strong> ${smsCount}</p>
+      <p><strong>Coût total :</strong> ${costEur} €</p>
+      <p><strong>Programmée pour :</strong> ${esc(scheduledFr)}</p>
+      <p><strong>Message :</strong></p>
+      <blockquote style="border-left: 3px solid #ccc; padding-left: 12px; margin: 8px 0; white-space: pre-wrap;">${esc(body)}</blockquote>
+    `;
+    const textContent = `Nouvelle campagne SMS soumise pour validation\n\nCommerce : ${shopName}\nDestinataires : ${recipientCount}\nSMS par destinataire : ${smsCount}\nCoût total : ${costEur} €\nProgrammée pour : ${scheduledFr}\n\nMessage :\n${body}`;
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to: 'sales@getqarte.com',
+      subject: `Nouvelle campagne SMS à valider : ${shopName}`,
+      html: htmlContent,
+      text: textContent,
+    });
+
+    if (error) {
+      logger.error('Failed to send new SMS campaign notification', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`New SMS campaign notification sent for ${shopName}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending new SMS campaign notification', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Notification interne nouvel achat de pack SMS (always FR — internal)
+export async function sendNewSmsPackPurchaseNotification(
+  shopName: string,
+  packSize: number,
+  amountTtc: string,
+  merchantEmail: string,
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const htmlContent = `
+      <h2>Nouvel achat de pack SMS</h2>
+      <p><strong>Commerce :</strong> ${esc(shopName)}</p>
+      <p><strong>Email :</strong> ${esc(merchantEmail)}</p>
+      <p><strong>Pack :</strong> ${packSize} SMS</p>
+      <p><strong>Montant TTC :</strong> ${esc(amountTtc)} €</p>
+      <p><strong>Date :</strong> ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}</p>
+    `;
+    const textContent = `Nouvel achat de pack SMS\n\nCommerce : ${shopName}\nEmail : ${merchantEmail}\nPack : ${packSize} SMS\nMontant TTC : ${amountTtc} €\nDate : ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`;
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to: 'sales@getqarte.com',
+      subject: `Achat pack SMS : ${shopName} (${packSize} SMS)`,
+      html: htmlContent,
+      text: textContent,
+    });
+
+    if (error) {
+      logger.error('Failed to send SMS pack purchase notification', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`SMS pack purchase notification sent for ${shopName}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending SMS pack purchase notification', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
 export async function sendSubscriptionConfirmedEmail(
   to: string,
   shopName: string,

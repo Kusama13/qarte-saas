@@ -8,6 +8,7 @@ import { SMS_UNIT_COST_CENTS } from '@/lib/sms';
 import { isLegalSendTime, nextLegalSlot } from '@/lib/sms-compliance';
 import { getPlanFeatures } from '@/lib/plan-tiers';
 import { triggerUpgradeAllInEmail } from '@/lib/upgrade-triggers';
+import { sendNewSmsCampaignNotification } from '@/lib/email';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, country, subscription_status, plan_tier')
+      .select('id, country, subscription_status, plan_tier, shop_name')
       .eq('id', merchantId)
       .eq('user_id', user.id)
       .single();
@@ -99,6 +100,15 @@ export async function POST(request: NextRequest) {
       logger.error('SMS campaign insert error:', insertError);
       return NextResponse.json({ error: 'Erreur à la création de la campagne' }, { status: 500 });
     }
+
+    void sendNewSmsCampaignNotification(
+      (merchant.shop_name as string) || 'Commerce',
+      resolved.count,
+      smsCount,
+      costCentsInt,
+      validation.finalBody,
+      effectiveAt.toISOString(),
+    ).catch((err) => logger.error('Failed to send SMS campaign admin notification', err));
 
     return NextResponse.json({
       campaignId: campaign.id,

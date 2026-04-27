@@ -3,7 +3,7 @@ import { stripe, PLAN, PLAN_ANNUAL, PLAN_FIDELITY, PLAN_FIDELITY_ANNUAL, PLAN_LE
 import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 import logger from '@/lib/logger';
-import { sendSubscriptionConfirmedEmail, sendPaymentFailedEmail, sendSubscriptionCanceledEmail, sendSubscriptionReactivatedEmail, sendSmsPackPurchaseEmail } from '@/lib/email';
+import { sendSubscriptionConfirmedEmail, sendPaymentFailedEmail, sendSubscriptionCanceledEmail, sendSubscriptionReactivatedEmail, sendSmsPackPurchaseEmail, sendNewSmsPackPurchaseNotification } from '@/lib/email';
 import type { EmailLocale } from '@/emails/translations';
 import { sendCapiPurchaseEvent } from '@/lib/facebook-capi';
 import { toBCP47, getCurrencyForCountry } from '@/lib/utils';
@@ -141,6 +141,13 @@ export async function POST(request: Request) {
             }).catch((err) => {
               logger.error('Failed to send SMS pack purchase email', err);
             });
+
+            void sendNewSmsPackPurchaseNotification(
+              (merchantInfo.shop_name as string) || 'Commerce',
+              purchase.pack_size,
+              amountTtc,
+              email,
+            ).catch((err) => logger.error('Failed to send SMS pack purchase admin notification', err));
           }
         }
         break;
