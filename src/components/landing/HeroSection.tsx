@@ -117,10 +117,12 @@ export function HeroSection() {
           <div className="relative">
             <div className="absolute -inset-x-20 -inset-y-10 bg-indigo-100/50 blur-[100px] rounded-full pointer-events-none" />
             <h1 className="relative text-[1.95rem] sm:text-[2.4rem] md:text-5xl lg:text-[3.6rem] [hyphens:none] font-bold text-gray-900 leading-tight lg:leading-[1.15]">
-              {t('titlePart1').split('. ').map((line, i, arr) => (
-                <span key={i} className="block">{line}{i < arr.length - 1 ? '.' : ''}</span>
+              {t('titlePart1').split(/\n+|(?<=[.?!])\s+/).map((line, i) => (
+                <span key={i} className="block">{line}</span>
               ))}
-              <span className="block text-rose-500">{t('titlePart2').replace('-', '‑')}</span>
+              {t('titlePart2').split(/\n+|(?<=[.?!])\s+/).map((line, i) => (
+                <span key={i} className="block text-rose-500">{line.replace('-', '‑')}</span>
+              ))}
             </h1>
           </div>
 

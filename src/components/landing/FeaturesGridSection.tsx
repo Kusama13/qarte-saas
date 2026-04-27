@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { Link2, ShieldCheck, Heart, MessageSquare, Star, Smartphone } from 'lucide-react';
+import { ShieldCheck, Heart, MessageSquare } from 'lucide-react';
 
 const EASE: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
@@ -10,12 +10,9 @@ export function FeaturesGridSection() {
   const t = useTranslations('featuresGrid');
 
   const features = [
-    { Icon: Link2,         titleKey: 'bookingTitle',   descKey: 'bookingDesc',   bg: 'bg-indigo-50',  border: 'border-indigo-100',  text: 'text-indigo-600'  },
-    { Icon: ShieldCheck,   titleKey: 'remindersTitle', descKey: 'remindersDesc', bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-600' },
-    { Icon: Heart,         titleKey: 'dashboardTitle', descKey: 'dashboardDesc', bg: 'bg-rose-50',    border: 'border-rose-100',    text: 'text-rose-500'    },
-    { Icon: MessageSquare, titleKey: 'policyTitle',    descKey: 'policyDesc',    bg: 'bg-sky-50',     border: 'border-sky-100',     text: 'text-sky-600'     },
-    { Icon: Star,          titleKey: 'contestTitle',   descKey: 'contestDesc',   bg: 'bg-amber-50',   border: 'border-amber-100',   text: 'text-amber-500'   },
-    { Icon: Smartphone,    titleKey: 'reviewsTitle',   descKey: 'reviewsDesc',   bg: 'bg-violet-50',  border: 'border-violet-100',  text: 'text-violet-600'  },
+    { Icon: MessageSquare, titleKey: 'policyTitle',    descKey: 'policyDesc',    competitorKey: 'policyCompetitor',    bg: 'bg-sky-50',     border: 'border-sky-100',     text: 'text-sky-600'     },
+    { Icon: ShieldCheck,   titleKey: 'remindersTitle', descKey: 'remindersDesc', competitorKey: 'remindersCompetitor', bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-600' },
+    { Icon: Heart,         titleKey: 'dashboardTitle', descKey: 'dashboardDesc', competitorKey: 'dashboardCompetitor', bg: 'bg-rose-50',    border: 'border-rose-100',    text: 'text-rose-500'    },
   ] as const;
 
   return (
@@ -43,8 +40,8 @@ export function FeaturesGridSection() {
           <p className="text-base md:text-lg text-gray-500 leading-relaxed max-w-xl mx-auto">{t('subtitle')}</p>
         </motion.div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
-          {features.map(({ Icon, titleKey, descKey, bg, border, text }, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5">
+          {features.map(({ Icon, titleKey, descKey, competitorKey, bg, border, text }, i) => (
             <motion.div
               key={titleKey}
               initial={{ opacity: 0, y: 20 }}
@@ -56,12 +53,15 @@ export function FeaturesGridSection() {
               <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl ${bg} border ${border} flex items-center justify-center shrink-0 mt-0.5`}>
                 <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${text}`} strokeWidth={2} />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <h3 className="text-base sm:text-[22px] font-semibold text-gray-900 mb-1 sm:mb-1.5 leading-snug">
                   {t(titleKey)}
                 </h3>
-                <p className="text-[13px] sm:text-[18px] text-gray-500 leading-snug sm:leading-relaxed line-clamp-3">
+                <p className="text-[13px] sm:text-[17px] text-gray-500 leading-snug sm:leading-relaxed">
                   {t(descKey)}
+                </p>
+                <p className="mt-2 text-[11px] sm:text-xs text-gray-400 italic leading-snug">
+                  {t(competitorKey)}
                 </p>
               </div>
             </motion.div>
