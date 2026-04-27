@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { motion } from 'framer-motion';
-import { formatDateTime, formatCurrency, formatTime } from '@/lib/utils';
+import { formatDateTime, formatCurrency, formatTime, customServiceDisplayName } from '@/lib/utils';
 import type { Merchant, Visit, VisitStatus } from '@/types';
 
 interface PointAdjustment {
@@ -52,6 +52,8 @@ interface AppointmentItem {
   id: string;
   slot_date: string;
   start_time: string;
+  custom_service_name?: string | null;
+  custom_service_duration?: number | null;
   planning_slot_services?: Array<{ service_id: string; service: { name: string } | null }>;
 }
 
@@ -144,7 +146,10 @@ export default function HistorySection({
       reward_description: undefined as string | undefined,
       source: null as string | null,
       amount_spent: null as number | null,
-      serviceNames: (a.planning_slot_services || []).map(s => s.service?.name).filter(Boolean) as string[],
+      serviceNames: [
+        ...(a.planning_slot_services || []).map(s => s.service?.name).filter(Boolean) as string[],
+        ...(a.custom_service_duration ? [customServiceDisplayName(a)] : []),
+      ],
     })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 30),
   [visits, adjustments, redemptions, usedVouchers, appointments]);

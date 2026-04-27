@@ -105,16 +105,19 @@ export function colorBorderStyle(color?: string): CSSProperties | undefined {
 
 export { computeDepositAmount } from '@/lib/deposit';
 
-/** Get the dominant color for a slot (first service's color) */
+export { customServiceDisplayName, CUSTOM_SERVICE_DEFAULT_NAME } from '@/lib/utils';
+
+/** Get the dominant color for a slot (first catalog service's color, fallback custom_service_color) */
 export function getSlotColor(
-  slot: { planning_slot_services?: { service_id: string }[]; service_id?: string | null },
+  slot: { planning_slot_services?: { service_id: string }[]; service_id?: string | null; custom_service_color?: string | null },
   colorMap: Map<string, string>,
 ): string | undefined {
   const ids = getSlotServiceIds(slot);
-  return ids.length > 0 ? colorMap.get(ids[0]) : undefined;
+  if (ids.length > 0) return colorMap.get(ids[0]);
+  return slot.custom_service_color || undefined;
 }
 
-/** Sum of service prices for confirmed bookings (ignores blocked + available slots). */
+/** Sum of service prices for confirmed bookings (ignores blocked + available slots). Inclut prestation perso. */
 export function computeDayRevenue(
   daySlots: PlanningSlot[],
   serviceMap: Map<string, { price: number }>,
@@ -126,6 +129,7 @@ export function computeDayRevenue(
       const svc = serviceMap.get(id);
       if (svc?.price) total += svc.price;
     }
+    if (slot.custom_service_price) total += slot.custom_service_price;
   }
   return total;
 }

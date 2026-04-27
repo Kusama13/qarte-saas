@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { CalendarDays, Hourglass, Check, Clock, X, Loader2, CalendarClock } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatTime, getTodayForCountry } from '@/lib/utils';
+import { formatTime, getTodayForCountry, customServiceDisplayName } from '@/lib/utils';
 import type { MerchantCountry } from '@/types';
 
 interface AppointmentSlot {
@@ -14,6 +14,8 @@ interface AppointmentSlot {
   total_duration_minutes?: number | null;
   deposit_confirmed?: boolean | null;
   booked_online?: boolean;
+  custom_service_name?: string | null;
+  custom_service_duration?: number | null;
   planning_slot_services: Array<{
     service_id: string;
     service: { name: string; duration?: number | null } | null;
@@ -217,7 +219,10 @@ export default function UpcomingAppointmentsSection({
 
   const showFooterContact = !allowCancel && !allowReschedule;
   const modalServices = confirmCancelSlot
-    ? confirmCancelSlot.planning_slot_services.map(s => s.service?.name).filter((n): n is string => !!n)
+    ? [
+        ...confirmCancelSlot.planning_slot_services.map(s => s.service?.name).filter((n): n is string => !!n),
+        ...(confirmCancelSlot.custom_service_duration ? [customServiceDisplayName(confirmCancelSlot)] : []),
+      ]
     : [];
 
   // Reschedule: available dates and times for selected date
@@ -255,9 +260,10 @@ export default function UpcomingAppointmentsSection({
         <div className="space-y-2 mb-2.5">
           <AnimatePresence mode="popLayout">
             {appointments.map((appt) => {
-              const serviceNames = appt.planning_slot_services
-                .map(s => s.service?.name)
-                .filter((n): n is string => !!n);
+              const serviceNames = [
+                ...appt.planning_slot_services.map(s => s.service?.name).filter((n): n is string => !!n),
+                ...(appt.custom_service_duration ? [customServiceDisplayName(appt)] : []),
+              ];
               const showCancel = allowCancel && canCancelAppointment(appt);
               const showReschedule = allowReschedule && canRescheduleAppointment(appt);
               const deadlinePassed = (allowCancel || allowReschedule) && !showCancel && !showReschedule;

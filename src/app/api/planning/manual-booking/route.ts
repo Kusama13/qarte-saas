@@ -16,6 +16,10 @@ const schema = z.object({
   phone_country: z.string().optional(),
   customer_id: z.string().uuid().optional(),
   service_ids: z.array(z.string().uuid()).optional(),
+  custom_service_name: z.string().max(100).nullable().optional(),
+  custom_service_duration: z.number().int().positive().max(720).nullable().optional(),
+  custom_service_price: z.number().min(0).max(100_000).nullable().optional(),
+  custom_service_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable().optional(),
   notes: z.string().max(500).optional(),
   force: z.boolean().optional(),
   send_sms: z.boolean().optional(),
@@ -41,7 +45,7 @@ export async function POST(request: NextRequest) {
     const parsed = schema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
 
-    const { merchantId, date, start_time, total_duration_minutes, client_name, client_phone, phone_country, customer_id, service_ids, notes, force, send_sms } = parsed.data;
+    const { merchantId, date, start_time, total_duration_minutes, client_name, client_phone, phone_country, customer_id, service_ids, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, notes, force, send_sms } = parsed.data;
 
     const { data: m } = await supabase.from('merchants').select('id, booking_mode, buffer_minutes, country, shop_name, locale, subscription_status').eq('id', merchantId).eq('user_id', user.id).single();
     if (!m) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
@@ -87,7 +91,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Insert slot
     const { data: slot, error: insertError } = await supabaseAdmin
       .from('merchant_planning_slots')
       .insert({
@@ -99,6 +102,10 @@ export async function POST(request: NextRequest) {
         customer_id: customer_id || null,
         notes: notes || null,
         total_duration_minutes,
+        custom_service_name: custom_service_name?.trim() || null,
+        custom_service_duration: custom_service_duration ?? null,
+        custom_service_price: custom_service_price ?? null,
+        custom_service_color: custom_service_color ?? null,
       })
       .select('id')
       .single();

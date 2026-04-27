@@ -16,6 +16,10 @@ type ExpiredSlot = {
   total_duration_minutes: number | null;
   notes: string | null;
   deposit_deadline_at: string | null;
+  custom_service_name: string | null;
+  custom_service_duration: number | null;
+  custom_service_price: number | null;
+  custom_service_color: string | null;
   planning_slot_services?: { service_id: string }[] | null;
 };
 
@@ -37,6 +41,10 @@ const WIPE_FIELDS = {
   customer_id: null,
   deposit_confirmed: null,
   deposit_deadline_at: null,
+  custom_service_name: null,
+  custom_service_duration: null,
+  custom_service_price: null,
+  custom_service_color: null,
 };
 
 /**
@@ -55,7 +63,7 @@ export async function releaseExpiredDeposits(
 
   const { data: expiredSlots, error: fetchErr } = await supabase
     .from('merchant_planning_slots')
-    .select('id, merchant_id, client_name, client_phone, customer_id, slot_date, start_time, total_duration_minutes, notes, deposit_deadline_at, planning_slot_services(service_id)')
+    .select('id, merchant_id, client_name, client_phone, customer_id, slot_date, start_time, total_duration_minutes, notes, deposit_deadline_at, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, planning_slot_services(service_id)')
     .eq('deposit_confirmed', false)
     .not('deposit_deadline_at', 'is', null)
     .lt('deposit_deadline_at', nowIso)
@@ -112,7 +120,8 @@ export async function releaseExpiredDeposits(
     try {
       const merchant = merchantMap.get(slot.merchant_id);
       const serviceIds = (slot.planning_slot_services || []).map(x => x.service_id);
-      const totalPrice = serviceIds.reduce((sum, id) => sum + Number(serviceMap.get(id)?.price || 0), 0);
+      const catalogPrice = serviceIds.reduce((sum, id) => sum + Number(serviceMap.get(id)?.price || 0), 0);
+      const totalPrice = catalogPrice + Number(slot.custom_service_price || 0);
       const depositAmount = merchant
         ? computeDepositAmount(totalPrice, merchant.deposit_amount, merchant.deposit_percent)
         : null;
@@ -125,6 +134,10 @@ export async function releaseExpiredDeposits(
           client_name: slot.client_name || 'Cliente',
           client_phone: slot.client_phone,
           service_ids: serviceIds,
+          custom_service_name: slot.custom_service_name,
+          custom_service_duration: slot.custom_service_duration,
+          custom_service_price: slot.custom_service_price,
+          custom_service_color: slot.custom_service_color,
           original_slot_date: slot.slot_date,
           original_start_time: slot.start_time,
           total_duration_minutes: slot.total_duration_minutes,

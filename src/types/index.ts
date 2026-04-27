@@ -216,6 +216,10 @@ export interface PlanningSlot {
   total_duration_minutes: number | null;
   attendance_status?: 'pending' | 'attended' | 'no_show' | 'cancelled' | null;
   created_at: string;
+  custom_service_name?: string | null;
+  custom_service_duration?: number | null;
+  custom_service_price?: number | null;
+  custom_service_color?: string | null;
   planning_slot_services?: PlanningSlotService[];
   planning_slot_photos?: PlanningSlotPhoto[];
   planning_slot_result_photos?: PlanningSlotResultPhoto[];
@@ -229,6 +233,10 @@ export interface BookingDepositFailure {
   client_name: string;
   client_phone: string | null;
   service_ids: string[];
+  custom_service_name: string | null;
+  custom_service_duration: number | null;
+  custom_service_price: number | null;
+  custom_service_color: string | null;
   original_slot_date: string;
   original_start_time: string;
   total_duration_minutes: number | null;

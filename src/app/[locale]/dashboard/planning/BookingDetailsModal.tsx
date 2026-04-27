@@ -12,7 +12,8 @@ import type { PlanningSlot, CustomerSearchResult, BookingMode } from '@/types';
 import { formatTime, formatCurrency, toBCP47, getTimezoneForCountry, displayPhoneNumber, detectPhoneCountry } from '@/lib/utils';
 import { downloadIcs } from '@/lib/ics';
 import { compressOfferImage } from '@/lib/image-compression';
-import { timeToMinutes, minutesToTime, roundUp5, formatDuration, getSlotServiceIds, colorBorderStyle, computeDepositAmount } from './utils';
+import { timeToMinutes, minutesToTime, roundUp5, formatDuration, getSlotServiceIds, colorBorderStyle, computeDepositAmount, CUSTOM_SERVICE_DEFAULT_NAME } from './utils';
+import CustomServicePicker from './CustomServicePicker';
 import type { BookingDraft, ServiceWithDuration } from './usePlanningState';
 
 function TabButton({ active, onClick, label, badge }: {
@@ -56,6 +57,10 @@ interface BookingDetailsModalProps {
     client_phone: string | null;
     customer_id: string | null;
     service_ids: string[];
+    custom_service_name?: string | null;
+    custom_service_duration?: number | null;
+    custom_service_price?: number | null;
+    custom_service_color?: string | null;
     notes: string | null;
     send_sms?: boolean;
     send_sms_cancel?: boolean;
@@ -156,14 +161,19 @@ export default function BookingDetailsModal({
 
   const handleAddToCalendar = () => {
     const slotServices = services.filter(s => draft.serviceIds.includes(s.id));
-    const duration = slotServices.reduce((sum, s) => sum + (s.duration || 30), 0) || 60;
-    const serviceNames = slotServices.map(s => s.name).join(', ');
+    let duration = slotServices.reduce((sum, s) => sum + (s.duration || 30), 0);
+    if (draft.customService) duration += draft.customService.duration;
+    if (duration === 0) duration = 60;
+    const names = slotServices.map(s => s.name);
+    if (draft.customService) names.push(draft.customService.name?.trim() || CUSTOM_SERVICE_DEFAULT_NAME);
+    const serviceNames = names.join(', ');
     const title = serviceNames
       ? `${slot.client_name} — ${serviceNames}`
       : (slot.client_name || t('addToCalendar'));
     const descLines: string[] = [];
     if (serviceNames) descLines.push(serviceNames);
-    const total = slotServices.reduce((sum, s) => sum + (s.price || 0), 0);
+    let total = slotServices.reduce((sum, s) => sum + (s.price || 0), 0);
+    if (draft.customService) total += draft.customService.price;
     if (total > 0) descLines.push(formatCurrency(total, merchantCountry, locale));
     if (slot.client_phone) descLines.push(displayPhoneNumber(slot.client_phone, detectPhoneCountry(slot.client_phone)));
     if (slot.notes) descLines.push(slot.notes);
@@ -233,21 +243,28 @@ export default function BookingDetailsModal({
       else hasUnknown = true;
       if (svc?.price) priceTotal += svc.price;
     }
+    if (draft.customService) {
+      durationTotal += draft.customService.duration;
+      priceTotal += draft.customService.price;
+    }
+    const hasAnySelection = draft.serviceIds.length > 0 || !!draft.customService;
     return {
       totalMinutes: { total: durationTotal, hasUnknown },
-      totalPrice: draft.serviceIds.length > 0 && priceTotal > 0 ? priceTotal : null,
+      totalPrice: hasAnySelection && priceTotal > 0 ? priceTotal : null,
     };
-  }, [draft.serviceIds, serviceMap]);
+  }, [draft.serviceIds, draft.customService, serviceMap]);
 
   const durationLabel = useMemo(() => {
-    if (draft.serviceIds.length === 0) return null;
+    const hasAnySelection = draft.serviceIds.length > 0 || !!draft.customService;
+    if (!hasAnySelection) return null;
     if (totalMinutes.total === 0 && totalMinutes.hasUnknown) return t('durationUnknown');
     return t('totalDuration', { duration: formatDuration(totalMinutes.total) });
-  }, [draft.serviceIds.length, totalMinutes, t]);
+  }, [draft.serviceIds.length, draft.customService, totalMinutes, t]);
 
   // Overlap detection — skip filler slots belonging to same booking
   const overlap = useMemo(() => {
-    if (draft.serviceIds.length === 0 || totalMinutes.total === 0) return null;
+    const hasAnySelection = draft.serviceIds.length > 0 || !!draft.customService;
+    if (!hasAnySelection || totalMinutes.total === 0) return null;
     const daySlots = slotsByDate.get(slot.slot_date) || [];
     const slotIndex = daySlots.findIndex(s => s.id === slot.id);
     if (slotIndex === -1) return null;
@@ -272,7 +289,7 @@ export default function BookingDetailsModal({
       return { nextSlot, endTime: minutesToTime(endMins), suggestedTime };
     }
     return null;
-  }, [draft.serviceIds, totalMinutes.total, slotsByDate, slot]);
+  }, [draft.serviceIds, draft.customService, totalMinutes.total, slotsByDate, slot]);
 
   const toggleService = (serviceId: string) => {
     const current = draft.serviceIds;
@@ -288,6 +305,10 @@ export default function BookingDetailsModal({
       client_phone: draft.clientPhone.trim() || null,
       customer_id: draft.customerId,
       service_ids: draft.serviceIds,
+      custom_service_name: draft.customService?.name?.trim() || null,
+      custom_service_duration: draft.customService?.duration ?? null,
+      custom_service_price: draft.customService?.price ?? null,
+      custom_service_color: draft.customService?.color ?? null,
       notes: draft.notes.trim() || null,
       ...(draft.phoneCountry && { phone_country: draft.phoneCountry }),
       ...(sendSms && { send_sms: true }),
@@ -317,8 +338,9 @@ export default function BookingDetailsModal({
       const svc = serviceMap.get(sid);
       if (svc?.duration) { total += svc.duration; hasAny = true; }
     }
+    if (draft.customService) { total += draft.customService.duration; hasAny = true; }
     return hasAny ? total : 30;
-  }, [slot.total_duration_minutes, draft.serviceIds, serviceMap]);
+  }, [slot.total_duration_minutes, draft.serviceIds, draft.customService, serviceMap]);
 
   // Mode créneaux : only show starts where the booking's full duration fits in consecutive empty slots
   const moveDateFreeSlots = useMemo(() => {
@@ -588,7 +610,7 @@ export default function BookingDetailsModal({
           )}
 
           {/* ── Prestations ── */}
-          {services.length > 0 && (() => {
+          {(() => {
             const selected = services.filter(s => draft.serviceIds.includes(s.id));
             const unselected = services.filter(s => !draft.serviceIds.includes(s.id));
             const VISIBLE_UNSELECTED = 4;
@@ -620,18 +642,26 @@ export default function BookingDetailsModal({
               );
             };
 
+            const hasNothing = services.length === 0 && !draft.customService;
+
             return (
             <div>
               <label className="text-xs font-semibold text-gray-600 mb-1.5 block">{t('servicesLabel')}</label>
 
-              {/* Selected services — always visible */}
-              {selected.length > 0 && (
+              {(selected.length > 0 || draft.customService) && (
                 <div className="space-y-1 mb-2">
+                  {draft.customService && (
+                    <CustomServicePicker
+                      value={draft.customService}
+                      onChange={(next) => onDraftChange({ customService: next })}
+                      country={merchantCountry}
+                      locale={locale}
+                    />
+                  )}
                   {selected.map(svc => <ServiceRow key={svc.id} svc={svc} isChecked />)}
                 </div>
               )}
 
-              {/* Unselected services */}
               {unselected.length > 0 && (
                 <div className="space-y-1">
                   {visibleUnselected.map(svc => <ServiceRow key={svc.id} svc={svc} isChecked={false} />)}
@@ -656,6 +686,20 @@ export default function BookingDetailsModal({
                     </button>
                   )}
                 </div>
+              )}
+
+              {!draft.customService && (
+                <CustomServicePicker
+                  value={null}
+                  onChange={(next) => onDraftChange({ customService: next })}
+                  country={merchantCountry}
+                  locale={locale}
+                  hasSiblings={selected.length > 0 || unselected.length > 0}
+                />
+              )}
+
+              {hasNothing && (
+                <p className="text-[11px] text-gray-400 italic mt-1">{t('customServiceEmptyHint')}</p>
               )}
 
               {(durationLabel || totalPrice) && (

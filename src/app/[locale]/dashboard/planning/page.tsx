@@ -12,6 +12,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
 import { PHONE_CONFIG, toBCP47, getCurrencySymbol, formatCurrency, formatPhoneLabel } from '@/lib/utils';
 import { formatDate, getServiceColorMap, colorBorderStyle, getWeekStart, timeToMinutes, minutesToTime, formatDuration, getISOWeekNumber } from './utils';
+import type { CustomServiceDraft } from './usePlanningState';
+import CustomServicePicker from './CustomServicePicker';
 import { handleDownloadStory } from './StoryExport';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
@@ -161,6 +163,7 @@ export default function PlanningDashboard() {
   const [manualDate, setManualDate] = useState('');
   const [manualStartTime, setManualStartTime] = useState('09:00');
   const [manualServiceIds, setManualServiceIds] = useState<string[]>([]);
+  const [manualCustomService, setManualCustomService] = useState<CustomServiceDraft | null>(null);
   const [manualNotes, setManualNotes] = useState('');
   const [manualShowSocial, setManualShowSocial] = useState(false);
   const [manualShowAllServices, setManualShowAllServices] = useState(false);
@@ -173,23 +176,29 @@ export default function PlanningDashboard() {
   const [manualSendSms, setManualSendSms] = useState(false);
   const [manualStep, setManualStep] = useState<1 | 2>(1);
 
-  const manualDuration = useMemo(() => manualServiceIds.reduce((sum, id) => {
-    return sum + (serviceMap.get(id)?.duration ?? 30);
-  }, 0) || 30, [manualServiceIds, serviceMap]);
+  const manualDuration = useMemo(() => {
+    const catalog = manualServiceIds.reduce((sum, id) => sum + (serviceMap.get(id)?.duration ?? 30), 0);
+    const custom = manualCustomService?.duration ?? 0;
+    return (catalog + custom) || 30;
+  }, [manualServiceIds, manualCustomService, serviceMap]);
 
   const manualEndTime = useMemo(() => {
     if (!manualStartTime) return '';
     return minutesToTime(timeToMinutes(manualStartTime) + manualDuration);
   }, [manualStartTime, manualDuration]);
 
-  const manualTotalPrice = useMemo(() => manualServiceIds.reduce((sum, id) => {
-    return sum + (serviceMap.get(id)?.price || 0);
-  }, 0), [manualServiceIds, serviceMap]);
+  const manualTotalPrice = useMemo(() => {
+    const catalog = manualServiceIds.reduce((sum, id) => sum + (serviceMap.get(id)?.price || 0), 0);
+    const custom = manualCustomService?.price ?? 0;
+    return catalog + custom;
+  }, [manualServiceIds, manualCustomService, serviceMap]);
+
 
   const openManualBookingModal = (date: string) => {
     setManualDate(date);
     setManualStartTime('09:00');
     setManualServiceIds([]);
+    setManualCustomService(null);
     setManualNotes('');
     setManualShowSocial(false);
     setManualShowAllServices(false);
@@ -229,6 +238,12 @@ export default function PlanningDashboard() {
           ...(draft.phoneCountry && { phone_country: draft.phoneCountry }),
           ...(draft.customerId && { customer_id: draft.customerId }),
           service_ids: manualServiceIds.length ? manualServiceIds : undefined,
+          ...(manualCustomService && {
+            custom_service_name: manualCustomService.name.trim() || null,
+            custom_service_duration: manualCustomService.duration,
+            custom_service_price: manualCustomService.price,
+            custom_service_color: manualCustomService.color,
+          }),
           notes: manualNotes.trim() || undefined,
           ...(force && { force: true }),
           ...(manualSendSms && { send_sms: true }),
@@ -1571,79 +1586,94 @@ export default function PlanningDashboard() {
                   {/* ═══════ ÉTAPE 1 : PRESTATIONS + CRÉNEAU ═══════ */}
                   {manualStep === 1 && <>
                   {/* ───── 1. PRESTATIONS ───── */}
-                  {services.length > 0 && (
-                    <div>
-                      <div className="flex items-baseline justify-between mb-1.5">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400">1. {t('manualServices')}</label>
-                        {manualServiceIds.length > 0 && (
-                          <span className="text-[11px] font-semibold text-indigo-600">
-                            {t('totalDuration', { duration: formatDuration(manualDuration) })}
-                            {manualTotalPrice > 0 && ` · ${formatCurrency(manualTotalPrice, merchant?.country, locale)}`}
-                          </span>
-                        )}
-                      </div>
-                      {manualSelected.length > 0 && (
-                        <div className="space-y-1 mb-2">
-                          {manualSelected.map(svc => {
-                            const svcColor = serviceColorMap.get(svc.id);
-                            return (
-                              <button key={svc.id} type="button" onClick={() => toggleManualService(svc.id)}
-                                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-indigo-300 bg-indigo-50 text-left transition-all text-[13px] text-indigo-700"
-                                style={colorBorderStyle(svcColor)}
-                              >
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <div className="w-3.5 h-3.5 rounded shrink-0 flex items-center justify-center border bg-indigo-600 border-indigo-600">
-                                    <Check className="w-2.5 h-2.5 text-white" />
-                                  </div>
-                                  <span className="font-medium">{svc.name}</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 text-[11px] text-gray-400 shrink-0 ml-2">
-                                  {svc.price > 0 && <span>{formatCurrency(svc.price, merchant?.country, locale)}</span>}
-                                  {svc.duration && <span className="flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" />{svc.duration}</span>}
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                      {manualUnselected.length > 0 && (
-                        <div className="space-y-1">
-                          {visibleUnselected.map(svc => {
-                            const svcColor = serviceColorMap.get(svc.id);
-                            return (
-                              <button key={svc.id} type="button" onClick={() => toggleManualService(svc.id)}
-                                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 text-left transition-all text-[13px] text-gray-700"
-                                style={colorBorderStyle(svcColor)}
-                              >
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <div className="w-3.5 h-3.5 rounded shrink-0 flex items-center justify-center border border-gray-300" />
-                                  <span className="font-medium">{svc.name}</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 text-[11px] text-gray-400 shrink-0 ml-2">
-                                  {svc.price > 0 && <span>{formatCurrency(svc.price, merchant?.country, locale)}</span>}
-                                  {svc.duration && <span className="flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" />{svc.duration}</span>}
-                                </div>
-                              </button>
-                            );
-                          })}
-                          {hiddenCount > 0 && !manualShowAllServices && (
-                            <button type="button" onClick={() => setManualShowAllServices(true)}
-                              className="w-full flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">
-                              {t('showMoreServices', { count: hiddenCount })}
-                              <ChevronDown className="w-3 h-3" />
-                            </button>
-                          )}
-                          {manualShowAllServices && hiddenCount > 0 && (
-                            <button type="button" onClick={() => setManualShowAllServices(false)}
-                              className="w-full flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold text-gray-400 hover:text-gray-500 transition-colors">
-                              {t('showLessServices')}
-                              <ChevronDown className="w-3 h-3 rotate-180" />
-                            </button>
-                          )}
-                        </div>
+                  <div>
+                    <div className="flex items-baseline justify-between mb-1.5">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400">1. {t('manualServices')}</label>
+                      {(manualServiceIds.length > 0 || manualCustomService) && (
+                        <span className="text-[11px] font-semibold text-indigo-600">
+                          {t('totalDuration', { duration: formatDuration(manualDuration) })}
+                          {manualTotalPrice > 0 && ` · ${formatCurrency(manualTotalPrice, merchant?.country, locale)}`}
+                        </span>
                       )}
                     </div>
-                  )}
+                    {(manualSelected.length > 0 || manualCustomService) && (
+                      <div className="space-y-1 mb-2">
+                        {manualCustomService && (
+                          <CustomServicePicker
+                            value={manualCustomService}
+                            onChange={setManualCustomService}
+                            country={merchant?.country}
+                            locale={locale}
+                          />
+                        )}
+                        {manualSelected.map(svc => {
+                          const svcColor = serviceColorMap.get(svc.id);
+                          return (
+                            <button key={svc.id} type="button" onClick={() => toggleManualService(svc.id)}
+                              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-indigo-300 bg-indigo-50 text-left transition-all text-[13px] text-indigo-700"
+                              style={colorBorderStyle(svcColor)}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="w-3.5 h-3.5 rounded shrink-0 flex items-center justify-center border bg-indigo-600 border-indigo-600">
+                                  <Check className="w-2.5 h-2.5 text-white" />
+                                </div>
+                                <span className="font-medium">{svc.name}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-[11px] text-gray-400 shrink-0 ml-2">
+                                {svc.price > 0 && <span>{formatCurrency(svc.price, merchant?.country, locale)}</span>}
+                                {svc.duration && <span className="flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" />{svc.duration}</span>}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {manualUnselected.length > 0 && (
+                      <div className="space-y-1">
+                        {visibleUnselected.map(svc => {
+                          const svcColor = serviceColorMap.get(svc.id);
+                          return (
+                            <button key={svc.id} type="button" onClick={() => toggleManualService(svc.id)}
+                              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 text-left transition-all text-[13px] text-gray-700"
+                              style={colorBorderStyle(svcColor)}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="w-3.5 h-3.5 rounded shrink-0 flex items-center justify-center border border-gray-300" />
+                                <span className="font-medium">{svc.name}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-[11px] text-gray-400 shrink-0 ml-2">
+                                {svc.price > 0 && <span>{formatCurrency(svc.price, merchant?.country, locale)}</span>}
+                                {svc.duration && <span className="flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" />{svc.duration}</span>}
+                              </div>
+                            </button>
+                          );
+                        })}
+                        {hiddenCount > 0 && !manualShowAllServices && (
+                          <button type="button" onClick={() => setManualShowAllServices(true)}
+                            className="w-full flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">
+                            {t('showMoreServices', { count: hiddenCount })}
+                            <ChevronDown className="w-3 h-3" />
+                          </button>
+                        )}
+                        {manualShowAllServices && hiddenCount > 0 && (
+                          <button type="button" onClick={() => setManualShowAllServices(false)}
+                            className="w-full flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold text-gray-400 hover:text-gray-500 transition-colors">
+                            {t('showLessServices')}
+                            <ChevronDown className="w-3 h-3 rotate-180" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {!manualCustomService && (
+                      <CustomServicePicker
+                        value={null}
+                        onChange={setManualCustomService}
+                        country={merchant?.country}
+                        locale={locale}
+                        hasSiblings={manualSelected.length > 0 || manualUnselected.length > 0}
+                      />
+                    )}
+                  </div>
 
                   {/* ───── 2. CRÉNEAU ───── */}
                   <div>

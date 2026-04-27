@@ -6,7 +6,7 @@ import { useMerchant } from '@/contexts/MerchantContext';
 import { useToast } from '@/components/ui/Toast';
 import { getSupabase } from '@/lib/supabase';
 import type { PlanningSlot, CustomerSearchResult, MerchantCountry, BookingMode, BookingDepositFailure } from '@/types';
-import { getWeekStart, formatDate, getSlotServiceIds } from './utils';
+import { getWeekStart, formatDate, getSlotServiceIds, SERVICE_COLORS } from './utils';
 import { toLocalPhone } from '@/lib/utils';
 
 export interface ServiceWithDuration {
@@ -25,12 +25,20 @@ export type ModalState =
   | { type: 'client-select'; slot: PlanningSlot }
   | { type: 'booking-details'; slot: PlanningSlot; customer: CustomerSearchResult | null; isNewCustomer: boolean };
 
+export interface CustomServiceDraft {
+  name: string;
+  duration: number; // minutes
+  price: number; // centimes
+  color: string; // hex
+}
+
 export interface BookingDraft {
   clientName: string;
   clientPhone: string;
   phoneCountry: MerchantCountry | '';
   customerId: string | null;
   serviceIds: string[];
+  customService: CustomServiceDraft | null;
   notes: string;
   instagramHandle: string;
   tiktokHandle: string;
@@ -43,6 +51,7 @@ const emptyDraft: BookingDraft = {
   phoneCountry: '',
   customerId: null,
   serviceIds: [],
+  customService: null,
   notes: '',
   instagramHandle: '',
   tiktokHandle: '',
@@ -215,14 +224,23 @@ export function usePlanningState() {
 
   const bringBackDepositFailure = useCallback(async (
     failureId: string,
-    opts: { markDepositConfirmed: boolean; sendSms: boolean },
+    opts: { markDepositConfirmed: boolean; sendSms: boolean; customService?: CustomServiceDraft | null; customOverridden?: boolean },
   ): Promise<{ success: boolean; error?: string }> => {
     if (!merchant) return { success: false, error: 'Merchant non chargé' };
     try {
+      const { customService, customOverridden, ...rest } = opts;
+      const customPayload = customOverridden
+        ? {
+            custom_service_name: customService?.name?.trim() || null,
+            custom_service_duration: customService?.duration ?? null,
+            custom_service_price: customService?.price ?? null,
+            custom_service_color: customService?.color ?? null,
+          }
+        : {};
       const res = await fetch('/api/planning/deposit-failures/bring-back', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ merchantId: merchant.id, failureId, ...opts }),
+        body: JSON.stringify({ merchantId: merchant.id, failureId, ...rest, ...customPayload }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -318,6 +336,10 @@ export function usePlanningState() {
     client_phone: string | null;
     customer_id: string | null;
     service_ids: string[];
+    custom_service_name?: string | null;
+    custom_service_duration?: number | null;
+    custom_service_price?: number | null;
+    custom_service_color?: string | null;
     notes: string | null;
     phone_country?: string;
     send_sms?: boolean;
@@ -583,12 +605,21 @@ export function usePlanningState() {
     const serviceIds = getSlotServiceIds(slot);
     const social = slot.customer;
     const phoneInfo = slot.client_phone ? toLocalPhone(slot.client_phone) : null;
+    const customService = (slot.custom_service_duration && slot.custom_service_duration > 0)
+      ? {
+          name: slot.custom_service_name || '',
+          duration: slot.custom_service_duration,
+          price: slot.custom_service_price || 0,
+          color: slot.custom_service_color || SERVICE_COLORS[0],
+        }
+      : null;
     setDraft({
       clientName: slot.client_name || '',
       clientPhone: phoneInfo?.local || '',
       phoneCountry: phoneInfo?.country || '',
       customerId: slot.customer_id || null,
       serviceIds,
+      customService,
       notes: slot.notes || '',
       instagramHandle: social?.instagram_handle || '',
       tiktokHandle: social?.tiktok_handle || '',

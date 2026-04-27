@@ -227,13 +227,25 @@ export default function CustomersPage() {
     }
   }, [deepLinkCustomerId, customers]);
 
+  // Re-pointer selectedCustomer sur la version fraiche apres chaque refetch.
+  // Evite la jauge stale dans CustomerManagementModal apres un +1 tampon / ajustement cagnotte.
+  const selectedId = selectedCustomer?.id;
+  useEffect(() => {
+    if (!selectedId) return;
+    setSelectedCustomer((prev) => {
+      if (!prev) return prev;
+      const fresh = customers.find((c) => c.id === selectedId);
+      return fresh && fresh !== prev ? fresh : prev;
+    });
+  }, [customers, selectedId]);
+
   const handleOpenAdjustModal = (customer: CustomerWithCard) => {
     setSelectedCustomer(customer);
     setAdjustModalOpen(true);
   };
 
-  const handleAdjustSuccess = () => {
-    fetchData();
+  const handleAdjustSuccess = async () => {
+    await fetchData();
   };
 
   const handleCreateCustomer = async () => {

@@ -12,6 +12,11 @@ const bringBackSchema = z.object({
   failureId: z.string().uuid(),
   markDepositConfirmed: z.boolean(),
   sendSms: z.boolean().optional(),
+  // Optional override: si renseigne (ou null pour retirer), prend le pas sur la prestation custom archivee
+  custom_service_name: z.string().max(100).nullable().optional(),
+  custom_service_duration: z.number().int().positive().max(720).nullable().optional(),
+  custom_service_price: z.number().min(0).max(100_000).nullable().optional(),
+  custom_service_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable().optional(),
 });
 
 function timeToMinutes(t: string): number {
@@ -43,7 +48,11 @@ export async function POST(request: NextRequest) {
     const parsed = bringBackSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
 
-    const { merchantId, failureId, markDepositConfirmed, sendSms } = parsed.data;
+    const { merchantId, failureId, markDepositConfirmed, sendSms, custom_service_name, custom_service_duration, custom_service_price, custom_service_color } = parsed.data;
+    const customOverridden = custom_service_name !== undefined
+      || custom_service_duration !== undefined
+      || custom_service_price !== undefined
+      || custom_service_color !== undefined;
     if (!(await verifyOwnership(supabase, merchantId, user.id))) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
@@ -59,13 +68,20 @@ export async function POST(request: NextRequest) {
     if (!merchant) return NextResponse.json({ error: 'Commerce introuvable' }, { status: 404 });
 
     const serviceIds: string[] = failure.service_ids || [];
+    // Resolve effective custom service: si override fourni, prend le pas; sinon retombe sur la valeur archivee
+    const effectiveCustomName = custom_service_name !== undefined ? (custom_service_name?.trim() || null) : (failure.custom_service_name as string | null);
+    const effectiveCustomDuration = custom_service_duration !== undefined ? custom_service_duration : (failure.custom_service_duration as number | null);
+    const effectiveCustomPrice = custom_service_price !== undefined ? custom_service_price : (failure.custom_service_price as number | null);
+    const effectiveCustomColor = custom_service_color !== undefined ? custom_service_color : (failure.custom_service_color as string | null);
+
+    // Recalcule la durée si l'override custom change (sinon on garde celle archivée)
     let totalDuration = failure.total_duration_minutes as number | null;
-    if (!totalDuration && serviceIds.length > 0) {
-      const { data: svcs } = await supabaseAdmin
-        .from('merchant_services')
-        .select('duration')
-        .in('id', serviceIds);
-      totalDuration = (svcs || []).reduce((sum, s) => sum + (s.duration || 30), 0) || 30;
+    if (!totalDuration || customOverridden) {
+      const { data: svcs } = serviceIds.length > 0
+        ? await supabaseAdmin.from('merchant_services').select('duration').in('id', serviceIds)
+        : { data: [] };
+      const catalogDuration = (svcs || []).reduce((sum, s) => sum + (s.duration || 30), 0);
+      totalDuration = (catalogDuration + (effectiveCustomDuration ?? 0)) || 30;
     }
     totalDuration = totalDuration || 30;
 
@@ -124,6 +140,10 @@ export async function POST(request: NextRequest) {
           deposit_confirmed: depositConfirmedValue,
           deposit_deadline_at: depositDeadlineAt,
           notes: failure.notes,
+          custom_service_name: effectiveCustomName,
+          custom_service_duration: effectiveCustomDuration,
+          custom_service_price: effectiveCustomPrice,
+          custom_service_color: effectiveCustomColor,
         })
         .select('id')
         .single();
@@ -168,6 +188,10 @@ export async function POST(request: NextRequest) {
         deposit_confirmed: depositConfirmedValue,
         deposit_deadline_at: depositDeadlineAt,
         notes: failure.notes,
+        custom_service_name: effectiveCustomName,
+        custom_service_duration: effectiveCustomDuration,
+        custom_service_price: effectiveCustomPrice,
+        custom_service_color: effectiveCustomColor,
       };
 
       const { error: primaryErr } = await supabaseAdmin

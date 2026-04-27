@@ -320,8 +320,8 @@ export default function ProgramPage() {
 
       </div>
 
-      {/* Save Button — inline on mobile, sticky on desktop */}
-      <div className="mt-6 md:mt-0 md:fixed md:bottom-0 md:left-0 md:right-0 lg:left-72 md:z-50 md:p-4 md:bg-white/70 md:md:border-t md:border-gray-100/50 md:shadow-lg md:shadow-gray-900/5">
+      {/* Save Button — inline on mobile/tablet, sticky on desktop (lg:) où la BottomNav disparaît */}
+      <div className="mt-6 lg:mt-0 lg:fixed lg:bottom-0 lg:left-72 lg:right-0 lg:z-50 lg:p-4 lg:bg-white/70 lg:border-t lg:border-gray-100/50 lg:shadow-lg lg:shadow-gray-900/5">
         <div className="max-w-3xl mx-auto flex justify-center lg:justify-end">
           <button
             onClick={handleSave}
@@ -350,8 +350,8 @@ export default function ProgramPage() {
         </div>
       </div>
 
-      {/* Spacer for sticky button (desktop only) */}
-      <div className="hidden md:block h-16" />
+      {/* Spacer for sticky button (desktop only — lg:) */}
+      <div className="hidden lg:block h-16" />
 
       {/* Test Scan Modal — shown after first program save */}
       {showTestModal && merchant && (

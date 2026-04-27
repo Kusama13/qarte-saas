@@ -6,7 +6,7 @@ import { Link } from '@/i18n/navigation';
 import { Users, Gift, AlertTriangle, X, Eye, UserPlus, Flower2, BarChart3, ChevronRight } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
-import { formatRelativeTime, getTodayForCountry, unwrapJoin } from '@/lib/utils';
+import { formatRelativeTime, getTodayForCountry, unwrapJoin, customServiceDisplayName } from '@/lib/utils';
 import { safeFetchJson } from '@/lib/fetch';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -287,7 +287,7 @@ export default function DashboardPage() {
           merchant.planning_enabled
             ? supabase
                 .from('merchant_planning_slots')
-                .select('id, slot_date, start_time, client_name, deposit_confirmed, total_duration_minutes, planning_slot_services(service:merchant_services!service_id(name, duration, price))')
+                .select('id, slot_date, start_time, client_name, deposit_confirmed, total_duration_minutes, custom_service_name, custom_service_duration, custom_service_price, planning_slot_services(service:merchant_services!service_id(name, duration, price))')
                 .eq('merchant_id', merchant.id)
                 .not('client_name', 'is', null)
                 .neq('client_name', '__blocked__')
@@ -386,6 +386,13 @@ export default function DashboardPage() {
               const s = unwrapJoin(ps.service);
               return s ? { name: s.name, duration: s.duration ?? null, price: s.price != null ? Number(s.price) : null } : null;
             }).filter(Boolean);
+            if (b.custom_service_duration) {
+              services.push({
+                name: customServiceDisplayName(b),
+                duration: b.custom_service_duration as number,
+                price: b.custom_service_price != null ? Number(b.custom_service_price) : null,
+              });
+            }
             return {
               id: b.id,
               slot_date: b.slot_date,

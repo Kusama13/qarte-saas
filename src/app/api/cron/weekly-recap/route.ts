@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     // Fetch all bookings in window for these merchants (one query)
     const { data: slots } = await supabase
       .from('merchant_planning_slots')
-      .select('id, merchant_id, slot_date, client_name, primary_slot_id')
+      .select('id, merchant_id, slot_date, client_name, primary_slot_id, custom_service_price')
       .in('merchant_id', merchantIds)
       .gte('slot_date', globalStart)
       .lt('slot_date', globalEnd)
@@ -72,6 +72,7 @@ export async function GET(request: NextRequest) {
     // Aggregate per merchant (respecting each merchant's own window)
     const countByMerchant = new Map<string, number>();
     const slotIdsByMerchant = new Map<string, string[]>();
+    const revenueByMerchant = new Map<string, number>();
     for (const slot of slots || []) {
       const start = startByMerchant.get(slot.merchant_id);
       const end = endByMerchant.get(slot.merchant_id);
@@ -80,11 +81,15 @@ export async function GET(request: NextRequest) {
       countByMerchant.set(slot.merchant_id, (countByMerchant.get(slot.merchant_id) || 0) + 1);
       if (!slotIdsByMerchant.has(slot.merchant_id)) slotIdsByMerchant.set(slot.merchant_id, []);
       slotIdsByMerchant.get(slot.merchant_id)!.push(slot.id);
+      // Inclut la prestation perso dans le CA hebdo
+      const customPrice = Number(slot.custom_service_price || 0);
+      if (customPrice > 0) {
+        revenueByMerchant.set(slot.merchant_id, (revenueByMerchant.get(slot.merchant_id) || 0) + customPrice);
+      }
     }
 
     // Fetch services (price) for all those slots in one query
     const allSlotIds = [...slotIdsByMerchant.values()].flat();
-    const revenueByMerchant = new Map<string, number>();
     if (allSlotIds.length > 0) {
       const { data: slotServices } = await supabase
         .from('planning_slot_services')

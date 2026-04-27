@@ -820,3 +820,23 @@ export function detectBookingPlatform(url: string | null | undefined): string | 
   }
   return null;
 }
+
+/** Default label for a one-shot custom prestation when no name is provided. */
+export const CUSTOM_SERVICE_DEFAULT_NAME = 'Prestation sur mesure';
+
+/** Display name for a custom prestation : nom trimmé ou label par défaut. */
+export function customServiceDisplayName(slot: { custom_service_name?: string | null }): string {
+  return slot.custom_service_name?.trim() || CUSTOM_SERVICE_DEFAULT_NAME;
+}
+
+/**
+ * Parse a user-entered price string ("180", "180,50", "180.50") into euros (decimal).
+ * Returns 0 for invalid/empty input. Defensive against locale comma vs dot.
+ * Cohérent avec le stockage merchant_services.price (decimal(10,2)).
+ */
+export function parsePriceEuros(input: string): number {
+  const cleaned = input.trim().replace(',', '.');
+  if (!cleaned) return 0;
+  const parsed = parseFloat(cleaned);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed * 100) / 100 : 0;
+}

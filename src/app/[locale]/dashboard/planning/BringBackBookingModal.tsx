@@ -6,8 +6,9 @@ import { useTranslations } from 'next-intl';
 import type { BookingDepositFailure } from '@/types';
 import { formatTime, formatPhoneLabel, formatCurrency } from '@/lib/utils';
 import { formatDateLong } from './utils';
-import type { ServiceWithDuration } from './usePlanningState';
+import type { ServiceWithDuration, CustomServiceDraft } from './usePlanningState';
 import PlanningModal, { ModalHeader } from './PlanningModal';
+import CustomServicePicker from './CustomServicePicker';
 
 interface Props {
   failure: BookingDepositFailure;
@@ -15,7 +16,7 @@ interface Props {
   merchantCountry: string;
   locale: string;
   saving: boolean;
-  onBringBack: (failureId: string, opts: { markDepositConfirmed: boolean; sendSms: boolean }) => Promise<{ success: boolean; error?: string }>;
+  onBringBack: (failureId: string, opts: { markDepositConfirmed: boolean; sendSms: boolean; customService: CustomServiceDraft | null; customOverridden: boolean }) => Promise<{ success: boolean; error?: string }>;
   onClose: () => void;
 }
 
@@ -24,6 +25,18 @@ export default function BringBackBookingModal({ failure, services, merchantCount
   const [markDepositConfirmed, setMarkDepositConfirmed] = useState(false);
   const [sendSms, setSendSms] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Hydrate la prestation custom depuis l'archive failure (si presente)
+  const initialCustom: CustomServiceDraft | null = failure.custom_service_duration
+    ? {
+        name: failure.custom_service_name || '',
+        duration: failure.custom_service_duration,
+        price: failure.custom_service_price || 0,
+        color: failure.custom_service_color || '#4f46e5',
+      }
+    : null;
+  const [customService, setCustomService] = useState<CustomServiceDraft | null>(initialCustom);
+  const [customDirty, setCustomDirty] = useState(false);
 
   const serviceMap = useMemo(() => new Map(services.map(s => [s.id, s])), [services]);
   const svcNames = failure.service_ids
@@ -35,12 +48,17 @@ export default function BringBackBookingModal({ failure, services, merchantCount
 
   const handleConfirm = async () => {
     setError(null);
-    const res = await onBringBack(failure.id, { markDepositConfirmed, sendSms });
+    const res = await onBringBack(failure.id, { markDepositConfirmed, sendSms, customService, customOverridden: customDirty });
     if (!res.success) {
       setError(res.error || t('errorGeneric'));
       return;
     }
     onClose();
+  };
+
+  const handleCustomChange = (next: CustomServiceDraft | null) => {
+    setCustomService(next);
+    setCustomDirty(true);
   };
 
   return (
@@ -66,6 +84,15 @@ export default function BringBackBookingModal({ failure, services, merchantCount
             {svcNames.length > 0 && (
               <p className="text-xs text-gray-500">{svcNames.join(', ')}</p>
             )}
+            <div className="mt-2">
+              <CustomServicePicker
+                value={customService}
+                onChange={handleCustomChange}
+                country={merchantCountry}
+                locale={locale}
+                hasSiblings={svcNames.length > 0}
+              />
+            </div>
             {failure.deposit_amount != null && failure.deposit_amount > 0 && (
               <p className="text-xs text-amber-700 mt-1">
                 {t('depositExpected')} : <strong>{formatCurrency(failure.deposit_amount, merchantCountry, locale)}</strong>

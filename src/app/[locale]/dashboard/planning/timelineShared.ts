@@ -1,5 +1,6 @@
 import type { PlanningSlot } from '@/types';
 import { getSlotServiceIds, timeToMinutes, getSlotColor } from './utils';
+import { customServiceDisplayName } from '@/lib/utils';
 import type { ServiceWithDuration } from './usePlanningState';
 
 export type DayOpeningHours = { open: string; close: string; break_start?: string; break_end?: string } | null;
@@ -97,18 +98,21 @@ export function computeSlotCards(
     let durationMins = 30;
     if (slot.total_duration_minutes && slot.total_duration_minutes > 0) {
       durationMins = slot.total_duration_minutes;
-    } else if (svcIds.length > 0) {
+    } else if (svcIds.length > 0 || slot.custom_service_duration) {
       let total = 0;
       let hasAny = false;
       for (const sid of svcIds) {
         const svc = serviceMap.get(sid);
         if (svc?.duration) { total += svc.duration; hasAny = true; }
       }
+      if (slot.custom_service_duration) { total += slot.custom_service_duration; hasAny = true; }
       if (hasAny) durationMins = total;
     }
     const height = Math.max((durationMins / 60) * HOUR_HEIGHT, 28);
     const color = getSlotColor(slot, serviceColorMap);
-    const serviceNames = svcIds.map(id => serviceMap.get(id)?.name).filter(Boolean).join(', ');
+    const catalogNames = svcIds.map(id => serviceMap.get(id)?.name).filter(Boolean) as string[];
+    if (slot.custom_service_duration) catalogNames.push(customServiceDisplayName(slot));
+    const serviceNames = catalogNames.join(', ');
     return { slot, top, height, color, serviceNames, durationMins };
   });
 }

@@ -5,7 +5,7 @@ import { CalendarDays, Clock, ChevronRight, Wallet, AlertTriangle, Trash2, Undo2
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot, BookingDepositFailure } from '@/types';
 import { formatTime, toBCP47, formatCurrency, formatPhoneLabel } from '@/lib/utils';
-import { getSlotServiceIds, formatDate, colorBorderStyle, endTimeFromStart, formatDateLong } from './utils';
+import { getSlotServiceIds, formatDate, colorBorderStyle, endTimeFromStart, formatDateLong, customServiceDisplayName } from './utils';
 import type { ServiceWithDuration } from './usePlanningState';
 
 interface ReservationsSectionProps {
@@ -124,16 +124,20 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
   };
 
   const getServiceNames = (slot: PlanningSlot): string => {
-    return getSlotServices(slot).map(s => s.name).join(', ');
+    const names = getSlotServices(slot).map(s => s.name);
+    if (slot.custom_service_duration) {
+      names.push(customServiceDisplayName(slot));
+    }
+    return names.join(', ');
   };
 
   const getTotalDuration = (slot: PlanningSlot): number | null => {
     const svcs = getSlotServices(slot);
-    if (svcs.length === 0) return null;
     let total = 0;
     for (const svc of svcs) {
       if (svc.duration) total += svc.duration;
     }
+    if (slot.custom_service_duration) total += slot.custom_service_duration;
     return total || null;
   };
 
@@ -196,7 +200,8 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
     const dayCount = group.slots.length;
     const dayTotal = group.slots.reduce((sum, slot) => {
       const svcs = getSlotServices(slot);
-      return sum + svcs.reduce((s, svc) => s + (svc.price || 0), 0);
+      const catalog = svcs.reduce((s, svc) => s + (svc.price || 0), 0);
+      return sum + catalog + (slot.custom_service_price || 0);
     }, 0);
     return (
     <div key={group.date} className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${group.isPast ? 'border-gray-100 opacity-60' : group.isToday ? 'border-indigo-200 ring-1 ring-indigo-100' : 'border-gray-100'}`}>

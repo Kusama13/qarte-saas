@@ -747,6 +747,10 @@ Single-row table : id, content (TEXT, default ''), updated_at
 | booked_at | TIMESTAMPTZ | NULL | mig 088, timestamp de reservation (set par book API + PATCH manual) |
 | primary_slot_id | UUID FK → merchant_planning_slots | NULL | mig 084, NULL=slot principal/libre, UUID=filler d'un booking multi-creneaux |
 | total_duration_minutes | SMALLINT | NULL | mig 103, NULL=mode creneaux (duree implicite via services lies), non-null=mode libre (duree totale du RDV) |
+| custom_service_name | TEXT | NULL | mig 130, prestation perso one-shot (nom optionnel a la creation, requis depuis fix UX) |
+| custom_service_duration | INTEGER | NULL | mig 130, minutes, CHECK (>0 si renseigne) |
+| custom_service_price | DECIMAL(10,2) | NULL | mig 130 (INTEGER) → mig 132 (DECIMAL en euros, aligne sur merchant_services.price) ; CHECK (>=0) |
+| custom_service_color | TEXT | NULL | mig 130, hex aleatoire pour affichage colore (badge + bordure card) |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
 **RLS** : SELECT public (client_name IS NULL AND slot_date >= CURRENT_DATE), ALL merchant own
@@ -874,6 +878,10 @@ Archive des resas liberees pour acompte non recu. Le cron horaire `/api/cron/dep
 | total_duration_minutes | INTEGER | NULL | |
 | notes | TEXT | NULL | |
 | deposit_amount | NUMERIC(10,2) | NULL | Montant attendu snapshot (mig 111) |
+| custom_service_name | TEXT | NULL | mig 131, snapshot de la prestation perso du slot original |
+| custom_service_duration | INTEGER | NULL | mig 131, CHECK (>0 si renseigne) |
+| custom_service_price | DECIMAL(10,2) | NULL | mig 131 (INTEGER) → mig 132 (DECIMAL en euros) ; CHECK (>=0) |
+| custom_service_color | TEXT | NULL | mig 131, hex preserve pour cohérence visuelle au bring-back |
 | expired_at | TIMESTAMPTZ | NOT NULL | Deadline qui a ete depassee |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
@@ -1226,6 +1234,10 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 126 | blog_email_recipients | Table `blog_email_recipients` pour dedup per-merchant du cron blog-digest : `(article_slug TEXT, merchant_id UUID FK ON DELETE CASCADE) PRIMARY KEY`, `sent_at TIMESTAMPTZ DEFAULT NOW()`. Index `merchant_id`. RLS enable, service_role only. Garantit qu'un merchant ne recoit jamais 2 fois le meme article (utile depuis l'extension audience aux abonnes payants tous millesimes). Bulk upsert avec `ignoreDuplicates: true` apres chaque batch d'envoi |
 | 127 | churn_tracking | Colonnes sur `merchants` : `cancellation_reason TEXT` (CHECK IN 6 valeurs : too_expensive/not_using/missing_feature/switching/temporary/other — source de verite `src/lib/cancellation-reasons.ts`), `cancellation_reason_at TIMESTAMPTZ`, `churn_survey_skip_count INTEGER NOT NULL DEFAULT 0`, `team_demo_requested_at TIMESTAMPTZ`. Index partiels sur cancellation_reason + cancellation_reason_at DESC, et sur team_demo_requested_at DESC (analytics churn drivers + suivi demo follow-up). Alimente par `/api/merchant/cancellation-reason` POST (au moment du select dans le save-offer modal), `/api/merchant/survey-skip` POST (via RPC mig 128, voir ci-dessous), et `/api/churn-survey` POST (set `team_demo_requested_at` si Q4=team_demo) |
 | 128 | increment_survey_skip_fn | Fonction RPC `increment_churn_survey_skip(p_user_id UUID, p_max INTEGER)` SECURITY DEFINER : UPDATE atomique de `churn_survey_skip_count + 1`, et marque automatiquement `churn_survey_seen_at = NOW()` quand le seuil `p_max` est atteint (defaut `MAX_SURVEY_SKIPS_BEFORE_AUTO_SEEN = 3` cote `src/lib/churn-survey-config.ts`). Atomicite garantie contre les double-clics. GRANT EXECUTE pour `authenticated` et `service_role`. Returns `(skip_count, auto_seen)` |
+| 129 | sms_provider | Colonne `provider TEXT NOT NULL DEFAULT 'ovh' CHECK IN ('ovh','sms_partner')` sur `sms_logs` + index `(merchant_id, provider, created_at DESC)`. Tracé du provider qui a envoyé chaque SMS (cf. routing transactionnel FR/BE → SMS Partner, marketing + CH → OVH) |
+| 130 | planning_slots_custom_service | 4 colonnes nullable sur `merchant_planning_slots` : `custom_service_name TEXT`, `custom_service_duration INTEGER` (CHECK >0), `custom_service_price INTEGER` (CHECK >=0, **converti en DECIMAL par mig 132**), `custom_service_color TEXT`. Permet de creer une prestation perso one-shot par booking sans polluer le catalogue `merchant_services`. Le slot porte les 4 champs directement (pas de junction) : 1 prestation perso max par booking |
+| 131 | deposit_failures_custom_service | Mêmes 4 colonnes sur `booking_deposit_failures` (snapshot au moment de l'archive cron) + WIPE_FIELDS du slot étendu pour les nettoyer. Permet au bring-back de restaurer la prestation perso (avec override possible cote modal) |
+| 132 | custom_service_price_decimal | ALTER COLUMN `custom_service_price` TYPE INTEGER → DECIMAL(10,2) sur `merchant_planning_slots` ET `booking_deposit_failures`, avec `USING (col::DECIMAL / 100)` pour ramener les valeurs deja stockees (cas test merchant) de centimes vers euros. Aligne sur `merchant_services.price` (decimal en euros) — sinon `formatCurrency(4000)` affichait "4 000 €" au lieu de "40 €" |
 
 ---
 

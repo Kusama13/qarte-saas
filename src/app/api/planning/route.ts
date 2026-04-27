@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     const supabaseAdmin = getSupabaseAdmin();
     let query = supabaseAdmin
       .from('merchant_planning_slots')
-      .select('id, slot_date, start_time, client_name, client_phone, customer_id, service_id, notes, deposit_confirmed, deposit_deadline_at, primary_slot_id, total_duration_minutes, created_at, planning_slot_services(service_id, service:merchant_services!service_id(name)), planning_slot_photos(id, url, position), planning_slot_result_photos(id, url, position), customer:customers!customer_id(instagram_handle, tiktok_handle, facebook_url)')
+      .select('id, slot_date, start_time, client_name, client_phone, customer_id, service_id, notes, deposit_confirmed, deposit_deadline_at, primary_slot_id, total_duration_minutes, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, created_at, planning_slot_services(service_id, service:merchant_services!service_id(name)), planning_slot_photos(id, url, position), planning_slot_result_photos(id, url, position), customer:customers!customer_id(instagram_handle, tiktok_handle, facebook_url)')
       .eq('merchant_id', merchantId)
       .order('slot_date')
       .order('start_time');
@@ -198,6 +198,10 @@ const updateSlotSchema = z.object({
   customer_id: z.string().uuid().nullable().optional(),
   service_id: z.string().uuid().nullable().optional(), // deprecated
   service_ids: z.array(z.string().uuid()).max(10).optional(),
+  custom_service_name: z.string().max(100).nullable().optional(),
+  custom_service_duration: z.number().int().positive().max(720).nullable().optional(),
+  custom_service_price: z.number().min(0).max(100_000).nullable().optional(),
+  custom_service_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable().optional(),
   notes: z.string().max(300).nullable().optional(),
   deposit_confirmed: z.boolean().nullable().optional(),
   phone_country: z.enum(['FR', 'BE', 'CH']).optional(),
@@ -224,7 +228,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
     }
 
-    const { slotId, merchantId, client_name, client_phone, customer_id, service_ids, notes, deposit_confirmed, send_sms, send_sms_cancel, delete_if_empty } = parsed.data;
+    const { slotId, merchantId, client_name, client_phone, customer_id, service_ids, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, notes, deposit_confirmed, send_sms, send_sms_cancel, delete_if_empty } = parsed.data;
 
     if (!await verifyOwnership(supabase, merchantId, user.id)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
@@ -275,6 +279,19 @@ export async function PATCH(request: NextRequest) {
     if (customer_id !== undefined) updateData.customer_id = customer_id;
     if (notes !== undefined) updateData.notes = notes?.trim() || null;
     if (deposit_confirmed !== undefined) updateData.deposit_confirmed = deposit_confirmed;
+    // Annulation : reset complet de la prestation perso pour eviter les fantomes,
+    // meme si le client n'a pas explicitement envoye les custom_* dans le payload.
+    if (!trimmedName) {
+      updateData.custom_service_duration = null;
+      updateData.custom_service_name = null;
+      updateData.custom_service_price = null;
+      updateData.custom_service_color = null;
+    } else {
+      if (custom_service_duration !== undefined) updateData.custom_service_duration = custom_service_duration;
+      if (custom_service_name !== undefined) updateData.custom_service_name = custom_service_name?.trim() || null;
+      if (custom_service_price !== undefined) updateData.custom_service_price = custom_service_price;
+      if (custom_service_color !== undefined) updateData.custom_service_color = custom_service_color;
+    }
 
     // Run slot update and services junction update in parallel
     const slotUpdatePromise = supabaseAdmin
@@ -299,18 +316,25 @@ export async function PATCH(request: NextRequest) {
           })
       : Promise.resolve();
 
-    // Recalculate duration / fillers when services change on a booked slot
-    if (service_ids !== undefined && trimmedName) {
+    // Recalculate duration / fillers when catalog services OR custom prestation change
+    const servicesChanged = service_ids !== undefined;
+    const customDurationChanged = custom_service_duration !== undefined;
+    if ((servicesChanged || customDurationChanged) && trimmedName) {
       const { data: slotMeta } = await supabaseAdmin
         .from('merchant_planning_slots')
-        .select('total_duration_minutes, slot_date, start_time, client_phone, customer_id')
+        .select('total_duration_minutes, slot_date, start_time, client_phone, customer_id, custom_service_duration, planning_slot_services(service_id)')
         .eq('id', slotId)
         .single();
 
-      const { data: svcs } = service_ids.length > 0
-        ? await supabaseAdmin.from('merchant_services').select('duration').in('id', service_ids)
+      // Fallback aux IDs catalogue existants si le payload ne les inclut pas
+      // (sinon : update partiel = perte de la durée des autres composants)
+      const effectiveServiceIds = service_ids ?? (slotMeta?.planning_slot_services?.map((r: { service_id: string }) => r.service_id) ?? []);
+      const { data: svcs } = effectiveServiceIds.length > 0
+        ? await supabaseAdmin.from('merchant_services').select('duration').in('id', effectiveServiceIds)
         : { data: [] };
-      const newDuration = (svcs || []).reduce((sum, s) => sum + (s.duration || 30), 0) || 30;
+      const catalogDuration = (svcs || []).reduce((sum, s) => sum + (s.duration || 30), 0);
+      const customDuration = custom_service_duration ?? slotMeta?.custom_service_duration ?? 0;
+      const newDuration = (catalogDuration + customDuration) || 30;
 
       if (slotMeta?.total_duration_minutes != null) {
         // Mode libre — recalculate total_duration_minutes
