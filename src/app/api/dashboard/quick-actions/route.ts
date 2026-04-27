@@ -15,6 +15,7 @@ export type QuickActionId =
   | 'suggest_deposit'
   | 'sms_campaign'
   | 'referral_boost'
+  | 'setup_google_review'
   | 'activate_review_sms'
   | 'activate_voucher_expiry_sms'
   | 'activate_j0_reminder';
@@ -83,6 +84,7 @@ const PRIORITY: QuickActionId[] = [
   'sms_campaign',
   'referral_boost',
   'activate_voucher_expiry_sms',
+  'setup_google_review',
   'activate_review_sms',
 ];
 
@@ -148,7 +150,7 @@ export async function GET(request: NextRequest) {
           'post_visit_review_enabled',
           'voucher_expiry_sms_enabled',
           'reminder_j0_enabled',
-          'google_review_url',
+          'review_link',
         ].join(', '),
       )
       .eq('id', merchantId)
@@ -177,7 +179,7 @@ export async function GET(request: NextRequest) {
     const reviewSmsEnabled = !!m.post_visit_review_enabled;
     const voucherExpirySmsEnabled = !!m.voucher_expiry_sms_enabled;
     const j0Enabled = !!m.reminder_j0_enabled;
-    const googleReviewUrl = (m.google_review_url as string | null) || null;
+    const reviewLink = ((m.review_link as string | null) || '').trim() || null;
 
     const birthdayPairs: Array<{ month: number; day: number }> = [];
     for (let i = 0; i < 7; i++) {
@@ -315,7 +317,7 @@ export async function GET(request: NextRequest) {
         .lt('created_at', `${tomorrow}T00:00:00`)
         .limit(10),
 
-      !reviewSmsEnabled && googleReviewUrl
+      !reviewLink || !reviewSmsEnabled
         ? supabaseAdmin
             .from('redemptions')
             .select('id', { count: 'exact', head: true })
@@ -533,15 +535,26 @@ export async function GET(request: NextRequest) {
     }
 
     const redemptionsCount = redemptions30dRes.count ?? 0;
-    if (!reviewSmsEnabled && googleReviewUrl && redemptionsCount >= REVIEW_MIN_REDEMPTIONS) {
-      actions.push({
-        id: 'activate_review_sms',
-        title: 'Tu ne demandes pas d’avis Google à tes clientes',
-        subtitle: 'Active le SMS auto après visite — ça boost ta visibilité',
-        href: '/dashboard/marketing?tab=automations',
-        icon: 'star',
-        accent: 'amber',
-      });
+    if (redemptionsCount >= REVIEW_MIN_REDEMPTIONS) {
+      if (!reviewLink) {
+        actions.push({
+          id: 'setup_google_review',
+          title: 'Tes clientes sont prêtes : ajoute ton lien d’avis Google',
+          subtitle: 'Crée ta fiche Google Business si besoin, puis colle le lien dans Programme',
+          href: '/dashboard/program',
+          icon: 'star',
+          accent: 'amber',
+        });
+      } else if (!reviewSmsEnabled) {
+        actions.push({
+          id: 'activate_review_sms',
+          title: 'Tu ne demandes pas d’avis Google à tes clientes',
+          subtitle: 'Active le SMS auto après visite — ça boost ta visibilité',
+          href: '/dashboard/marketing?tab=automations',
+          icon: 'star',
+          accent: 'amber',
+        });
+      }
     }
 
     const expiringCount = expiringVouchersRes.count ?? 0;
@@ -557,7 +570,7 @@ export async function GET(request: NextRequest) {
     }
 
     actions.sort((a, b) => PRIORITY.indexOf(a.id) - PRIORITY.indexOf(b.id));
-    const response = NextResponse.json({ actions: actions.slice(0, 3) });
+    const response = NextResponse.json({ actions: actions.slice(0, 4) });
     response.headers.set('Cache-Control', 'private, max-age=60');
     return response;
   } catch (error) {

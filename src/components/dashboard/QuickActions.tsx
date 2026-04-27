@@ -87,7 +87,7 @@ export default function QuickActions({ merchantId }: Props) {
     <>
       <div>
         <p className="px-1 mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
-          À toi de jouer
+          Booste ton chiffre d&apos;affaires
         </p>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <ul className="divide-y divide-slate-100">
@@ -95,21 +95,16 @@ export default function QuickActions({ merchantId }: Props) {
               const Icon = ICONS[action.icon];
               const styles = ACCENT_STYLES[action.accent];
 
+              // No line-clamp: actions are calls to action — the merchant must read them in full.
               const content = (
-                <div className="flex items-center gap-3 px-4 py-3">
-                  <div
-                    className={`flex items-center justify-center w-9 h-9 rounded-lg shrink-0 ${styles.bg}`}
-                  >
-                    <Icon className={`w-4 h-4 ${styles.icon}`} strokeWidth={2.4} />
+                <div className="flex items-start gap-2.5 px-3.5 py-2.5">
+                  <div className={`flex items-center justify-center w-7 h-7 rounded-lg shrink-0 ${styles.bg} mt-px`}>
+                    <Icon className={`w-3.5 h-3.5 ${styles.icon}`} strokeWidth={2.4} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-900 leading-snug line-clamp-2">
-                      {action.title}
-                    </p>
+                    <p className="text-[13px] font-semibold text-slate-900 leading-snug">{action.title}</p>
                     {action.subtitle && (
-                      <p className="mt-0.5 text-[11px] text-slate-500 line-clamp-1">
-                        {action.subtitle}
-                      </p>
+                      <p className="mt-0.5 text-[10.5px] text-slate-500 leading-snug">{action.subtitle}</p>
                     )}
                   </div>
                 </div>

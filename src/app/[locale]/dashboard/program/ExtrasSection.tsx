@@ -6,10 +6,13 @@ import {
   Flame,
   Cake,
   Gift,
+  AlertTriangle,
+  ExternalLink,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui';
 import { BIRTHDAY_SUGGESTIONS, DUO_OFFER_SUGGESTIONS, REFERRAL_SUGGESTIONS, type ProgramFormData } from './types';
+import { isGoogleReviewUrl } from '@/lib/google-review-url';
 
 interface ExtrasSectionProps {
   formData: ProgramFormData;
@@ -119,26 +122,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
       </div>
 
       {/* ═══════ AVIS GOOGLE ═══════ */}
-      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
-        <div className="p-3 md:p-5">
-          <div className="flex items-start gap-2 md:gap-3 mb-3">
-            <div className="shrink-0 w-8 h-8 md:w-9 md:h-9 rounded-lg bg-amber-50 flex items-center justify-center">
-              <Star className="w-4 h-4 text-amber-600" strokeWidth={2.25} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-sm md:text-base font-bold text-slate-900">{t('googleReviewTitle')}</h3>
-              <p className="text-[11px] md:text-xs text-slate-400 mt-0.5">{t('googleReviewDesc')}</p>
-            </div>
-          </div>
-          <Input
-            type="url"
-            className="bg-white border border-gray-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 h-11 text-sm rounded-xl w-full"
-            placeholder="https://g.page/r/votre-commerce/review"
-            value={formData.reviewLink}
-            onChange={(e) => setFormData(prev => ({ ...prev, reviewLink: e.target.value }))}
-          />
-        </div>
-      </div>
+      <GoogleReviewSection formData={formData} setFormData={setFormData} />
 
       {/* ═══════ OFFRE DUO ═══════ */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
@@ -322,5 +306,57 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
         </div>
       </div>
     </>
+  );
+}
+
+interface GoogleReviewSectionProps {
+  formData: ProgramFormData;
+  setFormData: React.Dispatch<React.SetStateAction<ProgramFormData>>;
+}
+
+function GoogleReviewSection({ formData, setFormData }: GoogleReviewSectionProps) {
+  const t = useTranslations('program');
+  const reviewLink = formData.reviewLink.trim();
+  // Warning non-bloquant : le marchand peut ignorer si on ne reconnait pas le format.
+  const suspicious = reviewLink.length > 0 && !isGoogleReviewUrl(reviewLink);
+  const inputBorder = suspicious ? 'border-amber-300' : 'border-gray-200';
+
+  return (
+    <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+      <div className="p-3 md:p-5">
+        <div className="flex items-start gap-2 md:gap-3 mb-3">
+          <div className="shrink-0 w-8 h-8 md:w-9 md:h-9 rounded-lg bg-amber-50 flex items-center justify-center">
+            <Star className="w-4 h-4 text-amber-600" strokeWidth={2.25} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm md:text-base font-bold text-slate-900">{t('googleReviewTitle')}</h3>
+            <p className="text-[11px] md:text-xs text-slate-400 mt-0.5">{t('googleReviewDesc')}</p>
+          </div>
+        </div>
+        <Input
+          type="url"
+          className={`bg-white border h-11 text-sm rounded-xl w-full focus:ring-2 focus:border-amber-400 focus:ring-amber-400/20 ${inputBorder}`}
+          placeholder="https://g.page/r/votre-commerce/review"
+          value={formData.reviewLink}
+          onChange={(e) => setFormData(prev => ({ ...prev, reviewLink: e.target.value }))}
+        />
+        {suspicious ? (
+          <div className="mt-2 flex items-start gap-2 p-2.5 rounded-lg bg-amber-50 border border-amber-100">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-600 mt-0.5 shrink-0" />
+            <p className="text-[11px] leading-relaxed text-amber-700">{t('googleReviewMaybeNotGoogle')}</p>
+          </div>
+        ) : (
+          <a
+            href="https://www.google.com/business/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-amber-600 transition-colors"
+          >
+            <ExternalLink className="w-3 h-3" />
+            {t('googleReviewHelp')}
+          </a>
+        )}
+      </div>
+    </div>
   );
 }

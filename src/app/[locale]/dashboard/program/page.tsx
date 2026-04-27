@@ -11,6 +11,7 @@ import {
   Smartphone,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { normalizeUrl } from '@/lib/utils';
 import { type LoyaltySettings } from '@/components/loyalty';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { useTranslations } from 'next-intl';
@@ -124,13 +125,6 @@ export default function ProgramPage() {
 
     fetchMerchant();
   }, [router]);
-
-  const normalizeUrl = (url: string) => {
-    const trimmed = url.trim();
-    if (!trimmed) return '';
-    if (/^https?:\/\//i.test(trimmed)) return trimmed;
-    return `https://${trimmed}`;
-  };
 
   const tier2MaxStamps = getTier2MaxStamps(merchant?.created_at);
 

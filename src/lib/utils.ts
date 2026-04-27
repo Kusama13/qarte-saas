@@ -721,6 +721,13 @@ export function truncate(str: string, maxLength: number): string {
   return str.slice(0, maxLength - 3) + '...';
 }
 
+/** Trim + auto-prepend `https://` when the scheme is missing. Returns '' for empty input. */
+export function normalizeUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
 export function getAppUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 }

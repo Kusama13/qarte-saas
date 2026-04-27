@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { Link } from '@/i18n/navigation';
-import { Users, Gift, AlertTriangle, X, Eye, UserPlus, Flower2, BarChart3 } from 'lucide-react';
+import { Users, Gift, AlertTriangle, X, Eye, UserPlus, Flower2, BarChart3, ChevronRight } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime, getTodayForCountry, unwrapJoin } from '@/lib/utils';
@@ -670,21 +670,24 @@ export default function DashboardPage() {
           />
           <div className="relative flex items-center gap-3.5 p-5">
             <div
-              className="flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-xl shrink-0 shadow-md"
+              className="flex items-center justify-center w-12 h-12 rounded-xl shrink-0 shadow-md"
               style={{
                 background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                 boxShadow: '0 4px 12px rgba(99,102,241,0.33)',
               }}
             >
-              <BarChart3 className="w-5 h-5 md:w-5.5 md:h-5.5 text-white" strokeWidth={2.5} />
+              <BarChart3 className="w-5 h-5 text-white" strokeWidth={2.5} />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">Analytics</p>
-              <p className="mt-0.5 text-base font-bold text-slate-900 tracking-[-0.01em] leading-tight">Tes statistiques</p>
+              <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-[0.18em]">Pilotage</p>
+              <p className="mt-0.5 text-base md:text-lg font-bold text-slate-900 tracking-[-0.01em] leading-tight">
+                Tes stats & tes prochaines actions
+              </p>
               <p className="text-xs text-slate-500 mt-1 leading-snug">
-                CA, remplissage, tops prestations et fidélité
+                CA, remplissage, fidélité — et les actions à mettre en place pour booster ton chiffre d&apos;affaires
               </p>
             </div>
+            <ChevronRight className="w-5 h-5 text-slate-300 shrink-0 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all" strokeWidth={2.5} />
           </div>
         </Link>
       )}
