@@ -131,12 +131,15 @@ export function CustomerJournalTab({ customerId, merchantId, notes, refetchNotes
 
   const handleTogglePin = async (note: CustomerNote) => {
     try {
-      await fetch('/api/customer-notes', {
+      const res = await fetch('/api/customer-notes', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ note_id: note.id, merchant_id: merchantId, pinned: !note.pinned }),
       });
-      await refetchNotes();
+      if (res.ok) {
+        onSuccess(t(note.pinned ? 'noteUnpinned' : 'notePinned'));
+        await refetchNotes();
+      }
     } catch {
       // ignore
     }

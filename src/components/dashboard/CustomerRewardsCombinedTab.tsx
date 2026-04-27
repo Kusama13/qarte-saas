@@ -85,7 +85,7 @@ export function CustomerRewardsCombinedTab({
   const [existingVouchers, setExistingVouchers] = useState<ExistingVoucher[]>([]);
   const [granting, setGranting] = useState<string | null>(null);
   const [acting, setActing] = useState<string | null>(null);
-  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'use' | 'remove'; id: string } | null>(null);
 
   // Shared state
   const [loading, setLoading] = useState(true);
@@ -238,6 +238,7 @@ export function CustomerRewardsCombinedTab({
       setError(to('grantError'));
     }
     setActing(null);
+    setConfirmAction(null);
   };
 
   const handleRemoveVoucher = async (voucherId: string) => {
@@ -259,7 +260,7 @@ export function CustomerRewardsCombinedTab({
       setError(to('grantError'));
     }
     setActing(null);
-    setConfirmRemoveId(null);
+    setConfirmAction(null);
   };
 
   // ── Computed ──
@@ -303,7 +304,7 @@ export function CustomerRewardsCombinedTab({
                     </div>
                   </div>
 
-                  {confirmRemoveId === v.id ? (
+                  {confirmAction?.id === v.id && confirmAction.type === 'remove' ? (
                     <div className="mt-3 flex gap-2">
                       <Button
                         variant="danger"
@@ -319,18 +320,40 @@ export function CustomerRewardsCombinedTab({
                         variant="outline"
                         size="sm"
                         className="flex-1"
-                        onClick={() => setConfirmRemoveId(null)}
+                        onClick={() => setConfirmAction(null)}
                       >
                         {to('cancel')}
                       </Button>
+                    </div>
+                  ) : confirmAction?.id === v.id && confirmAction.type === 'use' ? (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs font-medium text-emerald-700">{to('confirmUseQuestion')}</p>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className={`flex-1 ${ROLES.success.solid} focus:ring-emerald-500`}
+                          loading={acting === v.id}
+                          onClick={() => handleUseVoucher(v.id)}
+                        >
+                          <ShoppingBag className="w-3.5 h-3.5 mr-1.5" />
+                          {to('confirmUse')}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => setConfirmAction(null)}
+                        >
+                          {to('cancel')}
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     <div className="mt-3 flex gap-2">
                       <Button
                         size="sm"
                         className={`flex-1 ${ROLES.success.solid} focus:ring-emerald-500`}
-                        loading={acting === v.id}
-                        onClick={() => handleUseVoucher(v.id)}
+                        onClick={() => setConfirmAction({ type: 'use', id: v.id })}
                       >
                         <ShoppingBag className="w-3.5 h-3.5 mr-1.5" />
                         {to('useVoucher')}
@@ -339,7 +362,7 @@ export function CustomerRewardsCombinedTab({
                         variant="outline"
                         size="sm"
                         className={`${ROLES.danger.icon} ${ROLES.danger.border} ${ROLES.danger.hoverBg}`}
-                        onClick={() => setConfirmRemoveId(v.id)}
+                        onClick={() => setConfirmAction({ type: 'remove', id: v.id })}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>

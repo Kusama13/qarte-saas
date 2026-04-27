@@ -2501,7 +2501,9 @@
     "dayOption": "Jour",
     "monthOption": "Mois",
     "monthsShort": "janv.,fév.,mars,avr.,mai,juin,juil.,août,sept.,oct.,nov.,déc.",
-    "monthsPicker": "Jan,Fév,Mar,Avr,Mai,Juin,Juil,Août,Sep,Oct,Nov,Déc"
+    "monthsPicker": "Jan,Fév,Mar,Avr,Mai,Juin,Juil,Août,Sep,Oct,Nov,Déc",
+    "nameUpdated": "Nom mis à jour",
+    "birthdayUpdated": "Anniversaire mis à jour"
   },
   "customerRewards": {
     "redeemError": "Erreur lors de la validation",
@@ -2556,7 +2558,9 @@
     "newCagnotte": "Nouvelle cagnotte",
     "reasonPlaceholder": "Raison (optionnel)",
     "cancel": "Annuler",
-    "validate": "Valider"
+    "validate": "Valider",
+    "confirm": "Confirmer",
+    "confirmSignificant": "Modification importante — vérifie le nombre avant de confirmer."
   },
   "customerHistory": {
     "noHistory": "Aucun historique",
@@ -2587,7 +2591,8 @@
     "bucket_today": "Aujourd'hui",
     "bucket_week": "Cette semaine",
     "bucket_month": "Ce mois",
-    "bucket_older": "Plus ancien"
+    "bucket_older": "Plus ancien",
+    "visitUpdated": "Passage modifié"
   },
   "customerJournal": {
     "title": "Journal",
@@ -2604,6 +2609,8 @@
     "noteAdded": "Note ajoutée",
     "noteUpdated": "Note modifiée",
     "noteDeleted": "Note supprimée",
+    "notePinned": "Note épinglée",
+    "noteUnpinned": "Note désépinglée",
     "typeGeneral": "Générale",
     "typeAllergy": "Allergie",
     "typeContraindication": "Contre-indication",
@@ -2918,6 +2925,8 @@
     "useVoucher": "Consommer",
     "removeVoucher": "Retirer",
     "confirmRemove": "Confirmer",
+    "confirmUse": "Confirmer",
+    "confirmUseQuestion": "Le client utilise vraiment ce bon ?",
     "cancel": "Annuler",
     "grantError": "Erreur lors de l'opération",
     "notNewClient": "Déjà cliente",

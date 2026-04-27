@@ -7,6 +7,9 @@ import { Button, Input } from '@/components/ui';
 import { formatCurrency, calculateCashback } from '@/lib/utils';
 import { ROLES } from '@/lib/customer-modal-styles';
 
+const SIGNIFICANT_STAMP_DELTA = 5;
+const SIGNIFICANT_AMOUNT_DELTA = 50;
+
 interface CompactProgressRowProps {
   icon: React.ReactNode;
   label: string;
@@ -113,6 +116,7 @@ export function CustomerAdjustTab({
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [pendingConfirm, setPendingConfirm] = useState(false);
 
   const effectiveMax = (tier2Enabled && tier2StampsRequired) ? tier2StampsRequired : stampsRequired;
   const maxAdjustment = effectiveMax - currentStamps;
@@ -128,11 +132,25 @@ export function CustomerAdjustTab({
   const tweakBy = (delta: number) => {
     const next = adjustment + delta;
     setAdjustment(Math.max(minAdjustment, Math.min(maxAdjustment, next)));
+    setPendingConfirm(false);
   };
+
+  // Garde-fou : un retrait ou un gros ajout demande une confirmation explicite (clic-clic).
+  // Évite qu'un -10 par mégarde ne vide la carte du client.
+  const isSignificant =
+    adjustment < 0 ||
+    Math.abs(adjustment) >= SIGNIFICANT_STAMP_DELTA ||
+    parsedAmountAdj < 0 ||
+    Math.abs(parsedAmountAdj) >= SIGNIFICANT_AMOUNT_DELTA;
 
   const handleSubmit = async () => {
     if (adjustment === 0 && (!isCagnotte || parsedAmountAdj === 0)) {
       setError(t('enterAdjustment'));
+      return;
+    }
+    if (isSignificant && !pendingConfirm) {
+      setPendingConfirm(true);
+      setError('');
       return;
     }
     setLoading(true);
@@ -155,6 +173,7 @@ export function CustomerAdjustTab({
       setAdjustment(0);
       setAmountAdjustment('');
       setReason('');
+      setPendingConfirm(false);
       onSuccess(isCagnotte ? t('adjustSuccess') : t('pointsAdjusted'));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('adjustError'));
@@ -250,6 +269,7 @@ export function CustomerAdjustTab({
               if (val < minAdjustment) val = minAdjustment;
               if (val > maxAdjustment) val = maxAdjustment;
               setAdjustment(val);
+              setPendingConfirm(false);
             }}
             className="text-center text-2xl sm:text-3xl font-bold h-12 sm:h-14"
           />
@@ -272,7 +292,7 @@ export function CustomerAdjustTab({
             inputMode="decimal"
             placeholder={t('adjustAmountPlaceholder')}
             value={amountAdjustment}
-            onChange={(e) => setAmountAdjustment(e.target.value)}
+            onChange={(e) => { setAmountAdjustment(e.target.value); setPendingConfirm(false); }}
             className="text-center text-lg sm:text-xl h-12 max-w-sm mx-auto"
           />
           {parsedAmountAdj !== 0 && (
@@ -298,12 +318,28 @@ export function CustomerAdjustTab({
         <div className={`p-3 text-xs sm:text-sm ${ROLES.danger.text} ${ROLES.danger.bg} rounded-lg`}>{error}</div>
       )}
 
+      {pendingConfirm && (
+        <div className={`p-3 rounded-lg border ${ROLES.warning.border} ${ROLES.warning.bg} text-xs sm:text-sm ${ROLES.warning.text} animate-in fade-in duration-150`}>
+          {t('confirmSignificant')}
+        </div>
+      )}
+
       <div className="flex gap-3 pt-1">
-        <Button variant="ghost" onClick={onClose} className="flex-1" disabled={loading}>
+        <Button
+          variant="ghost"
+          onClick={pendingConfirm ? () => setPendingConfirm(false) : onClose}
+          className="flex-1"
+          disabled={loading}
+        >
           {t('cancel')}
         </Button>
-        <Button onClick={handleSubmit} loading={loading} disabled={!canSubmit} className="flex-1">
-          {t('validate')}
+        <Button
+          onClick={handleSubmit}
+          loading={loading}
+          disabled={!canSubmit}
+          className={`flex-1 ${pendingConfirm ? 'bg-amber-600 hover:bg-amber-700' : ''}`}
+        >
+          {pendingConfirm ? t('confirm') : t('validate')}
         </Button>
       </div>
     </div>

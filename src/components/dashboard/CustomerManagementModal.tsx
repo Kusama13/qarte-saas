@@ -166,7 +166,7 @@ export function CustomerManagementModal({
       });
       if (res.ok) {
         setEditingName(false);
-        onSuccess();
+        showSuccess(t('nameUpdated'));
       }
     } catch {
       // ignore
@@ -189,7 +189,7 @@ export function CustomerManagementModal({
       });
       if (res.ok) {
         setEditingBirthday(false);
-        onSuccess();
+        showSuccess(t('birthdayUpdated'));
       }
     } catch {
       // ignore
@@ -475,6 +475,7 @@ export function CustomerManagementModal({
                   isCagnotte={isCagnotte}
                   country={country}
                   customerId={customerId}
+                  onSuccess={showSuccess}
                 />
               )}
 

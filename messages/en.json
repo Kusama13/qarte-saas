@@ -2508,7 +2508,9 @@
     "dayOption": "Day",
     "monthOption": "Month",
     "monthsShort": "Jan.,Feb.,Mar.,Apr.,May,Jun.,Jul.,Aug.,Sep.,Oct.,Nov.,Dec.",
-    "monthsPicker": "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec"
+    "monthsPicker": "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec",
+    "nameUpdated": "Name updated",
+    "birthdayUpdated": "Birthday updated"
   },
   "customerRewards": {
     "redeemError": "Error during validation",
@@ -2563,7 +2565,9 @@
     "newCagnotte": "New cashback",
     "reasonPlaceholder": "Reason (optional)",
     "cancel": "Cancel",
-    "validate": "Confirm"
+    "validate": "Confirm",
+    "confirm": "Confirm",
+    "confirmSignificant": "Significant change — double-check the number before confirming."
   },
   "customerHistory": {
     "noHistory": "No history",
@@ -2594,7 +2598,8 @@
     "bucket_today": "Today",
     "bucket_week": "This week",
     "bucket_month": "This month",
-    "bucket_older": "Older"
+    "bucket_older": "Older",
+    "visitUpdated": "Visit updated"
   },
   "customerJournal": {
     "title": "Journal",
@@ -2611,6 +2616,8 @@
     "noteAdded": "Note added",
     "noteUpdated": "Note updated",
     "noteDeleted": "Note deleted",
+    "notePinned": "Note pinned",
+    "noteUnpinned": "Note unpinned",
     "typeGeneral": "General",
     "typeAllergy": "Allergy",
     "typeContraindication": "Contraindication",
@@ -2923,6 +2930,8 @@
     "promoOffer": "Promo offer",
     "birthdayGift": "Birthday gift",
     "useVoucher": "Use",
+    "confirmUse": "Confirm",
+    "confirmUseQuestion": "Is the customer using this voucher?",
     "removeVoucher": "Remove",
     "confirmRemove": "Confirm",
     "cancel": "Cancel",

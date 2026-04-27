@@ -65,6 +65,7 @@ export interface CustomerHistoryTabProps {
   isCagnotte?: boolean;
   country?: string;
   customerId?: string;
+  onSuccess?: (message: string) => void;
 }
 
 type ItemType = 'visit' | 'adjustment' | 'redemption' | 'voucher' | 'appointment';
@@ -100,6 +101,7 @@ export function CustomerHistoryTab({
   isCagnotte = false,
   country,
   customerId,
+  onSuccess,
 }: CustomerHistoryTabProps) {
   const t = useTranslations('customerHistory');
   const locale = useLocale();
@@ -182,6 +184,7 @@ export function CustomerHistoryTab({
       });
       if (res.ok) {
         cancelEdit();
+        onSuccess?.(t('visitUpdated'));
         fetchHistory();
       }
     } finally {

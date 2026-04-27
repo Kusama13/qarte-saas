@@ -514,9 +514,10 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Single source of truth pour les notes : le shell fetch `/api/customer-notes`, derive le bandeau allergies, et passe `notes + refetchNotes` en prop a `CustomerJournalTab` (evite double fetch)
 - Composant partage `<SectionHeader role label count />` dans `src/components/dashboard/customer-modal/SectionHeader.tsx` — utilise dans les 4 tabs pour une hierarchie visuelle uniforme
 - Tokens couleurs centralises dans `src/lib/customer-modal-styles.ts` — 7 ROLES (primary/success/premium/warning/danger/neutral/birthday) avec champs `bg`/`bgSolid`/`bar`/`text`/`icon`/`solid`/`hoverBg`/`hoverBgSolid`/`hoverIcon` (full literal classes pour Tailwind JIT)
-- AdjustTab : jauge dynamique avec preview live de l'ajustement (segment delta emerald/red superpose), labels `Palier 1` / `Palier 2` explicites, divider entre les 2 paliers
-- HistoryTab : groupement par bucket (`Aujourd'hui` / `Cette semaine` / `Ce mois` / `Plus ancien`), limite 5 items + bouton "Voir plus" (×2 a chaque clic)
-- RewardsTab : 3 sections (Bons actifs / Recompenses / Offrir) en grid 2 cols desktop, refetch via `loadVouchers()` apres grant (evite UUID synthetique fantome)
+- AdjustTab : jauge dynamique avec preview live de l'ajustement (segment delta emerald/red superpose), labels `Palier 1` / `Palier 2` explicites, divider entre les 2 paliers. **Garde-fou clic-clic** : confirmation explicite (bandeau ambre + bouton "Confirmer") quand l'ajustement est significatif (negatif, ≥5 tampons ou ≥50€). Tampons clampes a [0, max] cote UI **et** API (jamais negatif).
+- HistoryTab : groupement par bucket (`Aujourd'hui` / `Cette semaine` / `Ce mois` / `Plus ancien`), limite 5 items + bouton "Voir plus" (×2 a chaque clic). Toast `visitUpdated` apres edition d'un passage.
+- RewardsTab : 3 sections (Bons actifs / Recompenses / Offrir) en grid 2 cols desktop, refetch via `loadVouchers()` apres grant (evite UUID synthetique fantome). **Confirm inline** sur "Consommer" et "Retirer" un bon — etat unifie via `confirmAction: { type: 'use' | 'remove'; id }` (un seul confirm a la fois, etat impossible elimine).
+- Toasts coherents (via `showSuccess` interne, rendu en haut du tab) sur **toutes** les actions : edit nom (`nameUpdated`), edit anniv (`birthdayUpdated`), pin/unpin note (`notePinned`/`noteUnpinned`), edit visite (`visitUpdated`) — plus de save silencieux.
 
 ### Jeu concours mensuel
 - `GET /api/contest?merchantId=` — Historique tirages (auth, 12 derniers)
