@@ -72,6 +72,7 @@ export const en = {
     socialProof: '{shopName}, how Elodie doubled her regular clients',
     smsQuotaWarning: '{shopName}, less than 10% SMS left — buy a pack',
     smsQuotaReached: '{shopName}, SMS quota done — sends suspended',
+    smsPackPurchase: '{shopName}, your pack of {packSize} SMS is credited',
   },
 
   baseLayout: {
@@ -1059,4 +1060,20 @@ export const en = {
     footer: 'Packs from €5.70 incl. VAT (50 SMS). Instant activation.',
     signature: 'The Qarte Team',
   },
+
+  smsPackPurchase: {
+    preview: 'Your pack of {packSize} SMS is credited — you can send right now',
+    heading: '{packSize} SMS credited to your account',
+    greeting: 'Hi <strong>{shopName}</strong>,',
+    intro: 'Your payment of \u20ac{amountTtc} (incl. VAT) for your pack of {packSize} SMS has been received. Credits are already available.',
+    balanceLabel: 'New balance',
+    smsUnit: 'SMS',
+    balanceHint: 'Credits are valid throughout your subscription.',
+    cta: 'Open my dashboard',
+    invoiceIntro: 'Your invoice is available on Stripe for your accounting.',
+    invoiceCta: 'Download invoice',
+    footer: 'If you have a question about your pack, just reply to this email.',
+    signature: 'The Qarte team',
+  },
 } as const;
+

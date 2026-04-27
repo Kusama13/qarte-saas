@@ -47,5 +47,6 @@ export { SocialProofEmail } from './SocialProofEmail';
 export { SlotReleasedEmail } from './SlotReleasedEmail';
 export { AmbassadorWelcomeEmail } from './AmbassadorWelcomeEmail';
 export { SmsQuotaEmail } from './SmsQuotaEmail';
+export { SmsPackPurchaseEmail } from './SmsPackPurchaseEmail';
 export { ActivationStalledEmail } from './ActivationStalledEmail';
 export { UpgradeAllInEmail, type UpgradeTrigger } from './UpgradeAllInEmail';

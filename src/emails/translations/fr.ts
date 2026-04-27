@@ -72,6 +72,7 @@ export const fr = {
     socialProof: '{shopName}, comment Elodie a doubl\u00e9 ses clientes r\u00e9guli\u00e8res',
     smsQuotaWarning: '{shopName}, plus que 10% de SMS — achète un pack',
     smsQuotaReached: '{shopName}, quota SMS terminé — envois suspendus',
+    smsPackPurchase: '{shopName}, ton pack de {packSize} SMS est crédité',
   },
 
   baseLayout: {
@@ -1059,4 +1060,20 @@ export const fr = {
     footer: 'Packs d\u00e8s 5,70€ TTC (50 SMS). Activation imm\u00e9diate.',
     signature: 'L\'\u00e9quipe Qarte',
   },
+
+  smsPackPurchase: {
+    preview: 'Ton pack de {packSize} SMS est cr\u00e9dit\u00e9 \u2014 tu peux envoyer d\u00e8s maintenant',
+    heading: '{packSize} SMS cr\u00e9dit\u00e9s sur ton compte',
+    greeting: 'Bonjour <strong>{shopName}</strong>,',
+    intro: 'Ton paiement de {amountTtc}\u20ac TTC pour ton pack de {packSize} SMS a bien \u00e9t\u00e9 re\u00e7u. Les cr\u00e9dits sont d\u00e9j\u00e0 disponibles.',
+    balanceLabel: 'Nouveau solde',
+    smsUnit: 'SMS',
+    balanceHint: 'Cr\u00e9dits valables tout au long de ton abonnement.',
+    cta: 'Aller sur mon dashboard',
+    invoiceIntro: 'Ta facture est disponible dans Stripe pour ta comptabilit\u00e9.',
+    invoiceCta: 'T\u00e9l\u00e9charger ma facture',
+    footer: 'Si tu as une question sur ton pack, r\u00e9ponds simplement \u00e0 cet email.',
+    signature: 'L\'\u00e9quipe Qarte',
+  },
 } as const;
+

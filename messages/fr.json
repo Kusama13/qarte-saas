@@ -948,13 +948,19 @@
     "tabPush": "Push",
     "tabSms": "SMS",
     "tabAutomations": "Automatisations SMS",
+    "packSuccess": "Paiement validé ! Tes nouveaux SMS sont crédités sur ton compte. Le solde est mis à jour ci-dessus, et la facture t'a été envoyée par email.",
+    "packCanceled": "Achat annulé. Aucun débit n'a été effectué — tu peux réessayer quand tu veux.",
     "smsBalance": {
       "title": "Mes SMS",
       "includedUsage": "{sent}/{quota} inclus ce cycle",
       "packBalance": "+ {balance} dans mon pack",
       "buyPack": "Acheter un pack",
       "warningMessage": "Tu approches de la limite. Anticipe avec un pack pour éviter l'interruption.",
-      "blockedMessage": "Ton quota SMS est terminé. Merci d'acheter un pack pour continuer à envoyer."
+      "blockedMessage": "Ton quota SMS est terminé. Merci d'acheter un pack pour continuer à envoyer.",
+      "historyToggle": "Mes derniers achats",
+      "historyEmpty": "Aucun pack acheté pour le moment.",
+      "historyRefunded": "Remboursé",
+      "historyInvoicesNote": "Les factures sont envoyées automatiquement par email à chaque achat."
     },
     "buyPack": {
       "title": "Acheter un pack SMS",
@@ -966,7 +972,19 @@
       "benefit1": "Paiement unique, aucun engagement",
       "benefit2": "Crédits jamais perdus pendant ton abonnement",
       "benefit3": "TVA 20% calculée automatiquement par Stripe",
-      "errorGeneric": "Impossible de lancer le paiement. Réessaie."
+      "errorGeneric": "Impossible de lancer le paiement. Réessaie.",
+      "close": "Fermer",
+      "back": "Retour",
+      "confirmTitle": "Confirme ton achat",
+      "confirmPackHint": "Crédités sur ton compte dès le paiement validé.",
+      "lineSms": "{count} SMS",
+      "lineFee": "Frais de traitement",
+      "lineSubtotalHt": "Sous-total HT",
+      "lineVat": "TVA {rate}%",
+      "lineTotalTtc": "Total TTC",
+      "confirmInfo": "En cliquant ci-dessous, tu seras redirigé vers Stripe pour le paiement sécurisé. La facture sera envoyée par email automatiquement.",
+      "confirmCta": "Payer {amount}€",
+      "redirecting": "Redirection…"
     },
     "smsTab": {
       "upgradeTitle": "Les campagnes SMS sont incluses dans Tout-en-un",

@@ -194,6 +194,12 @@ export default function AdminSmsPage() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
+  // Packs SMS — stats commerciales + 30 derniers achats
+  const [packsData, setPacksData] = useState<{
+    stats: { revenueAllTimeCents: number; revenueThisMonthCents: number; refundedCents: number; smsCreditedAllTime: number; smsCreditedThisMonth: number; smsRefunded: number; paidCount: number; refundedCount: number };
+    recent: Array<{ id: string; pack_size: number; amount_ttc_cents: number; status: 'paid' | 'refunded'; paid_at: string | null; merchant_id: string; merchants: { shop_name: string } | null }>;
+  } | null>(null);
+
   const fetchOverview = useCallback(async () => {
     const res = await fetch('/api/admin/sms');
     if (res.ok) setData(await res.json());
@@ -241,7 +247,12 @@ export default function AdminSmsPage() {
     }
   }, []);
 
-  useEffect(() => { fetchOverview(); fetchPending(); }, [fetchOverview, fetchPending]);
+  const fetchPacks = useCallback(async () => {
+    const res = await fetch('/api/admin/sms-packs');
+    if (res.ok) setPacksData(await res.json());
+  }, []);
+
+  useEffect(() => { fetchOverview(); fetchPending(); fetchPacks(); }, [fetchOverview, fetchPending, fetchPacks]);
   useEffect(() => { if (tab === 'failures' && failures.length === 0 && !loadingFailures) fetchFailures(); }, [tab, failures.length, loadingFailures, fetchFailures]);
   useEffect(() => { if (tab === 'history') fetchHistory(historyCategory, historyPage); }, [tab, historyCategory, historyPage, fetchHistory]);
 
@@ -368,6 +379,66 @@ export default function AdminSmsPage() {
                 </p>
               </button>
             </div>
+
+            {/* Section Packs SMS — stats commerciales + 30 derniers achats */}
+            {packsData && (
+              <div className="mb-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                  <MetricCard label="Revenus packs (mois)" value={`${(packsData.stats.revenueThisMonthCents / 100).toFixed(2)}€`} />
+                  <MetricCard label="Revenus packs (total)" value={`${(packsData.stats.revenueAllTimeCents / 100).toFixed(2)}€`} />
+                  <MetricCard label="Packs vendus" value={packsData.stats.paidCount} />
+                  <MetricCard label="SMS crédités (total)" value={packsData.stats.smsCreditedAllTime} />
+                </div>
+                {(packsData.stats.refundedCount > 0 || packsData.recent.length > 0) && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+                      <h2 className="text-sm font-bold text-gray-800">Achats de packs récents</h2>
+                      {packsData.stats.refundedCount > 0 && (
+                        <span className="text-[11px] text-orange-600 font-semibold">
+                          {packsData.stats.refundedCount} remb. ({(packsData.stats.refundedCents / 100).toFixed(2)}€)
+                        </span>
+                      )}
+                    </div>
+                    {packsData.recent.length === 0 ? (
+                      <p className="text-sm text-gray-400 text-center py-8">Aucun achat pour le moment</p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                          <thead>
+                            <tr className="text-[11px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50">
+                              <th className="px-4 py-2">Date</th>
+                              <th className="px-4 py-2">Merchant</th>
+                              <th className="px-4 py-2 text-right">Pack</th>
+                              <th className="px-4 py-2 text-right">Montant TTC</th>
+                              <th className="px-4 py-2">Statut</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {packsData.recent.map((p) => (
+                              <tr key={p.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
+                                <td className="px-4 py-2.5 text-xs text-gray-500">
+                                  {p.paid_at ? new Date(p.paid_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' }) : '—'}
+                                </td>
+                                <td className="px-4 py-2.5 text-sm font-medium text-gray-700">{p.merchants?.shop_name || '—'}</td>
+                                <td className="px-4 py-2.5 text-sm text-right text-gray-700">{p.pack_size} SMS</td>
+                                <td className="px-4 py-2.5 text-sm text-right font-semibold text-gray-800">{(Number(p.amount_ttc_cents || 0) / 100).toFixed(2)}€</td>
+                                <td className="px-4 py-2.5 text-xs">
+                                  <span className={`inline-flex px-2 py-0.5 rounded-md font-semibold ${
+                                    p.status === 'refunded' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'
+                                  }`}>
+                                    {p.status === 'refunded' ? 'Remboursé' : 'Payé'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="px-4 sm:px-5 py-3 border-b border-gray-100">

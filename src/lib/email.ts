@@ -40,6 +40,7 @@ import {
   BookingRescheduledEmail,
   BookingCancelledEmail,
   SmsQuotaEmail,
+  SmsPackPurchaseEmail,
   VitrineReminderEmail,
   PlanningReminderEmail,
   ChurnSurveyReminderEmail,
@@ -1017,6 +1018,28 @@ export async function sendSmsQuotaEmail(
     SmsQuotaEmail,
     { shopName, level, ctaUrl, locale },
     { logLabel: `SMS quota ${level}% email` },
+  );
+}
+
+export async function sendSmsPackPurchaseEmail(
+  to: string,
+  params: {
+    shopName: string;
+    packSize: number;
+    amountTtc: string;
+    newBalance: number;
+    invoiceUrl?: string | null;
+    locale?: EmailLocale;
+  },
+): Promise<SendEmailResult> {
+  const { shopName, packSize, amountTtc, newBalance, invoiceUrl, locale = 'fr' } = params;
+  const ctaUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com'}/dashboard/marketing?tab=sms`;
+  return sendEmail(
+    to,
+    subj(locale, 'smsPackPurchase', { shopName, packSize: String(packSize) }),
+    SmsPackPurchaseEmail,
+    { shopName, packSize, amountTtc, newBalance, invoiceUrl, ctaUrl, locale },
+    { logLabel: `SMS pack purchase confirmation email (${packSize})` },
   );
 }
 

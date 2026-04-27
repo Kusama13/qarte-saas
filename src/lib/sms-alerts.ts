@@ -14,9 +14,9 @@ export type SmsQuotaLevel = '80' | '90' | '100';
  *
  * Niveaux :
  * - 80% : push seulement (early warning léger)
- * - 90% : email + push avec lien achat pack (alerte principale)
- * - 100% : push (blocage hard côté sms.ts, pas d'email — évite double-notification
- *          quand le 90% email vient juste de partir)
+ * - 90% : email + push avec lien achat pack (alerte principale, plage actionnable)
+ * - 100% : email + push (blocage hard côté sms.ts) — relance critique pour les
+ *          merchants qui ont raté l'email à 90% (spam, vacances, etc.)
  */
 export async function notifyMerchantQuotaAlert(
   supabase: SupabaseClient,
@@ -72,9 +72,10 @@ export async function notifyMerchantQuotaAlert(
     return false;
   });
 
-  // Email uniquement à 90% — seuil actionnable avant blocage (voir sms-alerts docstring).
+  // Email aux niveaux 90% (anticipation) ET 100% (blocage). Pas d'email à 80% — push suffit.
+  // Le template SmsQuotaEmail gère deux variantes ('90' = warning, '100' = reached/blocked).
   let emailPromise: Promise<unknown> = Promise.resolve();
-  if (level === '90' && canEmail({
+  if ((level === '90' || level === '100') && canEmail({
     no_contact: row.no_contact as boolean | null,
     email_bounced_at: row.email_bounced_at as string | null,
     email_unsubscribed_at: row.email_unsubscribed_at as string | null,
@@ -82,7 +83,7 @@ export async function notifyMerchantQuotaAlert(
     const { data: userData } = await supabase.auth.admin.getUserById(row.user_id as string);
     const email = userData?.user?.email;
     if (email) {
-      emailPromise = sendSmsQuotaEmail(email, shopName, '90', locale).catch((err) => {
+      emailPromise = sendSmsQuotaEmail(email, shopName, level, locale).catch((err) => {
         logger.error('notifyMerchantQuotaAlert email error', err);
       });
     }

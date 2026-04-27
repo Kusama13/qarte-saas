@@ -3,7 +3,7 @@ import { stripe, PLAN, PLAN_ANNUAL, PLAN_FIDELITY, PLAN_FIDELITY_ANNUAL, PLAN_LE
 import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 import logger from '@/lib/logger';
-import { sendSubscriptionConfirmedEmail, sendPaymentFailedEmail, sendSubscriptionCanceledEmail, sendSubscriptionReactivatedEmail } from '@/lib/email';
+import { sendSubscriptionConfirmedEmail, sendPaymentFailedEmail, sendSubscriptionCanceledEmail, sendSubscriptionReactivatedEmail, sendSmsPackPurchaseEmail } from '@/lib/email';
 import type { EmailLocale } from '@/emails/translations';
 import { sendCapiPurchaseEvent } from '@/lib/facebook-capi';
 import { toBCP47, getCurrencyForCountry } from '@/lib/utils';
@@ -98,9 +98,45 @@ export async function POST(request: Request) {
         });
         if (creditError) {
           logger.error('credit_sms_pack RPC failed', { purchaseId, error: creditError });
+          // Pas d'envoi d'email si le crédit a échoué — éviter de promettre des SMS qui ne sont pas crédités.
+          break;
         }
 
         logger.debug('SMS pack credited', { merchantId: purchase.merchant_id, packSize: purchase.pack_size });
+
+        // Email de confirmation au merchant (fire-and-forget, ne bloque jamais le webhook).
+        const { data: merchantInfo } = await supabase
+          .from('merchants')
+          .select('shop_name, user_id, locale, sms_pack_balance')
+          .eq('id', purchase.merchant_id)
+          .maybeSingle();
+        if (merchantInfo?.user_id) {
+          const { data: userData } = await supabase.auth.admin.getUserById(merchantInfo.user_id as string);
+          const email = userData?.user?.email;
+          if (email) {
+            // Récupère l'URL de la facture Stripe si dispo (utile pour la compta du merchant).
+            let invoiceUrl: string | null = null;
+            if (session.invoice) {
+              try {
+                const inv = await stripe.invoices.retrieve(session.invoice as string);
+                invoiceUrl = inv.hosted_invoice_url || null;
+              } catch (err) {
+                logger.error('Failed to retrieve invoice URL', { invoice: session.invoice, err });
+              }
+            }
+            const amountTtc = session.amount_total ? (session.amount_total / 100).toFixed(2) : '—';
+            await sendSmsPackPurchaseEmail(email, {
+              shopName: (merchantInfo.shop_name as string) || 'Qarte',
+              packSize: purchase.pack_size,
+              amountTtc,
+              newBalance: Number(merchantInfo.sms_pack_balance || 0),
+              invoiceUrl,
+              locale: ((merchantInfo.locale as EmailLocale) || 'fr'),
+            }).catch((err) => {
+              logger.error('Failed to send SMS pack purchase email', err);
+            });
+          }
+        }
         break;
       }
 
@@ -357,6 +393,78 @@ export async function POST(request: Request) {
         }
       }
 
+      break;
+    }
+
+    case 'checkout.session.expired': {
+      // Cleanup : la session Stripe a expiré (24h sans paiement). Marque le purchase
+      // pending correspondant comme failed pour ne pas polluer la table indéfiniment.
+      // N'affecte que les sms_pack — les abandons d'abonnement ne créent pas de row pending.
+      const session = event.data.object;
+      if (session.metadata?.type !== 'sms_pack') break;
+      const purchaseId = session.metadata?.purchase_id;
+      if (!purchaseId) break;
+
+      const { data: updated } = await supabase
+        .from('sms_pack_purchases')
+        .update({ status: 'failed' })
+        .eq('id', purchaseId)
+        .eq('status', 'pending')
+        .select('id')
+        .maybeSingle();
+
+      if (updated) {
+        logger.debug('SMS pack purchase marked failed (session expired)', { purchaseId });
+      }
+      break;
+    }
+
+    case 'charge.refunded': {
+      // Stripe envoie ce hook quand un refund (total ou partiel) est créé sur un charge.
+      // On ne traite que les remboursements totaux des packs SMS — les refunds partiels
+      // d'abonnement sont hors scope.
+      const charge = event.data.object;
+      // `invoice` n'est pas exposé par défaut dans le type Charge récent de la SDK Stripe ;
+      // il l'est dans la réponse API quand un charge est lié à une facture (c'est notre cas
+      // pour les packs SMS — `invoice_creation: { enabled: true }` dans la session checkout).
+      const invoiceId = (charge as unknown as { invoice?: string | null }).invoice;
+      if (!invoiceId) break;
+      // Ignorer si le charge n'est pas totalement remboursé (refund partiel = cas non couvert).
+      if (charge.amount_refunded < charge.amount) break;
+
+      const { data: purchase } = await supabase
+        .from('sms_pack_purchases')
+        .update({ status: 'refunded' })
+        .eq('stripe_invoice_id', invoiceId)
+        .eq('status', 'paid')
+        .select('id, merchant_id, pack_size')
+        .maybeSingle();
+
+      if (!purchase) {
+        // Pas un pack SMS, ou déjà remboursé, ou jamais payé — ignore silencieusement.
+        break;
+      }
+
+      // Décrément atomique via le même RPC (amount négatif). Le solde peut tomber sous 0
+      // si le merchant a déjà consommé les SMS — `consumePackOne` gère bien le balance > 0,
+      // donc un négatif = bloqué jusqu'au prochain pack. On log pour visibilité admin.
+      const { data: newBalance, error: refundError } = await supabase.rpc('credit_sms_pack', {
+        p_merchant_id: purchase.merchant_id,
+        p_amount: -purchase.pack_size,
+      });
+      if (refundError) {
+        logger.error('credit_sms_pack RPC (refund) failed', { purchaseId: purchase.id, error: refundError });
+        break;
+      }
+      if (typeof newBalance === 'number' && newBalance < 0) {
+        logger.error('SMS pack refund left balance negative — partial consumption before refund', {
+          merchantId: purchase.merchant_id,
+          packSize: purchase.pack_size,
+          newBalance,
+        });
+      }
+
+      logger.debug('SMS pack refunded', { merchantId: purchase.merchant_id, packSize: purchase.pack_size });
       break;
     }
   }

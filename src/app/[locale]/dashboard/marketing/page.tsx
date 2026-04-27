@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Send,
   MessageSquareText,
   Flame,
   HelpCircle,
+  CheckCircle2,
+  XCircle,
+  X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -30,10 +33,33 @@ export default function MarketingPushPage() {
     if (t === 'sms') return 'sms';
     return 'automations';
   })();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'push' | 'sms' | 'automations'>(initialTab);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showOfferModal, setShowOfferModal] = useState(false);
-  const [showBuyPack, setShowBuyPack] = useState(searchParams.get('pack') === 'success' ? false : false);
+  const [showBuyPack, setShowBuyPack] = useState(searchParams.get('buy') === '1');
+  const [packBanner, setPackBanner] = useState<'success' | 'canceled' | null>(() => {
+    const p = searchParams.get('pack');
+    return p === 'success' || p === 'canceled' ? p : null;
+  });
+
+  // Nettoie les params transients (?pack=, ?buy=) sans recharger, pour éviter
+  // que le banner / modal réapparaissent au refresh ou au partage du lien.
+  useEffect(() => {
+    if (packBanner || showBuyPack) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('pack');
+      params.delete('buy');
+      const qs = params.toString();
+      router.replace(`/dashboard/marketing${qs ? `?${qs}` : ''}`, { scroll: false });
+    }
+    // Auto-dismiss success après 8s (cancel reste jusqu'au clic sur la croix).
+    if (packBanner === 'success') {
+      const timer = setTimeout(() => setPackBanner(null), 8000);
+      return () => clearTimeout(timer);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const data = useMarketingData(merchant);
   const composer = useNotificationComposer(merchant, {
@@ -66,6 +92,26 @@ export default function MarketingPushPage() {
           <span className="hidden sm:inline">{t('help')}</span>
         </button>
       </div>
+
+      {/* Banner feedback achat pack (success auto-dismiss 8s, cancel persistent jusqu'au clic) */}
+      {packBanner === 'success' && (
+        <div className="mb-3 flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm">
+          <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+          <p className="flex-1 leading-snug">{t('packSuccess')}</p>
+          <button onClick={() => setPackBanner(null)} className="p-0.5 -m-0.5 rounded hover:bg-emerald-100" aria-label="Fermer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+      {packBanner === 'canceled' && (
+        <div className="mb-3 flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-700 text-sm">
+          <XCircle className="w-4 h-4 shrink-0 mt-0.5 text-gray-500" />
+          <p className="flex-1 leading-snug">{t('packCanceled')}</p>
+          <button onClick={() => setPackBanner(null)} className="p-0.5 -m-0.5 rounded hover:bg-gray-100" aria-label="Fermer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* SMS Balance Panel — masqué pour Fidélité (pas de quota marketing) */}
       {getPlanFeatures(merchant).marketingSms && (

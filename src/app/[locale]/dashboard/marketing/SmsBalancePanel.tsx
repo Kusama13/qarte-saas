@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { MessageSquareText, ShoppingCart, AlertTriangle } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
+import { MessageSquareText, ShoppingCart, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { SMS_FREE_QUOTA } from '@/lib/sms-constants';
+import { toBCP47 } from '@/lib/utils';
 
 interface SmsUsage {
   sent: number;
@@ -13,6 +14,16 @@ interface SmsUsage {
   quota: number;
 }
 
+interface PackPurchase {
+  id: string;
+  pack_size: number;
+  amount_ttc_cents: number;
+  status: 'paid' | 'refunded';
+  paid_at: string | null;
+  created_at: string;
+  stripe_invoice_id: string | null;
+}
+
 interface SmsBalancePanelProps {
   merchantId?: string;
   onBuyPack?: () => void;
@@ -20,8 +31,33 @@ interface SmsBalancePanelProps {
 
 export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePanelProps) {
   const t = useTranslations('marketing.smsBalance');
+  const locale = useLocale();
   const [usage, setUsage] = useState<SmsUsage | null>(null);
   const [loading, setLoading] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [purchases, setPurchases] = useState<PackPurchase[] | null>(null);
+  const [purchasesLoading, setPurchasesLoading] = useState(false);
+
+  const toggleHistory = async () => {
+    const next = !historyOpen;
+    setHistoryOpen(next);
+    if (next && purchases === null) {
+      setPurchasesLoading(true);
+      try {
+        const res = await fetch('/api/sms/pack-purchases');
+        if (res.ok) {
+          const data = await res.json();
+          setPurchases(data.purchases || []);
+        } else {
+          setPurchases([]);
+        }
+      } catch {
+        setPurchases([]);
+      } finally {
+        setPurchasesLoading(false);
+      }
+    }
+  };
 
   useEffect(() => {
     if (!merchantId) return;
@@ -128,6 +164,45 @@ export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePan
         <div className="mt-3 flex items-start gap-2 rounded-xl bg-amber-100 p-2.5 text-xs text-amber-800">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           <span className="font-medium">{t('warningMessage')}</span>
+        </div>
+      )}
+
+      {/* Historique des achats — repliable, fetch lazy au premier déploiement. */}
+      <button
+        onClick={toggleHistory}
+        className="mt-3 w-full flex items-center justify-between text-[11px] font-semibold text-gray-500 hover:text-gray-700 transition-colors"
+      >
+        <span>{t('historyToggle')}</span>
+        {historyOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+      </button>
+      {historyOpen && (
+        <div className="mt-2 space-y-1.5">
+          {purchasesLoading && (
+            <div className="h-6 w-full bg-gray-100 rounded animate-pulse" />
+          )}
+          {!purchasesLoading && purchases && purchases.length === 0 && (
+            <p className="text-[11px] text-gray-400 italic py-2">{t('historyEmpty')}</p>
+          )}
+          {!purchasesLoading && purchases && purchases.map((p) => {
+            const date = p.paid_at || p.created_at;
+            const dateLabel = date ? new Date(date).toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+            return (
+              <div key={p.id} className="flex items-center justify-between text-xs py-1.5 px-2 rounded-lg bg-white border border-gray-100">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`shrink-0 w-1.5 h-1.5 rounded-full ${p.status === 'refunded' ? 'bg-orange-400' : 'bg-emerald-500'}`} />
+                  <span className="font-medium text-gray-800">{p.pack_size} SMS</span>
+                  <span className="text-gray-400 truncate">· {dateLabel}</span>
+                  {p.status === 'refunded' && (
+                    <span className="shrink-0 text-[10px] font-semibold uppercase text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">{t('historyRefunded')}</span>
+                  )}
+                </div>
+                <span className="text-gray-700 font-semibold shrink-0">{(Number(p.amount_ttc_cents || 0) / 100).toFixed(2)}€</span>
+              </div>
+            );
+          })}
+          {!purchasesLoading && purchases && purchases.length > 0 && (
+            <p className="text-[11px] text-gray-400 italic pt-1">{t('historyInvoicesNote')}</p>
+          )}
         </div>
       )}
     </div>

@@ -972,13 +972,19 @@
     "tabPush": "Push",
     "tabSms": "SMS",
     "tabAutomations": "SMS automations",
+    "packSuccess": "Payment confirmed! Your new SMS credits are now active. Balance updated above, invoice sent to your email.",
+    "packCanceled": "Purchase canceled. No charge was made — you can retry whenever you want.",
     "smsBalance": {
       "title": "My SMS",
       "includedUsage": "{sent}/{quota} included this cycle",
       "packBalance": "+ {balance} in my pack",
       "buyPack": "Buy a pack",
       "warningMessage": "You're approaching the limit. Get a pack to avoid interruption.",
-      "blockedMessage": "Your SMS quota is done. Please buy a pack to continue sending."
+      "blockedMessage": "Your SMS quota is done. Please buy a pack to continue sending.",
+      "historyToggle": "My recent purchases",
+      "historyEmpty": "No pack purchased yet.",
+      "historyRefunded": "Refunded",
+      "historyInvoicesNote": "Invoices are sent automatically by email after each purchase."
     },
     "buyPack": {
       "title": "Buy an SMS pack",
@@ -990,7 +996,19 @@
       "benefit1": "One-time payment, no commitment",
       "benefit2": "Credits never expire during your subscription",
       "benefit3": "20% VAT auto-computed by Stripe",
-      "errorGeneric": "Couldn't start payment. Retry."
+      "errorGeneric": "Couldn't start payment. Retry.",
+      "close": "Close",
+      "back": "Back",
+      "confirmTitle": "Confirm your purchase",
+      "confirmPackHint": "Credited to your account as soon as payment is validated.",
+      "lineSms": "{count} SMS",
+      "lineFee": "Processing fee",
+      "lineSubtotalHt": "Subtotal (excl. VAT)",
+      "lineVat": "VAT {rate}%",
+      "lineTotalTtc": "Total (incl. VAT)",
+      "confirmInfo": "Clicking below redirects you to Stripe for secure payment. The invoice will be sent by email automatically.",
+      "confirmCta": "Pay {amount}€",
+      "redirecting": "Redirecting…"
     },
     "smsTab": {
       "upgradeTitle": "SMS campaigns are part of All-in-one",
