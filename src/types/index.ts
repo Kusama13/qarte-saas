@@ -477,6 +477,20 @@ export interface Referral {
 // Global type declarations
 // ============================================
 
+/** Statut d'un achat de pack SMS — reflète le CHECK contrainte de `sms_pack_purchases` (mig 112). */
+export type SmsPackPurchaseStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+
+/** Row de `sms_pack_purchases` côté client (champs sélectionnés depuis les routes API). */
+export interface SmsPackPurchase {
+  id: string;
+  pack_size: number;
+  amount_ttc_cents: number;
+  status: SmsPackPurchaseStatus;
+  paid_at: string | null;
+  created_at: string;
+  stripe_invoice_id: string | null;
+}
+
 declare global {
   interface Window {
     fbq?: (action: string, event: string, params?: Record<string, unknown>) => void;

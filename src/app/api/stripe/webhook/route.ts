@@ -97,8 +97,14 @@ export async function POST(request: Request) {
           p_amount: purchase.pack_size,
         });
         if (creditError) {
-          logger.error('credit_sms_pack RPC failed', { purchaseId, error: creditError });
-          // Pas d'envoi d'email si le crédit a échoué — éviter de promettre des SMS qui ne sont pas crédités.
+          // Revert le status à pending pour qu'un admin/retry puisse reprendre — sinon le merchant
+          // a payé mais n'a pas ses SMS, et le row reste 'paid' sans qu'on puisse le distinguer
+          // d'un crédit réussi. L'idempotence sur status='pending' empêche un double-crédit au retry.
+          await supabase
+            .from('sms_pack_purchases')
+            .update({ status: 'pending', paid_at: null })
+            .eq('id', purchase.id);
+          logger.error('credit_sms_pack RPC failed — purchase reverted to pending for manual retry', { purchaseId, merchantId: purchase.merchant_id, packSize: purchase.pack_size, error: creditError });
           break;
         }
 
@@ -430,7 +436,10 @@ export async function POST(request: Request) {
       const invoiceId = (charge as unknown as { invoice?: string | null }).invoice;
       if (!invoiceId) break;
       // Ignorer si le charge n'est pas totalement remboursé (refund partiel = cas non couvert).
-      if (charge.amount_refunded < charge.amount) break;
+      if (charge.amount_refunded < charge.amount) {
+        logger.info('partial refund ignored — only full refunds decrement the SMS pack', { chargeId: charge.id, amountRefunded: charge.amount_refunded, amount: charge.amount });
+        break;
+      }
 
       const { data: purchase } = await supabase
         .from('sms_pack_purchases')

@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { MessageSquareText, ShoppingCart, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { SMS_FREE_QUOTA } from '@/lib/sms-constants';
-import { toBCP47 } from '@/lib/utils';
+import { toBCP47, formatCurrency } from '@/lib/utils';
+import type { SmsPackPurchase } from '@/types';
 
 interface SmsUsage {
   sent: number;
@@ -12,16 +13,6 @@ interface SmsUsage {
   packBalance: number;
   periodStart: string;
   quota: number;
-}
-
-interface PackPurchase {
-  id: string;
-  pack_size: number;
-  amount_ttc_cents: number;
-  status: 'paid' | 'refunded';
-  paid_at: string | null;
-  created_at: string;
-  stripe_invoice_id: string | null;
 }
 
 interface SmsBalancePanelProps {
@@ -35,7 +26,7 @@ export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePan
   const [usage, setUsage] = useState<SmsUsage | null>(null);
   const [loading, setLoading] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [purchases, setPurchases] = useState<PackPurchase[] | null>(null);
+  const [purchases, setPurchases] = useState<SmsPackPurchase[] | null>(null);
   const [purchasesLoading, setPurchasesLoading] = useState(false);
 
   const toggleHistory = async () => {
@@ -167,7 +158,7 @@ export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePan
         </div>
       )}
 
-      {/* Historique des achats — repliable, fetch lazy au premier déploiement. */}
+      {/* Fetch lazy au premier toggle — économise un appel pour les merchants qui ne consultent jamais leur historique. */}
       <button
         onClick={toggleHistory}
         className="mt-3 w-full flex items-center justify-between text-[11px] font-semibold text-gray-500 hover:text-gray-700 transition-colors"
@@ -196,7 +187,7 @@ export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePan
                     <span className="shrink-0 text-[10px] font-semibold uppercase text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">{t('historyRefunded')}</span>
                   )}
                 </div>
-                <span className="text-gray-700 font-semibold shrink-0">{(Number(p.amount_ttc_cents || 0) / 100).toFixed(2)}€</span>
+                <span className="text-gray-700 font-semibold shrink-0">{formatCurrency(Number(p.amount_ttc_cents || 0) / 100, undefined, locale)}</span>
               </div>
             );
           })}

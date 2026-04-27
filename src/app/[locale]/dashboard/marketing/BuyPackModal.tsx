@@ -39,7 +39,7 @@ type PackWithFee = (typeof PACKS_WITH_FEE)[number];
 
 export default function BuyPackModal({ open, onClose }: BuyPackModalProps) {
   const t = useTranslations('marketing.buyPack');
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmingPack, setConfirmingPack] = useState<PackWithFee | null>(null);
 
@@ -57,7 +57,7 @@ export default function BuyPackModal({ open, onClose }: BuyPackModalProps) {
 
   const handleConfirm = async () => {
     if (!confirmingPack) return;
-    setLoading(true);
+    setSubmitting(true);
     setError(null);
     try {
       const res = await fetch('/api/stripe/sms-pack/checkout', {
@@ -70,18 +70,18 @@ export default function BuyPackModal({ open, onClose }: BuyPackModalProps) {
         window.location.href = data.url;
       } else {
         setError(data.error || t('errorGeneric'));
-        setLoading(false);
+        setSubmitting(false);
       }
     } catch {
       setError(t('errorGeneric'));
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
   return (
     <div
       className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
-      onClick={loading ? undefined : onClose}
+      onClick={submitting ? undefined : onClose}
     >
       <div
         className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
@@ -92,7 +92,7 @@ export default function BuyPackModal({ open, onClose }: BuyPackModalProps) {
             {confirmingPack ? (
               <button
                 onClick={handleBack}
-                disabled={loading}
+                disabled={submitting}
                 className="p-1 -ml-1 rounded-lg hover:bg-gray-100 text-gray-500 disabled:opacity-50"
                 aria-label={t('back')}
               >
@@ -107,7 +107,7 @@ export default function BuyPackModal({ open, onClose }: BuyPackModalProps) {
           </div>
           <button
             onClick={onClose}
-            disabled={loading}
+            disabled={submitting}
             className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 disabled:opacity-50"
             aria-label={t('close')}
           >
@@ -233,17 +233,17 @@ export default function BuyPackModal({ open, onClose }: BuyPackModalProps) {
             <div className="flex flex-col-reverse sm:flex-row gap-2 pt-1">
               <button
                 onClick={handleBack}
-                disabled={loading}
+                disabled={submitting}
                 className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 {t('back')}
               </button>
               <button
                 onClick={handleConfirm}
-                disabled={loading}
+                disabled={submitting}
                 className="flex-1 px-4 py-2.5 rounded-xl bg-[#4b0082] text-white font-bold text-sm hover:bg-[#3d006b] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading ? (
+                {submitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     {t('redirecting')}

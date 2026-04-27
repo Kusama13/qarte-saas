@@ -15,7 +15,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import { displayPhoneWithFlag } from '@/lib/utils';
+import { displayPhoneWithFlag, formatCurrency } from '@/lib/utils';
 
 interface MerchantSms {
   merchant_id: string;
@@ -194,7 +194,6 @@ export default function AdminSmsPage() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
-  // Packs SMS — stats commerciales + 30 derniers achats
   const [packsData, setPacksData] = useState<{
     stats: { revenueAllTimeCents: number; revenueThisMonthCents: number; refundedCents: number; smsCreditedAllTime: number; smsCreditedThisMonth: number; smsRefunded: number; paidCount: number; refundedCount: number };
     recent: Array<{ id: string; pack_size: number; amount_ttc_cents: number; status: 'paid' | 'refunded'; paid_at: string | null; merchant_id: string; merchants: { shop_name: string } | null }>;
@@ -252,7 +251,8 @@ export default function AdminSmsPage() {
     if (res.ok) setPacksData(await res.json());
   }, []);
 
-  useEffect(() => { fetchOverview(); fetchPending(); fetchPacks(); }, [fetchOverview, fetchPending, fetchPacks]);
+  useEffect(() => { fetchOverview(); fetchPending(); }, [fetchOverview, fetchPending]);
+  useEffect(() => { if (tab === 'overview' && !packsData) fetchPacks(); }, [tab, packsData, fetchPacks]);
   useEffect(() => { if (tab === 'failures' && failures.length === 0 && !loadingFailures) fetchFailures(); }, [tab, failures.length, loadingFailures, fetchFailures]);
   useEffect(() => { if (tab === 'history') fetchHistory(historyCategory, historyPage); }, [tab, historyCategory, historyPage, fetchHistory]);
 
@@ -380,12 +380,11 @@ export default function AdminSmsPage() {
               </button>
             </div>
 
-            {/* Section Packs SMS — stats commerciales + 30 derniers achats */}
             {packsData && (
               <div className="mb-6">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-                  <MetricCard label="Revenus packs (mois)" value={`${(packsData.stats.revenueThisMonthCents / 100).toFixed(2)}€`} />
-                  <MetricCard label="Revenus packs (total)" value={`${(packsData.stats.revenueAllTimeCents / 100).toFixed(2)}€`} />
+                  <MetricCard label="Revenus packs (mois)" value={formatCurrency(packsData.stats.revenueThisMonthCents / 100)} />
+                  <MetricCard label="Revenus packs (total)" value={formatCurrency(packsData.stats.revenueAllTimeCents / 100)} />
                   <MetricCard label="Packs vendus" value={packsData.stats.paidCount} />
                   <MetricCard label="SMS crédités (total)" value={packsData.stats.smsCreditedAllTime} />
                 </div>
@@ -395,7 +394,7 @@ export default function AdminSmsPage() {
                       <h2 className="text-sm font-bold text-gray-800">Achats de packs récents</h2>
                       {packsData.stats.refundedCount > 0 && (
                         <span className="text-[11px] text-orange-600 font-semibold">
-                          {packsData.stats.refundedCount} remb. ({(packsData.stats.refundedCents / 100).toFixed(2)}€)
+                          {packsData.stats.refundedCount} remb. ({formatCurrency(packsData.stats.refundedCents / 100)})
                         </span>
                       )}
                     </div>
@@ -421,7 +420,7 @@ export default function AdminSmsPage() {
                                 </td>
                                 <td className="px-4 py-2.5 text-sm font-medium text-gray-700">{p.merchants?.shop_name || '—'}</td>
                                 <td className="px-4 py-2.5 text-sm text-right text-gray-700">{p.pack_size} SMS</td>
-                                <td className="px-4 py-2.5 text-sm text-right font-semibold text-gray-800">{(Number(p.amount_ttc_cents || 0) / 100).toFixed(2)}€</td>
+                                <td className="px-4 py-2.5 text-sm text-right font-semibold text-gray-800">{formatCurrency(Number(p.amount_ttc_cents || 0) / 100)}</td>
                                 <td className="px-4 py-2.5 text-xs">
                                   <span className={`inline-flex px-2 py-0.5 rounded-md font-semibold ${
                                     p.status === 'refunded' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'
