@@ -23,7 +23,7 @@
 - **Next.js** 15.5.12 (App Router) + **React** 18.3.1 + **TypeScript** 5.6.2
 - **Tailwind CSS** 3.4.13 + **Framer Motion** (animations)
 - **Supabase** (PostgreSQL + Auth + Storage + RLS)
-- **Stripe** (paiements) + **Resend** (emails) + **OVH SMS** (SMS transactionnels)
+- **Stripe** (paiements) + **Resend** (emails) + **OVH SMS** + **SMS Partner** (SMS transactionnels FR/BE via SMS Partner, marketing + CH via OVH)
 - **Recharts** (graphiques), **Lucide React** (icones), **jsPDF** + **QRCode** (PDF/QR), **Web Push**
 - **next-intl** (i18n) — `messages/fr.json` + `messages/en.json` (~2243 lignes chacun)
 
@@ -442,10 +442,16 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **SW controller workaround** : `sw.js` n'appelle plus `clients.claim()` (causait crash React removeChild sur personalize mobile). Pour eviter le "Registration failed - push service error" sur Chrome Android / iOS PWA quand le SW vient d'etre installe, `subscribeToPush()` detecte `navigator.serviceWorker.controller === null` apres `serviceWorker.ready` et **reload la page une fois** (flag sessionStorage anti-loop, cleared apres subscribe reussi)
 - **Pas de toggles** : toutes les notifs actives par defaut pour tout merchant abonne au push
 
-### SMS (OVH Cloud)
-> **Pour l'architecture complete (marketing + packs + automatisations) voir `docs/sms-system.md`.**
+### SMS (OVH Cloud + SMS Partner)
+> **Pour l'architecture complete (marketing + packs + automatisations + dispatch providers + rollback) voir `docs/sms-system.md`.**
 
-- **Client API** : `src/lib/ovh-sms.ts` — signature HMAC-SHA1 custom, fire-and-forget, pas de npm package
+- **Deux providers cohabitent** depuis avril 2026 :
+  - **OVH** — marketing tous pays + transactionnel CH ([`src/lib/ovh-sms.ts`](../src/lib/ovh-sms.ts), signature HMAC-SHA1)
+  - **SMS Partner** — transactionnel FR/BE uniquement ([`src/lib/sms-partner.ts`](../src/lib/sms-partner.ts), API key body)
+  - **Routage** automatique via `selectTransactionalProvider(phone)` dans [`sms.ts`](../src/lib/sms.ts), basé sur `detectPhoneCountry()` (préfixe E.164)
+  - **Feature flag** `SMS_PARTNER_ENABLED=true` — à `false` ou absent, tout repart sur OVH (rollback instantané via redeploy Vercel)
+  - **Tracé** : colonne `sms_logs.provider` (`'ovh' | 'sms_partner'`, default `'ovh'`, mig 129)
+  - **Quota agrégé** : `getSmsUsageThisMonth()` ne filtre jamais par provider — 1 SMS = 1 unité de quota peu importe le fournisseur
 - **Service** : `src/lib/sms.ts` — dedup via `sms_logs`, quota 100 SMS/cycle + pack (pas d'overage, blocage a 0), templates FR/EN < 160 chars
 - **Reserve aux abonnes actifs** (pas trial) — message CTA dans dashboard + planning settings
 - **15 types de SMS** (migrations 092, 112, 113) :
@@ -467,9 +473,10 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Landing** : SMS mis en avant dans Hero (badge), FeaturesGrid, PageProSection (bloc dedie avec visual 2 SMS), Pricing, FAQ (Q4+Q12)
 - **Admin** : `/admin/sms` unifie avec 2 onglets (Apercu : metriques + breakdown par merchant cycle ; Moderation : liste campagnes pending + approve/reject avec badge count). Fusion des anciennes pages `/admin/sms` + `/admin/sms-review`.
 - **Admin activite** : badges "Acompte en attente" / "Acompte OK" sur les reservations
-- **Env vars** : `OVH_APP_KEY`, `OVH_APP_SECRET`, `OVH_CONSUMER_KEY`, `OVH_SMS_SERVICE`, `OVH_SMS_SENDER`
-- **Sender** : "Qarte" (en attente validation OVH, fallback numero court via `senderForResponse`)
-- **Migrations** : 092 (sms_logs + app_config), 093 (birthday + referral types), 094 (booking_moved + booking_cancelled), **112 (chantier SMS marketing complet — packs, campagnes, opt-outs, 14 types, RPC `credit_sms_pack`)**, **113 (near_reward)**
+- **Env vars OVH** : `OVH_APP_KEY`, `OVH_APP_SECRET`, `OVH_CONSUMER_KEY`, `OVH_SMS_SERVICE`, `OVH_SMS_SENDER`
+- **Env vars SMS Partner** : `SMS_PARTNER_API_KEY`, `SMS_PARTNER_SENDER` (default "Qarte"), `SMS_PARTNER_ENABLED` ("true" pour activer le routage transactionnel FR/BE), `SMS_PARTNER_SANDBOX` ("true" en dev = pas d'envoi réel)
+- **Sender** : "Qarte" sur les deux providers (en attente validation OVH, fallback numero court via `senderForResponse` ; SMS Partner accepte 3-11 chars sans spéciaux)
+- **Migrations** : 092 (sms_logs + app_config), 093 (birthday + referral types), 094 (booking_moved + booking_cancelled), **112 (chantier SMS marketing complet — packs, campagnes, opt-outs, 14 types, RPC `credit_sms_pack`)**, **113 (near_reward)**, **129 (colonne `provider` pour distinguer OVH vs SMS Partner, default 'ovh', additive non-destructive)**
 
 ### Stripe
 - `POST /api/stripe/checkout` — Session paiement (verifie customer Stripe)

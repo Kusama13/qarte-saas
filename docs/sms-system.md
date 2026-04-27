@@ -1,6 +1,6 @@
 # SMS System — Context
 
-Dernière MAJ : 19 avril 2026.
+Dernière MAJ : 27 avril 2026.
 
 ## Vue d'ensemble
 
@@ -84,8 +84,92 @@ Validité : valable pendant l'abonnement actif. Perdus à la résiliation. Strip
 3. **Blocage** — `{ success: false, blocked: true }`
 
 ### Fonctions d'envoi
-- `sendBookingSms()` — transactionnel (rappels, confirmations, parrainage, birthday). Check `PAID_STATUSES` + quota/pack + dedup par slot/phone/type/jour.
-- `sendMarketingSms()` — marketing (campaign, welcome, review_request, voucher_expiry, referral_invite, inactive_reminder, near_reward). Check `PAID_STATUSES` + quota/pack. Refund pack si OVH fail ou si insert log fail.
+- `sendBookingSms()` — transactionnel (rappels, confirmations, parrainage, birthday). Check `PAID_STATUSES` + quota/pack + dedup par slot/phone/type/jour. **Routage provider** : pays détecté FR/BE → SMS Partner (si `SMS_PARTNER_ENABLED=true`), sinon OVH.
+- `sendMarketingSms()` — marketing (campaign, welcome, review_request, voucher_expiry, referral_invite, inactive_reminder, near_reward). Check `PAID_STATUSES` + quota/pack. **Toujours via OVH** (tous pays). Refund pack si envoi fail ou si insert log fail.
+
+### Providers SMS — dispatch et rollback
+
+**Deux fournisseurs cohabitent**. Le choix se fait à l'envoi selon le type de SMS + le pays détecté du destinataire (préfixe E.164).
+
+#### Tableau de routage complet
+
+| Type SMS | Catégorie | FR | BE | CH |
+|---|---|---|---|---|
+| `reminder_j0` (rappel H-3) | Transactionnel | SMS Partner | SMS Partner | OVH |
+| `reminder_j1` (rappel J-1 19h) | Transactionnel | SMS Partner | SMS Partner | OVH |
+| `confirmation_no_deposit` | Transactionnel | SMS Partner | SMS Partner | OVH |
+| `confirmation_deposit` | Transactionnel | SMS Partner | SMS Partner | OVH |
+| `booking_moved` | Transactionnel | SMS Partner | SMS Partner | OVH |
+| `booking_cancelled` | Transactionnel | SMS Partner | SMS Partner | OVH |
+| `birthday` | Transactionnel (free Qarte) | SMS Partner | SMS Partner | OVH |
+| `referral_reward` | Transactionnel (free Qarte) | SMS Partner | SMS Partner | OVH |
+| `review_request` | Marketing | OVH | OVH | OVH |
+| `voucher_expiry` | Marketing | OVH | OVH | OVH |
+| `campaign` | Marketing | OVH | OVH | OVH |
+| `referral_invite` | Marketing | OVH | OVH | OVH |
+| `inactive_reminder` | Marketing | OVH | OVH | OVH |
+| `near_reward` | Marketing | OVH | OVH | OVH |
+
+**Règle simple** : SMS Partner = transactionnel FR/BE uniquement. OVH = tout le reste (marketing global + transactionnel CH + tout transactionnel si feature flag à `false`).
+
+#### Mécanique d'implémentation
+
+- **Détection pays** : `detectPhoneCountry()` dans [`utils.ts`](../src/lib/utils.ts) lit le préfixe E.164 du `client_phone` stocké (`33` → FR, `32` → BE, `41` → CH). Default `FR` si préfixe inconnu.
+- **Routage transactionnel** : fonction privée `selectTransactionalProvider(phone)` dans [`sms.ts`](../src/lib/sms.ts) — appelée juste avant l'insert du log. Retourne `'ovh'` ou `'sms_partner'`.
+- **Routage marketing** : aucun routage. `sendMarketingSms()` appelle directement le wrapper OVH et logge `provider: 'ovh'` en dur.
+- **Wrappers** : [`ovh-sms.ts`](../src/lib/ovh-sms.ts) (signature inchangée) et [`sms-partner.ts`](../src/lib/sms-partner.ts) (signature analogue : `(phone, message) → { success, jobId?, error? }`, fire-and-forget, jamais d'exception).
+- **Tracé** : colonne `sms_logs.provider` (`'ovh' | 'sms_partner'`, default `'ovh'`). `sms_logs.ovh_job_id` stocke aussi le `message_id` SMS Partner — sémantique élargie : ID externe du provider quel qu'il soit. Pas de renommage pour préserver l'historique.
+
+#### Variables d'environnement
+
+| Variable | Valeur typique | Effet |
+|---|---|---|
+| `SMS_PARTNER_API_KEY` | clé fournie par SMS Partner | Auth API. Sans ça → tous les envois SMS Partner échouent en `failed` |
+| `SMS_PARTNER_SENDER` | `Qarte` (3-11 chars, sans spéciaux) | Sender ID affiché chez le destinataire |
+| `SMS_PARTNER_ENABLED` | `true` ou `false` | **Feature flag principal**. `≠ "true"` → tout repart sur OVH instantanément |
+| `SMS_PARTNER_SANDBOX` | `true` (dev) ou `false` (prod) | Mode test SMS Partner : pas de débit, pas d'envoi réel |
+
+#### Rollback rapide vers OVH
+
+Si SMS Partner pose problème en prod (down, dégradation, facturation, etc.) :
+
+1. **Vercel Dashboard** → projet `qarte-saas` → **Settings → Environment Variables**
+2. Trouver `SMS_PARTNER_ENABLED` (Production) → Edit → `true` → `false` → Save
+3. **Deployments** → dernier deploy → menu `...` → **Redeploy**
+4. Délai effectif : ~1 min (durée du redeploy Vercel)
+
+⚠️ **Le redeploy est obligatoire** : Vercel ne hot-reload pas les env vars sur les fonctions serverless. Sans redeploy, la valeur reste cachée en mémoire.
+
+Variante CLI plus rapide :
+```bash
+echo "false" | vercel env add SMS_PARTNER_ENABLED production --force
+vercel --prod  # déclenche redeploy
+```
+
+Variante "kill switch" via commit vide (si flag déjà à `false` côté Vercel mais pas redéployé) :
+```bash
+git commit --allow-empty -m "ops: rollback SMS Partner"
+git push  # auto-deploy Vercel
+```
+
+#### Sécurité du rollback
+
+- Aucune perte de données : SMS déjà envoyés via SMS Partner restent loggés (`provider='sms_partner'`).
+- Aucune migration à reverse : la colonne `provider` reste, default `'ovh'`.
+- Pas de coupure : entre le changement de var et la fin du redeploy, les fonctions actives continuent leur trafic normalement.
+- Le code SMS Partner reste en place mais n'est plus appelé — réactivable instantanément.
+
+#### Limites connues
+
+- ⚠️ **Pas de fallback automatique** : si SMS Partner répond une erreur API (clé invalide, solde épuisé, numéro rejeté), le SMS est marqué `failed` en DB. Aucun retry automatique vers OVH. Décision UX : éviter les double-envois fantômes. Si besoin futur, ajouter ~10 lignes dans `sendBookingSms` (try SMS Partner → fallback OVH si `result.success === false`).
+- ⚠️ **Suisse non couverte** par SMS Partner (compte non habilité). Détection automatique via préfixe `41` → fallback OVH. Si le compte est étendu un jour, modifier `selectTransactionalProvider()` dans [`sms.ts`](../src/lib/sms.ts) pour inclure `CH`.
+- ⚠️ **Restriction horaire SMS commerciaux** : SMS Partner applique par défaut la restriction légale française (pas d'envoi 20h-8h, dimanches/jours fériés). Pour les transactionnels (rappels J-0), demander au support SMS Partner de désactiver cette contrainte sur la clé API utilisée. Compte Qarte actuel : restriction levée (avril 2026).
+
+#### Tarification merchant — inchangée par le routage
+
+- 0,075€/SMS quota/pack peu importe le provider.
+- 1 SMS = 1 unité décrémentée du quota gratuit (100/cycle) ou du `sms_pack_balance`.
+- Le calcul agrège les deux providers : `getSmsUsageThisMonth()` dans [`sms.ts`](../src/lib/sms.ts) ne filtre **jamais** par provider. Voir aussi `getSmsQuotaStatus()`, `consumePackOne()`, `refundPackOne()`, RPC `credit_sms_pack` — tous indépendants du provider.
 
 ### Helpers
 - `fetchOptedOutPhones(supabase, merchantId)` — Set des téléphones opt-out, utilisé par crons + audience resolver

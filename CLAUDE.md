@@ -45,6 +45,7 @@ docs/                        — context.md, supabase-context.md, audits
 - Supabase admin client (service_role) = server-side only
 - Phone storage: E.164 without + (e.g. `33612345678`). Client chooses country via PhoneInput (default=merchant). APIs accept optional `phone_country` param, lookup via `getAllPhoneFormats()` for cross-border dedup
 - Migrations must be applied manually in Supabase SQL Editor
+- SMS routing: transactionnel FR/BE → SMS Partner (si `SMS_PARTNER_ENABLED=true`), transactionnel CH + tout marketing → OVH. Détection pays via `detectPhoneCountry()`. Provider tracé dans `sms_logs.provider`
 - `.next` cache can cause stale module errors → `rm -rf .next`
 
 ## Environment
@@ -52,7 +53,8 @@ docs/                        — context.md, supabase-context.md, audits
 Required env vars (server-side):
 `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
 `RESEND_API_KEY`, `CRON_SECRET`, `VAPID_PRIVATE_KEY`, `IP_HASH_SALT`,
-`OVH_APP_KEY`, `OVH_APP_SECRET`, `OVH_CONSUMER_KEY`, `OVH_SMS_SERVICE`, `OVH_SMS_SENDER`
+`OVH_APP_KEY`, `OVH_APP_SECRET`, `OVH_CONSUMER_KEY`, `OVH_SMS_SERVICE`, `OVH_SMS_SENDER`,
+`SMS_PARTNER_API_KEY`, `SMS_PARTNER_SENDER` (default "Qarte"), `SMS_PARTNER_ENABLED` ("true" pour router le transactionnel FR/BE), `SMS_PARTNER_SANDBOX` ("true" en dev)
 
 Public (NEXT_PUBLIC_):
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`

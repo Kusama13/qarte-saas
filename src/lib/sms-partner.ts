@@ -1,0 +1,70 @@
+const API_KEY = (process.env.SMS_PARTNER_API_KEY || '').trim();
+const SMS_SENDER = (process.env.SMS_PARTNER_SENDER || process.env.OVH_SMS_SENDER || 'Qarte').trim();
+const SANDBOX = process.env.SMS_PARTNER_SANDBOX === 'true';
+
+const SMS_PARTNER_ENDPOINT = 'https://api.smspartner.fr/v1/send';
+
+interface SmsPartnerSuccess {
+  success: true;
+  code: number;
+  message_id: number;
+  nb_sms?: number;
+  cost?: number;
+  currency?: string;
+}
+
+interface SmsPartnerError {
+  success: false;
+  code: number;
+  errors?: Array<{ elementId?: string; message?: string }>;
+  message?: string;
+}
+
+type SmsPartnerResponse = SmsPartnerSuccess | SmsPartnerError;
+
+/**
+ * Send an SMS via SMS Partner. Fire-and-forget — never throws.
+ * Used for transactional SMS to FR/BE recipients.
+ * @param phone E.164 without + (e.g. "33612345678") — `+` est ajouté avant l'envoi.
+ * @param message SMS body (max 160 chars 7-bit).
+ */
+export async function sendSmsPartner(phone: string, message: string): Promise<{ success: boolean; jobId?: string; error?: string }> {
+  if (!API_KEY) {
+    console.error('[sms-partner] Missing SMS_PARTNER_API_KEY');
+    return { success: false, error: 'Missing SMS Partner config' };
+  }
+
+  try {
+    const payload: Record<string, unknown> = {
+      apiKey: API_KEY,
+      phoneNumbers: `+${phone}`,
+      message,
+      sender: SMS_SENDER,
+    };
+    if (SANDBOX) payload.sandbox = 1;
+
+    const res = await fetch(SMS_PARTNER_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => null) as SmsPartnerResponse | null;
+
+    if (!res.ok || !data || data.success !== true) {
+      const errCode = data && 'code' in data ? data.code : 'unknown';
+      const errDetail = (data && 'errors' in data && data.errors?.length)
+        ? data.errors.map(e => e.message).filter(Boolean).join('; ')
+        : (data && 'message' in data ? data.message : null);
+      const errMsg = `[HTTP ${res.status}] SMS Partner error (code ${errCode})${errDetail ? `: ${errDetail}` : ''}`;
+      console.error(`[sms-partner] Send failed: ${errMsg}`);
+      return { success: false, error: errMsg };
+    }
+
+    return { success: true, jobId: String(data.message_id) };
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error(`[sms-partner] Error: ${errMsg}`);
+    return { success: false, error: errMsg };
+  }
+}

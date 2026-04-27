@@ -1,8 +1,24 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { sendSms } from './ovh-sms';
+import { sendSmsPartner } from './sms-partner';
+import { detectPhoneCountry } from './utils';
 import { notifyMerchantQuotaAlert } from './sms-alerts';
 import { getPlanFeatures } from './plan-tiers';
 import type { PlanTier, SubscriptionStatus } from '@/types';
+
+type SmsProvider = 'ovh' | 'sms_partner';
+
+/**
+ * Décide quel provider utiliser pour un SMS transactionnel selon le pays détecté.
+ * - SMS Partner : transactionnel FR/BE (si flag activé)
+ * - OVH : transactionnel CH (Suisse non couverte par SMS Partner) + fallback si flag off
+ * Marketing reste 100% OVH (voir sendMarketingSms ci-dessous).
+ */
+function selectTransactionalProvider(phone: string): SmsProvider {
+  if (process.env.SMS_PARTNER_ENABLED !== 'true') return 'ovh';
+  const country = detectPhoneCountry(phone);
+  return (country === 'FR' || country === 'BE') ? 'sms_partner' : 'ovh';
+}
 
 export { SMS_FREE_QUOTA, SMS_OVERAGE_COST, SMS_UNIT_COST, SMS_UNIT_COST_CENTS } from './sms-constants';
 import { SMS_FREE_QUOTA, SMS_OVERAGE_COST } from './sms-constants';
@@ -377,7 +393,10 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
       }
     }
 
-    // 6. Insert log FIRST (prevents concurrent duplicate sends via unique constraint)
+    // 6. Sélection du provider selon le pays (FR/BE → SMS Partner, CH → OVH).
+    const provider = selectTransactionalProvider(phone);
+
+    // 7. Insert log FIRST (prevents concurrent duplicate sends via unique constraint)
     // Cost = 0 (free quota or pre-paid pack). No overage anymore.
     const { data: logRow, error: logError } = await supabase.from('sms_logs').insert({
       merchant_id: merchantId,
@@ -387,6 +406,7 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
       message_body: message,
       status: 'sent',
       cost_euro: 0,
+      provider,
     }).select('id').maybeSingle();
 
     // Unique constraint violation = already sent (concurrent dedup) → refund the pack consumption
@@ -397,10 +417,12 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
     // Unique constraint violation = already sent (concurrent dedup)
     if (logError) return false;
 
-    // 7. Send via OVH
-    const result = await sendSms(phone, message);
+    // 8. Envoi via le provider sélectionné.
+    const result = provider === 'sms_partner'
+      ? await sendSmsPartner(phone, message)
+      : await sendSms(phone, message);
 
-    // 8. Update log with result. Refund pack if send failed.
+    // 9. Update log with result. Refund pack if send failed.
     if (logRow?.id) {
       await supabase.from('sms_logs').update({
         ovh_job_id: result.jobId || null,
@@ -484,6 +506,7 @@ export async function sendMarketingSms(
     }
 
     // 2. Insert log (refund pack si échec d'insertion pour préserver la cohérence)
+    // Marketing reste 100% OVH (tous pays) — SMS Partner réservé au transactionnel FR/BE.
     const { data: logRow, error: logError } = await supabase.from('sms_logs').insert({
       merchant_id: merchantId,
       slot_id: null,
@@ -492,6 +515,7 @@ export async function sendMarketingSms(
       message_body: body,
       status: 'sent',
       cost_euro: 0,
+      provider: 'ovh',
     }).select('id').maybeSingle();
     if (logError) {
       if (consumedFromPack) await refundPackOne(supabase, merchantId);
