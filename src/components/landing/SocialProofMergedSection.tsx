@@ -28,17 +28,19 @@ interface Review {
   avatar: string;
 }
 
-const AVATARS = [
+const FALLBACK_AVATARS = [
   '/images/testimonials/t1.jpg',
   '/images/testimonials/t2.jpg',
   '/images/testimonials/t3.jpg',
+  '/images/testimonials/t4.jpg',
 ];
 
-function buildReviews(t: (key: string) => string): Review[] {
+function buildReviews(t: (key: string) => string, logos: string[]): Review[] {
   return [
-    { rating: t('t1Rating'), title: t('t1Title'), text: t('t1Text'), name: t('t1Name'), shopType: t('t1ShopType'), avatar: AVATARS[0] },
-    { rating: t('t2Rating'), title: t('t2Title'), text: t('t2Text'), name: t('t2Name'), shopType: t('t2ShopType'), avatar: AVATARS[1] },
-    { rating: t('t3Rating'), title: t('t3Title'), text: t('t3Text'), name: t('t3Name'), shopType: t('t3ShopType'), avatar: AVATARS[2] },
+    { rating: t('t1Rating'), title: t('t1Title'), text: t('t1Text'), name: t('t1Name'), shopType: t('t1ShopType'), avatar: logos[0] || FALLBACK_AVATARS[0] },
+    { rating: t('t2Rating'), title: t('t2Title'), text: t('t2Text'), name: t('t2Name'), shopType: t('t2ShopType'), avatar: logos[1] || FALLBACK_AVATARS[1] },
+    { rating: t('t3Rating'), title: t('t3Title'), text: t('t3Text'), name: t('t3Name'), shopType: t('t3ShopType'), avatar: logos[2] || FALLBACK_AVATARS[2] },
+    { rating: t('t4Rating'), title: t('t4Title'), text: t('t4Text'), name: t('t4Name'), shopType: t('t4ShopType'), avatar: logos[3] || FALLBACK_AVATARS[3] },
   ];
 }
 
@@ -73,11 +75,11 @@ function ReviewCard({ review, delay, visible }: { review: Review; delay: number;
   );
 }
 
-export function SocialProofMergedSection() {
+export function SocialProofMergedSection({ testimonialLogos = [] }: { testimonialLogos?: string[] } = {}) {
   const { ref, isInView } = useInView();
   const t = useTranslations('testimonials');
   const tc = useTranslations('caseStudy');
-  const reviews = buildReviews(t);
+  const reviews = buildReviews(t, testimonialLogos);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -119,7 +121,7 @@ export function SocialProofMergedSection() {
 
         {/* Top: 3 testimonials */}
         {/* Desktop / tablet */}
-        <div className="hidden md:grid grid-cols-3 gap-4 items-stretch mb-10">
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch mb-10">
           {reviews.map((review, i) => (
             <ReviewCard key={i} review={review} delay={i * 100} visible={isInView} />
           ))}

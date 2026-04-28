@@ -39,7 +39,7 @@ export function FeaturesGridSection() {
           <p className="text-base md:text-lg text-gray-500 leading-relaxed max-w-xl mx-auto">{t('subtitle')}</p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-5">
           {features.map(({ number, titleKey, descKey, competitorKey, bg, border, text }, i) => (
             <motion.div
               key={titleKey}
@@ -47,22 +47,22 @@ export function FeaturesGridSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
               transition={{ duration: 0.5, delay: 0.05 + i * 0.04, ease: EASE }}
-              className="bg-white backdrop-blur-sm rounded-2xl p-4 sm:p-7 shadow-md md:shadow-lg shadow-gray-200/40 border border-gray-100 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex flex-col sm:flex-row items-start gap-2.5 sm:gap-5"
+              className="bg-white backdrop-blur-sm rounded-2xl p-4 md:p-7 shadow-md md:shadow-lg shadow-gray-200/40 border border-gray-100 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex flex-col gap-2.5 md:gap-3"
             >
-              <div className={`min-w-[3.5rem] sm:min-w-[4.5rem] px-3 py-2 rounded-xl ${bg} border ${border} flex items-center justify-center shrink-0`}>
-                <span className={`text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tighter ${text}`}>{number}</span>
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="text-base sm:text-[22px] font-semibold text-gray-900 mb-1 sm:mb-1.5 leading-snug">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className={`min-w-[3.5rem] md:min-w-[4.5rem] px-3 py-2 rounded-xl ${bg} border ${border} flex items-center justify-center shrink-0`}>
+                  <span className={`text-2xl md:text-3xl font-extrabold tabular-nums tracking-tighter ${text}`}>{number}</span>
+                </div>
+                <h3 className="min-w-0 flex-1 text-base md:text-[22px] font-semibold text-gray-900 leading-snug">
                   {t(titleKey)}
                 </h3>
-                <p className="text-[13px] sm:text-[17px] text-gray-500 leading-snug sm:leading-relaxed">
-                  {t(descKey)}
-                </p>
-                <p className="mt-2 text-[11px] sm:text-xs text-gray-400 italic leading-snug">
-                  {t(competitorKey)}
-                </p>
               </div>
+              <p className="text-[13px] md:text-[17px] text-gray-500 leading-snug md:leading-relaxed">
+                {t(descKey)}
+              </p>
+              <p className="text-[11px] md:text-xs text-gray-400 italic leading-snug">
+                {t(competitorKey)}
+              </p>
             </motion.div>
           ))}
         </div>

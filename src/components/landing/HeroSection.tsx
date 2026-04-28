@@ -116,13 +116,13 @@ export function HeroSection({ topLogos = [] }: { topLogos?: HeroLogo[] } = {}) {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-pink-100/30 rounded-full blur-3xl" />
       </div>
 
-      <div ref={ref} className="relative z-10 max-w-[1500px] mx-auto px-6 lg:px-10 pt-32 lg:pt-24 pb-14 lg:pb-20 grid lg:grid-cols-[1.1fr_1fr] gap-8 lg:gap-16 items-start">
+      <div ref={ref} className="relative z-10 max-w-[1500px] mx-auto px-6 lg:px-10 pt-32 md:pt-28 lg:pt-24 pb-14 lg:pb-20 grid xl:grid-cols-[1fr_1.2fr] gap-8 xl:gap-12 items-start xl:items-center">
 
         {/* Text content */}
-        <div className={`min-w-0 space-y-4 lg:space-y-6 text-center lg:text-left ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
+        <div className={`min-w-0 space-y-4 lg:space-y-6 text-center xl:text-left ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
 
           {/* Social proof pill */}
-          <div className="flex justify-center lg:justify-start">
+          <div className="flex justify-center xl:justify-start">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/80 border border-rose-100 pl-1.5 pr-3 py-1 shadow-sm">
               <div className="flex -space-x-1.5">
                 {pillItems.map((item, i) => (
@@ -153,11 +153,11 @@ export function HeroSection({ topLogos = [] }: { topLogos?: HeroLogo[] } = {}) {
             ))}
           </h1>
 
-          <p className="text-lg md:text-lg lg:text-xl text-gray-700 max-w-lg mx-auto lg:mx-0 leading-relaxed">
+          <p className="text-lg md:text-lg lg:text-xl text-gray-700 max-w-lg mx-auto xl:mx-0 leading-relaxed">
             {t('subtitle')}
           </p>
 
-          <div className="flex flex-col items-center lg:items-start gap-3 w-full sm:w-auto pt-2">
+          <div className="flex flex-col items-center xl:items-start gap-3 w-full sm:w-auto pt-2">
             <Link
               href="/auth/merchant/signup"
               onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
@@ -166,13 +166,12 @@ export function HeroSection({ topLogos = [] }: { topLogos?: HeroLogo[] } = {}) {
               <span>{t('ctaPrimary')}</span>
             </Link>
             <p className="text-xs text-gray-600 font-medium text-center">{t('ctaSubtext')}</p>
-            <p className="text-xs text-rose-600 font-semibold text-center">{t('ctaTrust')}</p>
           </div>
         </div>
 
         {/* Person + floating cards */}
-        <div className={`min-w-0 flex justify-center lg:justify-end ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.3s' }}>
-          <div className="scale-[0.62] sm:scale-[0.8] md:scale-90 lg:scale-100 origin-top mt-4 lg:mt-0 lg:translate-x-8 -mb-[236px] sm:-mb-[124px] md:-mb-[62px] lg:mb-0">
+        <div className={`min-w-0 flex justify-center xl:justify-end ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.3s' }}>
+          <div className="scale-[0.62] sm:scale-[0.8] md:scale-90 lg:scale-100 origin-top mt-4 xl:mt-0 xl:translate-x-8 -mb-[236px] sm:-mb-[124px] md:-mb-[62px] lg:mb-0">
             <HeroPersonMockup />
           </div>
         </div>

@@ -11,12 +11,12 @@ export function FooterCta() {
   const t = useTranslations('footer');
 
   return (
-    <div className="bg-gray-50 border-t border-gray-200 py-16">
+    <div id="footer-cta" className="bg-gray-50 border-t border-gray-200 py-16">
       <div className="max-w-6xl mx-auto px-6 text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
           {t('ctaTitle')}
         </h2>
-        <ul className="inline-flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-emerald-700 font-semibold mb-6">
+        <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-emerald-700 font-semibold mb-6">
           <li className="flex items-center gap-1.5"><span>✓</span> {t('ctaChecklist1')}</li>
           <li className="flex items-center gap-1.5"><span>✓</span> {t('ctaChecklist2')}</li>
           <li className="flex items-center gap-1.5"><span>✓</span> {t('ctaChecklist3')}</li>

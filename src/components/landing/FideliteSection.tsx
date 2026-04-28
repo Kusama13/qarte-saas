@@ -601,7 +601,7 @@ export function FideliteSection() {
           <Link
             href="/auth/merchant/signup"
             onClick={() => { trackCtaClick('fidelite_cta', 'fidelite_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-            className="group inline-flex items-center gap-2 px-8 py-4 bg-gray-900 text-white font-bold rounded-xl shadow-lg shadow-gray-900/20 hover:shadow-gray-900/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+            className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 hover:from-indigo-700 hover:to-violet-700 hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
           >
             {t('cta')}
             <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />

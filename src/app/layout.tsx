@@ -87,8 +87,7 @@ export default async function RootLayout({
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'testimonials' });
 
-  // Build Review array from i18n testimonials (5 reviews)
-  const reviews = [1, 2, 3, 4, 5].map((i) => ({
+  const reviews = [1, 2, 3, 4].map((i) => ({
     '@type': 'Review',
     reviewRating: {
       '@type': 'Rating',
@@ -99,8 +98,7 @@ export default async function RootLayout({
     reviewBody: t(`t${i}Text`),
   }));
 
-  // Average rating from the 5 testimonials (5.0 + 5.0 + 4.9 + 5.0 + 4.8) / 5 = 4.94
-  const ratingValues = [1, 2, 3, 4, 5].map((i) => parseFloat(t(`t${i}Rating`)));
+  const ratingValues = [1, 2, 3, 4].map((i) => parseFloat(t(`t${i}Rating`)));
   const avgRating = (ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length).toFixed(1);
 
   // Single @graph JSON-LD — Organization + WebSite + SoftwareApplication with aggregateRating + reviews

@@ -11,6 +11,7 @@ import { Link } from '@/i18n/navigation';
 export function MobileStickyCta() {
   const t = useTranslations('mobileCta');
   const [isVisible, setIsVisible] = useState(false);
+  const [footerInView, setFooterInView] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,7 +22,18 @@ export function MobileStickyCta() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  if (!isVisible) return null;
+  useEffect(() => {
+    const target = document.getElementById('footer-cta');
+    if (!target) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setFooterInView(entry.isIntersecting),
+      { rootMargin: '0px 0px -20% 0px' }
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
+  if (!isVisible || footerInView) return null;
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-4 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] bg-white/95 backdrop-blur-lg border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
