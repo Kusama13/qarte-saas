@@ -69,7 +69,6 @@ interface Merchant extends BaseMerchant {
   referral_invite_sms_enabled?: boolean;
   inactive_sms_enabled?: boolean;
   voucher_expiry_sms_enabled?: boolean;
-  events_sms_enabled?: boolean;
 }
 
 interface Stats {
@@ -1221,7 +1220,6 @@ export default function MerchantDetailPage() {
           { key: 'referral_invite', label: 'Invitation parrainage', active: !!merchant.referral_invite_sms_enabled, group: 'parr' },
           { key: 'inactive_sms', label: 'Relance inactifs', active: !!merchant.inactive_sms_enabled, group: 'conv' },
           { key: 'voucher_expiry', label: 'Expiration voucher', active: !!merchant.voucher_expiry_sms_enabled, group: 'conv' },
-          { key: 'events_sms', label: 'Événements', active: !!merchant.events_sms_enabled, group: 'conv' },
         ];
         const activeCount = smsToggles.filter(t => t.active).length;
         const groups: Record<SmsGroup, { label: string; iconColor: string }> = {

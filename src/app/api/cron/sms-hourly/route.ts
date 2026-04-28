@@ -5,7 +5,6 @@ import { verifyCronAuth } from '@/lib/cron-helpers';
 import { sendBookingSms, sendMarketingSms, getGlobalSmsConfig, PAID_STATUSES } from '@/lib/sms';
 import { fetchOptedOutPhones, hasSmsLog, type CustomerEmbed } from '@/lib/sms-audience';
 import { getTimezoneForCountry } from '@/lib/utils';
-import { getUpcomingEvent } from '@/lib/push-automation';
 import { isLegalSendTime } from '@/lib/sms-compliance';
 import logger from '@/lib/logger';
 
@@ -29,8 +28,6 @@ interface MerchantRow {
   billing_period_start: string | null;
   reminder_j0_enabled: boolean | null;
   post_visit_review_enabled: boolean | null;
-  events_sms_enabled: boolean | null;
-  events_sms_offer_text: string | null;
   voucher_expiry_sms_enabled: boolean | null;
   referral_invite_sms_enabled: boolean | null;
   inactive_sms_enabled: boolean | null;
@@ -116,7 +113,6 @@ export async function GET(request: NextRequest) {
   const results = {
     j0Sent: 0,
     reviewSent: 0,
-    eventSent: 0,
     voucherExpirySent: 0,
     referralInviteSent: 0,
     inactiveSent: 0,
@@ -128,7 +124,7 @@ export async function GET(request: NextRequest) {
 
   const { data: merchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, country, locale, subscription_status, billing_period_start, reminder_j0_enabled, post_visit_review_enabled, events_sms_enabled, events_sms_offer_text, voucher_expiry_sms_enabled, referral_invite_sms_enabled, inactive_sms_enabled, near_reward_sms_enabled, referral_program_enabled, planning_enabled, review_link, stamps_required, reward_description, tier2_enabled, tier2_stamps_required, tier2_reward_description, birthday_gift_enabled, birthday_gift_description')
+    .select('id, shop_name, country, locale, subscription_status, billing_period_start, reminder_j0_enabled, post_visit_review_enabled, voucher_expiry_sms_enabled, referral_invite_sms_enabled, inactive_sms_enabled, near_reward_sms_enabled, referral_program_enabled, planning_enabled, review_link, stamps_required, reward_description, tier2_enabled, tier2_stamps_required, tier2_reward_description, birthday_gift_enabled, birthday_gift_description')
     .in('subscription_status', PAID_STATUSES);
 
   const activeMerchants = (merchants || []) as MerchantRow[];
@@ -255,70 +251,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // ── 4. EVENT SMS (marketing) — J-7 avant Saint-Valentin, Noël, etc. ──
-  // Déclenche uniquement à 10h local pour éviter de spammer à chaque heure.
-  for (const m of activeMerchants) {
-    if (Date.now() - startedAt > 290_000) break;
-    if (!m.events_sms_enabled) continue;
-
-    const tz = getTimezoneForCountry(m.country || 'FR');
-    const localHour = localHourFor(now, tz);
-    // Fenetre 10h-11h (filet de securite si Vercel rate le run de 10h).
-    if (localHour < 10 || localHour > 11) continue;
-
-    // Paris as neutral anchor for event detection (event dates fixed in FR cal).
-    const nowParis = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
-    const upcomingEvent = getUpcomingEvent(nowParis, m.locale === 'en' ? 'en' : 'fr');
-    if (!upcomingEvent) continue;
-
-    if (!isLegalSendTime(now, m.country || 'FR').ok) continue;
-
-    const { data: cards } = await supabase
-      .from('loyalty_cards')
-      .select('customer_id, customers(first_name, phone_number)')
-      .eq('merchant_id', m.id);
-
-    if (!cards || cards.length === 0) continue;
-    const optOuts = await fetchOptedOutPhones(supabase, m.id);
-    const locale = m.locale || 'fr';
-    const offerText = m.events_sms_offer_text || '';
-
-    // Dedup cross-types + per-phone daily. Le flag events_sms_last_event_id
-    // a ete retire au profit de sms_logs (plus fiable, retry natif).
-    const sentMarketingToday = await fetchPhonesWithMarketingToday(supabase, m.id, todayStartIsoUtc());
-
-    for (const card of cards) {
-      const customer = getEmbeddedCustomer(card);
-      const phone = customer?.phone_number;
-      if (!phone || optOuts.has(phone)) continue;
-      if (sentMarketingToday.has(phone)) continue; // cap daily
-
-      const first = customer?.first_name ? `${customer.first_name}, ` : '';
-      const intro = locale === 'en'
-        ? `${upcomingEvent.name} is coming up at ${m.shop_name}!`
-        : `C'est bientôt ${upcomingEvent.name} chez ${m.shop_name} !`;
-      const closing = offerText || (locale === 'en'
-        ? 'Book your slot before the agenda fills up.'
-        : 'Pensez à réserver votre créneau avant que le planning ne soit complet.');
-      const body = `${first}${intro} ${closing} STOP SMS`;
-
-      const result = await sendMarketingSms(supabase, {
-        merchantId: m.id,
-        phone,
-        body,
-        billingPeriodStart: m.billing_period_start,
-        smsType: 'campaign',
-      });
-      if (result.success) {
-        results.eventSent++;
-      } else if (result.blocked) {
-        results.errors++;
-        break;
-      } else {
-        results.skipped++;
-      }
-    }
-  }
+  // ── 4. (retire) — EVENT SMS J-7 avant Saint-Val/Noël/etc. supprime (avril 2026).
 
   // ── 5. VOUCHER EXPIRY (marketing) — J-7 avant expiration ──
   // Fire uniquement à 10h local. Dedup par phone+type+today.

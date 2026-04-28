@@ -9,15 +9,12 @@ const ALLOWED_SMS_TOGGLES = [
   'reminder_j0_enabled',
   'post_visit_review_enabled',
   'review_sms_include_link',
-  'events_sms_enabled',
   'referral_reward_sms_enabled',
   'voucher_expiry_sms_enabled',
   'referral_invite_sms_enabled',
   'inactive_sms_enabled',
   'near_reward_sms_enabled',
 ] as const;
-
-const ALLOWED_SMS_TEXT_FIELDS = ['events_sms_offer_text'] as const;
 
 type SmsToggle = typeof ALLOWED_SMS_TOGGLES[number];
 
@@ -33,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, reminder_j1_enabled, reminder_j0_enabled, post_visit_review_enabled, review_sms_include_link, review_link, events_sms_enabled, events_sms_offer_text, referral_reward_sms_enabled, voucher_expiry_sms_enabled, referral_invite_sms_enabled, inactive_sms_enabled, near_reward_sms_enabled, referral_program_enabled, referral_reward_referrer, referral_reward_referred, planning_enabled, reward_description, tier2_enabled, tier2_reward_description')
+      .select('id, reminder_j1_enabled, reminder_j0_enabled, post_visit_review_enabled, review_sms_include_link, review_link, referral_reward_sms_enabled, voucher_expiry_sms_enabled, referral_invite_sms_enabled, inactive_sms_enabled, near_reward_sms_enabled, referral_program_enabled, referral_reward_referrer, referral_reward_referred, planning_enabled, reward_description, tier2_enabled, tier2_reward_description')
       .eq('id', merchantId)
       .eq('user_id', user.id)
       .single();
@@ -64,13 +61,10 @@ export async function POST(request: NextRequest) {
       .single();
     if (!merchant) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 
-    const safeUpdates: Record<string, boolean | string | null> = {};
+    const safeUpdates: Record<string, boolean> = {};
     for (const key of Object.keys(updates)) {
       if ((ALLOWED_SMS_TOGGLES as readonly string[]).includes(key) && typeof updates[key] === 'boolean') {
         safeUpdates[key as SmsToggle] = updates[key];
-      }
-      if ((ALLOWED_SMS_TEXT_FIELDS as readonly string[]).includes(key) && typeof updates[key] === 'string') {
-        safeUpdates[key] = (updates[key] as string).trim() || null;
       }
     }
 
@@ -82,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     const { data: settings } = await supabaseAdmin
       .from('merchants')
-      .select('id, reminder_j1_enabled, reminder_j0_enabled, post_visit_review_enabled, review_sms_include_link, review_link, events_sms_enabled, events_sms_offer_text, referral_reward_sms_enabled, voucher_expiry_sms_enabled, referral_invite_sms_enabled, inactive_sms_enabled, near_reward_sms_enabled, referral_program_enabled, referral_reward_referrer, referral_reward_referred, planning_enabled, reward_description, tier2_enabled, tier2_reward_description')
+      .select('id, reminder_j1_enabled, reminder_j0_enabled, post_visit_review_enabled, review_sms_include_link, review_link, referral_reward_sms_enabled, voucher_expiry_sms_enabled, referral_invite_sms_enabled, inactive_sms_enabled, near_reward_sms_enabled, referral_program_enabled, referral_reward_referrer, referral_reward_referred, planning_enabled, reward_description, tier2_enabled, tier2_reward_description')
       .eq('id', merchantId)
       .single();
 
