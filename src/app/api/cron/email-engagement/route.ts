@@ -67,7 +67,6 @@ export async function GET(request: NextRequest) {
     .select('id, shop_name, slug, user_id, locale, trial_ends_at, subscription_status, plan_tier, created_at, reward_description, stamps_required, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, referral_code, no_contact, pwa_installed_at, auto_booking_enabled, email_bounced_at, email_unsubscribed_at, billing_period_start');
 
   const allMerchantsList = allMerchants || [];
-  const allMerchantsMap = new Map(allMerchantsList.map(m => [m.id, m]));
   const allUserIds = [...new Set(allMerchantsList.map(m => m.user_id))];
   const allMerchantIds = allMerchantsList.map(m => m.id);
 
@@ -86,27 +85,52 @@ export async function GET(request: NextRequest) {
   );
 
   // ==================== MILESTONE EMAILS ====================
+  // Compteurs par merchant (visites confirmées/pending, résas, récompenses,
+  // clients uniques) calculés côté DB par la RPC merchant_milestone_stats —
+  // évite les agrégations en mémoire qui se brisaient au-delà du cap PostgREST
+  // et envoyaient des mails milestone à tort. Voir migration 133.
+  type MilestoneStats = {
+    merchant_id: string;
+    confirmed_visit_count: number;
+    last_confirmed_visit_at: string | null;
+    pending_visit_count: number;
+    oldest_pending_visit_at: string | null;
+    booking_count: number;
+    total_rewards_earned: number;
+    unique_customer_count: number;
+  };
+  const statsByMerchant = new Map<string, MilestoneStats>();
+  if (allMerchantIds.length > 0) {
+    const { data: statsRows, error: statsErr } = await supabase.rpc('merchant_milestone_stats', { merchant_ids: allMerchantIds });
+    if (statsErr) {
+      logger.error('merchant_milestone_stats RPC failed', statsErr);
+    } else {
+      for (const row of (statsRows || []) as MilestoneStats[]) {
+        statsByMerchant.set(row.merchant_id, {
+          ...row,
+          confirmed_visit_count: Number(row.confirmed_visit_count),
+          pending_visit_count: Number(row.pending_visit_count),
+          booking_count: Number(row.booking_count),
+          total_rewards_earned: Number(row.total_rewards_earned),
+          unique_customer_count: Number(row.unique_customer_count),
+        });
+      }
+    }
+  }
+  const getStats = (id: string): MilestoneStats => statsByMerchant.get(id) || {
+    merchant_id: id,
+    confirmed_visit_count: 0, last_confirmed_visit_at: null,
+    pending_visit_count: 0, oldest_pending_visit_at: null,
+    booking_count: 0, total_rewards_earned: 0, unique_customer_count: 0,
+  };
+
   if (isTimedOut()) { sectionStatuses.push({ name: 'milestoneEmails', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
   else try {
     const allConfiguredMerchants = configuredActiveMerchants;
 
     if (allConfiguredMerchants.length > 0) {
-      const configuredIds = allConfiguredMerchants.map(m => m.id);
-
-      const { data: visitCounts } = await supabase
-        .from('visits')
-        .select('merchant_id')
-        .in('merchant_id', configuredIds)
-        .eq('status', 'confirmed')
-        .limit(10000);
-
-      const visitCountMap = new Map<string, number>();
-      for (const v of visitCounts || []) {
-        visitCountMap.set(v.merchant_id, (visitCountMap.get(v.merchant_id) || 0) + 1);
-      }
-
       // First scan — exactly 2 visits (1st = merchant test, 2nd = first real client)
-      const firstScanMerchants = allConfiguredMerchants.filter(m => visitCountMap.get(m.id) === 2);
+      const firstScanMerchants = allConfiguredMerchants.filter(m => getStats(m.id).confirmed_visit_count === 2);
 
       if (firstScanMerchants.length > 0) {
         await runStandardEmailSection(supabase, {
@@ -132,20 +156,7 @@ export async function GET(request: NextRequest) {
       // First booking — merchants with auto_booking_enabled + exactly 1 online booking
       const bookingEnabledMerchants = allConfiguredMerchants.filter(m => m.auto_booking_enabled);
       if (bookingEnabledMerchants.length > 0) {
-        const bookingMerchantIds = bookingEnabledMerchants.map(m => m.id);
-        const { data: bookingCounts } = await supabase
-          .from('merchant_planning_slots')
-          .select('merchant_id')
-          .in('merchant_id', bookingMerchantIds)
-          .not('client_name', 'is', null)
-          .not('client_name', 'eq', '__blocked__');
-
-        const bookingCountMap = new Map<string, number>();
-        for (const b of bookingCounts || []) {
-          bookingCountMap.set(b.merchant_id, (bookingCountMap.get(b.merchant_id) || 0) + 1);
-        }
-
-        const firstBookingMerchants = bookingEnabledMerchants.filter(m => bookingCountMap.get(m.id) === 1);
+        const firstBookingMerchants = bookingEnabledMerchants.filter(m => getStats(m.id).booking_count === 1);
 
         if (firstBookingMerchants.length > 0) {
           await runStandardEmailSection(supabase, {
@@ -171,23 +182,11 @@ export async function GET(request: NextRequest) {
 
       // First reward — total rewards_earned = 1
       {
-        const programIds = allConfiguredMerchants.map(m => m.id);
         const merchantProgramMap = new Map(allConfiguredMerchants.map(m => [m.id, m]));
 
-        const { data: rewardCards } = await supabase
-          .from('loyalty_cards')
-          .select('merchant_id, rewards_earned')
-          .in('merchant_id', programIds)
-          .gt('rewards_earned', 0);
-
-        const merchantsWithRewards = new Map<string, number>();
-        for (const card of rewardCards || []) {
-          merchantsWithRewards.set(card.merchant_id, (merchantsWithRewards.get(card.merchant_id) || 0) + card.rewards_earned);
-        }
-
-        const firstRewardMerchantIds = [...merchantsWithRewards.entries()]
-          .filter(([, count]) => count === 1)
-          .map(([id]) => id);
+        const firstRewardMerchantIds = allConfiguredMerchants
+          .filter(m => getStats(m.id).total_rewards_earned === 1)
+          .map(m => m.id);
 
         if (firstRewardMerchantIds.length > 0) {
           const alreadySentReward = new Set(firstRewardMerchantIds.filter(id => globalTrackingSet.has(`${id}:-101`)));
@@ -224,24 +223,7 @@ export async function GET(request: NextRequest) {
       );
 
       if (tier2Candidates.length > 0) {
-        const t2Ids = tier2Candidates.map(m => m.id);
-
-        const { data: loyaltyCards } = await supabase
-          .from('loyalty_cards')
-          .select('merchant_id, customer_id')
-          .in('merchant_id', t2Ids);
-
-        const customerCountMap = new Map<string, number>();
-        const seenCustomers = new Map<string, Set<string>>();
-        for (const card of loyaltyCards || []) {
-          if (!seenCustomers.has(card.merchant_id)) seenCustomers.set(card.merchant_id, new Set());
-          seenCustomers.get(card.merchant_id)!.add(card.customer_id);
-        }
-        for (const [merchantId, customers] of seenCustomers) {
-          customerCountMap.set(merchantId, customers.size);
-        }
-
-        const tier2Eligible = tier2Candidates.filter(m => (customerCountMap.get(m.id) || 0) >= 50);
+        const tier2Eligible = tier2Candidates.filter(m => getStats(m.id).unique_customer_count >= 50);
 
         if (tier2Eligible.length > 0) {
           const alreadySentTier2 = new Set(tier2Eligible.filter(m => globalTrackingSet.has(`${m.id}:-102`)).map(m => m.id));
@@ -254,7 +236,7 @@ export async function GET(request: NextRequest) {
             stats: results.tier2Upsell,
             extraSkip: (m) => !m.reward_description,
             sendFn: (email, m) => {
-              const totalCustomers = customerCountMap.get(m.id) || 0;
+              const totalCustomers = getStats(m.id).unique_customer_count;
               return sendTier2UpsellEmail(email, m.shop_name, totalCustomers, m.reward_description!, (m.locale as EmailLocale) || 'fr');
             },
           });
@@ -274,24 +256,8 @@ export async function GET(request: NextRequest) {
     const activeMerchants = configuredActiveMerchants;
 
     if (activeMerchants.length > 0) {
-      const merchantIds = activeMerchants.map(m => m.id);
-      const { data: allLastVisits } = await supabase
-        .from('visits')
-        .select('merchant_id, visited_at')
-        .in('merchant_id', merchantIds)
-        .eq('status', 'confirmed')
-        .order('visited_at', { ascending: false })
-        .limit(10000);
-
-      const lastVisitMap = new Map<string, string>();
-      for (const visit of allLastVisits || []) {
-        if (!lastVisitMap.has(visit.merchant_id)) {
-          lastVisitMap.set(visit.merchant_id, visit.visited_at);
-        }
-      }
-
       const candidateMerchants = activeMerchants.filter(merchant => {
-        const lastVisitDate = lastVisitMap.get(merchant.id);
+        const lastVisitDate = getStats(merchant.id).last_confirmed_visit_at;
         const referenceDate = lastVisitDate ? new Date(lastVisitDate) : new Date(merchant.created_at);
         const daysInactive = Math.floor((now.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
         return INACTIVE_DAYS.includes(daysInactive);
@@ -302,7 +268,7 @@ export async function GET(request: NextRequest) {
 
       if (candidateMerchants.length > 0) {
         for (const merchant of candidateMerchants) {
-          const lastVisitDate = lastVisitMap.get(merchant.id);
+          const lastVisitDate = getStats(merchant.id).last_confirmed_visit_at;
           const referenceDate = lastVisitDate ? new Date(lastVisitDate) : new Date(merchant.created_at);
           const daysInactive = Math.floor((now.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
 
@@ -459,47 +425,14 @@ export async function GET(request: NextRequest) {
   // ==================== PENDING REMINDERS ====================
   if (isTimedOut()) { sectionStatuses.push({ name: 'pendingReminders', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
   else try {
-    const { data: merchantsWithPending } = await supabase
-      .from('visits')
-      .select('merchant_id')
-      .eq('status', 'pending')
-      .order('merchant_id')
-      .limit(10000);
+    const merchantsWithPending = allMerchantsList.filter(m => {
+      const s = getStats(m.id);
+      return s.pending_visit_count > 0 && canEmail(m);
+    });
 
-    const uniqueMerchantIds = [...new Set(merchantsWithPending?.map(v => v.merchant_id) || [])];
-
-    if (uniqueMerchantIds.length > 0) {
-      const pendingMerchantMap = new Map(
-        uniqueMerchantIds
-          .map(id => allMerchantsMap.get(id))
-          .filter((m): m is NonNullable<typeof m> => m != null && canEmail(m))
-          .map(m => [m.id, m])
-      );
-
-      const { data: allPendingVisits } = await supabase
-        .from('visits')
-        .select('id, merchant_id, visited_at')
-        .in('merchant_id', uniqueMerchantIds)
-        .eq('status', 'pending')
-        .order('visited_at', { ascending: true })
-        .limit(10000);
-
-      const pendingByMerchant = new Map<string, { id: string; visited_at: string }[]>();
-      for (const visit of allPendingVisits || []) {
-        if (!pendingByMerchant.has(visit.merchant_id)) {
-          pendingByMerchant.set(visit.merchant_id, []);
-        }
-        pendingByMerchant.get(visit.merchant_id)!.push(visit);
-      }
-
-      for (const merchantId of uniqueMerchantIds) {
+    if (merchantsWithPending.length > 0) {
+      for (const merchant of merchantsWithPending) {
         results.pendingReminders.processed++;
-
-        const merchant = pendingMerchantMap.get(merchantId);
-        if (!merchant) {
-          results.pendingReminders.errors++;
-          continue;
-        }
 
         const email = globalEmailMap.get(merchant.user_id);
         if (!email) {
@@ -507,15 +440,15 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
-        const pendingVisits = pendingByMerchant.get(merchantId);
-        if (!pendingVisits || pendingVisits.length === 0) {
+        const stats = getStats(merchant.id);
+        const pendingCount = stats.pending_visit_count;
+        if (!stats.oldest_pending_visit_at) {
           results.pendingReminders.skipped++;
           continue;
         }
-
-        const pendingCount = pendingVisits.length;
-        const oldestPendingDate = new Date(pendingVisits[0].visited_at);
+        const oldestPendingDate = new Date(stats.oldest_pending_visit_at);
         const daysSinceFirst = Math.floor((now.getTime() - oldestPendingDate.getTime()) / (1000 * 60 * 60 * 24));
+        const merchantId = merchant.id;
 
         const isInitialAlert = INITIAL_ALERT_DAYS.includes(daysSinceFirst);
         const isReminder = REMINDER_DAYS.includes(daysSinceFirst);

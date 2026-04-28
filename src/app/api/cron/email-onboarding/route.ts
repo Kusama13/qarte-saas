@@ -310,13 +310,16 @@ export async function GET(request: NextRequest) {
 
         const alreadySentScript = new Set(scriptIds.filter(id => globalTrackingSet.has(`${id}:-106`)));
 
-        const { data: scriptVisits } = await supabase
-          .from('visits')
-          .select('merchant_id')
-          .in('merchant_id', scriptIds)
-          .eq('status', 'confirmed')
-          .limit(10000);
-        const hasVisits = new Set((scriptVisits || []).map(v => v.merchant_id));
+        // Compte exact de visites confirmées par merchant via RPC (évite cap PostgREST).
+        const { data: visitStats, error: visitStatsErr } = await supabase.rpc('merchant_milestone_stats', { merchant_ids: scriptIds });
+        if (visitStatsErr) {
+          logger.error('merchant_milestone_stats RPC failed (firstClientScript)', visitStatsErr);
+        }
+        const hasVisits = new Set(
+          ((visitStats || []) as Array<{ merchant_id: string; confirmed_visit_count: number }>)
+            .filter(s => Number(s.confirmed_visit_count) > 0)
+            .map(s => s.merchant_id)
+        );
 
         const scriptToSend = scriptCandidates.filter(
           m => qrSent2DaysAgo.has(m.id) && !alreadySentScript.has(m.id) && !hasVisits.has(m.id)
