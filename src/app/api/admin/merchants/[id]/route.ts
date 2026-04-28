@@ -84,6 +84,7 @@ export async function GET(
       pendingDepositsRes,
       smsSentRes,
       onlineBookingsRes,
+      smsPackHistoryRes,
     ] = await Promise.all([
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
@@ -109,6 +110,7 @@ export async function GET(
       supabaseAdmin.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('deposit_confirmed', false).not('client_name', 'is', null).is('primary_slot_id', null).gte('slot_date', new Date().toISOString().split('T')[0]),
       supabaseAdmin.from('sms_logs').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).neq('status', 'failed'),
       supabaseAdmin.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('booked_online', true).not('client_name', 'is', null).is('primary_slot_id', null),
+      supabaseAdmin.from('sms_pack_purchases').select('id, pack_size, status, amount_ttc_cents, paid_at, created_at, stripe_session_id').eq('merchant_id', merchantId).order('created_at', { ascending: false }).limit(20),
     ]);
 
     // Compute push subscribers (same logic as before)
@@ -169,10 +171,22 @@ export async function GET(
       periodStart: smsUsage.periodStart,
     };
 
+    const smsPackHistory = smsPackHistoryRes.data || [];
+
+    // Cycle alerts state (alert_X_sent_cycle === current cycle start ⇒ déjà envoyée ce cycle)
+    const cycleStartDate = smsUsage.periodStart.slice(0, 10);
+    const smsAlerts = {
+      alert80: merchant.sms_alert_80_sent_cycle === cycleStartDate,
+      alert90: merchant.sms_alert_90_sent_cycle === cycleStartDate,
+      alert100: merchant.sms_alert_100_sent_cycle === cycleStartDate,
+    };
+
     return NextResponse.json({
       merchant,
       userEmail,
       smsCredit,
+      smsPackHistory,
+      smsAlerts,
       stats: {
         totalCustomers: totalCustomersRes.count || 0,
         activeCustomers: activeCustomersRes.count || 0,

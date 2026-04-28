@@ -167,6 +167,29 @@ export async function getSmsQuotaStatus(
 }
 
 /**
+ * Fire-and-forget des alertes 80% / 90% / 100% selon le compteur courant.
+ * Le helper notifyMerchantQuotaAlert gère lui-même la déduplication par cycle
+ * et le skip 80/90 si packBalance > 0.
+ */
+function dispatchQuotaAlerts(
+  supabase: SupabaseClient,
+  merchantId: string,
+  sentBeforeThis: number,
+  freeQuota: number,
+  cycleStart: string,
+  packBalance: number,
+): void {
+  const next = sentBeforeThis + 1;
+  if (next >= freeQuota) {
+    void notifyMerchantQuotaAlert(supabase, merchantId, '100', cycleStart, packBalance);
+  } else if (next >= Math.floor(freeQuota * 0.9)) {
+    void notifyMerchantQuotaAlert(supabase, merchantId, '90', cycleStart, packBalance);
+  } else if (next >= Math.floor(freeQuota * 0.8)) {
+    void notifyMerchantQuotaAlert(supabase, merchantId, '80', cycleStart, packBalance);
+  }
+}
+
+/**
  * Atomically decrement the merchant's pack balance by 1. Returns true on success.
  * Uses a conditional update to avoid race conditions (only succeeds if balance > 0).
  */
@@ -374,17 +397,7 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
       const freeQuota = getEffectiveQuota(mRow, usage.periodStart);
       const quotaLeft = Math.max(0, freeQuota - usage.sent);
 
-      // Alerts at 80% / 90% / 100% thresholds (fire-and-forget, deduped per cycle)
-      const alert80 = Math.floor(freeQuota * 0.8);
-      const alert90 = Math.floor(freeQuota * 0.9);
-      const cycleStart = usage.periodStart.slice(0, 10);
-      if (usage.sent + 1 >= freeQuota) {
-        void notifyMerchantQuotaAlert(supabase, merchantId, '100', cycleStart);
-      } else if (usage.sent + 1 >= alert90) {
-        void notifyMerchantQuotaAlert(supabase, merchantId, '90', cycleStart);
-      } else if (usage.sent + 1 >= alert80) {
-        void notifyMerchantQuotaAlert(supabase, merchantId, '80', cycleStart);
-      }
+      dispatchQuotaAlerts(supabase, merchantId, usage.sent, freeQuota, usage.periodStart.slice(0, 10), packBalance);
 
       if (quotaLeft === 0 && packBalance === 0) {
         return false; // blocked — merchant must buy a pack
@@ -487,16 +500,7 @@ export async function sendMarketingSms(
     const freeQuota = getEffectiveQuota(merchantRow, usage.periodStart);
     const quotaLeft = Math.max(0, freeQuota - usage.sent);
 
-    const alert80 = Math.floor(freeQuota * 0.8);
-    const alert90 = Math.floor(freeQuota * 0.9);
-    const cycleStart = usage.periodStart.slice(0, 10);
-    if (usage.sent + 1 >= freeQuota) {
-      void notifyMerchantQuotaAlert(supabase, merchantId, '100', cycleStart);
-    } else if (usage.sent + 1 >= alert90) {
-      void notifyMerchantQuotaAlert(supabase, merchantId, '90', cycleStart);
-    } else if (usage.sent + 1 >= alert80) {
-      void notifyMerchantQuotaAlert(supabase, merchantId, '80', cycleStart);
-    }
+    dispatchQuotaAlerts(supabase, merchantId, usage.sent, freeQuota, usage.periodStart.slice(0, 10), packBalance);
 
     if (quotaLeft === 0 && packBalance === 0) {
       return { success: false, blocked: true, error: 'quota_exhausted' };

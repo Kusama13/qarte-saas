@@ -1,39 +1,30 @@
 'use client';
 
 import { useState } from 'react';
-import { X, ShoppingCart, Loader2, CheckCircle2, Info, ArrowLeft, ChevronRight } from 'lucide-react';
+import { X, ShoppingCart, Loader2, CheckCircle2, Info, ArrowLeft, ChevronRight, Gift } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { PACK_SIZES, PACK_TTC_CENTS, PROCESSING_FEE_TTC_CENTS, VAT_RATE, getBonusSms, type PackSize } from '@/lib/sms-pack-pricing';
 
 interface BuyPackModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-interface Pack {
-  size: 50 | 100 | 150 | 200 | 250;
-  ht: number;
-  ttc: number;
-  popular?: boolean;
-}
+const FEE_TTC = PROCESSING_FEE_TTC_CENTS / 100; // 1€
 
-const PACKS: Pack[] = [
-  { size: 50, ht: 3.75, ttc: 5.70 },
-  { size: 100, ht: 7.50, ttc: 9.00 },
-  { size: 150, ht: 11.25, ttc: 13.50, popular: true },
-  { size: 200, ht: 15.00, ttc: 18.00 },
-  { size: 250, ht: 18.75, ttc: 22.50 },
-];
-
-const FEE_HT = 1;
-const FEE_TTC = 1.2;
-const VAT_RATE = 0.20;
-
-const PACKS_WITH_FEE = PACKS.map((p) => ({
-  ...p,
-  htWithFee: +(p.ht + FEE_HT).toFixed(2),
-  ttcWithFee: +(p.ttc + FEE_TTC).toFixed(2),
-  vatAmount: +(((p.ht + FEE_HT) * VAT_RATE)).toFixed(2),
-}));
+// Prix TTC envoyés directement à Stripe. Source unique : src/lib/sms-pack-pricing.ts.
+const PACKS_WITH_FEE = PACK_SIZES.map((size: PackSize) => {
+  const totalTtc = PACK_TTC_CENTS[size] / 100;
+  const smsTtc = totalTtc - FEE_TTC;
+  return {
+    size,
+    smsTtc: +smsTtc.toFixed(2),
+    totalTtc: +totalTtc.toFixed(2),
+    vatAmount: +(totalTtc - totalTtc / (1 + VAT_RATE)).toFixed(2),
+    bonusSms: getBonusSms(size),
+    popular: size === 150,
+  };
+});
 
 type PackWithFee = (typeof PACKS_WITH_FEE)[number];
 
@@ -145,6 +136,12 @@ export default function BuyPackModal({ open, onClose }: BuyPackModalProps) {
                     <div className="text-left min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="text-sm font-bold text-gray-900">{t('packLabel', { count: p.size })}</p>
+                        {p.bonusSms > 0 && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap">
+                            <Gift className="w-2.5 h-2.5" />
+                            +{p.bonusSms} {t('bonusBadge')}
+                          </span>
+                        )}
                         {p.popular && (
                           <span className="text-[9px] font-bold text-[#4b0082] bg-[#4b0082]/10 px-1.5 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap">
                             {t('popular')}
@@ -152,14 +149,16 @@ export default function BuyPackModal({ open, onClose }: BuyPackModalProps) {
                         )}
                       </div>
                       <p className="text-[11px] text-gray-500 truncate">
-                        {p.htWithFee.toFixed(2)}€ HT
+                        {p.bonusSms > 0
+                          ? t('packLineWithBonus', { total: p.size + p.bonusSms })
+                          : t('packLineHint')}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-right shrink-0">
                     <div>
-                      <p className="text-base font-bold text-gray-900">{p.ttcWithFee.toFixed(2)}€</p>
-                      <p className="text-[10px] text-gray-400">TTC</p>
+                      <p className="text-base font-bold text-gray-900">{p.totalTtc.toFixed(2)}€</p>
+                      <p className="text-[10px] text-gray-400">{t('ttcLabel')}</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-gray-400" />
                   </div>
@@ -197,27 +196,38 @@ export default function BuyPackModal({ open, onClose }: BuyPackModalProps) {
               </div>
             </div>
 
+            {confirmingPack.bonusSms > 0 && (
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200">
+                <div className="w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                  <Gift className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-emerald-800">
+                    {t('bonusOffered', { count: confirmingPack.bonusSms })}
+                  </p>
+                  <p className="text-[11px] text-emerald-700">
+                    {t('bonusOfferedSub', { total: confirmingPack.size + confirmingPack.bonusSms })}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1.5 text-sm">
               <div className="flex items-center justify-between text-gray-600">
                 <span>{t('lineSms', { count: confirmingPack.size })}</span>
-                <span className="font-medium text-gray-700">{confirmingPack.ht.toFixed(2)}€</span>
+                <span className="font-medium text-gray-700">{confirmingPack.smsTtc.toFixed(2)}€</span>
               </div>
               <div className="flex items-center justify-between text-gray-600">
                 <span>{t('lineFee')}</span>
-                <span className="font-medium text-gray-700">{FEE_HT.toFixed(2)}€</span>
-              </div>
-              <div className="flex items-center justify-between text-gray-500 pt-1 border-t border-gray-100">
-                <span>{t('lineSubtotalHt')}</span>
-                <span className="font-medium text-gray-700">{confirmingPack.htWithFee.toFixed(2)}€</span>
-              </div>
-              <div className="flex items-center justify-between text-gray-500">
-                <span>{t('lineVat', { rate: '20' })}</span>
-                <span className="font-medium text-gray-700">{confirmingPack.vatAmount.toFixed(2)}€</span>
+                <span className="font-medium text-gray-700">{FEE_TTC.toFixed(2)}€</span>
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-gray-200">
                 <span className="text-base font-bold text-gray-900">{t('lineTotalTtc')}</span>
-                <span className="text-xl font-bold text-[#4b0082]">{confirmingPack.ttcWithFee.toFixed(2)}€</span>
+                <span className="text-xl font-bold text-[#4b0082]">{confirmingPack.totalTtc.toFixed(2)}€</span>
               </div>
+              <p className="text-[11px] text-gray-400 text-right pt-1">
+                {t('vatIncludedNote', { amount: confirmingPack.vatAmount.toFixed(2) })}
+              </p>
             </div>
 
             <div className="rounded-xl bg-gray-50 border border-gray-200 p-3">
@@ -249,7 +259,7 @@ export default function BuyPackModal({ open, onClose }: BuyPackModalProps) {
                     {t('redirecting')}
                   </>
                 ) : (
-                  t('confirmCta', { amount: confirmingPack.ttcWithFee.toFixed(2) })
+                  t('confirmCta', { amount: confirmingPack.totalTtc.toFixed(2) })
                 )}
               </button>
             </div>

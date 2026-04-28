@@ -1064,8 +1064,10 @@ export const fr = {
   smsPackPurchase: {
     preview: 'Ton pack de {packSize} SMS est cr\u00e9dit\u00e9 \u2014 tu peux envoyer d\u00e8s maintenant',
     heading: '{packSize} SMS cr\u00e9dit\u00e9s sur ton compte',
+    headingWithBonus: '{packSize} SMS + {bonusSms} offerts cr\u00e9dit\u00e9s sur ton compte',
     greeting: 'Bonjour <strong>{shopName}</strong>,',
     intro: 'Ton paiement de {amountTtc}\u20ac TTC pour ton pack de {packSize} SMS a bien \u00e9t\u00e9 re\u00e7u. Les cr\u00e9dits sont d\u00e9j\u00e0 disponibles.',
+    introWithBonus: 'Ton paiement de {amountTtc}\u20ac TTC pour ton pack de {packSize} SMS a bien \u00e9t\u00e9 re\u00e7u. On te rajoute {bonusSms} SMS offerts \u2014 soit {totalCredited} SMS au total cr\u00e9dit\u00e9s sur ton compte.',
     balanceLabel: 'Nouveau solde',
     smsUnit: 'SMS',
     balanceHint: 'Cr\u00e9dits valables tout au long de ton abonnement.',

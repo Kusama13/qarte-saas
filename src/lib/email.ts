@@ -1118,19 +1118,20 @@ export async function sendSmsPackPurchaseEmail(
   params: {
     shopName: string;
     packSize: number;
+    bonusSms?: number;
     amountTtc: string;
     newBalance: number;
     invoiceUrl?: string | null;
     locale?: EmailLocale;
   },
 ): Promise<SendEmailResult> {
-  const { shopName, packSize, amountTtc, newBalance, invoiceUrl, locale = 'fr' } = params;
+  const { shopName, packSize, bonusSms = 0, amountTtc, newBalance, invoiceUrl, locale = 'fr' } = params;
   const ctaUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com'}/dashboard/marketing?tab=sms`;
   return sendEmail(
     to,
     subj(locale, 'smsPackPurchase', { shopName, packSize: String(packSize) }),
     SmsPackPurchaseEmail,
-    { shopName, packSize, amountTtc, newBalance, invoiceUrl, ctaUrl, locale },
+    { shopName, packSize, bonusSms, amountTtc, newBalance, invoiceUrl, ctaUrl, locale },
     { logLabel: `SMS pack purchase confirmation email (${packSize})` },
   );
 }

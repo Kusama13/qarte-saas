@@ -94,7 +94,8 @@ export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePan
   const quotaDepleted = usage.remaining === 0;
   const packEmpty = usage.packBalance === 0;
   const blocked = quotaDepleted && packEmpty;
-  const warning = percent >= 80 && !blocked;
+  // Warning visuel uniquement si pas de pack en backup (sinon on bascule en silence dessus)
+  const warning = percent >= 80 && !blocked && packEmpty;
 
   const barColor = blocked
     ? 'bg-red-500'

@@ -6,6 +6,7 @@ import { getEmailT, type EmailLocale } from './translations';
 interface SmsPackPurchaseEmailProps {
   shopName: string;
   packSize: number;
+  bonusSms?: number;
   amountTtc: string;
   newBalance: number;
   invoiceUrl?: string | null;
@@ -13,16 +14,26 @@ interface SmsPackPurchaseEmailProps {
   locale?: EmailLocale;
 }
 
-export function SmsPackPurchaseEmail({ shopName, packSize, amountTtc, newBalance, invoiceUrl, ctaUrl, locale = 'fr' }: SmsPackPurchaseEmailProps) {
+export function SmsPackPurchaseEmail({ shopName, packSize, bonusSms = 0, amountTtc, newBalance, invoiceUrl, ctaUrl, locale = 'fr' }: SmsPackPurchaseEmailProps) {
   const t = getEmailT(locale);
+  const hasBonus = bonusSms > 0;
+  const totalCredited = packSize + bonusSms;
 
   return (
     <BaseLayout preview={t('smsPackPurchase.preview', { shopName, packSize: String(packSize) })} locale={locale}>
-      <Heading style={heading}>{t('smsPackPurchase.heading', { packSize: String(packSize) })}</Heading>
+      <Heading style={heading}>
+        {hasBonus
+          ? t('smsPackPurchase.headingWithBonus', { packSize: String(packSize), bonusSms: String(bonusSms) })
+          : t('smsPackPurchase.heading', { packSize: String(packSize) })}
+      </Heading>
 
       <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('smsPackPurchase.greeting', { shopName }) }} />
 
-      <Text style={paragraph}>{t('smsPackPurchase.intro', { packSize: String(packSize), amountTtc })}</Text>
+      <Text style={paragraph}>
+        {hasBonus
+          ? t('smsPackPurchase.introWithBonus', { packSize: String(packSize), bonusSms: String(bonusSms), totalCredited: String(totalCredited), amountTtc })
+          : t('smsPackPurchase.intro', { packSize: String(packSize), amountTtc })}
+      </Text>
 
       <Section style={successBox}>
         <Text style={successTitle}>{t('smsPackPurchase.balanceLabel')}</Text>

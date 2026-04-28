@@ -234,6 +234,13 @@ const HIGHLIGHT_STYLES = {
   red:   { container: 'bg-red-50 border-red-200',     value: 'text-red-700' },
 } as const;
 
+const PACK_STATUS_COLORS: Record<string, string> = {
+  paid: 'text-emerald-600',
+  pending: 'text-amber-600',
+  failed: 'text-red-600',
+  refunded: 'text-gray-500',
+};
+
 function LoyaltyRow({
   icon: Icon, iconClass, label, description,
 }: {
@@ -400,6 +407,8 @@ export default function MerchantDetailPage() {
   });
   const [memberPrograms, setMemberPrograms] = useState<MemberProgram[]>([]);
   const [smsCredit, setSmsCredit] = useState<{ sent: number; quota: number; packBalance: number; totalAvailable: number } | null>(null);
+  const [smsPackHistory, setSmsPackHistory] = useState<Array<{ id: string; pack_size: number; status: string; amount_ttc_cents: number; paid_at: string | null; created_at: string; stripe_session_id: string | null }>>([]);
+  const [smsAlerts, setSmsAlerts] = useState<{ alert80: boolean; alert90: boolean; alert100: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
@@ -424,6 +433,8 @@ export default function MerchantDetailPage() {
         setMemberPrograms(data.memberPrograms || []);
         setEmailTrackings(data.emailTrackings || []);
         setSmsCredit(data.smsCredit || null);
+        setSmsPackHistory(data.smsPackHistory || []);
+        setSmsAlerts(data.smsAlerts || null);
         if (data.userEmail) setUserEmail(data.userEmail);
       } catch (error) {
         console.error('Error fetching merchant data:', error);
@@ -1277,6 +1288,39 @@ export default function MerchantDetailPage() {
                   <span>Pack acheté en sus</span>
                   <span>{smsCredit.packBalance}</span>
                 </div>
+                {smsAlerts && (
+                  <div className="flex items-center justify-between gap-3 text-[11px] text-gray-400 pt-1">
+                    <span>Alertes envoyées ce cycle</span>
+                    <span className="flex items-center gap-2">
+                      <span className={smsAlerts.alert80 ? 'text-amber-600 font-semibold' : 'text-gray-300'}>80% {smsAlerts.alert80 ? '✓' : '—'}</span>
+                      <span className={smsAlerts.alert90 ? 'text-orange-600 font-semibold' : 'text-gray-300'}>90% {smsAlerts.alert90 ? '✓' : '—'}</span>
+                      <span className={smsAlerts.alert100 ? 'text-red-600 font-semibold' : 'text-gray-300'}>100% {smsAlerts.alert100 ? '✓' : '—'}</span>
+                    </span>
+                  </div>
+                )}
+                {smsPackHistory.length > 0 && (
+                  <div className="pt-2 mt-2 border-t border-gray-100">
+                    <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                      Historique des packs ({smsPackHistory.length})
+                    </div>
+                    <div className="space-y-1 max-h-[200px] overflow-y-auto">
+                      {smsPackHistory.map((p) => {
+                        const date = new Date(p.paid_at || p.created_at);
+                        const dateStr = date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+                        const ttc = (p.amount_ttc_cents / 100).toFixed(2);
+                        const statusColor = PACK_STATUS_COLORS[p.status] ?? 'text-gray-400';
+                        return (
+                          <div key={p.id} className="flex items-center justify-between gap-2 text-[11px] py-1 px-2 rounded hover:bg-gray-50">
+                            <span className="text-gray-600 truncate">{dateStr}</span>
+                            <span className="text-gray-700 font-medium tabular-nums">{p.pack_size} SMS</span>
+                            <span className="text-gray-700 font-medium tabular-nums">{ttc}€</span>
+                            <span className={`font-semibold uppercase text-[10px] ${statusColor}`}>{p.status}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </CollapsibleCard>

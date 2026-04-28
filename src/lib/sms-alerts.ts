@@ -13,17 +13,21 @@ export type SmsQuotaLevel = '80' | '90' | '100';
  * Dedup is stored in merchants.sms_alert_{80,90,100}_sent_cycle (DATE of billing cycle start).
  *
  * Niveaux :
- * - 80% : push seulement (early warning léger)
- * - 90% : email + push avec lien achat pack (alerte principale, plage actionnable)
- * - 100% : email + push (blocage hard côté sms.ts) — relance critique pour les
- *          merchants qui ont raté l'email à 90% (spam, vacances, etc.)
+ * - 80% : push seulement (early warning léger) — SKIP si pack > 0 (rien à anticiper)
+ * - 90% : email + push avec lien achat pack — SKIP si pack > 0
+ * - 100% : email + push, message change selon pack > 0 (bascule silencieuse) ou pack = 0 (bloqué)
  */
 export async function notifyMerchantQuotaAlert(
   supabase: SupabaseClient,
   merchantId: string,
   level: SmsQuotaLevel,
   billingCycleStart: string, // YYYY-MM-DD of current cycle
+  packBalance: number = 0,
 ): Promise<void> {
+  // Si le merchant a un pack, on ne le bombarde pas d'alertes 80/90 — il a déjà du backup.
+  // Le 100% reste, mais avec un message adouci (cf. plus bas).
+  if (packBalance > 0 && (level === '80' || level === '90')) return;
+
   const flagCol = level === '80' ? 'sms_alert_80_sent_cycle'
     : level === '90' ? 'sms_alert_90_sent_cycle'
     : 'sms_alert_100_sent_cycle';
@@ -48,8 +52,16 @@ export async function notifyMerchantQuotaAlert(
   let pushTitle: string;
   let pushBody: string;
   if (level === '100') {
-    pushTitle = locale === 'en' ? 'SMS quota done — buy a pack' : 'Ton quota SMS est terminé';
-    pushBody = locale === 'en' ? 'Buy a pack to unblock your sends.' : 'Merci d\'acheter un pack pour continuer à envoyer.';
+    if (packBalance > 0) {
+      // Quota inclus épuisé mais le pack prend le relais — info, pas d'urgence.
+      pushTitle = locale === 'en' ? 'Switching to your SMS pack' : 'On bascule sur ton pack SMS';
+      pushBody = locale === 'en'
+        ? `Your monthly quota is done. Your pack of ${packBalance} SMS now takes over.`
+        : `Ton quota inclus du mois est épuisé. Ton pack de ${packBalance} SMS prend le relais.`;
+    } else {
+      pushTitle = locale === 'en' ? 'SMS quota done — buy a pack' : 'Ton quota SMS est terminé';
+      pushBody = locale === 'en' ? 'Buy a pack to unblock your sends.' : 'Merci d\'acheter un pack pour continuer à envoyer.';
+    }
   } else if (level === '90') {
     pushTitle = locale === 'en' ? '90% SMS used — buy a pack' : 'Quota SMS à 90% — achète un pack';
     pushBody = locale === 'en' ? 'Anticipate now to avoid interruption.' : 'Anticipe maintenant pour éviter l\'interruption.';
@@ -73,9 +85,11 @@ export async function notifyMerchantQuotaAlert(
   });
 
   // Email aux niveaux 90% (anticipation) ET 100% (blocage). Pas d'email à 80% — push suffit.
-  // Le template SmsQuotaEmail gère deux variantes ('90' = warning, '100' = reached/blocked).
+  // Avec pack > 0 : 90% est skippé tout en haut, 100% n'envoie que le push (pas d'email — la bascule
+  // sur le pack est silencieuse côté inbox, le merchant verra dans le dashboard si besoin).
+  const shouldEmail = (level === '90' || level === '100') && packBalance === 0;
   let emailPromise: Promise<unknown> = Promise.resolve();
-  if ((level === '90' || level === '100') && canEmail({
+  if (shouldEmail && canEmail({
     no_contact: row.no_contact as boolean | null,
     email_bounced_at: row.email_bounced_at as string | null,
     email_unsubscribed_at: row.email_unsubscribed_at as string | null,

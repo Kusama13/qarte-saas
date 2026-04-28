@@ -7,6 +7,7 @@ import { sendSubscriptionConfirmedEmail, sendPaymentFailedEmail, sendSubscriptio
 import type { EmailLocale } from '@/emails/translations';
 import { sendCapiPurchaseEvent } from '@/lib/facebook-capi';
 import { toBCP47, getCurrencyForCountry } from '@/lib/utils';
+import { getCreditedSmsCount, getBonusSms, type PackSize } from '@/lib/sms-pack-pricing';
 import type { SubscriptionStatus, PlanTier } from '@/types';
 
 /** Map a Stripe price ID to our internal tier. Returns null if unknown
@@ -92,9 +93,11 @@ export async function POST(request: Request) {
         }
 
         // Atomic credit via RPC (évite la race avec un sendSms concurrent).
+        // Total crédité = pack_size + bonus (les bonus 10% à partir de 150 sont gratuits, gérés en code).
+        const creditedCount = getCreditedSmsCount(purchase.pack_size as PackSize);
         const { error: creditError } = await supabase.rpc('credit_sms_pack', {
           p_merchant_id: purchase.merchant_id,
-          p_amount: purchase.pack_size,
+          p_amount: creditedCount,
         });
         if (creditError) {
           // Revert le status à pending pour qu'un admin/retry puisse reprendre — sinon le merchant
@@ -104,11 +107,11 @@ export async function POST(request: Request) {
             .from('sms_pack_purchases')
             .update({ status: 'pending', paid_at: null })
             .eq('id', purchase.id);
-          logger.error('credit_sms_pack RPC failed — purchase reverted to pending for manual retry', { purchaseId, merchantId: purchase.merchant_id, packSize: purchase.pack_size, error: creditError });
+          logger.error('credit_sms_pack RPC failed — purchase reverted to pending for manual retry', { purchaseId, merchantId: purchase.merchant_id, packSize: purchase.pack_size, creditedCount, error: creditError });
           break;
         }
 
-        logger.debug('SMS pack credited', { merchantId: purchase.merchant_id, packSize: purchase.pack_size });
+        logger.debug('SMS pack credited', { merchantId: purchase.merchant_id, packSize: purchase.pack_size, creditedCount });
 
         // Email de confirmation au merchant (fire-and-forget, ne bloque jamais le webhook).
         const { data: merchantInfo } = await supabase
@@ -134,6 +137,7 @@ export async function POST(request: Request) {
             await sendSmsPackPurchaseEmail(email, {
               shopName: (merchantInfo.shop_name as string) || 'Qarte',
               packSize: purchase.pack_size,
+              bonusSms: getBonusSms(purchase.pack_size as PackSize),
               amountTtc,
               newBalance: Number(merchantInfo.sms_pack_balance || 0),
               invoiceUrl,

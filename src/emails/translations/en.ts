@@ -1064,8 +1064,10 @@ export const en = {
   smsPackPurchase: {
     preview: 'Your pack of {packSize} SMS is credited — you can send right now',
     heading: '{packSize} SMS credited to your account',
+    headingWithBonus: '{packSize} SMS + {bonusSms} bonus credited to your account',
     greeting: 'Hi <strong>{shopName}</strong>,',
     intro: 'Your payment of \u20ac{amountTtc} (incl. VAT) for your pack of {packSize} SMS has been received. Credits are already available.',
+    introWithBonus: 'Your payment of \u20ac{amountTtc} (incl. VAT) for your pack of {packSize} SMS has been received. We are adding {bonusSms} bonus SMS \u2014 totalling {totalCredited} SMS credited to your account.',
     balanceLabel: 'New balance',
     smsUnit: 'SMS',
     balanceHint: 'Credits are valid throughout your subscription.',
