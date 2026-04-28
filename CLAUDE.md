@@ -63,3 +63,4 @@ Public (NEXT_PUBLIC_):
 
 - `docs/context.md` — Full project context (architecture, features, APIs)
 - `docs/supabase-context.md` — DB schema (tables, RLS, triggers, indexes)
+- `docs/admin-operations.md` — Snippets SQL prêts à coller (suppression compte utilisateur, etc.)
