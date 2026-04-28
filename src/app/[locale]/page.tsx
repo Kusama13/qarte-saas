@@ -47,8 +47,8 @@ export default async function LandingPageV4() {
       <main className="overflow-hidden">
         <HeroSection topLogos={heroLogos} />
         <FeaturesGridSection />
-        <LazyFideliteSection />
         <PageProSection />
+        <LazyFideliteSection />
         <SocialProofMergedSection testimonialLogos={testimonialLogos} />
         <PricingTransitionSection />
         <PricingSectionCondensed />
