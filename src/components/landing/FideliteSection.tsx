@@ -558,7 +558,28 @@ export function FideliteSection() {
             delay={0.05}
           />
 
-          <Separator />
+          {/* Mini-testimonial */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: EASE }}
+            className="mx-auto max-w-3xl bg-rose-50/60 border border-rose-100 rounded-2xl p-5 md:p-6 flex items-start gap-4"
+          >
+            <img
+              src="/images/testimonials/t2.jpg"
+              alt={t('miniName')}
+              className="w-12 h-12 rounded-full object-cover shadow-sm shrink-0"
+            />
+            <div>
+              <p className="text-base text-gray-800 leading-relaxed italic">
+                &ldquo;{t('miniQuote')}&rdquo;
+              </p>
+              <p className="mt-2 text-sm font-semibold text-gray-900">
+                {t('miniName')} <span className="text-gray-500 font-normal">— {t('miniRole')}</span>
+              </p>
+            </div>
+          </motion.div>
 
           <FeatureBlock
             title={t('reviewsTitle')}

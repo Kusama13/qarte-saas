@@ -24,10 +24,13 @@ export function PricingTransitionSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.5, ease: EASE }}
         >
-          <div className="bg-gradient-to-r from-indigo-50 via-violet-50 to-pink-50 border border-indigo-100/60 rounded-2xl md:rounded-3xl p-5 md:p-7">
+          <div className="bg-gradient-to-r from-stone-50 via-white to-stone-50 border border-stone-200 rounded-2xl md:rounded-3xl p-5 md:p-7">
             <div className="text-center mb-5 md:mb-6">
-              <p className="text-lg md:text-lg font-bold text-gray-900">{t('planityTitle')}</p>
-              <p className="text-sm md:text-base text-gray-600 mt-1.5">{t('planityDesc')}</p>
+              <p className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">{t('planityTitle')}</p>
+              <p className="text-sm md:text-base text-gray-600 mt-2 max-w-2xl mx-auto">{t('planityDesc')}</p>
+              <p className="text-xs md:text-sm text-emerald-700 font-semibold mt-3 inline-flex items-center gap-1.5">
+                <span>✓</span> {t('planityMigrate')}
+              </p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-3 mb-5">
@@ -52,11 +55,11 @@ export function PricingTransitionSection() {
                 </ul>
               </div>
 
-              <div className="relative bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl p-4 text-white shadow-lg shadow-indigo-200/40 flex flex-col">
+              <div className="relative bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl p-4 text-white shadow-lg shadow-emerald-200/50 flex flex-col">
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{'\uD83D\uDE80'}</span>
-                    <span className="text-[10px] font-bold text-indigo-100 uppercase tracking-wider">
+                    <span className="text-[10px] font-bold text-emerald-100 uppercase tracking-wider">
                       {t('planityOpt2Label')}
                     </span>
                   </div>
@@ -67,7 +70,7 @@ export function PricingTransitionSection() {
                 <h4 className="text-[15px] md:text-base font-bold mb-1 leading-snug">
                   {t('planityOpt2Title')}
                 </h4>
-                <p className="text-[13px] text-indigo-100 mb-3">{t('planityOpt2Desc')}</p>
+                <p className="text-[13px] text-emerald-100 mb-3">{t('planityOpt2Desc')}</p>
                 <ul className="space-y-1.5 mt-auto">
                   {(['planityOpt2Feat1', 'planityOpt2Feat2', 'planityOpt2Feat3', 'planityOpt2Feat4'] as const).map(k => (
                     <li key={k} className="flex items-start gap-2">
@@ -79,7 +82,7 @@ export function PricingTransitionSection() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm pt-4 border-t border-indigo-100/50">
+            <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm pt-4 border-t border-stone-200">
               <span className="text-gray-500 font-medium">{t('planityCompareLabel')}</span>
               <Link
                 href="/compare/planity"

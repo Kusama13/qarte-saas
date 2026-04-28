@@ -221,7 +221,7 @@ export const CtaScene: React.FC = () => {
               opacity: stat1,
             }}
           >
-            400+ salons
+            800+ salons
           </div>
           <div
             style={{

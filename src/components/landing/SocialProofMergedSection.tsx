@@ -5,6 +5,10 @@ import { useInView } from '@/hooks/useInView';
 import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, Heart, Star, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Link } from '@/i18n/navigation';
+import { trackCtaClick } from '@/lib/analytics';
+import { fbEvents } from '@/components/analytics/FacebookPixel';
+import { ttEvents } from '@/components/analytics/TikTokPixel';
 
 /**
  * Merged social proof section — replaces TestimonialsSection + CaseStudySection.
@@ -162,14 +166,18 @@ export function SocialProofMergedSection() {
           </div>
         </div>
 
-        {/* Bottom: compact case study (1 horizontal block instead of 2-column) */}
+        {/* Case study */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-3xl shadow-xl overflow-hidden text-white p-6 md:p-8"
+          className="bg-stone-900 rounded-3xl shadow-xl overflow-hidden text-white p-6 md:p-8"
         >
-          <div className="flex flex-col md:flex-row md:items-center gap-6">
+          <h3 className="text-lg md:text-2xl font-bold leading-snug mb-5 max-w-2xl">
+            {tc('title')} <span className="text-rose-300">{tc('titleBold')}</span>
+          </h3>
+
+          <div className="flex flex-col md:flex-row md:items-start gap-6">
             {/* Avatar + name */}
             <div className="flex items-center gap-3 md:gap-4 shrink-0">
               <img
@@ -178,45 +186,45 @@ export function SocialProofMergedSection() {
                 className="w-12 h-12 md:w-14 md:h-14 rounded-2xl object-cover shadow-lg"
               />
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-200 mb-0.5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-rose-300 mb-0.5">
                   {tc('badge')}
                 </p>
-                <h3 className="text-base md:text-lg font-bold leading-tight">Nail Salon by Elodie</h3>
-                <p className="text-xs text-indigo-200">{tc('role')}</p>
+                <h4 className="text-base md:text-lg font-bold leading-tight">Nail Salon by Elodie</h4>
+                <p className="text-xs text-stone-400">{tc('role')}</p>
               </div>
             </div>
 
-            {/* Quote */}
-            <blockquote className="flex-1 text-sm md:text-base text-white/90 italic leading-relaxed border-l-2 border-white/30 pl-4 md:pl-5">
-              &quot;{tc('quote')}&quot;
+              <blockquote className="flex-1 text-sm md:text-base text-stone-200 leading-relaxed">
+              <span className="italic">&quot;{tc('quote')}&quot;</span>
+              <p className="mt-3 text-rose-300 font-semibold not-italic">
+                {tc('metric')}
+              </p>
             </blockquote>
-
-            {/* Hero metric */}
-            <div className="shrink-0 flex items-center gap-3 md:flex-col md:items-end md:text-right">
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-4xl md:text-5xl font-black tracking-tight text-white">
-                  +45%
-                </span>
-                <TrendingUp className="w-5 h-5 text-emerald-300" />
-              </div>
-              <p className="text-xs md:text-sm text-indigo-200 leading-tight">{tc('regularClients')}</p>
-            </div>
           </div>
 
-          {/* Inline metrics */}
-          <div className="flex items-center justify-center gap-6 md:gap-8 mt-5 pt-5 border-t border-white/20 text-center">
-            <div>
-              <div className="flex items-baseline justify-center gap-1">
-                <span className="text-xl md:text-2xl font-bold">4.8</span>
-                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+          <div className="flex flex-col md:flex-row items-center justify-between gap-5 mt-6 pt-5 border-t border-stone-700">
+            <div className="flex items-center gap-6 md:gap-8">
+              <div className="text-center md:text-left">
+                <div className="flex items-baseline gap-1 justify-center md:justify-start">
+                  <span className="text-xl md:text-2xl font-bold">4.8</span>
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                </div>
+                <p className="text-[10px] text-stone-400 mt-0.5">{tc('googleRating')}</p>
               </div>
-              <p className="text-[10px] text-indigo-200 mt-0.5">{tc('googleRating')}</p>
+              <div className="h-8 w-px bg-stone-700" />
+              <div className="text-center md:text-left">
+                <span className="text-xl md:text-2xl font-bold">83</span>
+                <p className="text-[10px] text-stone-400 mt-0.5">{tc('loyaltyCards')}</p>
+              </div>
             </div>
-            <div className="h-8 w-px bg-white/20" />
-            <div>
-              <span className="text-xl md:text-2xl font-bold">83</span>
-              <p className="text-[10px] text-indigo-200 mt-0.5">{tc('loyaltyCards')}</p>
-            </div>
+            <Link
+              href="/auth/merchant/signup"
+              onClick={() => { trackCtaClick('social_proof_case_study', 'social_proof_merged'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-white text-stone-900 text-sm font-bold rounded-full hover:bg-stone-100 transition-colors"
+            >
+              {tc('ctaButton')}
+              <TrendingUp className="w-4 h-4" />
+            </Link>
           </div>
         </motion.div>
       </div>

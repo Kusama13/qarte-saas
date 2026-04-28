@@ -1,13 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, MessageCircle, Plus } from 'lucide-react';
+import { ArrowRight, ChevronDown, MessageCircle, Plus } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 import { useInView } from '@/hooks/useInView';
 import { useTranslations } from 'next-intl';
-import { trackFaqOpened } from '@/lib/analytics';
+import { trackFaqOpened, trackCtaClick } from '@/lib/analytics';
+import { fbEvents } from '@/components/analytics/FacebookPixel';
+import { ttEvents } from '@/components/analytics/TikTokPixel';
 
 const INITIAL_VISIBLE_FAQS = 4;
+
+// Strip HTML tags for JSON-LD schema (Google requires plain text)
+const stripHtml = (s: string): string =>
+  s.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '');
 
 // Ordre affiché des questions dans messages/fr.json `faq` (clés q1..q15).
 // Non séquentiel car trié par objections les + bloquantes en premier :
@@ -72,11 +79,10 @@ function AccordionItem({
               className="overflow-hidden"
             >
               <div className="px-4 sm:px-5 pb-5">
-                <div className="pt-3 border-t border-gray-100">
-                  <p className="text-base text-gray-500 leading-relaxed">
-                    {faq.answer}
-                  </p>
-                </div>
+                <div
+                  className="pt-3 border-t border-gray-100 text-base text-gray-600 leading-relaxed [&_strong]:text-gray-900 [&_ul]:mt-2 [&_ul]:space-y-1.5 [&_li]:flex [&_li]:gap-2 [&_li]:items-start [&_li]:before:content-['•'] [&_li]:before:text-indigo-500 [&_li]:before:font-bold"
+                  dangerouslySetInnerHTML={{ __html: faq.answer }}
+                />
               </div>
             </motion.div>
           )}
@@ -92,24 +98,30 @@ export function FAQSection() {
   const [showAll, setShowAll] = useState(false);
   const t = useTranslations('faq');
 
-  const faqItems = FAQ_ORDER.map((i) => ({
-    question: t(`q${i}`),
-    answer: t(`a${i}`),
-  }));
+  const faqItems = useMemo(
+    () => FAQ_ORDER.map((i) => ({
+      question: t(`q${i}`),
+      answer: t.raw(`a${i}`) as string,
+    })),
+    [t]
+  );
   const visibleItems = showAll ? faqItems : faqItems.slice(0, INITIAL_VISIBLE_FAQS);
 
-  const faqJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((faq) => ({
-      '@type': 'Question',
-      name: faq.question,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: faq.answer,
-      },
-    })),
-  };
+  const faqJsonLd = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqItems.map((faq) => ({
+        '@type': 'Question',
+        name: faq.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: stripHtml(faq.answer),
+        },
+      })),
+    }),
+    [faqItems]
+  );
 
   return (
     <section id="faq" className="relative py-14 md:py-20 overflow-hidden bg-white">
@@ -162,6 +174,24 @@ export function FAQSection() {
             </button>
           </div>
         )}
+
+        {/* Mid-FAQ CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: 0.25 }}
+          className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 text-center"
+        >
+          <p className="text-sm text-gray-700 font-medium">{t('midCtaPrefix')}</p>
+          <Link
+            href="/auth/merchant/signup"
+            onClick={() => { trackCtaClick('faq_mid_cta', 'faq_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-bold rounded-full hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+          >
+            {t('midCtaButton')}
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </motion.div>
 
         {/* WhatsApp compact */}
         <motion.div

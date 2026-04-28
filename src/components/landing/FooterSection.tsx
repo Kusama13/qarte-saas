@@ -13,9 +13,14 @@ export function FooterCta() {
   return (
     <div className="bg-gray-50 border-t border-gray-200 py-16">
       <div className="max-w-6xl mx-auto px-6 text-center">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
           {t('ctaTitle')}
         </h2>
+        <ul className="inline-flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-emerald-700 font-semibold mb-6">
+          <li className="flex items-center gap-1.5"><span>✓</span> {t('ctaChecklist1')}</li>
+          <li className="flex items-center gap-1.5"><span>✓</span> {t('ctaChecklist2')}</li>
+          <li className="flex items-center gap-1.5"><span>✓</span> {t('ctaChecklist3')}</li>
+        </ul>
         <Link
           href="/auth/merchant/signup"
           onClick={() => { trackCtaClick('footer_cta', 'footer_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
@@ -23,6 +28,7 @@ export function FooterCta() {
         >
           {t('ctaButton')}
         </Link>
+        <p className="mt-3 text-xs text-gray-500">{t('ctaTrust')}</p>
       </div>
     </div>
   );
@@ -44,7 +50,7 @@ export function FooterDark() {
             <p className="text-gray-400 text-base leading-relaxed">
               {t('tagline')}
             </p>
-            <p className="text-gray-500 text-xs mt-4">
+            <p className="text-gray-300 text-xs mt-4">
               {t('madeIn')}
             </p>
             <a
@@ -157,11 +163,11 @@ export function FooterDark() {
 
         {/* Copyright + Language Switcher */}
         <div className="mt-12 pt-8 border-t border-gray-700/50 flex flex-col md:flex-row justify-between items-center gap-3">
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-300 text-sm">
             {t('copyright')}
           </p>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5 text-gray-500 text-sm">
+            <div className="flex items-center gap-1.5 text-gray-300 text-sm">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
               </svg>

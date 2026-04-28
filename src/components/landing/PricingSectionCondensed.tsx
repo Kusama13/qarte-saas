@@ -43,11 +43,15 @@ export function PricingSectionCondensed() {
               <p className="text-sm text-gray-500 leading-snug">{t('condensedFidelityHint')}</p>
             </div>
 
+            <p className="text-xs text-gray-400 line-through mb-1">{t('condensedFidelityCompare')}</p>
             <div className="mb-1 flex items-baseline gap-1">
               <span className="text-4xl md:text-5xl font-extrabold tracking-tighter text-gray-900 tabular-nums">19€</span>
               <span className="text-sm font-semibold text-gray-400">{t('perMonth')}</span>
             </div>
-            <p className="text-xs text-gray-400 mb-5">{t('condensedFidelityAnnual')}</p>
+            <div className="mb-5 flex items-center gap-2 flex-wrap">
+              <p className="text-sm text-gray-600">{t('condensedFidelityAnnual')}</p>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 uppercase tracking-wider">−2 mois offerts</span>
+            </div>
 
             <ul className="space-y-2.5 mb-6 flex-1">
               {(['condensedFidelityF1', 'condensedFidelityF2', 'condensedFidelityF3'] as const).map(k => (
@@ -87,11 +91,15 @@ export function PricingSectionCondensed() {
               <p className="text-sm text-gray-500 leading-snug">{t('condensedAllInHint')}</p>
             </div>
 
+            <p className="text-xs text-gray-400 line-through mb-1">{t('condensedAllInCompare')}</p>
             <div className="mb-1 flex items-baseline gap-1">
               <span className="text-4xl md:text-5xl font-extrabold tracking-tighter text-gray-900 tabular-nums">24€</span>
               <span className="text-sm font-semibold text-gray-400">{t('perMonth')}</span>
             </div>
-            <p className="text-xs text-gray-400 mb-5">{t('condensedAllInAnnual')}</p>
+            <div className="mb-5 flex items-center gap-2 flex-wrap">
+              <p className="text-sm text-gray-600">{t('condensedAllInAnnual')}</p>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 uppercase tracking-wider">−2 mois offerts</span>
+            </div>
 
             <ul className="space-y-2.5 mb-6 flex-1">
               <li className="flex items-start gap-2.5 pb-2 mb-1 border-b border-gray-100">
