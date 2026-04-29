@@ -148,15 +148,23 @@ export default function SubscriptionPage() {
     t('featureDuoOffer'),
     t('featureQrNfc'),
   ];
+  // Highlight le bonus +20 SMS/mois sur l'annuel — la ligne SMS swap selon billingPlan,
+  // 100 ou 120 mis en valeur indigo pour signaler la différence.
+  const smsAccent = (chunks: React.ReactNode) => (
+    <span className="font-bold text-indigo-600">{chunks}</span>
+  );
+  const smsFeatureLine = billingPlan === 'annual'
+    ? t.rich('featureSmsAnnual', { accent: smsAccent })
+    : t.rich('featureSmsMonthly', { accent: smsAccent });
   const allInExtrasFeatures = [
     t('featurePlanning'),
-    t('featureSms'),
+    smsFeatureLine,
     t('featureSmsCampaigns'),
     t('featureContest'),
     t('featureMemberPrograms'),
   ];
   // Liste complète des features actives du tier courant (pour le mode payant summary).
-  const activeFeaturesByTier: Record<PlanTier, string[]> = {
+  const activeFeaturesByTier: Record<PlanTier, React.ReactNode[]> = {
     fidelity: fidelityFeatures,
     all_in: [...fidelityFeatures, ...allInExtrasFeatures],
   };

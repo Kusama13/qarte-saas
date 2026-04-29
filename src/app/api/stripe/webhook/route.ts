@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { stripe, PLAN, PLAN_ANNUAL, PLAN_FIDELITY, PLAN_FIDELITY_ANNUAL, PLAN_LEGACY_PRICE_IDS } from '@/lib/stripe';
+import { getSmsQuotaFor, isLegacyMerchant } from '@/lib/plan-tiers';
 import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 import logger from '@/lib/logger';
@@ -190,7 +191,16 @@ export async function POST(request: Request) {
         // Debit immediat — prochain prelevement dans 30j (mensuel) ou 1 an (annuel)
         const billingInterval = session.metadata?.plan === 'annual' ? 'annual' : 'monthly';
         const nextBillingDate: string | undefined = undefined; // Email uses generic fallback ("dans 30 jours" / "dans 1 an")
-        await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name, nextBillingDate, billingInterval, locale, (merchant.plan_tier as 'fidelity' | 'all_in') || 'all_in').catch((err) => {
+        const tierForQuota: 'fidelity' | 'all_in' = (merchant.plan_tier as 'fidelity' | 'all_in') || 'all_in';
+        await sendSubscriptionConfirmedEmail({
+          to: userData.user.email,
+          shopName: merchant.shop_name,
+          nextBillingDate,
+          billingInterval,
+          locale,
+          planTier: tierForQuota,
+          smsQuota: getSmsQuotaFor(tierForQuota, billingInterval),
+        }).catch((err) => {
           logger.error('Failed to send subscription email', err);
         });
 
@@ -285,14 +295,22 @@ export async function POST(request: Request) {
         })
         .eq('stripe_customer_id', invoice.customer as string)
         .eq('subscription_status', 'past_due')
-        .select('shop_name, user_id, locale, plan_tier')
+        .select('shop_name, user_id, locale, plan_tier, billing_interval, created_at')
         .single();
 
       // Email de confirmation si paiement récupéré (past_due → active)
       if (merchant) {
         const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
         if (userData?.user?.email) {
-          await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name, undefined, undefined, mLocale(merchant), (merchant.plan_tier as 'fidelity' | 'all_in') || 'all_in').catch((err) => {
+          const recoveryTier: 'fidelity' | 'all_in' = (merchant.plan_tier as 'fidelity' | 'all_in') || 'all_in';
+          const recoveryInterval: 'monthly' | 'annual' = merchant.billing_interval === 'annual' ? 'annual' : 'monthly';
+          await sendSubscriptionConfirmedEmail({
+            to: userData.user.email,
+            shopName: merchant.shop_name,
+            locale: mLocale(merchant),
+            planTier: recoveryTier,
+            smsQuota: getSmsQuotaFor(recoveryTier, recoveryInterval, isLegacyMerchant(merchant)),
+          }).catch((err) => {
             logger.error('Failed to send payment recovery email', err);
           });
         }
@@ -364,11 +382,15 @@ export async function POST(request: Request) {
       // Unknown prices (grandfathered, custom) leave plan_tier untouched.
       const currentPriceId = subscription.items.data[0]?.price?.id;
       const detectedTier = tierFromPriceId(currentPriceId);
+      // Sync billing_interval too — the SMS quota bonus depends on it (annual = +20 SMS/mois).
+      const recurringInterval = subscription.items.data[0]?.price?.recurring?.interval;
       const updatePayload: Record<string, unknown> = {
         subscription_status: newStatus,
         updated_at: new Date().toISOString(),
       };
       if (detectedTier) updatePayload.plan_tier = detectedTier;
+      if (recurringInterval === 'year') updatePayload.billing_interval = 'annual';
+      else if (recurringInterval === 'month') updatePayload.billing_interval = 'monthly';
 
       const { data: updatedMerchant } = await supabase
         .from('merchants')

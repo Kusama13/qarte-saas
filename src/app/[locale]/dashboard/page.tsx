@@ -118,7 +118,7 @@ export default function DashboardPage() {
   const [upcomingBirthdays, setUpcomingBirthdays] = useState<Array<{
     firstName: string; lastName: string; birthMonth: number; birthDay: number;
   }>>([]);
-  const [smsUsage, setSmsUsage] = useState<{ sent: number; remaining: number; overageCount: number; overageCost: number; periodStart: string } | null>(null);
+  const [smsUsage, setSmsUsage] = useState<{ sent: number; remaining: number; overageCount: number; overageCost: number; periodStart: string; quota: number; packBalance: number } | null>(null);
 
   // Fetch SMS usage
   useEffect(() => {

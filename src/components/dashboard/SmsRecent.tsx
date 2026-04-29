@@ -6,6 +6,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { MessageSquare, Settings2, ChevronDown } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime, cn } from '@/lib/utils';
+import SmsQuotaGauge from './SmsQuotaGauge';
 
 interface SmsLogRow {
   id: string;
@@ -17,7 +18,7 @@ interface SmsLogRow {
 
 interface Props {
   merchantId: string;
-  smsUsage?: { sent: number; remaining: number; overageCount: number } | null;
+  smsUsage?: { sent: number; remaining: number; overageCount: number; quota: number; packBalance?: number } | null;
   showQuota: boolean; // false pour Fidélité (pas de quota SMS)
 }
 
@@ -96,7 +97,7 @@ export default function SmsRecent({ merchantId, smsUsage, showQuota }: Props) {
   if (loading) return null;
   if (logs.length === 0 && !showQuota) return null;
 
-  const isOverage = (smsUsage?.sent ?? 0) > 100;
+  const isOverage = (smsUsage?.sent ?? 0) > (smsUsage?.quota ?? 100);
 
   return (
     <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
@@ -115,7 +116,7 @@ export default function SmsRecent({ merchantId, smsUsage, showQuota }: Props) {
               'shrink-0 text-[11px] font-semibold px-1.5 py-0.5 rounded-md tabular-nums',
               isOverage ? 'bg-amber-100 text-amber-700' : 'bg-emerald-50 text-emerald-700'
             )}>
-              {smsUsage.sent}/100
+              {smsUsage.sent}/{smsUsage.quota}
             </span>
           )}
           <span className="flex-1" />
@@ -133,6 +134,11 @@ export default function SmsRecent({ merchantId, smsUsage, showQuota }: Props) {
       {/* Expanded content */}
       {expanded && (
         <div className="border-t border-slate-100">
+          {showQuota && smsUsage && (
+            <div className="px-4 py-3 border-b border-slate-100">
+              <SmsQuotaGauge sent={smsUsage.sent} quota={smsUsage.quota} packBalance={smsUsage.packBalance ?? 0} />
+            </div>
+          )}
           <p className="px-4 py-2 text-[11px] text-slate-500 leading-snug bg-slate-50/40">
             {t('hint')}
           </p>

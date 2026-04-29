@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { Check, ArrowUpDown, Flame } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
@@ -10,7 +11,7 @@ interface PaidStatusCardProps {
   statusLabel: string;
   statusTone: 'active' | 'canceling' | 'past_due';
   nextBillingDate?: string | null;
-  includedFeatures: string[];
+  includedFeatures: ReactNode[];
   canChangeTier: boolean;
   isLegacy: boolean;
   onChangeTier: () => void;

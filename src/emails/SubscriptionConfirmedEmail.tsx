@@ -16,10 +16,12 @@ interface SubscriptionConfirmedEmailProps {
   referralCode?: string;
   /** Plan tier — change le label + les features listées (plan v2). */
   planTier?: 'fidelity' | 'all_in';
+  /** Quota SMS effectif (100 mensuel / 120 annuel non legacy). Défaut 100. */
+  smsQuota?: number;
   locale?: EmailLocale;
 }
 
-export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingInterval, referralCode, planTier = 'all_in', locale = 'fr' }: SubscriptionConfirmedEmailProps) {
+export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingInterval, referralCode, planTier = 'all_in', smsQuota = 100, locale = 'fr' }: SubscriptionConfirmedEmailProps) {
   const t = getEmailT(locale);
   const planLabel = billingInterval === 'annual' ? t('subscriptionConfirmed.planAnnual') : t('subscriptionConfirmed.planMonthly');
   const tierName = planTier === 'fidelity' ? t('subscriptionConfirmed.tierFidelityName') : t('subscriptionConfirmed.tierAllInName');
@@ -32,7 +34,7 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingI
 
       <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('subscriptionConfirmed.greeting', { shopName }) }} />
 
-      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: planTier === 'fidelity' ? t('subscriptionConfirmed.introFidelity') : t('subscriptionConfirmed.introAllIn') }} />
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: planTier === 'fidelity' ? t('subscriptionConfirmed.introFidelity') : t('subscriptionConfirmed.introAllIn', { smsQuota }) }} />
 
       <Section style={confirmBox}>
         <Text style={confirmTitle}>{tierName}</Text>

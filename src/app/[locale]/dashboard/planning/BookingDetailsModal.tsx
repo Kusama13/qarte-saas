@@ -204,6 +204,10 @@ export default function BookingDetailsModal({
   const [moving, setMoving] = useState(false);
   const [freeModeSlots, setFreeModeSlots] = useState<string[]>([]);
   const [freeModeLoading, setFreeModeLoading] = useState(false);
+  // Mode créneaux : slots du jour cible quand il est hors de la semaine actuellement chargée.
+  // null = on s'appuie sur slotsByDate (jour visible). Sinon on prend ce fetch.
+  const [moveTargetDaySlots, setMoveTargetDaySlots] = useState<PlanningSlot[] | null>(null);
+  const [moveTargetLoading, setMoveTargetLoading] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'history' && draft.customerId && historyFetchedFor.current !== draft.customerId) {
@@ -342,10 +346,29 @@ export default function BookingDetailsModal({
     return hasAny ? total : 30;
   }, [slot.total_duration_minutes, draft.serviceIds, draft.customService, serviceMap]);
 
+  // slotsByDate est limité à la semaine affichée — déplacer vers un autre jour requiert un fetch.
+  // On dérive un boolean stable pour éviter de re-fetcher à chaque mutation de slots.
+  const moveDateOutOfCache = moveMode && bookingMode === 'slots' && !slotsByDate.has(moveDate);
+  useEffect(() => {
+    if (!moveDateOutOfCache) { setMoveTargetDaySlots(null); return; }
+    const controller = new AbortController();
+    setMoveTargetLoading(true);
+    fetch(`/api/planning?merchantId=${merchantId}&from=${moveDate}&to=${moveDate}`, { signal: controller.signal })
+      .then(r => r.ok ? r.json() : { slots: [] })
+      .then(data => {
+        if (controller.signal.aborted) return;
+        setMoveTargetDaySlots(data.slots || []);
+      })
+      .catch(() => { if (!controller.signal.aborted) setMoveTargetDaySlots([]); })
+      .finally(() => { if (!controller.signal.aborted) setMoveTargetLoading(false); });
+    return () => controller.abort();
+  }, [moveDateOutOfCache, moveDate, merchantId]);
+
   // Mode créneaux : only show starts where the booking's full duration fits in consecutive empty slots
   const moveDateFreeSlots = useMemo(() => {
     if (!moveMode || bookingMode !== 'slots') return [];
-    const daySlots = (slotsByDate.get(moveDate) || [])
+    const source = slotsByDate.has(moveDate) ? (slotsByDate.get(moveDate) || []) : (moveTargetDaySlots || []);
+    const daySlots = source
       .filter(s => !s.primary_slot_id)
       .sort((a, b) => a.start_time.localeCompare(b.start_time));
     const empty = daySlots.filter(s => s.id !== slot.id && !s.client_name);
@@ -361,7 +384,7 @@ export default function BookingDetailsModal({
       }
       return true;
     });
-  }, [moveMode, bookingMode, moveDate, slotsByDate, slot.id, bookingDuration]);
+  }, [moveMode, bookingMode, moveDate, slotsByDate, moveTargetDaySlots, slot.id, bookingDuration]);
 
   // Mode libre : fetch free windows from server when the target date changes
   useEffect(() => {
@@ -1119,7 +1142,7 @@ export default function BookingDetailsModal({
                 const moveFreeTimes = bookingMode === 'free'
                   ? freeModeSlots
                   : moveDateFreeSlots.map(s => s.start_time);
-                const moveLoading = bookingMode === 'free' && freeModeLoading;
+                const moveLoading = bookingMode === 'free' ? freeModeLoading : moveTargetLoading;
                 return (
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t('moveBookingTime')}</label>

@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
@@ -15,6 +16,8 @@ type Billing = 'monthly' | 'annual';
 interface Feature {
   key: string;
   highlighted?: boolean;
+  /** Override le rendu de t(key). Permet de rendre du rich text (ex: bonus +20 SMS annuel). */
+  node?: ReactNode;
 }
 
 const PLANS = {
@@ -50,6 +53,17 @@ export function PricingSection() {
   const fidelityPrice = billing === 'monthly' ? PLANS.fidelity.monthly : PLANS.fidelity.monthlyEquiv;
   const allInPrice = billing === 'monthly' ? PLANS.all_in.monthly : PLANS.all_in.monthlyEquiv;
 
+  // Ligne SMS dynamique : 100 ou 120 mis en valeur selon billing — effet upsell visible.
+  const smsAccent = (chunks: ReactNode) => (
+    <span className="font-bold text-indigo-600">{chunks}</span>
+  );
+  const smsFeatureNode = billing === 'annual'
+    ? t.rich('allInFeature3Annual', { accent: smsAccent })
+    : t.rich('allInFeature3Monthly', { accent: smsAccent });
+  const allInFeatures: Feature[] = PLANS.all_in.features.map((f) =>
+    f.key === 'allInFeature3' ? { ...f, node: smsFeatureNode } : f
+  );
+
   const renderFeatures = (features: Feature[], accentClass: string) => (
     <ul className="space-y-2 mb-8 flex-1">
       {features.map((f) => (
@@ -65,7 +79,7 @@ export function PricingSection() {
             <Check className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
           )}
           <span className={`text-sm leading-snug ${f.highlighted ? 'font-semibold text-gray-900' : 'text-gray-600'}`}>
-            {t(f.key)}
+            {f.node ?? t(f.key)}
           </span>
         </li>
       ))}
@@ -200,7 +214,7 @@ export function PricingSection() {
               <span className="h-px w-4 bg-indigo-300" />
               {t('allInIncludesPrefix')}
             </p>
-            {renderFeatures(PLANS.all_in.features, 'text-violet-500')}
+            {renderFeatures(allInFeatures, 'text-violet-500')}
 
             <Link
               href="/auth/merchant/signup"

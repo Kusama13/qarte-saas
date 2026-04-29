@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { Check, Gem, CreditCard } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
@@ -14,7 +15,7 @@ interface PlanCardProps {
   totalLabel: string;
   annualOriginal?: string;
   persona: string;
-  features: string[];
+  features: ReactNode[];
   inheritsFromFidelity?: boolean;
   recommended?: boolean;
   nfcIncluded?: boolean;

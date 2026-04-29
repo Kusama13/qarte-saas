@@ -82,13 +82,11 @@ export async function POST(request: NextRequest) {
     results.push({ type: 'trial_expired', ...trialExpired });
     await delay(600);
 
-    // 5. Email confirmation abonnement mensuel
-    const subscription = await sendSubscriptionConfirmedEmail(email, 'Boulangerie Test', undefined, 'monthly');
+    const subscription = await sendSubscriptionConfirmedEmail({ to: email, shopName: 'Boulangerie Test', billingInterval: 'monthly' });
     results.push({ type: 'subscription_confirmed_monthly', ...subscription });
     await delay(600);
 
-    // 5b. Email confirmation abonnement annuel
-    const subscriptionAnnual = await sendSubscriptionConfirmedEmail(email, 'Boulangerie Test', undefined, 'annual');
+    const subscriptionAnnual = await sendSubscriptionConfirmedEmail({ to: email, shopName: 'Boulangerie Test', billingInterval: 'annual', smsQuota: 120 });
     results.push({ type: 'subscription_confirmed_annual', ...subscriptionAnnual });
     await delay(600);
 

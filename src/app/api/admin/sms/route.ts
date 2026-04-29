@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
   // Fetch all merchants with billing_period_start
   const { data: allMerchantData } = await supabaseAdmin
     .from('merchants')
-    .select('id, shop_name, billing_period_start, plan_tier, subscription_status, sms_quota_override, sms_quota_override_cycle_anchor')
+    .select('id, shop_name, billing_period_start, plan_tier, subscription_status, sms_quota_override, sms_quota_override_cycle_anchor, billing_interval, created_at')
     .in('subscription_status', PAID_STATUSES as readonly string[]);
 
   // Compute each merchant's current billing cycle start

@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   // Verify merchant ownership
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('id, billing_period_start, sms_pack_balance, plan_tier, subscription_status, sms_quota_override, sms_quota_override_cycle_anchor')
+    .select('id, billing_period_start, sms_pack_balance, plan_tier, subscription_status, sms_quota_override, sms_quota_override_cycle_anchor, billing_interval, created_at')
     .eq('id', merchantId)
     .eq('user_id', user.id)
     .single();

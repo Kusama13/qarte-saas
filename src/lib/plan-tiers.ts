@@ -41,9 +41,39 @@ export const PLAN_TIERS: Record<PlanTier, PlanFeatures> = {
   },
 };
 
-type MerchantLike = Pick<Merchant, 'subscription_status' | 'plan_tier'> | {
+/**
+ * Bonus SMS mensuel pour les abonnés Tout-en-un annuels (post-split pricing).
+ * Récompense l'engagement annuel — les annual legacy (créés avant PRICING_SPLIT_DATE,
+ * tarif historique 19€/180€) restent à 100, c'est leur tarif d'époque qui prime.
+ */
+export const ANNUAL_SMS_BONUS = 20;
+
+export const ALL_IN_MONTHLY_QUOTA = PLAN_TIERS.all_in.smsQuota;
+export const ALL_IN_ANNUAL_QUOTA = PLAN_TIERS.all_in.smsQuota + ANNUAL_SMS_BONUS;
+
+/**
+ * Quota mensuel SMS pour un tier + intervalle de facturation donnés.
+ * Utilisé hors du flux merchant complet (webhook checkout, change-tier prorata, email
+ * de confirmation) où on n'a pas besoin de passer un objet merchant entier.
+ *
+ * Note : pour un check intégrant le flag legacy, passer `isLegacy = true` pour
+ * forcer le quota mensuel sur les annual legacy (ils gardent leur tarif historique).
+ */
+export function getSmsQuotaFor(
+  tier: 'fidelity' | 'all_in' | string | null | undefined,
+  interval: 'monthly' | 'annual' | string | null | undefined,
+  isLegacy = false,
+): number {
+  if (tier !== 'all_in') return PLAN_TIERS.fidelity.smsQuota;
+  if (interval === 'annual' && !isLegacy) return ALL_IN_ANNUAL_QUOTA;
+  return ALL_IN_MONTHLY_QUOTA;
+}
+
+type MerchantLike = Pick<Merchant, 'subscription_status' | 'plan_tier' | 'billing_interval' | 'created_at'> | {
   subscription_status?: SubscriptionStatus | string | null;
   plan_tier?: PlanTier | string | null;
+  billing_interval?: 'monthly' | 'annual' | string | null;
+  created_at?: string | null;
 };
 
 /**
@@ -56,7 +86,25 @@ export function getPlanFeatures(merchant: MerchantLike | null | undefined): Plan
   if (!merchant) return PLAN_TIERS.all_in;
   if (merchant.subscription_status === 'trial') return PLAN_TIERS.all_in;
   const tier = (merchant.plan_tier === 'fidelity' ? 'fidelity' : 'all_in') as PlanTier;
-  return PLAN_TIERS[tier];
+  const base = PLAN_TIERS[tier];
+  if (tier === 'all_in' && hasAnnualSmsBonus(merchant)) {
+    return { ...base, smsQuota: base.smsQuota + ANNUAL_SMS_BONUS };
+  }
+  return base;
+}
+
+/**
+ * True si le merchant bénéficie du bonus +20 SMS/mois sur l'abonnement annuel.
+ * Conditions cumulées : status payant + interval annuel + non-legacy
+ * (les annual legacy restent à 100 car ils sont déjà sur tarif historique 180€).
+ */
+export function hasAnnualSmsBonus(merchant: MerchantLike | null | undefined): boolean {
+  if (!merchant) return false;
+  const status = merchant.subscription_status;
+  if (!status || !(['active', 'canceling', 'past_due'] as const).includes(status as 'active' | 'canceling' | 'past_due')) return false;
+  if (merchant.billing_interval !== 'annual') return false;
+  if (isLegacyMerchant(merchant as { created_at?: string | null })) return false;
+  return true;
 }
 
 export function getPlanTier(merchant: MerchantLike | null | undefined): PlanTier {

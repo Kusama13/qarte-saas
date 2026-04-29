@@ -27,8 +27,13 @@ function selectTransactionalProvider(phone: string): SmsProvider {
 export { SMS_FREE_QUOTA, SMS_OVERAGE_COST, SMS_UNIT_COST, SMS_UNIT_COST_CENTS } from './sms-constants';
 import { SMS_FREE_QUOTA, SMS_OVERAGE_COST } from './sms-constants';
 
-/** Quota mensuel selon tier merchant (0 Fidélité / 100 Tout-en-un, 100 pour trials). */
-export function getQuotaFor(merchant: { subscription_status?: string | null; plan_tier?: string | null } | null): number {
+/** Quota mensuel selon tier merchant (0 Fidélité / 100 Tout-en-un, 120 si annuel non legacy, 100 pour trials). */
+export function getQuotaFor(merchant: {
+  subscription_status?: string | null;
+  plan_tier?: string | null;
+  billing_interval?: string | null;
+  created_at?: string | null;
+} | null): number {
   return getPlanFeatures(merchant as { subscription_status: SubscriptionStatus; plan_tier?: PlanTier } | null).smsQuota;
 }
 
@@ -270,6 +275,8 @@ export function getEffectiveQuota(
     subscription_status?: string | null;
     sms_quota_override?: number | null;
     sms_quota_override_cycle_anchor?: string | null;
+    billing_interval?: string | null;
+    created_at?: string | null;
   } | null,
   currentPeriodStart: string,
 ): number {
@@ -382,10 +389,10 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
     // Fidélité bypass : birthday + referral_reward envoyés sans quota ni pack (coût absorbé).
     const { data: merchantRow } = await supabase
       .from('merchants')
-      .select('billing_period_start, sms_pack_balance, plan_tier, subscription_status, sms_quota_override, sms_quota_override_cycle_anchor')
+      .select('billing_period_start, sms_pack_balance, plan_tier, subscription_status, sms_quota_override, sms_quota_override_cycle_anchor, billing_interval, created_at')
       .eq('id', merchantId)
       .maybeSingle();
-    const mRow = merchantRow as { billing_period_start?: string | null; sms_pack_balance?: number; plan_tier?: string; subscription_status?: string; sms_quota_override?: number | null; sms_quota_override_cycle_anchor?: string | null } | null;
+    const mRow = merchantRow as { billing_period_start?: string | null; sms_pack_balance?: number; plan_tier?: string; subscription_status?: string; sms_quota_override?: number | null; sms_quota_override_cycle_anchor?: string | null; billing_interval?: string | null; created_at?: string | null } | null;
     const bps = mRow?.billing_period_start || null;
     const packBalance = Number(mRow?.sms_pack_balance || 0);
     const fidelityFree = isFidelityFreeSms(mRow, smsType);
@@ -487,10 +494,10 @@ export async function sendMarketingSms(
     // 1. Gate: paid subscription + quota selon tier + pack
     const { data: merchant } = await supabase
       .from('merchants')
-      .select('billing_period_start, sms_pack_balance, subscription_status, plan_tier, sms_quota_override, sms_quota_override_cycle_anchor')
+      .select('billing_period_start, sms_pack_balance, subscription_status, plan_tier, sms_quota_override, sms_quota_override_cycle_anchor, billing_interval, created_at')
       .eq('id', merchantId)
       .maybeSingle();
-    const merchantRow = merchant as { billing_period_start?: string | null; sms_pack_balance?: number; subscription_status?: string; plan_tier?: string; sms_quota_override?: number | null; sms_quota_override_cycle_anchor?: string | null } | null;
+    const merchantRow = merchant as { billing_period_start?: string | null; sms_pack_balance?: number; subscription_status?: string; plan_tier?: string; sms_quota_override?: number | null; sms_quota_override_cycle_anchor?: string | null; billing_interval?: string | null; created_at?: string | null } | null;
     if (!merchantRow || !(PAID_STATUSES as readonly string[]).includes(merchantRow.subscription_status || '')) {
       return { success: false, error: 'subscription_inactive' };
     }

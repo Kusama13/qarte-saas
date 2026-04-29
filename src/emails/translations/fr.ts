@@ -170,7 +170,7 @@ export const fr = {
     preview: 'Ton abonnement Qarte est activé',
     heading: 'Ton abonnement est actif !',
     greeting: 'Bonjour <strong>{shopName}</strong>,',
-    introAllIn: 'Merci pour ta confiance ! Ton abonnement Tout-en-un est actif, tes <strong>100 SMS/mois sont débloqués</strong> — rappels, confirmations et anniversaires partent automatiquement. Planning et réservation en ligne activés.',
+    introAllIn: 'Merci pour ta confiance ! Ton abonnement Tout-en-un est actif, tes <strong>{smsQuota} SMS/mois sont débloqués</strong> — rappels, confirmations et anniversaires partent automatiquement. Planning et réservation en ligne activés.',
     introFidelity: 'Merci pour ta confiance ! Ton abonnement Fidélité est actif. Programme de fidélité, vitrine, parrainage et avis Google tournent pour toi. Les SMS anniversaire et parrainage partent automatiquement, sans compteur.',
     confirmTitle: '✓ Abonnement confirmé',
     tierAllInName: '✓ Qarte Tout-en-un activé',

@@ -29,6 +29,7 @@ import DayView from './DayView';
 import WeekView from './WeekView';
 import PlanningModal, { ModalHeader, ModalFooter } from './PlanningModal';
 import PlanUpgradeCTA from '@/components/dashboard/PlanUpgradeCTA';
+import SmsQuotaGauge from '@/components/dashboard/SmsQuotaGauge';
 import { getPlanFeatures } from '@/lib/plan-tiers';
 import { useToast } from '@/components/ui/Toast';
 import { Link } from '@/i18n/navigation';
@@ -367,7 +368,7 @@ export default function PlanningDashboard() {
   };
 
   // SMS usage
-  const [smsUsage, setSmsUsage] = useState<{ sent: number; remaining: number } | null>(null);
+  const [smsUsage, setSmsUsage] = useState<{ sent: number; remaining: number; quota: number; packBalance: number } | null>(null);
   useEffect(() => {
     if (!merchant || tab !== 'settings') return;
     fetch(`/api/sms/usage?merchantId=${merchant.id}`)
@@ -1672,17 +1673,7 @@ export default function PlanningDashboard() {
                     <p className="text-[11px] text-gray-500 leading-relaxed">{t('smsActiveInfo')}</p>
                     {smsUsage && (
                       <div className="mt-2">
-                        <div className="flex items-center justify-between text-[11px] mb-1">
-                          <span className="text-gray-500">{t('smsQuotaLabel')}</span>
-                          <span className="font-bold text-gray-700">{smsUsage.sent} {t('smsQuotaOf')} 100</span>
-                        </div>
-                        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${smsUsage.sent >= 100 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                            style={{ width: `${Math.min(100, smsUsage.sent)}%` }}
-                          />
-                        </div>
-                        <p className="text-[10px] text-gray-400 mt-1">{t('smsOverageInfo')}</p>
+                        <SmsQuotaGauge sent={smsUsage.sent} quota={smsUsage.quota} packBalance={smsUsage.packBalance} />
                       </div>
                     )}
                     <Link

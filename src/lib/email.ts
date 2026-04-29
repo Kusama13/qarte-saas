@@ -507,15 +507,19 @@ export async function sendNewSmsPackPurchaseNotification(
   }
 }
 
-export async function sendSubscriptionConfirmedEmail(
-  to: string,
-  shopName: string,
-  nextBillingDate?: string,
-  billingInterval?: 'monthly' | 'annual',
-  locale: EmailLocale = 'fr',
-  planTier: 'fidelity' | 'all_in' = 'all_in',
-): Promise<SendEmailResult> {
-  return sendEmail(to, subj(locale, 'subscriptionConfirmed', { shopName }), SubscriptionConfirmedEmail, { shopName, nextBillingDate, billingInterval, planTier, locale }, {
+export interface SubscriptionConfirmedOptions {
+  to: string;
+  shopName: string;
+  nextBillingDate?: string;
+  billingInterval?: 'monthly' | 'annual';
+  locale?: EmailLocale;
+  planTier?: 'fidelity' | 'all_in';
+  smsQuota?: number;
+}
+
+export async function sendSubscriptionConfirmedEmail(opts: SubscriptionConfirmedOptions): Promise<SendEmailResult> {
+  const { to, shopName, nextBillingDate, billingInterval, locale = 'fr', planTier = 'all_in', smsQuota } = opts;
+  return sendEmail(to, subj(locale, 'subscriptionConfirmed', { shopName }), SubscriptionConfirmedEmail, { shopName, nextBillingDate, billingInterval, planTier, smsQuota, locale }, {
     logLabel: `Subscription confirmed email (tier: ${planTier})`,
   });
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createRouteHandlerSupabaseClient, getSupabaseAdmin } from '@/lib/supabase';
 import { stripe, PLAN, PLAN_ANNUAL, PLAN_FIDELITY, PLAN_FIDELITY_ANNUAL } from '@/lib/stripe';
-import { isLegacyMerchant } from '@/lib/plan-tiers';
+import { isLegacyMerchant, getSmsQuotaFor } from '@/lib/plan-tiers';
 import type { PlanTier } from '@/types';
 import logger from '@/lib/logger';
 
@@ -88,10 +88,11 @@ export async function POST(request: NextRequest) {
         const nowSec = Math.floor(Date.now() / 1000);
         const cycleSec = item.current_period_end - item.current_period_start;
         const remainingSec = Math.max(0, item.current_period_end - nowSec);
-        const prorata = Math.max(1, Math.round(100 * remainingSec / cycleSec));
+        const baseQuota = getSmsQuotaFor('all_in', interval, isLegacyMerchant(merchant));
+        const prorata = Math.max(1, Math.round(baseQuota * remainingSec / cycleSec));
         updatePayload.sms_quota_override = prorata;
         updatePayload.sms_quota_override_cycle_anchor = new Date(item.current_period_start * 1000).toISOString();
-        logger.info('sms_quota_prorata_set', { merchantId: merchant.id, prorata });
+        logger.info('sms_quota_prorata_set', { merchantId: merchant.id, prorata, baseQuota });
       }
     }
     // Si downgrade Tout-en-un → Fidélité : clear override (Fidélité quota = 0 de toute façon)
