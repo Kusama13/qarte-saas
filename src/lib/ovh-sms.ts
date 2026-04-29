@@ -20,7 +20,7 @@ async function getTimeDelta(): Promise<number> {
   if (timeDelta !== null && Date.now() - timeDeltaFetchedAt < TIME_DELTA_TTL) {
     return timeDelta;
   }
-  const res = await fetch(`${OVH_BASE}/auth/time`);
+  const res = await fetchWithRetry(`${OVH_BASE}/auth/time`, { method: 'GET' });
   const serverTime = await res.json() as number;
   timeDelta = serverTime - Math.floor(Date.now() / 1000);
   timeDeltaFetchedAt = Date.now();
@@ -33,6 +33,29 @@ function sign(method: string, url: string, body: string, timestamp: number): str
   return `$1$${hash}`;
 }
 
+// Timeout court + 1 retry pour absorber les blips réseau transitoires
+// (cf. error_message="fetch failed" dans sms_logs — undici n'a jamais reçu de réponse).
+// On retry UNIQUEMENT sur erreur fetch bas niveau, pas sur HTTP 4xx/5xx.
+const FETCH_TIMEOUT_MS = 5000;
+
+async function fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), FETCH_TIMEOUT_MS);
+    try {
+      return await fetch(url, { ...init, signal: ac.signal });
+    } catch (err) {
+      if (attempt === 1) throw err;
+      // backoff bref avant le 2e essai
+      await new Promise((r) => setTimeout(r, 400));
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  // unreachable
+  throw new Error('fetchWithRetry: unreachable');
+}
+
 async function ovhRequest(method: string, path: string, body?: Record<string, unknown>): Promise<{ ok: boolean; data: unknown; status: number }> {
   const url = `${OVH_BASE}${path}`;
   const bodyStr = body ? JSON.stringify(body) : '';
@@ -40,7 +63,7 @@ async function ovhRequest(method: string, path: string, body?: Record<string, un
   const timestamp = Math.floor(Date.now() / 1000) + delta;
   const signature = sign(method, url, bodyStr, timestamp);
 
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     method,
     headers: {
       'Content-Type': 'application/json',

@@ -9,6 +9,27 @@ const SANDBOX = (process.env.SMS_PARTNER_SANDBOX || '').trim().toLowerCase() ===
 
 const SMS_PARTNER_ENDPOINT = 'https://api.smspartner.fr/v1/send';
 
+// Timeout court + 1 retry pour absorber les blips réseau transitoires
+// (cf. error_message="fetch failed" dans sms_logs — undici n'a jamais reçu de réponse).
+// On retry UNIQUEMENT sur erreur fetch bas niveau, pas sur réponses HTTP applicatives.
+const FETCH_TIMEOUT_MS = 5000;
+
+async function fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), FETCH_TIMEOUT_MS);
+    try {
+      return await fetch(url, { ...init, signal: ac.signal });
+    } catch (err) {
+      if (attempt === 1) throw err;
+      await new Promise((r) => setTimeout(r, 400));
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw new Error('fetchWithRetry: unreachable');
+}
+
 interface SmsPartnerSuccess {
   success: true;
   code: number;
@@ -48,7 +69,7 @@ export async function sendSmsPartner(phone: string, message: string): Promise<{ 
     };
     if (SANDBOX) payload.sandbox = 1;
 
-    const res = await fetch(SMS_PARTNER_ENDPOINT, {
+    const res = await fetchWithRetry(SMS_PARTNER_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
