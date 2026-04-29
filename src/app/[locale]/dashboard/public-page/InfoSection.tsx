@@ -125,6 +125,7 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
 
       if (error) throw error;
       refetch().catch(() => {});
+      fetch('/api/dashboard/revalidate-merchant-page', { method: 'POST' }).catch(() => {});
     });
   };
 

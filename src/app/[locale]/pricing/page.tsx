@@ -76,7 +76,7 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
             </h2>
 
             <div className="space-y-3">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
+              {[1, 2, 3, 4, 5, 6, 7].map((i) => (
                 <details key={i} className="group rounded-2xl border bg-white shadow-md shadow-gray-200/60 border-gray-100 p-6 open:shadow-lg transition-shadow">
                   <summary className="flex items-center justify-between cursor-pointer list-none">
                     <h3 className="text-base md:text-lg font-semibold text-gray-900">{t(`faq.q${i}`)}</h3>

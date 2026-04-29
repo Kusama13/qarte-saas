@@ -5,7 +5,7 @@ import { getTodayForCountry } from '@/lib/utils';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
-import { getTravelTime, type Coords } from '@/lib/travel-time';
+import { getTravelTime, cacheKey as coordKey, type Coords } from '@/lib/travel-time';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -162,58 +162,67 @@ export async function GET(request: NextRequest) {
     let validCandidates = baseCandidates;
 
     if (homeService && customerCoords && shopCoords) {
-      // Pré-calcul parallèle des durées de trajet : on dédupe les paires (origin → customer)
-      // et (customer → next), puis on appelle getTravelTimes en batch parallèle.
-      // Pour chaque candidate : prev∈{bookings|null} et next∈{bookings|null} —
-      // donc N+1 origines distinctes (bookings.length + shop) et N+1 destinations.
-      const candidateNeighbors = baseCandidates.map((t) => {
-        const prev = [...bookings].reverse().find((b) => b.end <= t);
-        const next = bookings.find((b) => b.start >= t + totalDuration);
-        return { t, prev, next };
-      });
-
-      const inOriginsSet = new Set<string>();
+      // Trajets dédupés : (shop → cliente) pour le 1er RDV, + (booking ↔ cliente) pour les autres.
+      const inOriginsSet = new Set<string>([coordKey(shopCoords)]);
       const outDestsSet = new Set<string>();
-      const coordKey = (c: Coords) => `${c.lat.toFixed(4)},${c.lng.toFixed(4)}`;
-
-      for (const { prev, next } of candidateNeighbors) {
-        inOriginsSet.add(coordKey(prev?.coords ?? shopCoords));
-        if (next?.coords) outDestsSet.add(coordKey(next.coords));
+      for (const b of bookings) {
+        if (!b.coords) continue;
+        inOriginsSet.add(coordKey(b.coords));
+        outDestsSet.add(coordKey(b.coords));
       }
 
-      const inOriginsArr = Array.from(inOriginsSet);
-      const outDestsArr = Array.from(outDestsSet);
+      const inOriginsArr = [...inOriginsSet];
+      const outDestsArr = [...outDestsSet];
 
-      const inResults = await Promise.all(
-        inOriginsArr.map((key) => {
+      const [inResults, outResults] = await Promise.all([
+        Promise.all(inOriginsArr.map((key) => {
           const [lat, lng] = key.split(',').map(Number);
           return getTravelTime({ lat, lng }, customerCoords);
-        })
-      );
-      const outResults = await Promise.all(
-        outDestsArr.map((key) => {
+        })),
+        Promise.all(outDestsArr.map((key) => {
           const [lat, lng] = key.split(',').map(Number);
           return getTravelTime(customerCoords, { lat, lng });
-        })
-      );
+        })),
+      ]);
 
       const inMap = new Map(inOriginsArr.map((k, i) => [k, inResults[i]]));
       const outMap = new Map(outDestsArr.map((k, i) => [k, outResults[i]]));
 
-      const filtered: number[] = [];
-      for (const { t, prev, next } of candidateNeighbors) {
-        const travelIn = inMap.get(coordKey(prev?.coords ?? shopCoords))!;
+      // Pour chaque RDV, propose aussi un créneau "serré" 5 min après son trajet.
+      // Sinon un trajet qui retombe à 10h47 force la cliente à 11h00 (13 min perdues pour la pro).
+      const tightCandidates: number[] = [];
+      for (const b of bookings) {
+        if (!b.coords) continue;
+        const travelIn = inMap.get(coordKey(b.coords))!;
         if (travelIn > MAX_TRAVEL_MINUTES) continue;
+        const tight = Math.ceil((b.end + travelIn) / 5) * 5;
+        if (tight % 15 === 0) continue;
+        if (tight < openMins || tight + totalDuration > closeMins) continue;
+        if (breakStart !== null && breakEnd !== null && tight < breakEnd && tight + totalDuration > breakStart) continue;
+        if (bookings.some(x => tight < x.end && tight + totalDuration > x.start)) continue;
+        tightCandidates.push(tight);
+      }
+
+      const allCandidates = tightCandidates.length > 0
+        ? [...new Set([...baseCandidates, ...tightCandidates])].sort((a, b) => a - b)
+        : baseCandidates;
+
+      const filtered: number[] = [];
+      for (const t of allCandidates) {
+        const prev = [...bookings].reverse().find((b) => b.end <= t);
+        const next = bookings.find((b) => b.start >= t + totalDuration);
+
+        const travelIn = inMap.get(coordKey(prev?.coords ?? shopCoords));
+        if (travelIn === undefined || travelIn > MAX_TRAVEL_MINUTES) continue;
 
         // Mode loose pour le 1er RDV : on respecte l'horaire d'ouverture tel quel.
         // L'horaire = "heure du 1er RDV possible", pas "heure de départ de chez la pro".
-        // Pour les RDV suivants, on ajoute le trajet entre les deux clientes.
         const earliestStart = prev ? prev.end + travelIn : openMins;
         if (t < earliestStart) continue;
 
         if (next?.coords) {
-          const travelOut = outMap.get(coordKey(next.coords))!;
-          if (travelOut > MAX_TRAVEL_MINUTES) continue;
+          const travelOut = outMap.get(coordKey(next.coords));
+          if (travelOut === undefined || travelOut > MAX_TRAVEL_MINUTES) continue;
           // Buffer (aléa) appliqué symétriquement : sortie = duration + buffer + travelOut
           if (t + totalDuration + buffer + travelOut > next.start) continue;
         }

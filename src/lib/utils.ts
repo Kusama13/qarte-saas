@@ -49,9 +49,15 @@ export function getCurrencyForCountry(country?: string): string {
  *  Keeps arrondissement suffix ("Paris 9") since it's more specific for local SEO. */
 export function extractCityFromAddress(address?: string | null): string | null {
   if (!address) return null;
-  const lastChunk = address.split(',').pop()?.trim() ?? '';
-  const city = lastChunk.replace(/^\s*\d{4,5}\s+/, '').trim();
-  return city || null;
+  // Try last comma-separated chunk first (e.g. "12 rue Lepic, 75018 Paris" → "75018 Paris").
+  // If no comma (BAN-style "12 Rue Lepic 75018 Paris"), fall back to the substring after the last postal code.
+  let chunk = address.includes(',')
+    ? address.split(',').pop()?.trim() ?? ''
+    : address.trim();
+  const zipMatch = chunk.match(/\b\d{4,5}\b\s+(.+)$/);
+  if (zipMatch) chunk = zipMatch[1];
+  else chunk = chunk.replace(/^\s*\d{4,5}\s+/, '');
+  return chunk.trim() || null;
 }
 
 /** Currency symbol for display. */

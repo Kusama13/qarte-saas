@@ -30,7 +30,7 @@ export function roundCoord(n: number): number {
   return Math.round(n * 10000) / 10000;
 }
 
-function cacheKey(c: Coords): string {
+export function cacheKey(c: Coords): string {
   return `${roundCoord(c.lat)},${roundCoord(c.lng)}`;
 }
 

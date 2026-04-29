@@ -23,7 +23,7 @@ function FeatureBlock({
 }: {
   title: string;
   titleBold: string;
-  description: string;
+  description: React.ReactNode;
   visual: React.ReactNode;
   reverse?: boolean;
   delay?: number;
@@ -222,7 +222,14 @@ export function PageProSection() {
           <FeatureBlock
             title={t('planningTitle')}
             titleBold={t('planningTitleBold')}
-            description={t('planningDesc')}
+            description={t.rich('planningDesc', {
+              accent: (chunks) => (
+                <span className="relative inline font-semibold text-gray-800">
+                  {chunks}
+                  <span className="absolute -bottom-0.5 left-0 right-0 h-2 bg-indigo-100/70 -skew-x-3 rounded-sm -z-10" />
+                </span>
+              ),
+            })}
             visual={<PlanningVisual t={t} locale={locale} />}
             delay={0.05}
           />

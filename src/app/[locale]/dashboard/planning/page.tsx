@@ -504,6 +504,7 @@ export default function PlanningDashboard() {
         throw error;
       }
       refetch().catch(() => {});
+      fetch('/api/dashboard/revalidate-merchant-page', { method: 'POST' }).catch(() => {});
     });
   };
 
@@ -1704,14 +1705,31 @@ export default function PlanningDashboard() {
             </div>
           </section>
 
-          {/* Floating save button — discrete icon, bottom-right, above mobile BottomNav.
-              Hidden at top of scroll, fades in once user scrolls. */}
+          {/* Save button — md+ sticky centered pill ; < md floating disc above BottomNav. */}
+          <button
+            onClick={handleSaveSettings}
+            disabled={savingSettings}
+            className={`hidden md:inline-flex fixed bottom-6 left-1/2 -translate-x-1/2 z-30 items-center gap-2.5 px-8 py-4 rounded-full text-base font-bold shadow-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
+              savedSettings
+                ? 'bg-emerald-500 text-white shadow-emerald-300/50'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-400/40'
+            }`}
+          >
+            {savingSettings ? (
+              <><Loader2 className="w-5 h-5 animate-spin" /> {t('saving')}</>
+            ) : savedSettings ? (
+              <><Check className="w-5 h-5" /> {t('saved')}</>
+            ) : (
+              <><Save className="w-5 h-5" /> {t('save')}</>
+            )}
+          </button>
+
           <button
             onClick={handleSaveSettings}
             disabled={savingSettings || !hasScrolled}
             aria-label={t('save')}
             title={t('save')}
-            className={`fixed right-4 bottom-[calc(60px+env(safe-area-inset-bottom)+12px)] lg:right-6 lg:bottom-6 z-30 w-12 h-12 rounded-full flex items-center justify-center shadow-xl transition-all duration-300 disabled:cursor-not-allowed ${
+            className={`md:hidden fixed right-4 bottom-[calc(60px+env(safe-area-inset-bottom)+12px)] z-30 w-12 h-12 rounded-full flex items-center justify-center shadow-xl transition-all duration-300 disabled:cursor-not-allowed ${
               hasScrolled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none'
             } ${savedSettings ? 'bg-emerald-500 text-white shadow-emerald-300/60' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-300/60'}`}
           >
