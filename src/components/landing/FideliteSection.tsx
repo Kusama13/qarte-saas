@@ -6,7 +6,6 @@ import {
   ChevronRight,
   MousePointer2,
   ArrowRight,
-  TrendingUp,
 } from 'lucide-react';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
@@ -530,12 +529,7 @@ export function FideliteSection() {
             </span>
           </h2>
           {t('subtitle') && <p className="text-base md:text-lg text-gray-500 leading-relaxed max-w-xl mx-auto">{t('subtitle')}</p>}
-
-          {/* Proof pill — claim du case study Nail Salon by Elodie */}
-          <div className="mt-5 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 text-sm">
-            <TrendingUp className="w-4 h-4 text-emerald-600" strokeWidth={2.5} />
-            <span className="text-emerald-700 font-semibold">{t('proofStat')}</span>
-          </div>
+          {t('soloPlan') && <p className="mt-2 text-sm text-gray-400 italic">{t('soloPlan')}</p>}
         </motion.div>
 
         <div className="flex flex-col gap-10 md:gap-10 lg:gap-12">
@@ -567,7 +561,7 @@ export function FideliteSection() {
             className="mx-auto max-w-3xl bg-rose-50/60 border border-rose-100 rounded-2xl p-5 md:p-6 flex items-start gap-4"
           >
             <img
-              src="/images/testimonials/t2.jpg"
+              src="/images/testimonials/laila.jpeg"
               alt={t('miniName')}
               className="w-12 h-12 rounded-full object-cover shadow-sm shrink-0"
             />

@@ -19,28 +19,35 @@ import { ttEvents } from '@/components/analytics/TikTokPixel';
  *  - copywriting: one section, one purpose (build credibility)
  */
 
+interface Avatar {
+  logo_url: string | null;
+  initial: string;
+  bgClass: string;
+  textClass: string;
+}
+
 interface Review {
   rating: string;
   title: string;
   text: string;
   name: string;
   shopType: string;
-  avatar: string;
+  avatar: Avatar;
 }
 
-const FALLBACK_AVATARS = [
-  '/images/testimonials/t1.jpg',
-  '/images/testimonials/t2.jpg',
-  '/images/testimonials/t3.jpg',
-  '/images/testimonials/t4.jpg',
+const AVATARS: Avatar[] = [
+  { logo_url: null,                                initial: 'F', bgClass: 'bg-rose-100',    textClass: 'text-rose-700'    },
+  { logo_url: '/images/testimonials/yam.png',     initial: 'Y', bgClass: 'bg-emerald-100', textClass: 'text-emerald-700' },
+  { logo_url: '/images/testimonials/ericka.jpeg', initial: 'E', bgClass: 'bg-indigo-100',  textClass: 'text-indigo-700'  },
+  { logo_url: '/images/testimonials/lindsay.png', initial: 'L', bgClass: 'bg-violet-100',  textClass: 'text-violet-700'  },
 ];
 
-function buildReviews(t: (key: string) => string, logos: string[]): Review[] {
+function buildReviews(t: (key: string) => string): Review[] {
   return [
-    { rating: t('t1Rating'), title: t('t1Title'), text: t('t1Text'), name: t('t1Name'), shopType: t('t1ShopType'), avatar: logos[0] || FALLBACK_AVATARS[0] },
-    { rating: t('t2Rating'), title: t('t2Title'), text: t('t2Text'), name: t('t2Name'), shopType: t('t2ShopType'), avatar: logos[1] || FALLBACK_AVATARS[1] },
-    { rating: t('t3Rating'), title: t('t3Title'), text: t('t3Text'), name: t('t3Name'), shopType: t('t3ShopType'), avatar: logos[2] || FALLBACK_AVATARS[2] },
-    { rating: t('t4Rating'), title: t('t4Title'), text: t('t4Text'), name: t('t4Name'), shopType: t('t4ShopType'), avatar: logos[3] || FALLBACK_AVATARS[3] },
+    { rating: t('t1Rating'), title: t('t1Title'), text: t('t1Text'), name: t('t1Name'), shopType: t('t1ShopType'), avatar: AVATARS[0] },
+    { rating: t('t2Rating'), title: t('t2Title'), text: t('t2Text'), name: t('t2Name'), shopType: t('t2ShopType'), avatar: AVATARS[1] },
+    { rating: t('t3Rating'), title: t('t3Title'), text: t('t3Text'), name: t('t3Name'), shopType: t('t3ShopType'), avatar: AVATARS[2] },
+    { rating: t('t4Rating'), title: t('t4Title'), text: t('t4Text'), name: t('t4Name'), shopType: t('t4ShopType'), avatar: AVATARS[3] },
   ];
 }
 
@@ -65,7 +72,13 @@ function ReviewCard({ review, delay, visible }: { review: Review; delay: number;
         </p>
       </div>
       <div className="flex items-center gap-3 mt-5 pt-3 border-t border-gray-50">
-        <img src={review.avatar} alt={review.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
+        {review.avatar.logo_url ? (
+          <img src={review.avatar.logo_url} alt={review.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
+        ) : (
+          <div className={`w-9 h-9 rounded-full ${review.avatar.bgClass} ${review.avatar.textClass} font-bold text-sm flex items-center justify-center shrink-0`}>
+            {review.avatar.initial}
+          </div>
+        )}
         <div className="min-w-0">
           <p className="text-sm font-semibold text-gray-900 truncate">{review.name}</p>
           <p className="text-[11px] text-gray-400 font-medium">{review.shopType}</p>
@@ -75,11 +88,11 @@ function ReviewCard({ review, delay, visible }: { review: Review; delay: number;
   );
 }
 
-export function SocialProofMergedSection({ testimonialLogos = [] }: { testimonialLogos?: string[] } = {}) {
+export function SocialProofMergedSection() {
   const { ref, isInView } = useInView();
   const t = useTranslations('testimonials');
   const tc = useTranslations('caseStudy');
-  const reviews = buildReviews(t, testimonialLogos);
+  const reviews = buildReviews(t);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -106,7 +119,7 @@ export function SocialProofMergedSection({ testimonialLogos = [] }: { testimonia
   };
 
   return (
-    <section className="relative py-10 md:py-14 overflow-hidden bg-gray-50/80">
+    <section className="relative py-16 md:py-20 overflow-hidden bg-white">
       <div ref={ref} className="relative max-w-6xl mx-auto px-6">
         {/* Single header */}
         <div className={`text-center mb-10 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>

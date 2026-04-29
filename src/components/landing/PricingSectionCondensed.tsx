@@ -17,7 +17,7 @@ export function PricingSectionCondensed() {
       <div ref={ref} className="relative max-w-5xl mx-auto px-6">
         {/* Header */}
         <div className={`text-center mb-12 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
             {t('title')}{' '}
             <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
               {t('titleHighlight')}

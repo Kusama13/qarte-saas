@@ -124,7 +124,7 @@ export function FAQSection() {
   );
 
   return (
-    <section id="faq" className="relative py-14 md:py-20 overflow-hidden bg-white">
+    <section id="faq" className="relative py-16 md:py-20 overflow-hidden bg-white">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
@@ -133,7 +133,7 @@ export function FAQSection() {
       <div ref={ref} className="relative max-w-4xl mx-auto px-6">
         {/* Header */}
         <div className={`text-center mb-10 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
             {t('title')}{' '}
             <span className="relative font-[family-name:var(--font-display)] italic text-indigo-600">
               {t('titleBold')}
@@ -145,7 +145,7 @@ export function FAQSection() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-3.5">
           {visibleItems.map((faq, index) => (
             <AccordionItem
               key={index}

@@ -15,7 +15,7 @@ export function FeaturesGridSection() {
   ] as const;
 
   return (
-    <section className="relative py-12 md:py-16 bg-white overflow-hidden">
+    <section className="relative py-16 md:py-20 bg-white overflow-hidden">
       {/* Ambient glow */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-emerald-100/30 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 left-1/3 w-96 h-96 bg-rose-100/30 rounded-full blur-[120px] pointer-events-none" />
@@ -53,14 +53,14 @@ export function FeaturesGridSection() {
                 <div className={`min-w-[3.5rem] md:min-w-[4.5rem] px-3 py-2 rounded-xl ${bg} border ${border} flex items-center justify-center shrink-0`}>
                   <span className={`text-2xl md:text-3xl font-extrabold tabular-nums tracking-tighter ${text}`}>{number}</span>
                 </div>
-                <h3 className="min-w-0 flex-1 text-base md:text-[22px] font-semibold text-gray-900 leading-snug">
+                <h3 className="min-w-0 flex-1 text-lg md:text-xl font-semibold text-gray-900 leading-snug">
                   {t(titleKey)}
                 </h3>
               </div>
-              <p className="text-[13px] md:text-[17px] text-gray-500 leading-snug md:leading-relaxed">
+              <p className="text-sm md:text-base text-gray-500 leading-snug md:leading-relaxed">
                 {t(descKey)}
               </p>
-              <p className="text-[11px] md:text-xs text-gray-400 italic leading-snug">
+              <p className="text-xs text-gray-400 italic leading-snug">
                 {t(competitorKey)}
               </p>
             </motion.div>

@@ -16,7 +16,7 @@ export function PricingTransitionSection() {
   const t = useTranslations('fidelite');
 
   return (
-    <section className="relative py-12 md:py-14 bg-white overflow-hidden">
+    <section className="relative py-16 md:py-20 bg-white overflow-hidden">
       <div className="relative max-w-5xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
