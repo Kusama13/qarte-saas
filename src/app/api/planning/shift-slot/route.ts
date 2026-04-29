@@ -3,6 +3,7 @@ import { createRouteHandlerSupabaseClient, getSupabaseAdmin } from '@/lib/supaba
 import { z } from 'zod';
 import { sendBookingSms } from '@/lib/sms';
 import logger from '@/lib/logger';
+import { recomputeDayTravel } from '@/lib/travel-recompute';
 
 const shiftSlotSchema = z.object({
   merchantId: z.string().uuid(),
@@ -148,6 +149,17 @@ export async function POST(request: NextRequest) {
           .from('merchant_planning_slots')
           .update({ total_duration_minutes: slot.total_duration_minutes })
           .eq('id', result.target_id);
+      }
+
+      // Home-service: recompute travel times on both source and target days
+      // (the moved slot changes the predecessor of any later booking on each day).
+      const datesToRecompute = new Set<string>([slot.slot_date, targetDate]);
+      for (const date of datesToRecompute) {
+        try {
+          await recomputeDayTravel(merchantId, date);
+        } catch (err) {
+          logger.warn('recomputeDayTravel after shift failed', { date, err: String(err) });
+        }
       }
 
       return NextResponse.json({ success: true, target_id: result.target_id });

@@ -162,6 +162,11 @@ export interface Merchant {
   // Booking mode (free = merchant sets opening hours, system computes availability)
   booking_mode: 'slots' | 'free';
   buffer_minutes: 0 | 10 | 15 | 30;
+  // Service à domicile — calcul durée de trajet entre RDV
+  home_service_enabled: boolean;
+  shop_lat: number | null;
+  shop_lng: number | null;
+  hide_address_on_public_page: boolean;
   // Monthly contest
   contest_enabled: boolean;
   contest_prize: string | null;
@@ -220,6 +225,12 @@ export interface PlanningSlot {
   custom_service_duration?: number | null;
   custom_service_price?: number | null;
   custom_service_color?: string | null;
+  // Service à domicile
+  customer_address?: string | null;
+  customer_lat?: number | null;
+  customer_lng?: number | null;
+  travel_time_minutes?: number | null;
+  travel_time_overridden?: boolean;
   planning_slot_services?: PlanningSlotService[];
   planning_slot_photos?: PlanningSlotPhoto[];
   planning_slot_result_photos?: PlanningSlotResultPhoto[];

@@ -54,7 +54,8 @@ Required env vars (server-side):
 `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
 `RESEND_API_KEY`, `CRON_SECRET`, `VAPID_PRIVATE_KEY`, `IP_HASH_SALT`,
 `OVH_APP_KEY`, `OVH_APP_SECRET`, `OVH_CONSUMER_KEY`, `OVH_SMS_SERVICE`, `OVH_SMS_SENDER`,
-`SMS_PARTNER_API_KEY`, `SMS_PARTNER_SENDER` (default "Qarte"), `SMS_PARTNER_ENABLED` ("true" pour router le transactionnel FR/BE), `SMS_PARTNER_SANDBOX` ("true" en dev)
+`SMS_PARTNER_API_KEY`, `SMS_PARTNER_SENDER` (default "Qarte"), `SMS_PARTNER_ENABLED` ("true" pour router le transactionnel FR/BE), `SMS_PARTNER_SANDBOX` ("true" en dev),
+`OPENROUTESERVICE_API_KEY` (mode service à domicile, signup gratuit https://openrouteservice.org/dev/)
 
 Public (NEXT_PUBLIC_):
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`

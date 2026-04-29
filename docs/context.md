@@ -345,6 +345,43 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Acompte** : toggle on/off dans parametres planning (`depositEnabled` state local, sync au load). `computeDepositAmount()` cappe au prix total (`Math.min`). Si acompte >= prix → affiche "Paiement integral" au lieu de "Acompte" (vitrine + dashboard).
 - **Reply OK warm-up** : texte sous bouton signup "Reponds OK a l'email pour activer tes 7 jours d'essai gratuit" + encart jaune dans Welcome email demandant de repondre OK (warm-up deliverabilite)
 
+### Service à domicile — calcul auto durée de trajet (mig 134-136)
+
+- **But** : pour les pros qui interviennent à domicile (ongleries mobiles, esthéticiennes itinérantes), le planning intègre automatiquement le temps de trajet entre RDV. La cliente saisit son adresse à la résa, le système calcule le trajet et bloque le créneau juste à temps.
+- **S'applique uniquement au mode libre** (`booking_mode = 'free'`) — les créneaux pré-générés du mode `slots` sont fixes par construction.
+- **Toggle merchant** : carte dans Planning → Paramètres → Mon agenda. Active sous condition que `shop_address` soit renseignée (validation à l'activation, toast si manquante). À l'activation, géocodage auto via BAN si `shop_lat/lng` non déjà capturés (InfoSection les pré-stocke depuis avril 2026).
+- **Privacy par défaut** : sub-toggle "Masquer mon adresse sur la vitrine" auto-activé à la 1ère activation home_service. Cache `streetAddress` côté `/p/[slug]` ET dans le JSON-LD ; `addressLocality` (ville) reste pour le SEO local.
+- **Stack** :
+  - Géocodage : `api-adresse.data.gouv.fr` (BAN, gratuit, sans clé) — déjà utilisé par `AddressAutocomplete`, étendu pour exposer `lat/lng`
+  - Routing : OpenRouteService Directions API (`https://api.openrouteservice.org/v2/directions/driving-car`), 2000 req/jour gratuit, env `OPENROUTESERVICE_API_KEY`
+  - Cache Postgres `travel_time_cache` (origin_key, dest_key, duration_minutes, fetched_at) — clé = "lat,lng" arrondi 4 décimales (~11m)
+  - Fallback Haversine × 1.4 / 30 km/h si ORS down
+- **Calcul slots dispo** (`/api/planning/free-slots`) :
+  - Si `home_service_enabled`, exige `?customerLat=&customerLng=` (sinon 400 + flag `requiresAddress`)
+  - Pour chaque créneau candidat : trouve le booking précédent / suivant du jour, calcule travelIn (prev → cliente) et travelOut (cliente → next)
+  - Dédoublonnage des paires d'origine/destination + appels `getTravelTime` parallèles via `Promise.all` (gain ~10× sur les jours chargés)
+  - Slot valide si : `t >= prev.end + travelIn` ET (si next) `t + duration + buffer + travelOut <= next.start` — buffer (aléa) appliqué symétriquement
+  - **Mode loose pour le 1er RDV** : `earliestStart = prev ? prev.end + travelIn : openMins`. L'horaire d'ouverture représente "heure du 1er RDV possible" (modèle mental pro à domicile), pas "heure de départ de chez soi". Pro doit avancer son ouverture si trajet matinal nécessaire — la modale BookingDetails affiche l'heure de départ conseillée.
+  - Cap de sécurité : `MAX_TRAVEL_MINUTES = 60` — au-delà le slot est rejeté (cliente trop loin)
+- **Booking** (`/api/planning/book`) :
+  - Schéma Zod accepte `customer_address`, `customer_lat`, `customer_lng` (optionnels, requis si `home_service_enabled`)
+  - Recheck travel-time anti-race avant l'INSERT
+  - Persiste `customer_address`, `customer_lat/lng`, `travel_time_minutes` (calculé) sur le slot
+  - Après INSERT, appelle `recomputeDayTravel(merchantId, date)` — un nouveau RDV inséré entre deux existants change le prédécesseur du suivant
+  - Réponse JSON : `is_new_customer: boolean` (utilisé par BookingModal pour gating le badge "carte de fidélité prête")
+- **Recompute** (`src/lib/travel-recompute.ts`) :
+  - Une seule fonction `recomputeDayTravel(merchantId, date)` — recalcule tous les slots de la journée en parallèle (Promise.all sur fetch + sur update)
+  - Respecte `travel_time_overridden = true` (override manuel jamais réécrasé)
+  - Hooks : POST book, PATCH cancel (client_name → null), DELETE slots (par date affectée), POST shift-slot (sur source date + target date)
+- **Move (déplacement) — mig 136** : la fonction RPC `move_booking` transfère désormais les 5 champs home-service (`customer_address`, `customer_lat/lng`, `travel_time_minutes`, `travel_time_overridden`) vers la cible et les reset sur la source. Sans ça (mig 091 originale) l'adresse restait orpheline sur le slot vidé et la cible perdait toute info.
+- **Cancel (annulation)** : PATCH avec `client_name: null` reset les 5 champs home-service en plus des champs de réservation classiques (defense in depth — vraie utilité limitée car fillers existent uniquement en mode `slots`).
+- **Affichage planning** (DayView + WeekView) : bande visuelle juste au-dessus de chaque RDV, hauteur proportionnelle au `travel_time_minutes`, **couleur dérivée de la couleur de prestation** (tint léger ~15% opacité + bordure dashed à ~33% opacité — continuité visuelle, pas de rupture). Texte adaptatif : icône `Car` dès 14px de haut, label "Trajet X min" à partir de 24px, sinon juste la bande colorée. Title HTML toujours présent pour tooltip.
+- **Modale BookingDetails** : nouvelle carte sky bleue quand `customer_address` présent — affiche adresse complète + bouton "Itinéraire" (Google Maps avec `&origin=` cliente précédente ou marchand pour le 1er RDV, `&destination=` cliente actuelle), durée trajet entrant, **heure de départ conseillée** (= start - travelIn), trajet vers la cliente suivante (depuis le `travel_time_minutes` du slot suivant).
+- **BookingModal vitrine** : étape `address` insérée entre `services` et `datetime` quand `home_service_enabled`. Indicateur de progression : 4 dots au lieu de 3. Validation : coords requises (sélection dans l'autocomplete BAN, pas juste tape libre). Récap final affiche l'adresse. Intro personnalisée avec `{shopName}` ("Lux'beauty by Laila intervient à domicile...").
+- **Push notification merchant** enrichie en mode home_service : ajoute `📍 {address}` + `🚗 {travelIn} min trajet · départ conseillé HH:MM`.
+- **Email confirmation merchant** (`BookingNotificationEmail`) : section ambrée "🏠 Service à domicile" avec adresse + trajet + heure de départ conseillée, juste avant l'éventuel bloc acompte.
+- **Manuel booking dashboard (PlanningModal)** : champ adresse + override durée **différé v2** (le code serveur supporte déjà tout, manque l'UI). En attendant, le marchand peut éditer l'adresse via la DB ou attendre une résa client.
+
 ### Clients fideles (ex Programmes Membres, mig 018 + 109)
 - Programmes de fidelite avances : nom, duree (jours/semaines/mois), avantages configurables
 - **Avantage texte libre** : `benefit_label` — affiche sur la carte client ("Brushing offert", "Acces prioritaire")
@@ -899,6 +936,7 @@ NEXT_PUBLIC_GA4_ID=
 FACEBOOK_CAPI_ACCESS_TOKEN=
 NEXT_PUBLIC_APP_URL=
 CONTACT_EMAIL=
+OPENROUTESERVICE_API_KEY=  # Mode service à domicile, signup gratuit https://openrouteservice.org/dev/
 ```
 
 ---

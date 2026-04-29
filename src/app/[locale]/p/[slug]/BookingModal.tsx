@@ -8,6 +8,7 @@ import { useRouter } from '@/i18n/navigation';
 import { formatTime, toBCP47, formatCurrency } from '@/lib/utils';
 import type { Merchant, MerchantCountry } from '@/types';
 import { PhoneInput } from '@/components/ui/PhoneInput';
+import { AddressAutocomplete, type AddressSuggestion } from '@/components/ui/AddressAutocomplete';
 
 type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
 type ServiceCategory = { id: string; name: string; position: number };
@@ -19,7 +20,8 @@ type MerchantBooking = Pick<
   'id' | 'shop_name' | 'primary_color' | 'secondary_color' | 'country' | 'booking_message' |
   'auto_booking_enabled' | 'deposit_link' | 'deposit_percent' | 'deposit_amount' |
   'welcome_offer_enabled' | 'welcome_offer_description' | 'subscription_status' | 'booking_mode' |
-  'allow_customer_cancel' | 'cancel_deadline_days' | 'allow_customer_reschedule' | 'reschedule_deadline_days'
+  'allow_customer_cancel' | 'cancel_deadline_days' | 'allow_customer_reschedule' | 'reschedule_deadline_days' |
+  'home_service_enabled'
 >;
 
 interface BookingModalProps {
@@ -34,7 +36,7 @@ interface BookingModalProps {
   onClose: () => void;
 }
 
-type Step = 'services' | 'datetime' | 'info' | 'confirm';
+type Step = 'services' | 'address' | 'datetime' | 'info' | 'confirm';
 
 function timeToMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);
@@ -115,8 +117,12 @@ export default function BookingModal({
   const country = (merchant.country || 'FR') as MerchantCountry;
 
   const isFreeMod = merchant.booking_mode === 'free';
+  const isHomeService = isFreeMod && merchant.home_service_enabled === true;
   const [step, setStep] = useState<Step>('services');
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
+  // Home service: customer address (only used when isHomeService === true)
+  const [customerAddress, setCustomerAddress] = useState('');
+  const [customerCoords, setCustomerCoords] = useState<{ lat: number; lng: number } | null>(null);
   // Mode libre: date/time selection
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
@@ -132,7 +138,7 @@ export default function BookingModal({
   const [error, setError] = useState<string | null>(null);
   const [bookingResult, setBookingResult] = useState<{
     date: string; time: string; services: { name: string; price: number; duration: number }[];
-    total_price: number; total_duration: number;
+    total_price: number; total_duration: number; is_new_customer?: boolean;
   } | null>(null);
   const [depositResult, setDepositResult] = useState<{
     link: string;
@@ -229,16 +235,26 @@ export default function BookingModal({
   // Fetch free slots when date selected in mode libre
   useEffect(() => {
     if (!isFreeMod || !selectedDate || totalDuration === 0) return;
+    if (isHomeService && !customerCoords) return; // address required first
     setFreeSlots([]);
     setSelectedTime('');
     setFreeSlotsError(false);
     setLoadingFreeSlots(true);
-    fetch(`/api/planning/free-slots?merchantId=${merchant.id}&date=${selectedDate}&totalDuration=${totalDuration}`)
+    const params = new URLSearchParams({
+      merchantId: merchant.id,
+      date: selectedDate,
+      totalDuration: String(totalDuration),
+    });
+    if (isHomeService && customerCoords) {
+      params.set('customerLat', String(customerCoords.lat));
+      params.set('customerLng', String(customerCoords.lng));
+    }
+    fetch(`/api/planning/free-slots?${params.toString()}`)
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(data => setFreeSlots(data.slots || []))
       .catch(() => setFreeSlotsError(true))
       .finally(() => setLoadingFreeSlots(false));
-  }, [isFreeMod, selectedDate, totalDuration, merchant.id]);
+  }, [isFreeMod, isHomeService, customerCoords, selectedDate, totalDuration, merchant.id]);
 
   const toggleService = (id: string) => {
     setSelectedServiceIds(prev => {
@@ -269,6 +285,11 @@ export default function BookingModal({
           last_name: lastName.trim() || undefined,
           service_ids: Array.from(selectedServiceIds),
           ...(isFreeMod && { booking_mode: 'free' }),
+          ...(isHomeService && customerCoords && {
+            customer_address: customerAddress,
+            customer_lat: customerCoords.lat,
+            customer_lng: customerCoords.lng,
+          }),
         }),
       });
 
@@ -337,9 +358,11 @@ export default function BookingModal({
   }, [freeSlots]);
 
   // Step indicator
-  const indicatorSteps: Step[] = isFreeMod
-    ? ['services', 'datetime', 'info']
-    : ['services', 'info'];
+  const indicatorSteps: Step[] = isHomeService
+    ? ['services', 'address', 'datetime', 'info']
+    : isFreeMod
+      ? ['services', 'datetime', 'info']
+      : ['services', 'info'];
   const currentStepIdx = indicatorSteps.indexOf(step);
 
   // Sticky bar deposit info
@@ -605,9 +628,56 @@ export default function BookingModal({
                   </div>
                   <button
                     type="button"
-                    onClick={() => setStep(isFreeMod ? 'datetime' : 'info')}
+                    onClick={() => setStep(isHomeService ? 'address' : isFreeMod ? 'datetime' : 'info')}
                     disabled={selectedServiceIds.size === 0 || !durationAvailable}
                     className="shrink-0 px-5 py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center gap-2"
+                    style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
+                  >
+                    {t('next')}
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── STEP 1.5: Adresse cliente (mode service à domicile) ── */}
+            {step === 'address' && (
+              <motion.div key="address" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <div className="mb-4 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                  <p className="text-xs text-amber-800 leading-relaxed">{t('addressIntro', { shopName: merchant.shop_name })}</p>
+                </div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('addressLabel')}</label>
+                <AddressAutocomplete
+                  value={customerAddress}
+                  onChange={(value: string, suggestion?: AddressSuggestion) => {
+                    setCustomerAddress(value);
+                    if (suggestion) {
+                      setCustomerCoords({ lat: suggestion.lat, lng: suggestion.lng });
+                    } else {
+                      setCustomerCoords(null);
+                    }
+                  }}
+                  placeholder={t('addressPlaceholder')}
+                  className="h-11 text-sm"
+                />
+                {customerAddress && !customerCoords && (
+                  <p className="mt-2 text-[11px] text-gray-500">{t('addressNeedSelect')}</p>
+                )}
+
+                <div className="sticky bottom-0 -mx-5 -mb-5 mt-6 px-5 py-3 bg-white/95 backdrop-blur-sm border-t border-gray-100 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setStep('services')}
+                    className="px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-1"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    {t('back')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStep('datetime')}
+                    disabled={!customerCoords}
+                    className="ml-auto shrink-0 px-5 py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center gap-2"
                     style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
                   >
                     {t('next')}
@@ -761,7 +831,7 @@ export default function BookingModal({
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setStep('services')}
+                    onClick={() => setStep(isHomeService ? 'address' : 'services')}
                     className="flex-1 py-3 rounded-xl font-bold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all"
                   >
                     {t('back')}
@@ -937,10 +1007,12 @@ export default function BookingModal({
                     <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
                       {t('bookingConfirmedHint')}
                     </p>
-                    <div className="mx-auto mb-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[12px] font-semibold">
-                      <Crown className="w-3.5 h-3.5" strokeWidth={2.5} />
-                      <span>{t('loyaltyCardReady', { shop: merchant.shop_name })}</span>
-                    </div>
+                    {bookingResult.is_new_customer && (
+                      <div className="mx-auto mb-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[12px] font-semibold">
+                        <Crown className="w-3.5 h-3.5" strokeWidth={2.5} />
+                        <span>{t('loyaltyCardReady', { shop: merchant.shop_name })}</span>
+                      </div>
+                    )}
                   </>
                 )}
                 <p className="text-center text-[11px] text-gray-500 mb-3 px-2">
@@ -957,6 +1029,12 @@ export default function BookingModal({
                     <span className="text-gray-500">{t('time')}</span>
                     <span className="font-semibold text-gray-900">{formatTime(bookingResult.time, locale)}</span>
                   </div>
+                  {isHomeService && customerAddress && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500 shrink-0 mr-2">{t('addressLabel')}</span>
+                      <span className="font-semibold text-gray-900 text-right line-clamp-2">{customerAddress}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">{t('services')}</span>
                     <span className="font-semibold text-gray-900 text-right max-w-[60%] line-clamp-2">

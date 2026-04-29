@@ -986,6 +986,8 @@ interface BookingNotificationParams {
   totalPrice: number;
   deposit: { link: string; percent: number | null; amount: number | null } | null;
   locale: EmailLocale;
+  customerAddress?: string | null;
+  travelTimeMinutes?: number | null;
 }
 
 export async function sendBookingNotificationEmail(

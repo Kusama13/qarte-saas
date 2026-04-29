@@ -109,88 +109,55 @@ export async function POST(request: NextRequest) {
       .eq('merchant_id', merchant.id)
       .maybeSingle();
 
-    let customerId: string;
-    let cardId: string;
-
+    // Règle simple : si la cliente existe déjà chez ce marchand, ce n'est pas une
+    // nouvelle cliente — peu importe ses tampons, récompenses ou bons précédents.
+    // L'offre nouvelle cliente est strictement réservée aux nouveaux numéros.
     if (existingCustomer) {
-      // Client exists — check eligibility (stamps + existing vouchers)
-      const [cardRes, voucherRes] = await Promise.all([
-        supabaseAdmin
-          .from('loyalty_cards')
-          .select('id, current_stamps')
-          .eq('customer_id', existingCustomer.id)
-          .eq('merchant_id', merchant.id)
-          .maybeSingle(),
-        supabaseAdmin
-          .from('vouchers')
-          .select('id, source')
-          .eq('customer_id', existingCustomer.id)
-          .eq('merchant_id', merchant.id)
-          .in('source', ['welcome', 'referral'])
-          .limit(1),
-      ]);
-
-      if (!cardRes.data) {
-        return NextResponse.json({ error: 'Erreur interne' }, { status: 500 });
-      }
-
-      if (Number(cardRes.data.current_stamps || 0) > 0) {
-        return NextResponse.json(
-          { error: 'Vous faites déjà partie de nos fidèles ! Cette offre est réservée aux nouvelles clientes. Merci pour votre confiance.' },
-          { status: 409 }
-        );
-      }
-
-      if (voucherRes.data && voucherRes.data.length > 0) {
-        return NextResponse.json(
-          { error: 'Vous avez déjà bénéficié de cette offre. Au plaisir de vous revoir bientôt !' },
-          { status: 409 }
-        );
-      }
-
-      customerId = existingCustomer.id;
-      cardId = cardRes.data.id;
-    } else {
-      // 4. Créer le customer
-      const { data: newCustomer, error: customerError } = await supabaseAdmin
-        .from('customers')
-        .insert({
-          phone_number: formattedPhone,
-          first_name: first_name.trim(),
-          last_name: last_name?.trim() || null,
-          merchant_id: merchant.id,
-        })
-        .select()
-        .single();
-
-      if (customerError || !newCustomer) {
-        logger.error('Welcome customer creation error:', customerError);
-        return NextResponse.json({ error: 'Erreur lors de la création du compte' }, { status: 500 });
-      }
-
-      // 5. Créer la loyalty card
-      const { data: newCard, error: cardError } = await supabaseAdmin
-        .from('loyalty_cards')
-        .insert({
-          customer_id: newCustomer.id,
-          merchant_id: merchant.id,
-          current_stamps: 0,
-          current_amount: 0,
-          stamps_target: merchant.stamps_required,
-          referral_code: generateReferralCode(),
-        })
-        .select()
-        .single();
-
-      if (cardError || !newCard) {
-        logger.error('Welcome card creation error:', cardError);
-        await supabaseAdmin.from('customers').delete().eq('id', newCustomer.id);
-        return NextResponse.json({ error: 'Erreur lors de la création de la carte' }, { status: 500 });
-      }
-
-      customerId = newCustomer.id;
-      cardId = newCard.id;
+      return NextResponse.json(
+        { error: 'Vous faites déjà partie de nos client(e)s ! Cette offre est réservée aux nouvelles clientes. Au plaisir de vous revoir.' },
+        { status: 409 }
+      );
     }
+
+    // 4. Créer le customer
+    const { data: newCustomer, error: customerError } = await supabaseAdmin
+      .from('customers')
+      .insert({
+        phone_number: formattedPhone,
+        first_name: first_name.trim(),
+        last_name: last_name?.trim() || null,
+        merchant_id: merchant.id,
+      })
+      .select()
+      .single();
+
+    if (customerError || !newCustomer) {
+      logger.error('Welcome customer creation error:', customerError);
+      return NextResponse.json({ error: 'Erreur lors de la création du compte' }, { status: 500 });
+    }
+
+    // 5. Créer la loyalty card
+    const { data: newCard, error: cardError } = await supabaseAdmin
+      .from('loyalty_cards')
+      .insert({
+        customer_id: newCustomer.id,
+        merchant_id: merchant.id,
+        current_stamps: 0,
+        current_amount: 0,
+        stamps_target: merchant.stamps_required,
+        referral_code: generateReferralCode(),
+      })
+      .select()
+      .single();
+
+    if (cardError || !newCard) {
+      logger.error('Welcome card creation error:', cardError);
+      await supabaseAdmin.from('customers').delete().eq('id', newCustomer.id);
+      return NextResponse.json({ error: 'Erreur lors de la création de la carte' }, { status: 500 });
+    }
+
+    const customerId = newCustomer.id;
+    const cardId = newCard.id;
 
     // 6. Créer le voucher welcome (expire dans 30 jours)
     const { data: welcomeVoucher, error: voucherError } = await supabaseAdmin

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Input, PhoneInput } from '@/components/ui';
-import { AddressAutocomplete } from '@/components/ui/AddressAutocomplete';
+import { AddressAutocomplete, type AddressSuggestion } from '@/components/ui/AddressAutocomplete';
 import { getSupabase } from '@/lib/supabase';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { formatPhoneNumber, toLocalPhone, PHONE_COUNTRIES } from '@/lib/utils';
@@ -29,6 +29,7 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
 
   const [shopName, setShopName] = useState('');
   const [address, setAddress] = useState('');
+  const [addressCoords, setAddressCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [bio, setBio] = useState('');
   const [displayPhone, setDisplayPhone] = useState('');
   const [displayPhoneCountry, setDisplayPhoneCountry] = useState<MerchantCountry>((merchant.country as MerchantCountry) || 'FR');
@@ -50,6 +51,11 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
   useEffect(() => {
     setShopName(merchant.shop_name || '');
     setAddress(merchant.shop_address || '');
+    setAddressCoords(
+      merchant.shop_lat != null && merchant.shop_lng != null
+        ? { lat: merchant.shop_lat, lng: merchant.shop_lng }
+        : null
+    );
     setBio(merchant.bio || '');
     if (merchant.opening_hours) {
       setOpeningHours(merchant.opening_hours as Record<string, { open: string; close: string; break_start?: string; break_end?: string } | null>);
@@ -103,6 +109,8 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
         .update({
           shop_name: shopName.trim() || null,
           shop_address: address.trim() || null,
+          shop_lat: address.trim() ? addressCoords?.lat ?? null : null,
+          shop_lng: address.trim() ? addressCoords?.lng ?? null : null,
           bio: bio.trim() || null,
           display_phone: displayPhone.trim() ? formatPhoneNumber(displayPhone.trim(), displayPhoneCountry) : null,
           opening_hours: hoursEnabled && Object.values(openingHours).some(Boolean) ? openingHours : null,
@@ -141,7 +149,17 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
             <AddressAutocomplete
               placeholder={t('infoAddressPlaceholder')}
               value={address}
-              onChange={(v) => setAddress(v)}
+              onChange={(v, suggestion?: AddressSuggestion) => {
+                setAddress(v);
+                if (suggestion) {
+                  setAddressCoords({ lat: suggestion.lat, lng: suggestion.lng });
+                } else if (v.trim() === '') {
+                  setAddressCoords(null);
+                }
+                // If user types manually without picking a suggestion, keep
+                // existing coords as-is (avoid wiping a valid location on a
+                // tiny edit). They'll need to re-pick to update coords.
+              }}
               className="h-10 text-sm"
             />
           </div>

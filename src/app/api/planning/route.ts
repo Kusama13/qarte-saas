@@ -6,6 +6,7 @@ import { sendBookingSms } from '@/lib/sms';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 import { requirePlanFeature } from '@/lib/api-helpers';
+import { recomputeDayTravel } from '@/lib/travel-recompute';
 
 async function verifyOwnership(supabase: Awaited<ReturnType<typeof createRouteHandlerSupabaseClient>>, merchantId: string, userId: string) {
   const { data } = await supabase
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest) {
     const supabaseAdmin = getSupabaseAdmin();
     let query = supabaseAdmin
       .from('merchant_planning_slots')
-      .select('id, slot_date, start_time, client_name, client_phone, customer_id, service_id, notes, deposit_confirmed, deposit_deadline_at, primary_slot_id, total_duration_minutes, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, created_at, planning_slot_services(service_id, service:merchant_services!service_id(name)), planning_slot_photos(id, url, position), planning_slot_result_photos(id, url, position), customer:customers!customer_id(instagram_handle, tiktok_handle, facebook_url)')
+      .select('id, slot_date, start_time, client_name, client_phone, customer_id, service_id, notes, deposit_confirmed, deposit_deadline_at, primary_slot_id, total_duration_minutes, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, customer_address, customer_lat, customer_lng, travel_time_minutes, travel_time_overridden, created_at, planning_slot_services(service_id, service:merchant_services!service_id(name)), planning_slot_photos(id, url, position), planning_slot_result_photos(id, url, position), customer:customers!customer_id(instagram_handle, tiktok_handle, facebook_url)')
       .eq('merchant_id', merchantId)
       .order('slot_date')
       .order('start_time');
@@ -242,7 +243,7 @@ export async function PATCH(request: NextRequest) {
     // mauvaise date cote tracking / HeroToday).
     const { data: existingSlot } = await supabaseAdmin
       .from('merchant_planning_slots')
-      .select('client_name, booked_at')
+      .select('client_name, booked_at, slot_date')
       .eq('id', slotId)
       .eq('merchant_id', merchantId)
       .maybeSingle();
@@ -286,6 +287,12 @@ export async function PATCH(request: NextRequest) {
       updateData.custom_service_name = null;
       updateData.custom_service_price = null;
       updateData.custom_service_color = null;
+      // Reset home-service fields too — slot is freed, address shouldn't linger
+      updateData.customer_address = null;
+      updateData.customer_lat = null;
+      updateData.customer_lng = null;
+      updateData.travel_time_minutes = null;
+      updateData.travel_time_overridden = false;
     } else {
       if (custom_service_duration !== undefined) updateData.custom_service_duration = custom_service_duration;
       if (custom_service_name !== undefined) updateData.custom_service_name = custom_service_name?.trim() || null;
@@ -348,7 +355,7 @@ export async function PATCH(request: NextRequest) {
         // 1. Clear all existing fillers for this slot
         await supabaseAdmin
           .from('merchant_planning_slots')
-          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null, booked_online: false, booked_at: null })
+          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null, booked_online: false, booked_at: null, customer_address: null, customer_lat: null, customer_lng: null, travel_time_minutes: null, travel_time_overridden: false })
           .eq('primary_slot_id', slotId)
           .eq('merchant_id', merchantId);
 
@@ -410,7 +417,7 @@ export async function PATCH(request: NextRequest) {
     const clearFillersPromise = (client_name === null || client_name === '')
       ? supabaseAdmin
           .from('merchant_planning_slots')
-          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null, booked_online: false, booked_at: null })
+          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null, booked_online: false, booked_at: null, customer_address: null, customer_lat: null, customer_lng: null, travel_time_minutes: null, travel_time_overridden: false })
           .eq('primary_slot_id', slotId)
           .eq('merchant_id', merchantId)
       : Promise.resolve({ error: null });
@@ -455,6 +462,16 @@ export async function PATCH(request: NextRequest) {
         .eq('merchant_id', merchantId);
     }
 
+    // Home-service: cancellation/edit may shift the predecessor of remaining
+    // slots — recompute the day's travel times.
+    if (existingSlot?.slot_date) {
+      try {
+        await recomputeDayTravel(merchantId, existingSlot.slot_date);
+      } catch (err) {
+        logger.warn('recomputeDayTravel after PATCH failed', { err: String(err) });
+      }
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     logger.error('Planning PATCH error:', error);
@@ -492,6 +509,13 @@ export async function DELETE(request: NextRequest) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
+    // Capture distinct slot_dates BEFORE deletion so we can recompute travel afterwards
+    const { data: deletedSlots } = await supabaseAdmin
+      .from('merchant_planning_slots')
+      .select('slot_date')
+      .in('id', slotIds);
+    const affectedDates = Array.from(new Set((deletedSlots || []).map((s) => s.slot_date)));
+
     // Also delete filler slots linked to any deleted primary slot
     await supabaseAdmin
       .from('merchant_planning_slots')
@@ -508,6 +532,14 @@ export async function DELETE(request: NextRequest) {
     if (error) {
       logger.error('Planning DELETE error:', error);
       return NextResponse.json({ error: 'Erreur lors de la suppression' }, { status: 500 });
+    }
+
+    for (const date of affectedDates) {
+      try {
+        await recomputeDayTravel(merchantId, date);
+      } catch (err) {
+        logger.warn('recomputeDayTravel after DELETE failed', { date, err: String(err) });
+      }
     }
 
     return NextResponse.json({ success: true });

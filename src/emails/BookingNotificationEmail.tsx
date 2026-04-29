@@ -26,6 +26,9 @@ interface BookingNotificationEmailProps {
   deposit: { percent: number | null; amount: number | null } | null;
   dashboardUrl?: string;
   locale?: EmailLocale;
+  // Home service: address + computed departure time
+  customerAddress?: string | null;
+  travelTimeMinutes?: number | null;
 }
 
 function formatDurationEmail(mins: number): string {
@@ -33,6 +36,12 @@ function formatDurationEmail(mins: number): string {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return m > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
+}
+
+function computeDepartureTime(time: string, travelMinutes: number): string {
+  const [h, m] = time.split(':').map(Number);
+  const total = Math.max(0, h * 60 + m - travelMinutes);
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
 export function BookingNotificationEmail({
@@ -47,8 +56,14 @@ export function BookingNotificationEmail({
   deposit,
   dashboardUrl = 'https://getqarte.com/dashboard/planning',
   locale = 'fr',
+  customerAddress,
+  travelTimeMinutes,
 }: BookingNotificationEmailProps) {
   const isEn = locale === 'en';
+  const isHomeService = !!customerAddress;
+  const departureTime = isHomeService && travelTimeMinutes && travelTimeMinutes > 0
+    ? computeDepartureTime(time, travelTimeMinutes)
+    : null;
 
   const formattedDate = new Date(date + 'T12:00:00').toLocaleDateString(
     isEn ? 'en-US' : 'fr-FR',
@@ -95,6 +110,28 @@ export function BookingNotificationEmail({
           <strong>{isEn ? 'Phone:' : 'Téléphone :'}</strong> {clientPhone}
         </Text>
       </Section>
+
+      {isHomeService && (
+        <Section style={homeServiceBox}>
+          <Text style={homeServiceTitle}>
+            {isEn ? '🏠 Home service' : '🏠 Service à domicile'}
+          </Text>
+          <Text style={homeServiceDetail}>
+            <strong>{isEn ? 'Address:' : 'Adresse :'}</strong> {customerAddress}
+          </Text>
+          {travelTimeMinutes && travelTimeMinutes > 0 && (
+            <Text style={homeServiceDetail}>
+              <strong>{isEn ? 'Travel:' : 'Trajet :'}</strong> {travelTimeMinutes} min
+              {departureTime && (
+                <>
+                  {' · '}
+                  <strong>{isEn ? 'Suggested departure:' : 'Départ conseillé :'}</strong> {departureTime}
+                </>
+              )}
+            </Text>
+          )}
+        </Section>
+      )}
 
       {deposit && deposit.amount && (
         <Section style={depositBox}>
@@ -161,6 +198,30 @@ const bookingDetail = {
   fontSize: '15px',
   lineHeight: '1.5',
   margin: '0 0 6px 0',
+};
+
+const homeServiceBox = {
+  backgroundColor: '#FEF7E0',
+  borderRadius: '12px',
+  padding: '16px 20px',
+  margin: '16px 0',
+  border: '1px solid #FCD34D',
+};
+
+const homeServiceTitle = {
+  color: '#92400E',
+  fontSize: '14px',
+  fontWeight: '700',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.5px',
+  margin: '0 0 8px 0',
+};
+
+const homeServiceDetail = {
+  color: '#78350F',
+  fontSize: '14px',
+  lineHeight: '1.5',
+  margin: '0 0 4px 0',
 };
 
 const depositBox = {

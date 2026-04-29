@@ -48,6 +48,7 @@ type MerchantPublic = Pick<
   | 'shop_name'
   | 'shop_type'
   | 'shop_address'
+  | 'hide_address_on_public_page'
   | 'bio'
   | 'logo_url'
   | 'primary_color'
@@ -324,7 +325,18 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             {merchant.shop_name}
           </motion.h1>
 
-          {merchant.shop_address && (
+          {merchant.shop_address && merchant.hide_address_on_public_page && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.12, duration: 0.35 }}
+              className="flex items-center gap-1 text-[12px] text-gray-500 font-medium mb-2"
+            >
+              <MapPin className="w-3 h-3 shrink-0" />
+              <span>{extractCityFromAddress(merchant.shop_address) || t('homeServiceArea')}</span>
+            </motion.div>
+          )}
+          {merchant.shop_address && !merchant.hide_address_on_public_page && (
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1301,7 +1313,9 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 const city = extractCityFromAddress(merchant.shop_address);
                 return {
                   '@type': 'PostalAddress',
-                  streetAddress: merchant.shop_address,
+                  // Hide street when address is private (home-service merchants).
+                  // City stays for local SEO discovery.
+                  ...(!merchant.hide_address_on_public_page && { streetAddress: merchant.shop_address }),
                   ...(city && { addressLocality: city }),
                   ...(merchant.country && { addressCountry: merchant.country }),
                 };

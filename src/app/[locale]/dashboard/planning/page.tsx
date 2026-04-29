@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
-import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical, Settings } from 'lucide-react';
+import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical, Settings, Save } from 'lucide-react';
 import type { BookingMode, MerchantCountry, BookingDepositFailure } from '@/types';
 import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -61,6 +61,8 @@ export default function PlanningDashboard() {
     cancelDeadlineDays, setCancelDeadlineDays, rescheduleDeadlineDays, setRescheduleDeadlineDays,
     depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     bookingMode, setBookingMode, bufferMinutes, setBufferMinutes,
+    homeServiceEnabled, setHomeServiceEnabled,
+    hideAddressOnPublicPage, setHideAddressOnPublicPage,
     services,
     modalState, setModalState, closeModal,
     selectedTimes, setSelectedTimes, customTime, setCustomTime,
@@ -151,6 +153,27 @@ export default function PlanningDashboard() {
   // Mode choice (shown when planning is freshly enabled with no slots)
   const [showModeChoice, setShowModeChoice] = useState(false);
   const [missingHoursBlock, setMissingHoursBlock] = useState(false);
+  const [pendingMode, setPendingMode] = useState<BookingMode | null>(null);
+  const [pendingOnlineBooking, setPendingOnlineBooking] = useState(true);
+  const [homeServiceHelpOpen, setHomeServiceHelpOpen] = useState(false);
+
+  // Save button visibility on scroll (mobile UX): hidden at top, slides in once user scrolls.
+  // Reads from window.scrollY OR documentElement.scrollTop OR body.scrollTop —
+  // depending on the browser / iOS PWA context, scroll happens on different elements.
+  const [hasScrolled, setHasScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+      setHasScrolled(y > 24);
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('scroll', onScroll);
+    };
+  }, []);
   // Auto-dismiss mode choice if real slots already exist
   useEffect(() => {
     if (showModeChoice && !loadingSlots && slots.some(s => !s.client_name)) {
@@ -421,6 +444,32 @@ export default function PlanningDashboard() {
       if (hasLink && !hasAmount) { setDepositError(t('depositAmountRequired')); return; }
       if (depositPercent && parseInt(depositPercent) > 100) { setDepositError(t('depositPercentMax')); return; }
     }
+    // Geocode shop address when home service mode is being enabled.
+    // Required so we can compute travel from merchant home → 1st client of the day.
+    let shopLat: number | null = merchant.shop_lat ?? null;
+    let shopLng: number | null = merchant.shop_lng ?? null;
+    if (homeServiceEnabled && (shopLat == null || shopLng == null)) {
+      if (!merchant.shop_address) {
+        addToast(t('homeServiceNeedsAddress'), 'error');
+        return;
+      }
+      try {
+        const res = await fetch(
+          `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(merchant.shop_address)}&limit=1`
+        );
+        const data = await res.json();
+        const feature = data.features?.[0];
+        if (!feature) {
+          addToast(t('homeServiceGeocodeFailed'), 'error');
+          return;
+        }
+        shopLng = feature.geometry.coordinates[0];
+        shopLat = feature.geometry.coordinates[1];
+      } catch {
+        addToast(t('homeServiceGeocodeFailed'), 'error');
+        return;
+      }
+    }
     setDepositError(null);
     saveSettings(async () => {
       const { error } = await supabase.from('merchants').update({
@@ -445,6 +494,10 @@ export default function PlanningDashboard() {
         reschedule_deadline_days: parseInt(rescheduleDeadlineDays) || 1,
         booking_mode: bookingMode,
         buffer_minutes: bufferMinutes,
+        home_service_enabled: homeServiceEnabled,
+        shop_lat: shopLat,
+        shop_lng: shopLng,
+        hide_address_on_public_page: hideAddressOnPublicPage,
       }).eq('id', merchant.id);
       if (error) {
         console.error('Settings save error:', error);
@@ -519,21 +572,38 @@ export default function PlanningDashboard() {
     await handleTogglePlanning(enabled);
   };
 
-  const handleModeChoice = async (mode: BookingMode) => {
+  const handleToggleHomeService = () => {
+    if (homeServiceEnabled) {
+      setHomeServiceEnabled(false);
+      return;
+    }
+    if (!merchant?.shop_address) {
+      addToast(t('homeServiceMissingAddressBlock'), 'error');
+      return;
+    }
+    setHomeServiceEnabled(true);
+    // Privacy default: when activating home service, propose hiding the address
+    // (it's likely the merchant's home). Merchant can untick the sub-toggle.
+    if (!merchant.hide_address_on_public_page) {
+      setHideAddressOnPublicPage(true);
+    }
+  };
+
+  const handleModeChoice = async (mode: BookingMode, onlineBooking: boolean) => {
     if (!merchant) return;
     if (mode === 'free' && !hasValidOpeningHours(merchant.opening_hours)) {
       setMissingHoursBlock(true);
       return;
     }
     setBookingMode(mode);
-    const update: Record<string, unknown> = { booking_mode: mode };
-    if (mode === 'free') {
-      update.auto_booking_enabled = true;
-      setAutoBookingEnabled(true);
-    }
-    await supabase.from('merchants').update(update).eq('id', merchant.id);
+    setAutoBookingEnabled(onlineBooking);
+    await supabase
+      .from('merchants')
+      .update({ booking_mode: mode, auto_booking_enabled: onlineBooking })
+      .eq('id', merchant.id);
     await refetch();
     setShowModeChoice(false);
+    setPendingMode(null);
   };
 
   const handleBlockSubmit = async () => {
@@ -608,7 +678,8 @@ export default function PlanningDashboard() {
           settings: { icon: Settings, activeColor: 'text-slate-700' },
         };
         return (
-          <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-5 lg:max-w-md">
+          <div className="sticky top-[calc(48px+env(safe-area-inset-top))] lg:static z-30 -mx-4 px-4 pt-2 pb-3 mb-3 bg-[#f8fafc]/95 backdrop-blur-sm lg:bg-transparent lg:backdrop-blur-none lg:mx-0 lg:px-0 lg:py-0 lg:mb-5">
+          <div className="flex gap-1 p-1 bg-gray-100 rounded-xl lg:max-w-md">
             {(['slots', 'reservations', 'settings'] as const).map(tabKey => {
               const Icon = TAB_META[tabKey].icon;
               const active = tab === tabKey;
@@ -633,6 +704,7 @@ export default function PlanningDashboard() {
                 </button>
               );
             })}
+          </div>
           </div>
         );
       })()}
@@ -667,33 +739,85 @@ export default function PlanningDashboard() {
       {planningEnabled && tab === 'slots' && (
         <>
           {showModeChoice ? (
-            /* ── MODE CHOICE SCREEN (first activation) ── */
+            /* ── MODE CHOICE SCREEN (first activation) — pick mode + online booking together ── */
             <div className="max-w-lg mx-auto">
               <div className="text-center mb-6">
                 <h2 className="text-base font-bold text-gray-900 mb-1">{t('modeChoiceTitle')}</h2>
                 <p className="text-xs text-gray-400">{t('modeChoiceSubtitle')}</p>
               </div>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {(['slots', 'free'] as const).map(mode => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => handleModeChoice(mode)}
-                    className="text-left bg-white rounded-2xl border-2 border-gray-100 hover:border-indigo-300 shadow-sm p-5 transition-all hover:shadow-md group"
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center mb-3 group-hover:bg-indigo-100 transition-colors">
-                      {mode === 'slots' ? <LayoutGrid className="w-4.5 h-4.5 text-indigo-600" /> : <Clock className="w-4.5 h-4.5 text-indigo-600" />}
-                    </div>
-                    <p className="text-sm font-bold text-gray-900 mb-1.5">
-                      {mode === 'slots' ? t('modeChoiceSlotTitle') : t('modeChoiceFreeTitle')}
-                    </p>
-                    <p className="text-[11px] text-gray-400 leading-relaxed">
-                      {mode === 'slots' ? t('modeChoiceSlotDesc') : t('modeChoiceFreeDesc')}
-                    </p>
-                    <span className="mt-3 inline-block text-[11px] font-bold text-indigo-600 group-hover:underline">{t('modeChoiceCta')} →</span>
-                  </button>
-                ))}
+              <div className="grid sm:grid-cols-2 gap-3 mb-4">
+                {(['slots', 'free'] as const).map(mode => {
+                  const selected = pendingMode === mode;
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setPendingMode(mode)}
+                      className={`text-left bg-white rounded-2xl border-2 shadow-sm p-5 transition-all relative ${
+                        selected
+                          ? 'border-indigo-500 ring-2 ring-indigo-100 shadow-md'
+                          : 'border-gray-100 hover:border-indigo-200 hover:shadow-md'
+                      }`}
+                    >
+                      {selected && (
+                        <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white" />
+                        </span>
+                      )}
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 transition-colors ${selected ? 'bg-indigo-100' : 'bg-indigo-50'}`}>
+                        {mode === 'slots' ? <LayoutGrid className="w-4.5 h-4.5 text-indigo-600" /> : <Clock className="w-4.5 h-4.5 text-indigo-600" />}
+                      </div>
+                      <p className="text-sm font-bold text-gray-900 mb-1.5">
+                        {mode === 'slots' ? t('modeChoiceSlotTitle') : t('modeChoiceFreeTitle')}
+                      </p>
+                      <p className="text-[11px] text-gray-400 leading-relaxed">
+                        {mode === 'slots' ? t('modeChoiceSlotDesc') : t('modeChoiceFreeDesc')}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
+
+              {/* Online booking toggle */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4">
+                <label className="flex items-center justify-between gap-3 cursor-pointer">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+                      <Globe className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gray-800">{t('modeChoiceOnlineBookingTitle')}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">{t('modeChoiceOnlineBookingHint')}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={pendingOnlineBooking}
+                    onClick={() => setPendingOnlineBooking(v => !v)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${pendingOnlineBooking ? 'bg-emerald-500' : 'bg-gray-200'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${pendingOnlineBooking ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </label>
+              </div>
+
+              {missingHoursBlock && pendingMode === 'free' && (
+                <div className="mb-4 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                  {t('modeFreeMissingHours')}{' '}
+                  <a href="/dashboard/public-page" className="font-semibold underline">{t('modeFreeMissingHoursLink')}</a>
+                </div>
+              )}
+
+              <button
+                type="button"
+                disabled={!pendingMode}
+                onClick={() => pendingMode && handleModeChoice(pendingMode, pendingOnlineBooking)}
+                className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {t('modeChoiceConfirm')}
+              </button>
+              <p className="text-center text-[11px] text-gray-400 mt-3">{t('modeChoiceEditableLater')}</p>
             </div>
           ) : (
             <>
@@ -1049,7 +1173,7 @@ export default function PlanningDashboard() {
 
       {/* ── TAB: PARAMETRES ── */}
       {planningEnabled && tab === 'settings' && (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-20 lg:pb-24">
 
           {/* ═══════ SECTION 1: MON AGENDA ═══════ */}
           <section>
@@ -1093,6 +1217,37 @@ export default function PlanningDashboard() {
                 </div>
               </div>
 
+              {/* Card: Résa en ligne (toggle) — placé juste sous le mode pour visibilité */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+                      <Globe className="w-3.5 h-3.5 text-emerald-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="text-sm font-bold text-gray-800">{t('autoBookingTitle')}</h2>
+                      <p className="text-[11px] text-gray-400 mt-0.5">{autoBookingEnabled ? t('autoBookingHint') : t('autoBookingOffHint')}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={autoBookingEnabled}
+                    onClick={() => setAutoBookingEnabled(!autoBookingEnabled)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 ${autoBookingEnabled ? 'bg-emerald-500' : 'bg-gray-200'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${autoBookingEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+                {/* Warning : la résa Qarte remplace tout lien externe configuré */}
+                {autoBookingEnabled && merchant?.booking_url && (
+                  <div className="mt-3 flex gap-2.5 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5">
+                    <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-700">{t('externalBookingWarning')}</p>
+                  </div>
+                )}
+              </div>
+
               {/* Card: Tampon entre les RDV (mode libre uniquement) */}
               {bookingMode === 'free' && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -1129,37 +1284,90 @@ export default function PlanningDashboard() {
                   </p>
                 </div>
               )}
+
+              {/* Card: Service à domicile (mode libre uniquement) */}
+              {bookingMode === 'free' && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+                        <svg className="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <h2 className="text-sm font-bold text-gray-800">{t('homeServiceTitle')}</h2>
+                          <button
+                            type="button"
+                            onClick={() => setHomeServiceHelpOpen(v => !v)}
+                            aria-label={t('homeServiceHelpAria')}
+                            className="text-gray-300 hover:text-amber-500 transition-colors"
+                          >
+                            <Info className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-gray-400 mt-0.5">{t('homeServiceHint')}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleToggleHomeService}
+                      className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${homeServiceEnabled ? 'bg-amber-500' : 'bg-gray-200'}`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${homeServiceEnabled ? 'translate-x-5' : ''}`} />
+                    </button>
+                  </div>
+
+                  {homeServiceHelpOpen && (
+                    <div className="mt-3 ml-9 p-3 bg-amber-50/60 border border-amber-100 rounded-lg">
+                      <p className="text-[11px] text-amber-900 leading-relaxed whitespace-pre-line">{t('homeServiceHelpBody')}</p>
+                    </div>
+                  )}
+
+                  {/* Sub-toggle: hide address on public page (default ON when home service activated) */}
+                  {homeServiceEnabled && (
+                    <div className="mt-3 ml-9 p-3 bg-gray-50 border border-gray-100 rounded-lg">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={hideAddressOnPublicPage}
+                          onClick={() => setHideAddressOnPublicPage(!hideAddressOnPublicPage)}
+                          className={`relative w-9 h-5 rounded-full transition-colors shrink-0 mt-0.5 ${hideAddressOnPublicPage ? 'bg-amber-500' : 'bg-gray-300'}`}
+                        >
+                          <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${hideAddressOnPublicPage ? 'translate-x-[16px]' : ''}`} />
+                        </button>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-gray-700">{t('homeServiceHideAddressLabel')}</p>
+                          <p className="text-[11px] text-gray-500 mt-0.5">{t('homeServiceHideAddressHint')}</p>
+                        </div>
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Aléa = tampon entre RDV. Rappel + nudge si non défini. */}
+                  {homeServiceEnabled && (
+                    <div className="mt-3 ml-9 flex items-start gap-2">
+                      <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
+                      <p className="text-[11px] text-gray-500 leading-relaxed">
+                        {bufferMinutes > 0
+                          ? t('homeServiceAleaSet', { minutes: bufferMinutes })
+                          : t('homeServiceAleaUnset')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </section>
 
-          {/* ═══════ SECTION 2: RÉSA EN LIGNE ═══════ */}
+          {/* ═══════ SECTION 2: RÉSA EN LIGNE — paramètres avancés ═══════ */}
+          {/* Header masqué quand résa en ligne off : il ne resterait rien dedans */}
+          {autoBookingEnabled && (
           <section>
             <h3 className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 mb-2 px-1">{t('sectionOnlineBooking')}</h3>
             <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0">
-
-              {/* Card: Resa en ligne — toggle */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:col-span-2">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-                      <Globe className="w-3.5 h-3.5 text-emerald-600" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-bold text-gray-800">{t('autoBookingTitle')}</h2>
-                      <p className="text-[11px] text-gray-400 mt-0.5">{autoBookingEnabled ? t('autoBookingHint') : t('autoBookingOffHint')}</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={autoBookingEnabled}
-                    onClick={() => setAutoBookingEnabled(!autoBookingEnabled)}
-                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 ${autoBookingEnabled ? 'bg-emerald-500' : 'bg-gray-200'}`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${autoBookingEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </button>
-                </div>
-              </div>
 
               {/* Card: Conditions de reservation (only when online booking enabled) */}
               {autoBookingEnabled && (
@@ -1189,14 +1397,6 @@ export default function PlanningDashboard() {
           {/* ── Online booking advanced settings (visible when auto-booking enabled) ── */}
           {autoBookingEnabled && (
             <>
-              {/* Warning if external booking URL is configured */}
-              {merchant?.booking_url && (
-                <div className="flex gap-2.5 rounded-xl bg-amber-50 border border-amber-200 px-3 sm:px-4 py-3 sm:col-span-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-700">{t('externalBookingWarning')}</p>
-                </div>
-              )}
-
               {/* Acompte config */}
               {(() => {
                 const hasAmount = !!(depositPercent || depositAmount);
@@ -1360,6 +1560,7 @@ export default function PlanningDashboard() {
           )}
             </div>
           </section>
+          )}
 
           {/* ═══════ SECTION 3: COMMUNICATION ═══════ */}
           <section>
@@ -1483,6 +1684,13 @@ export default function PlanningDashboard() {
                         <p className="text-[10px] text-gray-400 mt-1">{t('smsOverageInfo')}</p>
                       </div>
                     )}
+                    <Link
+                      href="/dashboard/marketing?tab=automations"
+                      className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-100 hover:bg-emerald-100 transition-colors"
+                    >
+                      <Settings className="w-3 h-3" />
+                      {t('smsConfigureNotifications')}
+                    </Link>
                   </div>
                 ) : (
                   <div className="ml-9 flex items-center justify-between gap-3">
@@ -1496,22 +1704,25 @@ export default function PlanningDashboard() {
             </div>
           </section>
 
-          {/* Save button — sticky at bottom on mobile/desktop so the merchant never loses it */}
-          <div className="sticky bottom-4 flex justify-center pt-2 z-10 pointer-events-none">
-            <button
-              onClick={handleSaveSettings}
-              disabled={savingSettings}
-              className={`pointer-events-auto w-full sm:w-auto sm:min-w-[220px] px-6 py-3 rounded-2xl font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ${savedSettings ? 'bg-emerald-500 text-white shadow-emerald-300/60' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-300/60'}`}
-            >
-              {savedSettings ? (
-                <span className="flex items-center justify-center gap-2"><Check className="w-4 h-4" /> {t('saved')}</span>
-              ) : savingSettings ? (
-                <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-              ) : (
-                t('save')
-              )}
-            </button>
-          </div>
+          {/* Floating save button — discrete icon, bottom-right, above mobile BottomNav.
+              Hidden at top of scroll, fades in once user scrolls. */}
+          <button
+            onClick={handleSaveSettings}
+            disabled={savingSettings || !hasScrolled}
+            aria-label={t('save')}
+            title={t('save')}
+            className={`fixed right-4 bottom-[calc(60px+env(safe-area-inset-bottom)+12px)] lg:right-6 lg:bottom-6 z-30 w-12 h-12 rounded-full flex items-center justify-center shadow-xl transition-all duration-300 disabled:cursor-not-allowed ${
+              hasScrolled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none'
+            } ${savedSettings ? 'bg-emerald-500 text-white shadow-emerald-300/60' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-300/60'}`}
+          >
+            {savingSettings ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : savedSettings ? (
+              <Check className="w-5 h-5" />
+            ) : (
+              <Save className="w-5 h-5" />
+            )}
+          </button>
         </div>
       )}
 

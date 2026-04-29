@@ -97,6 +97,9 @@ export function usePlanningState() {
   // Booking mode + buffer
   const [bookingMode, setBookingMode] = useState<BookingMode>('slots');
   const [bufferMinutes, setBufferMinutes] = useState<0 | 10 | 15 | 30>(0);
+  // Service à domicile
+  const [homeServiceEnabled, setHomeServiceEnabled] = useState(false);
+  const [hideAddressOnPublicPage, setHideAddressOnPublicPage] = useState(false);
 
   // Services with duration
   const [services, setServices] = useState<ServiceWithDuration[]>([]);
@@ -174,6 +177,8 @@ export function usePlanningState() {
       setRescheduleDeadlineDays(String(merchant.reschedule_deadline_days ?? 1));
       setBookingMode((merchant.booking_mode as BookingMode) || 'slots');
       setBufferMinutes((merchant.buffer_minutes as 0 | 10 | 15 | 30) || 0);
+      setHomeServiceEnabled(!!merchant.home_service_enabled);
+      setHideAddressOnPublicPage(!!merchant.hide_address_on_public_page);
     }
   }, [merchant]);
 
@@ -728,6 +733,8 @@ export function usePlanningState() {
     cancelDeadlineDays, setCancelDeadlineDays, rescheduleDeadlineDays, setRescheduleDeadlineDays,
     depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     bookingMode, setBookingMode, bufferMinutes, setBufferMinutes,
+    homeServiceEnabled, setHomeServiceEnabled,
+    hideAddressOnPublicPage, setHideAddressOnPublicPage,
     // Services
     services,
     // Modal state machine

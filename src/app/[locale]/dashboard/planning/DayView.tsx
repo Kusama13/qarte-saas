@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Lock } from 'lucide-react';
+import { Plus, Lock, Car } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot, MerchantCountry } from '@/types';
 import { formatTime, formatCurrency } from '@/lib/utils';
@@ -162,6 +162,36 @@ export default function DayView({
         ))}
 
         {/* Slot cards — Booksy-style bands : couleurs vives, fond satur\u00e9, texte blanc lisible */}
+        {/* Travel-time blocks (home service) \u2014 visual extension of the booking, in a lighter tint
+            of the booking's accent color (continuity, not contrast). Text only when tall enough. */}
+        {slotCards.map(({ slot, top, color }) => {
+          const travel = slot.travel_time_minutes;
+          if (!travel || travel <= 0 || slot.client_name === '__blocked__') return null;
+          const travelHeight = (travel / 60) * HOUR_HEIGHT;
+          const travelTop = top - travelHeight;
+          const accent = color || '#6366f1';
+          // Light tint (~20% opacity) over white = lighter shade of the booking color
+          const bg = `${accent}26`;
+          const borderCol = `${accent}55`;
+          const showText = travelHeight >= 24;
+          const showIcon = travelHeight >= 14;
+          return (
+            <div
+              key={`travel-${slot.id}`}
+              className="absolute left-12 right-0 rounded-md flex items-center gap-1.5 px-2 overflow-hidden border border-dashed pointer-events-none"
+              style={{ top: travelTop, height: Math.max(travelHeight, 6), backgroundColor: bg, borderColor: borderCol }}
+              title={t('travelLabel', { minutes: travel })}
+            >
+              {showIcon && <Car className="w-3 h-3 shrink-0" style={{ color: accent }} />}
+              {showText && (
+                <span className="text-[10px] font-bold uppercase tracking-wide truncate" style={{ color: accent }}>
+                  {t('travelLabel', { minutes: travel })}
+                </span>
+              )}
+            </div>
+          );
+        })}
+
         {slotCards.map(({ slot, top, height, color, serviceNames, durationMins }) => {
           const isBlocked = slot.client_name === '__blocked__';
 

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, BookOpen, ChevronDown, CalendarClock, CalendarPlus, UserCheck, UserX } from 'lucide-react';
+import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, BookOpen, ChevronDown, CalendarClock, CalendarPlus, UserCheck, UserX, MapPin, Car, Navigation } from 'lucide-react';
 import SmsToggle from './SmsToggle';
 import { getTypeStyle } from '@/lib/note-styles';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
@@ -756,6 +756,84 @@ export default function BookingDetailsModal({
                 </div>
               )}
             </div>
+            );
+          })()}
+
+          {/* Home service: address + travel time + recommended departure */}
+          {slot.client_name && slot.customer_address && (() => {
+            const travelIn = slot.travel_time_minutes ?? 0;
+            const departureMins = timeToMinutes(slot.start_time) - travelIn;
+            const departureTime = travelIn > 0 ? minutesToTime(Math.max(0, departureMins)) : null;
+
+            // Outgoing travel: derived from the next booked slot's travel_time_minutes
+            // (which represents travel FROM this customer TO the next customer).
+            const daySlots = (slotsByDate.get(slot.slot_date) || [])
+              .filter(s => s.id === slot.id || (s.client_name && !s.primary_slot_id && s.client_name !== '__blocked__'))
+              .sort((a, b) => a.start_time.localeCompare(b.start_time));
+            const idx = daySlots.findIndex(s => s.id === slot.id);
+            const prevBookedSlot = idx > 0 ? [...daySlots.slice(0, idx)].reverse().find(s => s.client_name && !s.primary_slot_id) : null;
+            const nextBookedSlot = idx >= 0 ? daySlots.slice(idx + 1).find(s => s.client_name && !s.primary_slot_id) : null;
+            const travelOut = nextBookedSlot?.travel_time_minutes ?? 0;
+
+            // Itinéraire vers ce RDV : origine = adresse cliente précédente (ou marchand pour le 1er RDV).
+            const originAddress = prevBookedSlot?.customer_address || merchantAddress || null;
+            const mapsParams = new URLSearchParams({ api: '1', destination: slot.customer_address });
+            if (originAddress) mapsParams.set('origin', originAddress);
+            const mapsUrl = `https://www.google.com/maps/dir/?${mapsParams.toString()}`;
+
+            return (
+              <div className="rounded-xl bg-sky-50/70 border border-sky-200 p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin className="w-4 h-4 text-sky-700 shrink-0" />
+                  <h4 className="text-xs font-bold text-sky-900 uppercase tracking-wide">{t('homeServiceCardTitle')}</h4>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div>
+                    <p className="text-[11px] text-sky-700 font-semibold mb-0.5">{t('addressLabel')}</p>
+                    <div className="flex items-start gap-2">
+                      <p className="flex-1 text-gray-800 font-medium leading-snug">{slot.customer_address}</p>
+                      <a
+                        href={mapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white border border-sky-200 text-sky-700 text-[10px] font-bold hover:bg-sky-100 transition-colors"
+                      >
+                        <Navigation className="w-2.5 h-2.5" />
+                        {t('openMaps')}
+                      </a>
+                    </div>
+                    {originAddress && (
+                      <p className="text-[10px] text-gray-500 mt-1 truncate">
+                        {t('routeFromLabel')} <span className="font-medium">{originAddress}</span>
+                      </p>
+                    )}
+                  </div>
+                  {travelIn > 0 && departureTime && (
+                    <div className="flex items-center gap-2 pt-2 border-t border-sky-100">
+                      <Car className="w-3.5 h-3.5 text-sky-700 shrink-0" />
+                      <p className="flex-1 text-gray-700">
+                        {t('travelInLabel', { minutes: travelIn })}
+                      </p>
+                    </div>
+                  )}
+                  {departureTime && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-3.5 h-3.5 text-sky-700 shrink-0" />
+                      <p className="flex-1 text-gray-700">
+                        {t('departAtLabel')} <span className="font-bold text-sky-900">{formatTime(departureTime, locale)}</span>
+                      </p>
+                    </div>
+                  )}
+                  {travelOut > 0 && nextBookedSlot && (
+                    <div className="flex items-center gap-2 pt-2 border-t border-sky-100">
+                      <Car className="w-3.5 h-3.5 text-sky-700 shrink-0" />
+                      <p className="flex-1 text-gray-700">
+                        {t('travelOutLabel', { minutes: travelOut, time: formatTime(nextBookedSlot.start_time, locale) })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             );
           })()}
 

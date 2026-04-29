@@ -5,13 +5,18 @@ import { getTodayForCountry } from '@/lib/utils';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
+import { getTravelTime, type Coords } from '@/lib/travel-time';
 
 const supabaseAdmin = getSupabaseAdmin();
+
+const MAX_TRAVEL_MINUTES = 60;
 
 const querySchema = z.object({
   merchantId: z.string().uuid(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   totalDuration: z.coerce.number().int().min(1).max(600),
+  customerLat: z.coerce.number().min(-90).max(90).optional(),
+  customerLng: z.coerce.number().min(-180).max(180).optional(),
 });
 
 function timeToMinutes(time: string): number {
@@ -42,18 +47,20 @@ export async function GET(request: NextRequest) {
       merchantId: searchParams.get('merchantId'),
       date: searchParams.get('date'),
       totalDuration: searchParams.get('totalDuration'),
+      customerLat: searchParams.get('customerLat') ?? undefined,
+      customerLng: searchParams.get('customerLng') ?? undefined,
     });
 
     if (!parsed.success) {
       return NextResponse.json({ error: 'Paramètres invalides' }, { status: 400 });
     }
 
-    const { merchantId, date, totalDuration } = parsed.data;
+    const { merchantId, date, totalDuration, customerLat, customerLng } = parsed.data;
 
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, booking_mode, buffer_minutes, country, auto_booking_enabled, planning_enabled, opening_hours')
+      .select('id, booking_mode, buffer_minutes, country, auto_booking_enabled, planning_enabled, opening_hours, home_service_enabled, shop_lat, shop_lng')
       .eq('id', merchantId)
       .is('deleted_at', null)
       .single();
@@ -102,37 +109,121 @@ export async function GET(request: NextRequest) {
     // 4. Fetch existing booked slots for this day (primary slots only, no filler)
     const { data: bookedSlots } = await supabaseAdmin
       .from('merchant_planning_slots')
-      .select('start_time, total_duration_minutes')
+      .select('start_time, total_duration_minutes, customer_lat, customer_lng')
       .eq('merchant_id', merchantId)
       .eq('slot_date', date)
       .not('client_name', 'is', null)
       .is('primary_slot_id', null);
 
     // Build occupied ranges: [startMins, endMins) inclusive of buffer after
-    const occupiedRanges = (bookedSlots || []).map(s => {
-      const start = timeToMinutes(s.start_time);
-      const duration = s.total_duration_minutes ?? 30; // fallback for legacy créneaux-mode slots
-      return { start, end: start + duration + buffer };
-    });
+    type Booking = { start: number; end: number; coords: Coords | null };
+    const bookings: Booking[] = (bookedSlots || [])
+      .map(s => {
+        const start = timeToMinutes(s.start_time);
+        const duration = s.total_duration_minutes ?? 30;
+        const coords: Coords | null =
+          s.customer_lat != null && s.customer_lng != null
+            ? { lat: s.customer_lat, lng: s.customer_lng }
+            : null;
+        return { start, end: start + duration + buffer, coords };
+      })
+      .sort((a, b) => a.start - b.start);
 
-    // 5. Generate candidates every 15 min from open to (close - totalDuration)
-    // No extra buffer deducted from lastStart: buffer is only added AFTER a booking
-    const lastStart = closeMins - totalDuration;
-    const candidates: string[] = [];
+    // 5. Home service mode: customer coords required + travel time slot filtering
+    const homeService = merchant.home_service_enabled === true;
+    const customerCoords: Coords | null =
+      customerLat != null && customerLng != null ? { lat: customerLat, lng: customerLng } : null;
+    const shopCoords: Coords | null =
+      merchant.shop_lat != null && merchant.shop_lng != null
+        ? { lat: merchant.shop_lat, lng: merchant.shop_lng }
+        : null;
 
-    for (let t = openMins; t <= lastStart; t += 15) {
-      const candidateEnd = t + totalDuration;
-      // Skip if candidate overlaps with lunch break
-      if (breakStart !== null && breakEnd !== null && t < breakEnd && candidateEnd > breakStart) continue;
-      const hasConflict = occupiedRanges.some(
-        r => t < r.end && candidateEnd > r.start
-      );
-      if (!hasConflict) {
-        candidates.push(minutesToTime(t));
+    if (homeService) {
+      if (!customerCoords) {
+        return NextResponse.json({ error: 'Adresse cliente requise', requiresAddress: true }, { status: 400 });
+      }
+      if (!shopCoords) {
+        // Marchande à domicile mais shop_address pas géocodée → on ne peut rien proposer
+        return NextResponse.json({ slots: [] });
       }
     }
 
-    const slots = candidates.map(start_time => ({ slot_date: date, start_time }));
+    // 6. Generate candidates every 15 min from open to (close - totalDuration)
+    const lastStart = closeMins - totalDuration;
+    const baseCandidates: number[] = [];
+
+    for (let t = openMins; t <= lastStart; t += 15) {
+      const candidateEnd = t + totalDuration;
+      if (breakStart !== null && breakEnd !== null && t < breakEnd && candidateEnd > breakStart) continue;
+      const hasConflict = bookings.some(b => t < b.end && candidateEnd > b.start);
+      if (!hasConflict) baseCandidates.push(t);
+    }
+
+    let validCandidates = baseCandidates;
+
+    if (homeService && customerCoords && shopCoords) {
+      // Pré-calcul parallèle des durées de trajet : on dédupe les paires (origin → customer)
+      // et (customer → next), puis on appelle getTravelTimes en batch parallèle.
+      // Pour chaque candidate : prev∈{bookings|null} et next∈{bookings|null} —
+      // donc N+1 origines distinctes (bookings.length + shop) et N+1 destinations.
+      const candidateNeighbors = baseCandidates.map((t) => {
+        const prev = [...bookings].reverse().find((b) => b.end <= t);
+        const next = bookings.find((b) => b.start >= t + totalDuration);
+        return { t, prev, next };
+      });
+
+      const inOriginsSet = new Set<string>();
+      const outDestsSet = new Set<string>();
+      const coordKey = (c: Coords) => `${c.lat.toFixed(4)},${c.lng.toFixed(4)}`;
+
+      for (const { prev, next } of candidateNeighbors) {
+        inOriginsSet.add(coordKey(prev?.coords ?? shopCoords));
+        if (next?.coords) outDestsSet.add(coordKey(next.coords));
+      }
+
+      const inOriginsArr = Array.from(inOriginsSet);
+      const outDestsArr = Array.from(outDestsSet);
+
+      const inResults = await Promise.all(
+        inOriginsArr.map((key) => {
+          const [lat, lng] = key.split(',').map(Number);
+          return getTravelTime({ lat, lng }, customerCoords);
+        })
+      );
+      const outResults = await Promise.all(
+        outDestsArr.map((key) => {
+          const [lat, lng] = key.split(',').map(Number);
+          return getTravelTime(customerCoords, { lat, lng });
+        })
+      );
+
+      const inMap = new Map(inOriginsArr.map((k, i) => [k, inResults[i]]));
+      const outMap = new Map(outDestsArr.map((k, i) => [k, outResults[i]]));
+
+      const filtered: number[] = [];
+      for (const { t, prev, next } of candidateNeighbors) {
+        const travelIn = inMap.get(coordKey(prev?.coords ?? shopCoords))!;
+        if (travelIn > MAX_TRAVEL_MINUTES) continue;
+
+        // Mode loose pour le 1er RDV : on respecte l'horaire d'ouverture tel quel.
+        // L'horaire = "heure du 1er RDV possible", pas "heure de départ de chez la pro".
+        // Pour les RDV suivants, on ajoute le trajet entre les deux clientes.
+        const earliestStart = prev ? prev.end + travelIn : openMins;
+        if (t < earliestStart) continue;
+
+        if (next?.coords) {
+          const travelOut = outMap.get(coordKey(next.coords))!;
+          if (travelOut > MAX_TRAVEL_MINUTES) continue;
+          // Buffer (aléa) appliqué symétriquement : sortie = duration + buffer + travelOut
+          if (t + totalDuration + buffer + travelOut > next.start) continue;
+        }
+
+        filtered.push(t);
+      }
+      validCandidates = filtered;
+    }
+
+    const slots = validCandidates.map(t => ({ slot_date: date, start_time: minutesToTime(t) }));
 
     return NextResponse.json({ slots });
   } catch (error) {

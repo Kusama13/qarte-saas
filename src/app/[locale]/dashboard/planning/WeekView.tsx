@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Lock } from 'lucide-react';
+import { Lock, Car } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot, MerchantCountry } from '@/types';
 import { formatTime, formatCurrency, toBCP47 } from '@/lib/utils';
@@ -215,6 +215,32 @@ export default function WeekView({
                   </div>
                 </div>
               ))}
+
+              {/* Travel-time blocks (home service) — lighter tint of the booking color. */}
+              {slotCards.map(({ slot, top, color }) => {
+                const travel = slot.travel_time_minutes;
+                if (!travel || travel <= 0 || slot.client_name === '__blocked__') return null;
+                const travelHeight = (travel / 60) * HOUR_HEIGHT;
+                const travelTopInCol = top - 12 - travelHeight;
+                const accent = color || '#6366f1';
+                const bg = `${accent}26`;
+                const borderCol = `${accent}55`;
+                const showIcon = travelHeight >= 12;
+                const showNumber = travelHeight >= 22;
+                return (
+                  <div
+                    key={`travel-${slot.id}`}
+                    className="absolute left-0.5 right-0.5 rounded-md flex items-center justify-center px-1 overflow-hidden border border-dashed pointer-events-none"
+                    style={{ top: travelTopInCol, height: Math.max(travelHeight, 5), backgroundColor: bg, borderColor: borderCol }}
+                    title={`Trajet ${travel} min`}
+                  >
+                    {showIcon && <Car className="w-2.5 h-2.5 shrink-0" style={{ color: accent }} />}
+                    {showNumber && (
+                      <span className="ml-1 text-[9px] font-bold truncate" style={{ color: accent }}>{travel}</span>
+                    )}
+                  </div>
+                );
+              })}
 
               {/* Slot cards */}
               {slotCards.map(({ slot, top, height, color, serviceNames, durationMins }) => {

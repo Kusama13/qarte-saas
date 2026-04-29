@@ -11,6 +11,8 @@ import { sendMerchantPush } from '@/lib/merchant-push';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 import { getPlanFeatures } from '@/lib/plan-tiers';
+import { getTravelTime, type Coords } from '@/lib/travel-time';
+import { recomputeDayTravel } from '@/lib/travel-recompute';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -24,7 +26,12 @@ const bookSchema = z.object({
   last_name: z.string().max(100).optional(),
   service_ids: z.array(z.string().uuid()).min(1).max(10),
   booking_mode: z.enum(['slots', 'free']).optional(),
+  customer_address: z.string().min(3).max(300).optional(),
+  customer_lat: z.number().min(-90).max(90).optional(),
+  customer_lng: z.number().min(-180).max(180).optional(),
 });
+
+const MAX_TRAVEL_MINUTES = 60;
 
 function timeToMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);
@@ -44,12 +51,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
     }
 
-    const { merchant_id, slot_date, slot_time, phone_number, first_name, last_name, service_ids } = parsed.data;
+    const { merchant_id, slot_date, slot_time, phone_number, first_name, last_name, service_ids, customer_address, customer_lat, customer_lng } = parsed.data;
 
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, welcome_offer_enabled, welcome_offer_description, booking_mode, buffer_minutes')
+      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, welcome_offer_enabled, welcome_offer_description, booking_mode, buffer_minutes, home_service_enabled, shop_lat, shop_lng')
       .eq('id', merchant_id)
       .single();
 
@@ -79,6 +86,17 @@ export async function POST(request: NextRequest) {
     }
 
     const isFreeMod = merchant.booking_mode === 'free';
+    const homeService = merchant.home_service_enabled === true;
+
+    // Home service: customer address + coords required (online booking only — manual bookings go through /api/planning/manual-booking)
+    if (homeService) {
+      if (!customer_address || customer_lat == null || customer_lng == null) {
+        return NextResponse.json({ error: 'Adresse cliente requise pour ce salon à domicile' }, { status: 400 });
+      }
+      if (merchant.shop_lat == null || merchant.shop_lng == null) {
+        return NextResponse.json({ error: 'Le salon n\'a pas configuré son adresse de départ' }, { status: 400 });
+      }
+    }
 
     // 3-5. Fetch services + (mode créneaux: slot + day slots)
     const servicesPromise = supabaseAdmin
@@ -131,11 +149,13 @@ export async function POST(request: NextRequest) {
     // Member discount applied after member lookup (section 6b) — use rawTotalPrice until then
     let totalPrice = rawTotalPrice;
 
+    let travelTimeIn: number | null = null;
+
     if (isFreeMod) {
       // Mode libre: re-check conflict (race condition guard)
       const { data: sameDayBooked } = await supabaseAdmin
         .from('merchant_planning_slots')
-        .select('start_time, total_duration_minutes')
+        .select('id, start_time, total_duration_minutes, customer_lat, customer_lng')
         .eq('merchant_id', merchant_id)
         .eq('slot_date', slot_date)
         .not('client_name', 'is', null)
@@ -153,6 +173,45 @@ export async function POST(request: NextRequest) {
 
       if (conflict) {
         return NextResponse.json({ error: 'Ce créneau n\'est plus disponible' }, { status: 409 });
+      }
+
+      // Home service: recheck travel-time gaps (anti-race) + compute travelTimeIn for storage
+      if (homeService && customer_lat != null && customer_lng != null && merchant.shop_lat != null && merchant.shop_lng != null) {
+        const customerCoords: Coords = { lat: customer_lat, lng: customer_lng };
+        const shopCoords: Coords = { lat: merchant.shop_lat, lng: merchant.shop_lng };
+
+        // Buffer (aléa) inclus dans .end pour cohérence avec free-slots route.
+        const dayBookings = (sameDayBooked || [])
+          .map(s => ({
+            id: s.id,
+            start: timeToMinutes(s.start_time),
+            end: timeToMinutes(s.start_time) + (s.total_duration_minutes ?? 30) + buffer,
+            coords: s.customer_lat != null && s.customer_lng != null
+              ? ({ lat: s.customer_lat, lng: s.customer_lng } as Coords)
+              : null,
+          }))
+          .sort((a, b) => a.start - b.start);
+
+        const prev = [...dayBookings].reverse().find(b => b.end <= requestedStart);
+        const next = dayBookings.find(b => b.start >= requestedEnd);
+
+        const prevCoords = prev?.coords ?? shopCoords;
+        const [travelInResult, travelOutResult] = await Promise.all([
+          getTravelTime(prevCoords, customerCoords),
+          next?.coords ? getTravelTime(customerCoords, next.coords) : Promise.resolve<number | null>(null),
+        ]);
+        travelTimeIn = travelInResult;
+
+        if (travelTimeIn > MAX_TRAVEL_MINUTES || requestedStart - travelTimeIn < (prev?.end ?? 0)) {
+          return NextResponse.json({ error: 'Trajet trop long depuis le RDV précédent' }, { status: 409 });
+        }
+
+        if (next?.coords && travelOutResult != null) {
+          // Buffer appliqué symétriquement : duration + buffer + travelOut ≤ next.start
+          if (travelOutResult > MAX_TRAVEL_MINUTES || requestedEnd + buffer + travelOutResult > next.start) {
+            return NextResponse.json({ error: 'Pas assez de temps pour rejoindre le RDV suivant' }, { status: 409 });
+          }
+        }
       }
     } else {
       // Mode créneaux: check consecutive slots availability
@@ -183,6 +242,8 @@ export async function POST(request: NextRequest) {
       .in('phone_number', getAllPhoneFormats(formattedPhone))
       .eq('merchant_id', merchant_id)
       .maybeSingle();
+
+    const isNewCustomer = !existingCustomer;
 
     if (existingCustomer) {
       customerId = existingCustomer.id;
@@ -288,6 +349,12 @@ export async function POST(request: NextRequest) {
         insertData.deposit_confirmed = false;
         if (depositDeadlineAt) insertData.deposit_deadline_at = depositDeadlineAt;
       }
+      if (homeService && customer_address) {
+        insertData.customer_address = customer_address;
+        insertData.customer_lat = customer_lat;
+        insertData.customer_lng = customer_lng;
+        insertData.travel_time_minutes = travelTimeIn;
+      }
 
       const { data: newSlot, error: insertError } = await supabaseAdmin
         .from('merchant_planning_slots')
@@ -377,6 +444,16 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin.from('planning_slot_services').insert(rows);
     }
 
+    // 8b. Home service: a new booking shifts the predecessor of any later booking on
+    // the same day, so all later slots' travel_time_in may need recompute. Skip overrides.
+    if (homeService && isFreeMod && customer_lat != null && customer_lng != null) {
+      try {
+        await recomputeDayTravel(merchant_id, slot_date);
+      } catch (err) {
+        logger.warn('recomputeDayTravel after booking failed', { err: String(err) });
+      }
+    }
+
     // 9. Build response
     const serviceDetails = services.map(s => ({
       name: s.name,
@@ -424,18 +501,33 @@ export async function POST(request: NextRequest) {
           totalPrice,
           deposit,
           locale: merchant.locale || 'fr',
+          customerAddress: homeService ? customer_address ?? null : null,
+          travelTimeMinutes: homeService ? travelTimeIn : null,
         }
       ).catch(err => logger.error('Booking notification email failed:', err));
     }
 
     // 10b. Push notification to merchant (fire-and-forget)
+    // Home service: enrich body with address + travel time + recommended departure
+    let pushBody = `${clientName} — ${slot_date} à ${slot_time}`;
+    if (homeService && customer_address) {
+      pushBody += `\n📍 ${customer_address}`;
+      if (travelTimeIn != null && travelTimeIn > 0) {
+        const startMins = timeToMinutes(slot_time);
+        const departMins = Math.max(0, startMins - travelTimeIn);
+        const departHH = String(Math.floor(departMins / 60)).padStart(2, '0');
+        const departMM = String(departMins % 60).padStart(2, '0');
+        pushBody += `\n🚗 ${travelTimeIn} min trajet · départ conseillé ${departHH}:${departMM}`;
+      }
+    }
+
     sendMerchantPush({
       supabase: supabaseAdmin,
       merchantId: merchant_id,
       notificationType: 'booking',
       referenceId: bookedSlotId,
       title: 'Nouvelle réservation',
-      body: `${clientName} — ${slot_date} à ${slot_time}`,
+      body: pushBody,
       url: `/dashboard/planning?date=${slot_date}`,
       tag: 'qarte-merchant-booking',
     }).catch(() => {});
@@ -453,6 +545,7 @@ export async function POST(request: NextRequest) {
         total_price: totalPrice,
         total_duration: totalDuration,
         slots_blocked: slotsBlocked,
+        is_new_customer: isNewCustomer,
       },
       deposit,
       member_benefit: memberDiscount || memberSkipDeposit ? {

@@ -9,7 +9,6 @@ import {
   Copy,
   Check,
   Flower2,
-  HelpCircle,
   X,
   Pencil,
   Palette,
@@ -46,8 +45,6 @@ export default function PublicPageDashboard() {
     });
   };
 
-  // Help modals
-  const [showHelp, setShowHelp] = useState(false);
   const [showWelcomeHelp, setShowWelcomeHelp] = useState(false);
   // Link copy
   const [copied, setCopied] = useState(false);
@@ -88,26 +85,18 @@ export default function PublicPageDashboard() {
     <div className="max-w-3xl mx-auto">
       {/* Header */}
       <div className="mb-6 p-5 md:p-6 rounded-2xl bg-violet-50/40 border border-violet-100">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <div className="shrink-0 w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center">
-              <Globe className="w-4 h-4 text-[#4b0082]" strokeWidth={2.25} />
-            </div>
-            <div>
-              <h1 className="text-lg md:text-2xl font-bold tracking-tight text-slate-900">
-                {t('title')}
-              </h1>
-              <p className="mt-0.5 text-xs md:text-sm text-slate-500">
-                {t('subtitle')}
-              </p>
-            </div>
+        <div className="flex items-start gap-3">
+          <div className="shrink-0 w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center">
+            <Globe className="w-4 h-4 text-[#4b0082]" strokeWidth={2.25} />
           </div>
-          <button
-            onClick={() => setShowHelp(true)}
-            className="shrink-0 w-9 h-9 rounded-xl bg-white border border-violet-200 flex items-center justify-center text-gray-400 hover:text-violet-600 hover:border-violet-300 transition-colors"
-          >
-            <HelpCircle className="w-5 h-5" />
-          </button>
+          <div>
+            <h1 className="text-lg md:text-2xl font-bold tracking-tight text-slate-900">
+              {t('title')}
+            </h1>
+            <p className="mt-0.5 text-xs md:text-sm text-slate-500">
+              {t('subtitle')}
+            </p>
+          </div>
         </div>
 
         {/* Completion */}
@@ -152,59 +141,6 @@ export default function PublicPageDashboard() {
           </div>
         )}
       </div>
-
-      {/* Help modal */}
-      {showHelp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setShowHelp(false)}>
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => setShowHelp(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
-                <Flower2 className="w-5 h-5 text-violet-600" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900">{t('helpTitle')}</h3>
-            </div>
-
-            <p className="text-sm text-gray-500 mb-4">
-              {t('helpIntro')}
-            </p>
-
-            <div className="space-y-4 text-sm text-gray-600">
-              <div className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-100 text-violet-600 font-bold text-xs flex items-center justify-center">1</span>
-                <p dangerouslySetInnerHTML={{ __html: t('helpStep1') }} />
-              </div>
-              <div className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-100 text-violet-600 font-bold text-xs flex items-center justify-center">2</span>
-                <p dangerouslySetInnerHTML={{ __html: t('helpStep2') }} />
-              </div>
-              <div className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-100 text-violet-600 font-bold text-xs flex items-center justify-center">3</span>
-                <p dangerouslySetInnerHTML={{ __html: t('helpStep3') }} />
-              </div>
-              <div className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 font-bold text-xs flex items-center justify-center">
-                  <Check className="w-3 h-3" />
-                </span>
-                <p dangerouslySetInnerHTML={{ __html: t('helpStep4') }} />
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowHelp(false)}
-              className="w-full mt-6 py-2.5 bg-violet-600 text-white font-semibold rounded-xl hover:bg-violet-700 transition-colors"
-            >
-              {t('helpGotIt')}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Welcome help modal */}
       {showWelcomeHelp && (

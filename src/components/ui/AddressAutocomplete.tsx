@@ -4,16 +4,18 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface AddressSuggestion {
+export interface AddressSuggestion {
   label: string;
   name: string;
   city: string;
   postcode: string;
+  lat: number;
+  lng: number;
 }
 
 interface AddressAutocompleteProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, suggestion?: AddressSuggestion) => void;
   placeholder?: string;
   className?: string;
 }
@@ -44,6 +46,8 @@ export function AddressAutocomplete({ value, onChange, placeholder, className }:
           name: f.properties.name,
           city: f.properties.city,
           postcode: f.properties.postcode,
+          lng: f.geometry.coordinates[0],
+          lat: f.geometry.coordinates[1],
         })
       );
       setSuggestions(results);
@@ -64,7 +68,7 @@ export function AddressAutocomplete({ value, onChange, placeholder, className }:
   };
 
   const handleSelect = (suggestion: AddressSuggestion) => {
-    onChange(suggestion.label);
+    onChange(suggestion.label, suggestion);
     setOpen(false);
     setSuggestions([]);
   };

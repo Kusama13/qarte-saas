@@ -106,7 +106,11 @@
 | cancel_deadline_days | INTEGER | `1` | NOT NULL, mig 097, delai annulation en jours avant le RDV |
 | reschedule_deadline_days | INTEGER | `1` | NOT NULL, mig 097, delai modification en jours avant le RDV |
 | booking_mode | VARCHAR(10) | `'slots'` | NOT NULL, mig 103, CHECK ('slots','free'). Mode creneaux = slots pre-generes, mode libre = calcul dynamique depuis opening_hours |
-| buffer_minutes | SMALLINT | `0` | NOT NULL, mig 103, CHECK (0,10,15,30). Pause entre RDV en mode libre |
+| buffer_minutes | SMALLINT | `0` | NOT NULL, mig 103, CHECK (0,10,15,30). Pause entre RDV en mode libre. En mode home_service sert d'aléa supplémentaire (parking, déchargement, retard) appliqué symétriquement entre RDV |
+| home_service_enabled | BOOLEAN | `FALSE` | NOT NULL, mig 134, mode service à domicile (calcul auto trajet entre RDV) |
+| shop_lat | DOUBLE PRECISION | NULL | mig 134, latitude de l'adresse marchand (pour calcul trajet 1er RDV). Capturé via BAN dans InfoSection ou géocodé à l'activation home_service |
+| shop_lng | DOUBLE PRECISION | NULL | mig 134, longitude de l'adresse marchand |
+| hide_address_on_public_page | BOOLEAN | `FALSE` | NOT NULL, mig 135, masque l'adresse sur `/p/[slug]` et dans le JSON-LD streetAddress (privacy pro à domicile = home address). Auto-activé à la 1ère activation de home_service. Ville (`addressLocality`) reste visible pour SEO local |
 | contest_enabled | BOOLEAN | `FALSE` | mig 105. Tirage au sort mensuel |
 | contest_prize | TEXT | NULL | mig 105. Description du lot a gagner |
 | show_public_page_on_card | BOOLEAN | `FALSE` | NOT NULL, mig 067 (toggle UI retire, colonne conservee) |
@@ -751,10 +755,17 @@ Single-row table : id, content (TEXT, default ''), updated_at
 | custom_service_duration | INTEGER | NULL | mig 130, minutes, CHECK (>0 si renseigne) |
 | custom_service_price | DECIMAL(10,2) | NULL | mig 130 (INTEGER) → mig 132 (DECIMAL en euros, aligne sur merchant_services.price) ; CHECK (>=0) |
 | custom_service_color | TEXT | NULL | mig 130, hex aleatoire pour affichage colore (badge + bordure card) |
+| customer_address | TEXT | NULL | mig 134, adresse cliente saisie à la résa (mode home_service) |
+| customer_lat | DOUBLE PRECISION | NULL | mig 134, latitude cliente (capturé via BAN dans BookingModal vitrine) |
+| customer_lng | DOUBLE PRECISION | NULL | mig 134, longitude cliente |
+| travel_time_minutes | SMALLINT | NULL | mig 134, durée trajet entrant calculée (depuis cliente précédente ou marchand pour le 1er RDV). Recalculée par `recomputeDayTravel` après book/cancel/move/delete |
+| travel_time_overridden | BOOLEAN | `FALSE` | NOT NULL, mig 134, true si le merchant a fixé manuellement la durée — recompute auto skip ces slots (UI override différée v2) |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
 **RLS** : SELECT public (client_name IS NULL AND slot_date >= CURRENT_DATE), ALL merchant own
 **Indexes** : `idx_planning_slots_merchant_date`, `idx_planning_slots_customer` (partial, NOT NULL), `idx_planning_slots_primary_slot_id` (partial, NOT NULL), `idx_planning_slots_deposit_deadline` (mig 089, partial : `deposit_confirmed=false AND deposit_deadline_at IS NOT NULL AND primary_slot_id IS NULL` — speed up cron deposit scan a 500 slots), `idx_planning_slots_booked` (mig 089, partial : `client_name IS NOT NULL` — speed up onglet Reservations dashboard), UNIQUE(merchant_id, slot_date, start_time)
+
+**RPC** : `move_booking(merchant_id, source_slot_id, target_date, target_time)` (mig 091, étendue mig 136 pour transférer/reset les 5 champs home_service)
 
 ### 2.36 planning_slot_services (mig 071)
 
@@ -958,6 +969,20 @@ Aussi : SMS Fidélité-free (`birthday`, `referral_reward`) exclus du compteur q
 **Index** : `idx_booking_deposit_failures_merchant_expired (merchant_id, expired_at DESC)`
 **GET limit** : 100 items (pas de pagination pour v1)
 **Pas d'auto-purge v1** : les rows persistent jusqu'a delete manuel merchant (a surveiller si abus)
+
+### 2.46 travel_time_cache (mig 134)
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| origin_key | TEXT | NOT NULL | "lat,lng" arrondi 4 décimales (~11m) |
+| dest_key | TEXT | NOT NULL | idem |
+| duration_minutes | SMALLINT | NOT NULL | durée trajet en minutes (depuis OpenRouteService ou fallback Haversine) |
+| fetched_at | TIMESTAMPTZ | `NOW()` | NOT NULL, pour purge cron mensuelle des entrées > 6 mois |
+
+**PRIMARY KEY** : (origin_key, dest_key)
+**RLS** : `ENABLE ROW LEVEL SECURITY` sans policies → **service_role only** (table server-only, lue/écrite uniquement par `src/lib/travel-time.ts`). Defense in depth si une clé anon touche par erreur.
+**Index** : `idx_travel_time_cache_fetched_at`
+**Pas d'auto-purge v1** : à brancher sur cron mensuel quand le volume devient un sujet (calcul : ~800 marchands × 10 RDV/jour × cache ratio élevé → loin des 2000 req/jour ORS gratuit)
 
 ---
 
