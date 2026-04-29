@@ -82,7 +82,9 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
                     <h3 className="text-base md:text-lg font-semibold text-gray-900">{t(`faq.q${i}`)}</h3>
                     <span className="text-indigo-600 text-xl group-open:rotate-45 transition-transform">+</span>
                   </summary>
-                  <p className="text-sm md:text-base text-gray-600 leading-relaxed mt-3">{t(`faq.a${i}`)}</p>
+                  <p className="text-sm md:text-base text-gray-600 leading-relaxed mt-3">
+                    {t.rich(`faq.a${i}`, { strong: (chunks) => <strong className="font-semibold text-gray-900">{chunks}</strong> })}
+                  </p>
                 </details>
               ))}
             </div>
