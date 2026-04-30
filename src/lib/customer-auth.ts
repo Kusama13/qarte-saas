@@ -1,7 +1,8 @@
 import { createHmac } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
+import { COOKIE_NAME } from './customer-auth-shared';
 
-const COOKIE_NAME = 'qarte_cust';
+export { COOKIE_NAME } from './customer-auth-shared';
 const MAX_AGE_SECONDS = 30 * 24 * 60 * 60; // 30 days
 
 function getSecret(): string {

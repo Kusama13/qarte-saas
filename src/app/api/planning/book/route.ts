@@ -13,6 +13,7 @@ import logger from '@/lib/logger';
 import { getPlanFeatures } from '@/lib/plan-tiers';
 import { getTravelTime, type Coords } from '@/lib/travel-time';
 import { recomputeDayTravel } from '@/lib/travel-recompute';
+import { buildDepositLinks } from '@/lib/payment-providers';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -479,14 +480,12 @@ export async function POST(request: NextRequest) {
         ? Math.round(totalPrice * merchant.deposit_percent / 100)
         : null;
 
-    const normalizeLink = (url: string | null) =>
-      url && !/^https?:\/\//i.test(url) ? `https://${url}` : url;
-
-    const links: Array<{ label: string | null; url: string }> = [];
-    const link1 = normalizeLink(merchant.deposit_link);
-    if (link1) links.push({ label: merchant.deposit_link_label || null, url: link1 });
-    const link2 = normalizeLink(merchant.deposit_link_2);
-    if (link2) links.push({ label: merchant.deposit_link_2_label || null, url: link2 });
+    const links = buildDepositLinks(
+      merchant.deposit_link,
+      merchant.deposit_link_label,
+      merchant.deposit_link_2,
+      merchant.deposit_link_2_label,
+    );
 
     const deposit = links.length > 0 && hasDeposit ? {
       link: links[0].url, // retro-compat

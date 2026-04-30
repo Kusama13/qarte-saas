@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { CalendarDays, Hourglass, Check, Clock, X, Loader2, CalendarClock } from 'lucide-react';
+import { useState, useRef, useMemo } from 'react';
+import { CalendarDays, Hourglass, Check, Clock, X, Loader2, CalendarClock, CreditCard, ChevronRight } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatTime, getTodayForCountry, customServiceDisplayName } from '@/lib/utils';
+import { detectPaymentProvider, buildDepositLinks } from '@/lib/payment-providers';
 import type { MerchantCountry } from '@/types';
 
 interface AppointmentSlot {
@@ -33,6 +34,10 @@ interface UpcomingAppointmentsSectionProps {
   allowReschedule?: boolean;
   cancelDeadlineDays?: number;
   rescheduleDeadlineDays?: number;
+  depositLink?: string | null;
+  depositLinkLabel?: string | null;
+  depositLink2?: string | null;
+  depositLink2Label?: string | null;
   onCancelled?: (slotId: string) => void;
   onRescheduled?: (oldSlotId: string, newSlotId: string) => void;
 }
@@ -50,6 +55,10 @@ export default function UpcomingAppointmentsSection({
   allowReschedule = false,
   cancelDeadlineDays = 1,
   rescheduleDeadlineDays = 1,
+  depositLink,
+  depositLinkLabel,
+  depositLink2,
+  depositLink2Label,
   onCancelled,
   onRescheduled,
 }: UpcomingAppointmentsSectionProps) {
@@ -71,6 +80,11 @@ export default function UpcomingAppointmentsSection({
   const abortRef = useRef<AbortController | null>(null);
 
   const [error, setError] = useState<string | null>(null);
+
+  const depositLinks = useMemo(
+    () => buildDepositLinks(depositLink, depositLinkLabel, depositLink2, depositLink2Label),
+    [depositLink, depositLinkLabel, depositLink2, depositLink2Label],
+  );
 
   if (appointments.length === 0) return null;
 
@@ -315,6 +329,46 @@ export default function UpcomingAppointmentsSection({
                           </li>
                         ))}
                       </ul>
+                    )}
+
+                    {/* Deposit payment block */}
+                    {appt.deposit_confirmed === false && depositLinks.length > 0 && (
+                      <div className="mt-2.5 pt-2.5 border-t" style={{ borderColor: `${merchantColor}15` }}>
+                        {depositLinks.length > 1 && (
+                          <p className="text-[10px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+                            {t('depositChooseMethod')}
+                          </p>
+                        )}
+                        <div className="space-y-1.5">
+                          {depositLinks.map((link, i) => {
+                            const label = link.label || detectPaymentProvider(link.url) || t('payDepositGeneric');
+                            return (
+                              <a
+                                key={i}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full inline-flex items-center justify-between gap-2 h-11 px-4 rounded-xl text-sm font-bold text-white shadow-sm hover:shadow-md active:scale-[0.98] transition-all touch-manipulation"
+                                style={{
+                                  background: `linear-gradient(135deg, ${merchantColor}, ${merchantColor}dd)`,
+                                  boxShadow: `0 2px 8px ${merchantColor}30`,
+                                }}
+                              >
+                                <span className="inline-flex items-center gap-2 min-w-0">
+                                  <CreditCard className="w-4 h-4 shrink-0" strokeWidth={2.25} />
+                                  <span className="truncate">
+                                    {depositLinks.length > 1 ? label : t('payMyDeposit')}
+                                  </span>
+                                </span>
+                                <ChevronRight className="w-4 h-4 shrink-0 opacity-80" />
+                              </a>
+                            );
+                          })}
+                        </div>
+                        <p className="mt-1.5 text-[10px] text-gray-500 text-center leading-snug">
+                          {t('depositValidationHint', { shop: shopName })}
+                        </p>
+                      </div>
                     )}
 
                     {/* Action buttons */}

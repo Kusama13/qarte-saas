@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Flame, Trophy, CalendarDays, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard } from 'lucide-react';
+import { Gift, Users, Flame, Trophy, CalendarDays, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard, Hourglass } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import { SuspendedBanner } from '@/components/shared/SuspendedBanner';
@@ -17,6 +17,7 @@ import { Link } from '@/i18n/navigation';
 import type { Merchant } from '@/types';
 import type { OpeningHours } from '@/lib/opening-hours';
 import { getPlanFeatures } from '@/lib/plan-tiers';
+import { hasCustomerCookie } from '@/lib/customer-auth-shared';
 
 type DaySlot = OpeningHours[string];
 
@@ -113,9 +114,18 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
 
   // Read cookie client-side to avoid cookies() in server component (breaks ISR)
   const [hasPhoneCookie, setHasPhoneCookie] = useState(false);
+  const [hasPendingDeposit, setHasPendingDeposit] = useState(false);
   useEffect(() => {
-    setHasPhoneCookie(document.cookie.includes('qarte_cust='));
-  }, []);
+    const cookied = hasCustomerCookie();
+    setHasPhoneCookie(cookied);
+    if (!cookied || isDemo) return;
+    const ctrl = new AbortController();
+    fetch(`/api/customers/pending-deposits?merchantId=${merchant.id}`, { signal: ctrl.signal })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data?.hasPending) setHasPendingDeposit(true); })
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [merchant.id, isDemo]);
   const p = merchant.primary_color;
   const s = merchant.secondary_color || merchant.primary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
@@ -424,6 +434,42 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               </div>
               <div className="w-7 h-7 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0 border border-white/30 group-hover:bg-white/30 transition-colors">
                 <ChevronRight className="w-4 h-4 text-white" />
+              </div>
+            </div>
+          </motion.a>
+        )}
+
+        {/* ── PENDING DEPOSIT SHORTCUT ── */}
+        {hasPhoneCookie && hasPendingDeposit && !isDemo && (
+          <motion.a
+            href={`/customer/card/${merchant.id}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.22, duration: 0.4 }}
+            className="group relative block rounded-2xl overflow-hidden bg-white border-2 border-amber-300 shadow-md shadow-amber-200/40 active:scale-[0.99] transition-transform"
+          >
+            <motion.div
+              animate={{ opacity: [0.35, 0.55, 0.35] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute inset-0 bg-gradient-to-r from-amber-50 via-amber-100/60 to-amber-50 pointer-events-none"
+            />
+            <div className="relative flex items-center gap-3.5 px-4 py-3.5">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-amber-100 border border-amber-200">
+                <Hourglass className="w-5 h-5 text-amber-700" strokeWidth={2.25} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-black text-amber-700 uppercase tracking-[0.14em] mb-0.5">
+                  {t('pendingDepositEyebrow')}
+                </p>
+                <p className="text-[15px] font-black text-gray-900 leading-tight tracking-tight">
+                  {t('pendingDepositTitle')}
+                </p>
+                <p className="text-[11px] text-gray-600 mt-0.5 font-medium truncate">
+                  {t('pendingDepositSubtitle')}
+                </p>
+              </div>
+              <div className="w-7 h-7 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center shrink-0 group-hover:bg-amber-200 transition-colors">
+                <ChevronRight className="w-4 h-4 text-amber-700" />
               </div>
             </div>
           </motion.a>

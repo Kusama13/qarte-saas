@@ -2740,6 +2740,9 @@
     "returningShortcutEyebrow": "Déjà client",
     "returningShortcutTitle": "Mes RDV & fidélité",
     "returningShortcutSubtitle": "Retrouve tes réservations et ta carte de fidélité",
+    "pendingDepositEyebrow": "Action requise",
+    "pendingDepositTitle": "Payer l'acompte",
+    "pendingDepositSubtitle": "Finalise ta réservation en quelques secondes",
     "hours": "Horaires",
     "closed": "Fermé",
     "openNow": "Ouvert",
@@ -3104,7 +3107,11 @@
     "rescheduleError": "Erreur lors de la modification",
     "noSlotsAvailable": "Aucun créneau disponible",
     "depositPending": "En attente de confirmation acompte",
-    "depositOk": "Acompte confirmé"
+    "depositOk": "Acompte confirmé",
+    "payMyDeposit": "Payer mon acompte",
+    "payDepositGeneric": "Payer l'acompte",
+    "depositChooseMethod": "Choisis ton moyen de paiement",
+    "depositValidationHint": "{shop} confirme ton paiement sous quelques heures."
   },
   "customerLogin": {
     "myCards": "Mes cartes.",

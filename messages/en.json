@@ -2737,6 +2737,9 @@
     "returningShortcutEyebrow": "Already a client",
     "returningShortcutTitle": "My bookings & loyalty",
     "returningShortcutSubtitle": "Find your appointments and your loyalty card",
+    "pendingDepositEyebrow": "Action required",
+    "pendingDepositTitle": "Pay deposit",
+    "pendingDepositSubtitle": "Finalize your booking in a few seconds",
     "hours": "Hours",
     "closed": "Closed",
     "openNow": "Open",
@@ -3101,7 +3104,11 @@
     "rescheduleError": "Error rescheduling appointment",
     "noSlotsAvailable": "No available slots",
     "depositPending": "Deposit confirmation pending",
-    "depositOk": "Deposit confirmed"
+    "depositOk": "Deposit confirmed",
+    "payMyDeposit": "Pay my deposit",
+    "payDepositGeneric": "Pay deposit",
+    "depositChooseMethod": "Choose your payment method",
+    "depositValidationHint": "{shop} confirms your payment within a few hours."
   },
   "customerLogin": {
     "myCards": "My cards.",

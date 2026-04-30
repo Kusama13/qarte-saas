@@ -9,6 +9,7 @@ import { formatTime, toBCP47, formatCurrency } from '@/lib/utils';
 import type { Merchant, MerchantCountry } from '@/types';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { AddressAutocomplete, type AddressSuggestion } from '@/components/ui/AddressAutocomplete';
+import { detectPaymentProvider } from '@/lib/payment-providers';
 
 type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
 type ServiceCategory = { id: string; name: string; position: number };
@@ -52,35 +53,6 @@ function formatDuration(mins: number, locale: string): string {
 }
 
 const CATEGORY_COLORS = ['#F59E0B', '#EC4899', '#10B981', '#8B5CF6', '#06B6D4', '#F97316'];
-
-const PAYMENT_PROVIDER_RULES: Array<[RegExp, string]> = [
-  [/revolut\.(me|com)/, 'Revolut'],
-  [/paypal\.(com|me)/, 'PayPal'],
-  [/(lydia-app\.com|lydia\.me)/, 'Lydia'],
-  [/pumpkin-app\.com/, 'Pumpkin'],
-  [/wise\.com/, 'Wise'],
-  [/(stripe\.com|buy\.stripe\.com)/, 'Stripe'],
-  [/sumup\.(link|com)/, 'SumUp'],
-  [/buymeacoffee\.com/, 'Buy Me a Coffee'],
-  [/venmo\.com/, 'Venmo'],
-  [/cash\.app/, 'Cash App'],
-  [/zelle\.com/, 'Zelle'],
-  [/payconiq\.com/, 'Payconiq'],
-  [/twint/, 'Twint'],
-  [/monzo\.me/, 'Monzo'],
-];
-
-function detectPaymentProvider(url: string): string | null {
-  try {
-    const host = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
-    for (const [pattern, label] of PAYMENT_PROVIDER_RULES) {
-      if (pattern.test(host)) return label;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
 
 function PolicyNotice({ merchant, t, className = 'mb-3' }: { merchant: MerchantBooking; t: ReturnType<typeof import('next-intl').useTranslations>; className?: string }) {
   if (!merchant.allow_customer_cancel && !merchant.allow_customer_reschedule) return null;
