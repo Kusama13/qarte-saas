@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
-import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical, Settings, Save } from 'lucide-react';
+import { CalendarDays, CalendarCheck, CalendarX2, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical, Settings, Save, MapPin } from 'lucide-react';
 import type { BookingMode, MerchantCountry, BookingDepositFailure } from '@/types';
 import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -16,6 +16,7 @@ import type { CustomServiceDraft } from './usePlanningState';
 import CustomServicePicker from './CustomServicePicker';
 import { handleDownloadStory } from './StoryExport';
 import { PhoneInput } from '@/components/ui/PhoneInput';
+import { AddressAutocomplete, type AddressSuggestion } from '@/components/ui/AddressAutocomplete';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
 import { usePlanningState } from './usePlanningState';
 import AddSlotsModal from './AddSlotsModal';
@@ -199,6 +200,10 @@ export default function PlanningDashboard() {
   const [manualConflict, setManualConflict] = useState<{ client_name: string; start_time: string; end_time: string } | null>(null);
   const [manualSendSms, setManualSendSms] = useState(false);
   const [manualStep, setManualStep] = useState<1 | 2>(1);
+  // Home service: customer address (only used when homeServiceEnabled)
+  const [manualCustomerAddress, setManualCustomerAddress] = useState('');
+  const [manualCustomerLat, setManualCustomerLat] = useState<number | null>(null);
+  const [manualCustomerLng, setManualCustomerLng] = useState<number | null>(null);
 
   const manualDuration = useMemo(() => {
     const catalog = manualServiceIds.reduce((sum, id) => sum + (serviceMap.get(id)?.duration ?? 30), 0);
@@ -232,6 +237,9 @@ export default function PlanningDashboard() {
     setManualConflict(null);
     setManualSendSms(false);
     setManualStep(1);
+    setManualCustomerAddress('');
+    setManualCustomerLat(null);
+    setManualCustomerLng(null);
     updateDraft({ clientName: '', clientPhone: '', customerId: null, phoneCountry: merchant?.country as MerchantCountry || 'FR', instagramHandle: '', tiktokHandle: '', facebookUrl: '' });
     // Fetch active offers for grant options
     if (merchant?.id) {
@@ -269,6 +277,13 @@ export default function PlanningDashboard() {
             custom_service_color: manualCustomService.color,
           }),
           notes: manualNotes.trim() || undefined,
+          ...(homeServiceEnabled && manualCustomerAddress.trim() && {
+            customer_address: manualCustomerAddress.trim(),
+            ...(manualCustomerLat != null && manualCustomerLng != null && {
+              customer_lat: manualCustomerLat,
+              customer_lng: manualCustomerLng,
+            }),
+          }),
           ...(force && { force: true }),
           ...(manualSendSms && { send_sms: true }),
         }),
@@ -722,18 +737,40 @@ export default function PlanningDashboard() {
 
       {/* ── PLANNING DISABLED: activation screen ── */}
       {!planningEnabled && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 text-center max-w-md mx-auto">
-          <CalendarDays className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-          <p className="text-sm font-semibold text-gray-700 mb-1">{t('disabledTitle')}</p>
-          <p className="text-xs text-gray-400 mb-4">{t('disabledHint')}</p>
-          <div className="text-left space-y-2.5">
-            {[1, 2, 3].map(n => (
-              <div key={n} className="flex items-start gap-2.5">
-                <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold flex items-center justify-center mt-0.5">{n}</span>
-                <p className="text-xs text-gray-500">{t(`disabledStep${n}` as 'disabledStep1')}</p>
-              </div>
-            ))}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 max-w-md mx-auto">
+          <div className="text-center mb-5">
+            <CalendarDays className="w-10 h-10 text-indigo-500 mx-auto mb-3" />
+            <p className="text-base font-bold text-gray-900 mb-1">{t('disabledTitle')}</p>
+            <p className="text-xs text-gray-500">{t('disabledHint')}</p>
           </div>
+          <ul className="space-y-3.5">
+            {([
+              { Icon: CalendarCheck, n: 1 as const },
+              { Icon: LayoutGrid, n: 2 as const },
+              { Icon: MapPin, n: 3 as const },
+              { Icon: MessageSquare, n: 4 as const },
+              { Icon: CreditCard, n: 5 as const },
+            ]).map(({ Icon, n }) => (
+              <li key={n} className="flex items-start gap-3">
+                <span className="shrink-0 mt-0.5 w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
+                  <Icon className="w-3.5 h-3.5 text-indigo-600" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-gray-900 leading-tight">
+                    {t(`disabledFeat${n}Title` as 'disabledFeat1Title')}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                    {n === 2
+                      ? t.rich('disabledFeat2Desc', { b: (chunks) => <strong className="font-semibold text-gray-700">{chunks}</strong> })
+                      : t(`disabledFeat${n}Desc` as 'disabledFeat1Desc')}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="text-[11px] text-gray-400 italic text-center mt-5 pt-4 border-t border-gray-100">
+            {t('disabledFooter')}
+          </p>
         </div>
       )}
 
@@ -1922,6 +1959,34 @@ export default function PlanningDashboard() {
                     </div>
                   </div>
 
+                  {/* ───── Adresse cliente (mode service à domicile) ───── */}
+                  {homeServiceEnabled && (
+                    <div>
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5 flex items-center gap-1.5">
+                        <MapPin className="w-3 h-3 text-sky-600" />
+                        {t('addressLabelOptional')}
+                      </label>
+                      <AddressAutocomplete
+                        value={manualCustomerAddress}
+                        onChange={(value: string, suggestion?: AddressSuggestion) => {
+                          setManualCustomerAddress(value);
+                          if (suggestion) {
+                            setManualCustomerLat(suggestion.lat);
+                            setManualCustomerLng(suggestion.lng);
+                          } else {
+                            setManualCustomerLat(null);
+                            setManualCustomerLng(null);
+                          }
+                        }}
+                        placeholder={t('addressPlaceholder')}
+                        className="text-sm border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                      />
+                      {manualCustomerAddress.trim() && manualCustomerLat == null && (
+                        <p className="text-[10px] text-amber-700 mt-1">{t('addressNeedSelect')}</p>
+                      )}
+                    </div>
+                  )}
+
                   {/* Conflit de créneau (409) — affiché sur l'étape 1 pour que le merchant ajuste l'horaire */}
                   {manualConflict && (
                     <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
@@ -2450,6 +2515,7 @@ export default function PlanningDashboard() {
             merchantName={merchant.shop_name}
             merchantAddress={merchant.shop_address}
             bookingMode={bookingMode}
+            homeServiceEnabled={homeServiceEnabled}
             saving={saving}
             locale={locale}
             depositPercent={merchant.deposit_percent}

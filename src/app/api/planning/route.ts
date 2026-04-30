@@ -206,6 +206,9 @@ const updateSlotSchema = z.object({
   notes: z.string().max(300).nullable().optional(),
   deposit_confirmed: z.boolean().nullable().optional(),
   phone_country: z.enum(['FR', 'BE', 'CH']).optional(),
+  customer_address: z.string().max(300).nullable().optional(),
+  customer_lat: z.number().min(-90).max(90).nullable().optional(),
+  customer_lng: z.number().min(-180).max(180).nullable().optional(),
   send_sms: z.boolean().optional(),
   send_sms_cancel: z.boolean().optional(),
   // Mode libre: après avoir vidé un slot (annulation), on le supprime entièrement.
@@ -229,7 +232,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
     }
 
-    const { slotId, merchantId, client_name, client_phone, customer_id, service_ids, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, notes, deposit_confirmed, send_sms, send_sms_cancel, delete_if_empty } = parsed.data;
+    const { slotId, merchantId, client_name, client_phone, customer_id, service_ids, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, notes, deposit_confirmed, customer_address, customer_lat, customer_lng, send_sms, send_sms_cancel, delete_if_empty } = parsed.data;
 
     if (!await verifyOwnership(supabase, merchantId, user.id)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
@@ -298,6 +301,30 @@ export async function PATCH(request: NextRequest) {
       if (custom_service_name !== undefined) updateData.custom_service_name = custom_service_name?.trim() || null;
       if (custom_service_price !== undefined) updateData.custom_service_price = custom_service_price;
       if (custom_service_color !== undefined) updateData.custom_service_color = custom_service_color;
+      // Home service: address (only persisted when client info present AND
+      // home_service_enabled — defense in depth, mirrors manual-booking gate).
+      if (customer_address !== undefined) {
+        const { data: hsMerchant } = await supabaseAdmin
+          .from('merchants')
+          .select('home_service_enabled')
+          .eq('id', merchantId)
+          .maybeSingle();
+        if (hsMerchant?.home_service_enabled) {
+          const trimmedAddr = customer_address?.trim() || null;
+          updateData.customer_address = trimmedAddr;
+          // Coords come together with the address (geocoded via BAN). If address cleared
+          // or typed without selecting a suggestion, drop coords + travel info.
+          if (!trimmedAddr || customer_lat == null || customer_lng == null) {
+            updateData.customer_lat = null;
+            updateData.customer_lng = null;
+            updateData.travel_time_minutes = null;
+            updateData.travel_time_overridden = false;
+          } else {
+            updateData.customer_lat = customer_lat;
+            updateData.customer_lng = customer_lng;
+          }
+        }
+      }
     }
 
     // Run slot update and services junction update in parallel

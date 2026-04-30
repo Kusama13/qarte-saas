@@ -6,6 +6,7 @@ import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, 
 import SmsToggle from './SmsToggle';
 import { getTypeStyle } from '@/lib/note-styles';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
+import { AddressAutocomplete, type AddressSuggestion } from '@/components/ui/AddressAutocomplete';
 import { useTranslations } from 'next-intl';
 import { useToast } from '@/components/ui/Toast';
 import type { PlanningSlot, CustomerSearchResult, BookingMode } from '@/types';
@@ -46,6 +47,7 @@ interface BookingDetailsModalProps {
   merchantName?: string | null;
   merchantAddress?: string | null;
   bookingMode?: BookingMode;
+  homeServiceEnabled?: boolean;
   saving: boolean;
   locale: string;
   depositPercent?: number | null;
@@ -62,6 +64,9 @@ interface BookingDetailsModalProps {
     custom_service_price?: number | null;
     custom_service_color?: string | null;
     notes: string | null;
+    customer_address?: string | null;
+    customer_lat?: number | null;
+    customer_lng?: number | null;
     send_sms?: boolean;
     send_sms_cancel?: boolean;
     delete_if_empty?: boolean;
@@ -88,6 +93,7 @@ export default function BookingDetailsModal({
   merchantName,
   merchantAddress,
   bookingMode = 'slots',
+  homeServiceEnabled = false,
   saving,
   locale,
   depositPercent,
@@ -127,6 +133,23 @@ export default function BookingDetailsModal({
   const isPaid = subscriptionStatus === 'active' || subscriptionStatus === 'canceling' || subscriptionStatus === 'past_due';
   const [sendSms, setSendSms] = useState(false);
   const [depositSendSms, setDepositSendSms] = useState(false);
+
+  const [addressDraft, setAddressDraft] = useState(slot.customer_address || '');
+  const [addressLat, setAddressLat] = useState<number | null>(slot.customer_lat ?? null);
+  const [addressLng, setAddressLng] = useState<number | null>(slot.customer_lng ?? null);
+  // Re-seed only when the modal is re-used for a different slot — not when the parent
+  // refetches and the same slot's address fields update mid-edit (would clobber keystrokes).
+  useEffect(() => {
+    setAddressDraft(slot.customer_address || '');
+    setAddressLat(slot.customer_lat ?? null);
+    setAddressLng(slot.customer_lng ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slot.id]);
+
+  const addressChanged = (slot.customer_address || '') !== addressDraft.trim()
+    || (slot.customer_lat ?? null) !== addressLat
+    || (slot.customer_lng ?? null) !== addressLng;
+  const addressTypedButNotPicked = !!addressDraft.trim() && (addressLat == null || addressLng == null);
 
   // Attendance tracking for past slots (no-show / came) — v1 manual only
   const [attendanceStatus, setAttendanceStatus] = useState<'pending' | 'attended' | 'no_show' | 'cancelled' | null>(slot.attendance_status ?? null);
@@ -315,6 +338,11 @@ export default function BookingDetailsModal({
       custom_service_color: draft.customService?.color ?? null,
       notes: draft.notes.trim() || null,
       ...(draft.phoneCountry && { phone_country: draft.phoneCountry }),
+      ...(homeServiceEnabled && addressChanged && {
+        customer_address: addressDraft.trim() || null,
+        customer_lat: addressDraft.trim() ? addressLat : null,
+        customer_lng: addressDraft.trim() ? addressLng : null,
+      }),
       ...(sendSms && { send_sms: true }),
     });
   };
@@ -782,8 +810,8 @@ export default function BookingDetailsModal({
             );
           })()}
 
-          {/* Home service: address + travel time + recommended departure */}
-          {slot.client_name && slot.customer_address && (() => {
+          {/* Home service: editable address + travel time + recommended departure */}
+          {homeServiceEnabled && slot.client_name && slot.client_name !== '__blocked__' && (() => {
             const travelIn = slot.travel_time_minutes ?? 0;
             const departureMins = timeToMinutes(slot.start_time) - travelIn;
             const departureTime = travelIn > 0 ? minutesToTime(Math.max(0, departureMins)) : null;
@@ -799,10 +827,16 @@ export default function BookingDetailsModal({
             const travelOut = nextBookedSlot?.travel_time_minutes ?? 0;
 
             // Itinéraire vers ce RDV : origine = adresse cliente précédente (ou marchand pour le 1er RDV).
+            // Destination = adresse actuelle (édition non sauvée incluse) pour navigation immédiate.
             const originAddress = prevBookedSlot?.customer_address || merchantAddress || null;
-            const mapsParams = new URLSearchParams({ api: '1', destination: slot.customer_address });
-            if (originAddress) mapsParams.set('origin', originAddress);
-            const mapsUrl = `https://www.google.com/maps/dir/?${mapsParams.toString()}`;
+            const destAddress = addressDraft.trim() || slot.customer_address || null;
+            const mapsUrl = destAddress
+              ? (() => {
+                  const p = new URLSearchParams({ api: '1', destination: destAddress });
+                  if (originAddress) p.set('origin', originAddress);
+                  return `https://www.google.com/maps/dir/?${p.toString()}`;
+                })()
+              : null;
 
             return (
               <div className="rounded-xl bg-sky-50/70 border border-sky-200 p-3">
@@ -812,20 +846,41 @@ export default function BookingDetailsModal({
                 </div>
                 <div className="space-y-2 text-xs">
                   <div>
-                    <p className="text-[11px] text-sky-700 font-semibold mb-0.5">{t('addressLabel')}</p>
+                    <p className="text-[11px] text-sky-700 font-semibold mb-1">{t('addressLabel')}</p>
                     <div className="flex items-start gap-2">
-                      <p className="flex-1 text-gray-800 font-medium leading-snug">{slot.customer_address}</p>
-                      <a
-                        href={mapsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white border border-sky-200 text-sky-700 text-[10px] font-bold hover:bg-sky-100 transition-colors"
-                      >
-                        <Navigation className="w-2.5 h-2.5" />
-                        {t('openMaps')}
-                      </a>
+                      <div className="flex-1 min-w-0">
+                        <AddressAutocomplete
+                          value={addressDraft}
+                          onChange={(value: string, suggestion?: AddressSuggestion) => {
+                            setAddressDraft(value);
+                            if (suggestion) {
+                              setAddressLat(suggestion.lat);
+                              setAddressLng(suggestion.lng);
+                            } else {
+                              setAddressLat(null);
+                              setAddressLng(null);
+                            }
+                          }}
+                          placeholder={t('addressPlaceholder')}
+                          className="h-9 text-xs bg-white"
+                        />
+                      </div>
+                      {mapsUrl && (
+                        <a
+                          href={mapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 inline-flex items-center gap-1 px-2 h-9 rounded-md bg-white border border-sky-200 text-sky-700 text-[10px] font-bold hover:bg-sky-100 transition-colors"
+                        >
+                          <Navigation className="w-2.5 h-2.5" />
+                          {t('openMaps')}
+                        </a>
+                      )}
                     </div>
-                    {originAddress && (
+                    {addressTypedButNotPicked && (
+                      <p className="text-[10px] text-amber-700 mt-1">{t('addressNeedSelect')}</p>
+                    )}
+                    {originAddress && destAddress && !addressTypedButNotPicked && (
                       <p className="text-[10px] text-gray-500 mt-1 truncate">
                         {t('routeFromLabel')} <span className="font-medium">{originAddress}</span>
                       </p>

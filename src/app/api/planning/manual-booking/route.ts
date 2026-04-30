@@ -3,6 +3,7 @@ import { createRouteHandlerSupabaseClient, getSupabaseAdmin } from '@/lib/supaba
 import { z } from 'zod';
 import { formatPhoneNumber } from '@/lib/utils';
 import { sendBookingSms } from '@/lib/sms';
+import { recomputeDayTravel } from '@/lib/travel-recompute';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 
@@ -21,6 +22,9 @@ const schema = z.object({
   custom_service_price: z.number().min(0).max(100_000).nullable().optional(),
   custom_service_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable().optional(),
   notes: z.string().max(500).optional(),
+  customer_address: z.string().min(3).max(300).optional(),
+  customer_lat: z.number().min(-90).max(90).optional(),
+  customer_lng: z.number().min(-180).max(180).optional(),
   force: z.boolean().optional(),
   send_sms: z.boolean().optional(),
 });
@@ -45,9 +49,9 @@ export async function POST(request: NextRequest) {
     const parsed = schema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
 
-    const { merchantId, date, start_time, total_duration_minutes, client_name, client_phone, phone_country, customer_id, service_ids, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, notes, force, send_sms } = parsed.data;
+    const { merchantId, date, start_time, total_duration_minutes, client_name, client_phone, phone_country, customer_id, service_ids, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, notes, customer_address, customer_lat, customer_lng, force, send_sms } = parsed.data;
 
-    const { data: m } = await supabase.from('merchants').select('id, booking_mode, buffer_minutes, country, shop_name, locale, subscription_status').eq('id', merchantId).eq('user_id', user.id).single();
+    const { data: m } = await supabase.from('merchants').select('id, booking_mode, buffer_minutes, country, shop_name, locale, subscription_status, home_service_enabled').eq('id', merchantId).eq('user_id', user.id).single();
     if (!m) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     if (m.booking_mode !== 'free') return NextResponse.json({ error: 'Mode non applicable' }, { status: 400 });
 
@@ -91,6 +95,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const homeService = !!m.home_service_enabled;
+    const hasAddressText = homeService && !!customer_address?.trim();
+    const hasCoords = hasAddressText && customer_lat != null && customer_lng != null;
+
     const { data: slot, error: insertError } = await supabaseAdmin
       .from('merchant_planning_slots')
       .insert({
@@ -106,6 +114,10 @@ export async function POST(request: NextRequest) {
         custom_service_duration: custom_service_duration ?? null,
         custom_service_price: custom_service_price ?? null,
         custom_service_color: custom_service_color ?? null,
+        ...(hasAddressText && {
+          customer_address: customer_address!.trim(),
+          ...(hasCoords && { customer_lat, customer_lng }),
+        }),
       })
       .select('id')
       .single();
@@ -120,6 +132,17 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin.from('planning_slot_services').insert(
         service_ids.map(service_id => ({ slot_id: slot.id, service_id }))
       );
+    }
+
+    // Home service: recompute travel times for the day. Only useful when the new
+    // booking has coords — otherwise it doesn't affect the chain (skipped slots
+    // don't update prevCoords for following ones).
+    if (hasCoords) {
+      try {
+        await recomputeDayTravel(merchantId, date);
+      } catch (err) {
+        logger.warn('recomputeDayTravel after manual-booking failed', { err: String(err) });
+      }
     }
 
     // SMS confirmation (opt-in, fire-and-forget)

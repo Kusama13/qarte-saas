@@ -347,6 +347,9 @@ export function usePlanningState() {
     custom_service_color?: string | null;
     notes: string | null;
     phone_country?: string;
+    customer_address?: string | null;
+    customer_lat?: number | null;
+    customer_lng?: number | null;
     send_sms?: boolean;
     send_sms_cancel?: boolean;
     delete_if_empty?: boolean;
