@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
   const results = {
     birthdayVouchers: { processed: 0, created: 0, skipped: 0, errors: 0 },
     depositDeadline: { released: 0, warned: 0 },
+    attendanceAutoMarked: { count: 0 },
   };
 
   const sectionStatuses: Array<{ name: string; status: 'ok' | 'error'; error?: string }> = [];
@@ -337,6 +338,30 @@ export async function GET(request: NextRequest) {
     sectionStatuses.push({ name: 'depositDeadline', status: 'ok' });
   } catch (error) {
     sectionStatuses.push({ name: 'depositDeadline', status: 'error', error: String(error) });
+  }
+
+  // ==================== ATTENDANCE AUTO-MARK ====================
+  // Marque en bulk attended tous les slots passés non encore marqués (pending ou NULL).
+  // Le merchant peut ensuite flipper en no_show via le soft-prompt dashboard du matin
+  // (cf. AttendanceCheckPrompt). Sans ça, chaque RDV demandait un tap manuel.
+  if (isTimedOut()) { sectionStatuses.push({ name: 'attendanceAutoMark', status: 'error', error: 'Skipped: cron timeout' }); }
+  else try {
+    const todayParis = getTodayInParis();
+    const { data: marked, error: markErr } = await supabase
+      .from('merchant_planning_slots')
+      .update({ attendance_status: 'attended' })
+      .lt('slot_date', todayParis)
+      .or('attendance_status.is.null,attendance_status.eq.pending')
+      .not('client_name', 'is', null)
+      .neq('client_name', '__blocked__')
+      .is('primary_slot_id', null)
+      .select('id');
+    if (markErr) throw markErr;
+    results.attendanceAutoMarked.count = marked?.length || 0;
+    sectionStatuses.push({ name: 'attendanceAutoMark', status: 'ok' });
+  } catch (err) {
+    logger.error('attendance auto-mark error:', err);
+    sectionStatuses.push({ name: 'attendanceAutoMark', status: 'error', error: err instanceof Error ? err.message : String(err) });
   }
 
   // Await all push promises before returning

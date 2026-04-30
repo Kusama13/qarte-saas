@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Link } from '@/i18n/navigation';
 
@@ -20,6 +20,7 @@ import {
   Lock,
   Flower2,
   BarChart3,
+  ArrowUpRight,
   type LucideIcon,
 } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -50,6 +51,8 @@ const WEEKDAYS_FULL_JS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 've
 // les donnees de planning en ligne etablies avant.
 const STATS_FLOOR_YEAR = 2026;
 const STATS_FLOOR_MONTH = 4; // avril (1-indexed)
+
+const FUTURE_KPI_SUB = 'Disponible après la période';
 
 function pad2(n: number): string {
   return String(n).padStart(2, '0');
@@ -220,6 +223,7 @@ function KpiCard({
   sub,
   delta,
   color,
+  dimmed,
 }: {
   icon: LucideIcon;
   label: string;
@@ -227,6 +231,7 @@ function KpiCard({
   sub?: string;
   delta?: number;
   color: 'emerald' | 'indigo' | 'rose' | 'amber' | 'cyan' | 'violet';
+  dimmed?: boolean;
 }) {
   // Hex dominants pour le gradient d'icone (pattern StatsCard)
   const hexMap: Record<'emerald' | 'indigo' | 'rose' | 'amber' | 'cyan' | 'violet', string> = {
@@ -240,7 +245,7 @@ function KpiCard({
   const hex = hexMap[color];
 
   return (
-    <div className="h-full p-4 md:p-5 bg-white border border-gray-100 rounded-2xl shadow-sm flex flex-col gap-3">
+    <div className={`h-full p-4 md:p-5 bg-white border border-gray-100 rounded-2xl shadow-sm flex flex-col gap-3 ${dimmed ? 'opacity-60' : ''}`}>
       <div className="flex items-center gap-2.5 min-w-0">
         <div
           className="flex items-center justify-center w-9 h-9 rounded-lg shrink-0 shadow-md"
@@ -256,12 +261,12 @@ function KpiCard({
         </p>
       </div>
       <div className="flex items-baseline flex-wrap gap-x-1.5 gap-y-0.5">
-        <h3 className="text-xl md:text-2xl font-bold text-slate-900 tracking-[-0.02em] tabular-nums leading-none">
+        <h3 className={`text-xl md:text-2xl font-bold tracking-[-0.02em] tabular-nums leading-none ${dimmed ? 'text-slate-400' : 'text-slate-900'}`}>
           {value}
         </h3>
         {delta !== undefined && <DeltaPill delta={delta} />}
       </div>
-      {sub && <p className="text-[11px] text-slate-500 leading-snug">{sub}</p>}
+      {sub && <p className={`text-[11px] leading-snug ${dimmed ? 'text-slate-400 italic' : 'text-slate-500'}`}>{sub}</p>}
     </div>
   );
 }
@@ -307,11 +312,46 @@ export default function StatsPage() {
   const planFeatures = useMemo(() => getPlanFeatures(merchant), [merchant]);
   const hasAccess = planFeatures.planning;
 
-  const months = useMemo(() => availableMonths(), []);
+  const [futureMonths, setFutureMonths] = useState<string[]>([]);
+  const currentMonthKey = useMemo(() => monthKey(new Date()), []);
+
+  // Fetch les mois futurs avec resa au mount (M+1, M+2). Cache 60s server-side.
+  useEffect(() => {
+    if (!merchant?.id || !hasAccess) return;
+    let cancelled = false;
+    safeFetchJson<{ months: string[] }>(`/api/dashboard/stats/future-months?merchantId=${merchant.id}`)
+      .then((data) => {
+        if (!cancelled && data) setFutureMonths(data.months || []);
+      });
+    return () => { cancelled = true; };
+  }, [merchant?.id, hasAccess]);
+
+  const months = useMemo(() => {
+    // Future en tete (chrono descendant, l'API renvoie ascendant) puis past depuis floor
+    return [...[...futureMonths].reverse(), ...availableMonths()];
+  }, [futureMonths]);
+
   const showYears = useMemo(() => {
     const years = new Set(months.map((m) => m.slice(0, 4)));
     return years.size > 1;
   }, [months]);
+
+  const isFuture = useMemo(() => month > currentMonthKey, [month, currentMonthKey]);
+
+  // Auto-scroll pour amener la pill active en vue quand des futures sont prependees
+  // (sinon sur mobile l'utilisateur voit Mai/Juin en premier et peut louper le mois courant actif).
+  const pillsContainerRef = useRef<HTMLDivElement>(null);
+  const activePillRef = useRef<HTMLButtonElement>(null);
+  const didAutoScrollRef = useRef(false);
+  useEffect(() => {
+    if (didAutoScrollRef.current) return;
+    if (futureMonths.length === 0) return;
+    const container = pillsContainerRef.current;
+    const active = activePillRef.current;
+    if (!container || !active) return;
+    container.scrollLeft = Math.max(0, active.offsetLeft - 16);
+    didAutoScrollRef.current = true;
+  }, [futureMonths]);
 
   const weeks = useMemo(() => weeksInMonth(month), [month]);
   const range = useMemo(() => {
@@ -371,22 +411,28 @@ export default function StatsPage() {
         <>
           {/* Ligne 1 : mois (clic = mois entier). Ligne 2 : semaines optionnelles (clic actif = deselect). */}
           <div className="space-y-2">
-            <div className="-mx-4 px-4 overflow-x-auto scrollbar-none">
+            <div ref={pillsContainerRef} className="-mx-4 px-4 overflow-x-auto scrollbar-none">
               <div className="flex gap-1.5 min-w-max">
                 {months.map((key) => {
                   const active = month === key && weekIdx === 0;
+                  const future = key > currentMonthKey;
+                  const className = future
+                    ? active
+                      ? 'bg-indigo-50 text-indigo-700 border border-indigo-300 ring-1 ring-indigo-200 shadow-sm'
+                      : 'bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300'
+                    : active
+                      ? 'bg-[#4b0082] text-white shadow-sm border border-transparent'
+                      : 'bg-white text-slate-600 border border-gray-100 hover:text-slate-900 hover:border-gray-200';
                   return (
                     <button
                       key={key}
+                      ref={active ? activePillRef : undefined}
                       type="button"
                       onClick={() => selectMonth(key)}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors touch-manipulation whitespace-nowrap ${
-                        active
-                          ? 'bg-[#4b0082] text-white shadow-sm'
-                          : 'bg-white text-slate-600 border border-gray-100 hover:text-slate-900 hover:border-gray-200'
-                      }`}
+                      className={`inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors touch-manipulation whitespace-nowrap ${className}`}
                     >
                       {labelForMonthKey(key, showYears)}
+                      {future && <ArrowUpRight className="w-3 h-3 stroke-[2.5]" />}
                     </button>
                   );
                 })}
@@ -442,34 +488,45 @@ export default function StatsPage() {
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                   <KpiCard
                     icon={Euro}
-                    label="Chiffre d'affaires"
+                    label={isFuture ? "CA attendu" : "Chiffre d'affaires"}
                     value={formatCurrency(stats.planning.revenue.current, merchant?.country)}
-                    delta={stats.planning.revenue.previous > 0 ? stats.planning.revenue.delta : undefined}
+                    delta={!isFuture && stats.planning.revenue.previous > 0 ? stats.planning.revenue.delta : undefined}
                     color="emerald"
                   />
                   <KpiCard
                     icon={CalendarDays}
-                    label="Réservations"
+                    label={isFuture ? "Résas attendues" : "Réservations"}
                     value={String(stats.planning.bookings.current)}
-                    delta={stats.planning.bookings.previous > 0 ? stats.planning.bookings.delta : undefined}
+                    delta={!isFuture && stats.planning.bookings.previous > 0 ? stats.planning.bookings.delta : undefined}
                     color="cyan"
                   />
                   <KpiCard
                     icon={TrendingUp}
-                    label="Remplissage"
+                    label={isFuture ? "Remplissage prévisionnel" : "Remplissage"}
                     value={stats.planning.fillRate.availableMinutes ? `${Math.round(stats.planning.fillRate.current * 100)}%` : '—'}
                     sub={stats.planning.fillRate.availableMinutes
                       ? `${Math.round(stats.planning.fillRate.bookedMinutes / 60)}h / ${Math.round(stats.planning.fillRate.availableMinutes / 60)}h ouvertes`
                       : 'Renseigne tes horaires'}
                     color="indigo"
                   />
-                  <KpiCard
-                    icon={UserX}
-                    label="Taux no-show"
-                    value={stats.planning.noShowRate.marked ? `${Math.round(stats.planning.noShowRate.current * 100)}%` : '—'}
-                    sub={stats.planning.noShowRate.marked ? `${stats.planning.noShowRate.noShows}/${stats.planning.noShowRate.marked} marqués` : 'Aucun RDV marqué'}
-                    color="rose"
-                  />
+                  {isFuture ? (
+                    <KpiCard
+                      icon={UserX}
+                      label="Taux no-show"
+                      value="—"
+                      sub={FUTURE_KPI_SUB}
+                      color="rose"
+                      dimmed
+                    />
+                  ) : (
+                    <KpiCard
+                      icon={UserX}
+                      label="Taux no-show"
+                      value={stats.planning.noShowRate.marked ? `${Math.round(stats.planning.noShowRate.current * 100)}%` : '—'}
+                      sub={stats.planning.noShowRate.marked ? `${stats.planning.noShowRate.noShows}/${stats.planning.noShowRate.marked} marqués` : 'Aucun RDV marqué'}
+                      color="rose"
+                    />
+                  )}
                 </div>
               </div>
 
@@ -585,39 +642,50 @@ export default function StatsPage() {
               <div>
                 <SectionLabel>Fidélité & clientes</SectionLabel>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                  <KpiCard
-                    icon={UserPlus}
-                    label="Nouvelles clientes"
-                    value={String(stats.fidelite.newCustomers.current)}
-                    delta={stats.fidelite.newCustomers.previous > 0 ? stats.fidelite.newCustomers.delta : undefined}
-                    color="emerald"
-                  />
-                  <KpiCard
-                    icon={Users}
-                    label="Taux de retour"
-                    value={stats.fidelite.returningRate.distinct ? `${Math.round(stats.fidelite.returningRate.current * 100)}%` : '—'}
-                    sub={stats.fidelite.returningRate.distinct ? `${stats.fidelite.returningRate.returning}/${stats.fidelite.returningRate.distinct} clientes` : 'Pas encore de données'}
-                    color="rose"
-                  />
-                  <KpiCard
-                    icon={Flower2}
-                    label="Récompenses utilisées"
-                    value={String(stats.fidelite.vouchersRedeemed.current)}
-                    delta={stats.fidelite.vouchersRedeemed.previous > 0 ? stats.fidelite.vouchersRedeemed.delta : undefined}
-                    color="amber"
-                  />
-                  <KpiCard
-                    icon={Share2}
-                    label="Parrainages convertis"
-                    value={`${stats.fidelite.referrals.converted}/${stats.fidelite.referrals.invited}`}
-                    sub={stats.fidelite.referrals.invited ? `${Math.round(stats.fidelite.referrals.conversionRate * 100)}% conversion` : undefined}
-                    color="violet"
-                  />
+                  {isFuture ? (
+                    <>
+                      <KpiCard icon={UserPlus} label="Nouvelles clientes" value="—" sub={FUTURE_KPI_SUB} color="emerald" dimmed />
+                      <KpiCard icon={Users} label="Taux de retour" value="—" sub={FUTURE_KPI_SUB} color="rose" dimmed />
+                      <KpiCard icon={Flower2} label="Récompenses utilisées" value="—" sub={FUTURE_KPI_SUB} color="amber" dimmed />
+                      <KpiCard icon={Share2} label="Parrainages convertis" value="—" sub={FUTURE_KPI_SUB} color="violet" dimmed />
+                    </>
+                  ) : (
+                    <>
+                      <KpiCard
+                        icon={UserPlus}
+                        label="Nouvelles clientes"
+                        value={String(stats.fidelite.newCustomers.current)}
+                        delta={stats.fidelite.newCustomers.previous > 0 ? stats.fidelite.newCustomers.delta : undefined}
+                        color="emerald"
+                      />
+                      <KpiCard
+                        icon={Users}
+                        label="Taux de retour"
+                        value={stats.fidelite.returningRate.distinct ? `${Math.round(stats.fidelite.returningRate.current * 100)}%` : '—'}
+                        sub={stats.fidelite.returningRate.distinct ? `${stats.fidelite.returningRate.returning}/${stats.fidelite.returningRate.distinct} clientes` : 'Pas encore de données'}
+                        color="rose"
+                      />
+                      <KpiCard
+                        icon={Flower2}
+                        label="Récompenses utilisées"
+                        value={String(stats.fidelite.vouchersRedeemed.current)}
+                        delta={stats.fidelite.vouchersRedeemed.previous > 0 ? stats.fidelite.vouchersRedeemed.delta : undefined}
+                        color="amber"
+                      />
+                      <KpiCard
+                        icon={Share2}
+                        label="Parrainages convertis"
+                        value={`${stats.fidelite.referrals.converted}/${stats.fidelite.referrals.invited}`}
+                        sub={stats.fidelite.referrals.invited ? `${Math.round(stats.fidelite.referrals.conversionRate * 100)}% conversion` : undefined}
+                        color="violet"
+                      />
+                    </>
+                  )}
                 </div>
               </div>
 
               {/* New customers timeline */}
-              {stats.fidelite.newCustomersTimeline.length > 0 && (
+              {!isFuture && stats.fidelite.newCustomersTimeline.length > 0 && (
                 <div>
                   <SectionLabel>Tes nouvelles clientes</SectionLabel>
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -643,7 +711,7 @@ export default function StatsPage() {
               )}
 
               {/* Top clients */}
-              {stats.fidelite.topClients.length > 0 && (
+              {!isFuture && stats.fidelite.topClients.length > 0 && (
                 <div>
                   <SectionLabel>Tes meilleures clientes</SectionLabel>
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -670,14 +738,18 @@ export default function StatsPage() {
 
               {/* Empty state pour les périodes sans data */}
               {stats.planning.bookings.current === 0 &&
-                stats.fidelite.newCustomers.current === 0 && (
+                (isFuture || stats.fidelite.newCustomers.current === 0) && (
                   <div className="rounded-3xl border border-gray-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-8 md:p-10 text-center">
                     <div className="w-14 h-14 mx-auto rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4">
                       <BarChart3 className="w-6 h-6 text-indigo-500" />
                     </div>
-                    <p className="text-base font-bold text-slate-900 mb-1">Pas encore de données</p>
+                    <p className="text-base font-bold text-slate-900 mb-1">
+                      {isFuture ? 'Pas encore de résas confirmées' : 'Pas encore de données'}
+                    </p>
                     <p className="text-sm text-slate-600 max-w-sm mx-auto">
-                      Reviens voir quand tes clientes auront défilé sur cette période.
+                      {isFuture
+                        ? "C'est devant toi — au fur et à mesure que tes clientes réservent, tu verras tes prévisions ici."
+                        : 'Reviens voir quand tes clientes auront défilé sur cette période.'}
                     </p>
                   </div>
                 )}

@@ -85,6 +85,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Numéro de téléphone invalide' }, { status: 400 });
     }
 
+    // 2b. Banned numbers — bloque le numero banni par le merchant (cohérent avec /api/checkin)
+    const phoneVariants = getAllPhoneFormats(formattedPhone);
+    const { data: bannedRow } = await supabaseAdmin
+      .from('banned_numbers')
+      .select('id')
+      .in('phone_number', phoneVariants)
+      .eq('merchant_id', merchant.id)
+      .maybeSingle();
+    if (bannedRow) {
+      return NextResponse.json({ error: 'Ce numéro ne peut pas réserver ici. Contactez directement le salon.' }, { status: 403 });
+    }
+
     const isFreeMod = merchant.booking_mode === 'free';
     const homeService = merchant.home_service_enabled === true;
 

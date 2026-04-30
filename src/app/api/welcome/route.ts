@@ -101,11 +101,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Numéro de téléphone invalide' }, { status: 400 });
     }
 
+    const phoneVariants = getAllPhoneFormats(formattedPhone);
+
+    // 2b. Banned numbers — bloque le numero banni par le merchant
+    const { data: bannedRow } = await supabaseAdmin
+      .from('banned_numbers')
+      .select('id')
+      .in('phone_number', phoneVariants)
+      .eq('merchant_id', merchant.id)
+      .maybeSingle();
+    if (bannedRow) {
+      return NextResponse.json({ error: 'Ce numéro ne peut pas s\'inscrire ici. Contactez directement le salon.' }, { status: 403 });
+    }
+
     // 3. Vérifier si le client existe déjà chez ce merchant
     const { data: existingCustomer } = await supabaseAdmin
       .from('customers')
       .select('id')
-      .in('phone_number', getAllPhoneFormats(formattedPhone))
+      .in('phone_number', phoneVariants)
       .eq('merchant_id', merchant.id)
       .maybeSingle();
 
