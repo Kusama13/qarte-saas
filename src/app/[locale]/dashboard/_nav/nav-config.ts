@@ -10,6 +10,7 @@ import {
   Wallet,
   Settings,
   BarChart3,
+  Gift,
   type LucideIcon,
 } from 'lucide-react';
 import type { Merchant } from '@/types';
@@ -37,6 +38,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/program', labelKey: 'program', icon: Heart, color: 'text-pink-500', bg: 'bg-pink-50', primary: false },
   { href: '/dashboard/public-page', labelKey: 'publicPage', icon: Globe, color: 'text-violet-500', bg: 'bg-violet-50', primary: false },
   { href: '/dashboard/stats', labelKey: 'stats', icon: BarChart3, color: 'text-indigo-500', bg: 'bg-indigo-50', primary: false, locked: (m) => !getPlanFeatures(m).planning },
+  { href: '/dashboard/gift-cards', labelKey: 'giftCards', icon: Gift, color: 'text-fuchsia-500', bg: 'bg-fuchsia-50', primary: false },
   { href: '/dashboard/marketing', labelKey: 'notifications', icon: Megaphone, color: 'text-orange-500', bg: 'bg-orange-50', primary: false },
   { href: '/dashboard/referrals', labelKey: 'referrals', icon: UserPlus, color: 'text-blue-500', bg: 'bg-blue-50', primary: false },
   { href: '/dashboard/subscription', labelKey: 'subscription', icon: Wallet, color: 'text-teal-500', bg: 'bg-teal-50', primary: false },

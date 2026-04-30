@@ -6,6 +6,7 @@ import { getAuthenticatedPhone } from '@/lib/customer-auth';
 import { getTodayForCountry, getTrialStatus } from '@/lib/utils';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { sendBookingSms } from '@/lib/sms';
+import { formatCurrency } from '@/lib/utils';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -169,6 +170,56 @@ export async function POST(request: NextRequest) {
           })
           .eq('id', filleulCard.id);
       }
+    }
+
+    // 4a. Si voucher = bon cadeau → SMS systématique à l'offreur (fire-and-forget)
+    if (voucher.source === 'gift') {
+      const sendGiftUsedSmsToSender = async () => {
+        try {
+          const { data: giftCard } = await supabaseAdmin
+            .from('gift_cards')
+            .select('id, sender_phone, sender_first_name, recipient_first_name, amount')
+            .eq('voucher_id', voucher_id)
+            .maybeSingle();
+
+          if (!giftCard) return;
+
+          // Update gift_card → used + used_at
+          await supabaseAdmin
+            .from('gift_cards')
+            .update({
+              status: 'used',
+              used_at: new Date().toISOString(),
+            })
+            .eq('id', giftCard.id);
+
+          // Récup merchant pour shop_name + locale + status
+          const { data: shopMerchant } = await supabaseAdmin
+            .from('merchants')
+            .select('shop_name, locale, country, subscription_status')
+            .eq('id', voucher.merchant_id)
+            .maybeSingle();
+
+          if (!shopMerchant) return;
+          const lang = (shopMerchant.locale || 'fr') as 'fr' | 'en';
+          const amountFmt = formatCurrency(Number(giftCard.amount), shopMerchant.country, lang, 0);
+
+          await sendBookingSms(supabaseAdmin, {
+            merchantId: voucher.merchant_id,
+            phone: giftCard.sender_phone,
+            shopName: shopMerchant.shop_name,
+            smsType: 'gift_card_used',
+            locale: lang,
+            subscriptionStatus: shopMerchant.subscription_status,
+            giftSenderName: giftCard.sender_first_name,
+            giftRecipientName: giftCard.recipient_first_name,
+            giftAmount: amountFmt,
+          });
+        } catch (err) {
+          logger.error('Gift card sender SMS failed:', err);
+        }
+      };
+      sendGiftUsedSmsToSender().catch(() => {});
     }
 
     // 4. Vérifier si c'est un voucher filleul → auto-créer le voucher parrain

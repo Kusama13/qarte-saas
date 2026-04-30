@@ -7,6 +7,7 @@ import {
   CreditCard,
   Home,
   Gift,
+  Heart,
   Globe,
   QrCode,
   Users,
@@ -89,13 +90,14 @@ function DashboardLayoutContent({
   const planFeatures = getPlanFeatures(merchant);
   const navItems = [
     { href: '/dashboard', icon: Home, label: t('home'), color: 'text-indigo-500', bg: 'bg-indigo-50' },
-    { href: '/dashboard/program', icon: Gift, label: t('program'), color: 'text-pink-500', bg: 'bg-pink-50' },
+    { href: '/dashboard/program', icon: Heart, label: t('program'), color: 'text-pink-500', bg: 'bg-pink-50' },
     { href: '/dashboard/public-page', icon: Globe, label: t('publicPage'), color: 'text-violet-500', bg: 'bg-violet-50' },
     { href: '/dashboard/qr-download', icon: QrCode, label: t('qrCode'), color: 'text-violet-500', bg: 'bg-violet-50' },
     { href: '/dashboard/planning', icon: CalendarDays, label: t('planning'), color: 'text-cyan-500', bg: 'bg-cyan-50', locked: !planFeatures.planning },
     { href: '/dashboard/stats', icon: BarChart3, label: t('stats'), color: 'text-indigo-500', bg: 'bg-indigo-50', locked: !planFeatures.planning },
     { href: '/dashboard/customers', icon: Users, label: t('customers'), color: 'text-emerald-500', bg: 'bg-emerald-50' },
     { href: '/dashboard/referrals', icon: UserPlus, label: t('referrals'), color: 'text-blue-500', bg: 'bg-blue-50' },
+    { href: '/dashboard/gift-cards', icon: Gift, label: t('giftCards'), color: 'text-fuchsia-500', bg: 'bg-fuchsia-50' },
     { href: '/dashboard/marketing', icon: Megaphone, label: t('notifications'), color: 'text-orange-500', bg: 'bg-orange-50' },
     { href: '/dashboard/subscription', icon: Wallet, label: t('subscription'), color: 'text-teal-500', bg: 'bg-teal-50' },
     { href: '/dashboard/settings', icon: Settings, label: t('settings'), color: 'text-slate-500', bg: 'bg-slate-50' },

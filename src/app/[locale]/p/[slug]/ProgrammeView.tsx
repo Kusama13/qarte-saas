@@ -8,13 +8,14 @@ import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import { SuspendedBanner } from '@/components/shared/SuspendedBanner';
 import SimulatedCard from './SimulatedCard';
 import BookingModal from './BookingModal';
+import GiftCardModal from './GiftCardModal';
 import { useInView } from '@/hooks/useInView';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency, detectBookingPlatform, displayPhoneWithFlag, getTrialStatus, getCurrencyForCountry, extractCityFromAddress } from '@/lib/utils';
 import { trackCtaClick } from '@/lib/analytics';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import type { Merchant } from '@/types';
+import type { Merchant, MerchantCountry } from '@/types';
 import type { OpeningHours } from '@/lib/opening-hours';
 import { getPlanFeatures } from '@/lib/plan-tiers';
 import { hasCustomerCookie } from '@/lib/customer-auth-shared';
@@ -106,10 +107,14 @@ type MerchantPublic = Pick<
   | 'cancel_deadline_days'
   | 'allow_customer_reschedule'
   | 'reschedule_deadline_days'
+  | 'gift_card_enabled'
+  | 'gift_card_amounts'
+  | 'gift_card_message'
 >;
 
 export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], bookedSlots = [], isDemo = false, demoOffer }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; bookedSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null }) {
   const t = useTranslations('programmeView');
+  const pgcT = useTranslations('giftCards');
   const locale = useLocale();
 
   // Read cookie client-side to avoid cookies() in server component (breaks ISR)
@@ -144,6 +149,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
       : planningSlots.length > 0
   );
   const [bookingSlot, setBookingSlot] = useState<{ date: string | null; time: string | null } | null>(null);
+  const [giftCardOpen, setGiftCardOpen] = useState(false);
 
   // Opening hours
   const DAY_LABELS_SHORT = t('dayLabelsShort').split(',');
@@ -977,6 +983,54 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           </motion.div>
         )}
 
+        {/* ── BON CADEAU (offrir) ── */}
+        {merchant.gift_card_enabled && !isSuspended && (
+          <motion.button
+            type="button"
+            onClick={isDemo ? noOp : () => setGiftCardOpen(true)}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.34, ease: 'easeOut' }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            className="block w-full text-left rounded-2xl overflow-hidden shadow-lg relative group"
+            style={{
+              background: `linear-gradient(135deg, ${p} 0%, ${s} 100%)`,
+              boxShadow: `0 16px 32px -12px ${p}55`,
+            }}
+          >
+            {/* Watermark décoratif */}
+            <div className="absolute -right-4 -top-4 opacity-15 pointer-events-none">
+              <Gift className="w-28 h-28 text-white" strokeWidth={1.2} />
+            </div>
+            <div className="relative p-5 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-sm">
+                <Gift className="w-6 h-6 text-white" strokeWidth={2.5} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/85">
+                  {pgcT('vitrineTitle')}
+                </p>
+                <p className="text-[15px] font-bold text-white leading-snug mt-0.5">
+                  {pgcT('vitrineDesc')}
+                </p>
+                {(() => {
+                  const a = Array.isArray(merchant.gift_card_amounts)
+                    ? merchant.gift_card_amounts.map(Number).filter((n) => Number.isFinite(n) && n > 0)
+                    : [];
+                  const min = a.length ? Math.min(...a) : 30;
+                  return (
+                    <p className="text-[12px] text-white/85 mt-1">
+                      {pgcT('vitrinePriceFrom', { amount: formatCurrency(min, merchant.country, locale, 0) })}
+                    </p>
+                  );
+                })()}
+              </div>
+              <ChevronRight className="w-5 h-5 text-white/70 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </motion.button>
+        )}
+
         {/* Label carte simulée */}
         <motion.p
           initial={{ opacity: 0, y: 8 }}
@@ -1429,6 +1483,20 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           }),
         }}
       />
+      {/* ── GIFT CARD MODAL ── */}
+      <GiftCardModal
+        open={giftCardOpen}
+        onClose={() => setGiftCardOpen(false)}
+        merchantId={merchant.id}
+        shopName={merchant.shop_name}
+        primaryColor={p}
+        secondaryColor={s}
+        defaultCountry={(merchant.country || 'FR') as MerchantCountry}
+        amounts={merchant.gift_card_amounts as number[] | null}
+        introMessage={merchant.gift_card_message}
+        isDemo={isDemo}
+      />
+
       {/* ── BOOKING MODAL ── */}
       {bookingSlot && merchant.auto_booking_enabled && !isDemo && (
         <BookingModal

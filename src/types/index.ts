@@ -170,6 +170,10 @@ export interface Merchant {
   // Monthly contest
   contest_enabled: boolean;
   contest_prize: string | null;
+  // Gift cards (bons cadeaux — mig 138)
+  gift_card_enabled: boolean;
+  gift_card_amounts: number[];
+  gift_card_message: string | null;
   // Email deliverability
   email_bounced_at: string | null;
   email_unsubscribed_at: string | null;
@@ -271,6 +275,48 @@ export interface MerchantOffer {
   created_at: string;
 }
 
+// ============================================
+// Gift cards (mig 138)
+// ============================================
+
+export type GiftCardStatus =
+  | 'pending_payment'  // commande passée, attente validation paiement merchant
+  | 'active'           // payé, voucher émis, destinataire notifié
+  | 'used'             // voucher consommé (lookup via voucher_id)
+  | 'cancelled'        // annulé par merchant ou auto-cancel après 3j sans paiement
+  | 'expired';         // 12 mois après paid_at sans utilisation
+
+export type GiftCardCancellationReason = 'merchant' | 'auto_expired_3d' | 'no_payment';
+
+export interface GiftCard {
+  id: string;
+  merchant_id: string;
+  code: string;
+  amount: number;
+  // Offreur
+  sender_first_name: string;
+  sender_phone: string;
+  sender_phone_country: string | null;
+  sender_email: string;
+  sender_message: string | null;
+  // Destinataire
+  recipient_first_name: string;
+  recipient_phone: string;
+  recipient_phone_country: string | null;
+  recipient_email: string | null;
+  // État
+  status: GiftCardStatus;
+  voucher_id: string | null;
+  recipient_customer_id: string | null;
+  paid_at: string | null;
+  used_at: string | null;
+  cancelled_at: string | null;
+  cancellation_reason: GiftCardCancellationReason | null;
+  expires_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface MerchantContest {
   id: string;
   merchant_id: string;
@@ -340,7 +386,7 @@ export interface Voucher {
   merchant_id: string;
   customer_id: string;
   reward_description: string;
-  source: 'birthday' | 'referral' | 'redemption' | 'welcome' | 'offer' | null;
+  source: 'birthday' | 'referral' | 'redemption' | 'welcome' | 'offer' | 'gift' | null;
   offer_id: string | null;
   is_used: boolean;
   used_at: string | null;

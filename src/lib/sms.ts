@@ -49,7 +49,7 @@ export const PAID_STATUSES = ['active', 'canceling', 'past_due'] as const;
 
 // ── Templates SMS (< 160 chars, vouvoiement client-facing) ──
 
-export type SmsType = 'reminder_j1' | 'reminder_j0' | 'confirmation_no_deposit' | 'confirmation_deposit' | 'birthday' | 'referral_reward' | 'booking_moved' | 'booking_cancelled';
+export type SmsType = 'reminder_j1' | 'reminder_j0' | 'confirmation_no_deposit' | 'confirmation_deposit' | 'birthday' | 'referral_reward' | 'booking_moved' | 'booking_cancelled' | 'gift_card_received' | 'gift_card_used';
 
 export type MarketingSmsType = 'campaign' | 'welcome' | 'review_request' | 'voucher_expiry' | 'referral_invite' | 'inactive_reminder' | 'near_reward';
 
@@ -63,6 +63,8 @@ const SMS_TEMPLATES: Record<string, Record<SmsType, (...args: string[]) => strin
     referral_reward: (shop, reward) => `Bonne nouvelle ! Votre filleul(e) a utilisé sa récompense. Votre cadeau vous attend chez ${shop} : ${reward}`,
     booking_moved: (shop, date, time) => `Votre RDV chez ${shop} a été déplacé au ${date} à ${time}. À bientôt !`,
     booking_cancelled: (shop, date, time) => `Votre RDV chez ${shop} le ${date} à ${time} a été annulé. Contactez-nous pour reprogrammer.`,
+    gift_card_received: (shop, sender, amount, recipient) => recipient ? `${recipient}, ${sender} t'offre un bon cadeau de ${amount} chez ${shop} ! Retrouve-le dans ta carte fidélité : qarte.fr` : `${sender} t'offre un bon cadeau de ${amount} chez ${shop} ! Retrouve-le dans ta carte fidélité : qarte.fr`,
+    gift_card_used: (shop, recipient, amount, sender) => sender ? `${sender}, bonne nouvelle ! ${recipient} vient d'utiliser le bon de ${amount} que tu lui as offert chez ${shop}. Merci de nous avoir choisis !` : `${recipient} vient d'utiliser le bon de ${amount} que vous avez offert chez ${shop}. Merci de nous avoir choisis !`,
   },
   en: {
     reminder_j1: (shop, time) => `Reminder: appointment tomorrow at ${time} at ${shop}. Earn loyalty points on your visit!`,
@@ -73,6 +75,8 @@ const SMS_TEMPLATES: Record<string, Record<SmsType, (...args: string[]) => strin
     referral_reward: (shop, reward) => `Great news! Your referral used their reward. Your gift is waiting at ${shop}: ${reward}`,
     booking_moved: (shop, date, time) => `Your appointment at ${shop} has been moved to ${date} at ${time}. See you soon!`,
     booking_cancelled: (shop, date, time) => `Your appointment at ${shop} on ${date} at ${time} has been cancelled. Contact us to reschedule.`,
+    gift_card_received: (shop, sender, amount, recipient) => recipient ? `${recipient}, ${sender} is offering you a ${amount} gift card at ${shop}! Find it in your loyalty card: qarte.fr` : `${sender} is offering you a ${amount} gift card at ${shop}! Find it in your loyalty card: qarte.fr`,
+    gift_card_used: (shop, recipient, amount, sender) => sender ? `${sender}, great news! ${recipient} just used the ${amount} gift card you offered at ${shop}. Thanks for choosing us!` : `${recipient} just used the ${amount} gift card you offered at ${shop}. Thanks for choosing us!`,
   },
 };
 
@@ -112,6 +116,8 @@ function isTypeEnabled(smsType: SmsType, config: GlobalSmsConfig): boolean {
     case 'confirmation_deposit':
     case 'booking_moved':
     case 'booking_cancelled': return true;
+    case 'gift_card_received':
+    case 'gift_card_used': return true;
     case 'birthday': return config.birthday_enabled;
     case 'referral_reward': return config.referral_enabled;
   }
@@ -312,6 +318,10 @@ interface SendSmsParams {
   clientName?: string;
   // For referral
   reward?: string;
+  // For gift cards
+  giftSenderName?: string;     // gift_card_received: prénom de l'offreur
+  giftRecipientName?: string;  // gift_card_used: prénom du destinataire (utilisateur du voucher)
+  giftAmount?: string;         // ex: "50€" — déjà formaté avec devise
   // Pass pre-fetched config to avoid re-querying in loops
   globalConfig?: GlobalSmsConfig;
 }
@@ -321,7 +331,7 @@ interface SendSmsParams {
  * Checks global toggle, subscription status, and dedup before sending.
  */
 export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsParams): Promise<boolean> {
-  const { merchantId, slotId, phone, shopName, smsType, locale, subscriptionStatus, date, time, gift, clientName, reward, globalConfig: preloadedConfig } = params;
+  const { merchantId, slotId, phone, shopName, smsType, locale, subscriptionStatus, date, time, gift, clientName, reward, giftSenderName, giftRecipientName, giftAmount, globalConfig: preloadedConfig } = params;
 
   if (!phone) return false;
 
@@ -382,6 +392,12 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
         break;
       case 'referral_reward':
         message = template(shopName, reward || '');
+        break;
+      case 'gift_card_received':
+        message = template(shopName, giftSenderName || '', giftAmount || '', giftRecipientName || '');
+        break;
+      case 'gift_card_used':
+        message = template(shopName, giftRecipientName || '', giftAmount || '', giftSenderName || '');
         break;
     }
 

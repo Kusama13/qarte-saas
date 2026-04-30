@@ -50,3 +50,7 @@ export { SmsQuotaEmail } from './SmsQuotaEmail';
 export { SmsPackPurchaseEmail } from './SmsPackPurchaseEmail';
 export { ActivationStalledEmail } from './ActivationStalledEmail';
 export { UpgradeAllInEmail, type UpgradeTrigger } from './UpgradeAllInEmail';
+export { GiftCardOrderConfirmationEmail } from './GiftCardOrderConfirmationEmail';
+export { GiftCardActivatedEmail } from './GiftCardActivatedEmail';
+export { GiftCardReceivedEmail } from './GiftCardReceivedEmail';
+export { GiftCardMerchantNotificationEmail } from './GiftCardMerchantNotificationEmail';

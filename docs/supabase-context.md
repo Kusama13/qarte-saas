@@ -113,6 +113,9 @@
 | hide_address_on_public_page | BOOLEAN | `FALSE` | NOT NULL, mig 135, masque l'adresse sur `/p/[slug]` et dans le JSON-LD streetAddress (privacy pro à domicile = home address). Auto-activé à la 1ère activation de home_service. Ville (`addressLocality`) reste visible pour SEO local |
 | contest_enabled | BOOLEAN | `FALSE` | mig 105. Tirage au sort mensuel |
 | contest_prize | TEXT | NULL | mig 105. Description du lot a gagner |
+| gift_card_enabled | BOOLEAN | `FALSE` | NOT NULL, mig 138. Active la vente de bons cadeaux sur la vitrine |
+| gift_card_amounts | JSONB | `[30,50,80,100]` | NOT NULL, mig 138. Array de montants suggérés (chips dans la modal vitrine + le client peut entrer un montant libre) |
+| gift_card_message | TEXT | NULL | mig 138, max 300 chars. Mot d'introduction affiché sous le titre de la modal vitrine |
 | show_public_page_on_card | BOOLEAN | `FALSE` | NOT NULL, mig 067 (toggle UI retire, colonne conservee) |
 | signup_source | TEXT | NULL | mig 068 |
 | locale | TEXT | `'fr'` | NOT NULL, mig 069 |
@@ -970,6 +973,47 @@ Aussi : SMS Fidélité-free (`birthday`, `referral_reward`) exclus du compteur q
 **GET limit** : 100 items (pas de pagination pour v1)
 **Pas d'auto-purge v1** : les rows persistent jusqu'a delete manuel merchant (a surveiller si abus)
 
+### 2.47 gift_cards (mig 138)
+
+Bons cadeaux offerts depuis la vitrine `/p/[slug]`. Cycle de vie distinct des `vouchers` (commande → paiement merchant → activation → utilisation), lié au voucher créé à l'activation via `voucher_id`.
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| merchant_id | UUID FK → merchants | NOT NULL | ON DELETE CASCADE |
+| code | TEXT | NOT NULL | UNIQUE — format `GIFT-XXXXXX` (6 chars sans 0/O/I/1/L) |
+| amount | NUMERIC(10,2) | NOT NULL | CHECK (>0 AND <=1000) |
+| sender_first_name | TEXT | NOT NULL | CHECK length 1-60 |
+| sender_phone | TEXT | NOT NULL | E.164 sans + |
+| sender_phone_country | VARCHAR(2) | NULL | FR/BE/CH |
+| sender_email | TEXT | NOT NULL | CHECK length <= 255 |
+| sender_message | TEXT | NULL | CHECK length <= 300, mot perso optionnel |
+| recipient_first_name | TEXT | NOT NULL | CHECK length 1-60 |
+| recipient_phone | TEXT | NOT NULL | E.164 sans + |
+| recipient_phone_country | VARCHAR(2) | NULL | FR/BE/CH |
+| recipient_email | TEXT | NULL | CHECK length <= 255, optionnel |
+| status | TEXT | `'pending_payment'` | NOT NULL CHECK IN (`pending_payment`, `active`, `used`, `cancelled`, `expired`) |
+| voucher_id | UUID FK → vouchers | NULL | ON DELETE SET NULL — lié au voucher créé à `confirm-payment` |
+| recipient_customer_id | UUID FK → customers | NULL | ON DELETE SET NULL |
+| paid_at | TIMESTAMPTZ | NULL | quand merchant a validé le paiement |
+| used_at | TIMESTAMPTZ | NULL | quand voucher consommé (set par hook dans /api/vouchers/use) |
+| cancelled_at | TIMESTAMPTZ | NULL | quand annulé |
+| cancellation_reason | TEXT | NULL | `merchant` / `auto_expired_3d` / `no_payment` |
+| expires_at | TIMESTAMPTZ | NULL | 12 mois après paid_at |
+| created_at | TIMESTAMPTZ | `NOW()` | NOT NULL |
+| updated_at | TIMESTAMPTZ | `NOW()` | NOT NULL — trigger auto |
+
+**Indexes** :
+- `idx_gift_cards_merchant_status (merchant_id, status, created_at DESC)` — page dashboard avec onglets
+- `idx_gift_cards_voucher (voucher_id) WHERE voucher_id IS NOT NULL` — lookup pour SMS offreur quand consommé
+- `idx_gift_cards_pending_old (created_at) WHERE status='pending_payment'` — cron auto-cancel
+
+**Trigger** : `update_gift_cards_updated_at` → `update_updated_at_column()`
+
+**RLS** : merchant SELECT + UPDATE own (via `merchants.user_id = auth.uid()`), INSERT et SELECT public/anon = service_role only via API routes (anti-spam, route POST publique rate-limitée 3/h par IP).
+
+**vouchers.source CHECK étendu** : `('birthday', 'referral', 'redemption', 'welcome', 'offer', 'gift')` — le voucher créé à l'activation porte `source='gift'`.
+
 ### 2.46 travel_time_cache (mig 134)
 
 | Colonne | Type | Default | Contrainte |
@@ -1263,6 +1307,8 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 130 | planning_slots_custom_service | 4 colonnes nullable sur `merchant_planning_slots` : `custom_service_name TEXT`, `custom_service_duration INTEGER` (CHECK >0), `custom_service_price INTEGER` (CHECK >=0, **converti en DECIMAL par mig 132**), `custom_service_color TEXT`. Permet de creer une prestation perso one-shot par booking sans polluer le catalogue `merchant_services`. Le slot porte les 4 champs directement (pas de junction) : 1 prestation perso max par booking |
 | 131 | deposit_failures_custom_service | Mêmes 4 colonnes sur `booking_deposit_failures` (snapshot au moment de l'archive cron) + WIPE_FIELDS du slot étendu pour les nettoyer. Permet au bring-back de restaurer la prestation perso (avec override possible cote modal) |
 | 132 | custom_service_price_decimal | ALTER COLUMN `custom_service_price` TYPE INTEGER → DECIMAL(10,2) sur `merchant_planning_slots` ET `booking_deposit_failures`, avec `USING (col::DECIMAL / 100)` pour ramener les valeurs deja stockees (cas test merchant) de centimes vers euros. Aligne sur `merchant_services.price` (decimal en euros) — sinon `formatCurrency(4000)` affichait "4 000 €" au lieu de "40 €" |
+| 138 | gift_cards | Table `gift_cards` (bons cadeaux offerts depuis vitrine, payés via lien externe merchant) + 3 colonnes `merchants` (`gift_card_enabled BOOLEAN`, `gift_card_amounts JSONB DEFAULT [30,50,80,100]`, `gift_card_message TEXT`) + extension `vouchers.source` CHECK avec `'gift'`. Indexes composé `(merchant_id, status, created_at DESC)` + dédié `voucher_id` (lookup SMS offreur quand consommé) + partiel `(created_at) WHERE status='pending_payment'` (cron auto-cancel). RLS merchant SELECT/UPDATE own, INSERT public via API service_role uniquement |
+| 139 | sms_gift_card_types | Étend `sms_logs.sms_type` CHECK avec 2 nouveaux types : `gift_card_received` (envoyé au destinataire à la confirmation paiement) et `gift_card_used` (envoyé à l'offreur quand le destinataire consomme). Tous les types existants conservés (reminder, confirmation, birthday, referral_reward, booking_*, marketing) |
 
 ---
 

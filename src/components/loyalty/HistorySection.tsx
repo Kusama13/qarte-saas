@@ -45,7 +45,7 @@ export interface UsedVoucher {
   id: string;
   used_at: string;
   reward_description: string;
-  source?: 'birthday' | 'referral' | 'redemption' | 'welcome' | 'offer' | null;
+  source?: 'birthday' | 'referral' | 'redemption' | 'welcome' | 'offer' | 'gift' | null;
 }
 
 interface AppointmentItem {

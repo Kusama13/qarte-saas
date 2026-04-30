@@ -47,6 +47,10 @@
     {
       "path": "/api/cron/blog-digest",
       "schedule": "30 6 * * *"
+    },
+    {
+      "path": "/api/cron/gift-cards-expire",
+      "schedule": "0 * * * *"
     }
   ]
 }

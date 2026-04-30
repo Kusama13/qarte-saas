@@ -16,6 +16,7 @@ import { usePullToRefreshRegister } from '@/components/shared/PullToRefresh';
 
 const PendingPointsWidget = dynamic(() => import('@/components/dashboard/PendingPointsWidget'), { ssr: false });
 const PendingDepositsWidget = dynamic(() => import('@/components/dashboard/PendingDepositsWidget'), { ssr: false });
+const PendingGiftCardsWidget = dynamic(() => import('@/components/dashboard/PendingGiftCardsWidget'), { ssr: false });
 const AttendanceCheckPrompt = dynamic(() => import('@/components/dashboard/AttendanceCheckPrompt'), { ssr: false });
 const OnboardingChecklist = dynamic(() => import('@/components/dashboard/OnboardingChecklist'), { ssr: false });
 import HeroToday from '@/components/dashboard/HeroToday';
@@ -648,6 +649,8 @@ export default function DashboardPage() {
       )}
 
       {merchant.planning_enabled && <AttendanceCheckPrompt merchantId={merchant.id} />}
+
+      <PendingGiftCardsWidget merchantId={merchant.id} giftCardEnabled={merchant.gift_card_enabled} />
 
       <ToSeeList items={toSeeItems} />
 

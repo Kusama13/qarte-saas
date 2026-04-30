@@ -54,6 +54,10 @@ import {
   ActivationStalledEmail,
   UpgradeAllInEmail,
   type UpgradeTrigger,
+  GiftCardOrderConfirmationEmail,
+  GiftCardActivatedEmail,
+  GiftCardReceivedEmail,
+  GiftCardMerchantNotificationEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import logger from './logger';
@@ -1156,4 +1160,104 @@ export async function sendAmbassadorWelcomeEmail(
     { firstName, affiliateSlug, signupUrl, homeUrl },
     { logLabel: 'Ambassador welcome email' }
   );
+}
+
+// ===========================================================================
+// Gift cards (mig 138) — 4 helpers
+// ===========================================================================
+
+interface GiftCardPaymentLink {
+  url: string;
+  label: string;
+}
+
+export async function sendGiftCardOrderConfirmationEmail(
+  to: string,
+  params: {
+    shopName: string;
+    senderFirstName: string;
+    recipientFirstName: string;
+    amount: string;
+    code: string;
+    paymentLinks: GiftCardPaymentLink[];
+    locale?: EmailLocale;
+  },
+): Promise<SendEmailResult> {
+  const { locale = 'fr', amount, recipientFirstName } = params;
+  const subject = locale === 'en'
+    ? `Your ${amount} gift card for ${recipientFirstName} is on hold`
+    : `Ton bon cadeau de ${amount} pour ${recipientFirstName} est en attente`;
+  return sendEmail(to, subject, GiftCardOrderConfirmationEmail, params, {
+    logLabel: 'Gift card order confirmation',
+  });
+}
+
+export async function sendGiftCardActivatedEmail(
+  to: string,
+  params: {
+    shopName: string;
+    senderFirstName: string;
+    recipientFirstName: string;
+    amount: string;
+    expiresAtFormatted: string;
+    locale?: EmailLocale;
+  },
+): Promise<SendEmailResult> {
+  const { locale = 'fr', recipientFirstName, amount } = params;
+  const subject = locale === 'en'
+    ? `${recipientFirstName} just received your ${amount} gift 🎁`
+    : `${recipientFirstName} vient de recevoir ton cadeau de ${amount} 🎁`;
+  return sendEmail(to, subject, GiftCardActivatedEmail, params, {
+    logLabel: 'Gift card activated',
+  });
+}
+
+export async function sendGiftCardReceivedEmail(
+  to: string,
+  params: {
+    shopName: string;
+    senderFirstName: string;
+    recipientFirstName: string;
+    amount: string;
+    senderMessage?: string | null;
+    expiresAtFormatted: string;
+    cardUrl: string;
+    shopAddress?: string | null;
+    primaryColor?: string;
+    secondaryColor?: string;
+    locale?: EmailLocale;
+  },
+): Promise<SendEmailResult> {
+  const { locale = 'fr', senderFirstName, amount, shopName } = params;
+  const subject = locale === 'en'
+    ? `${senderFirstName} is offering you a ${amount} gift at ${shopName} ✨`
+    : `${senderFirstName} t'offre un bon de ${amount} chez ${shopName} ✨`;
+  return sendEmail(to, subject, GiftCardReceivedEmail, params, {
+    logLabel: 'Gift card received',
+  });
+}
+
+export async function sendGiftCardMerchantNotificationEmail(
+  to: string,
+  params: {
+    shopName: string;
+    senderFirstName: string;
+    senderEmail: string;
+    senderPhoneFormatted: string;
+    recipientFirstName: string;
+    recipientPhoneFormatted: string;
+    amount: string;
+    code: string;
+    senderMessage?: string | null;
+    dashboardUrl?: string;
+    locale?: EmailLocale;
+  },
+): Promise<SendEmailResult> {
+  const { locale = 'fr', amount, senderFirstName } = params;
+  const subject = locale === 'en'
+    ? `New gift card order ${amount} from ${senderFirstName}`
+    : `Nouveau bon cadeau ${amount} de ${senderFirstName}`;
+  return sendEmail(to, subject, GiftCardMerchantNotificationEmail, params, {
+    logLabel: 'Gift card merchant notification',
+  });
 }
