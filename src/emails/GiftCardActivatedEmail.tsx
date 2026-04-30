@@ -14,6 +14,7 @@ interface GiftCardActivatedEmailProps {
   amount: string;
   expiresAtFormatted: string;  // ex "30 avril 2027"
   locale?: EmailLocale;
+  servicesLabel?: string | null;
 }
 
 export function GiftCardActivatedEmail({
@@ -23,11 +24,13 @@ export function GiftCardActivatedEmail({
   amount,
   expiresAtFormatted,
   locale = 'fr',
+  servicesLabel,
 }: GiftCardActivatedEmailProps) {
   const isEn = locale === 'en';
+  const giftLabel = servicesLabel || (isEn ? `${amount} gift card` : `bon cadeau de ${amount}`);
   const preview = isEn
-    ? `${recipientFirstName} just received your ${amount} gift card`
-    : `${recipientFirstName} vient de recevoir ton bon cadeau de ${amount}`;
+    ? `${recipientFirstName} just received your ${giftLabel}`
+    : `${recipientFirstName} vient de recevoir ton ${giftLabel}`;
 
   return (
     <BaseLayout preview={preview} locale={locale}>
@@ -37,8 +40,8 @@ export function GiftCardActivatedEmail({
 
       <Text style={paragraph}>
         {isEn
-          ? `Hi ${senderFirstName}, ${shopName} just confirmed your payment. ${recipientFirstName} is receiving an SMS right now with their ${amount} gift card.`
-          : `Bonjour ${senderFirstName}, ${shopName} vient de confirmer la réception de ton paiement. ${recipientFirstName} reçoit son bon cadeau de ${amount} par SMS dans la foulée.`}
+          ? `Hi ${senderFirstName}, ${shopName} just confirmed your payment. ${recipientFirstName} is receiving an SMS right now with their ${giftLabel}.`
+          : `Bonjour ${senderFirstName}, ${shopName} vient de confirmer la réception de ton paiement. ${recipientFirstName} reçoit son ${giftLabel} par SMS dans la foulée.`}
       </Text>
 
       <Section style={successBox}>
@@ -48,8 +51,8 @@ export function GiftCardActivatedEmail({
         </Text>
         <Text style={successDetail}>
           {isEn
-            ? `${amount} · valid until ${expiresAtFormatted}`
-            : `${amount} · valable jusqu'au ${expiresAtFormatted}`}
+            ? `${servicesLabel ? `${servicesLabel} (${amount})` : amount} · valid until ${expiresAtFormatted}`
+            : `${servicesLabel ? `${servicesLabel} (${amount})` : amount} · valable jusqu'au ${expiresAtFormatted}`}
         </Text>
       </Section>
 

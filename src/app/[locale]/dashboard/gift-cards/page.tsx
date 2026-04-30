@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import {
   Gift, Loader2, Check, X, Phone, Mail, Calendar,
   AlertCircle, Hourglass, CheckCircle2, XCircle, ChevronRight,
-  ExternalLink, MessageSquare, Save, AlertTriangle,
+  ExternalLink, MessageSquare, Save, AlertTriangle, Sparkles,
 } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { useToast } from '@/components/ui/Toast';
@@ -116,6 +116,7 @@ export default function GiftCardsPage() {
         enabled={enabled}
         amounts={merchant.gift_card_amounts || GIFT_CARD_DEFAULT_AMOUNTS}
         message={merchant.gift_card_message}
+        servicesEnabled={merchant.gift_card_services_enabled !== false}
         onChange={() => fetchData()}
       />
 
@@ -204,12 +205,13 @@ export default function GiftCardsPage() {
 // ============================================================
 
 function SettingsPanel({
-  merchantId, enabled: initialEnabled, amounts: initialAmounts, message: initialMessage, onChange,
+  merchantId, enabled: initialEnabled, amounts: initialAmounts, message: initialMessage, servicesEnabled: initialServicesEnabled, onChange,
 }: {
   merchantId: string;
   enabled: boolean;
   amounts: number[];
   message: string | null;
+  servicesEnabled: boolean;
   onChange?: () => void;
 }) {
   const t = useTranslations('giftCards');
@@ -218,10 +220,11 @@ function SettingsPanel({
   const [enabled, setEnabled] = useState(initialEnabled);
   const [amounts, setAmounts] = useState<number[]>(initialAmounts);
   const [message, setMessage] = useState(initialMessage || '');
+  const [servicesEnabled, setServicesEnabled] = useState(initialServicesEnabled);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
 
-  const persist = useCallback(async (override?: { enabled?: boolean; amounts?: number[]; message?: string }) => {
+  const persist = useCallback(async (override?: { enabled?: boolean; amounts?: number[]; message?: string; servicesEnabled?: boolean }) => {
     setSaving(true);
     try {
       const res = await fetch('/api/gift-cards/settings', {
@@ -232,6 +235,7 @@ function SettingsPanel({
           enabled: override?.enabled ?? enabled,
           amounts: (override?.amounts ?? amounts).filter((a) => a >= GIFT_CARD_MIN_AMOUNT && a <= GIFT_CARD_MAX_AMOUNT),
           message: (override?.message ?? message)?.trim() || null,
+          servicesEnabled: override?.servicesEnabled ?? servicesEnabled,
         }),
       });
       if (!res.ok) throw new Error('Failed');
@@ -243,7 +247,13 @@ function SettingsPanel({
     } finally {
       setSaving(false);
     }
-  }, [merchantId, enabled, amounts, message, addToast, t, onChange]);
+  }, [merchantId, enabled, amounts, message, servicesEnabled, addToast, t, onChange]);
+
+  const handleServicesToggle = () => {
+    const next = !servicesEnabled;
+    setServicesEnabled(next);
+    persist({ servicesEnabled: next });
+  };
 
   const handleToggle = () => {
     const next = !enabled;
@@ -351,6 +361,30 @@ function SettingsPanel({
               />
             </div>
 
+            {/* Sous-toggle : offrir une prestation */}
+            <div className="flex items-center justify-between gap-3 rounded-xl bg-rose-50/40 border border-rose-100 px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-gray-900">{t('programServicesToggleTitle')}</p>
+                <p className="text-xs text-gray-500 mt-0.5 leading-snug">{t('programServicesToggleDesc')}</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={servicesEnabled}
+                onClick={handleServicesToggle}
+                disabled={saving}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-2 disabled:opacity-50 ${
+                  servicesEnabled ? 'bg-rose-500' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
+                    servicesEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
             {dirty && cleanAmounts.length > 0 && (
               <div className="flex justify-end">
                 <button
@@ -407,7 +441,7 @@ type RowMode = 'view' | 'confirming' | 'cancelling';
 function GiftCardRow({
   card, locale, country, onChange,
 }: {
-  card: GiftCard;
+  card: GiftCard & { services_resolved?: Array<{ id: string; name: string; price: number }> };
   locale: 'fr' | 'en';
   country: string | null;
   onChange: () => void;
@@ -421,6 +455,11 @@ function GiftCardRow({
   const amountFmt = formatCurrency(Number(card.amount), country || 'FR', locale, 0);
   const days = daysUntil(card.expires_at);
   const expiringSoon = days !== null && days <= 30 && days > 0;
+  const isServicesKind = card.kind === 'services';
+  // services_resolved est calculé serveur-side (LIVE + fallback snapshot)
+  const resolvedServices = card.services_resolved && card.services_resolved.length > 0
+    ? card.services_resolved
+    : (card.service_snapshot || []);
 
   const handleConfirm = async () => {
     setBusy(true);
@@ -455,6 +494,12 @@ function GiftCardRow({
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2 flex-wrap">
             <span className="text-xl font-bold text-gray-900 tabular-nums">{amountFmt}</span>
+            {isServicesKind && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 text-[10px] font-bold uppercase tracking-wider">
+                <Sparkles className="w-2.5 h-2.5" />
+                {t('rowKindServices')}
+              </span>
+            )}
             <code className="text-[11px] font-mono font-semibold text-gray-400 tracking-wider">
               {card.code}
             </code>
@@ -467,6 +512,26 @@ function GiftCardRow({
         </div>
         <StatusPill status={card.status} t={t} />
       </div>
+
+      {/* Liste prestations offertes (kind=services) */}
+      {isServicesKind && resolvedServices.length > 0 && (
+        <div className="rounded-xl bg-violet-50/50 border border-violet-100 px-3 py-2.5 mb-3">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-violet-600 mb-1.5 flex items-center gap-1">
+            <Sparkles className="w-3 h-3" />
+            {t('rowServicesLabel')}
+          </p>
+          <ul className="space-y-0.5">
+            {resolvedServices.map((s, idx) => (
+              <li key={`${s.id}-${idx}`} className="flex items-center justify-between gap-2 text-[13px]">
+                <span className="text-violet-900 truncate">{s.name}</span>
+                <span className="text-violet-700 font-semibold tabular-nums shrink-0">
+                  {formatCurrency(Number(s.price || 0), country || 'FR', locale, 0)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Détails 2 colonnes */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">

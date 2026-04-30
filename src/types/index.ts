@@ -170,10 +170,11 @@ export interface Merchant {
   // Monthly contest
   contest_enabled: boolean;
   contest_prize: string | null;
-  // Gift cards (bons cadeaux — mig 138)
+  // Gift cards (bons cadeaux — mig 138, services mig 140)
   gift_card_enabled: boolean;
   gift_card_amounts: number[];
   gift_card_message: string | null;
+  gift_card_services_enabled: boolean;
   // Email deliverability
   email_bounced_at: string | null;
   email_unsubscribed_at: string | null;
@@ -288,11 +289,26 @@ export type GiftCardStatus =
 
 export type GiftCardCancellationReason = 'merchant' | 'auto_expired_3d' | 'no_payment';
 
+export type GiftCardKind = 'amount' | 'services';
+
+// Snapshot d'une prestation au moment de la commande (mig 140)
+// Sert de fallback si le service est supprimé/renommé après commande.
+// L'affichage prend en priorité le LIVE depuis merchant_services.
+export interface GiftCardServiceSnapshot {
+  id: string;
+  name: string;
+  price: number;
+}
+
 export interface GiftCard {
   id: string;
   merchant_id: string;
   code: string;
   amount: number;
+  // Type de cadeau (mig 140)
+  kind: GiftCardKind;
+  service_ids: string[] | null;
+  service_snapshot: GiftCardServiceSnapshot[] | null;
   // Offreur
   sender_first_name: string;
   sender_phone: string;

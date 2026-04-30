@@ -64,7 +64,7 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
       'booking_mode, buffer_minutes, home_service_enabled, hide_address_on_public_page, ' +
       'allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days, ' +
       'contest_enabled, contest_prize, ' +
-      'gift_card_enabled, gift_card_amounts, gift_card_message'
+      'gift_card_enabled, gift_card_amounts, gift_card_message, gift_card_services_enabled'
     )
     .eq('slug', slug)
     .maybeSingle();

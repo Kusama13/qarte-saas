@@ -55,3 +55,22 @@ export function parseGiftCardAmounts(raw: unknown): number[] {
 export function merchantHasPaymentLink(merchant: { deposit_link: string | null; deposit_link_2: string | null }): boolean {
   return Boolean(merchant.deposit_link?.trim() || merchant.deposit_link_2?.trim());
 }
+
+/**
+ * Construit un libellé court pour décrire les prestations offertes,
+ * utilisé dans les SMS et l'objet d'email. Ex: "1 coupe + 1 brushing"
+ * ou "2× coupe + 1 brushing" si doublons.
+ */
+export function formatGiftCardServicesLabel(serviceNames: string[]): string {
+  if (serviceNames.length === 0) return '';
+  // Compte les occurrences (cas où on offre 2× la même prestation)
+  const counts = new Map<string, number>();
+  for (const name of serviceNames) {
+    counts.set(name, (counts.get(name) || 0) + 1);
+  }
+  const parts: string[] = [];
+  for (const [name, count] of counts) {
+    parts.push(count > 1 ? `${count}× ${name}` : name);
+  }
+  return parts.join(' + ');
+}

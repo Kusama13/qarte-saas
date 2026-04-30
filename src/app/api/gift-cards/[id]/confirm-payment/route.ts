@@ -21,7 +21,9 @@ import {
 import {
   computeGiftCardExpiry,
   GIFT_CARD_EXPIRY_MONTHS,
+  formatGiftCardServicesLabel,
 } from '@/lib/gift-cards';
+import type { GiftCardServiceSnapshot } from '@/types';
 import { sendBookingSms } from '@/lib/sms';
 import {
   sendGiftCardReceivedEmail,
@@ -135,9 +137,32 @@ export async function POST(
     const expiresAt = computeGiftCardExpiry(paidAt);
     const locale = (merchant.locale || 'fr') as 'fr' | 'en';
     const amountFormatted = formatCurrency(Number(giftCard.amount), merchant.country, locale, 0);
-    const rewardDescription = locale === 'en'
-      ? `Gift card · ${amountFormatted}`
-      : `Bon cadeau · ${amountFormatted}`;
+
+    // Pour kind='services' : on tente le LIVE (au cas où nom changé depuis commande),
+    // fallback sur le snapshot (résilience suppression).
+    let servicesLabel: string | null = null;
+    let serviceNamesLive: string[] = [];
+    if (giftCard.kind === 'services' && Array.isArray(giftCard.service_ids) && giftCard.service_ids.length > 0) {
+      const { data: liveSvc } = await supabase
+        .from('merchant_services')
+        .select('id, name')
+        .eq('merchant_id', merchant.id)
+        .in('id', giftCard.service_ids);
+      const liveById = new Map<string, string>(
+        ((liveSvc as Array<{ id: string; name: string }>) || []).map((s) => [s.id, s.name]),
+      );
+      const snapById = new Map<string, GiftCardServiceSnapshot>(
+        ((giftCard.service_snapshot as GiftCardServiceSnapshot[] | null) || []).map((s) => [s.id, s]),
+      );
+      serviceNamesLive = (giftCard.service_ids as string[])
+        .map((id) => liveById.get(id) || snapById.get(id)?.name || null)
+        .filter((n): n is string => Boolean(n));
+      servicesLabel = formatGiftCardServicesLabel(serviceNamesLive);
+    }
+
+    const rewardDescription = giftCard.kind === 'services' && servicesLabel
+      ? (locale === 'en' ? `Gift · ${servicesLabel}` : `Bon cadeau · ${servicesLabel}`)
+      : (locale === 'en' ? `Gift card · ${amountFormatted}` : `Bon cadeau · ${amountFormatted}`);
 
     // 6. Crée le voucher
     const { data: voucher, error: voucherError } = await supabase
@@ -204,6 +229,7 @@ export async function POST(
         giftSenderName: giftCard.sender_first_name,
         giftRecipientName: giftCard.recipient_first_name,
         giftAmount: amountFormatted,
+        giftServicesLabel: servicesLabel,
       }),
 
       // Email destinataire (optionnel)
@@ -220,6 +246,8 @@ export async function POST(
             primaryColor: merchant.primary_color || '#4b0082',
             secondaryColor: merchant.secondary_color || '#ec4899',
             locale,
+            servicesLabel,
+            serviceNames: serviceNamesLive,
           })
         : Promise.resolve(),
 
@@ -231,6 +259,7 @@ export async function POST(
         amount: amountFormatted,
         expiresAtFormatted: expiresAtFmt,
         locale,
+        servicesLabel,
       }),
     ]).catch(() => {});
 

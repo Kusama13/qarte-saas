@@ -19,6 +19,7 @@ interface GiftCardMerchantNotificationEmailProps {
   amount: string;
   code: string;
   senderMessage?: string | null;
+  servicesLabel?: string | null;
   dashboardUrl?: string;
   locale?: EmailLocale;
 }
@@ -33,24 +34,26 @@ export function GiftCardMerchantNotificationEmail({
   amount,
   code,
   senderMessage,
+  servicesLabel,
   dashboardUrl = 'https://getqarte.com/dashboard/gift-cards',
   locale = 'fr',
 }: GiftCardMerchantNotificationEmailProps) {
   const isEn = locale === 'en';
+  const giftLabel = servicesLabel || (isEn ? `${amount} gift card` : `bon cadeau de ${amount}`);
   const preview = isEn
-    ? `New gift card order — ${amount} from ${senderFirstName}`
-    : `Nouveau bon cadeau — ${amount} de ${senderFirstName}`;
+    ? `New ${giftLabel} order from ${senderFirstName}`
+    : `Nouvelle commande ${giftLabel} de ${senderFirstName}`;
 
   return (
     <BaseLayout preview={preview} locale={locale}>
       <Heading style={heading}>
-        {isEn ? `New gift card order ${amount} 🎁` : `Nouveau bon cadeau ${amount} 🎁`}
+        {isEn ? `New ${giftLabel} order 🎁` : `Nouvelle commande ${giftLabel} 🎁`}
       </Heading>
 
       <Text style={paragraph}>
         {isEn
-          ? `Hi ${shopName}, ${senderFirstName} just ordered a ${amount} gift card for ${recipientFirstName} from your page.`
-          : `Bonjour ${shopName}, ${senderFirstName} vient de commander un bon cadeau de ${amount} pour ${recipientFirstName} depuis ta page.`}
+          ? `Hi ${shopName}, ${senderFirstName} just ordered a ${giftLabel} for ${recipientFirstName} from your page.`
+          : `Bonjour ${shopName}, ${senderFirstName} vient de commander un ${giftLabel} pour ${recipientFirstName} depuis ta page.`}
       </Text>
 
       {/* Référence à attendre */}
@@ -72,9 +75,20 @@ export function GiftCardMerchantNotificationEmail({
           {isEn ? 'Order details' : 'Détails de la commande'}
         </Text>
 
-        <Text style={detailLine}>
-          <strong>{isEn ? 'Amount:' : 'Montant :'}</strong> <span style={amountValue}>{amount}</span>
-        </Text>
+        {servicesLabel ? (
+          <>
+            <Text style={detailLine}>
+              <strong>{isEn ? 'Gift:' : 'Cadeau :'}</strong> <span style={amountValue}>{servicesLabel}</span>
+            </Text>
+            <Text style={detailLine}>
+              <strong>{isEn ? 'Total to receive:' : 'Total à percevoir :'}</strong> {amount}
+            </Text>
+          </>
+        ) : (
+          <Text style={detailLine}>
+            <strong>{isEn ? 'Amount:' : 'Montant :'}</strong> <span style={amountValue}>{amount}</span>
+          </Text>
+        )}
 
         <Hr style={miniDivider} />
 

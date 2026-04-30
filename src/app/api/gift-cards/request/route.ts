@@ -26,7 +26,9 @@ import {
   merchantHasPaymentLink,
   GIFT_CARD_MIN_AMOUNT,
   GIFT_CARD_MAX_AMOUNT,
+  formatGiftCardServicesLabel,
 } from '@/lib/gift-cards';
+import type { GiftCardServiceSnapshot } from '@/types';
 import { detectPaymentProvider } from '@/lib/payment-providers';
 import {
   sendGiftCardOrderConfirmationEmail,
@@ -40,7 +42,12 @@ const supabaseAdmin = getSupabaseAdmin();
 
 const giftCardRequestSchema = z.object({
   merchant_id: z.string().uuid(),
-  amount: z.number().min(GIFT_CARD_MIN_AMOUNT).max(GIFT_CARD_MAX_AMOUNT),
+
+  // Type : amount = montant libre, services = liste de prestations à offrir
+  // Si services, le montant est calculé serveur-side à partir des prix LIVE.
+  kind: z.enum(['amount', 'services']).default('amount'),
+  amount: z.number().min(GIFT_CARD_MIN_AMOUNT).max(GIFT_CARD_MAX_AMOUNT).optional(),
+  service_ids: z.array(z.string().uuid()).min(1).max(10).optional(),
 
   // Offreur
   sender_first_name: z.string().min(1).max(60),
@@ -54,7 +61,10 @@ const giftCardRequestSchema = z.object({
   recipient_phone: z.string().min(1),
   recipient_phone_country: z.enum(['FR', 'BE', 'CH']).optional(),
   recipient_email: z.string().email().max(255).optional().nullable(),
-});
+}).refine(
+  (data) => (data.kind === 'amount' ? data.amount !== undefined : (data.service_ids?.length || 0) > 0),
+  { message: 'amount requis si kind=amount, service_ids requis si kind=services' },
+);
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,7 +93,7 @@ export async function POST(request: NextRequest) {
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
       .select(
-        'id, slug, shop_name, country, locale, primary_color, secondary_color, gift_card_enabled, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, trial_ends_at, subscription_status, deleted_at, user_id',
+        'id, slug, shop_name, country, locale, primary_color, secondary_color, gift_card_enabled, gift_card_services_enabled, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, trial_ends_at, subscription_status, deleted_at, user_id',
       )
       .eq('id', data.merchant_id)
       .is('deleted_at', null)
@@ -96,6 +106,13 @@ export async function POST(request: NextRequest) {
     if (!merchant.gift_card_enabled) {
       return NextResponse.json(
         { error: 'Les bons cadeaux ne sont pas activés pour ce salon' },
+        { status: 403 },
+      );
+    }
+
+    if (data.kind === 'services' && !merchant.gift_card_services_enabled) {
+      return NextResponse.json(
+        { error: 'Ce salon ne propose pas d\'offrir une prestation' },
         { status: 403 },
       );
     }
@@ -147,7 +164,56 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 6. Génère un code unique
+    // 6a. Si mode services : charger les prix LIVE depuis DB, calculer amount,
+    //     snapshot {id,name,price} pour résilience future
+    let finalAmount: number;
+    let serviceIds: string[] | null = null;
+    let serviceSnapshot: GiftCardServiceSnapshot[] | null = null;
+    let servicesLabel: string | null = null;
+
+    if (data.kind === 'services') {
+      const ids = data.service_ids!;
+      const { data: svcRows } = await supabaseAdmin
+        .from('merchant_services')
+        .select('id, name, price')
+        .eq('merchant_id', merchant.id)
+        .in('id', ids);
+
+      const found = (svcRows as Array<{ id: string; name: string; price: number | string }>) || [];
+      // On vérifie que TOUS les ids demandés appartiennent bien à ce merchant
+      const foundIds = new Set(found.map((s) => s.id));
+      const missing = ids.filter((id) => !foundIds.has(id));
+      if (missing.length > 0) {
+        return NextResponse.json(
+          { error: 'Une ou plusieurs prestations sont introuvables' },
+          { status: 400 },
+        );
+      }
+
+      // Préserver l'ordre de sélection client (multi-sélection avec doublons éventuels)
+      const byId = new Map(found.map((s) => [s.id, s]));
+      const orderedFound = ids.map((id) => byId.get(id)!);
+
+      finalAmount = orderedFound.reduce((sum, s) => sum + Number(s.price || 0), 0);
+      if (finalAmount < GIFT_CARD_MIN_AMOUNT || finalAmount > GIFT_CARD_MAX_AMOUNT) {
+        return NextResponse.json(
+          { error: `Montant total invalide (min ${GIFT_CARD_MIN_AMOUNT}, max ${GIFT_CARD_MAX_AMOUNT})` },
+          { status: 400 },
+        );
+      }
+
+      serviceIds = ids;
+      serviceSnapshot = orderedFound.map((s) => ({
+        id: s.id,
+        name: s.name,
+        price: Number(s.price || 0),
+      }));
+      servicesLabel = formatGiftCardServicesLabel(orderedFound.map((s) => s.name));
+    } else {
+      finalAmount = data.amount!;
+    }
+
+    // 6b. Génère un code unique
     const code = await generateGiftCardCode();
 
     // 7. Insert gift_card en pending_payment
@@ -156,7 +222,10 @@ export async function POST(request: NextRequest) {
       .insert({
         merchant_id: merchant.id,
         code,
-        amount: data.amount,
+        amount: finalAmount,
+        kind: data.kind,
+        service_ids: serviceIds,
+        service_snapshot: serviceSnapshot,
         sender_first_name: data.sender_first_name.trim(),
         sender_phone: senderPhoneE164,
         sender_phone_country: senderCountry,
@@ -191,7 +260,7 @@ export async function POST(request: NextRequest) {
       paymentLinks.push({ url: merchant.deposit_link_2.trim(), label: `Payer avec ${label}` });
     }
 
-    const amountFormatted = formatCurrency(data.amount, merchant.country, merchant.locale || 'fr', 0);
+    const amountFormatted = formatCurrency(finalAmount, merchant.country, merchant.locale || 'fr', 0);
     const locale = (merchant.locale || 'fr') as 'fr' | 'en';
 
     // 9. Side effects fire-and-forget : email offreur + email merchant + push merchant
@@ -205,6 +274,7 @@ export async function POST(request: NextRequest) {
         code: giftCard.code,
         paymentLinks,
         locale,
+        servicesLabel,
       }),
       // Email merchant : envoyé à l'email du compte (auth.users)
       (async () => {
@@ -225,6 +295,7 @@ export async function POST(request: NextRequest) {
           amount: amountFormatted,
           code: giftCard.code,
           senderMessage: data.sender_message?.trim() || null,
+          servicesLabel,
           locale,
         });
       })(),
@@ -233,7 +304,9 @@ export async function POST(request: NextRequest) {
         merchantId: merchant.id,
         notificationType: 'gift_card_pending',
         referenceId: giftCard.id,
-        title: `🎁 Nouveau bon cadeau ${amountFormatted}`,
+        title: servicesLabel
+          ? `🎁 Nouveau bon ${servicesLabel}`
+          : `🎁 Nouveau bon cadeau ${amountFormatted}`,
         body: `${data.sender_first_name.trim()} pour ${data.recipient_first_name.trim()} · réf ${giftCard.code}`,
         url: '/dashboard/gift-cards',
       }),

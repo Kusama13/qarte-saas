@@ -7,6 +7,8 @@ import { getTodayForCountry, getTrialStatus } from '@/lib/utils';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { sendBookingSms } from '@/lib/sms';
 import { formatCurrency } from '@/lib/utils';
+import { formatGiftCardServicesLabel } from '@/lib/gift-cards';
+import type { GiftCardServiceSnapshot } from '@/types';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -178,7 +180,7 @@ export async function POST(request: NextRequest) {
         try {
           const { data: giftCard } = await supabaseAdmin
             .from('gift_cards')
-            .select('id, sender_phone, sender_first_name, recipient_first_name, amount')
+            .select('id, sender_phone, sender_first_name, recipient_first_name, amount, kind, service_ids, service_snapshot, merchant_id')
             .eq('voucher_id', voucher_id)
             .maybeSingle();
 
@@ -204,6 +206,26 @@ export async function POST(request: NextRequest) {
           const lang = (shopMerchant.locale || 'fr') as 'fr' | 'en';
           const amountFmt = formatCurrency(Number(giftCard.amount), shopMerchant.country, lang, 0);
 
+          // Si kind='services' : on construit le label LIVE (avec fallback snapshot)
+          let servicesLabel: string | null = null;
+          if (giftCard.kind === 'services' && Array.isArray(giftCard.service_ids) && giftCard.service_ids.length > 0) {
+            const { data: liveSvc } = await supabaseAdmin
+              .from('merchant_services')
+              .select('id, name')
+              .eq('merchant_id', giftCard.merchant_id)
+              .in('id', giftCard.service_ids);
+            const liveById = new Map<string, string>(
+              ((liveSvc as Array<{ id: string; name: string }>) || []).map((s) => [s.id, s.name]),
+            );
+            const snapById = new Map<string, GiftCardServiceSnapshot>(
+              ((giftCard.service_snapshot as GiftCardServiceSnapshot[] | null) || []).map((s) => [s.id, s]),
+            );
+            const names = (giftCard.service_ids as string[])
+              .map((id) => liveById.get(id) || snapById.get(id)?.name || null)
+              .filter((n): n is string => Boolean(n));
+            servicesLabel = formatGiftCardServicesLabel(names);
+          }
+
           await sendBookingSms(supabaseAdmin, {
             merchantId: voucher.merchant_id,
             phone: giftCard.sender_phone,
@@ -214,6 +236,7 @@ export async function POST(request: NextRequest) {
             giftSenderName: giftCard.sender_first_name,
             giftRecipientName: giftCard.recipient_first_name,
             giftAmount: amountFmt,
+            giftServicesLabel: servicesLabel,
           });
         } catch (err) {
           logger.error('Gift card sender SMS failed:', err);

@@ -72,8 +72,39 @@ export async function GET(request: NextRequest) {
       return acc;
     }, {});
 
+    // Live lookup des services pour les bons kind=services :
+    // si le merchant a renommé / supprimé un service, on prend le nom LIVE,
+    // sinon fallback sur service_snapshot (résilience).
+    const cardsList = (giftCards as Array<{ kind?: string; service_ids?: string[] | null; service_snapshot?: Array<{ id: string; name: string; price: number }> | null }>) || [];
+    const allServiceIds = new Set<string>();
+    for (const g of cardsList) {
+      if (g.kind === 'services' && Array.isArray(g.service_ids)) {
+        g.service_ids.forEach((id) => allServiceIds.add(id));
+      }
+    }
+
+    const liveServicesById = new Map<string, { id: string; name: string; price: number }>();
+    if (allServiceIds.size > 0) {
+      const { data: liveSvc } = await supabase
+        .from('merchant_services')
+        .select('id, name, price')
+        .eq('merchant_id', merchantId)
+        .in('id', Array.from(allServiceIds));
+      for (const s of (liveSvc as Array<{ id: string; name: string; price: number | string }>) || []) {
+        liveServicesById.set(s.id, { id: s.id, name: s.name, price: Number(s.price || 0) });
+      }
+    }
+
+    // Attache services_resolved (live + fallback snapshot) à chaque carte concernée
+    const enriched = cardsList.map((g) => {
+      if (g.kind !== 'services' || !Array.isArray(g.service_ids)) return g;
+      const snapById = new Map((g.service_snapshot || []).map((s) => [s.id, s]));
+      const resolved = g.service_ids.map((id) => liveServicesById.get(id) || snapById.get(id) || null);
+      return { ...g, services_resolved: resolved.filter(Boolean) };
+    });
+
     return NextResponse.json({
-      gift_cards: giftCards || [],
+      gift_cards: enriched,
       counts: {
         pending_payment: statusCounts.pending_payment || 0,
         active: statusCounts.active || 0,

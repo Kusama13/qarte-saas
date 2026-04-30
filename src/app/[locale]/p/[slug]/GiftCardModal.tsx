@@ -2,10 +2,18 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Gift, ArrowLeft, Loader2, Check, Sparkles } from 'lucide-react';
+import { X, Gift, ArrowLeft, Loader2, Check, Sparkles, Coins, Clock, ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { formatCurrency } from '@/lib/utils';
+
+function formatDuration(mins: number, locale: string): string {
+  if (mins < 60) return `${mins}min`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (locale === 'en') return m > 0 ? `${h}h ${m}min` : `${h}h`;
+  return m > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
+}
 import {
   GIFT_CARD_MIN_AMOUNT,
   GIFT_CARD_MAX_AMOUNT,
@@ -14,7 +22,23 @@ import {
 } from '@/lib/gift-cards';
 import type { MerchantCountry } from '@/types';
 
-type Step = 'amount' | 'recipient' | 'sender' | 'recap' | 'success';
+type Step = 'kind' | 'amount' | 'services' | 'recipient' | 'sender' | 'recap' | 'success';
+
+interface Service {
+  id: string;
+  name: string;
+  price: number;
+  duration?: number | null;
+  position?: number;
+  category_id?: string | null;
+  price_from?: boolean;
+}
+
+interface ServiceCategory {
+  id: string;
+  name: string;
+  position: number;
+}
 
 interface GiftCardModalProps {
   open: boolean;
@@ -26,30 +50,44 @@ interface GiftCardModalProps {
   defaultCountry: MerchantCountry;
   amounts: number[] | null;     // depuis merchant.gift_card_amounts (JSONB)
   introMessage: string | null;  // merchant.gift_card_message
+  services: Service[];          // services LIVE du merchant
+  serviceCategories: ServiceCategory[];
+  servicesEnabled: boolean;     // merchant.gift_card_services_enabled
+  locale: string;
   isDemo?: boolean;
 }
 
 export default function GiftCardModal({
   open, onClose, merchantId, shopName, primaryColor, secondaryColor,
-  defaultCountry, amounts, introMessage, isDemo = false,
+  defaultCountry, amounts, introMessage, services, serviceCategories,
+  servicesEnabled, locale, isDemo = false,
 }: GiftCardModalProps) {
   const t = useTranslations('giftCards');
 
-  const [step, setStep] = useState<Step>('amount');
+  // Mode services dispo seulement si toggle merchant ON ET au moins un service actif
+  const servicesAvailable = servicesEnabled && services.length > 0;
+  // Si pas de services → on skip l'étape kind, on démarre direct à amount
+  const initialStep: Step = servicesAvailable ? 'kind' : 'amount';
+
+  const [step, setStep] = useState<Step>(initialStep);
+  const [kind, setKind] = useState<'amount' | 'services'>('amount');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Step 1: amount
+  // Step amount
   const [amount, setAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState('');
 
-  // Step 2: recipient
+  // Step services — array d'IDs (autorise doublons : 2× même service)
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+
+  // Step recipient
   const [recipientFirstName, setRecipientFirstName] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
   const [recipientCountry, setRecipientCountry] = useState<MerchantCountry>(defaultCountry);
   const [recipientEmail, setRecipientEmail] = useState('');
 
-  // Step 3: sender
+  // Step sender
   const [senderFirstName, setSenderFirstName] = useState('');
   const [senderPhone, setSenderPhone] = useState('');
   const [senderCountry, setSenderCountry] = useState<MerchantCountry>(defaultCountry);
@@ -62,7 +100,25 @@ export default function GiftCardModal({
   );
 
   const country = defaultCountry || 'FR';
-  const finalAmount = amount ?? Number(customAmount) ?? 0;
+
+  // Total montant : depuis amount (mode amount) OU somme prix services
+  const selectedServices = useMemo(() => {
+    const byId = new Map(services.map((s) => [s.id, s]));
+    return selectedServiceIds.map((id) => byId.get(id)).filter((s): s is Service => Boolean(s));
+  }, [services, selectedServiceIds]);
+
+  const finalAmount = useMemo(() => {
+    if (kind === 'services') {
+      return selectedServices.reduce((sum, s) => sum + Number(s.price || 0), 0);
+    }
+    return amount ?? Number(customAmount) ?? 0;
+  }, [kind, selectedServices, amount, customAmount]);
+
+  const totalDuration = useMemo(
+    () => selectedServices.reduce((sum, s) => sum + (s.duration || 0), 0),
+    [selectedServices],
+  );
+
   const amountFormatted = useMemo(
     () => formatCurrency(finalAmount, country, 'fr', 0),
     [finalAmount, country],
@@ -71,9 +127,11 @@ export default function GiftCardModal({
   // Reset état à chaque ouverture
   useEffect(() => {
     if (open) {
-      setStep('amount');
+      setStep(initialStep);
+      setKind('amount');
       setAmount(null);
       setCustomAmount('');
+      setSelectedServiceIds([]);
       setRecipientFirstName('');
       setRecipientPhone('');
       setRecipientCountry(defaultCountry);
@@ -86,11 +144,46 @@ export default function GiftCardModal({
       setError(null);
       setSubmitting(false);
     }
-  }, [open, defaultCountry]);
+  }, [open, defaultCountry, initialStep]);
 
-  const canContinueStep1 = finalAmount >= GIFT_CARD_MIN_AMOUNT && finalAmount <= GIFT_CARD_MAX_AMOUNT;
-  const canContinueStep2 = recipientFirstName.trim().length > 0 && recipientPhone.trim().length >= 6;
-  const canContinueStep3 = senderFirstName.trim().length > 0
+  // Group services by category (pattern BookingModal simplifié)
+  const groupedServices = useMemo(() => {
+    const catMap = new Map(serviceCategories.map((c) => [c.id, c]));
+    const grouped: { category: ServiceCategory | null; services: Service[] }[] = [];
+    const withCat = services.filter((s) => s.category_id && catMap.has(s.category_id));
+    const withoutCat = services.filter((s) => !s.category_id || !catMap.has(s.category_id));
+    const seenCats = new Set<string>();
+    for (const svc of withCat) {
+      if (svc.category_id && !seenCats.has(svc.category_id)) {
+        seenCats.add(svc.category_id);
+        const cat = catMap.get(svc.category_id)!;
+        grouped.push({
+          category: cat,
+          services: withCat.filter((s) => s.category_id === svc.category_id).sort((a, b) => (a.position || 0) - (b.position || 0)),
+        });
+      }
+    }
+    if (withoutCat.length > 0) {
+      grouped.push({ category: null, services: withoutCat.sort((a, b) => (a.position || 0) - (b.position || 0)) });
+    }
+    return grouped;
+  }, [services, serviceCategories]);
+
+  const addService = useCallback((id: string) => {
+    setSelectedServiceIds((prev) => [...prev, id]);
+  }, []);
+
+  const removeServiceAt = useCallback((index: number) => {
+    setSelectedServiceIds((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const canContinueKind = true;
+  const canContinueAmount = finalAmount >= GIFT_CARD_MIN_AMOUNT && finalAmount <= GIFT_CARD_MAX_AMOUNT;
+  const canContinueServices = selectedServiceIds.length > 0
+    && finalAmount >= GIFT_CARD_MIN_AMOUNT
+    && finalAmount <= GIFT_CARD_MAX_AMOUNT;
+  const canContinueRecipient = recipientFirstName.trim().length > 0 && recipientPhone.trim().length >= 6;
+  const canContinueSender = senderFirstName.trim().length > 0
     && senderPhone.trim().length >= 6
     && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderEmail.trim());
 
@@ -107,7 +200,9 @@ export default function GiftCardModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           merchant_id: merchantId,
-          amount: finalAmount,
+          kind,
+          ...(kind === 'amount' ? { amount: finalAmount } : {}),
+          ...(kind === 'services' ? { service_ids: selectedServiceIds } : {}),
           sender_first_name: senderFirstName.trim(),
           sender_phone: senderPhone.trim(),
           sender_phone_country: senderCountry,
@@ -134,14 +229,43 @@ export default function GiftCardModal({
       setSubmitting(false);
     }
   }, [
-    isDemo, merchantId, finalAmount, senderFirstName, senderPhone, senderCountry,
-    senderEmail, senderMessage, recipientFirstName, recipientPhone, recipientCountry,
-    recipientEmail, t,
+    isDemo, merchantId, kind, finalAmount, selectedServiceIds,
+    senderFirstName, senderPhone, senderCountry, senderEmail, senderMessage,
+    recipientFirstName, recipientPhone, recipientCountry, recipientEmail, t,
   ]);
 
   if (!open) return null;
 
-  const stepIndex = step === 'amount' ? 0 : step === 'recipient' ? 1 : step === 'sender' ? 2 : 3;
+  // Logique navigation
+  const goBack = () => {
+    setError(null);
+    if (step === 'recap') setStep('sender');
+    else if (step === 'sender') setStep('recipient');
+    else if (step === 'recipient') setStep(kind === 'services' ? 'services' : 'amount');
+    else if (step === 'amount' || step === 'services') {
+      if (servicesAvailable) setStep('kind');
+    }
+  };
+
+  const goNext = () => {
+    setError(null);
+    if (step === 'kind') setStep(kind === 'services' ? 'services' : 'amount');
+    else if (step === 'amount' && canContinueAmount) setStep('recipient');
+    else if (step === 'services' && canContinueServices) setStep('recipient');
+    else if (step === 'recipient' && canContinueRecipient) setStep('sender');
+    else if (step === 'sender' && canContinueSender) setStep('recap');
+    else if (step === 'recap') submit();
+  };
+
+  // Progress dots
+  const totalSteps = servicesAvailable ? 5 : 4;
+  const stepIndex = step === 'kind' ? 0
+    : (step === 'amount' || step === 'services') ? (servicesAvailable ? 1 : 0)
+    : step === 'recipient' ? (servicesAvailable ? 2 : 1)
+    : step === 'sender' ? (servicesAvailable ? 3 : 2)
+    : (servicesAvailable ? 4 : 3);
+
+  const canShowBack = step !== 'success' && step !== initialStep;
 
   return (
     <AnimatePresence>
@@ -168,12 +292,9 @@ export default function GiftCardModal({
             style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
           >
             <div className="flex items-center justify-between">
-              {step !== 'success' && step !== 'amount' ? (
+              {canShowBack ? (
                 <button
-                  onClick={() => {
-                    setError(null);
-                    setStep(step === 'recap' ? 'sender' : step === 'sender' ? 'recipient' : 'amount');
-                  }}
+                  onClick={goBack}
                   className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors touch-manipulation"
                   aria-label={t('back')}
                 >
@@ -200,37 +321,70 @@ export default function GiftCardModal({
             </div>
 
             {step !== 'success' && (
-              <>
-                {/* Progress dots */}
-                <div className="flex justify-center gap-1.5 mt-4">
-                  {[0, 1, 2, 3].map((i) => (
-                    <span
-                      key={i}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                        i === stepIndex
-                          ? 'w-8 bg-white'
-                          : i < stepIndex
-                          ? 'w-1.5 bg-white/80'
-                          : 'w-1.5 bg-white/30'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </>
+              <div className="flex justify-center gap-1.5 mt-4">
+                {Array.from({ length: totalSteps }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      i === stepIndex
+                        ? 'w-8 bg-white'
+                        : i < stepIndex
+                        ? 'w-1.5 bg-white/80'
+                        : 'w-1.5 bg-white/30'
+                    }`}
+                  />
+                ))}
+              </div>
             )}
           </header>
 
           {/* Body scroll */}
           <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
-            {/* STEP 1 — AMOUNT */}
+            {/* STEP — KIND (type de cadeau) */}
+            {step === 'kind' && (
+              <div className="space-y-5">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">{t('publicStepKindTitle')}</h2>
+                  <p className="text-sm text-gray-500">{t('publicDesc', { shopName })}</p>
+                  {introMessage && (
+                    <p className="text-sm text-gray-700 italic mt-3 bg-gray-50 rounded-xl px-4 py-3">
+                      {introMessage}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <KindCard
+                    selected={kind === 'amount'}
+                    onClick={() => setKind('amount')}
+                    icon={<Coins className="w-5 h-5" />}
+                    title={t('kindAmountTitle')}
+                    description={t('kindAmountDesc')}
+                    primaryColor={primaryColor}
+                    secondaryColor={secondaryColor}
+                  />
+                  <KindCard
+                    selected={kind === 'services'}
+                    onClick={() => setKind('services')}
+                    icon={<Sparkles className="w-5 h-5" />}
+                    title={t('kindServicesTitle')}
+                    description={t('kindServicesDesc')}
+                    primaryColor={primaryColor}
+                    secondaryColor={secondaryColor}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* STEP — AMOUNT */}
             {step === 'amount' && (
               <div className="space-y-5">
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 mb-1">{t('publicStep1Title')}</h2>
-                  <p className="text-sm text-gray-500">
-                    {t('publicDesc', { shopName })}
-                  </p>
-                  {introMessage && (
+                  {!servicesAvailable && (
+                    <p className="text-sm text-gray-500">{t('publicDesc', { shopName })}</p>
+                  )}
+                  {!servicesAvailable && introMessage && (
                     <p className="text-sm text-gray-700 italic mt-3 bg-gray-50 rounded-xl px-4 py-3">
                       {introMessage}
                     </p>
@@ -295,13 +449,121 @@ export default function GiftCardModal({
               </div>
             )}
 
-            {/* STEP 2 — RECIPIENT */}
+            {/* STEP — SERVICES (sélection prestations) */}
+            {step === 'services' && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">{t('publicStepServicesTitle')}</h2>
+                  <p className="text-sm text-gray-500">{t('publicStepServicesDesc')}</p>
+                </div>
+
+                {/* Liste services groupée */}
+                <div className="space-y-4">
+                  {groupedServices.map(({ category, services: catServices }) => (
+                    <div key={category?.id || 'uncategorized'}>
+                      {category && (
+                        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-[0.14em] mb-2">
+                          {category.name}
+                        </p>
+                      )}
+                      <div className="space-y-1.5">
+                        {catServices.map((svc) => {
+                          const count = selectedServiceIds.filter((id) => id === svc.id).length;
+                          const selected = count > 0;
+                          return (
+                            <button
+                              key={svc.id}
+                              type="button"
+                              onClick={() => addService(svc.id)}
+                              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all touch-manipulation ${
+                                selected ? 'border-2' : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                              }`}
+                              style={selected ? { backgroundColor: `${primaryColor}10`, borderColor: primaryColor } : undefined}
+                            >
+                              <div
+                                className={`w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                                  selected ? 'border-transparent text-white' : 'border-gray-300 text-gray-400'
+                                }`}
+                                style={selected ? { backgroundColor: primaryColor } : undefined}
+                              >
+                                {selected ? (
+                                  <span className="text-xs font-bold">{count}</span>
+                                ) : (
+                                  <span className="text-base font-light">+</span>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-gray-900">{svc.name}</p>
+                                {svc.duration ? (
+                                  <p className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5">
+                                    <Clock className="w-3 h-3" />
+                                    {formatDuration(svc.duration, locale)}
+                                  </p>
+                                ) : null}
+                              </div>
+                              <p className="text-sm font-bold text-gray-700 shrink-0">
+                                {svc.price_from && (
+                                  <span className="text-[10px] font-normal text-gray-500">{t('priceFrom')} </span>
+                                )}
+                                {formatCurrency(Number(svc.price), country, 'fr')}
+                              </p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Sélection en cours (avec retrait individuel — gère les doublons) */}
+                {selectedServiceIds.length > 0 && (
+                  <div className="rounded-2xl bg-slate-50 border border-slate-100 p-3.5">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                      {t('selectedTitle', { count: selectedServiceIds.length })}
+                    </p>
+                    <div className="space-y-1.5">
+                      {selectedServices.map((svc, idx) => (
+                        <div key={`${svc.id}-${idx}`} className="flex items-center gap-2">
+                          <span className="flex-1 text-sm text-slate-800 truncate">{svc.name}</span>
+                          <span className="text-sm font-semibold text-slate-700 shrink-0">
+                            {formatCurrency(Number(svc.price), country, 'fr')}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeServiceAt(idx)}
+                            className="w-7 h-7 rounded-full hover:bg-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors touch-manipulation"
+                            aria-label={t('remove')}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-600">{t('totalLabel')}</span>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-slate-900 leading-tight">{amountFormatted}</p>
+                        {totalDuration > 0 && (
+                          <p className="text-[11px] text-slate-500">~{formatDuration(totalDuration, locale)}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedServiceIds.length === 0 && (
+                  <p className="text-xs text-gray-500 text-center py-3">
+                    {t('selectAtLeastOne')}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* STEP — RECIPIENT */}
             {step === 'recipient' && (
               <div className="space-y-5">
                 <h2 className="text-xl font-bold text-gray-900 mb-1">{t('publicStep2Title')}</h2>
-                <p className="text-sm text-gray-500 -mt-3">
-                  {t('recipientPhoneHint')}
-                </p>
+                <p className="text-sm text-gray-500 -mt-3">{t('recipientPhoneHint')}</p>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
@@ -348,7 +610,7 @@ export default function GiftCardModal({
               </div>
             )}
 
-            {/* STEP 3 — SENDER */}
+            {/* STEP — SENDER */}
             {step === 'sender' && (
               <div className="space-y-5">
                 <h2 className="text-xl font-bold text-gray-900 mb-1">{t('publicStep3Title')}</h2>
@@ -415,7 +677,7 @@ export default function GiftCardModal({
               </div>
             )}
 
-            {/* STEP 4 — RECAP */}
+            {/* STEP — RECAP */}
             {step === 'recap' && (
               <div className="space-y-5">
                 <h2 className="text-xl font-bold text-gray-900 mb-1">{t('publicStep4Title')}</h2>
@@ -432,11 +694,19 @@ export default function GiftCardModal({
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-90 mb-2">
                     {t('publicTitle')}
                   </p>
-                  <p className="text-5xl font-bold tracking-tight mb-2">{amountFormatted}</p>
+                  {kind === 'services' ? (
+                    <>
+                      <p className="text-2xl font-bold leading-tight tracking-tight mb-1.5 px-2">
+                        {selectedServices.map((s) => s.name).join(' + ')}
+                      </p>
+                      <p className="text-xs opacity-85 mb-2">{t('valueLabel')} {amountFormatted}</p>
+                    </>
+                  ) : (
+                    <p className="text-5xl font-bold tracking-tight mb-2">{amountFormatted}</p>
+                  )}
                   <p className="text-sm opacity-95">{shopName}</p>
                 </div>
 
-                {/* Détails récap */}
                 <div className="space-y-3 px-1">
                   <RecapLine label={t('toLabel')} value={`${recipientFirstName} · ${recipientPhone}`} />
                   <RecapLine label={t('fromLabel')} value={`${senderFirstName} · ${senderEmail}`} />
@@ -457,7 +727,7 @@ export default function GiftCardModal({
               </div>
             )}
 
-            {/* STEP 5 — SUCCESS */}
+            {/* STEP — SUCCESS */}
             {step === 'success' && (
               <div className="text-center py-6">
                 <div
@@ -506,18 +776,14 @@ export default function GiftCardModal({
           {step !== 'success' && (
             <footer className="px-5 py-4 border-t border-gray-100 bg-white">
               <button
-                onClick={() => {
-                  setError(null);
-                  if (step === 'amount' && canContinueStep1) setStep('recipient');
-                  else if (step === 'recipient' && canContinueStep2) setStep('sender');
-                  else if (step === 'sender' && canContinueStep3) setStep('recap');
-                  else if (step === 'recap') submit();
-                }}
+                onClick={goNext}
                 disabled={
                   submitting ||
-                  (step === 'amount' && !canContinueStep1) ||
-                  (step === 'recipient' && !canContinueStep2) ||
-                  (step === 'sender' && !canContinueStep3)
+                  (step === 'kind' && !canContinueKind) ||
+                  (step === 'amount' && !canContinueAmount) ||
+                  (step === 'services' && !canContinueServices) ||
+                  (step === 'recipient' && !canContinueRecipient) ||
+                  (step === 'sender' && !canContinueSender)
                 }
                 className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-white text-base font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 touch-manipulation"
                 style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
@@ -530,7 +796,12 @@ export default function GiftCardModal({
                 ) : step === 'recap' ? (
                   t('submit')
                 ) : (
-                  t('continue')
+                  <>
+                    {step === 'services' && selectedServiceIds.length > 0
+                      ? `${t('continue')} · ${amountFormatted}`
+                      : t('continue')}
+                    <ChevronRight className="w-4 h-4" />
+                  </>
                 )}
               </button>
             </footer>
@@ -547,5 +818,58 @@ function RecapLine({ label, value, italic = false }: { label: string; value: str
       <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{label}</span>
       <span className={`text-sm text-gray-800 ${italic ? 'italic' : 'font-medium'}`}>{value}</span>
     </div>
+  );
+}
+
+function KindCard({
+  selected,
+  onClick,
+  icon,
+  title,
+  description,
+  primaryColor,
+  secondaryColor,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  primaryColor: string;
+  secondaryColor: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full text-left rounded-2xl p-5 transition-all touch-manipulation flex items-start gap-4 ${
+        selected ? 'border-2 shadow-md' : 'border-2 border-gray-200 bg-white hover:border-gray-300'
+      }`}
+      style={selected ? {
+        borderColor: primaryColor,
+        background: `linear-gradient(135deg, ${primaryColor}08 0%, ${secondaryColor}05 100%)`,
+      } : undefined}
+    >
+      <div
+        className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
+          selected ? 'text-white' : 'bg-gray-100 text-gray-600'
+        }`}
+        style={selected ? { background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` } : undefined}
+      >
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-base font-bold text-gray-900 leading-tight">{title}</p>
+        <p className="text-[13px] text-gray-500 mt-0.5 leading-snug">{description}</p>
+      </div>
+      <div
+        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
+          selected ? 'border-transparent text-white' : 'border-gray-300'
+        }`}
+        style={selected ? { backgroundColor: primaryColor } : undefined}
+      >
+        {selected && <Check className="w-3 h-3" strokeWidth={3} />}
+      </div>
+    </button>
   );
 }

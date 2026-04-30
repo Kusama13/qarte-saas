@@ -110,6 +110,7 @@ type MerchantPublic = Pick<
   | 'gift_card_enabled'
   | 'gift_card_amounts'
   | 'gift_card_message'
+  | 'gift_card_services_enabled'
 >;
 
 export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], bookedSlots = [], isDemo = false, demoOffer }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; bookedSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null }) {
@@ -1014,17 +1015,6 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 <p className="text-[15px] font-bold text-white leading-snug mt-0.5">
                   {pgcT('vitrineDesc')}
                 </p>
-                {(() => {
-                  const a = Array.isArray(merchant.gift_card_amounts)
-                    ? merchant.gift_card_amounts.map(Number).filter((n) => Number.isFinite(n) && n > 0)
-                    : [];
-                  const min = a.length ? Math.min(...a) : 30;
-                  return (
-                    <p className="text-[12px] text-white/85 mt-1">
-                      {pgcT('vitrinePriceFrom', { amount: formatCurrency(min, merchant.country, locale, 0) })}
-                    </p>
-                  );
-                })()}
               </div>
               <ChevronRight className="w-5 h-5 text-white/70 shrink-0 group-hover:translate-x-0.5 transition-transform" />
             </div>
@@ -1494,6 +1484,10 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
         defaultCountry={(merchant.country || 'FR') as MerchantCountry}
         amounts={merchant.gift_card_amounts as number[] | null}
         introMessage={merchant.gift_card_message}
+        services={services}
+        serviceCategories={serviceCategories}
+        servicesEnabled={Boolean(merchant.gift_card_services_enabled)}
+        locale={locale}
         isDemo={isDemo}
       />
 

@@ -21,6 +21,8 @@ interface GiftCardReceivedEmailProps {
   primaryColor?: string;    // pour la carte gradient
   secondaryColor?: string;
   locale?: EmailLocale;
+  servicesLabel?: string | null;
+  serviceNames?: string[];
 }
 
 export function GiftCardReceivedEmail({
@@ -35,11 +37,14 @@ export function GiftCardReceivedEmail({
   primaryColor = '#4b0082',
   secondaryColor = '#ec4899',
   locale = 'fr',
+  servicesLabel,
+  serviceNames,
 }: GiftCardReceivedEmailProps) {
   const isEn = locale === 'en';
+  const giftDescription = servicesLabel || (isEn ? `${amount} gift card` : `bon cadeau de ${amount}`);
   const preview = isEn
-    ? `${senderFirstName} is offering you a ${amount} gift card at ${shopName}`
-    : `${senderFirstName} t'offre un bon cadeau de ${amount} chez ${shopName}`;
+    ? `${senderFirstName} is offering you ${giftDescription} at ${shopName}`
+    : `${senderFirstName} t'offre ${giftDescription} chez ${shopName}`;
 
   // Carte gradient personnalisée aux couleurs du merchant
   const cardGradient = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
@@ -54,8 +59,8 @@ export function GiftCardReceivedEmail({
 
       <Text style={paragraph}>
         {isEn
-          ? `Hi ${recipientFirstName}, you've just been offered a gift card to enjoy a moment at ${shopName}.`
-          : `Bonjour ${recipientFirstName}, on t'offre un bon cadeau pour profiter d'un moment chez ${shopName}.`}
+          ? `Hi ${recipientFirstName}, you've just been offered a ${servicesLabel ? 'gift' : 'gift card'} to enjoy a moment at ${shopName}.`
+          : `Bonjour ${recipientFirstName}, on t'offre un ${servicesLabel ? 'cadeau' : 'bon cadeau'} pour profiter d'un moment chez ${shopName}.`}
       </Text>
 
       {/* Carte cadeau visuelle — gradient merchant */}
@@ -63,7 +68,14 @@ export function GiftCardReceivedEmail({
         <Text style={giftLabel}>
           {isEn ? '✦ GIFT CARD ✦' : '✦ BON CADEAU ✦'}
         </Text>
-        <Text style={giftAmount}>{amount}</Text>
+        {servicesLabel ? (
+          <>
+            <Text style={giftServices}>{servicesLabel}</Text>
+            <Text style={giftAmountSmall}>{isEn ? `Value ${amount}` : `Valeur ${amount}`}</Text>
+          </>
+        ) : (
+          <Text style={giftAmount}>{amount}</Text>
+        )}
         <Text style={giftFor}>{shopName}</Text>
         {shopAddress && (
           <Text style={giftAddress}>{shopAddress}</Text>
@@ -74,6 +86,20 @@ export function GiftCardReceivedEmail({
         </Text>
         <Text style={giftFrom}>{senderFirstName}</Text>
       </Section>
+
+      {/* Liste détaillée des prestations si plusieurs */}
+      {serviceNames && serviceNames.length > 1 && (
+        <Section style={servicesList}>
+          <Text style={servicesListTitle}>
+            {isEn ? 'Included in your gift' : 'Inclus dans ton cadeau'}
+          </Text>
+          {serviceNames.map((name, idx) => (
+            <Text key={idx} style={servicesListItem}>
+              <span style={servicesListBullet}>✦</span> {name}
+            </Text>
+          ))}
+        </Section>
+      )}
 
       {senderMessage && (
         <Section style={messageBox}>
@@ -98,8 +124,13 @@ export function GiftCardReceivedEmail({
 
       <Section style={detailsBox}>
         <Text style={detailLine}>
-          <strong>{isEn ? 'Amount:' : 'Montant :'}</strong> {amount}
+          <strong>{isEn ? 'Gift:' : 'Cadeau :'}</strong> {servicesLabel || amount}
         </Text>
+        {servicesLabel && (
+          <Text style={detailLine}>
+            <strong>{isEn ? 'Value:' : 'Valeur :'}</strong> {amount}
+          </Text>
+        )}
         <Text style={detailLine}>
           <strong>{isEn ? 'Salon:' : 'Salon :'}</strong> {shopName}
         </Text>
@@ -160,6 +191,54 @@ const giftAmount = {
   letterSpacing: '-0.04em',
   lineHeight: '1',
   textShadow: '0 2px 8px rgba(0,0,0,0.15)',
+};
+
+const giftServices = {
+  color: '#ffffff',
+  fontSize: '26px',
+  fontWeight: '700',
+  margin: '0 0 6px 0',
+  letterSpacing: '-0.01em',
+  lineHeight: '1.25',
+  textShadow: '0 2px 8px rgba(0,0,0,0.15)',
+};
+
+const giftAmountSmall = {
+  color: 'rgba(255, 255, 255, 0.85)',
+  fontSize: '13px',
+  fontWeight: '500',
+  margin: '0 0 14px 0',
+  letterSpacing: '0.02em',
+};
+
+const servicesList = {
+  margin: '0 0 24px 0',
+  padding: '18px 22px',
+  backgroundColor: '#FAF8FF',
+  border: '1px solid #E9E2FB',
+  borderRadius: '14px',
+};
+
+const servicesListTitle = {
+  color: '#6D28D9',
+  fontSize: '11px',
+  fontWeight: '700',
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase' as const,
+  margin: '0 0 12px 0',
+};
+
+const servicesListItem = {
+  color: '#1F2937',
+  fontSize: '15px',
+  fontWeight: '500',
+  margin: '0 0 6px 0',
+  lineHeight: '1.5',
+};
+
+const servicesListBullet = {
+  color: '#A78BFA',
+  marginRight: '6px',
 };
 
 const giftFor = {

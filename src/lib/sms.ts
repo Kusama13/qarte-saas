@@ -63,8 +63,9 @@ const SMS_TEMPLATES: Record<string, Record<SmsType, (...args: string[]) => strin
     referral_reward: (shop, reward) => `Bonne nouvelle ! Votre filleul(e) a utilisé sa récompense. Votre cadeau vous attend chez ${shop} : ${reward}`,
     booking_moved: (shop, date, time) => `Votre RDV chez ${shop} a été déplacé au ${date} à ${time}. À bientôt !`,
     booking_cancelled: (shop, date, time) => `Votre RDV chez ${shop} le ${date} à ${time} a été annulé. Contactez-nous pour reprogrammer.`,
-    gift_card_received: (shop, sender, amount, recipient) => recipient ? `${recipient}, ${sender} t'offre un bon cadeau de ${amount} chez ${shop} ! Retrouve-le dans ta carte fidélité : qarte.fr` : `${sender} t'offre un bon cadeau de ${amount} chez ${shop} ! Retrouve-le dans ta carte fidélité : qarte.fr`,
-    gift_card_used: (shop, recipient, amount, sender) => sender ? `${sender}, bonne nouvelle ! ${recipient} vient d'utiliser le bon de ${amount} que tu lui as offert chez ${shop}. Merci de nous avoir choisis !` : `${recipient} vient d'utiliser le bon de ${amount} que vous avez offert chez ${shop}. Merci de nous avoir choisis !`,
+    // 4e arg `gift` = "un bon cadeau de 50€" OU "1 coupe + 1 brushing" selon kind
+    gift_card_received: (shop, sender, gift, recipient) => recipient ? `${recipient}, ${sender} t'offre ${gift} chez ${shop} ! Retrouve ton bon dans ta carte fidélité : getqarte.com` : `${sender} t'offre ${gift} chez ${shop} ! Retrouve ton bon dans ta carte fidélité : getqarte.com`,
+    gift_card_used: (shop, recipient, gift, sender) => sender ? `${sender}, bonne nouvelle ! ${recipient} vient d'utiliser ${gift} que tu lui as offert chez ${shop}. Merci de nous avoir choisis !` : `${recipient} vient d'utiliser ${gift} que vous avez offert chez ${shop}. Merci de nous avoir choisis !`,
   },
   en: {
     reminder_j1: (shop, time) => `Reminder: appointment tomorrow at ${time} at ${shop}. Earn loyalty points on your visit!`,
@@ -75,8 +76,8 @@ const SMS_TEMPLATES: Record<string, Record<SmsType, (...args: string[]) => strin
     referral_reward: (shop, reward) => `Great news! Your referral used their reward. Your gift is waiting at ${shop}: ${reward}`,
     booking_moved: (shop, date, time) => `Your appointment at ${shop} has been moved to ${date} at ${time}. See you soon!`,
     booking_cancelled: (shop, date, time) => `Your appointment at ${shop} on ${date} at ${time} has been cancelled. Contact us to reschedule.`,
-    gift_card_received: (shop, sender, amount, recipient) => recipient ? `${recipient}, ${sender} is offering you a ${amount} gift card at ${shop}! Find it in your loyalty card: qarte.fr` : `${sender} is offering you a ${amount} gift card at ${shop}! Find it in your loyalty card: qarte.fr`,
-    gift_card_used: (shop, recipient, amount, sender) => sender ? `${sender}, great news! ${recipient} just used the ${amount} gift card you offered at ${shop}. Thanks for choosing us!` : `${recipient} just used the ${amount} gift card you offered at ${shop}. Thanks for choosing us!`,
+    gift_card_received: (shop, sender, gift, recipient) => recipient ? `${recipient}, ${sender} is offering you ${gift} at ${shop}! Find your gift in your loyalty card: getqarte.com` : `${sender} is offering you ${gift} at ${shop}! Find your gift in your loyalty card: getqarte.com`,
+    gift_card_used: (shop, recipient, gift, sender) => sender ? `${sender}, great news! ${recipient} just used ${gift} you offered at ${shop}. Thanks for choosing us!` : `${recipient} just used ${gift} you offered at ${shop}. Thanks for choosing us!`,
   },
 };
 
@@ -322,6 +323,7 @@ interface SendSmsParams {
   giftSenderName?: string;     // gift_card_received: prénom de l'offreur
   giftRecipientName?: string;  // gift_card_used: prénom du destinataire (utilisateur du voucher)
   giftAmount?: string;         // ex: "50€" — déjà formaté avec devise
+  giftServicesLabel?: string | null;  // ex: "1 coupe + 1 brushing" — si kind=services, prend le pas sur giftAmount
   // Pass pre-fetched config to avoid re-querying in loops
   globalConfig?: GlobalSmsConfig;
 }
@@ -331,7 +333,7 @@ interface SendSmsParams {
  * Checks global toggle, subscription status, and dedup before sending.
  */
 export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsParams): Promise<boolean> {
-  const { merchantId, slotId, phone, shopName, smsType, locale, subscriptionStatus, date, time, gift, clientName, reward, giftSenderName, giftRecipientName, giftAmount, globalConfig: preloadedConfig } = params;
+  const { merchantId, slotId, phone, shopName, smsType, locale, subscriptionStatus, date, time, gift, clientName, reward, giftSenderName, giftRecipientName, giftAmount, giftServicesLabel, globalConfig: preloadedConfig } = params;
 
   if (!phone) return false;
 
@@ -393,12 +395,24 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
       case 'referral_reward':
         message = template(shopName, reward || '');
         break;
-      case 'gift_card_received':
-        message = template(shopName, giftSenderName || '', giftAmount || '', giftRecipientName || '');
+      case 'gift_card_received': {
+        // Si kind=services : "1 coupe + 1 brushing" (sans le mot "bon cadeau" qui se répète à la fin)
+        // Si kind=amount : "un bon cadeau de 50€"
+        const giftLabel = giftServicesLabel
+          ? giftServicesLabel
+          : (locale === 'en' ? `a ${giftAmount} gift card` : `un bon cadeau de ${giftAmount}`);
+        message = template(shopName, giftSenderName || '', giftLabel, giftRecipientName || '');
         break;
-      case 'gift_card_used':
-        message = template(shopName, giftRecipientName || '', giftAmount || '', giftSenderName || '');
+      }
+      case 'gift_card_used': {
+        // Si kind=services : "1 coupe + 1 brushing"
+        // Si kind=amount : "le bon de 50€"
+        const giftLabel = giftServicesLabel
+          ? giftServicesLabel
+          : (locale === 'en' ? `the ${giftAmount} gift card` : `le bon de ${giftAmount}`);
+        message = template(shopName, giftRecipientName || '', giftLabel, giftSenderName || '');
         break;
+      }
     }
 
     // 5. Gate: enforce quota selon tier + pack. No overage — block if both exhausted.

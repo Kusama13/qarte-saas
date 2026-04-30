@@ -23,6 +23,8 @@ const settingsSchema = z.object({
   enabled: z.boolean(),
   amounts: z.array(z.number().min(GIFT_CARD_MIN_AMOUNT).max(GIFT_CARD_MAX_AMOUNT)).max(8).optional(),
   message: z.string().max(300).nullable().optional(),
+  // Sous-toggle : autoriser le client à offrir une prestation (mig 140)
+  servicesEnabled: z.boolean().optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -42,7 +44,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const { merchantId, enabled, amounts, message } = parsed.data;
+    const { merchantId, enabled, amounts, message, servicesEnabled } = parsed.data;
     const supabase = getSupabaseAdmin();
 
     // Ownership check
@@ -59,13 +61,18 @@ export async function PATCH(request: NextRequest) {
     const cleanAmounts = (amounts || []).filter((a) => a >= GIFT_CARD_MIN_AMOUNT && a <= GIFT_CARD_MAX_AMOUNT);
     const finalAmounts = cleanAmounts.length > 0 ? cleanAmounts : GIFT_CARD_DEFAULT_AMOUNTS;
 
+    const updatePayload: Record<string, unknown> = {
+      gift_card_enabled: enabled,
+      gift_card_amounts: finalAmounts,
+      gift_card_message: message?.trim() || null,
+    };
+    if (typeof servicesEnabled === 'boolean') {
+      updatePayload.gift_card_services_enabled = servicesEnabled;
+    }
+
     const { error: updateError } = await supabase
       .from('merchants')
-      .update({
-        gift_card_enabled: enabled,
-        gift_card_amounts: finalAmounts,
-        gift_card_message: message?.trim() || null,
-      })
+      .update(updatePayload)
       .eq('id', merchantId);
 
     if (updateError) {
@@ -92,6 +99,7 @@ export async function PATCH(request: NextRequest) {
       gift_card_enabled: enabled,
       gift_card_amounts: finalAmounts,
       gift_card_message: message?.trim() || null,
+      ...(typeof servicesEnabled === 'boolean' ? { gift_card_services_enabled: servicesEnabled } : {}),
     });
   } catch (error) {
     logger.error('Gift cards settings error:', error);

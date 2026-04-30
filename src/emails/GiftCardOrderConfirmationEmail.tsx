@@ -22,6 +22,7 @@ interface GiftCardOrderConfirmationEmailProps {
   code: string;            // GIFT-XXXXXX
   paymentLinks: PaymentLink[];  // 1 ou 2 liens (Revolut, PayPal, etc.)
   locale?: EmailLocale;
+  servicesLabel?: string | null;   // "1 coupe + 1 brushing" si kind=services
 }
 
 export function GiftCardOrderConfirmationEmail({
@@ -32,11 +33,13 @@ export function GiftCardOrderConfirmationEmail({
   code,
   paymentLinks,
   locale = 'fr',
+  servicesLabel,
 }: GiftCardOrderConfirmationEmailProps) {
   const isEn = locale === 'en';
+  const giftLabel = servicesLabel || (isEn ? `${amount} gift card` : `bon cadeau de ${amount}`);
   const preview = isEn
-    ? `Your ${amount} gift card for ${recipientFirstName} is on hold`
-    : `Ton bon cadeau de ${amount} pour ${recipientFirstName} est en attente`;
+    ? `Your ${giftLabel} for ${recipientFirstName} is on hold`
+    : `Ton ${giftLabel} pour ${recipientFirstName} est en attente`;
 
   return (
     <BaseLayout preview={preview} locale={locale}>
@@ -46,16 +49,23 @@ export function GiftCardOrderConfirmationEmail({
 
       <Text style={paragraph}>
         {isEn
-          ? `Hi ${senderFirstName}, we've registered your ${amount} gift card for ${recipientFirstName}. To finalize, just send the payment to ${shopName} using one of the links below.`
-          : `Bonjour ${senderFirstName}, on a bien noté ton bon cadeau de ${amount} pour ${recipientFirstName}. Pour finaliser, il te reste à envoyer le paiement à ${shopName} via l'un des liens ci-dessous.`}
+          ? `Hi ${senderFirstName}, we've registered your ${giftLabel} for ${recipientFirstName}. To finalize, just send the payment to ${shopName} using one of the links below.`
+          : `Bonjour ${senderFirstName}, on a bien noté ton ${giftLabel} pour ${recipientFirstName}. Pour finaliser, il te reste à envoyer le paiement à ${shopName} via l'un des liens ci-dessous.`}
       </Text>
 
       {/* Carte cadeau visuelle */}
       <Section style={giftCard}>
-        <Text style={giftLabel}>
+        <Text style={giftLabelStyle}>
           {isEn ? 'GIFT CARD' : 'BON CADEAU'}
         </Text>
-        <Text style={giftAmount}>{amount}</Text>
+        {servicesLabel ? (
+          <>
+            <Text style={giftServices}>{servicesLabel}</Text>
+            <Text style={giftAmountSmall}>{isEn ? `Value ${amount}` : `Valeur ${amount}`}</Text>
+          </>
+        ) : (
+          <Text style={giftAmount}>{amount}</Text>
+        )}
         <Text style={giftFor}>
           {isEn ? `For ${recipientFirstName}` : `Pour ${recipientFirstName}`}
         </Text>
@@ -163,7 +173,7 @@ const giftCard = {
   textAlign: 'center' as const,
 };
 
-const giftLabel = {
+const giftLabelStyle = {
   color: 'rgba(255, 255, 255, 0.8)',
   fontSize: '11px',
   fontWeight: '700',
@@ -179,6 +189,22 @@ const giftAmount = {
   margin: '0 0 12px 0',
   letterSpacing: '-0.03em',
   lineHeight: '1',
+};
+
+const giftServices = {
+  color: '#ffffff',
+  fontSize: '24px',
+  fontWeight: '700',
+  margin: '0 0 6px 0',
+  letterSpacing: '-0.01em',
+  lineHeight: '1.2',
+};
+
+const giftAmountSmall = {
+  color: 'rgba(255, 255, 255, 0.85)',
+  fontSize: '13px',
+  fontWeight: '500',
+  margin: '0 0 12px 0',
 };
 
 const giftFor = {
