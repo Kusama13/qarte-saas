@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, BookOpen, ChevronDown, CalendarClock, CalendarPlus, UserCheck, UserX, MapPin, Car, Navigation } from 'lucide-react';
+import { X, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, BookOpen, ChevronDown, CalendarClock, CalendarPlus, UserCheck, UserX, MapPin, Car, Navigation, Pencil } from 'lucide-react';
 import SmsToggle from './SmsToggle';
 import { getTypeStyle } from '@/lib/note-styles';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
@@ -13,7 +13,7 @@ import type { PlanningSlot, CustomerSearchResult, BookingMode } from '@/types';
 import { formatTime, formatCurrency, toBCP47, getTimezoneForCountry, displayPhoneNumber, detectPhoneCountry } from '@/lib/utils';
 import { downloadIcs } from '@/lib/ics';
 import { compressOfferImage } from '@/lib/image-compression';
-import { timeToMinutes, minutesToTime, roundUp5, formatDuration, getSlotServiceIds, colorBorderStyle, computeDepositAmount, CUSTOM_SERVICE_DEFAULT_NAME } from './utils';
+import { timeToMinutes, minutesToTime, roundUp5, formatDuration, getSlotServiceIds, colorBorderStyle, computeDepositAmount, CUSTOM_SERVICE_DEFAULT_NAME, formatDateLong, endTimeFromStart } from './utils';
 import CustomServicePicker from './CustomServicePicker';
 import type { BookingDraft, ServiceWithDuration } from './usePlanningState';
 
@@ -137,12 +137,22 @@ export default function BookingDetailsModal({
   const [addressDraft, setAddressDraft] = useState(slot.customer_address || '');
   const [addressLat, setAddressLat] = useState<number | null>(slot.customer_lat ?? null);
   const [addressLng, setAddressLng] = useState<number | null>(slot.customer_lng ?? null);
+  const [addressEditMode, setAddressEditMode] = useState(false);
+  // Default expanded when action might be needed (no address, or travel not yet computed).
+  // Default collapsed when everything is set up — merchant just needs the glance summary.
+  const homeServiceNeedsSetup = !slot.customer_address || !slot.travel_time_minutes;
+  const [homeServiceExpanded, setHomeServiceExpanded] = useState(() => homeServiceNeedsSetup);
   // Re-seed only when the modal is re-used for a different slot — not when the parent
   // refetches and the same slot's address fields update mid-edit (would clobber keystrokes).
-  useEffect(() => {
+  const resetAddressDraft = () => {
     setAddressDraft(slot.customer_address || '');
     setAddressLat(slot.customer_lat ?? null);
     setAddressLng(slot.customer_lng ?? null);
+    setAddressEditMode(false);
+  };
+  useEffect(() => {
+    resetAddressDraft();
+    setHomeServiceExpanded(homeServiceNeedsSetup);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slot.id]);
 
@@ -150,6 +160,52 @@ export default function BookingDetailsModal({
     || (slot.customer_lat ?? null) !== addressLat
     || (slot.customer_lng ?? null) !== addressLng;
   const addressTypedButNotPicked = !!addressDraft.trim() && (addressLat == null || addressLng == null);
+
+  // Home-service derived data (memoized so it doesn't re-run on unrelated keystrokes
+  // and is skipped when home_service isn't enabled or slot is blocked).
+  const homeServiceData = useMemo(() => {
+    if (!homeServiceEnabled || slot.client_name === '__blocked__') return null;
+    const travelIn = slot.travel_time_minutes ?? 0;
+    const departureTime = travelIn > 0
+      ? minutesToTime(Math.max(0, timeToMinutes(slot.start_time) - travelIn))
+      : null;
+    const daySlots = (slotsByDate.get(slot.slot_date) || [])
+      .filter(s => s.id === slot.id || (s.client_name && !s.primary_slot_id && s.client_name !== '__blocked__'))
+      .sort((a, b) => a.start_time.localeCompare(b.start_time));
+    const idx = daySlots.findIndex(s => s.id === slot.id);
+    const prevBookedSlot = idx > 0 ? [...daySlots.slice(0, idx)].reverse().find(s => s.client_name && !s.primary_slot_id) : null;
+    const nextBookedSlot = idx >= 0 ? daySlots.slice(idx + 1).find(s => s.client_name && !s.primary_slot_id) : null;
+    const originAddress = prevBookedSlot?.customer_address || merchantAddress || null;
+    const destAddress = addressDraft.trim() || slot.customer_address || null;
+    const mapsUrl = destAddress
+      ? `https://www.google.com/maps/dir/?${new URLSearchParams({
+          api: '1',
+          destination: destAddress,
+          ...(originAddress ? { origin: originAddress } : {}),
+        }).toString()}`
+      : null;
+    return {
+      travelIn,
+      departureTime,
+      prevBookedSlot,
+      nextBookedSlot,
+      travelOut: nextBookedSlot?.travel_time_minutes ?? 0,
+      originAddress,
+      destAddress,
+      mapsUrl,
+    };
+  }, [
+    homeServiceEnabled,
+    slot.client_name,
+    slot.id,
+    slot.slot_date,
+    slot.start_time,
+    slot.customer_address,
+    slot.travel_time_minutes,
+    slotsByDate,
+    merchantAddress,
+    addressDraft,
+  ]);
 
   // Attendance tracking for past slots (no-show / came) — v1 manual only
   const [attendanceStatus, setAttendanceStatus] = useState<'pending' | 'attended' | 'no_show' | 'cancelled' | null>(slot.attendance_status ?? null);
@@ -547,41 +603,50 @@ export default function BookingDetailsModal({
         exit={{ y: 50, opacity: 0 }}
         className="relative bg-white rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-sm border border-slate-100"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <button onClick={onGoBack} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-              <ArrowLeft className="w-5 h-5 text-gray-400" />
-            </button>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-gray-900">
-                  {formatTime(slot.start_time, locale)}
-                </span>
-                <span className="text-xs text-gray-400">{slot.slot_date}</span>
-              </div>
-              {draft.clientName && (
-                <p className="text-xs text-gray-500">
-                  {draft.clientName}
-                  <button onClick={onGoBack} className="ml-1.5 text-indigo-600 font-medium hover:underline">
-                    {t('changeClient')}
-                  </button>
-                </p>
+        {/* Pas de fleche retour : ClientSelectModal n'est pertinente qu'en creation, et le lien "Changer le client" couvre ce cas */}
+        <div className="flex items-start justify-between gap-3 p-4 border-b border-gray-100">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base font-semibold text-gray-900 truncate leading-tight">
+              {draft.clientName.trim() || slot.client_name || '—'}
+            </h2>
+            <p className="text-sm text-gray-700 mt-1.5 capitalize truncate">
+              {formatDateLong(new Date(slot.slot_date), locale)}
+            </p>
+            <div className="flex items-center gap-1.5 text-sm font-medium text-gray-900 mt-0.5">
+              <Clock className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
+              <span className="tabular-nums">{formatTime(slot.start_time, locale)}</span>
+              {totalMinutes.total > 0 && (
+                <>
+                  <span className="text-gray-400 font-normal">→</span>
+                  <span className="tabular-nums">{formatTime(endTimeFromStart(slot.start_time, totalMinutes.total), locale)}</span>
+                </>
               )}
             </div>
+            {!slot.client_name && draft.clientName.trim() && (
+              <button
+                onClick={onGoBack}
+                className="text-xs font-medium text-cyan-700 hover:text-cyan-800 hover:underline mt-2 touch-manipulation"
+              >
+                {t('changeClient')}
+              </button>
+            )}
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             {slot.client_name && (
               <button
                 onClick={handleAddToCalendar}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
                 title={t('addToCalendar')}
               >
-                <CalendarPlus className="w-4 h-4 text-gray-400" />
+                <CalendarPlus className="w-4 h-4 text-gray-500" />
               </button>
             )}
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-              <X className="w-5 h-5 text-gray-400" />
+            <button
+              onClick={onClose}
+              aria-label={t('close')}
+              className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
+            >
+              <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
         </div>
@@ -810,78 +875,108 @@ export default function BookingDetailsModal({
             );
           })()}
 
-          {/* Home service: editable address + travel time + recommended departure */}
-          {homeServiceEnabled && slot.client_name && slot.client_name !== '__blocked__' && (() => {
-            const travelIn = slot.travel_time_minutes ?? 0;
-            const departureMins = timeToMinutes(slot.start_time) - travelIn;
-            const departureTime = travelIn > 0 ? minutesToTime(Math.max(0, departureMins)) : null;
-
-            // Outgoing travel: derived from the next booked slot's travel_time_minutes
-            // (which represents travel FROM this customer TO the next customer).
-            const daySlots = (slotsByDate.get(slot.slot_date) || [])
-              .filter(s => s.id === slot.id || (s.client_name && !s.primary_slot_id && s.client_name !== '__blocked__'))
-              .sort((a, b) => a.start_time.localeCompare(b.start_time));
-            const idx = daySlots.findIndex(s => s.id === slot.id);
-            const prevBookedSlot = idx > 0 ? [...daySlots.slice(0, idx)].reverse().find(s => s.client_name && !s.primary_slot_id) : null;
-            const nextBookedSlot = idx >= 0 ? daySlots.slice(idx + 1).find(s => s.client_name && !s.primary_slot_id) : null;
-            const travelOut = nextBookedSlot?.travel_time_minutes ?? 0;
-
-            // Itinéraire vers ce RDV : origine = adresse cliente précédente (ou marchand pour le 1er RDV).
-            // Destination = adresse actuelle (édition non sauvée incluse) pour navigation immédiate.
-            const originAddress = prevBookedSlot?.customer_address || merchantAddress || null;
-            const destAddress = addressDraft.trim() || slot.customer_address || null;
-            const mapsUrl = destAddress
-              ? (() => {
-                  const p = new URLSearchParams({ api: '1', destination: destAddress });
-                  if (originAddress) p.set('origin', originAddress);
-                  return `https://www.google.com/maps/dir/?${p.toString()}`;
-                })()
-              : null;
-
+          {/* Home service card — gated by homeServiceEnabled + (slot.client_name OR draft.clientName for new bookings) */}
+          {homeServiceData && (slot.client_name || draft.clientName.trim()) && (() => {
+            const { travelIn, departureTime, nextBookedSlot, travelOut, originAddress, destAddress, mapsUrl } = homeServiceData;
             return (
-              <div className="rounded-xl bg-sky-50/70 border border-sky-200 p-3">
-                <div className="flex items-center gap-2 mb-2">
+              <div className="rounded-xl bg-sky-50/70 border border-sky-200 overflow-hidden">
+                {/* Header collapsible : titre + resume (collapsed) ou titre seul (expanded) */}
+                <button
+                  type="button"
+                  onClick={() => setHomeServiceExpanded(v => !v)}
+                  aria-expanded={homeServiceExpanded}
+                  className="w-full flex items-center gap-2 p-3 text-left hover:bg-sky-100/40 active:bg-sky-100/60 transition-colors touch-manipulation"
+                >
                   <MapPin className="w-4 h-4 text-sky-700 shrink-0" />
-                  <h4 className="text-xs font-bold text-sky-900 uppercase tracking-wide">{t('homeServiceCardTitle')}</h4>
-                </div>
-                <div className="space-y-2 text-xs">
-                  <div>
-                    <p className="text-[11px] text-sky-700 font-semibold mb-1">{t('addressLabel')}</p>
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <AddressAutocomplete
-                          value={addressDraft}
-                          onChange={(value: string, suggestion?: AddressSuggestion) => {
-                            setAddressDraft(value);
-                            if (suggestion) {
-                              setAddressLat(suggestion.lat);
-                              setAddressLng(suggestion.lng);
-                            } else {
-                              setAddressLat(null);
-                              setAddressLng(null);
-                            }
-                          }}
-                          placeholder={t('addressPlaceholder')}
-                          className="h-9 text-xs bg-white"
-                        />
-                      </div>
-                      {mapsUrl && (
-                        <a
-                          href={mapsUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="shrink-0 inline-flex items-center gap-1 px-2 h-9 rounded-md bg-white border border-sky-200 text-sky-700 text-[10px] font-bold hover:bg-sky-100 transition-colors"
-                        >
-                          <Navigation className="w-2.5 h-2.5" />
-                          {t('openMaps')}
-                        </a>
+                  {homeServiceExpanded ? (
+                    <h4 className="text-xs font-bold text-sky-900 uppercase tracking-wide flex-1">
+                      {t('homeServiceCardTitle')}
+                    </h4>
+                  ) : (
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-sky-900 truncate">
+                        {slot.customer_address || <span className="italic text-sky-700/70 font-normal">{t('noAddressYet')}</span>}
+                      </p>
+                      {departureTime && (
+                        <p className="text-[11px] text-sky-700 mt-0.5 tabular-nums">
+                          {t('departAtLabel')} <span className="font-semibold">{formatTime(departureTime, locale)}</span>
+                        </p>
                       )}
                     </div>
-                    {addressTypedButNotPicked && (
-                      <p className="text-[10px] text-amber-700 mt-1">{t('addressNeedSelect')}</p>
+                  )}
+                  <ChevronDown
+                    className={`w-4 h-4 text-sky-700 shrink-0 transition-transform duration-200 ${
+                      homeServiceExpanded ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+                {homeServiceExpanded && (
+                <div className="px-3 pb-3 space-y-2 text-xs">
+                  <div>
+                    <p className="text-[11px] text-sky-700 font-semibold mb-1.5">{t('addressLabel')}</p>
+                    {/* Address row : content + actions cluster ; wraps below on very narrow screens */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex-1 min-w-[10rem]">
+                        {addressEditMode ? (
+                          <AddressAutocomplete
+                            value={addressDraft}
+                            onChange={(value: string, suggestion?: AddressSuggestion) => {
+                              setAddressDraft(value);
+                              if (suggestion) {
+                                setAddressLat(suggestion.lat);
+                                setAddressLng(suggestion.lng);
+                              } else {
+                                setAddressLat(null);
+                                setAddressLng(null);
+                              }
+                            }}
+                            placeholder={t('addressPlaceholder')}
+                            className="h-9 text-sm bg-white"
+                          />
+                        ) : slot.customer_address ? (
+                          <p className="text-gray-800 font-medium leading-snug">{slot.customer_address}</p>
+                        ) : (
+                          <p className="text-gray-400 italic">{t('noAddressYet')}</p>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-1 shrink-0">
+                        {addressEditMode ? (
+                          <button
+                            type="button"
+                            onClick={resetAddressDraft}
+                            className="inline-flex items-center justify-center gap-1 px-2.5 h-9 rounded-md bg-white border border-gray-200 text-gray-600 text-[11px] font-bold hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
+                          >
+                            <X className="w-3 h-3" />
+                            {t('cancel')}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setAddressEditMode(true)}
+                            className="inline-flex items-center justify-center gap-1 px-2.5 h-9 rounded-md bg-white border border-sky-200 text-sky-700 text-[11px] font-bold hover:bg-sky-100 active:bg-sky-200 transition-colors touch-manipulation"
+                          >
+                            <Pencil className="w-3 h-3" />
+                            {t('editAddress')}
+                          </button>
+                        )}
+                        {mapsUrl && (
+                          <a
+                            href={mapsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-1 px-2.5 h-9 rounded-md bg-white border border-sky-200 text-sky-700 text-[11px] font-bold hover:bg-sky-100 active:bg-sky-200 transition-colors touch-manipulation"
+                          >
+                            <Navigation className="w-3 h-3" />
+                            {t('openMaps')}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    {addressTypedButNotPicked && addressEditMode && (
+                      <p className="text-[10px] text-amber-700 mt-1.5">{t('addressNeedSelect')}</p>
                     )}
                     {originAddress && destAddress && !addressTypedButNotPicked && (
-                      <p className="text-[10px] text-gray-500 mt-1 truncate">
+                      <p className="text-[10px] text-gray-500 mt-1.5 truncate">
                         {t('routeFromLabel')} <span className="font-medium">{originAddress}</span>
                       </p>
                     )}
@@ -911,6 +1006,7 @@ export default function BookingDetailsModal({
                     </div>
                   )}
                 </div>
+                )}
               </div>
             );
           })()}
