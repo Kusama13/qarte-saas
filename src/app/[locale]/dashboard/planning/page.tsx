@@ -11,6 +11,7 @@ import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotificatio
 import { AnimatePresence, motion } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
 import { PHONE_CONFIG, toBCP47, getCurrencySymbol, formatCurrency, formatPhoneLabel } from '@/lib/utils';
+import { detectPaymentProvider } from '@/lib/payment-providers';
 import { formatDate, getServiceColorMap, colorBorderStyle, getWeekStart, timeToMinutes, minutesToTime, formatDuration, getISOWeekNumber } from './utils';
 import type { CustomServiceDraft } from './usePlanningState';
 import CustomServicePicker from './CustomServicePicker';
@@ -496,11 +497,16 @@ export default function PlanningDashboard() {
         deposit_link: autoBookingEnabled && depositEnabled && depositLink.trim()
           ? (/^https?:\/\//i.test(depositLink.trim()) ? depositLink.trim() : `https://${depositLink.trim()}`)
           : null,
-        deposit_link_label: autoBookingEnabled && depositEnabled && depositLink.trim() && depositLinkLabel.trim() ? depositLinkLabel.trim() : null,
+        // Label auto-détecté depuis l'URL (Revolut/PayPal/Stripe...). NULL si non reconnu → fallback "Payer" côté UI.
+        deposit_link_label: autoBookingEnabled && depositEnabled && depositLink.trim()
+          ? detectPaymentProvider(depositLink.trim())
+          : null,
         deposit_link_2: autoBookingEnabled && depositEnabled && depositLink2.trim()
           ? (/^https?:\/\//i.test(depositLink2.trim()) ? depositLink2.trim() : `https://${depositLink2.trim()}`)
           : null,
-        deposit_link_2_label: autoBookingEnabled && depositEnabled && depositLink2.trim() && depositLink2Label.trim() ? depositLink2Label.trim() : null,
+        deposit_link_2_label: autoBookingEnabled && depositEnabled && depositLink2.trim()
+          ? detectPaymentProvider(depositLink2.trim())
+          : null,
         deposit_percent: autoBookingEnabled && depositEnabled && depositPercent ? parseInt(depositPercent) : null,
         deposit_amount: autoBookingEnabled && depositEnabled && depositAmount ? parseFloat(depositAmount) : null,
         deposit_deadline_hours: autoBookingEnabled && depositEnabled && depositDeadlineHours ? parseInt(depositDeadlineHours) : null,
@@ -1455,18 +1461,19 @@ export default function PlanningDashboard() {
                     {depositEnabled && <div className="p-4 sm:p-5 space-y-4">
                       <div>
                         <label className="text-xs font-semibold text-gray-600 mb-1.5 block">{t('depositLinkLabel')}</label>
-                        <div className="flex gap-2">
-                          <input type="url" value={depositLink} onChange={(e) => setDepositLink(e.target.value)} placeholder={t('depositLinkPlaceholder')}
-                            className={`flex-1 min-w-0 px-3 py-2 sm:px-3.5 sm:py-2.5 text-base sm:text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors ${linkMissing ? 'border-red-300 bg-red-50/30' : 'border-gray-200'}`} />
-                          <input type="text" value={depositLinkLabel} onChange={(e) => setDepositLinkLabel(e.target.value)} placeholder={t('depositLinkNamePlaceholder')} maxLength={20}
-                            className="w-24 sm:w-28 px-2.5 py-2 sm:py-2.5 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors" />
-                        </div>
+                        <DepositLinkInput
+                          value={depositLink}
+                          onChange={setDepositLink}
+                          placeholder={t('depositLinkPlaceholder')}
+                          error={linkMissing}
+                        />
                         {linkMissing && <p className="text-[10px] text-red-400 mt-1.5">{t('depositLinkRequired')}</p>}
-                        <div className="flex gap-2 mt-2">
-                          <input type="url" value={depositLink2} onChange={(e) => setDepositLink2(e.target.value)} placeholder={t('depositLink2Placeholder')}
-                            className="flex-1 min-w-0 px-3 py-2 sm:px-3.5 sm:py-2.5 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors" />
-                          <input type="text" value={depositLink2Label} onChange={(e) => setDepositLink2Label(e.target.value)} placeholder={t('depositLinkNamePlaceholder')} maxLength={20}
-                            className="w-24 sm:w-28 px-2.5 py-2 sm:py-2.5 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors" />
+                        <div className="mt-2">
+                          <DepositLinkInput
+                            value={depositLink2}
+                            onChange={setDepositLink2}
+                            placeholder={t('depositLink2Placeholder')}
+                          />
                         </div>
                         <p className="text-[11px] text-gray-400 mt-1.5">{t('depositLink2Hint')}</p>
                         <p className="text-[11px] text-gray-400 mt-2">
@@ -2534,6 +2541,36 @@ export default function PlanningDashboard() {
           />
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// Input URL paiement avec auto-detect du provider (badge à droite quand reconnu).
+// Le label DB est résolu côté serveur via detectPaymentProvider() depuis l'URL.
+function DepositLinkInput({
+  value, onChange, placeholder, error = false,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  error?: boolean;
+}) {
+  const detected = value.trim() ? detectPaymentProvider(value.trim()) : null;
+  return (
+    <div className="relative">
+      <input
+        type="url"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={`w-full ${detected ? 'pr-28' : ''} px-3 py-2 sm:px-3.5 sm:py-2.5 text-base sm:text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors ${error ? 'border-red-300 bg-red-50/30' : 'border-gray-200'}`}
+      />
+      {detected && (
+        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+          <Check className="w-2.5 h-2.5" />
+          {detected}
+        </span>
+      )}
     </div>
   );
 }

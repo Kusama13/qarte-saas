@@ -92,7 +92,13 @@ async function sendEmail<P extends Record<string, unknown>>(
   subject: string,
   Component: (props: P) => React.JSX.Element,
   props: P,
-  options?: { scheduledAt?: string; replyTo?: string; logLabel?: string; merchantId?: string }
+  options?: {
+    scheduledAt?: string;
+    replyTo?: string;
+    logLabel?: string;
+    merchantId?: string;
+    attachments?: Array<{ filename: string; path?: string; content?: string }>;
+  }
 ): Promise<SendEmailResult> {
   const check = checkResend();
   if (check) return check;
@@ -118,6 +124,7 @@ async function sendEmail<P extends Record<string, unknown>>(
           headers: getEmailHeaders(options?.merchantId),
           tags: [{ name: 'category', value: options?.logLabel?.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50) || 'general' }],
           ...(options?.scheduledAt ? { scheduledAt: options.scheduledAt } : {}),
+          ...(options?.attachments?.length ? { attachments: options.attachments } : {}),
         });
 
         if (error) {
@@ -1176,7 +1183,9 @@ export async function sendGiftCardOrderConfirmationEmail(
   params: {
     shopName: string;
     senderFirstName: string;
+    senderLastName?: string | null;
     recipientFirstName: string;
+    recipientLastName?: string | null;
     amount: string;
     code: string;
     paymentLinks: GiftCardPaymentLink[];
@@ -1200,18 +1209,26 @@ export async function sendGiftCardActivatedEmail(
     shopName: string;
     senderFirstName: string;
     recipientFirstName: string;
+    recipientLastName?: string | null;
     amount: string;
     expiresAtFormatted: string;
     locale?: EmailLocale;
     servicesLabel?: string | null;
+    pdfUrl?: string | null;
+    scheduledSendAtFormatted?: string | null;
   },
 ): Promise<SendEmailResult> {
-  const { locale = 'fr', recipientFirstName, amount, servicesLabel } = params;
+  const { locale = 'fr', recipientFirstName, amount, servicesLabel, ...emailProps } = params;
   const giftLabel = servicesLabel || (locale === 'en' ? `${amount} gift` : `cadeau de ${amount}`);
-  const subject = locale === 'en'
-    ? `${recipientFirstName} just received your ${giftLabel} 🎁`
-    : `${recipientFirstName} vient de recevoir ton ${giftLabel} 🎁`;
-  return sendEmail(to, subject, GiftCardActivatedEmail, params, {
+  // Sujet adapté selon envoi immédiat vs planifié
+  const subject = params.scheduledSendAtFormatted
+    ? (locale === 'en'
+        ? `Your ${giftLabel} for ${recipientFirstName} is scheduled 🎁`
+        : `Ton ${giftLabel} pour ${recipientFirstName} est programmé 🎁`)
+    : (locale === 'en'
+        ? `${recipientFirstName} just received your ${giftLabel} 🎁`
+        : `${recipientFirstName} vient de recevoir ton ${giftLabel} 🎁`);
+  return sendEmail(to, subject, GiftCardActivatedEmail, { ...emailProps, recipientFirstName, amount, locale, servicesLabel }, {
     logLabel: 'Gift card activated',
   });
 }
@@ -1221,7 +1238,9 @@ export async function sendGiftCardReceivedEmail(
   params: {
     shopName: string;
     senderFirstName: string;
+    senderLastName?: string | null;
     recipientFirstName: string;
+    recipientLastName?: string | null;
     amount: string;
     senderMessage?: string | null;
     expiresAtFormatted: string;
@@ -1249,9 +1268,11 @@ export async function sendGiftCardMerchantNotificationEmail(
   params: {
     shopName: string;
     senderFirstName: string;
+    senderLastName?: string | null;
     senderEmail: string;
     senderPhoneFormatted: string;
     recipientFirstName: string;
+    recipientLastName?: string | null;
     recipientPhoneFormatted: string;
     amount: string;
     code: string;

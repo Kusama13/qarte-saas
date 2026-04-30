@@ -7,7 +7,7 @@
 
 import { supabaseAdmin } from './supabase';
 
-export const GIFT_CARD_EXPIRY_MONTHS = 12;
+export const GIFT_CARD_EXPIRY_MONTHS = 3;
 export const GIFT_CARD_AUTO_CANCEL_DAYS = 3;
 export const GIFT_CARD_MIN_AMOUNT = 5;
 export const GIFT_CARD_MAX_AMOUNT = 1000;
@@ -35,7 +35,7 @@ export async function generateGiftCardCode(): Promise<string> {
   throw new Error('Failed to generate unique gift card code after 5 attempts');
 }
 
-/** Calcule la date d'expiration (12 mois après paid_at). */
+/** Calcule la date d'expiration (3 mois après paid_at). */
 export function computeGiftCardExpiry(paidAt: Date = new Date()): Date {
   const exp = new Date(paidAt);
   exp.setMonth(exp.getMonth() + GIFT_CARD_EXPIRY_MONTHS);
@@ -51,9 +51,42 @@ export function parseGiftCardAmounts(raw: unknown): number[] {
   return amounts.length > 0 ? amounts : GIFT_CARD_DEFAULT_AMOUNTS;
 }
 
-/** True si le merchant a configuré au moins un lien de paiement. */
-export function merchantHasPaymentLink(merchant: { deposit_link: string | null; deposit_link_2: string | null }): boolean {
-  return Boolean(merchant.deposit_link?.trim() || merchant.deposit_link_2?.trim());
+/** True si le merchant a configuré au moins un lien de paiement dédié bons cadeaux. */
+export function merchantHasPaymentLink(merchant: {
+  gift_card_payment_link?: string | null;
+  gift_card_payment_link_2?: string | null;
+}): boolean {
+  return Boolean(
+    merchant.gift_card_payment_link?.trim()
+    || merchant.gift_card_payment_link_2?.trim(),
+  );
+}
+
+/**
+ * Construit la liste des liens paiement bons cadeaux. Indépendants des liens
+ * d'acompte (Planning) : si le merchant veut les mêmes, il les copie/colle.
+ */
+export function buildGiftCardPaymentLinks(
+  merchant: {
+    gift_card_payment_link?: string | null;
+    gift_card_payment_link_label?: string | null;
+    gift_card_payment_link_2?: string | null;
+    gift_card_payment_link_2_label?: string | null;
+  },
+  detectProvider: (url: string) => string | null,
+): Array<{ url: string; label: string }> {
+  const links: Array<{ url: string; label: string }> = [];
+  const giftLinks: Array<{ url: string | null | undefined; label: string | null | undefined }> = [
+    { url: merchant.gift_card_payment_link, label: merchant.gift_card_payment_link_label },
+    { url: merchant.gift_card_payment_link_2, label: merchant.gift_card_payment_link_2_label },
+  ];
+  for (const { url, label } of giftLinks) {
+    if (url?.trim()) {
+      const finalLabel = label?.trim() || detectProvider(url) || 'Payer';
+      links.push({ url: url.trim(), label: `Payer avec ${finalLabel}` });
+    }
+  }
+  return links;
 }
 
 /**

@@ -170,11 +170,15 @@ export interface Merchant {
   // Monthly contest
   contest_enabled: boolean;
   contest_prize: string | null;
-  // Gift cards (bons cadeaux — mig 138, services mig 140)
+  // Gift cards (bons cadeaux — mig 138, services mig 140, payment links mig 141)
   gift_card_enabled: boolean;
   gift_card_amounts: number[];
   gift_card_message: string | null;
   gift_card_services_enabled: boolean;
+  gift_card_payment_link: string | null;
+  gift_card_payment_link_label: string | null;
+  gift_card_payment_link_2: string | null;
+  gift_card_payment_link_2_label: string | null;
   // Email deliverability
   email_bounced_at: string | null;
   email_unsubscribed_at: string | null;
@@ -285,7 +289,7 @@ export type GiftCardStatus =
   | 'active'           // payé, voucher émis, destinataire notifié
   | 'used'             // voucher consommé (lookup via voucher_id)
   | 'cancelled'        // annulé par merchant ou auto-cancel après 3j sans paiement
-  | 'expired';         // 12 mois après paid_at sans utilisation
+  | 'expired';         // 3 mois après paid_at sans utilisation
 
 export type GiftCardCancellationReason = 'merchant' | 'auto_expired_3d' | 'no_payment';
 
@@ -311,12 +315,14 @@ export interface GiftCard {
   service_snapshot: GiftCardServiceSnapshot[] | null;
   // Offreur
   sender_first_name: string;
+  sender_last_name: string | null;
   sender_phone: string;
   sender_phone_country: string | null;
   sender_email: string;
   sender_message: string | null;
   // Destinataire
   recipient_first_name: string;
+  recipient_last_name: string | null;
   recipient_phone: string;
   recipient_phone_country: string | null;
   recipient_email: string | null;
@@ -329,6 +335,9 @@ export interface GiftCard {
   cancelled_at: string | null;
   cancellation_reason: GiftCardCancellationReason | null;
   expires_at: string | null;
+  pdf_url: string | null;
+  scheduled_send_at: string | null;  // mig 142 : date d'envoi future (NULL = immédiat)
+  notified_at: string | null;        // mig 142 : timestamp envoi effectif destinataire
   created_at: string;
   updated_at: string;
 }

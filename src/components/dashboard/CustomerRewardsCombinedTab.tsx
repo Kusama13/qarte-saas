@@ -24,6 +24,7 @@ import { SectionHeader } from './customer-modal/SectionHeader';
 const VOUCHER_SOURCE_ICONS: Record<string, typeof Gift> = {
   welcome: Flower2,
   birthday: Cake,
+  gift: Gift,
 };
 
 interface ExistingVoucher {
@@ -105,6 +106,8 @@ export function CustomerRewardsCombinedTab({
     if (!res.ok) return;
     const data = await res.json();
     const vouchers = (data.vouchers || []) as ExistingVoucher[];
+    // Les bons cadeaux (source='gift') ne sont PAS gérés ici — ils ont leur
+    // propre page /dashboard/gift-cards avec un bouton "Consommer" dédié.
     setExistingVouchers(vouchers.filter(v => v.source === 'welcome' || v.source === 'offer' || v.source === 'birthday'));
   };
 
@@ -300,7 +303,7 @@ export function CustomerRewardsCombinedTab({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 truncate">{v.reward_description}</p>
-                      <p className="text-[11px] text-gray-400">{v.source === 'welcome' ? to('welcomeOffer') : v.source === 'birthday' ? to('birthdayGift') : to('promoOffer')}</p>
+                      <p className="text-[11px] text-gray-400">{v.source === 'welcome' ? to('welcomeOffer') : v.source === 'birthday' ? to('birthdayGift') : v.source === 'gift' ? to('giftCard') : to('promoOffer')}</p>
                     </div>
                   </div>
 

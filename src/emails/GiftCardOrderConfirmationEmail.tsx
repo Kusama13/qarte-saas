@@ -17,7 +17,9 @@ interface PaymentLink {
 interface GiftCardOrderConfirmationEmailProps {
   shopName: string;
   senderFirstName: string;
+  senderLastName?: string | null;
   recipientFirstName: string;
+  recipientLastName?: string | null;
   amount: string;          // pré-formaté avec devise, ex "50€"
   code: string;            // GIFT-XXXXXX
   paymentLinks: PaymentLink[];  // 1 ou 2 liens (Revolut, PayPal, etc.)
@@ -29,6 +31,7 @@ export function GiftCardOrderConfirmationEmail({
   shopName,
   senderFirstName,
   recipientFirstName,
+  recipientLastName,
   amount,
   code,
   paymentLinks,
@@ -37,9 +40,10 @@ export function GiftCardOrderConfirmationEmail({
 }: GiftCardOrderConfirmationEmailProps) {
   const isEn = locale === 'en';
   const giftLabel = servicesLabel || (isEn ? `${amount} gift card` : `bon cadeau de ${amount}`);
+  const recipientFullName = recipientLastName ? `${recipientFirstName} ${recipientLastName}` : recipientFirstName;
   const preview = isEn
-    ? `Your ${giftLabel} for ${recipientFirstName} is on hold`
-    : `Ton ${giftLabel} pour ${recipientFirstName} est en attente`;
+    ? `Your ${giftLabel} for ${recipientFullName} is on hold`
+    : `Ton ${giftLabel} pour ${recipientFullName} est en attente`;
 
   return (
     <BaseLayout preview={preview} locale={locale}>
@@ -49,8 +53,8 @@ export function GiftCardOrderConfirmationEmail({
 
       <Text style={paragraph}>
         {isEn
-          ? `Hi ${senderFirstName}, we've registered your ${giftLabel} for ${recipientFirstName}. To finalize, just send the payment to ${shopName} using one of the links below.`
-          : `Bonjour ${senderFirstName}, on a bien noté ton ${giftLabel} pour ${recipientFirstName}. Pour finaliser, il te reste à envoyer le paiement à ${shopName} via l'un des liens ci-dessous.`}
+          ? `Hi ${senderFirstName}, we've registered your ${giftLabel} for ${recipientFullName}. To finalize, just send the payment to ${shopName} using one of the links below.`
+          : `Bonjour ${senderFirstName}, on a bien noté ton ${giftLabel} pour ${recipientFullName}. Pour finaliser, il te reste à envoyer le paiement à ${shopName} via l'un des liens ci-dessous.`}
       </Text>
 
       {/* Carte cadeau visuelle */}
@@ -67,7 +71,7 @@ export function GiftCardOrderConfirmationEmail({
           <Text style={giftAmount}>{amount}</Text>
         )}
         <Text style={giftFor}>
-          {isEn ? `For ${recipientFirstName}` : `Pour ${recipientFirstName}`}
+          {isEn ? `For ${recipientFullName}` : `Pour ${recipientFullName}`}
         </Text>
         <Text style={giftAt}>
           {isEn ? `Valid at ${shopName}` : `Valable chez ${shopName}`}
@@ -139,6 +143,13 @@ export function GiftCardOrderConfirmationEmail({
         {isEn
           ? 'If the salon doesn\'t confirm payment within 3 days, we\'ll automatically cancel the gift order.'
           : 'Si le salon ne confirme pas le paiement sous 3 jours, on annule automatiquement la commande.'}
+      </Text>
+
+      <Text style={trackLine}>
+        {isEn ? 'Track your gift: ' : 'Suivre ton bon : '}
+        <a href={`https://getqarte.com/gift-cards/track/${code}`} style={trackLink}>
+          getqarte.com/gift-cards/track/{code}
+        </a>
       </Text>
 
       <Text style={signature}>
@@ -347,11 +358,24 @@ const footnote = {
   color: '#6b7280',
   fontSize: '13px',
   lineHeight: '1.5',
-  margin: '0 0 24px 0',
+  margin: '0 0 16px 0',
   padding: '12px 16px',
   backgroundColor: '#F9FAFB',
   borderRadius: '8px',
   borderLeft: '3px solid #D1D5DB',
+};
+
+const trackLine = {
+  color: '#6b7280',
+  fontSize: '13px',
+  margin: '0 0 24px 0',
+  textAlign: 'center' as const,
+};
+
+const trackLink = {
+  color: '#4b0082',
+  fontWeight: 600,
+  textDecoration: 'underline',
 };
 
 const signature = {

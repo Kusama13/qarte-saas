@@ -2,6 +2,7 @@ import {
   Heading,
   Text,
   Section,
+  Button,
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
@@ -11,55 +12,91 @@ interface GiftCardActivatedEmailProps {
   shopName: string;
   senderFirstName: string;
   recipientFirstName: string;
+  recipientLastName?: string | null;
   amount: string;
-  expiresAtFormatted: string;  // ex "30 avril 2027"
+  expiresAtFormatted: string;
   locale?: EmailLocale;
   servicesLabel?: string | null;
+  pdfUrl?: string | null;
+  scheduledSendAtFormatted?: string | null;  // si renseigné = envoi destinataire différé
 }
 
 export function GiftCardActivatedEmail({
   shopName,
   senderFirstName,
   recipientFirstName,
+  recipientLastName,
   amount,
   expiresAtFormatted,
   locale = 'fr',
   servicesLabel,
+  pdfUrl,
+  scheduledSendAtFormatted,
 }: GiftCardActivatedEmailProps) {
   const isEn = locale === 'en';
   const giftLabel = servicesLabel || (isEn ? `${amount} gift card` : `bon cadeau de ${amount}`);
-  const preview = isEn
-    ? `${recipientFirstName} just received your ${giftLabel}`
-    : `${recipientFirstName} vient de recevoir ton ${giftLabel}`;
+  const recipientFullName = recipientLastName ? `${recipientFirstName} ${recipientLastName}` : recipientFirstName;
+  const isScheduled = Boolean(scheduledSendAtFormatted);
+  const preview = isScheduled
+    ? (isEn
+        ? `Your ${giftLabel} for ${recipientFullName} is scheduled for ${scheduledSendAtFormatted}`
+        : `Ton ${giftLabel} pour ${recipientFullName} est programmé pour le ${scheduledSendAtFormatted}`)
+    : (isEn
+        ? `${recipientFullName} just received your ${giftLabel}`
+        : `${recipientFullName} vient de recevoir ton ${giftLabel}`);
 
   return (
     <BaseLayout preview={preview} locale={locale}>
       <Heading style={heading}>
-        {isEn ? 'Your gift is on its way 🎁' : 'Ton bon cadeau est parti 🎁'}
+        {isScheduled
+          ? (isEn ? 'Your gift is scheduled 🎁' : 'Ton bon cadeau est programmé 🎁')
+          : (isEn ? 'Your gift is on its way 🎁' : 'Ton bon cadeau est parti 🎁')}
       </Heading>
 
       <Text style={paragraph}>
-        {isEn
-          ? `Hi ${senderFirstName}, ${shopName} just confirmed your payment. ${recipientFirstName} is receiving an SMS right now with their ${giftLabel}.`
-          : `Bonjour ${senderFirstName}, ${shopName} vient de confirmer la réception de ton paiement. ${recipientFirstName} reçoit son ${giftLabel} par SMS dans la foulée.`}
+        {isScheduled
+          ? (isEn
+              ? `Hi ${senderFirstName}, ${shopName} just confirmed your payment. ${recipientFullName} will receive their ${giftLabel} on ${scheduledSendAtFormatted}.`
+              : `Bonjour ${senderFirstName}, ${shopName} vient de confirmer la réception de ton paiement. ${recipientFullName} recevra son ${giftLabel} le ${scheduledSendAtFormatted}.`)
+          : (isEn
+              ? `Hi ${senderFirstName}, ${shopName} just confirmed your payment. ${recipientFullName} is receiving an SMS right now with their ${giftLabel}.`
+              : `Bonjour ${senderFirstName}, ${shopName} vient de confirmer la réception de ton paiement. ${recipientFullName} reçoit son ${giftLabel} par SMS dans la foulée.`)}
       </Text>
 
-      <Section style={successBox}>
-        <Text style={successIcon}>✨</Text>
-        <Text style={successTitle}>
-          {isEn ? `Gift delivered to ${recipientFirstName}` : `Bon envoyé à ${recipientFirstName}`}
+      <Section style={isScheduled ? scheduledBox : successBox}>
+        <Text style={isScheduled ? scheduledIcon : successIcon}>{isScheduled ? '📅' : '✨'}</Text>
+        <Text style={isScheduled ? scheduledTitle : successTitle}>
+          {isScheduled
+            ? (isEn ? `Sending on ${scheduledSendAtFormatted}` : `Envoi le ${scheduledSendAtFormatted}`)
+            : (isEn ? `Gift delivered to ${recipientFullName}` : `Bon envoyé à ${recipientFullName}`)}
         </Text>
-        <Text style={successDetail}>
+        <Text style={isScheduled ? scheduledDetail : successDetail}>
           {isEn
             ? `${servicesLabel ? `${servicesLabel} (${amount})` : amount} · valid until ${expiresAtFormatted}`
             : `${servicesLabel ? `${servicesLabel} (${amount})` : amount} · valable jusqu'au ${expiresAtFormatted}`}
         </Text>
       </Section>
 
+      {pdfUrl && (
+        <Section style={pdfBox}>
+          <Text style={pdfLabel}>
+            {isEn ? '🎁 PRINTABLE GIFT CARD' : '🎁 BON CADEAU IMPRIMABLE'}
+          </Text>
+          <Text style={pdfHint}>
+            {isEn
+              ? 'A nicely-designed PDF you can print and offer in person, if you want.'
+              : 'Un PDF joliment mis en page que tu peux imprimer et offrir en main propre, si tu veux.'}
+          </Text>
+          <Button href={pdfUrl} style={pdfButton}>
+            {isEn ? 'Download the PDF' : 'Télécharger le PDF'}
+          </Button>
+        </Section>
+      )}
+
       <Text style={paragraph}>
         {isEn
-          ? `We'll let you know as soon as ${recipientFirstName} uses the gift, so you can share the moment with them.`
-          : `On te préviendra dès que ${recipientFirstName} utilisera son bon, comme ça tu pourras partager le moment avec elle.`}
+          ? `We'll let you know as soon as ${recipientFullName} uses the gift, so you can share the moment with them.`
+          : `On te préviendra dès que ${recipientFullName} utilisera son bon, comme ça tu pourras partager le moment avec elle.`}
       </Text>
 
       <Text style={signature}>
@@ -116,6 +153,73 @@ const successDetail = {
   fontSize: '14px',
   fontWeight: '500',
   margin: '0',
+};
+
+const scheduledBox = {
+  background: 'linear-gradient(135deg, #FAF5FF 0%, #FDF4FF 100%)',
+  border: '2px solid #A78BFA',
+  borderRadius: '16px',
+  padding: '28px 24px',
+  margin: '0 0 24px 0',
+  textAlign: 'center' as const,
+};
+
+const scheduledIcon = {
+  fontSize: '32px',
+  margin: '0 0 8px 0',
+  lineHeight: '1',
+};
+
+const scheduledTitle = {
+  color: '#5B21B6',
+  fontSize: '20px',
+  fontWeight: '700',
+  margin: '0 0 8px 0',
+  letterSpacing: '-0.01em',
+};
+
+const scheduledDetail = {
+  color: '#6D28D9',
+  fontSize: '14px',
+  fontWeight: '500',
+  margin: '0',
+};
+
+const pdfBox = {
+  margin: '0 0 28px 0',
+  padding: '20px 24px',
+  backgroundColor: '#FFF7ED',
+  border: '1px solid #FED7AA',
+  borderRadius: '14px',
+  textAlign: 'center' as const,
+};
+
+const pdfLabel = {
+  color: '#9A3412',
+  fontSize: '11px',
+  fontWeight: '700',
+  letterSpacing: '0.5px',
+  textTransform: 'uppercase' as const,
+  margin: '0 0 6px 0',
+};
+
+const pdfHint = {
+  color: '#7C2D12',
+  fontSize: '13px',
+  margin: '0 0 14px 0',
+  lineHeight: '1.5',
+};
+
+const pdfButton = {
+  backgroundColor: '#9A3412',
+  borderRadius: '10px',
+  color: '#ffffff',
+  fontSize: '14px',
+  fontWeight: '600',
+  textDecoration: 'none',
+  textAlign: 'center' as const,
+  padding: '12px 28px',
+  display: 'inline-block' as const,
 };
 
 const signature = {

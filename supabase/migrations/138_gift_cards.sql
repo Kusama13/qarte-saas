@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS gift_cards (
   used_at TIMESTAMPTZ,                            -- quand le voucher a été consommé
   cancelled_at TIMESTAMPTZ,                       -- quand le merchant a annulé OU auto-cancel cron
   cancellation_reason TEXT,                       -- 'merchant' / 'auto_expired_3d' / 'no_payment'
-  expires_at TIMESTAMPTZ,                         -- 12 mois après paid_at
+  expires_at TIMESTAMPTZ,                         -- 3 mois après paid_at (cf GIFT_CARD_EXPIRY_MONTHS)
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

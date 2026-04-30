@@ -12,9 +12,11 @@ import type { EmailLocale } from './translations';
 interface GiftCardMerchantNotificationEmailProps {
   shopName: string;
   senderFirstName: string;
+  senderLastName?: string | null;
   senderEmail: string;
   senderPhoneFormatted: string;
   recipientFirstName: string;
+  recipientLastName?: string | null;
   recipientPhoneFormatted: string;
   amount: string;
   code: string;
@@ -33,6 +35,8 @@ export function GiftCardMerchantNotificationEmail({
   recipientPhoneFormatted,
   amount,
   code,
+  senderLastName,
+  recipientLastName,
   senderMessage,
   servicesLabel,
   dashboardUrl = 'https://getqarte.com/dashboard/gift-cards',
@@ -40,9 +44,11 @@ export function GiftCardMerchantNotificationEmail({
 }: GiftCardMerchantNotificationEmailProps) {
   const isEn = locale === 'en';
   const giftLabel = servicesLabel || (isEn ? `${amount} gift card` : `bon cadeau de ${amount}`);
+  const senderFullName = senderLastName ? `${senderFirstName} ${senderLastName}` : senderFirstName;
+  const recipientFullName = recipientLastName ? `${recipientFirstName} ${recipientLastName}` : recipientFirstName;
   const preview = isEn
-    ? `New ${giftLabel} order from ${senderFirstName}`
-    : `Nouvelle commande ${giftLabel} de ${senderFirstName}`;
+    ? `New ${giftLabel} order from ${senderFullName}`
+    : `Nouvelle commande ${giftLabel} de ${senderFullName}`;
 
   return (
     <BaseLayout preview={preview} locale={locale}>
@@ -52,8 +58,8 @@ export function GiftCardMerchantNotificationEmail({
 
       <Text style={paragraph}>
         {isEn
-          ? `Hi ${shopName}, ${senderFirstName} just ordered a ${giftLabel} for ${recipientFirstName} from your page.`
-          : `Bonjour ${shopName}, ${senderFirstName} vient de commander un ${giftLabel} pour ${recipientFirstName} depuis ta page.`}
+          ? `Hi ${shopName}, ${senderFullName} just ordered a ${giftLabel} for ${recipientFullName} from your page.`
+          : `Bonjour ${shopName}, ${senderFullName} vient de commander un ${giftLabel} pour ${recipientFullName} depuis ta page.`}
       </Text>
 
       {/* Référence à attendre */}
@@ -64,8 +70,8 @@ export function GiftCardMerchantNotificationEmail({
         <Text style={refCode}>{code}</Text>
         <Text style={refHint}>
           {isEn
-            ? `${senderFirstName} should put this reference in the transfer note when paying`
-            : `${senderFirstName} devrait mettre cette référence en commentaire de virement`}
+            ? `${senderFullName} should put this reference in the transfer note when paying`
+            : `${senderFullName} devrait mettre cette référence en commentaire de virement`}
         </Text>
       </Section>
 
@@ -96,7 +102,7 @@ export function GiftCardMerchantNotificationEmail({
           {isEn ? 'BUYER' : 'OFFREUR / OFFREUSE'}
         </Text>
         <Text style={detailLine}>
-          <strong>{senderFirstName}</strong>
+          <strong>{senderFullName}</strong>
         </Text>
         <Text style={detailLine}>
           📧 <a href={`mailto:${senderEmail}`} style={emailLink}>{senderEmail}</a>
@@ -111,7 +117,7 @@ export function GiftCardMerchantNotificationEmail({
           {isEn ? 'RECIPIENT' : 'DESTINATAIRE'}
         </Text>
         <Text style={detailLine}>
-          <strong>{recipientFirstName}</strong>
+          <strong>{recipientFullName}</strong>
         </Text>
         <Text style={detailLine}>
           📱 {recipientPhoneFormatted}
@@ -134,8 +140,8 @@ export function GiftCardMerchantNotificationEmail({
         </Text>
         <Text style={actionStep}>
           1. {isEn
-            ? `Wait for ${senderFirstName}'s payment via your link (Revolut, PayPal…)`
-            : `Attends le paiement de ${senderFirstName} via ton lien (Revolut, PayPal…)`}
+            ? `Wait for ${senderFullName}'s payment via your link (Revolut, PayPal…)`
+            : `Attends le paiement de ${senderFullName} via ton lien (Revolut, PayPal…)`}
         </Text>
         <Text style={actionStep}>
           2. {isEn
@@ -144,8 +150,8 @@ export function GiftCardMerchantNotificationEmail({
         </Text>
         <Text style={actionStep}>
           3. {isEn
-            ? `Click "Mark as paid" in your dashboard — we'll send the gift to ${recipientFirstName} by SMS`
-            : `Clique "Marquer payé" dans le dashboard — on envoie le bon à ${recipientFirstName} par SMS`}
+            ? `Click "Mark as paid" in your dashboard — we'll send the gift to ${recipientFullName} by SMS`
+            : `Clique "Marquer payé" dans le dashboard — on envoie le bon à ${recipientFullName} par SMS`}
         </Text>
 
         <Button href={dashboardUrl} style={ctaButton}>

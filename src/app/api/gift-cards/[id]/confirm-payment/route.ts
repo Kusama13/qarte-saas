@@ -4,7 +4,7 @@
  * Le merchant valide qu'il a reçu le paiement de l'offreur. À cette étape :
  *   1. Crée/récupère le customer destinataire chez ce merchant
  *   2. Crée/récupère sa loyalty_card (pour qu'il ait son bon dans sa carte fidélité)
- *   3. Crée le voucher (source='gift', expires 12 mois) lié à cette carte
+ *   3. Crée le voucher (source='gift', expires 3 mois) lié à cette carte
  *   4. Update la gift_card en status='active' avec voucher_id + recipient_customer_id + paid_at + expires_at
  *   5. Envoie le SMS au destinataire (gift_card_received)
  *   6. Envoie l'email au destinataire (si email fourni) — beau design carte cadeau
@@ -23,6 +23,7 @@ import {
   GIFT_CARD_EXPIRY_MONTHS,
   formatGiftCardServicesLabel,
 } from '@/lib/gift-cards';
+import { renderAndUploadGiftCardPdf } from '@/lib/gift-card-pdf';
 import type { GiftCardServiceSnapshot } from '@/types';
 import { sendBookingSms } from '@/lib/sms';
 import {
@@ -91,6 +92,7 @@ export async function POST(
         .insert({
           phone_number: giftCard.recipient_phone,
           first_name: giftCard.recipient_first_name,
+          last_name: giftCard.recipient_last_name || null,
           merchant_id: merchant.id,
         })
         .select('id')
@@ -217,27 +219,72 @@ export async function POST(
     });
     const cardUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com'}/customer/card/${merchant.id}`;
 
-    Promise.allSettled([
-      // SMS destinataire
-      sendBookingSms(supabase, {
-        merchantId: merchant.id,
-        phone: giftCard.recipient_phone,
-        shopName: merchant.shop_name,
-        smsType: 'gift_card_received',
-        locale,
-        subscriptionStatus: 'active',  // gating fait au niveau merchant ; ici déjà payé
-        giftSenderName: giftCard.sender_first_name,
-        giftRecipientName: giftCard.recipient_first_name,
-        giftAmount: amountFormatted,
-        giftServicesLabel: servicesLabel,
-      }),
+    // Génération PDF puis envoi des emails (PDF joint).
+    // Le PDF est attendu pour qu'il soit prêt avant les emails.
+    // SMS destinataire part en parallèle (pas besoin de PDF).
+    const senderFullName = giftCard.sender_last_name
+      ? `${giftCard.sender_first_name} ${giftCard.sender_last_name}`
+      : giftCard.sender_first_name;
+    const recipientFullName = giftCard.recipient_last_name
+      ? `${giftCard.recipient_first_name} ${giftCard.recipient_last_name}`
+      : giftCard.recipient_first_name;
 
-      // Email destinataire (optionnel)
-      giftCard.recipient_email
+    // Si scheduled_send_at est dans le futur → on diffère SMS+email destinataire
+    // (le cron /api/cron/gift-cards-deliver les enverra à l'échéance).
+    // Le mail offreur + PDF sont toujours envoyés immédiatement.
+    const scheduledAt = giftCard.scheduled_send_at ? new Date(giftCard.scheduled_send_at) : null;
+    const deferRecipient = scheduledAt && scheduledAt.getTime() > paidAt.getTime();
+
+    const sideEffectsTask = (async () => {
+      // 1. SMS + email destinataire — UNIQUEMENT si pas différé
+      if (!deferRecipient) {
+        sendBookingSms(supabase, {
+          merchantId: merchant.id,
+          phone: giftCard.recipient_phone,
+          shopName: merchant.shop_name,
+          smsType: 'gift_card_received',
+          locale,
+          subscriptionStatus: 'active',
+          giftSenderName: giftCard.sender_first_name,
+          giftRecipientName: giftCard.recipient_first_name,
+          giftAmount: amountFormatted,
+          giftServicesLabel: servicesLabel,
+        }).catch((e) => logger.error('Gift SMS recipient failed:', e));
+      }
+
+      // 2. Génère le PDF (peut prendre 1-3s côté serveur)
+      const pdfUrl = await renderAndUploadGiftCardPdf(supabase, giftCard.id, {
+        shopName: merchant.shop_name,
+        shopAddress: merchant.hide_address_on_public_page ? null : merchant.shop_address,
+        primaryColor: merchant.primary_color || '#4b0082',
+        secondaryColor: merchant.secondary_color || '#ec4899',
+        amountFormatted,
+        servicesLabel,
+        serviceNames: serviceNamesLive,
+        senderFullName,
+        recipientFullName,
+        senderMessage: giftCard.sender_message,
+        code: giftCard.code,
+        expiresAtFormatted: expiresAtFmt,
+        locale,
+      });
+
+      // 3. Stocke pdf_url + notified_at (si envoi immédiat)
+      const updates: Record<string, unknown> = {};
+      if (pdfUrl) updates.pdf_url = pdfUrl;
+      if (!deferRecipient) updates.notified_at = paidAt.toISOString();
+      if (Object.keys(updates).length > 0) {
+        await supabase.from('gift_cards').update(updates).eq('id', giftCard.id);
+      }
+
+      // 4. Email destinataire (si email fourni ET pas différé)
+      const recipientEmailTask = (!deferRecipient && giftCard.recipient_email)
         ? sendGiftCardReceivedEmail(giftCard.recipient_email, {
             shopName: merchant.shop_name,
             senderFirstName: giftCard.sender_first_name,
+            senderLastName: giftCard.sender_last_name,
             recipientFirstName: giftCard.recipient_first_name,
+            recipientLastName: giftCard.recipient_last_name,
             amount: amountFormatted,
             senderMessage: giftCard.sender_message,
             expiresAtFormatted: expiresAtFmt,
@@ -249,19 +296,28 @@ export async function POST(
             servicesLabel,
             serviceNames: serviceNamesLive,
           })
-        : Promise.resolve(),
+        : Promise.resolve();
 
-      // Email confirmation offreur
-      sendGiftCardActivatedEmail(giftCard.sender_email, {
+      // 5. Email offreur — toujours envoyé. Lien PDF (pas attachment) +
+      //    info "envoi prévu le X" si différé.
+      const senderEmailTask = sendGiftCardActivatedEmail(giftCard.sender_email, {
         shopName: merchant.shop_name,
         senderFirstName: giftCard.sender_first_name,
         recipientFirstName: giftCard.recipient_first_name,
+        recipientLastName: giftCard.recipient_last_name,
         amount: amountFormatted,
         expiresAtFormatted: expiresAtFmt,
         locale,
         servicesLabel,
-      }),
-    ]).catch(() => {});
+        pdfUrl,
+        scheduledSendAtFormatted: scheduledAt
+          ? scheduledAt.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+          : null,
+      });
+
+      await Promise.allSettled([recipientEmailTask, senderEmailTask]);
+    })();
+    sideEffectsTask.catch((e) => logger.error('Gift confirm-payment side effects failed:', e));
 
     return NextResponse.json({
       success: true,

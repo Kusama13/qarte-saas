@@ -51,6 +51,10 @@
     {
       "path": "/api/cron/gift-cards-expire",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/gift-cards-deliver",
+      "schedule": "5 * * * *"
     }
   ]
 }

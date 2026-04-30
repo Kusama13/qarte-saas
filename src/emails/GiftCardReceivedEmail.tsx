@@ -12,7 +12,9 @@ import type { EmailLocale } from './translations';
 interface GiftCardReceivedEmailProps {
   shopName: string;
   senderFirstName: string;
+  senderLastName?: string | null;
   recipientFirstName: string;
+  recipientLastName?: string | null;
   amount: string;
   senderMessage?: string | null;
   expiresAtFormatted: string;
@@ -28,6 +30,7 @@ interface GiftCardReceivedEmailProps {
 export function GiftCardReceivedEmail({
   shopName,
   senderFirstName,
+  senderLastName,
   recipientFirstName,
   amount,
   senderMessage,
@@ -40,6 +43,7 @@ export function GiftCardReceivedEmail({
   servicesLabel,
   serviceNames,
 }: GiftCardReceivedEmailProps) {
+  const senderFullName = senderLastName ? `${senderFirstName} ${senderLastName}` : senderFirstName;
   const isEn = locale === 'en';
   const giftDescription = servicesLabel || (isEn ? `${amount} gift card` : `bon cadeau de ${amount}`);
   const preview = isEn
@@ -84,7 +88,7 @@ export function GiftCardReceivedEmail({
         <Text style={giftFromLabel}>
           {isEn ? 'OFFERED BY' : 'OFFERT PAR'}
         </Text>
-        <Text style={giftFrom}>{senderFirstName}</Text>
+        <Text style={giftFrom}>{senderFullName}</Text>
       </Section>
 
       {/* Liste détaillée des prestations si plusieurs */}
@@ -105,7 +109,7 @@ export function GiftCardReceivedEmail({
         <Section style={messageBox}>
           <Text style={messageQuote}>"</Text>
           <Text style={messageText}>{senderMessage}</Text>
-          <Text style={messageSign}>— {senderFirstName}</Text>
+          <Text style={messageSign}>— {senderFullName}</Text>
         </Section>
       )}
 

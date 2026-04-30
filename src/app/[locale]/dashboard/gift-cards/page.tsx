@@ -5,18 +5,17 @@ import { useTranslations } from 'next-intl';
 import {
   Gift, Loader2, Check, X, Phone, Mail, Calendar,
   AlertCircle, Hourglass, CheckCircle2, XCircle, ChevronRight,
-  ExternalLink, MessageSquare, Save, AlertTriangle, Sparkles,
+  MessageSquare, Save, AlertTriangle, Sparkles,
 } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { useToast } from '@/components/ui/Toast';
-import { Link } from '@/i18n/navigation';
 import { formatCurrency, formatPhoneLabel } from '@/lib/utils';
 import {
-  merchantHasPaymentLink,
   GIFT_CARD_DEFAULT_AMOUNTS,
   GIFT_CARD_MIN_AMOUNT,
   GIFT_CARD_MAX_AMOUNT,
 } from '@/lib/gift-cards';
+import { detectPaymentProvider } from '@/lib/payment-providers';
 import type { GiftCard, GiftCardStatus } from '@/types';
 
 type Tab = 'pending_payment' | 'active' | 'used' | 'cancelled';
@@ -54,7 +53,6 @@ export default function GiftCardsPage() {
 
   const locale = (merchant?.locale || 'fr') as 'fr' | 'en';
   const enabled = merchant?.gift_card_enabled ?? false;
-  const hasPaymentLink = merchant ? merchantHasPaymentLink(merchant) : false;
 
   const fetchData = useCallback(async () => {
     if (!merchant?.id) return;
@@ -117,25 +115,10 @@ export default function GiftCardsPage() {
         amounts={merchant.gift_card_amounts || GIFT_CARD_DEFAULT_AMOUNTS}
         message={merchant.gift_card_message}
         servicesEnabled={merchant.gift_card_services_enabled !== false}
+        paymentLink={merchant.gift_card_payment_link}
+        paymentLink2={merchant.gift_card_payment_link_2}
         onChange={() => fetchData()}
       />
-
-      {/* ═══ Pas de lien paiement (warning inline) ═══ */}
-      {enabled && !hasPaymentLink && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex gap-3 items-start">
-          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-amber-900 leading-relaxed">{t('needPaymentLink')}</p>
-            <Link
-              href="/dashboard/planning?tab=settings"
-              className="inline-flex items-center gap-1 text-sm font-semibold text-amber-900 mt-1 hover:underline"
-            >
-              {t('needPaymentLinkCta')}
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      )}
 
       {/* ═══ Pas activé : pitch + signal d'activation ═══ */}
       {!enabled && <DisabledPitch t={t} />}
@@ -205,13 +188,17 @@ export default function GiftCardsPage() {
 // ============================================================
 
 function SettingsPanel({
-  merchantId, enabled: initialEnabled, amounts: initialAmounts, message: initialMessage, servicesEnabled: initialServicesEnabled, onChange,
+  merchantId, enabled: initialEnabled, amounts: initialAmounts, message: initialMessage, servicesEnabled: initialServicesEnabled,
+  paymentLink: initialPaymentLink, paymentLink2: initialPaymentLink2,
+  onChange,
 }: {
   merchantId: string;
   enabled: boolean;
   amounts: number[];
   message: string | null;
   servicesEnabled: boolean;
+  paymentLink: string | null;
+  paymentLink2: string | null;
   onChange?: () => void;
 }) {
   const t = useTranslations('giftCards');
@@ -221,10 +208,15 @@ function SettingsPanel({
   const [amounts, setAmounts] = useState<number[]>(initialAmounts);
   const [message, setMessage] = useState(initialMessage || '');
   const [servicesEnabled, setServicesEnabled] = useState(initialServicesEnabled);
+  const [paymentLink, setPaymentLink] = useState(initialPaymentLink || '');
+  const [paymentLink2, setPaymentLink2] = useState(initialPaymentLink2 || '');
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
 
-  const persist = useCallback(async (override?: { enabled?: boolean; amounts?: number[]; message?: string; servicesEnabled?: boolean }) => {
+  const persist = useCallback(async (override?: {
+    enabled?: boolean; amounts?: number[]; message?: string; servicesEnabled?: boolean;
+    paymentLink?: string; paymentLink2?: string;
+  }) => {
     setSaving(true);
     try {
       const res = await fetch('/api/gift-cards/settings', {
@@ -236,6 +228,8 @@ function SettingsPanel({
           amounts: (override?.amounts ?? amounts).filter((a) => a >= GIFT_CARD_MIN_AMOUNT && a <= GIFT_CARD_MAX_AMOUNT),
           message: (override?.message ?? message)?.trim() || null,
           servicesEnabled: override?.servicesEnabled ?? servicesEnabled,
+          paymentLink: (override?.paymentLink ?? paymentLink)?.trim() || null,
+          paymentLink2: (override?.paymentLink2 ?? paymentLink2)?.trim() || null,
         }),
       });
       if (!res.ok) throw new Error('Failed');
@@ -247,7 +241,7 @@ function SettingsPanel({
     } finally {
       setSaving(false);
     }
-  }, [merchantId, enabled, amounts, message, servicesEnabled, addToast, t, onChange]);
+  }, [merchantId, enabled, amounts, message, servicesEnabled, paymentLink, paymentLink2, addToast, t, onChange]);
 
   const handleServicesToggle = () => {
     const next = !servicesEnabled;
@@ -385,6 +379,37 @@ function SettingsPanel({
               </button>
             </div>
 
+            {/* Liens paiement dédiés bons cadeaux */}
+            <div>
+              <label className="text-sm font-semibold text-gray-700 mb-1 block">
+                {t('programPaymentLinksLabel')}
+              </label>
+              <p className="text-xs text-gray-500 mb-3 leading-snug">
+                {t('programPaymentLinksHint')}
+              </p>
+
+              <div className="space-y-2.5">
+                <PaymentLinkField
+                  url={paymentLink}
+                  onUrlChange={(v) => { setPaymentLink(v); setDirty(true); }}
+                  placeholder={t('programPaymentLinkPlaceholder1')}
+                />
+                <PaymentLinkField
+                  url={paymentLink2}
+                  onUrlChange={(v) => { setPaymentLink2(v); setDirty(true); }}
+                  placeholder={t('programPaymentLinkPlaceholder2')}
+                />
+              </div>
+
+              {/* Warning inline si aucun lien renseigné — directement sous les champs */}
+              {!paymentLink.trim() && !paymentLink2.trim() && (
+                <div className="mt-3 flex gap-2 items-start rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-900 leading-relaxed">{t('needPaymentLink')}</p>
+                </div>
+              )}
+            </div>
+
             {dirty && cleanAmounts.length > 0 && (
               <div className="flex justify-end">
                 <button
@@ -402,6 +427,34 @@ function SettingsPanel({
         )}
       </div>
     </section>
+  );
+}
+
+function PaymentLinkField({
+  url, onUrlChange, placeholder,
+}: {
+  url: string;
+  onUrlChange: (v: string) => void;
+  placeholder: string;
+}) {
+  const detected = url.trim() ? detectPaymentProvider(url.trim()) : null;
+  return (
+    <div className="relative">
+      <input
+        type="url"
+        value={url}
+        onChange={(e) => onUrlChange(e.target.value)}
+        placeholder={placeholder}
+        maxLength={500}
+        className={`w-full px-3.5 py-2.5 ${detected ? 'pr-28' : ''} rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 placeholder:text-gray-400`}
+      />
+      {detected && (
+        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+          <Check className="w-2.5 h-2.5" />
+          {detected}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -436,7 +489,7 @@ function DisabledPitch({ t: _t }: { t: ReturnType<typeof useTranslations<'giftCa
 // GiftCardRow — affichage avec confirm/cancel inline (pas de modal)
 // ============================================================
 
-type RowMode = 'view' | 'confirming' | 'cancelling';
+type RowMode = 'view' | 'confirming' | 'cancelling' | 'consuming';
 
 function GiftCardRow({
   card, locale, country, onChange,
@@ -460,6 +513,8 @@ function GiftCardRow({
   const resolvedServices = card.services_resolved && card.services_resolved.length > 0
     ? card.services_resolved
     : (card.service_snapshot || []);
+  const senderFullName = card.sender_last_name ? `${card.sender_first_name} ${card.sender_last_name}` : card.sender_first_name;
+  const recipientFullName = card.recipient_last_name ? `${card.recipient_first_name} ${card.recipient_last_name}` : card.recipient_first_name;
 
   const handleConfirm = async () => {
     setBusy(true);
@@ -487,6 +542,19 @@ function GiftCardRow({
     }
   };
 
+  const handleConsume = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/gift-cards/${card.id}/consume`, { method: 'POST' });
+      if (!res.ok) throw new Error('Failed');
+      addToast(t('toastConsumed', { name: recipientFullName }), 'success');
+      onChange();
+    } catch {
+      addToast(t('toastError'), 'error');
+      setBusy(false);
+    }
+  };
+
   return (
     <article className={`bg-white border border-slate-100 rounded-xl shadow-sm p-4 md:p-5 ${card.status === 'cancelled' || card.status === 'expired' ? 'opacity-70' : ''}`}>
       {/* En-tête : montant + code + status */}
@@ -505,9 +573,9 @@ function GiftCardRow({
             </code>
           </div>
           <p className="text-[13px] text-gray-600 mt-0.5">
-            <span className="font-semibold text-gray-900">{card.sender_first_name}</span>
+            <span className="font-semibold text-gray-900">{senderFullName}</span>
             <span className="text-gray-400 mx-1.5">→</span>
-            <span className="font-semibold text-gray-900">{card.recipient_first_name}</span>
+            <span className="font-semibold text-gray-900">{recipientFullName}</span>
           </p>
         </div>
         <StatusPill status={card.status} t={t} />
@@ -535,8 +603,8 @@ function GiftCardRow({
 
       {/* Détails 2 colonnes */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-        <ContactBlock label={t('fromLabel')} name={card.sender_first_name} phone={card.sender_phone} email={card.sender_email} />
-        <ContactBlock label={t('toLabel')} name={card.recipient_first_name} phone={card.recipient_phone} email={card.recipient_email} />
+        <ContactBlock label={t('fromLabel')} name={senderFullName} phone={card.sender_phone} email={card.sender_email} />
+        <ContactBlock label={t('toLabel')} name={recipientFullName} phone={card.recipient_phone} email={card.recipient_email} />
       </div>
 
       {/* Mot personnel */}
@@ -645,16 +713,47 @@ function GiftCardRow({
         </div>
       )}
 
-      {/* Active : lien vers la fiche cliente */}
-      {card.status === 'active' && card.recipient_customer_id && (
+      {/* Active : bouton "Consommer" inline */}
+      {card.status === 'active' && mode === 'view' && (
         <div className="pt-3 border-t border-gray-100">
-          <Link
-            href={`/dashboard/customers?focus=${card.recipient_customer_id}`}
-            className="inline-flex items-center gap-1.5 text-[12px] text-emerald-700 hover:text-emerald-900 font-medium"
+          <button
+            onClick={() => setMode('consuming')}
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors touch-manipulation"
           >
-            <ExternalLink className="w-3 h-3" />
-            {t('voucherLink')}
-          </Link>
+            <Sparkles className="w-4 h-4" />
+            {t('consumeCta')}
+          </button>
+        </div>
+      )}
+
+      {/* Consume step inline — pattern garde-fou clic-clic */}
+      {mode === 'consuming' && (
+        <div className="pt-3 border-t border-gray-100 space-y-3">
+          <div className="flex gap-2.5 p-3 rounded-xl bg-violet-50 border border-violet-200">
+            <Sparkles className="w-4 h-4 text-violet-600 shrink-0 mt-0.5" />
+            <p className="text-[13px] text-violet-900 leading-relaxed">
+              {t('consumeBody', { name: recipientFullName, gift: isServicesKind && resolvedServices.length > 0
+                ? resolvedServices.map((sv) => sv.name).join(' + ')
+                : amountFmt })}
+            </p>
+          </div>
+          <div className="flex flex-col-reverse sm:flex-row gap-2">
+            <button
+              onClick={() => setMode('view')}
+              disabled={busy}
+              className="sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 touch-manipulation"
+            >
+              {t('consumeCancel')}
+            </button>
+            <button
+              onClick={handleConsume}
+              disabled={busy}
+              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 disabled:opacity-50 transition-colors touch-manipulation"
+            >
+              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              {busy ? t('consuming') : t('consumeConfirm')}
+            </button>
+          </div>
         </div>
       )}
     </article>

@@ -24,6 +24,7 @@ import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit
 import {
   generateGiftCardCode,
   merchantHasPaymentLink,
+  buildGiftCardPaymentLinks,
   GIFT_CARD_MIN_AMOUNT,
   GIFT_CARD_MAX_AMOUNT,
   formatGiftCardServicesLabel,
@@ -51,6 +52,7 @@ const giftCardRequestSchema = z.object({
 
   // Offreur
   sender_first_name: z.string().min(1).max(60),
+  sender_last_name: z.string().min(1).max(60),
   sender_phone: z.string().min(1),
   sender_phone_country: z.enum(['FR', 'BE', 'CH']).optional(),
   sender_email: z.string().email().max(255),
@@ -58,9 +60,13 @@ const giftCardRequestSchema = z.object({
 
   // Destinataire
   recipient_first_name: z.string().min(1).max(60),
+  recipient_last_name: z.string().min(1).max(60),
   recipient_phone: z.string().min(1),
   recipient_phone_country: z.enum(['FR', 'BE', 'CH']).optional(),
   recipient_email: z.string().email().max(255).optional().nullable(),
+
+  // Envoi planifié (optionnel) — date ISO à laquelle SMS+email destinataire seront envoyés
+  scheduled_send_at: z.string().datetime().nullable().optional(),
 }).refine(
   (data) => (data.kind === 'amount' ? data.amount !== undefined : (data.service_ids?.length || 0) > 0),
   { message: 'amount requis si kind=amount, service_ids requis si kind=services' },
@@ -93,7 +99,7 @@ export async function POST(request: NextRequest) {
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
       .select(
-        'id, slug, shop_name, country, locale, primary_color, secondary_color, gift_card_enabled, gift_card_services_enabled, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, trial_ends_at, subscription_status, deleted_at, user_id',
+        'id, slug, shop_name, country, locale, primary_color, secondary_color, gift_card_enabled, gift_card_services_enabled, gift_card_payment_link, gift_card_payment_link_label, gift_card_payment_link_2, gift_card_payment_link_2_label, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, trial_ends_at, subscription_status, deleted_at, user_id',
       )
       .eq('id', data.merchant_id)
       .is('deleted_at', null)
@@ -227,14 +233,17 @@ export async function POST(request: NextRequest) {
         service_ids: serviceIds,
         service_snapshot: serviceSnapshot,
         sender_first_name: data.sender_first_name.trim(),
+        sender_last_name: data.sender_last_name.trim(),
         sender_phone: senderPhoneE164,
         sender_phone_country: senderCountry,
         sender_email: data.sender_email.trim().toLowerCase(),
         sender_message: data.sender_message?.trim() || null,
         recipient_first_name: data.recipient_first_name.trim(),
+        recipient_last_name: data.recipient_last_name.trim(),
         recipient_phone: recipientPhoneE164,
         recipient_phone_country: recipientCountry,
         recipient_email: data.recipient_email?.trim().toLowerCase() || null,
+        scheduled_send_at: data.scheduled_send_at || null,
         status: 'pending_payment',
       })
       .select('id, code')
@@ -245,20 +254,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Erreur lors de la création du bon' }, { status: 500 });
     }
 
-    // 8. Build payment links (1 ou 2)
-    const paymentLinks: Array<{ url: string; label: string }> = [];
-    if (merchant.deposit_link?.trim()) {
-      const label = merchant.deposit_link_label?.trim()
-        || detectPaymentProvider(merchant.deposit_link)
-        || 'Payer';
-      paymentLinks.push({ url: merchant.deposit_link.trim(), label: `Payer avec ${label}` });
-    }
-    if (merchant.deposit_link_2?.trim()) {
-      const label = merchant.deposit_link_2_label?.trim()
-        || detectPaymentProvider(merchant.deposit_link_2)
-        || 'Payer';
-      paymentLinks.push({ url: merchant.deposit_link_2.trim(), label: `Payer avec ${label}` });
-    }
+    // 8. Build payment links — priorité aux liens dédiés bons cadeaux,
+    //    fallback sur deposit_link / deposit_link_2 si pas configurés.
+    const paymentLinks = buildGiftCardPaymentLinks(merchant, detectPaymentProvider);
 
     const amountFormatted = formatCurrency(finalAmount, merchant.country, merchant.locale || 'fr', 0);
     const locale = (merchant.locale || 'fr') as 'fr' | 'en';
@@ -269,7 +267,9 @@ export async function POST(request: NextRequest) {
       sendGiftCardOrderConfirmationEmail(data.sender_email.trim().toLowerCase(), {
         shopName: merchant.shop_name,
         senderFirstName: data.sender_first_name.trim(),
+        senderLastName: data.sender_last_name.trim(),
         recipientFirstName: data.recipient_first_name.trim(),
+        recipientLastName: data.recipient_last_name.trim(),
         amount: amountFormatted,
         code: giftCard.code,
         paymentLinks,
@@ -288,9 +288,11 @@ export async function POST(request: NextRequest) {
         return sendGiftCardMerchantNotificationEmail(merchantEmail, {
           shopName: merchant.shop_name,
           senderFirstName: data.sender_first_name.trim(),
+          senderLastName: data.sender_last_name.trim(),
           senderEmail: data.sender_email.trim(),
           senderPhoneFormatted: `${senderPhoneDisplay.flag} ${senderPhoneDisplay.display}`,
           recipientFirstName: data.recipient_first_name.trim(),
+          recipientLastName: data.recipient_last_name.trim(),
           recipientPhoneFormatted: `${recipientPhoneDisplay.flag} ${recipientPhoneDisplay.display}`,
           amount: amountFormatted,
           code: giftCard.code,

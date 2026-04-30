@@ -16,7 +16,11 @@ import {
   GIFT_CARD_MAX_AMOUNT,
   GIFT_CARD_DEFAULT_AMOUNTS,
 } from '@/lib/gift-cards';
+import { detectPaymentProvider } from '@/lib/payment-providers';
 import logger from '@/lib/logger';
+
+// Accepte une URL valide OU une chaîne vide / null (= effacer le lien)
+const urlOrEmpty = z.union([z.string().url().max(500), z.literal(''), z.null()]);
 
 const settingsSchema = z.object({
   merchantId: z.string().uuid(),
@@ -25,6 +29,9 @@ const settingsSchema = z.object({
   message: z.string().max(300).nullable().optional(),
   // Sous-toggle : autoriser le client à offrir une prestation (mig 140)
   servicesEnabled: z.boolean().optional(),
+  // Liens paiement dédiés bons cadeaux (mig 141)
+  paymentLink: urlOrEmpty.optional(),
+  paymentLink2: urlOrEmpty.optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -44,7 +51,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const { merchantId, enabled, amounts, message, servicesEnabled } = parsed.data;
+    const { merchantId, enabled, amounts, message, servicesEnabled, paymentLink, paymentLink2 } = parsed.data;
     const supabase = getSupabaseAdmin();
 
     // Ownership check
@@ -68,6 +75,18 @@ export async function PATCH(request: NextRequest) {
     };
     if (typeof servicesEnabled === 'boolean') {
       updatePayload.gift_card_services_enabled = servicesEnabled;
+    }
+    // Liens paiement : on ne touche que si fourni (undefined = pas de changement,
+    // null/'' = clear, URL = set + label auto-détecté)
+    if (paymentLink !== undefined) {
+      const url = paymentLink?.trim() || null;
+      updatePayload.gift_card_payment_link = url;
+      updatePayload.gift_card_payment_link_label = url ? detectPaymentProvider(url) : null;
+    }
+    if (paymentLink2 !== undefined) {
+      const url = paymentLink2?.trim() || null;
+      updatePayload.gift_card_payment_link_2 = url;
+      updatePayload.gift_card_payment_link_2_label = url ? detectPaymentProvider(url) : null;
     }
 
     const { error: updateError } = await supabase
