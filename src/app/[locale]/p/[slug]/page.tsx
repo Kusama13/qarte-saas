@@ -142,19 +142,35 @@ export async function generateMetadata({
     ? `${shopLabelSeo}${city ? ` in ${city}` : ''} — ${merchant.shop_name}`
     : `${shopLabelSeo}${city ? ` à ${city}` : ''} — ${merchant.shop_name}`;
 
-  // Meta description — keyword + booking CTA + loyalty mention. Target ~150 chars.
-  // FR: "Institut de beauté à Paris 9, Studio Margot. Réservation en ligne 24h/24, soin visage, massage. Programme de fidélité."
+  // Meta description — viser ~150-160 chars. Pattern : entité (type + ville + nom),
+  // signal de réservation, top services, USP fidélité, accroche si bio.
   const topServices = services.slice(0, 3).map((s: { name: string }) => s.name).join(', ');
   const bookingHint = merchant.auto_booking_enabled
     ? (isEN ? 'Book online 24/7.' : 'Réservation en ligne 24h/24.')
     : '';
   const loyaltyHint = isEN ? 'Loyalty program included.' : 'Programme de fidélité.';
+  // Première phrase de la bio si dispo et < 80 chars — ajoute du contenu unique pour
+  // éviter les descriptions quasi-identiques entre marchands du même type / ville.
+  const bioFirstSentence = merchant.bio
+    ? merchant.bio.split(/[.!?\n]/)[0]?.trim().slice(0, 80)
+    : null;
+  const bioHint = bioFirstSentence && bioFirstSentence.length > 15 ? `${bioFirstSentence}.` : '';
   const description = isEN
-    ? `${shopLabelSeo}${city ? ` in ${city}` : ''}, ${merchant.shop_name}. ${bookingHint}${topServices ? ` ${topServices}.` : ''} ${loyaltyHint}`.replace(/\s+/g, ' ').trim()
-    : `${shopLabelSeo}${city ? ` à ${city}` : ''}, ${merchant.shop_name}. ${bookingHint}${topServices ? ` ${topServices}.` : ''} ${loyaltyHint}`.replace(/\s+/g, ' ').trim();
+    ? `${shopLabelSeo}${city ? ` in ${city}` : ''}, ${merchant.shop_name}. ${bioHint} ${bookingHint}${topServices ? ` ${topServices}.` : ''} ${loyaltyHint}`.replace(/\s+/g, ' ').trim().slice(0, 160)
+    : `${shopLabelSeo}${city ? ` à ${city}` : ''}, ${merchant.shop_name}. ${bioHint} ${bookingHint}${topServices ? ` ${topServices}.` : ''} ${loyaltyHint}`.replace(/\s+/g, ' ').trim().slice(0, 160);
 
+  // Qualification d'indexabilité : on noindex les pages trop pauvres, démos, et abonnements
+  // morts pour ne pas polluer les SERPs Google avec du contenu mince ou hors-marque.
+  const isDemo = isDemoSlug(slug);
+  const trialExpired = merchant.subscription_status === 'trial' && merchant.trial_ends_at && new Date(merchant.trial_ends_at) < new Date();
+  const isInactive = merchant.subscription_status === 'canceled' || trialExpired;
+  const tooThin = services.length === 0 && photos.length === 0 && !merchant.logo_url;
+  const shouldNoindex = isDemo || isInactive || tooThin;
+
+  // `absolute` casse le template `%s | Qarte` du root layout — on ne veut PAS que la marque
+  // Qarte apparaisse dans les SERPs marchand (objectif : pas de pollution brand "qarte" inversée).
   return {
-    title,
+    title: { absolute: title },
     description,
     openGraph: {
       title,
@@ -163,10 +179,21 @@ export async function generateMetadata({
       type: 'website',
       locale: isEN ? 'en_US' : 'fr_FR',
       alternateLocale: isEN ? ['fr_FR'] : ['en_US'],
+      siteName: merchant.shop_name,
     },
     alternates: {
       canonical: `${baseUrl}${isEN ? '/en' : ''}/p/${slug}`,
+      languages: {
+        fr: `${baseUrl}/p/${slug}`,
+        'x-default': `${baseUrl}/p/${slug}`,
+      },
     },
+    ...(shouldNoindex && {
+      robots: {
+        index: false,
+        follow: true, // garde le link juice vers le dashboard / pages de marque
+      },
+    }),
   };
 }
 

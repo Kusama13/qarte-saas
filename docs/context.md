@@ -283,13 +283,14 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **TikTokPixel** : seule exception, utilise `usePathname` de `next/navigation` (besoin du path complet avec prefixe pour analytics)
 
 ### SEO i18n
-- **Sitemap** (`src/app/sitemap.ts`) : pages statiques + blog + demos avec alternates FR/EN (PAS de pages merchant — decouverte organique uniquement)
-- **robots.ts** : disallow `/api/`, `/dashboard/`, `/admin/`, `/auth/`, `/customer/`, `/scan/`
-- **noindex** : `/scan/[code]` et `/customer/card/[merchantId]` (layouts avec `robots: { index: false, follow: false }`)
-- **Hreflang** : `<link rel="alternate" hrefLang="fr|en|x-default">` dans root layout `<head>`
+- **Sitemap principal** (`src/app/sitemap.ts`) : pages statiques + blog + compare + alternatives + tools. **Pas les démos `/p/demo-*`** (polluaient les SERPs "qarte" brandée), **pas les pages merchant** (cf sitemap secondaire ci-dessous)
+- **Sitemap secondaire merchants** (`src/app/sitemap-merchants.xml/route.ts`) : route handler XML qui liste les `/p/[slug]` éligibles (exclut canceled + trial expiré). **Volontairement non déclaré dans `robots.ts`** — soumis manuellement à Google Search Console pour que les marchands soient indexés sans pollution brand "qarte". Cache 1h.
+- **robots.ts (dynamic)** : disallow `/api/`, `/dashboard/`, `/admin/`, `/auth/`, `/customer/`, `/scan/`. + 11 règles AI bots opt-in (GPTBot, PerplexityBot, ClaudeBot, Google-Extended, Applebot-Extended, Bingbot, etc.) + opt-out CCBot. **Bug critique fix mai 2026** : `public/robots.txt` statique shadow le dynamic en Next.js → suppression du fichier statique pour que les règles AI bots soient enfin servies
+- **noindex** : `/scan/[code]` et `/customer/card/[merchantId]` (layouts avec `robots: { index: false, follow: false }`). **Page marchand `/p/[slug]` aussi noindex** quand : démo (`isDemoSlug(slug)`), abonnement annulé / trial expiré, ou trop pauvre (0 service ET 0 photo ET pas de logo). Garde `follow: true` pour le link juice
+- **Hreflang** : géré **par-page** via `metadata.alternates.languages` (Next 15). Plus de hreflang global dans `<head>` (créait des conflits sur `/p/[slug]` pointant vers `/`)
 - **og:locale:alternate** : dans `[locale]/layout.tsx` (FR ↔ EN)
 - **Blog** : `[locale]/blog/layout.tsx` — metadata locale-aware + canonical + alternates
-- **/p/[slug]** : `generateMetadata` — titre/description traduits, og:locale, alternates FR/EN
+- **/p/[slug]** : `generateMetadata` — `title: { absolute: ... }` pour casser le template `%s | Qarte` du root layout (objectif : pas de mention Qarte dans les SERPs marchand). Description enrichie avec ville + 1ère phrase de bio (max 160 chars). `og.siteName: shop_name` pour la même raison
 - **Welcome email** : `sendWelcomeEmail` recoit le locale du merchant a la creation
 - **Admin pages** : hardcoded `'fr-FR'` acceptable (usage interne uniquement)
 

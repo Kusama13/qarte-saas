@@ -35,15 +35,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry('/blog/logiciel-reservation-en-ligne-salon-beaute', { priority: 0.9, changeFrequency: 'monthly', lastModified: new Date('2026-04-16') }),
   ];
 
-  // --- Demo pages (8 types x 2 modes = 16 pages) ---
-  const demoSlugs = [
-    'demo-onglerie', 'demo-coiffure', 'demo-tatouage', 'demo-barbier',
-    'demo-institut', 'demo-spa', 'demo-estheticienne', 'demo-autre',
-  ];
-  const demoPages: MetadataRoute.Sitemap = demoSlugs.flatMap(slug => [
-    entry(`/p/${slug}`, { priority: 0.6, lastModified: new Date('2026-04-14') }),
-    entry(`/p/${slug}-libre`, { priority: 0.5, lastModified: new Date('2026-04-14') }),
-  ]);
+  // Pages démo (`/p/demo-*`) volontairement absentes du sitemap.
+  // Elles polluaient les SERPs "qarte" — désormais noindex côté generateMetadata
+  // de /p/[slug]/page.tsx (cf. isDemoSlug check).
 
   // --- Compare pages ---
   const comparePages: MetadataRoute.Sitemap = [
@@ -68,5 +62,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Each merchant page has its own SEO identity via JSON-LD LocalBusiness
   // and should be discovered organically, not listed under getqarte.com.
 
-  return [...staticPages, ...blogPages, ...demoPages, ...comparePages, ...alternativePages, ...toolPages];
+  return [...staticPages, ...blogPages, ...comparePages, ...alternativePages, ...toolPages];
 }

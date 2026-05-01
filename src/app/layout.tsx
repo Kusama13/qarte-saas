@@ -203,9 +203,9 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
-        {/* Hreflang — FR only (EN redirects to FR via middleware) */}
-        <link rel="alternate" hrefLang="fr" href={baseUrl} />
-        <link rel="alternate" hrefLang="x-default" href={baseUrl} />
+        {/* Hreflang : géré par-page via Next metadata.alternates.languages —
+            mettre des hreflang globaux pointant vers / créait des conflits sur /p/[slug]
+            (Google recevait un hreflang qui pointait ailleurs que la page courante). */}
 
         {/* Structured data — single @graph */}
         <script
