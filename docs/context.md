@@ -620,9 +620,15 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 ### Jeu concours mensuel
 - `GET /api/contest?merchantId=` — Historique tirages (auth, 12 derniers)
-- `PATCH /api/contest` — Sauvegarde config (contestEnabled, contestPrize)
+- `PATCH /api/contest` — Sauvegarde config (contestEnabled, contestPrize fallback)
 - `GET /api/contest/participants?merchantId=` — Nombre participants uniques du mois courant
-- `GET /api/cron/monthly-contest` — Cron 1er du mois : tirage, insert merchant_contests, push + email merchant
+- `GET /api/contest/analytics?merchantId=` — ROI : RDV mois courant vs moyenne 3 mois précédents (`{ currentMonthBookings, avgBaseline, boost, hasBaseline }`)
+- `GET /api/contest/prizes?merchantId=` — Lots planifiés mois par mois
+- `PUT /api/contest/prizes` — Upsert lot pour un mois donné (`{ merchantId, month, prize }`)
+- `DELETE /api/contest/prizes` — Efface lot d'un mois (revient au fallback `merchants.contest_prize`)
+- `GET /api/cron/monthly-contest` — Cron 1er du mois : tirage automatique. Lookup planned prize en bulk via `merchant_contest_prizes` → fallback `merchants.contest_prize`. Insert `merchant_contests`, push + email merchant
+- **Cron `morning-jobs` passe contestPrizeReminder** : si `contest_enabled=true` ET pas de lot pour mois courant (ni planifié, ni fallback) ET dans les 5 derniers jours du mois → push + email "Définis le lot avant le tirage". Idempotent via `merchants.contest_missing_prize_alerted_at` (max 1/mois)
+- Page `/dashboard/contest` (refonte nov 2026) : palette violet→rose (DESIGN.md feature "fidélité extras"), hero gradient avec stats grid (countdown J-X, participants live, boost ROI), last winner showcase 30 jours post-tirage, carte "Lot du mois courant" + carte "Planifier les mois suivants" avec édition inline mois par mois, modal sober "Comment fonctionne le tirage" via icône `ℹ️` discrète (pas de bullets pédagogiques visibles à l'écran)
 
 ### Clients (social)
 - `PATCH /api/customers/social` — MAJ liens sociaux (instagram_handle, tiktok_handle, facebook_url)

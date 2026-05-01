@@ -1328,6 +1328,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 144 | gift_card_merchant_image | (Abandonné/cleanup) — feature image custom merchant ajoutée puis retirée par 145 |
 | 145 | gift_card_expiry_months_cleanup | `merchants.gift_card_expiry_months SMALLINT NOT NULL DEFAULT 3 CHECK 1-24` (durée validité bon personnalisable, segment 3/6/12 mois côté UI). DROP `merchants.gift_card_image_url` (feature 144 abandonnée) + DROP policy bucket `merchant-uploads` (suppression manuelle Supabase Storage requise) |
 | 146 | gift_card_expiry_reminder | `gift_cards.expiry_reminder_sent_at TIMESTAMPTZ` (rappel SMS J-7 destinataire avant expiration, 1 envoi max par bon) + index partiel `(expires_at) WHERE status='active' AND expiry_reminder_sent_at IS NULL` (scan rapide cron `gift-cards-expire` passe 0) |
+| 147 | contest_monthly_prizes | Table `merchant_contest_prizes (merchant_id, contest_month VARCHAR(7), prize_description TEXT NOT NULL CHECK 1-300, created_at, updated_at, PK (merchant_id, contest_month))` pour planifier différents lots par mois (avril = coffret, mai = bon 30€…). Le cron `monthly-contest` lit ici en priorité, fallback sur `merchants.contest_prize`. RLS merchant manage own. Trigger `update_updated_at_column`. + Colonne `merchants.contest_missing_prize_alerted_at TIMESTAMPTZ` (idempotence du push+email envoyé J-5 par le cron `morning-jobs` quand le merchant n'a pas défini de lot pour le mois courant — max 1 alerte/mois via comparaison de la date) |
 
 ---
 

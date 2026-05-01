@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
     birthdayVouchers: { processed: 0, created: 0, skipped: 0, errors: 0 },
     depositDeadline: { released: 0, warned: 0 },
     attendanceAutoMarked: { count: 0 },
+    contestPrizeReminder: { processed: 0, alerted: 0 },
   };
 
   const sectionStatuses: Array<{ name: string; status: 'ok' | 'error'; error?: string }> = [];
@@ -362,6 +363,108 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     logger.error('attendance auto-mark error:', err);
     sectionStatuses.push({ name: 'attendanceAutoMark', status: 'error', error: err instanceof Error ? err.message : String(err) });
+  }
+
+  // ==================== CONTEST PRIZE REMINDER ====================
+  // Si contest_enabled = true ET pas de lot pour le mois courant (ni planifié,
+  // ni fallback merchants.contest_prize) ET on est dans les 5 derniers jours
+  // du mois → push + email pour rappeler de définir le lot avant le tirage du 1er.
+  // Idempotent via merchants.contest_missing_prize_alerted_at (max 1 alerte/mois).
+  if (isTimedOut()) { sectionStatuses.push({ name: 'contestPrizeReminder', status: 'error', error: 'Skipped: cron timeout' }); }
+  else try {
+    const todayParis = getTodayInParis();
+    const todayDate = new Date(todayParis + 'T12:00:00');
+    const currentMonth = todayParis.slice(0, 7);
+    const dayOfMonth = todayDate.getDate();
+    const lastDayOfMonth = new Date(todayDate.getFullYear(), todayDate.getMonth() + 1, 0).getDate();
+    const isInLast5Days = (lastDayOfMonth - dayOfMonth) <= 4;
+
+    if (isInLast5Days) {
+      const { data: contestMerchants } = await supabase
+        .from('merchants')
+        .select('id, shop_name, user_id, locale, contest_prize, contest_missing_prize_alerted_at')
+        .eq('contest_enabled', true)
+        .in('subscription_status', ['active', 'canceling']);
+
+      if (contestMerchants && contestMerchants.length > 0) {
+        const ids = contestMerchants.map((m) => m.id);
+        const { data: prizes } = await supabase
+          .from('merchant_contest_prizes')
+          .select('merchant_id')
+          .in('merchant_id', ids)
+          .eq('contest_month', currentMonth);
+        const haveCurrentPrize = new Set((prizes || []).map((p) => p.merchant_id));
+
+        const targets = contestMerchants.filter((m) => {
+          if (haveCurrentPrize.has(m.id)) return false;
+          if ((m.contest_prize || '').trim().length > 0) return false;
+          if (m.contest_missing_prize_alerted_at) {
+            const lastAlertMonth = new Date(m.contest_missing_prize_alerted_at).toISOString().slice(0, 7);
+            if (lastAlertMonth === currentMonth) return false;
+          }
+          return true;
+        });
+
+        results.contestPrizeReminder.processed = targets.length;
+
+        if (targets.length > 0) {
+          const userIds = targets.map((m) => m.user_id).filter((id): id is string => Boolean(id));
+          const emailsByUserId = await batchGetUserEmails(supabase, userIds);
+
+          for (const m of targets) {
+            const isEN = m.locale === 'en';
+            const monthLabel = todayDate.toLocaleDateString(isEN ? 'en-US' : 'fr-FR', { month: 'long' });
+            const title = isEN ? 'Pick the contest prize before the draw' : 'Définis le lot du concours avant le tirage';
+            const body = isEN
+              ? `${m.shop_name} — your monthly draw is in a few days but no prize is set yet.`
+              : `${m.shop_name} — le tirage du mois arrive et tu n'as pas encore défini de lot.`;
+
+            pushPromises.push(
+              sendMerchantPush({
+                supabase,
+                merchantId: m.id,
+                notificationType: 'contest_missing_prize',
+                referenceId: currentMonth,
+                title,
+                body,
+                url: '/dashboard/contest',
+                tag: 'qarte-merchant-contest-missing-prize',
+              }).catch(() => false),
+            );
+
+            const email = m.user_id ? emailsByUserId.get(m.user_id) : null;
+            if (email) {
+              try {
+                await resend?.emails.send({
+                  from: EMAIL_FROM,
+                  to: email,
+                  subject: isEN
+                    ? `${m.shop_name} — pick the contest prize for ${monthLabel}`
+                    : `${m.shop_name} — définis le lot du concours pour ${monthLabel}`,
+                  text: isEN
+                    ? `Your monthly draw is in a few days. Set the prize for ${monthLabel} before the draw on the 1st:\nhttps://getqarte.com/dashboard/contest`
+                    : `Le tirage du mois est dans quelques jours. Définis le lot pour ${monthLabel} avant le tirage du 1er :\nhttps://getqarte.com/dashboard/contest`,
+                  headers: EMAIL_HEADERS,
+                });
+              } catch (emailErr) {
+                logger.error(`Contest reminder email error for ${m.id}:`, emailErr);
+              }
+            }
+            await rateLimitDelay();
+          }
+
+          await supabase
+            .from('merchants')
+            .update({ contest_missing_prize_alerted_at: new Date().toISOString() })
+            .in('id', targets.map((m) => m.id));
+          results.contestPrizeReminder.alerted = targets.length;
+        }
+      }
+    }
+    sectionStatuses.push({ name: 'contestPrizeReminder', status: 'ok' });
+  } catch (err) {
+    logger.error('contest prize reminder error:', err);
+    sectionStatuses.push({ name: 'contestPrizeReminder', status: 'error', error: err instanceof Error ? err.message : String(err) });
   }
 
   // Await all push promises before returning

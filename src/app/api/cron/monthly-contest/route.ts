@@ -24,6 +24,19 @@ export async function GET(request: NextRequest) {
       .eq('contest_enabled', true)
       .in('subscription_status', ['active', 'canceling']);
 
+    // Lookup planned prizes en bulk (1 query pour tous les merchants)
+    const merchantIds = (merchants || []).map((m) => m.id);
+    const plannedPrizesMap = new Map<string, string>(); // key = `${merchantId}:${month}`
+    if (merchantIds.length > 0) {
+      const { data: plannedPrizes } = await supabase
+        .from('merchant_contest_prizes')
+        .select('merchant_id, contest_month, prize_description')
+        .in('merchant_id', merchantIds);
+      for (const p of plannedPrizes || []) {
+        plannedPrizesMap.set(`${p.merchant_id}:${p.contest_month}`, p.prize_description);
+      }
+    }
+
     if (!merchants || merchants.length === 0) {
       return NextResponse.json({ success: true, ...results });
     }
@@ -81,7 +94,8 @@ export async function GET(request: NextRequest) {
         }
 
         const participants = Array.from(customerMap.values());
-        const prize = merchant.contest_prize || '';
+        // Priorité au lot planifié pour ce mois, sinon fallback contest_prize
+        const prize = plannedPrizesMap.get(`${merchant.id}:${contestMonth}`) || merchant.contest_prize || '';
 
         if (participants.length === 0) {
           // No participants — record empty contest
