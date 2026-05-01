@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 import { CONVINCE_VARIANT_KEYS } from '@/lib/churn-survey-config';
 
@@ -54,9 +55,7 @@ export function PostSurveyLastChanceEmail({ shopName, variant, locale = 'fr' }: 
         {t('postSurveyLastChance.reassurance' as any)}
       </Text>
 
-      <Text style={signature}>
-        {t('postSurveyLastChance.signature' as any)}
-      </Text>
+      <EmailSignoff>{t('postSurveyLastChance.signature' as any)}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -137,13 +136,6 @@ const reassurance = {
   fontSize: '13px',
   textAlign: 'center' as const,
   margin: '0 0 24px 0',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default PostSurveyLastChanceEmail;

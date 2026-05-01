@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface FirstScanEmailProps {
@@ -65,9 +66,7 @@ export function FirstScanEmail({ shopName, slug, locale = 'fr' }: FirstScanEmail
         </Section>
       )}
 
-      <Text style={signature}>
-        {t('firstScan.signature')}
-      </Text>
+      <EmailSignoff>{t('firstScan.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -187,13 +186,6 @@ const buttonSecondary = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '12px 28px',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default FirstScanEmail;

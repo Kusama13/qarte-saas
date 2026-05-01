@@ -1,6 +1,7 @@
 import { Button, Heading, Text, Section, Hr } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface SmsPackPurchaseEmailProps {
@@ -61,7 +62,7 @@ export function SmsPackPurchaseEmail({ shopName, packSize, bonusSms = 0, amountT
 
       <Text style={footerNote}>{t('smsPackPurchase.footer')}</Text>
 
-      <Text style={signature}>{t('smsPackPurchase.signature')}</Text>
+      <EmailSignoff italic>{t('smsPackPurchase.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -86,4 +87,3 @@ const secondaryButton = {
 };
 const hr = { borderColor: '#e5e7eb', margin: '28px 0 20px 0' };
 const footerNote = { color: '#6b7280', fontSize: '13px', lineHeight: '1.6', margin: '24px 0 8px 0' };
-const signature = { color: '#4a5568', fontSize: '15px', margin: '24px 0 0 0', fontStyle: 'italic' as const };

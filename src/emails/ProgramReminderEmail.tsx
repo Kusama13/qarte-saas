@@ -7,6 +7,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface ProgramReminderEmailProps {
@@ -47,9 +48,7 @@ export function ProgramReminderEmail({ shopName, locale = 'fr' }: ProgramReminde
         </Text>
       </Section>
 
-      <Text style={signature}>
-        {t('programReminder.signature')}
-      </Text>
+      <EmailSignoff>{t('programReminder.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -153,13 +152,6 @@ const testimonialAuthor = {
   fontSize: '14px',
   fontWeight: '600',
   margin: '0',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default ProgramReminderEmail;

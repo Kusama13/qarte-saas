@@ -1,6 +1,7 @@
 import { Button, Heading, Text, Section } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface SmsQuotaEmailProps {
@@ -40,7 +41,7 @@ export function SmsQuotaEmail({ shopName, level, ctaUrl, locale = 'fr' }: SmsQuo
 
       <Text style={footerNote}>{t(`${prefix}.footer`)}</Text>
 
-      <Text style={signature}>{t(`${prefix}.signature`)}</Text>
+      <EmailSignoff italic>{t(`${prefix}.signature`)}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -60,4 +61,3 @@ const button = {
   padding: '14px 28px', display: 'inline-block',
 };
 const footerNote = { color: '#6b7280', fontSize: '13px', lineHeight: '1.6', margin: '24px 0 8px 0' };
-const signature = { color: '#4a5568', fontSize: '15px', margin: '24px 0 0 0', fontStyle: 'italic' as const };

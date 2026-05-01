@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 export type UpgradeTrigger = 'sms_campaign_blocked' | 'booking_request_manual';
@@ -71,7 +72,7 @@ export function UpgradeAllInEmail({ shopName, trigger, triggerContext, locale = 
         <a href="https://getqarte.com/dashboard/subscription" style={escapeLink}>{t('upgradeAllIn.escape')}</a>
       </Text>
 
-      <Text style={signature}>{t('upgradeAllIn.signature')}</Text>
+      <EmailSignoff>{t('upgradeAllIn.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -91,6 +92,5 @@ const buttonContainer = { textAlign: 'center' as const, margin: '20px 0 16px 0' 
 const button = { backgroundColor: '#7c3aed', borderRadius: '8px', color: '#ffffff', fontSize: '16px', fontWeight: '600', textDecoration: 'none', textAlign: 'center' as const, padding: '14px 32px' };
 const escapeText = { textAlign: 'center' as const, margin: '0 0 24px 0' };
 const escapeLink = { color: '#8898aa', fontSize: '13px', textDecoration: 'underline' };
-const signature = { color: '#4a5568', fontSize: '16px', lineHeight: '1.6', margin: '24px 0 0 0' };
 
 export default UpgradeAllInEmail;

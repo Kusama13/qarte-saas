@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import type { EmailLocale } from './translations';
 
 interface BookingRescheduledEmailProps {
@@ -64,9 +65,7 @@ export function BookingRescheduledEmail({
         </Button>
       </Section>
 
-      <Text style={signature}>
-        {isEn ? 'The Qarte team' : "L'équipe Qarte"}
-      </Text>
+      <EmailSignoff>{isEn ? 'The Qarte team 💜' : "L'équipe Qarte 💜"}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -132,13 +131,6 @@ const button = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '14px 32px',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default BookingRescheduledEmail;

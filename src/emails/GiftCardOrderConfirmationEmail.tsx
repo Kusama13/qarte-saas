@@ -7,6 +7,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import type { EmailLocale } from './translations';
 
 interface PaymentLink {
@@ -152,10 +153,7 @@ export function GiftCardOrderConfirmationEmail({
         </a>
       </Text>
 
-      <Text style={signature}>
-        {isEn ? 'See you soon ✨' : 'À très vite ✨'}<br />
-        {isEn ? 'The Qarte team' : "L'équipe Qarte"}
-      </Text>
+      <EmailSignoff prefix={isEn ? 'See you soon ✨' : 'À très vite ✨'}>{isEn ? 'The Qarte team 💜' : "L'équipe Qarte 💜"}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -376,13 +374,6 @@ const trackLink = {
   color: '#4b0082',
   fontWeight: 600,
   textDecoration: 'underline',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '15px',
-  lineHeight: '1.7',
-  margin: '0',
 };
 
 export default GiftCardOrderConfirmationEmail;

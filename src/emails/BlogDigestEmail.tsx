@@ -7,6 +7,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import type { EmailLocale } from './translations';
 
 interface BlogDigestEmailProps {
@@ -60,11 +61,7 @@ export function BlogDigestEmail({
         </Section>
       </Section>
 
-      <Text style={outro}>
-        À bientôt,
-        <br />
-        L&apos;équipe Qarte
-      </Text>
+      <EmailSignoff prefix={<>À bientôt,</>}>L&apos;équipe Qarte 💜</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -137,9 +134,3 @@ const cta = {
   textDecoration: 'none',
 };
 
-const outro = {
-  color: '#64748b',
-  fontSize: '14px',
-  lineHeight: '1.6',
-  margin: '28px 0 0 0',
-};

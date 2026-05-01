@@ -103,7 +103,7 @@ export const fr = {
     pwaText: 'Ouvre ton dashboard depuis Safari (iPhone) ou Chrome (Android), clique sur <strong>Partager \u2192 Ajouter \u00e0 l\'\u00e9cran d\'accueil</strong>. Tu recevras les notifs de r\u00e9servation en temps r\u00e9el.',
     trialNote: '{trialDays} jours d\'essai gratuit, sans carte bancaire.',
     helpText: 'Une question ? R\u00e9ponds \u00e0 cet email, on te r\u00e9pond dans l\'heure.',
-    signature: 'L\'\u00e9quipe Qarte',
+    signature: 'L\'\u00e9quipe Qarte 💜',
   },
 
   trialEnding: {
@@ -141,7 +141,7 @@ export const fr = {
     socialProof: '800+ pros de la beauté fidélisent déjà avec Qarte.',
     socialProofLink: 'Voir leurs programmes →',
     thankYou: 'Merci de faire confiance à Qarte pour fidéliser tes clients.',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   trialExpired: {
@@ -163,7 +163,7 @@ export const fr = {
     noCommitment: 'Sans engagement, annulable à tout moment.',
     questionText: 'Des questions ? Réponds à cet email, on te répond rapidement.',
     signaturePrefix: 'À très vite,',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   subscriptionConfirmed: {
@@ -193,7 +193,7 @@ export const fr = {
     referralCodeLabel: 'Ton code : <strong>{referralCode}</strong>',
     referralHint: 'Ton filleul communique ton code apr\u00e8s inscription, le cr\u00e9dit s\'applique \u00e0 chacun.',
     signaturePrefix: 'Merci de ta confiance !',
-    signature: 'L\'\u00e9quipe Qarte',
+    signature: 'L\'\u00e9quipe Qarte 💜',
   },
 
   subscriptionCanceled: {
@@ -213,7 +213,7 @@ export const fr = {
     ctaReactivate: 'Réactiver mon abonnement',
     feedbackText: 'Une minute pour nous aider ? Dis-nous juste ce qui t\'a bloqu\u00e9e. R\u00e9ponds \u00e0 cet email, \u00e7a nous aide \u00e0 am\u00e9liorer Qarte.',
     signaturePrefix: 'Merci d\'avoir utilisé Qarte,',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   paymentFailed: {
@@ -226,7 +226,7 @@ export const fr = {
       whyText: 'Carte expir\u00e9e, fonds insuffisants ou blocage bancaire. Une simple mise \u00e0 jour de ta carte r\u00e8gle le probl\u00e8me.',
       cta: 'Ajouter ma nouvelle carte — 30 secondes',
       helpText: 'Si tout est OK côté banque, tu peux ignorer cet email — on réessaie bientôt.',
-      signature: 'L\'équipe Qarte',
+      signature: 'L\'équipe Qarte 💜',
     },
     step2: {
       preview: '{shopName} — rappel : paiement en attente',
@@ -272,7 +272,7 @@ export const fr = {
     socialProof: '800+ pros ont déjà configuré leur programme en quelques minutes.',
     socialProofLink: 'Voir leurs programmes →',
     signaturePrefix: 'On est là pour toi,',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   subscriptionReactivated: {
@@ -295,7 +295,7 @@ export const fr = {
     referralText: 'Recommande Qarte \u00e0 un(e) coll\u00e8gue pro : tu re\u00e7ois <strong>10 \u20AC de cr\u00e9dit</strong>, ton filleul aussi.',
     referralCodeLabel: 'Ton code : <strong>{referralCode}</strong>',
     referralHint: 'Ton filleul communique ton code apr\u00e8s inscription, le cr\u00e9dit s\'applique \u00e0 chacun.',
-    signature: 'L\'\u00e9quipe Qarte',
+    signature: 'L\'\u00e9quipe Qarte 💜',
   },
 
   firstScan: {
@@ -313,7 +313,7 @@ export const fr = {
     shareTitle: 'Partage ta vitrine en ligne',
     shareText: 'Ajoute ta vitrine dans ta bio Instagram. Tes clientes y retrouvent ton salon, tes prestations et ta carte fidélité — tout en un lien.',
     ctaPublicPage: 'Voir ma vitrine',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   firstBooking: {
@@ -331,7 +331,7 @@ export const fr = {
     shareTitle: 'Partage ta page',
     shareText: 'Plus ta page est visible, plus tu re\u00e7ois de r\u00e9sas. Partage-la sur tes r\u00e9seaux sociaux.',
     ctaShare: 'Voir ma page',
-    signature: 'L\'\u00e9quipe Qarte',
+    signature: 'L\'\u00e9quipe Qarte 💜',
   },
 
   firstReward: {
@@ -346,7 +346,7 @@ export const fr = {
     ctaDashboard: 'Voir mes statistiques',
     nextStepTitle: 'Prochaine étape',
     nextStepText: 'Continue de proposer le scan à chaque passage. Plus tu as de clients fidélisés, plus ton chiffre d\'affaires augmente.',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   firstClientScript: {
@@ -360,7 +360,7 @@ export const fr = {
     tip1: '→ Place le QR code à hauteur des yeux, près de la caisse',
     tip2: '→ Propose le scan au moment du paiement (le client est déjà engagé)',
     tip3: '→ Les 5 premiers clients sont les plus durs — après, ça roule tout seul',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
     scriptCoiffeur: 'C\'est tout bon ! Au fait, on a lancé une carte de fidélité digitale. Scannez ce QR code là, ça prend 5 secondes',
     scriptBarbier: 'C\'est tout bon ! Au fait, on a lancé une carte de fidélité digitale. Scannez ce QR code là, ça prend 5 secondes',
     scriptOnglerie: 'Pendant que le vernis sèche, vous voulez scanner le QR code pour la carte de fidélité ? Ça prend 5 secondes',
@@ -384,7 +384,7 @@ export const fr = {
     tip2: '→ Montre le QR code en disant "C\'est gratuit et ça prend 5 secondes"',
     tip3: '→ Objectif : 5 scans avant vendredi',
     ctaDashboard: 'Voir mes statistiques',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   quickCheck: {
@@ -399,7 +399,7 @@ export const fr = {
     option4: '4. Autre chose',
     helpText: 'Réponds simplement le numéro (ou raconte-nous), et on t\'aide dans la journée.',
     trialNote: 'Il te reste <strong>{daysRemaining} jour{daysPlural}</strong> d\'essai.',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   programReminder: {
@@ -411,7 +411,7 @@ export const fr = {
     bonusText: 'Et si tu actives la réservation en ligne, chaque cliente qui réserve reçoit <strong>automatiquement sa carte de fidélité</strong>.',
     ctaSetup: 'Configurer ma récompense',
     testimonial: '"L\'offre nouveaux clients convertit direct et le parrainage fait le reste. J\'aurais dû prendre avant." — Nour Beauté, salon de coiffure',
-    signature: 'L\'\u00e9quipe Qarte',
+    signature: 'L\'\u00e9quipe Qarte 💜',
   },
 
   programReminderDay2: {
@@ -423,7 +423,7 @@ export const fr = {
     ctaSetup: 'Configurer mon programme',
     ctaPublicPage: 'Voir un exemple de page',
     helpText: 'Besoin d\'aide ? Réponds à cet email, on te guide.',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
     afterVisits: 'après',
   },
 
@@ -461,7 +461,7 @@ export const fr = {
     offerTitle: 'Réponds juste avec ta récompense',
     offerText: 'Ex : "1 brushing offert après 10 visites" — et on configure tout pour toi.',
     ctaSetup: 'Ou fais-le toi-même',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   inactiveDay7: {
@@ -475,7 +475,7 @@ export const fr = {
     optionLater: 'Je veux le faire plus tard → pense au parrainage et aux cadeaux anniversaire, ça fidélise sans effort',
     helpText: 'Réponds simplement à cet email, on est là pour t\'aider.',
     ctaDashboard: 'Accéder à mon tableau de bord',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   inactiveDay14: {
@@ -489,7 +489,7 @@ export const fr = {
     rewardLabel: 'Récompense : {rewardDescription}',
     stampsLabel: 'Après {stampsRequired} passages',
     ctaSetup: 'Lancer mon programme',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   inactiveDay30: {
@@ -506,7 +506,7 @@ export const fr = {
     option2Desc: 'Gratuit. On débloque ensemble ce qui te gêne — config, cas concret sur ton commerce, questions.',
     cta: 'Gérer mon abonnement',
     helpText: 'Ou réponds simplement à cet email. On te lit dans la journée.',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   weeklyDigest: {
@@ -520,7 +520,7 @@ export const fr = {
     goodWeek: 'Belle semaine ! Continue sur cette lancée.',
     noScans: 'Pas de scans cette semaine. Pense à proposer le scan à chaque client !',
     ctaDashboard: 'Voir mon tableau de bord',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   tier2Upsell: {
@@ -532,7 +532,7 @@ export const fr = {
     whatIsText: 'Un deuxième niveau de récompense pour tes clients les plus fidèles. Ils débloquent un cadeau encore plus généreux.',
     currentReward: 'Ta récompense actuelle : {rewardDescription}',
     ctaSetup: 'Activer le palier VIP',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   reactivation: {
@@ -545,7 +545,7 @@ export const fr = {
     lastChance: 'Dernière chance : tes données seront supprimées prochainement.',
     ctaReactivate: 'Réactiver mon compte',
     noCommitment: 'Sans engagement, annulable à tout moment.',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   incompleteSignup: {
@@ -554,7 +554,7 @@ export const fr = {
     intro: 'Tu as commencé ton inscription sur Qarte mais tu n\'as pas terminé.',
     ctaFinish: 'Lancer ma vitrine — 2 minutes',
     helpText: 'Besoin d\'aide ? Réponds à cet email.',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   guidedSignup: {
@@ -565,14 +565,14 @@ export const fr = {
     step2: 'Personnalise ta page (couleurs, logo, bio)',
     step3: 'Configure ta récompense fidélité',
     ctaSignup: 'Reprendre mon inscription',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   productUpdate: {
     preview: '{shopName}, découvre les nouveautés Qarte',
     heading: 'Les nouveautés de la semaine',
     greeting: 'Bonjour <strong>{shopName}</strong>,',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
     introBody: 'On a travaillé dur ces derniers jours pour te donner encore plus d\'outils. Voici ce qui est nouveau :',
     badgeNew: 'Nouveau',
     feature1Title: 'Planning et disponibilités',
@@ -603,7 +603,7 @@ export const fr = {
     promoText: 'Utilise le code ci-dessous pour bénéficier de ta réduction :',
     promoLabel: 'CODE PROMO',
     ctaDashboard: 'Accéder à mon tableau de bord',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
     monthlyPromoValue: '<strong>24€/mois</strong> sans engagement',
     promoExpiry: 'Valable <strong>24 heures seulement</strong>',
     annualOfferLabel: 'Offre annuelle',
@@ -636,7 +636,7 @@ export const fr = {
     resubscribeTitle: 'Tu n\'es plus abonné(e) ?',
     resubscribeText: 'On a ajouté beaucoup de nouveautés depuis ton départ. C\'est le moment idéal pour revenir et profiter de tout ce que Qarte peut apporter à ton commerce.',
     resubscribeCta: 'Se réabonner maintenant',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   qrCode: {
@@ -654,7 +654,7 @@ export const fr = {
     tip1: '→ À la caisse, à hauteur des yeux',
     tip2: '→ Sur ta vitrine',
     tip3: '→ Sur tes cartes de visite',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
     sectionQrTitle: 'Ton QR code',
     sectionQrDesc: 'Affiche-le \u00e0 la caisse ou sur ton t\u00e9l\u00e9phone. Propose le scan apr\u00e8s chaque soin.',
     step1: 'Télécharge le QR code depuis ton tableau de bord',
@@ -689,7 +689,7 @@ export const fr = {
     intro: 'Tu n\'as pas encore configuré ta récompense fidélité. On a analysé ce qui marche le mieux pour ton type d\'activité :',
     ctaSetup: 'Appliquer cette suggestion',
     trialNote: 'Il te reste <strong>{daysRemaining} jour{daysPlural}</strong> d\'essai.',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
     recommendationLabel: 'Récompense recommandée pour ton activité :',
     recommendationNote: 'Clique ci-dessous pour la configurer. Tu pourras la modifier à tout moment.',
     helpLine: 'Tu préfères qu\'on le fasse pour toi ? Réponds à cet email.',
@@ -709,7 +709,7 @@ export const fr = {
     smsConfirmNote: 'Ton/ta client(e) n\'oubliera pas ce geste. C\'est un(e) client(e) fidélisé(e) pour longtemps.',
     smsUpsell: 'Abonne-toi et tes clients recevront un SMS d\'anniversaire automatiquement le jour J — 0 effort, 100% fid\u00e9lisation.',
     ctaDashboard: 'Voir mes clients',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   pendingPoints: {
@@ -720,7 +720,7 @@ export const fr = {
     introReminder: 'Rappel : tu as toujours {pendingCount} point{plural} en attente de modération depuis {daysSinceFirst} jour{daysPlural}.',
     ctaModerate: 'Modérer les passages',
     helpText: 'Ces points seront automatiquement refusés après 7 jours sans action.',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
   lastChanceSignup: {
     preview: 'Votre compte Qarte sera supprimé bientôt — finalisez votre inscription',
@@ -733,7 +733,7 @@ export const fr = {
     promoText: 'Testez Qarte gratuitement pendant 7 jours : vitrine en ligne, programme fidélité, réservation en ligne, parrainage et cadeaux anniversaire. Sans carte bancaire.',
     cta: 'Finaliser mon inscription',
     helpLine: 'Une question avant de vous lancer ? Répondez à cet email.',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   incompleteSignup2: {
@@ -747,7 +747,7 @@ export const fr = {
     testimonialAuthor: '— Un coiffeur sur Qarte',
     helpLine: 'Si vous avez des questions ou besoin d\'aide, répondez à cet email.',
     signaturePrefix: 'À très vite,',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   setupForYou: {
@@ -765,7 +765,7 @@ export const fr = {
     selfSetup: 'Ou si vous préférez le faire vous-même, c\'est toujours possible :',
     cta: 'Finaliser mon inscription',
     signaturePrefix: 'À très vite,',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   winBack: {
@@ -783,7 +783,7 @@ export const fr = {
     socialProof: 'Plus d\'un millier de pros de la beauté utilisent Qarte au quotidien.',
     cta: 'Réactiver mon compte',
     reassurance: 'Tes données clients sont toujours là. Rien n\'a été supprimé.\nSans engagement — annulable à tout moment.',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   vitrineReminder: {
@@ -795,7 +795,7 @@ export const fr = {
     featureDesc: 'Tes prestations, tes tarifs, tes photos, tes horaires et tes avis — tout sur une seule page. Elles te trouvent, elles réservent. 2 minutes pour tout compléter.',
     trialNote: 'Il te reste <strong>{daysRemaining} jour{daysPlural}</strong> d\'essai.',
     cta: 'Rendre mon salon visible',
-    signature: 'L\'\u00e9quipe Qarte',
+    signature: 'L\'\u00e9quipe Qarte 💜',
   },
 
   planningReminder: {
@@ -809,7 +809,7 @@ export const fr = {
     bonusDesc: 'Chaque cliente qui réserve reçoit <strong>automatiquement sa carte de fidélité</strong>. Tu remplis ton agenda et tu fidélises en même temps.',
     trialNote: 'Il te reste <strong>{daysRemaining} jour{daysPlural}</strong> d\'essai.',
     cta: 'Recevoir mes premières résas',
-    signature: 'L\'\u00e9quipe Qarte',
+    signature: 'L\'\u00e9quipe Qarte 💜',
   },
 
   upgradeAllIn: {
@@ -836,7 +836,7 @@ export const fr = {
     prorataNote: 'Prorata appliqué sur ton mois en cours — tu paies seulement la différence aujourd\'hui.',
     cta: 'Passer à Tout-en-un',
     escape: 'Rester sur Fidélité pour le moment',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   activationStalled: {
@@ -871,7 +871,7 @@ export const fr = {
     },
     cta: 'Je commence maintenant',
     help: 'Bloqué quelque part ? Réponds à cet email, on te débloque en direct.',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   churnSurveyReminder: {
@@ -886,14 +886,14 @@ export const fr = {
     duration: '4 questions, moins de 2 minutes.',
     questionText: 'Une question ? Réponds directement à cet email, on te lit.',
     signaturePrefix: 'À très vite,',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   postSurveyFollowUp: {
     greeting: 'Bonjour <strong>{shopName}</strong>,',
     lastDayWarning: 'C\'est ton dernier jour d\'essai. Après ça, tes clientes perdent l\'accès à leur carte et tes réservations en ligne sont désactivées.',
     signaturePrefix: 'À très vite,',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
     lowerPrice: {
       preview: '{shopName}, on rouvre ton compte — ton code -25% est dedans',
       heading: 'On rouvre ton compte',
@@ -947,7 +947,7 @@ export const fr = {
     greeting: '<strong>{shopName}</strong>,',
     urgentText: 'Tes clientes perdent l\'accès à leur carte, tes réservations en ligne sont désactivées, ta vitrine disparaît de Google.',
     reassurance: 'Sans engagement — annulable à tout moment.',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
     lowerPrice: {
       preview: '{shopName}, ton code -25% expire demain',
       heading: 'Dernière chance — code valable jusqu\'à ce soir',
@@ -1012,7 +1012,7 @@ export const fr = {
     rewardDetail: 'par pro inscrit via ton lien',
     linkLabel: 'Ton lien de parrainage',
     cta: 'Partager mon lien',
-    signature: 'L\'\u00e9quipe Qarte',
+    signature: 'L\'\u00e9quipe Qarte 💜',
   },
 
   socialProof: {
@@ -1034,7 +1034,7 @@ export const fr = {
     testimonial2Author: 'Elodie H. — Institut de beaut\u00e9',
     closing: 'Vitrine, r\u00e9servation, fid\u00e9lit\u00e9 — tout est d\u00e9j\u00e0 pr\u00eat pour toi. Il ne manque plus que tes clientes.',
     cta: 'Continuer ma configuration',
-    signature: 'L\'\u00e9quipe Qarte',
+    signature: 'L\'\u00e9quipe Qarte 💜',
   },
 
   smsQuotaWarning: {
@@ -1046,7 +1046,7 @@ export const fr = {
     statusBody: 'Si tu atteins 100% sans pack, tous tes envois seront suspendus. Les crédits du pack sont valables tout au long de ton abonnement.',
     cta: 'Acheter un pack SMS',
     footer: 'Packs dès 5,70€ TTC (50 SMS). Pas d\'engagement.',
-    signature: 'L\'équipe Qarte',
+    signature: 'L\'équipe Qarte 💜',
   },
 
   smsQuotaReached: {
@@ -1058,7 +1058,7 @@ export const fr = {
     statusBody: 'Ach\u00e8te un pack SMS : les cr\u00e9dits sont valables tout au long de ton abonnement et d\u00e9bloquent imm\u00e9diatement tes envois.',
     cta: 'D\u00e9bloquer mes envois',
     footer: 'Packs d\u00e8s 5,70€ TTC (50 SMS). Activation imm\u00e9diate.',
-    signature: 'L\'\u00e9quipe Qarte',
+    signature: 'L\'\u00e9quipe Qarte 💜',
   },
 
   smsPackPurchase: {
@@ -1075,7 +1075,7 @@ export const fr = {
     invoiceIntro: 'Ta facture est disponible dans Stripe pour ta comptabilit\u00e9.',
     invoiceCta: 'T\u00e9l\u00e9charger ma facture',
     footer: 'Si tu as une question sur ton pack, r\u00e9ponds simplement \u00e0 cet email.',
-    signature: 'L\'\u00e9quipe Qarte',
+    signature: 'L\'\u00e9quipe Qarte 💜',
   },
 } as const;
 

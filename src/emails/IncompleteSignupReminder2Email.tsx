@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface IncompleteSignupReminder2EmailProps {
@@ -50,11 +51,7 @@ export function IncompleteSignupReminder2Email({ email, locale = 'fr' }: Incompl
         {t('incompleteSignup2.helpLine')}
       </Text>
 
-      <Text style={signature}>
-        {t('incompleteSignup2.signaturePrefix')}
-        <br />
-        {t('incompleteSignup2.signature')}
-      </Text>
+      <EmailSignoff prefix={t('incompleteSignup2.signaturePrefix')}>{t('incompleteSignup2.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -121,13 +118,6 @@ const testimonialAuthor = {
   color: '#718096',
   fontSize: '13px',
   margin: '0',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default IncompleteSignupReminder2Email;

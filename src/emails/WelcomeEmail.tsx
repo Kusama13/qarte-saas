@@ -7,6 +7,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface WelcomeEmailProps {
@@ -73,9 +74,7 @@ export function WelcomeEmail({ shopName, trialDays = 7, locale = 'fr' }: Welcome
         {t('welcome.helpText')}
       </Text>
 
-      <Text style={signature}>
-        {t('welcome.signature')}
-      </Text>
+      <EmailSignoff>{t('welcome.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -215,13 +214,6 @@ const footerNote = {
   fontSize: '14px',
   lineHeight: '1.6',
   margin: '0 0 16px 0',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default WelcomeEmail;

@@ -9,6 +9,7 @@ import {
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
 
+import { EmailSignoff } from './EmailSignoff';
 interface AmbassadorWelcomeEmailProps {
   firstName: string;
   affiliateSlug: string;
@@ -71,9 +72,7 @@ export function AmbassadorWelcomeEmail({
         Une question ? Réponds directement à cet email ou écris-nous à <Link href="mailto:hello@getqarte.com" style={linkUrl}>hello@getqarte.com</Link>.
       </Text>
 
-      <Text style={signature}>
-        L&apos;équipe Qarte
-      </Text>
+      <EmailSignoff>L&apos;équipe Qarte 💜</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -176,9 +175,3 @@ const button = {
   padding: '14px 32px',
 };
 
-const signature = {
-  color: '#718096',
-  fontSize: '14px',
-  lineHeight: '1.5',
-  margin: '24px 0 0 0',
-};

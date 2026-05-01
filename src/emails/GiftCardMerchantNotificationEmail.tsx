@@ -7,6 +7,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import type { EmailLocale } from './translations';
 
 interface GiftCardMerchantNotificationEmailProps {
@@ -165,9 +166,7 @@ export function GiftCardMerchantNotificationEmail({
           : 'Sans paiement reçu sous 3 jours, la commande est automatiquement annulée et l\'offreur prévenu.'}
       </Text>
 
-      <Text style={signature}>
-        {isEn ? 'The Qarte team' : "L'équipe Qarte"}
-      </Text>
+      <EmailSignoff>{isEn ? 'The Qarte team 💜' : "L'équipe Qarte 💜"}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -338,13 +337,6 @@ const footnote = {
   backgroundColor: '#F9FAFB',
   borderRadius: '8px',
   borderLeft: '3px solid #D1D5DB',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '15px',
-  lineHeight: '1.6',
-  margin: '0',
 };
 
 export default GiftCardMerchantNotificationEmail;

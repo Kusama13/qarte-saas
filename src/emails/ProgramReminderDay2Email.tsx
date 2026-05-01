@@ -7,6 +7,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface ProgramReminderDay2EmailProps {
@@ -86,9 +87,7 @@ export function ProgramReminderDay2Email({ shopName, shopType, slug, locale = 'f
         {t('programReminderDay2.helpText')}
       </Text>
 
-      <Text style={signature}>
-        {t('programReminderDay2.signature')}
-      </Text>
+      <EmailSignoff>{t('programReminderDay2.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -185,13 +184,6 @@ const tipText = {
   fontSize: '14px',
   lineHeight: '1.6',
   margin: '0',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default ProgramReminderDay2Email;

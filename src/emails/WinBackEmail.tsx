@@ -7,6 +7,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface WinBackEmailProps {
@@ -72,9 +73,7 @@ export function WinBackEmail({ shopName, locale = 'fr' }: WinBackEmailProps) {
         {t('winBack.reassurance')}
       </Text>
 
-      <Text style={signature}>
-        {t('winBack.signature')}
-      </Text>
+      <EmailSignoff>{t('winBack.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -204,13 +203,6 @@ const reassurance = {
   textAlign: 'center' as const,
   margin: '0 0 24px 0',
   lineHeight: '1.5',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '0',
 };
 
 export default WinBackEmail;

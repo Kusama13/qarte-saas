@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface PaymentFailedEmailProps {
@@ -53,9 +54,7 @@ export function PaymentFailedEmail({ shopName, step = 1, locale = 'fr' }: Paymen
         {t(`${stepKey}.helpText` as any)}
       </Text>
 
-      <Text style={signature}>
-        {t('paymentFailed.step1.signature')}
-      </Text>
+      <EmailSignoff>{t('paymentFailed.step1.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -167,13 +166,6 @@ const urgentText = {
   lineHeight: '1.6',
   fontWeight: '600' as const,
   margin: '0',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default PaymentFailedEmail;

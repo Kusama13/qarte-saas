@@ -7,6 +7,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface ChallengeCompletedEmailProps {
@@ -55,9 +56,7 @@ export function ChallengeCompletedEmail({ shopName, locale = 'fr' }: ChallengeCo
         {t('challengeCompleted.helpLine')}
       </Text>
 
-      <Text style={signature}>
-        {t('challengeCompleted.signature')}
-      </Text>
+      <EmailSignoff>{t('challengeCompleted.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -135,13 +134,6 @@ const urgencyText = {
   lineHeight: '1.6',
   margin: '0',
   textAlign: 'center' as const,
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default ChallengeCompletedEmail;

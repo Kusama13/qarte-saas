@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface SubscriptionCanceledEmailProps {
@@ -67,11 +68,7 @@ export function SubscriptionCanceledEmail({ shopName, endDate, locale = 'fr' }: 
         {t('subscriptionCanceled.feedbackText')}
       </Text>
 
-      <Text style={signature}>
-        {t('subscriptionCanceled.signaturePrefix')}
-        <br />
-        {t('subscriptionCanceled.signature')}
-      </Text>
+      <EmailSignoff prefix={t('subscriptionCanceled.signaturePrefix')}>{t('subscriptionCanceled.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -179,13 +176,6 @@ const feedbackTextStyle = {
   lineHeight: '1.6',
   margin: '24px 0',
   fontStyle: 'italic' as const,
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default SubscriptionCanceledEmail;

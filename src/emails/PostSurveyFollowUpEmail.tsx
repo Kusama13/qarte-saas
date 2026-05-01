@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 import { CONVINCE_VARIANT_KEYS } from '@/lib/churn-survey-config';
 
@@ -72,11 +73,7 @@ export function PostSurveyFollowUpEmail({ shopName, variant, daysRemaining, loca
         </Text>
       )}
 
-      <Text style={signature}>
-        {t('postSurveyFollowUp.signaturePrefix' as any)}
-        <br />
-        {t('postSurveyFollowUp.signature' as any)}
-      </Text>
+      <EmailSignoff prefix={t('postSurveyFollowUp.signaturePrefix' as any)}>{t('postSurveyFollowUp.signature' as any)}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -174,13 +171,6 @@ const helpLine = {
   lineHeight: '1.6',
   margin: '0 0 16px 0',
   fontStyle: 'italic' as const,
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default PostSurveyFollowUpEmail;

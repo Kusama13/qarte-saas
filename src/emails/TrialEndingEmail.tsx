@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface TrialEndingEmailProps {
@@ -132,9 +133,7 @@ export function TrialEndingEmail({
         {t('trialEnding.thankYou')}
       </Text>
 
-      <Text style={signature}>
-        {t('trialEnding.signature')}
-      </Text>
+      <EmailSignoff>{t('trialEnding.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -274,12 +273,5 @@ const tierBadge = { display: 'inline-block', backgroundColor: '#7c3aed', color: 
 const tierName = { color: '#1a1a1a', fontSize: '17px', fontWeight: '700' as const, margin: '0 0 4px 0' };
 const tierPrice = { color: '#7c3aed', fontSize: '20px', fontWeight: '800' as const, margin: '0 0 8px 0' };
 const tierDesc = { color: '#4a5568', fontSize: '14px', lineHeight: '1.6', margin: '0' };
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
-};
 
 export default TrialEndingEmail;

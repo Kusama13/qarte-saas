@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface BirthdayNotificationEmailProps {
@@ -73,9 +74,7 @@ export function BirthdayNotificationEmail({ shopName, clientNames, giftDescripti
         </Button>
       </Section>
 
-      <Text style={signature}>
-        {t('birthdayNotification.signature')}
-      </Text>
+      <EmailSignoff>{t('birthdayNotification.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -186,13 +185,6 @@ const button = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '14px 32px',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default BirthdayNotificationEmail;

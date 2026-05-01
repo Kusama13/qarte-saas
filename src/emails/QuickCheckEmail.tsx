@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface QuickCheckEmailProps {
@@ -48,9 +49,7 @@ export function QuickCheckEmail({ shopName, daysRemaining, locale = 'fr' }: Quic
         <Text style={urgencyText} dangerouslySetInnerHTML={{ __html: t('quickCheck.trialNote', { daysRemaining, daysPlural: daysRemaining > 1 ? 's' : '' }) }} />
       </Section>
 
-      <Text style={signature}>
-        {t('quickCheck.signature')}
-      </Text>
+      <EmailSignoff>{t('quickCheck.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -98,13 +97,6 @@ const urgencyText = {
   lineHeight: '1.6',
   margin: '0',
   textAlign: 'center' as const,
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default QuickCheckEmail;

@@ -7,6 +7,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface GracePeriodSetupEmailProps {
@@ -65,11 +66,7 @@ export function GracePeriodSetupEmail({ shopName, daysUntilDeletion, locale = 'f
         </Text>
       </Section>
 
-      <Text style={signature}>
-        {t('gracePeriodSetup.signaturePrefix')}
-        <br />
-        {t('gracePeriodSetup.signature')}
-      </Text>
+      <EmailSignoff prefix={t('gracePeriodSetup.signaturePrefix')}>{t('gracePeriodSetup.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -169,13 +166,6 @@ const reassuranceText = {
   lineHeight: '1.6',
   margin: '0',
   textAlign: 'center' as const,
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 const socialProofBox = {

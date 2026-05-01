@@ -7,6 +7,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface ProductUpdateEmailProps {
@@ -100,9 +101,7 @@ export function ProductUpdateEmail({ shopName, merchantId, referralCode, locale 
         </Section>
       )}
 
-      <Text style={signature}>
-        {t('productUpdate.signature')}
-      </Text>
+      <EmailSignoff>{t('productUpdate.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -294,13 +293,6 @@ const referralHint = {
   fontSize: '12px',
   textAlign: 'center' as const,
   margin: '0',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default ProductUpdateEmail;

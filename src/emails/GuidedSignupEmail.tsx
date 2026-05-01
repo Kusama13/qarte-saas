@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface GuidedSignupEmailProps {
@@ -38,9 +39,7 @@ export function GuidedSignupEmail({ email, locale = 'fr' }: GuidedSignupEmailPro
         </Button>
       </Section>
 
-      <Text style={signature}>
-        {t('guidedSignup.signature')}
-      </Text>
+      <EmailSignoff>{t('guidedSignup.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -88,13 +87,6 @@ const stepItem = {
   fontSize: '14px',
   lineHeight: '2',
   margin: '0',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default GuidedSignupEmail;

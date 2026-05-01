@@ -10,6 +10,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import type { EmailLocale } from './translations';
 
 interface GiftCardReceivedEmailProps {
@@ -129,6 +130,12 @@ export function GiftCardReceivedEmail({
         <Text style={detailLine}>
           <span style={detailLabel}>{isEn ? 'Valid until' : 'Valable jusqu\'au'}</span> {expiresAtFormatted}
         </Text>
+        <Text style={detailLine}>
+          <span style={detailLabel}>{isEn ? 'Usage' : 'Utilisation'}</span>{' '}
+          {isEn
+            ? 'Single use · Non-refundable'
+            : 'Utilisable en une fois · Non remboursable'}
+        </Text>
         {code && (
           <Text style={detailLine}>
             <span style={detailLabel}>Code</span>{' '}
@@ -137,12 +144,7 @@ export function GiftCardReceivedEmail({
         )}
       </Section>
 
-      <Text style={signature}>
-        {isEn ? 'Enjoy your moment' : 'Profite bien de ton moment'}<br />
-        <span style={signatureHighlight}>
-          {isEn ? 'The Qarte team 💜' : 'L\'équipe Qarte 💜'}
-        </span>
-      </Text>
+      <EmailSignoff prefix={isEn ? 'Enjoy your moment' : 'Profite bien de ton moment'}>{isEn ? 'The Qarte team 💜' : 'L\'équipe Qarte 💜'}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -274,18 +276,6 @@ const detailLabel = {
 const codeStyle = {
   fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
   fontSize: '13px',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '15px',
-  lineHeight: '1.7',
-  margin: '32px 0 0 0',
-};
-
-const signatureHighlight = {
-  color: '#4b0082',
-  fontWeight: '600',
 };
 
 export default GiftCardReceivedEmail;

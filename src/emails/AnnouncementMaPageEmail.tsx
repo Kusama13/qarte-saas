@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface AnnouncementMaPageEmailProps {
@@ -80,9 +81,7 @@ export function AnnouncementMaPageEmail({ shopName, slug, isSubscribed = true, l
         </Section>
       )}
 
-      <Text style={signature}>
-        {t('announcementMaPage.signature')}
-      </Text>
+      <EmailSignoff>{t('announcementMaPage.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -229,13 +228,6 @@ const resubscribeText = {
   fontSize: '14px',
   lineHeight: '1.6',
   margin: '0 0 4px 0',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default AnnouncementMaPageEmail;

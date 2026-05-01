@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface TrialExpiredEmailProps {
@@ -57,11 +58,7 @@ export function TrialExpiredEmail({ shopName, daysUntilDeletion, locale = 'fr' }
         {t('trialExpired.questionText')}
       </Text>
 
-      <Text style={signature}>
-        {t('trialExpired.signaturePrefix')}
-        <br />
-        {t('trialExpired.signature')}
-      </Text>
+      <EmailSignoff prefix={t('trialExpired.signaturePrefix')}>{t('trialExpired.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -147,13 +144,6 @@ const noteText = {
   fontSize: '13px',
   textAlign: 'center' as const,
   margin: '0 0 24px 0',
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
 };
 
 export default TrialExpiredEmail;

@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface InactiveMerchantDay30EmailProps {
@@ -60,9 +61,7 @@ export function InactiveMerchantDay30Email({ shopName, planTier = 'all_in', loca
         {t('inactiveDay30.helpText')}
       </Text>
 
-      <Text style={signatureBlock}>
-        {t('inactiveDay30.signature')}
-      </Text>
+      <EmailSignoff>{t('inactiveDay30.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -89,12 +88,5 @@ const optionTitle = { color: '#1a1a1a', fontSize: '16px', fontWeight: '700' as c
 const optionDesc = { color: '#4a5568', fontSize: '14px', lineHeight: '1.5', margin: '0' };
 const buttonContainer = { textAlign: 'center' as const, margin: '28px 0 16px 0' };
 const button = { backgroundColor: '#4b0082', borderRadius: '8px', color: '#ffffff', fontSize: '16px', fontWeight: '600', textDecoration: 'none', textAlign: 'center' as const, padding: '14px 32px' };
-
-const signatureBlock = {
-  color: '#4a5568',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '24px 0 0 0',
-};
 
 export default InactiveMerchantDay30Email;

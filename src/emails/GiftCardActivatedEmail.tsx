@@ -7,6 +7,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import type { EmailLocale } from './translations';
 
 interface GiftCardActivatedEmailProps {
@@ -99,12 +100,7 @@ export function GiftCardActivatedEmail({
           : `On te préviendra dès que ${recipientFullName} utilisera son bon, comme ça tu pourras partager le moment avec elle.`}
       </Text>
 
-      <Text style={signature}>
-        {isEn ? 'Thanks for choosing Qarte for this beautiful gesture' : 'Merci d\'avoir choisi Qarte pour ce beau geste'}<br />
-        <span style={signatureHighlight}>
-          {isEn ? 'The Qarte team 💜' : 'L\'équipe Qarte 💜'}
-        </span>
-      </Text>
+      <EmailSignoff prefix={isEn ? 'Thanks for choosing Qarte for this beautiful gesture' : 'Merci d\'avoir choisi Qarte pour ce beau geste'}>{isEn ? 'The Qarte team 💜' : 'L\'équipe Qarte 💜'}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -175,18 +171,6 @@ const pdfButton = {
   textAlign: 'center' as const,
   padding: '12px 28px',
   display: 'inline-block' as const,
-};
-
-const signature = {
-  color: '#4a5568',
-  fontSize: '15px',
-  lineHeight: '1.7',
-  margin: '32px 0 0 0',
-};
-
-const signatureHighlight = {
-  color: '#4b0082',
-  fontWeight: '600',
 };
 
 export default GiftCardActivatedEmail;

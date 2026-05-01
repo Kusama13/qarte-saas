@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
 
 interface ActivationStalledEmailProps {
@@ -55,7 +56,7 @@ export function ActivationStalledEmail({ shopName, shopType, locale = 'fr' }: Ac
 
       <Text style={paragraph}>{t('activationStalled.help')}</Text>
 
-      <Text style={signature}>{t('activationStalled.signature')}</Text>
+      <EmailSignoff>{t('activationStalled.signature')}</EmailSignoff>
     </BaseLayout>
   );
 }
@@ -77,6 +78,5 @@ const pathTitle = { color: '#1a1a1a', fontSize: '17px', fontWeight: '700' as con
 const pathStep = { color: '#4a5568', fontSize: '14px', lineHeight: '1.8', margin: '0 0 4px 0' };
 const buttonContainer = { textAlign: 'center' as const, margin: '32px 0' };
 const button = { backgroundColor: '#4b0082', borderRadius: '8px', color: '#ffffff', fontSize: '16px', fontWeight: '600', textDecoration: 'none', textAlign: 'center' as const, padding: '14px 32px' };
-const signature = { color: '#4a5568', fontSize: '16px', lineHeight: '1.6', margin: '24px 0 0 0' };
 
 export default ActivationStalledEmail;
