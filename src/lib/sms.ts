@@ -49,7 +49,7 @@ export const PAID_STATUSES = ['active', 'canceling', 'past_due'] as const;
 
 // ── Templates SMS (< 160 chars, vouvoiement client-facing) ──
 
-export type SmsType = 'reminder_j1' | 'reminder_j0' | 'confirmation_no_deposit' | 'confirmation_deposit' | 'birthday' | 'referral_reward' | 'booking_moved' | 'booking_cancelled' | 'gift_card_received' | 'gift_card_used';
+export type SmsType = 'reminder_j1' | 'reminder_j0' | 'confirmation_no_deposit' | 'confirmation_deposit' | 'birthday' | 'referral_reward' | 'booking_moved' | 'booking_cancelled' | 'gift_card_received' | 'gift_card_used' | 'gift_card_expiry_reminder';
 
 export type MarketingSmsType = 'campaign' | 'welcome' | 'review_request' | 'voucher_expiry' | 'referral_invite' | 'inactive_reminder' | 'near_reward';
 
@@ -66,6 +66,8 @@ const SMS_TEMPLATES: Record<string, Record<SmsType, (...args: string[]) => strin
     // 4e arg `gift` = "un bon cadeau de 50€" OU "1 coupe + 1 brushing" selon kind
     gift_card_received: (shop, sender, gift, recipient) => recipient ? `${recipient}, ${sender} t'offre ${gift} chez ${shop} ! Retrouve ton bon dans ta carte fidélité : getqarte.com` : `${sender} t'offre ${gift} chez ${shop} ! Retrouve ton bon dans ta carte fidélité : getqarte.com`,
     gift_card_used: (shop, recipient, gift, sender) => sender ? `${sender}, bonne nouvelle ! ${recipient} vient d'utiliser ${gift} que tu lui as offert chez ${shop}. Merci de nous avoir choisis !` : `${recipient} vient d'utiliser ${gift} que vous avez offert chez ${shop}. Merci de nous avoir choisis !`,
+    // (shop, recipient, gift, date) — rappel J-7 destinataire
+    gift_card_expiry_reminder: (shop, recipient, gift, date) => recipient ? `${recipient}, ton ${gift} chez ${shop} expire le ${date}. Pense a en profiter, prends RDV : getqarte.com` : `Ton ${gift} chez ${shop} expire le ${date}. Pense a en profiter, prends RDV : getqarte.com`,
   },
   en: {
     reminder_j1: (shop, time) => `Reminder: appointment tomorrow at ${time} at ${shop}. Earn loyalty points on your visit!`,
@@ -78,6 +80,7 @@ const SMS_TEMPLATES: Record<string, Record<SmsType, (...args: string[]) => strin
     booking_cancelled: (shop, date, time) => `Your appointment at ${shop} on ${date} at ${time} has been cancelled. Contact us to reschedule.`,
     gift_card_received: (shop, sender, gift, recipient) => recipient ? `${recipient}, ${sender} is offering you ${gift} at ${shop}! Find your gift in your loyalty card: getqarte.com` : `${sender} is offering you ${gift} at ${shop}! Find your gift in your loyalty card: getqarte.com`,
     gift_card_used: (shop, recipient, gift, sender) => sender ? `${sender}, great news! ${recipient} just used ${gift} you offered at ${shop}. Thanks for choosing us!` : `${recipient} just used ${gift} you offered at ${shop}. Thanks for choosing us!`,
+    gift_card_expiry_reminder: (shop, recipient, gift, date) => recipient ? `${recipient}, your ${gift} at ${shop} expires on ${date}. Book now to enjoy it: getqarte.com` : `Your ${gift} at ${shop} expires on ${date}. Book now to enjoy it: getqarte.com`,
   },
 };
 
@@ -118,7 +121,8 @@ function isTypeEnabled(smsType: SmsType, config: GlobalSmsConfig): boolean {
     case 'booking_moved':
     case 'booking_cancelled': return true;
     case 'gift_card_received':
-    case 'gift_card_used': return true;
+    case 'gift_card_used':
+    case 'gift_card_expiry_reminder': return true;
     case 'birthday': return config.birthday_enabled;
     case 'referral_reward': return config.referral_enabled;
   }
@@ -413,6 +417,13 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
         message = template(shopName, giftRecipientName || '', giftLabel, giftSenderName || '');
         break;
       }
+      case 'gift_card_expiry_reminder': {
+        const giftLabel = giftServicesLabel
+          ? giftServicesLabel
+          : (locale === 'en' ? `${giftAmount} gift card` : `bon de ${giftAmount}`);
+        message = template(shopName, giftRecipientName || '', giftLabel, date || '');
+        break;
+      }
     }
 
     // 5. Gate: enforce quota selon tier + pack. No overage — block if both exhausted.
@@ -471,7 +482,7 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
     // Unique constraint violation = already sent (concurrent dedup)
     if (logError) return false;
 
-    // 8. Envoi via le provider sélectionné.
+    // 8. Envoi via le provider sélectionné (sanitize GSM-7 fait au niveau provider).
     const result = provider === 'sms_partner'
       ? await sendSmsPartner(phone, message)
       : await sendSms(phone, message);
@@ -567,7 +578,7 @@ export async function sendMarketingSms(
       return { success: false, error: 'log_insert_failed' };
     }
 
-    // 3. Send via OVH
+    // 3. Send via OVH (sanitize GSM-7 fait au niveau provider).
     const result = await sendSms(phone, body);
 
     // 4. Update log + refund pack on failure

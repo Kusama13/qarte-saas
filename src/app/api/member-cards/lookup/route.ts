@@ -40,25 +40,43 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ memberCard: null });
     }
 
-    // Lookup active member card with best discount
-    const { data: memberCard } = await supabaseAdmin
-      .from('member_cards')
-      .select(`
-        id,
-        valid_until,
-        program:member_programs!inner (
-          id, name, benefit_label, discount_percent, skip_deposit, merchant_id
-        )
-      `)
-      .eq('customer_id', customer.id)
-      .eq('program.merchant_id', merchantId)
-      .gt('valid_until', new Date().toISOString())
-      .order('valid_until', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const nowIso = new Date().toISOString();
+    const [{ data: memberCard }, { data: activeGiftCards }] = await Promise.all([
+      supabaseAdmin
+        .from('member_cards')
+        .select(`
+          id,
+          valid_until,
+          program:member_programs!inner (
+            id, name, benefit_label, discount_percent, skip_deposit, merchant_id
+          )
+        `)
+        .eq('customer_id', customer.id)
+        .eq('program.merchant_id', merchantId)
+        .gt('valid_until', nowIso)
+        .order('valid_until', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('gift_cards')
+        .select('amount, kind')
+        .eq('recipient_customer_id', customer.id)
+        .eq('merchant_id', merchantId)
+        .eq('status', 'active')
+        .gt('expires_at', nowIso),
+    ]);
+
+    const giftCards = activeGiftCards && activeGiftCards.length > 0
+      ? {
+          count: activeGiftCards.length,
+          total_amount: activeGiftCards.reduce((sum, g) => sum + Number(g.amount || 0), 0),
+          has_services: activeGiftCards.some((g) => g.kind === 'services'),
+          has_amount: activeGiftCards.some((g) => g.kind === 'amount'),
+        }
+      : null;
 
     if (!memberCard) {
-      return NextResponse.json({ memberCard: null });
+      return NextResponse.json({ memberCard: null, giftCards, first_name: customer.first_name });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -73,6 +91,8 @@ export async function GET(request: NextRequest) {
         skip_deposit: program.skip_deposit || false,
         benefit_label: program.benefit_label,
       },
+      giftCards,
+      first_name: customer.first_name,
     });
   } catch (error) {
     logger.error('Member lookup error:', error);

@@ -121,13 +121,18 @@ export default function BookingModal({
     deadline_hours: number | null;
   } | null>(null);
 
-  // Member benefit detection
   const [memberBenefit, setMemberBenefit] = useState<{
     first_name: string;
     discount_percent: number | null;
     skip_deposit: boolean;
     benefit_label: string;
     program_name: string;
+  } | null>(null);
+  const [giftCardBenefit, setGiftCardBenefit] = useState<{
+    count: number;
+    total_amount: number;
+    has_services: boolean;
+    has_amount: boolean;
   } | null>(null);
   const memberLookupRef = useRef<ReturnType<typeof setTimeout>>();
   const memberAbortRef = useRef<AbortController>();
@@ -144,15 +149,19 @@ export default function BookingModal({
           if (res.ok) {
             const data = await res.json();
             setMemberBenefit(data.memberCard || null);
+            setGiftCardBenefit(data.giftCards || null);
           }
         } catch { /* aborted or network error */ }
       }, 500);
     } else {
       setMemberBenefit(null);
+      setGiftCardBenefit(null);
     }
     return () => { clearTimeout(memberLookupRef.current); memberAbortRef.current?.abort(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phone, phoneCountry, merchant.id]);
+
+  const skipDeposit = Boolean(memberBenefit?.skip_deposit) || Boolean(giftCardBenefit && giftCardBenefit.count > 0);
 
   // Compute totals
   const selectedServices = useMemo(
@@ -341,13 +350,13 @@ export default function BookingModal({
   const stickyDeposit = useMemo(() => {
     if (!merchant.deposit_link) return null;
     if (!merchant.deposit_percent && !merchant.deposit_amount) return null;
-    if (totalPrice <= 0 || memberBenefit?.skip_deposit) return null;
+    if (totalPrice <= 0 || skipDeposit) return null;
     const rawDeposit = merchant.deposit_amount
       ? Number(merchant.deposit_amount)
       : Math.round(totalPrice * (merchant.deposit_percent || 0) / 100);
     const capped = Math.min(rawDeposit, totalPrice);
     return { amount: capped, isFullPayment: rawDeposit >= totalPrice };
-  }, [merchant.deposit_link, merchant.deposit_percent, merchant.deposit_amount, totalPrice, memberBenefit]);
+  }, [merchant.deposit_link, merchant.deposit_percent, merchant.deposit_amount, totalPrice, skipDeposit]);
 
   return (
     <motion.div
@@ -545,7 +554,7 @@ export default function BookingModal({
                         <span className="font-bold text-gray-900">{formatCurrency(displayPrice, country, locale)}</span>
                       </span>
                     </div>
-                    {merchant.deposit_link && (merchant.deposit_percent || merchant.deposit_amount) && totalPrice > 0 && !memberBenefit?.skip_deposit && (() => {
+                    {merchant.deposit_link && (merchant.deposit_percent || merchant.deposit_amount) && totalPrice > 0 && !skipDeposit && (() => {
                       const rawDeposit = merchant.deposit_amount
                         ? Number(merchant.deposit_amount)
                         : Math.round(totalPrice * (merchant.deposit_percent || 0) / 100);
@@ -890,6 +899,37 @@ export default function BookingModal({
                     </div>
                   </div>
                 )}
+
+                {giftCardBenefit && giftCardBenefit.count > 0 && (() => {
+                  const isMulti = giftCardBenefit.count > 1;
+                  const useAmountCopy = isMulti || giftCardBenefit.has_amount;
+                  let titleKey: string;
+                  if (isMulti) titleKey = 'giftCardDetectedMulti';
+                  else if (giftCardBenefit.has_amount) titleKey = 'giftCardDetectedAmount';
+                  else titleKey = 'giftCardDetectedServices';
+                  return (
+                  <div className="p-3 rounded-xl mb-4 bg-emerald-50 border border-emerald-200">
+                    <div className="flex items-start gap-2.5">
+                      <Gift className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+                      <div className="text-[12px] text-emerald-900 leading-relaxed">
+                        <p className="font-semibold">
+                          {t(titleKey, {
+                            count: giftCardBenefit.count,
+                            amount: formatCurrency(giftCardBenefit.total_amount, country, locale, 0),
+                            shop: merchant.shop_name,
+                          })}
+                        </p>
+                        <p className="mt-1 text-emerald-800">
+                          {useAmountCopy ? t('giftCardSkipDepositHintAmount') : t('giftCardSkipDepositHintServices')}
+                        </p>
+                        <p className="mt-1.5 text-emerald-700/80 text-[11px]">
+                          {t('giftCardSingleUseHint')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  );
+                })()}
 
                 {/* Booking conditions */}
                 {merchant.booking_message && (

@@ -119,13 +119,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 3. Bonus +1 stamp (skip for birthday vouchers + skip if already visited today)
+    // 3. Bonus +1 stamp (skip for birthday vouchers + skip if already visited today,
+    //    SAUF pour les bons cadeaux : la cliente garde le bonus même si elle a scanné aujourd'hui)
     let bonusVisitId: string | null = null;
     let newStamps: number | null = null;
     let skipBonusStamp = voucher.source === 'birthday';
 
-    if (!skipBonusStamp) {
-      // If client already scanned QR today, don't add another stamp
+    if (!skipBonusStamp && voucher.source !== 'gift') {
       const today = getTodayForCountry(voucherMerchant?.country);
       const { count } = await supabaseAdmin
         .from('visits')

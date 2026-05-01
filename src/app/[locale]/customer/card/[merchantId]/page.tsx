@@ -154,7 +154,7 @@ export default function CustomerCardPage({
     rewardDescription: string;
     customerName: string | null;
     bonusStampAdded: boolean;
-    isBirthday: boolean;
+    source: string | null;
   } | null>(null);
 
   // Birthday: track if already set (for BirthdaySection)
@@ -587,7 +587,7 @@ export default function CustomerCardPage({
           rewardDescription: data.reward_description || '',
           customerName: data.customer_name || null,
           bonusStampAdded: !!data.bonus_stamp_added,
-          isBirthday: usedVoucher?.source === 'birthday',
+          source: usedVoucher?.source || null,
         });
         setShowVoucherCelebration(true);
       }

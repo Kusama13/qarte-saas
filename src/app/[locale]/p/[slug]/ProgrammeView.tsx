@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Flame, Trophy, CalendarDays, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard, Hourglass } from 'lucide-react';
+import { Gift, Users, Flame, Trophy, CalendarDays, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard, Hourglass, Sparkles, Tag } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import { SuspendedBanner } from '@/components/shared/SuspendedBanner';
@@ -37,6 +37,54 @@ function isOpenNow(slot: DaySlot, nowHHMM: string): boolean {
 }
 
 type Photo = { id: string; url: string; position: number };
+
+const OFFER_TIERS = {
+  emerald: { border: 'border-emerald-200/70', bg: 'bg-emerald-50/50', iconBg: 'bg-emerald-100', iconText: 'text-emerald-600', labelText: 'text-emerald-700', ctaBg: 'bg-emerald-600 hover:bg-emerald-700' },
+  amber:   { border: 'border-amber-200/70',   bg: 'bg-amber-50/50',   iconBg: 'bg-amber-100',   iconText: 'text-amber-600',   labelText: 'text-amber-700',   ctaBg: 'bg-amber-600 hover:bg-amber-700' },
+  violet:  { border: 'border-violet-200/60',  bg: 'bg-violet-50/40',  iconBg: 'bg-violet-100',  iconText: 'text-violet-600',  labelText: 'text-violet-700',  ctaBg: '' },
+} as const;
+
+type OfferTier = keyof typeof OFFER_TIERS;
+
+function OfferCard({
+  tier, icon: Icon, label, delay, cta, children,
+}: {
+  tier: OfferTier;
+  icon: typeof Sparkles;
+  label: ReactNode;
+  delay: number;
+  cta?: { href: string; text: string; onClick?: (e: React.MouseEvent) => void };
+  children: ReactNode;
+}) {
+  const c = OFFER_TIERS[tier];
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay, ease: 'easeOut' }}
+      className={`rounded-2xl overflow-hidden border ${c.border} ${c.bg}`}
+    >
+      <div className="px-4 py-4 flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-xl ${c.iconBg} flex items-center justify-center shrink-0`}>
+          <Icon className={`w-5 h-5 ${c.iconText}`} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className={`text-[10px] font-bold uppercase tracking-[0.14em] ${c.labelText}`}>{label}</p>
+          {children}
+        </div>
+        {cta && (
+          <a
+            href={cta.href}
+            onClick={cta.onClick}
+            className={`shrink-0 px-3.5 py-2.5 rounded-xl text-[12px] font-bold text-white transition-colors ${c.ctaBg}`}
+          >
+            {cta.text}
+          </a>
+        )}
+      </div>
+    </motion.div>
+  );
+}
 type ServiceCategory = { id: string; name: string; position: number };
 type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
 type PromoOffer = { id: string; title: string; description: string; expires_at: string | null };
@@ -875,151 +923,48 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           );
         })()}
 
-        {/* ── OFFRE NOUVEAUX CLIENTS ── */}
         {merchant.welcome_offer_enabled && merchant.welcome_offer_description && (canBookOnline || (merchant.welcome_referral_code && merchant.scan_code)) && (
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.28, ease: 'easeOut' }}
-            className="rounded-2xl overflow-hidden border"
-            style={{ borderColor: `${p}30`, background: `linear-gradient(135deg, ${p}10, ${p}05)` }}
+          <OfferCard
+            tier="emerald"
+            icon={Sparkles}
+            label={t('welcomeOffer')}
+            delay={0.28}
+            cta={!canBookOnline && merchant.scan_code ? {
+              href: isDemo ? '#' : `/scan/${merchant.scan_code}?welcome=${merchant.welcome_referral_code}`,
+              text: t('enjoyNow'),
+              onClick: isDemo ? noOp : undefined,
+            } : undefined}
           >
-            <div className="px-4 py-4 flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: `${p}18` }}
-              >
-                <Gift className="w-5 h-5" style={{ color: p }} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: p }}>
-                  {t('welcomeOffer')}
-                </p>
-                <p className="text-[14px] font-bold text-gray-800 leading-snug mt-0.5">
-                  {merchant.welcome_offer_description}
-                </p>
-                <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">
-                  {canBookOnline ? t('signUpToEnjoyBooking') : t('signUpToEnjoy')}
-                </p>
-              </div>
-              {!canBookOnline && merchant.scan_code && (
-                <a
-                  href={isDemo ? '#' : `/scan/${merchant.scan_code}?welcome=${merchant.welcome_referral_code}`}
-                  onClick={isDemo ? noOp : undefined}
-                  className="shrink-0 px-3.5 py-2.5 rounded-xl text-[12px] font-bold text-white"
-                  style={{ background: p }}
-                >
-                  {t('enjoyNow')}
-                </a>
-              )}
-            </div>
-          </motion.div>
+            <p className="text-[14px] font-bold text-gray-900 leading-snug mt-0.5">
+              {merchant.welcome_offer_description}
+            </p>
+            <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">
+              {canBookOnline ? t('signUpToEnjoyBooking') : t('signUpToEnjoy')}
+            </p>
+          </OfferCard>
         )}
 
-        {/* ── OFFRE PROMO (tout le monde) — style amber distinct ── */}
         {promoOffer && (canBookOnline || merchant.scan_code) && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.32, ease: 'easeOut' }}
-            className="block rounded-2xl overflow-hidden border-2 shadow-lg"
-            style={{ borderColor: '#f59e0b40', boxShadow: '0 4px 24px #f59e0b20' }}
+          <OfferCard
+            tier="amber"
+            icon={Tag}
+            label={promoOffer.title}
+            delay={0.32}
+            cta={!canBookOnline && merchant.scan_code ? {
+              href: `/scan/${merchant.scan_code}?offer=${promoOffer.id}`,
+              text: t('enjoyNow'),
+            } : undefined}
           >
-            <div
-              className="px-5 py-5 flex items-center gap-4"
-              style={{ background: 'linear-gradient(135deg, #f59e0b12, #f59e0b06)' }}
-            >
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-amber-100">
-                <Gift className="w-6 h-6 text-amber-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] mb-0.5 text-amber-600">
-                  {promoOffer.title}
-                </p>
-                <p className="text-[15px] font-bold text-gray-800 leading-tight">
-                  {promoOffer.description}
-                </p>
-                <p className="text-[12px] text-gray-500 mt-1">
-                  {t('promoOpenToAll')}
-                </p>
-              </div>
-              {!canBookOnline && merchant.scan_code && (
-                <a
-                  href={`/scan/${merchant.scan_code}?offer=${promoOffer.id}`}
-                  className="shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-bold text-white bg-amber-500"
-                >
-                  {t('enjoyNow')}
-                </a>
+            <p className="text-[14px] font-bold text-gray-900 leading-snug mt-0.5">
+              {promoOffer.description}
+            </p>
+            <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">
+              {canBookOnline ? t('promoInstructionsBooking') : t('promoInstructions')}
+              {promoOffer.expires_at && (
+                <span className="font-semibold text-amber-700"> {t('validUntil', { date: new Date(promoOffer.expires_at).toLocaleDateString(toBCP47(locale)) })}</span>
               )}
-            </div>
-            <div className="px-5 pb-4" style={{ background: 'linear-gradient(135deg, #f59e0b06, transparent)' }}>
-              <p className="text-[12px] text-gray-500 leading-relaxed">
-                {canBookOnline ? t('promoInstructionsBooking') : t('promoInstructions')}
-                {promoOffer.expires_at && (
-                  <span className="font-semibold text-amber-700"> {t('validUntil', { date: new Date(promoOffer.expires_at).toLocaleDateString(toBCP47(locale)) })}</span>
-                )}
-              </p>
-            </div>
-          </motion.div>
-        )}
-
-        {/* ── JEU CONCOURS DU MOIS ── */}
-        {merchant.contest_enabled && merchant.contest_prize && (
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25, duration: 0.4, ease: 'easeOut' }}
-            className="rounded-2xl overflow-hidden border border-amber-200/60"
-            style={{ background: `linear-gradient(135deg, ${p}08, #fef3c720, ${p}06)` }}
-          >
-            <div className="px-4 py-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shrink-0">
-                <Trophy className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-600">{t('contestBadge')}</p>
-                <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">{t('contestDesc')}</p>
-                <p className="text-[14px] font-bold mt-0.5" style={{ color: p }}>{merchant.contest_prize}</p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* ── BON CADEAU (offrir) ── */}
-        {merchant.gift_card_enabled && !isSuspended && (
-          <motion.button
-            type="button"
-            onClick={isDemo ? noOp : () => setGiftCardOpen(true)}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.34, ease: 'easeOut' }}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            className="block w-full text-left rounded-2xl overflow-hidden shadow-lg relative group"
-            style={{
-              background: `linear-gradient(135deg, ${p} 0%, ${s} 100%)`,
-              boxShadow: `0 16px 32px -12px ${p}55`,
-            }}
-          >
-            {/* Watermark décoratif */}
-            <div className="absolute -right-4 -top-4 opacity-15 pointer-events-none">
-              <Gift className="w-28 h-28 text-white" strokeWidth={1.2} />
-            </div>
-            <div className="relative p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-sm">
-                <Gift className="w-6 h-6 text-white" strokeWidth={2.5} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/85">
-                  {pgcT('vitrineTitle')}
-                </p>
-                <p className="text-[15px] font-bold text-white leading-snug mt-0.5">
-                  {pgcT('vitrineDesc')}
-                </p>
-              </div>
-              <ChevronRight className="w-5 h-5 text-white/70 shrink-0 group-hover:translate-x-0.5 transition-transform" />
-            </div>
-          </motion.button>
+            </p>
+          </OfferCard>
         )}
 
         {/* Label carte simulée */}
@@ -1202,6 +1147,50 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               )}
             </div>
           </motion.div>
+        )}
+
+        {/* ── BON CADEAU (offrir) ── */}
+        {merchant.gift_card_enabled && !isSuspended && (
+          <motion.button
+            type="button"
+            onClick={isDemo ? noOp : () => setGiftCardOpen(true)}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.5, ease: 'easeOut' }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            className="block w-full text-left rounded-2xl overflow-hidden shadow-lg relative group"
+            style={{
+              background: `linear-gradient(135deg, ${p} 0%, ${s} 100%)`,
+              boxShadow: `0 16px 32px -12px ${p}55`,
+            }}
+          >
+            {/* Watermark décoratif */}
+            <div className="absolute -right-4 -top-4 opacity-15 pointer-events-none">
+              <Gift className="w-28 h-28 text-white" strokeWidth={1.2} />
+            </div>
+            <div className="relative p-5 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-sm">
+                <Gift className="w-6 h-6 text-white" strokeWidth={2.5} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/85">
+                  {pgcT('vitrineTitle')}
+                </p>
+                <p className="text-[15px] font-bold text-white leading-snug mt-0.5">
+                  {pgcT('vitrineDesc')}
+                </p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-white/70 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </motion.button>
+        )}
+
+        {merchant.contest_enabled && merchant.contest_prize && (
+          <OfferCard tier="violet" icon={Trophy} label={t('contestBadge')} delay={0.52}>
+            <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">{t('contestDesc')}</p>
+            <p className="text-[14px] font-bold mt-0.5 text-gray-900">{merchant.contest_prize}</p>
+          </OfferCard>
         )}
 
         {/* ── GALERIE PHOTOS ── */}

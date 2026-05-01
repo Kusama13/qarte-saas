@@ -123,6 +123,7 @@ function buildJSX(params: GiftCardRenderParams, size: LayoutSize) {
   const offeredToLabel = isEn ? 'This gift is for' : 'Ce cadeau est offert à';
   const bookHintLabel = isEn ? 'To book your appointment' : 'Pour réserver';
   const validUntilLabel = isEn ? 'GIFT VALID UNTIL' : 'BON VALABLE JUSQU\'AU';
+  const singleUseLabel = isEn ? 'SINGLE USE · NON-REFUNDABLE' : 'UTILISABLE EN UNE FOIS · NON REMBOURSABLE';
 
   return (
     <div
@@ -291,6 +292,18 @@ function buildJSX(params: GiftCardRenderParams, size: LayoutSize) {
             }}
           >
             {`${validUntilLabel} ${expiresAtFormatted}`}
+          </div>
+          <div
+            style={{
+              fontFamily: 'Manrope',
+              fontSize: px(20),
+              letterSpacing: px(2.2),
+              color: inkSoft,
+              fontWeight: 500,
+              marginTop: px(6),
+            }}
+          >
+            {singleUseLabel}
           </div>
           <div
             style={{

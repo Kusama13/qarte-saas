@@ -1,8 +1,11 @@
 /**
- * Cron horaire — 2 passes :
- *   1. Auto-cancel les bons cadeaux en pending_payment depuis > 3 jours
+ * Cron horaire — 3 passes :
+ *   1. Reminder J-7 : pour chaque bon cadeau actif qui expire dans <= 7 jours
+ *      ET dont expiry_reminder_sent_at est NULL, envoyer 1 SMS au destinataire
+ *      et marquer expiry_reminder_sent_at = now() (anti-double-envoi).
+ *   2. Auto-cancel les bons cadeaux en pending_payment depuis > 3 jours
  *      (l'offreur n'a pas payé). status='cancelled', cancellation_reason='auto_expired_3d'.
- *   2. Auto-expire les bons cadeaux active dont expires_at <= now()
+ *   3. Auto-expire les bons cadeaux active dont expires_at <= now()
  *      (la durée de validité — `merchant.gift_card_expiry_months`, défaut 3 — est passée).
  *      status='expired'. ET supprime le voucher correspondant dans `vouchers`
  *      pour qu'il n'apparaisse plus dans la carte fidélité de la cliente.
@@ -15,8 +18,13 @@ export const maxDuration = 60;
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verifyCronAuth } from '@/lib/cron-helpers';
-import { GIFT_CARD_AUTO_CANCEL_DAYS } from '@/lib/gift-cards';
+import { GIFT_CARD_AUTO_CANCEL_DAYS, resolveGiftCardServiceNames } from '@/lib/gift-cards';
+import { sendBookingSms } from '@/lib/sms';
+import { formatCurrencyForSms, formatLongDate } from '@/lib/utils';
+import type { GiftCardServiceSnapshot } from '@/types';
 import logger from '@/lib/logger';
+
+const REMINDER_DAYS_BEFORE_EXPIRY = 7;
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,11 +38,77 @@ export async function GET(request: NextRequest) {
 
   const start = Date.now();
   const nowIso = new Date().toISOString();
+  let remindersSent = 0;
   let cancelled = 0;
   let expired = 0;
   let vouchersDeleted = 0;
 
   try {
+    // ─── PASSE 0 : J-7 reminder SMS au destinataire ───
+    const reminderCutoff = new Date(Date.now() + REMINDER_DAYS_BEFORE_EXPIRY * 24 * 60 * 60 * 1000);
+    const { data: dueReminders } = await supabase
+      .from('gift_cards')
+      .select(`
+        id, amount, kind, service_ids, service_snapshot,
+        recipient_first_name, recipient_phone, expires_at, merchant_id,
+        merchants!inner (
+          shop_name, country, locale, subscription_status
+        )
+      `)
+      .eq('status', 'active')
+      .is('expiry_reminder_sent_at', null)
+      .not('expires_at', 'is', null)
+      .gt('expires_at', nowIso)
+      .lte('expires_at', reminderCutoff.toISOString())
+      .limit(200);
+
+    type ReminderRow = {
+      id: string; amount: number; kind: string;
+      service_ids: string[] | null;
+      service_snapshot: GiftCardServiceSnapshot[] | null;
+      recipient_first_name: string; recipient_phone: string;
+      expires_at: string; merchant_id: string;
+      merchants: {
+        shop_name: string; country: string; locale: string;
+        subscription_status: string | null;
+      };
+    };
+
+    if (dueReminders && dueReminders.length > 0) {
+      const rows = dueReminders as unknown as ReminderRow[];
+      const processedIds: string[] = [];
+      const results = await Promise.allSettled(
+        rows.map(async (gc) => {
+          const lang = (gc.merchants.locale || 'fr') as 'fr' | 'en';
+          const { servicesLabel } = await resolveGiftCardServiceNames(
+            supabase, gc.merchant_id, gc.kind, gc.service_ids, gc.service_snapshot,
+          );
+          await sendBookingSms(supabase, {
+            merchantId: gc.merchant_id,
+            phone: gc.recipient_phone,
+            shopName: gc.merchants.shop_name,
+            smsType: 'gift_card_expiry_reminder',
+            locale: lang,
+            subscriptionStatus: gc.merchants.subscription_status || 'active',
+            date: formatLongDate(new Date(gc.expires_at), lang),
+            giftRecipientName: gc.recipient_first_name,
+            giftAmount: formatCurrencyForSms(Number(gc.amount), gc.merchants.country),
+            giftServicesLabel: servicesLabel,
+          });
+          processedIds.push(gc.id);
+        }),
+      );
+      remindersSent = results.filter((r) => r.status === 'fulfilled').length;
+      // Anti-double-envoi : on marque même si le SMS a échoué (numéro invalide).
+      // Batch single UPDATE après le Promise.allSettled.
+      if (processedIds.length > 0) {
+        await supabase
+          .from('gift_cards')
+          .update({ expiry_reminder_sent_at: new Date().toISOString() })
+          .in('id', processedIds);
+      }
+    }
+
     // ─── PASSE 1 : pending_payment > 3j → cancelled ───
     const cancelCutoff = new Date(Date.now() - GIFT_CARD_AUTO_CANCEL_DAYS * 24 * 60 * 60 * 1000);
     const { data: stalePending } = await supabase
@@ -111,10 +185,11 @@ export async function GET(request: NextRequest) {
 
     const elapsedMs = Date.now() - start;
     logger.info('Gift cards expire cron completed', {
-      cancelled, expired, vouchersDeleted, elapsedMs,
+      remindersSent, cancelled, expired, vouchersDeleted, elapsedMs,
     });
     return NextResponse.json({
       success: true,
+      remindersSent,
       cancelled,
       expired,
       vouchersDeleted,

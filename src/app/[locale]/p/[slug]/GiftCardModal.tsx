@@ -912,8 +912,11 @@ export default function GiftCardModal({
                     {t('successInstr2')} · {t('successInstr3', { code: '[ta référence]' })}
                   </p>
 
-                  <p className="text-[11px] text-gray-400 leading-relaxed mb-2 px-1">
+                  <p className="text-[11px] text-gray-400 leading-relaxed mb-1 px-1">
                     {t('validityNote', { months: expiryMonths })}
+                  </p>
+                  <p className="text-[11px] text-gray-400 leading-relaxed mb-2 px-1">
+                    {t('nonRefundableNote')}
                   </p>
 
                   <StickyCta
