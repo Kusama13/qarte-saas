@@ -1,9 +1,9 @@
 -- 141 — gift cards : lien paiement dédié + PDF imprimable + tracking public
 --
--- 1) Lien paiement dédié (optionnel) : un merchant qui n'a pas activé d'acompte
---    peut quand même proposer des bons cadeaux en configurant ici un lien
---    spécifique (Revolut, PayPal, Stripe Payment Link…). Si vide, on retombe
---    sur deposit_link / deposit_link_2 comme avant.
+-- 1) Lien paiement dédié (obligatoire pour activer les bons) : un merchant
+--    configure ici 1 ou 2 liens spécifiques aux bons cadeaux (Revolut, PayPal,
+--    Stripe Payment Link…). Indépendants des deposit_link* du Planning,
+--    aucun fallback : si vide, l'option bons cadeaux est inactive.
 --
 -- 2) pdf_url : URL du PDF A5 imprimable généré au moment de la confirmation
 --    de paiement, joint aux emails offreur + destinataire.
@@ -24,7 +24,7 @@ ALTER TABLE merchants
   ADD COLUMN IF NOT EXISTS gift_card_payment_link_2_label TEXT;
 
 COMMENT ON COLUMN merchants.gift_card_payment_link IS
-  'Lien paiement dédié bons cadeaux (Revolut/PayPal/Stripe…). Fallback sur deposit_link si NULL.';
+  'Lien paiement dédié bons cadeaux (Revolut/PayPal/Stripe…). Indépendant de deposit_link, aucun fallback.';
 COMMENT ON COLUMN merchants.gift_card_payment_link_label IS
   'Libellé affiché du lien (ex: "Revolut"). Auto-détecté si NULL.';
 

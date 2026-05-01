@@ -11,19 +11,21 @@
  *   7. Envoie l'email de confirmation à l'offreur (gift activé)
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import {
   getAllPhoneFormats,
   generateReferralCode,
   formatCurrency,
+  formatCurrencyForSms,
+  formatLongDate,
 } from '@/lib/utils';
 import {
   computeGiftCardExpiry,
   GIFT_CARD_EXPIRY_MONTHS,
   formatGiftCardServicesLabel,
 } from '@/lib/gift-cards';
-import { renderAndUploadGiftCardPdf } from '@/lib/gift-card-pdf';
+import { renderAndUploadGiftCardAssets } from '@/lib/gift-card-pdf';
 import type { GiftCardServiceSnapshot } from '@/types';
 import { sendBookingSms } from '@/lib/sms';
 import {
@@ -68,7 +70,7 @@ export async function POST(
 
     const { data: merchant } = await supabase
       .from('merchants')
-      .select('id, slug, shop_name, shop_address, country, locale, primary_color, secondary_color, stamps_required, hide_address_on_public_page')
+      .select('id, slug, shop_name, shop_address, display_phone, country, locale, primary_color, secondary_color, stamps_required, auto_booking_enabled, hide_address_on_public_page, gift_card_expiry_months')
       .eq('id', giftCard.merchant_id)
       .eq('user_id', user.id)
       .single();
@@ -136,9 +138,11 @@ export async function POST(
 
     // 5. Calcul expiry + amount formaté
     const paidAt = new Date();
-    const expiresAt = computeGiftCardExpiry(paidAt);
+    const expiresAt = computeGiftCardExpiry(paidAt, merchant.gift_card_expiry_months);
     const locale = (merchant.locale || 'fr') as 'fr' | 'en';
     const amountFormatted = formatCurrency(Number(giftCard.amount), merchant.country, locale, 0);
+    // SMS-safe : pas de symbole € (GSM-7 le splitte en 2 chars)
+    const amountForSms = formatCurrencyForSms(Number(giftCard.amount), merchant.country);
 
     // Pour kind='services' : on tente le LIVE (au cas où nom changé depuis commande),
     // fallback sur le snapshot (résilience suppression).
@@ -207,27 +211,8 @@ export async function POST(
     }
 
     // 8. Side effects fire-and-forget : SMS destinataire + emails
-    const expiresAtFormatted = paidAt.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-    const expiresAtFmt = new Date(expiresAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
+    const expiresAtFmt = formatLongDate(new Date(expiresAt), locale);
     const cardUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com'}/customer/card/${merchant.id}`;
-
-    // Génération PDF puis envoi des emails (PDF joint).
-    // Le PDF est attendu pour qu'il soit prêt avant les emails.
-    // SMS destinataire part en parallèle (pas besoin de PDF).
-    const senderFullName = giftCard.sender_last_name
-      ? `${giftCard.sender_first_name} ${giftCard.sender_last_name}`
-      : giftCard.sender_first_name;
-    const recipientFullName = giftCard.recipient_last_name
-      ? `${giftCard.recipient_first_name} ${giftCard.recipient_last_name}`
-      : giftCard.recipient_first_name;
 
     // Si scheduled_send_at est dans le futur → on diffère SMS+email destinataire
     // (le cron /api/cron/gift-cards-deliver les enverra à l'échéance).
@@ -247,31 +232,39 @@ export async function POST(
           subscriptionStatus: 'active',
           giftSenderName: giftCard.sender_first_name,
           giftRecipientName: giftCard.recipient_first_name,
-          giftAmount: amountFormatted,
+          giftAmount: amountForSms,
           giftServicesLabel: servicesLabel,
         }).catch((e) => logger.error('Gift SMS recipient failed:', e));
       }
 
-      // 2. Génère le PDF (peut prendre 1-3s côté serveur)
-      const pdfUrl = await renderAndUploadGiftCardPdf(supabase, giftCard.id, {
+      // 2. Génère PDF + PNG en UN seul satori puis upload les deux en parallèle
+      const renderParams = {
         shopName: merchant.shop_name,
-        shopAddress: merchant.hide_address_on_public_page ? null : merchant.shop_address,
-        primaryColor: merchant.primary_color || '#4b0082',
-        secondaryColor: merchant.secondary_color || '#ec4899',
+        // Tel vitrine UNIQUEMENT (display_phone, opt-in côté merchant) — jamais
+        // le tel perso (merchants.phone, utilisé pour login).
+        shopPhone: merchant.display_phone,
+        shopCountry: merchant.country,
+        shopSlug: merchant.slug,
+        autoBookingEnabled: merchant.auto_booking_enabled,
         amountFormatted,
+        amountValue: Number(giftCard.amount),
         servicesLabel,
         serviceNames: serviceNamesLive,
-        senderFullName,
-        recipientFullName,
+        senderFirstName: giftCard.sender_first_name,
+        senderLastName: giftCard.sender_last_name,
+        recipientFirstName: giftCard.recipient_first_name,
+        recipientLastName: giftCard.recipient_last_name,
         senderMessage: giftCard.sender_message,
         code: giftCard.code,
         expiresAtFormatted: expiresAtFmt,
         locale,
-      });
+      };
+      const { pdfUrl, imageUrl } = await renderAndUploadGiftCardAssets(supabase, giftCard.id, renderParams);
 
-      // 3. Stocke pdf_url + notified_at (si envoi immédiat)
+      // 3. Stocke pdf_url + image_url + notified_at (si envoi immédiat)
       const updates: Record<string, unknown> = {};
       if (pdfUrl) updates.pdf_url = pdfUrl;
+      if (imageUrl) updates.image_url = imageUrl;
       if (!deferRecipient) updates.notified_at = paidAt.toISOString();
       if (Object.keys(updates).length > 0) {
         await supabase.from('gift_cards').update(updates).eq('id', giftCard.id);
@@ -289,12 +282,14 @@ export async function POST(
             senderMessage: giftCard.sender_message,
             expiresAtFormatted: expiresAtFmt,
             cardUrl,
-            shopAddress: merchant.hide_address_on_public_page ? null : merchant.shop_address,
             primaryColor: merchant.primary_color || '#4b0082',
-            secondaryColor: merchant.secondary_color || '#ec4899',
             locale,
             servicesLabel,
-            serviceNames: serviceNamesLive,
+            imageUrl,
+            code: giftCard.code,
+            bookingUrl: merchant.auto_booking_enabled && merchant.slug
+              ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com'}/p/${merchant.slug}`
+              : null,
           })
         : Promise.resolve();
 
@@ -310,20 +305,21 @@ export async function POST(
         locale,
         servicesLabel,
         pdfUrl,
-        scheduledSendAtFormatted: scheduledAt
-          ? scheduledAt.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
-          : null,
+        imageUrl,
+        scheduledSendAtFormatted: scheduledAt ? formatLongDate(scheduledAt, locale) : null,
       });
 
       await Promise.allSettled([recipientEmailTask, senderEmailTask]);
     })();
-    sideEffectsTask.catch((e) => logger.error('Gift confirm-payment side effects failed:', e));
+    // Vercel kill toute promesse non-attendue après le `return`. `after()`
+    // garde l'exécution serverless en vie jusqu'à résolution.
+    after(sideEffectsTask.catch((e) => logger.error('Gift confirm-payment side effects failed:', e)));
 
     return NextResponse.json({
       success: true,
       voucher_id: voucher.id,
       recipient_customer_id: customer.id,
-      expiry_months: GIFT_CARD_EXPIRY_MONTHS,
+      expiry_months: merchant.gift_card_expiry_months ?? GIFT_CARD_EXPIRY_MONTHS,
     });
   } catch (error) {
     logger.error('Gift card confirm-payment error:', error);

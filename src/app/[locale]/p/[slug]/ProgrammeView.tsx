@@ -111,6 +111,7 @@ type MerchantPublic = Pick<
   | 'gift_card_amounts'
   | 'gift_card_message'
   | 'gift_card_services_enabled'
+  | 'gift_card_expiry_months'
 >;
 
 export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], bookedSlots = [], isDemo = false, demoOffer }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; bookedSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null }) {
@@ -1487,6 +1488,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
         services={services}
         serviceCategories={serviceCategories}
         servicesEnabled={Boolean(merchant.gift_card_services_enabled)}
+        expiryMonths={merchant.gift_card_expiry_months ?? 3}
         locale={locale}
         isDemo={isDemo}
       />

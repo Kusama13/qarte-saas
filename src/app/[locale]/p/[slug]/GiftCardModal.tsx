@@ -53,6 +53,7 @@ interface GiftCardModalProps {
   services: Service[];
   serviceCategories: ServiceCategory[];
   servicesEnabled: boolean;
+  expiryMonths: number;
   locale: string;
   isDemo?: boolean;
 }
@@ -60,7 +61,7 @@ interface GiftCardModalProps {
 export default function GiftCardModal({
   open, onClose, merchantId, shopName, primaryColor, secondaryColor,
   defaultCountry, amounts, introMessage, services, serviceCategories,
-  servicesEnabled, locale, isDemo = false,
+  servicesEnabled, expiryMonths, locale, isDemo = false,
 }: GiftCardModalProps) {
   const t = useTranslations('giftCards');
   const p = primaryColor;
@@ -912,7 +913,7 @@ export default function GiftCardModal({
                   </p>
 
                   <p className="text-[11px] text-gray-400 leading-relaxed mb-2 px-1">
-                    {t('validityNote')}
+                    {t('validityNote', { months: expiryMonths })}
                   </p>
 
                   <StickyCta

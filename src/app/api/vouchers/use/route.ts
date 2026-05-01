@@ -6,7 +6,7 @@ import { getAuthenticatedPhone } from '@/lib/customer-auth';
 import { getTodayForCountry, getTrialStatus } from '@/lib/utils';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { sendBookingSms } from '@/lib/sms';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrencyForSms } from '@/lib/utils';
 import { formatGiftCardServicesLabel } from '@/lib/gift-cards';
 import type { GiftCardServiceSnapshot } from '@/types';
 import logger from '@/lib/logger';
@@ -204,7 +204,8 @@ export async function POST(request: NextRequest) {
 
           if (!shopMerchant) return;
           const lang = (shopMerchant.locale || 'fr') as 'fr' | 'en';
-          const amountFmt = formatCurrency(Number(giftCard.amount), shopMerchant.country, lang, 0);
+          // SMS-safe : pas de symbole € (GSM-7)
+          const amountFmt = formatCurrencyForSms(Number(giftCard.amount), shopMerchant.country);
 
           // Si kind='services' : on construit le label LIVE (avec fallback snapshot)
           let servicesLabel: string | null = null;

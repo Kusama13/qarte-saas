@@ -4030,7 +4030,7 @@
     "didYouMean": "Did you mean",
     "scheduledSendAtLabel": "Send to recipient on",
     "scheduledSendAtHint": "If you want them to receive their gift on a specific date (birthday, Christmas…). Otherwise, sent right after payment confirmation.",
-    "validityNote": "The gift is valid for 3 months from when the salon confirms payment.",
+    "validityNote": "The gift is valid for {months} months from when the salon confirms payment.",
     "programPaymentLinksLabel": "Gift card payment links",
     "programPaymentLinksHint": "Add the payment links you want to use for gift cards.",
     "programPaymentLinkPlaceholder1": "https://revolut.me/yourname",

@@ -179,6 +179,7 @@ export interface Merchant {
   gift_card_payment_link_label: string | null;
   gift_card_payment_link_2: string | null;
   gift_card_payment_link_2_label: string | null;
+  gift_card_expiry_months: number | null;
   // Email deliverability
   email_bounced_at: string | null;
   email_unsubscribed_at: string | null;

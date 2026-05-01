@@ -17,8 +17,8 @@ import { createClient } from '@supabase/supabase-js';
 import { verifyCronAuth } from '@/lib/cron-helpers';
 import { sendBookingSms } from '@/lib/sms';
 import { sendGiftCardReceivedEmail } from '@/lib/email';
-import { formatCurrency } from '@/lib/utils';
-import { formatGiftCardServicesLabel } from '@/lib/gift-cards';
+import { formatCurrency, formatCurrencyForSms, formatLongDate } from '@/lib/utils';
+import { resolveGiftCardServiceNames } from '@/lib/gift-cards';
 import type { GiftCardServiceSnapshot } from '@/types';
 import logger from '@/lib/logger';
 
@@ -45,8 +45,8 @@ export async function GET(request: NextRequest) {
         recipient_first_name, recipient_last_name, recipient_phone, recipient_email,
         sender_message, expires_at, scheduled_send_at, merchant_id,
         merchants!inner (
-          shop_name, shop_address, country, locale,
-          primary_color, secondary_color,
+          shop_name, shop_address, display_phone, slug, country, locale,
+          primary_color, secondary_color, auto_booking_enabled,
           subscription_status, hide_address_on_public_page
         )
       `)
@@ -69,58 +69,57 @@ export async function GET(request: NextRequest) {
     let errors = 0;
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
 
-    for (const row of due) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const giftCard = row as any;
-      const merchant = giftCard.merchants;
-      if (!merchant) continue;
+    type GiftCardWithMerchant = {
+      id: string; code: string; amount: number; kind: string;
+      service_ids: string[] | null; service_snapshot: GiftCardServiceSnapshot[] | null;
+      sender_first_name: string; sender_last_name: string | null;
+      recipient_first_name: string; recipient_last_name: string | null;
+      recipient_phone: string; recipient_email: string | null;
+      sender_message: string | null; expires_at: string | null;
+      scheduled_send_at: string | null; image_url: string | null; merchant_id: string;
+      merchants: {
+        shop_name: string; shop_address: string | null; slug: string;
+        country: string; locale: string;
+        primary_color: string | null; secondary_color: string | null;
+        auto_booking_enabled: boolean;
+        subscription_status: string | null;
+        hide_address_on_public_page: boolean;
+      };
+    };
 
-      const locale = (merchant.locale || 'fr') as 'fr' | 'en';
-      const country = merchant.country || 'FR';
-      const amountFormatted = formatCurrency(Number(giftCard.amount), country, locale, 0);
-      const expiresAtFmt = giftCard.expires_at
-        ? new Date(giftCard.expires_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', {
-            day: 'numeric', month: 'long', year: 'numeric',
-          })
-        : '';
-      const cardUrl = `${baseUrl}/customer/card/${giftCard.merchant_id}`;
+    // Process en batches de 8 en parallèle pour ne pas dépasser maxDuration
+    // (200 bons × 500ms séquentiels = 100s > 60s ; en batches c'est ~12s).
+    const BATCH_SIZE = 8;
+    const dueTyped = due as unknown as GiftCardWithMerchant[];
 
-      // Mode services : noms LIVE avec fallback snapshot
-      let servicesLabel: string | null = null;
-      let serviceNames: string[] = [];
-      if (giftCard.kind === 'services' && Array.isArray(giftCard.service_ids) && giftCard.service_ids.length > 0) {
-        const { data: liveSvc } = await supabase
-          .from('merchant_services')
-          .select('id, name')
-          .eq('merchant_id', giftCard.merchant_id)
-          .in('id', giftCard.service_ids);
-        const liveById = new Map<string, string>(
-          ((liveSvc as Array<{ id: string; name: string }>) || []).map((s) => [s.id, s.name]),
+    for (let i = 0; i < dueTyped.length; i += BATCH_SIZE) {
+      const batch = dueTyped.slice(i, i + BATCH_SIZE);
+      const results = await Promise.allSettled(batch.map(async (giftCard) => {
+        const merchant = giftCard.merchants;
+        if (!merchant) return;
+
+        const locale = (merchant.locale || 'fr') as 'fr' | 'en';
+        const country = merchant.country || 'FR';
+        const amountFormatted = formatCurrency(Number(giftCard.amount), country, locale, 0);
+        const amountForSms = formatCurrencyForSms(Number(giftCard.amount), country);
+        const expiresAtFmt = giftCard.expires_at ? formatLongDate(new Date(giftCard.expires_at), locale) : '';
+        const cardUrl = `${baseUrl}/customer/card/${giftCard.merchant_id}`;
+
+        // Mode services : noms LIVE avec fallback snapshot
+        const { servicesLabel } = await resolveGiftCardServiceNames(
+          supabase, giftCard.merchant_id,
+          giftCard.kind, giftCard.service_ids, giftCard.service_snapshot,
         );
-        const snapById = new Map<string, GiftCardServiceSnapshot>(
-          ((giftCard.service_snapshot as GiftCardServiceSnapshot[] | null) || []).map((s) => [s.id, s]),
-        );
-        serviceNames = (giftCard.service_ids as string[])
-          .map((id) => liveById.get(id) || snapById.get(id)?.name || null)
-          .filter((n): n is string => Boolean(n));
-        servicesLabel = formatGiftCardServicesLabel(serviceNames);
-      }
 
-      // Atomic claim : on marque notified_at avant l'envoi pour éviter double-envoi
-      // si un autre process tourne en parallèle. Si claim échoue → on skip.
-      const { data: claimed, error: claimError } = await supabase
-        .from('gift_cards')
-        .update({ notified_at: nowIso })
-        .eq('id', giftCard.id)
-        .is('notified_at', null)
-        .select('id');
+        // Atomic claim notified_at — anti-doublon si un autre worker tourne
+        const { data: claimed } = await supabase
+          .from('gift_cards')
+          .update({ notified_at: nowIso })
+          .eq('id', giftCard.id)
+          .is('notified_at', null)
+          .select('id');
+        if (!claimed || claimed.length === 0) return; // race lost
 
-      if (claimError || !claimed || claimed.length === 0) {
-        continue; // race : un autre worker a déjà claim
-      }
-
-      // Envoi SMS + email destinataire (fire-and-forget, errors loggés mais pas bloquants)
-      try {
         await Promise.allSettled([
           sendBookingSms(supabase, {
             merchantId: giftCard.merchant_id,
@@ -131,7 +130,7 @@ export async function GET(request: NextRequest) {
             subscriptionStatus: merchant.subscription_status || 'active',
             giftSenderName: giftCard.sender_first_name,
             giftRecipientName: giftCard.recipient_first_name,
-            giftAmount: amountFormatted,
+            giftAmount: amountForSms,
             giftServicesLabel: servicesLabel,
           }),
           giftCard.recipient_email
@@ -145,20 +144,25 @@ export async function GET(request: NextRequest) {
                 senderMessage: giftCard.sender_message,
                 expiresAtFormatted: expiresAtFmt,
                 cardUrl,
-                shopAddress: merchant.hide_address_on_public_page ? null : merchant.shop_address,
                 primaryColor: merchant.primary_color || '#4b0082',
-                secondaryColor: merchant.secondary_color || '#ec4899',
                 locale,
                 servicesLabel,
-                serviceNames,
+                imageUrl: giftCard.image_url,
+                code: giftCard.code,
+                bookingUrl: merchant.auto_booking_enabled && merchant.slug
+                  ? `${baseUrl}/p/${merchant.slug}`
+                  : null,
               })
             : Promise.resolve(),
         ]);
         delivered++;
-      } catch (err) {
-        errors++;
-        logger.error(`Gift cards deliver cron — failed for ${giftCard.code}`, err);
-      }
+      }));
+      results.forEach((r, idx) => {
+        if (r.status === 'rejected') {
+          errors++;
+          logger.error(`Gift cards deliver cron — failed for ${batch[idx].code}`, r.reason);
+        }
+      });
     }
 
     return NextResponse.json({

@@ -15,7 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { sendBookingSms } from '@/lib/sms';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrencyForSms } from '@/lib/utils';
 import { formatGiftCardServicesLabel } from '@/lib/gift-cards';
 import type { GiftCardServiceSnapshot } from '@/types';
 import logger from '@/lib/logger';
@@ -94,7 +94,8 @@ export async function POST(
 
     // SMS offreur fire-and-forget
     const locale = (merchant.locale || 'fr') as 'fr' | 'en';
-    const amountFmt = formatCurrency(Number(giftCard.amount), merchant.country, locale, 0);
+    // SMS-safe : pas de symbole € (GSM-7), on émet "50 EUR" / "50 CHF" / "50 GBP"
+    const amountFmt = formatCurrencyForSms(Number(giftCard.amount), merchant.country);
 
     let servicesLabel: string | null = null;
     if (giftCard.kind === 'services' && Array.isArray(giftCard.service_ids) && giftCard.service_ids.length > 0) {

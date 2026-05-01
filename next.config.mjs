@@ -7,6 +7,9 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion', 'date-fns', 'date-fns-tz', 'recharts'],
   },
+  // Binaires natifs (resvg .node) + libs lourdes côté rendu bon cadeau :
+  // webpack ne sait pas les bundler, il faut les laisser require() at runtime.
+  serverExternalPackages: ['@resvg/resvg-js', 'satori', 'pdf-lib'],
   images: {
     formats: ['image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],

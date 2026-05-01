@@ -3,6 +3,7 @@ import {
   Text,
   Section,
   Button,
+  Img,
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
@@ -18,6 +19,7 @@ interface GiftCardActivatedEmailProps {
   locale?: EmailLocale;
   servicesLabel?: string | null;
   pdfUrl?: string | null;
+  imageUrl?: string | null; // même PNG que dans l'email destinataire (preview)
   scheduledSendAtFormatted?: string | null;  // si renseigné = envoi destinataire différé
 }
 
@@ -27,10 +29,10 @@ export function GiftCardActivatedEmail({
   recipientFirstName,
   recipientLastName,
   amount,
-  expiresAtFormatted,
   locale = 'fr',
   servicesLabel,
   pdfUrl,
+  imageUrl,
   scheduledSendAtFormatted,
 }: GiftCardActivatedEmailProps) {
   const isEn = locale === 'en';
@@ -63,32 +65,30 @@ export function GiftCardActivatedEmail({
               : `Bonjour ${senderFirstName}, ${shopName} vient de confirmer la réception de ton paiement. ${recipientFullName} reçoit son ${giftLabel} par SMS dans la foulée.`)}
       </Text>
 
-      <Section style={isScheduled ? scheduledBox : successBox}>
-        <Text style={isScheduled ? scheduledIcon : successIcon}>{isScheduled ? '📅' : '✨'}</Text>
-        <Text style={isScheduled ? scheduledTitle : successTitle}>
-          {isScheduled
-            ? (isEn ? `Sending on ${scheduledSendAtFormatted}` : `Envoi le ${scheduledSendAtFormatted}`)
-            : (isEn ? `Gift delivered to ${recipientFullName}` : `Bon envoyé à ${recipientFullName}`)}
-        </Text>
-        <Text style={isScheduled ? scheduledDetail : successDetail}>
-          {isEn
-            ? `${servicesLabel ? `${servicesLabel} (${amount})` : amount} · valid until ${expiresAtFormatted}`
-            : `${servicesLabel ? `${servicesLabel} (${amount})` : amount} · valable jusqu'au ${expiresAtFormatted}`}
-        </Text>
-      </Section>
+      {/* Aperçu du bon — même PNG que celui que reçoit le destinataire */}
+      {imageUrl && (
+        <Section style={imageWrap}>
+          <Img
+            src={imageUrl}
+            alt={isEn ? 'Gift voucher preview' : 'Aperçu du bon cadeau'}
+            width="560"
+            style={imageStyle}
+          />
+        </Section>
+      )}
 
       {pdfUrl && (
         <Section style={pdfBox}>
           <Text style={pdfLabel}>
-            {isEn ? '🎁 PRINTABLE GIFT CARD' : '🎁 BON CADEAU IMPRIMABLE'}
+            {isEn ? 'PRINTABLE VERSION' : 'VERSION IMPRIMABLE'}
           </Text>
           <Text style={pdfHint}>
             {isEn
-              ? 'A nicely-designed PDF you can print and offer in person, if you want.'
-              : 'Un PDF joliment mis en page que tu peux imprimer et offrir en main propre, si tu veux.'}
+              ? 'Same design in PDF, ready to print and offer in person.'
+              : 'Le même design en PDF, prêt à imprimer et offrir en main propre.'}
           </Text>
           <Button href={pdfUrl} style={pdfButton}>
-            {isEn ? 'Download the PDF' : 'Télécharger le PDF'}
+            {isEn ? 'Download the printable PDF' : 'Télécharger le PDF imprimable'}
           </Button>
         </Section>
       )}
@@ -109,6 +109,21 @@ export function GiftCardActivatedEmail({
   );
 }
 
+const imageWrap = {
+  textAlign: 'center' as const,
+  margin: '0 0 28px 0',
+};
+
+const imageStyle = {
+  display: 'block',
+  margin: '0 auto',
+  width: '100%',
+  maxWidth: '560px',
+  height: 'auto',
+  borderRadius: '4px',
+  border: '1px solid #E8E0CC',
+};
+
 const heading = {
   color: '#1a1a1a',
   fontSize: '26px',
@@ -123,66 +138,6 @@ const paragraph = {
   fontSize: '16px',
   lineHeight: '1.6',
   margin: '0 0 24px 0',
-};
-
-const successBox = {
-  background: 'linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)',
-  border: '2px solid #10B981',
-  borderRadius: '16px',
-  padding: '28px 24px',
-  margin: '0 0 28px 0',
-  textAlign: 'center' as const,
-};
-
-const successIcon = {
-  fontSize: '36px',
-  margin: '0 0 8px 0',
-  lineHeight: '1',
-};
-
-const successTitle = {
-  color: '#065F46',
-  fontSize: '20px',
-  fontWeight: '700',
-  margin: '0 0 8px 0',
-  letterSpacing: '-0.01em',
-};
-
-const successDetail = {
-  color: '#047857',
-  fontSize: '14px',
-  fontWeight: '500',
-  margin: '0',
-};
-
-const scheduledBox = {
-  background: 'linear-gradient(135deg, #FAF5FF 0%, #FDF4FF 100%)',
-  border: '2px solid #A78BFA',
-  borderRadius: '16px',
-  padding: '28px 24px',
-  margin: '0 0 24px 0',
-  textAlign: 'center' as const,
-};
-
-const scheduledIcon = {
-  fontSize: '32px',
-  margin: '0 0 8px 0',
-  lineHeight: '1',
-};
-
-const scheduledTitle = {
-  color: '#5B21B6',
-  fontSize: '20px',
-  fontWeight: '700',
-  margin: '0 0 8px 0',
-  letterSpacing: '-0.01em',
-};
-
-const scheduledDetail = {
-  color: '#6D28D9',
-  fontSize: '14px',
-  fontWeight: '500',
-  margin: '0',
 };
 
 const pdfBox = {

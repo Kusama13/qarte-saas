@@ -85,6 +85,35 @@ export function formatCurrency(amount: number, country?: string, locale: string 
   }).format(amount);
 }
 
+/** Formate une date en "30 avril 2026" (FR) / "April 30, 2026" (EN). */
+export function formatLongDate(date: Date | string | null | undefined, locale: 'fr' | 'en' = 'fr'): string {
+  if (!date) return '';
+  const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', {
+    day: 'numeric', month: 'long', year: 'numeric',
+  });
+}
+
+/**
+ * Variante GSM-7 safe pour les SMS : pas de symbole monétaire (le `€` n'est
+ * pas dans l'alphabet GSM-7 par défaut → carriers le splittent en 2 chars,
+ * vieux téléphones l'affichent en `?`). On émet le code ISO + montant brut :
+ *   formatCurrencyForSms(50, 'FR') → "50 EUR"
+ *   formatCurrencyForSms(50, 'CH') → "50 CHF"
+ *   formatCurrencyForSms(50, 'GB') → "50 GBP"
+ *
+ * `decimals` : 0 par défaut (les SMS gift cards / loyalty manipulent toujours
+ * des entiers). Passer 2 si on veut "29.90 EUR".
+ */
+export function formatCurrencyForSms(amount: number, country?: string, decimals: number = 0): string {
+  const currency = getCurrencyForCountry(country);
+  const formatted = decimals > 0
+    ? amount.toFixed(decimals).replace('.', ',')
+    : Math.round(amount).toString();
+  return `${formatted} ${currency}`;
+}
+
 /**
  * Ensures a hex color has enough contrast against a white background.
  * Returns the original color if contrast is OK, or a darkened version otherwise.

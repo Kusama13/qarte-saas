@@ -322,7 +322,7 @@ interface SendSmsParams {
   // For gift cards
   giftSenderName?: string;     // gift_card_received: prénom de l'offreur
   giftRecipientName?: string;  // gift_card_used: prénom du destinataire (utilisateur du voucher)
-  giftAmount?: string;         // ex: "50€" — déjà formaté avec devise
+  giftAmount?: string;         // ex: "50 EUR" / "50 CHF" — formaté SMS-safe (cf. formatCurrencyForSms : pas de symbole € qui n'est pas dans GSM-7 par défaut)
   giftServicesLabel?: string | null;  // ex: "1 coupe + 1 brushing" — si kind=services, prend le pas sur giftAmount
   // Pass pre-fetched config to avoid re-querying in loops
   globalConfig?: GlobalSmsConfig;

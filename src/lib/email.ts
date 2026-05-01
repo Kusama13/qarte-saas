@@ -1215,6 +1215,7 @@ export async function sendGiftCardActivatedEmail(
     locale?: EmailLocale;
     servicesLabel?: string | null;
     pdfUrl?: string | null;
+    imageUrl?: string | null;
     scheduledSendAtFormatted?: string | null;
   },
 ): Promise<SendEmailResult> {
@@ -1245,12 +1246,12 @@ export async function sendGiftCardReceivedEmail(
     senderMessage?: string | null;
     expiresAtFormatted: string;
     cardUrl: string;
-    shopAddress?: string | null;
     primaryColor?: string;
-    secondaryColor?: string;
     locale?: EmailLocale;
     servicesLabel?: string | null;
-    serviceNames?: string[];
+    imageUrl?: string | null;
+    code?: string;
+    bookingUrl?: string | null;
   },
 ): Promise<SendEmailResult> {
   const { locale = 'fr', senderFirstName, amount, shopName, servicesLabel } = params;

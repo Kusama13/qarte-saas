@@ -4033,7 +4033,7 @@
     "didYouMean": "Tu voulais dire",
     "scheduledSendAtLabel": "Date d'envoi au destinataire",
     "scheduledSendAtHint": "Si tu veux que la personne reçoive son bon à une date précise (anniversaire, Noël…). Sinon, envoi dès la validation du paiement.",
-    "validityNote": "Le bon est valable 3 mois à compter de la validation du paiement par le salon.",
+    "validityNote": "Le bon est valable {months} mois à compter de la validation du paiement par le salon.",
     "programPaymentLinksLabel": "Liens de paiement bons cadeaux",
     "programPaymentLinksHint": "Entre ici les liens de paiement que tu veux utiliser pour les bons cadeaux.",
     "programPaymentLinkPlaceholder1": "https://revolut.me/tonpseudo",

@@ -32,6 +32,8 @@ const settingsSchema = z.object({
   // Liens paiement dédiés bons cadeaux (mig 141)
   paymentLink: urlOrEmpty.optional(),
   paymentLink2: urlOrEmpty.optional(),
+  // Durée de validité personnalisable (mig 145, 1-24 mois)
+  expiryMonths: z.number().int().min(1).max(24).optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -51,7 +53,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const { merchantId, enabled, amounts, message, servicesEnabled, paymentLink, paymentLink2 } = parsed.data;
+    const { merchantId, enabled, amounts, message, servicesEnabled, paymentLink, paymentLink2, expiryMonths } = parsed.data;
     const supabase = getSupabaseAdmin();
 
     // Ownership check
@@ -65,14 +67,18 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
-    const cleanAmounts = (amounts || []).filter((a) => a >= GIFT_CARD_MIN_AMOUNT && a <= GIFT_CARD_MAX_AMOUNT);
-    const finalAmounts = cleanAmounts.length > 0 ? cleanAmounts : GIFT_CARD_DEFAULT_AMOUNTS;
-
     const updatePayload: Record<string, unknown> = {
       gift_card_enabled: enabled,
-      gift_card_amounts: finalAmounts,
-      gift_card_message: message?.trim() || null,
     };
+    // Patch partiel : on ne touche aux amounts/message que s'ils sont fournis
+    // dans le body (sinon le toggle écraserait la config existante).
+    if (amounts !== undefined) {
+      const cleanAmounts = amounts.filter((a) => a >= GIFT_CARD_MIN_AMOUNT && a <= GIFT_CARD_MAX_AMOUNT);
+      updatePayload.gift_card_amounts = cleanAmounts.length > 0 ? cleanAmounts : GIFT_CARD_DEFAULT_AMOUNTS;
+    }
+    if (message !== undefined) {
+      updatePayload.gift_card_message = message?.trim() || null;
+    }
     if (typeof servicesEnabled === 'boolean') {
       updatePayload.gift_card_services_enabled = servicesEnabled;
     }
@@ -88,6 +94,9 @@ export async function PATCH(request: NextRequest) {
       updatePayload.gift_card_payment_link_2 = url;
       updatePayload.gift_card_payment_link_2_label = url ? detectPaymentProvider(url) : null;
     }
+    if (expiryMonths !== undefined) {
+      updatePayload.gift_card_expiry_months = expiryMonths;
+    }
 
     const { error: updateError } = await supabase
       .from('merchants')
@@ -100,24 +109,21 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Force-revalide la vitrine pour que le toggle prenne effet immédiatement
-    // (sinon ISR cache 1h sert l'ancien HTML)
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com'}/api/dashboard/revalidate-merchant-page`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Cookie: request.headers.get('cookie') || '',
-        },
-      }).catch(() => {});
-    } catch {
-      // silent
-    }
+    // (sinon ISR cache 1h sert l'ancien HTML). Fire-and-forget : on ignore
+    // l'échec, l'ISR finira par expirer.
+    fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com'}/api/dashboard/revalidate-merchant-page`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: request.headers.get('cookie') || '',
+      },
+    }).catch(() => { /* silent */ });
 
     return NextResponse.json({
       success: true,
       gift_card_enabled: enabled,
-      gift_card_amounts: finalAmounts,
-      gift_card_message: message?.trim() || null,
+      gift_card_amounts: updatePayload.gift_card_amounts,
+      gift_card_message: updatePayload.gift_card_message,
       ...(typeof servicesEnabled === 'boolean' ? { gift_card_services_enabled: servicesEnabled } : {}),
     });
   } catch (error) {

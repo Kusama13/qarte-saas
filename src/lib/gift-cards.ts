@@ -6,8 +6,15 @@
  */
 
 import { supabaseAdmin } from './supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { GiftCardServiceSnapshot } from '@/types';
 
-export const GIFT_CARD_EXPIRY_MONTHS = 3;
+/** Valeur par défaut quand le merchant n'a pas (encore) configuré sa durée. */
+export const GIFT_CARD_EXPIRY_MONTHS_DEFAULT = 3;
+/** Garde rétro-compat avec les imports existants — pointe sur le défaut. */
+export const GIFT_CARD_EXPIRY_MONTHS = GIFT_CARD_EXPIRY_MONTHS_DEFAULT;
+export const GIFT_CARD_EXPIRY_MONTHS_MIN = 1;
+export const GIFT_CARD_EXPIRY_MONTHS_MAX = 24;
 export const GIFT_CARD_AUTO_CANCEL_DAYS = 3;
 export const GIFT_CARD_MIN_AMOUNT = 5;
 export const GIFT_CARD_MAX_AMOUNT = 1000;
@@ -35,11 +42,54 @@ export async function generateGiftCardCode(): Promise<string> {
   throw new Error('Failed to generate unique gift card code after 5 attempts');
 }
 
-/** Calcule la date d'expiration (3 mois après paid_at). */
-export function computeGiftCardExpiry(paidAt: Date = new Date()): Date {
+/**
+ * Calcule la date d'expiration N mois après paid_at. N est typiquement
+ * `merchant.gift_card_expiry_months` (1-24, défaut 3 si NULL/invalide).
+ */
+export function computeGiftCardExpiry(
+  paidAt: Date = new Date(),
+  months: number | null | undefined = GIFT_CARD_EXPIRY_MONTHS_DEFAULT,
+): Date {
+  const safeMonths = (typeof months === 'number' && months >= GIFT_CARD_EXPIRY_MONTHS_MIN && months <= GIFT_CARD_EXPIRY_MONTHS_MAX)
+    ? months
+    : GIFT_CARD_EXPIRY_MONTHS_DEFAULT;
   const exp = new Date(paidAt);
-  exp.setMonth(exp.getMonth() + GIFT_CARD_EXPIRY_MONTHS);
+  exp.setMonth(exp.getMonth() + safeMonths);
   return exp;
+}
+
+/**
+ * Résout les noms de prestations d'un bon kind='services' :
+ *   - lookup LIVE dans merchant_services (les noms ont pu changer)
+ *   - fallback service_snapshot (au cas où la prestation a été supprimée)
+ * Retourne `{ servicesLabel, serviceNames }` (label = noms joints par " + ").
+ * Pour kind='amount' ou ids vides : `{ servicesLabel: null, serviceNames: [] }`.
+ */
+export async function resolveGiftCardServiceNames(
+  supabase: SupabaseClient,
+  merchantId: string,
+  kind: string | null | undefined,
+  serviceIds: string[] | null | undefined,
+  serviceSnapshot: GiftCardServiceSnapshot[] | null | undefined,
+): Promise<{ servicesLabel: string | null; serviceNames: string[] }> {
+  if (kind !== 'services' || !Array.isArray(serviceIds) || serviceIds.length === 0) {
+    return { servicesLabel: null, serviceNames: [] };
+  }
+  const { data: liveSvc } = await supabase
+    .from('merchant_services')
+    .select('id, name')
+    .eq('merchant_id', merchantId)
+    .in('id', serviceIds);
+  const liveById = new Map<string, string>(
+    ((liveSvc as Array<{ id: string; name: string }>) || []).map((s) => [s.id, s.name]),
+  );
+  const snapById = new Map<string, GiftCardServiceSnapshot>(
+    (serviceSnapshot || []).map((s) => [s.id, s]),
+  );
+  const serviceNames = serviceIds
+    .map((id) => liveById.get(id) || snapById.get(id)?.name || null)
+    .filter((n): n is string => Boolean(n));
+  return { servicesLabel: formatGiftCardServicesLabel(serviceNames), serviceNames };
 }
 
 /** Parse `merchants.gift_card_amounts` (JSONB) → array de nombres validés. */

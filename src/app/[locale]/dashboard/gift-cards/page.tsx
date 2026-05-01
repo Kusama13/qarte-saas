@@ -6,6 +6,7 @@ import {
   Gift, Loader2, Check, X, Phone, Mail, Calendar,
   AlertCircle, Hourglass, CheckCircle2, XCircle, ChevronRight,
   MessageSquare, Save, AlertTriangle, Sparkles,
+  Settings, ListChecks,
 } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { useToast } from '@/components/ui/Toast';
@@ -19,6 +20,7 @@ import { detectPaymentProvider } from '@/lib/payment-providers';
 import type { GiftCard, GiftCardStatus } from '@/types';
 
 type Tab = 'pending_payment' | 'active' | 'used' | 'cancelled';
+type MainTab = 'settings' | 'tracking';
 
 interface GiftCardListResponse {
   gift_cards: GiftCard[];
@@ -47,6 +49,7 @@ export default function GiftCardsPage() {
   const { merchant } = useMerchant();
   const { addToast } = useToast();
 
+  const [mainTab, setMainTab] = useState<MainTab>('settings');
   const [activeTab, setActiveTab] = useState<Tab>('pending_payment');
   const [data, setData] = useState<GiftCardListResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -93,6 +96,11 @@ export default function GiftCardsPage() {
     { id: 'cancelled', label: t('tabCancelled'), count: counts.cancelled, urgent: false },
   ];
 
+  const mainTabs: Array<{ id: MainTab; label: string; icon: typeof Settings }> = [
+    { id: 'settings', label: 'Paramètres', icon: Settings },
+    { id: 'tracking', label: 'Suivi', icon: ListChecks },
+  ];
+
   return (
     <div className="max-w-6xl mx-auto">
       {/* ═══ HEADER ═══ */}
@@ -108,49 +116,42 @@ export default function GiftCardsPage() {
         </p>
       </div>
 
-      {/* ═══ SETTINGS ═══ */}
-      <SettingsPanel
+      {/* ═══ TOGGLE PRINCIPAL — déverrouille les 3 onglets ═══ */}
+      <ProgramToggleCard
         merchantId={merchant.id}
         enabled={enabled}
-        amounts={merchant.gift_card_amounts || GIFT_CARD_DEFAULT_AMOUNTS}
-        message={merchant.gift_card_message}
-        servicesEnabled={merchant.gift_card_services_enabled !== false}
-        paymentLink={merchant.gift_card_payment_link}
-        paymentLink2={merchant.gift_card_payment_link_2}
         onChange={() => fetchData()}
       />
 
-      {/* ═══ Pas activé : pitch + signal d'activation ═══ */}
+      {/* ═══ Pas activé : pitch + rien d'autre ═══ */}
       {!enabled && <DisabledPitch t={t} />}
 
-      {/* ═══ TABS + LISTE ═══ */}
+      {/* ═══ NAV 3 ONGLETS + CONTENU (visible uniquement si activé) ═══ */}
       {enabled && (
         <>
-          <div className="flex gap-1.5 sm:gap-2 mb-4">
-            {tabs.map((tab) => {
-              const active = activeTab === tab.id;
+          <div className="flex gap-1.5 sm:gap-2 mb-5">
+            {mainTabs.map(({ id, label, icon: Icon }) => {
+              const active = mainTab === id;
+              const showSuiviBadge = id === 'tracking' && counts.pending_payment > 0;
               return (
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-2 rounded-xl font-bold text-[12px] sm:text-sm transition-all touch-manipulation ${
+                  key={id}
+                  onClick={() => setMainTab(id)}
+                  className={`flex-1 min-w-0 flex items-center justify-center gap-2 py-3 px-3 rounded-xl font-semibold text-sm transition-all touch-manipulation ${
                     active
-                      ? 'bg-slate-900 text-white'
-                      : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
+                      ? 'bg-slate-900 text-white shadow-sm'
+                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                   }`}
                 >
-                  <span className="truncate">{tab.label}</span>
-                  {tab.count > 0 && (
+                  <Icon className="w-4 h-4" />
+                  <span className="truncate">{label}</span>
+                  {showSuiviBadge && (
                     <span
                       className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold ${
-                        active
-                          ? 'bg-white/20 text-white'
-                          : tab.urgent
-                          ? 'bg-rose-100 text-rose-700'
-                          : 'bg-gray-100 text-gray-600'
+                        active ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-700'
                       }`}
                     >
-                      {tab.count}
+                      {counts.pending_payment}
                     </span>
                   )}
                 </button>
@@ -158,25 +159,77 @@ export default function GiftCardsPage() {
             })}
           </div>
 
-          {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-            </div>
-          ) : filteredGiftCards.length === 0 ? (
-            <EmptyState tab={activeTab} t={t} />
-          ) : (
-            <div className="space-y-3">
-              {filteredGiftCards.map((card) => (
-                <GiftCardRow
-                  key={card.id}
-                  card={card}
-                  locale={locale}
-                  country={merchant.country}
-                  onChange={fetchData}
-                />
-              ))}
-            </div>
+          {/* Tab : Paramètres (config sans le toggle, déjà géré au-dessus) */}
+          {mainTab === 'settings' && (
+            <SettingsPanel
+              merchantId={merchant.id}
+              amounts={merchant.gift_card_amounts || GIFT_CARD_DEFAULT_AMOUNTS}
+              message={merchant.gift_card_message}
+              servicesEnabled={merchant.gift_card_services_enabled !== false}
+              paymentLink={merchant.gift_card_payment_link}
+              paymentLink2={merchant.gift_card_payment_link_2}
+              expiryMonths={merchant.gift_card_expiry_months ?? 3}
+              onChange={() => fetchData()}
+            />
           )}
+
+          {/* Tab : Suivi */}
+          {mainTab === 'tracking' && (
+            <>
+              <div className="flex gap-1.5 sm:gap-2 mb-4">
+                {tabs.map((tab) => {
+                  const active = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-2 rounded-xl font-bold text-[12px] sm:text-sm transition-all touch-manipulation ${
+                        active
+                          ? 'bg-slate-900 text-white'
+                          : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="truncate">{tab.label}</span>
+                      {tab.count > 0 && (
+                        <span
+                          className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold ${
+                            active
+                              ? 'bg-white/20 text-white'
+                              : tab.urgent
+                              ? 'bg-rose-100 text-rose-700'
+                              : 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          {tab.count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {loading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                </div>
+              ) : filteredGiftCards.length === 0 ? (
+                <EmptyState tab={activeTab} t={t} />
+              ) : (
+                <div className="space-y-3">
+                  {filteredGiftCards.map((card) => (
+                    <GiftCardRow
+                      key={card.id}
+                      card={card}
+                      locale={locale}
+                      country={merchant.country}
+                      onChange={fetchData}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
         </>
       )}
     </div>
@@ -184,38 +237,128 @@ export default function GiftCardsPage() {
 }
 
 // ============================================================
-// SettingsPanel — collapsible, toggle + amounts + message
+// ProgramToggleCard — toggle principal qui active/désactive la feature
 // ============================================================
 
-function SettingsPanel({
-  merchantId, enabled: initialEnabled, amounts: initialAmounts, message: initialMessage, servicesEnabled: initialServicesEnabled,
-  paymentLink: initialPaymentLink, paymentLink2: initialPaymentLink2,
+function ProgramToggleCard({
+  merchantId,
+  enabled: initialEnabled,
   onChange,
 }: {
   merchantId: string;
   enabled: boolean;
+  onChange?: () => void;
+}) {
+  const t = useTranslations('giftCards');
+  const { addToast } = useToast();
+  const { updateMerchant } = useMerchant();
+  const [enabled, setEnabled] = useState(initialEnabled);
+  const [saving, setSaving] = useState(false);
+
+  const handleToggle = useCallback(async () => {
+    const next = !enabled;
+    setEnabled(next);
+    setSaving(true);
+    try {
+      const res = await fetch('/api/gift-cards/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchantId, enabled: next }),
+      });
+      if (!res.ok) throw new Error('Failed');
+      updateMerchant({ gift_card_enabled: next });
+      addToast(t('saved'), 'success');
+      onChange?.();
+    } catch {
+      setEnabled(!next); // rollback
+      addToast(t('toastError'), 'error');
+    } finally {
+      setSaving(false);
+    }
+  }, [enabled, merchantId, addToast, t, onChange, updateMerchant]);
+
+  return (
+    <section
+      className={`rounded-2xl border shadow-sm mb-5 overflow-hidden transition-colors ${
+        enabled ? 'bg-white border-gray-100' : 'bg-gradient-to-br from-rose-50 to-amber-50 border-rose-100'
+      }`}
+    >
+      <div className="p-5 sm:p-6 flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1 flex items-start gap-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+            enabled ? 'bg-rose-50' : 'bg-white'
+          }`}>
+            <Gift className={`w-5 h-5 ${enabled ? 'text-rose-600' : 'text-rose-500'}`} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base md:text-lg font-bold text-gray-900">
+              {t('programToggleTitle')}
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">
+              {enabled
+                ? 'Activé. Tes clientes peuvent offrir un bon depuis ta vitrine.'
+                : t('programToggleDesc')}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={enabled}
+          onClick={handleToggle}
+          disabled={saving}
+          className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-2 disabled:opacity-50 mt-1 ${
+            enabled ? 'bg-rose-500' : 'bg-gray-300'
+          }`}
+        >
+          <span
+            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
+              enabled ? 'translate-x-6' : 'translate-x-1'
+            }`}
+          />
+        </button>
+      </div>
+    </section>
+  );
+}
+
+// ============================================================
+// SettingsPanel — config (montants, message, paiement) ; le toggle est
+// désormais géré par <ProgramToggleCard> au-dessus
+// ============================================================
+
+function SettingsPanel({
+  merchantId, amounts: initialAmounts, message: initialMessage, servicesEnabled: initialServicesEnabled,
+  paymentLink: initialPaymentLink, paymentLink2: initialPaymentLink2,
+  expiryMonths: initialExpiryMonths,
+  onChange,
+}: {
+  merchantId: string;
   amounts: number[];
   message: string | null;
   servicesEnabled: boolean;
   paymentLink: string | null;
   paymentLink2: string | null;
+  expiryMonths: number;
   onChange?: () => void;
 }) {
   const t = useTranslations('giftCards');
   const { addToast } = useToast();
 
-  const [enabled, setEnabled] = useState(initialEnabled);
+  // Toggle est géré par <ProgramToggleCard> au-dessus ; ce panel n'est
+  // monté que quand enabled=true (cf. {mainTab === 'settings' && …} dans la page).
   const [amounts, setAmounts] = useState<number[]>(initialAmounts);
   const [message, setMessage] = useState(initialMessage || '');
   const [servicesEnabled, setServicesEnabled] = useState(initialServicesEnabled);
   const [paymentLink, setPaymentLink] = useState(initialPaymentLink || '');
   const [paymentLink2, setPaymentLink2] = useState(initialPaymentLink2 || '');
+  const [expiryMonths, setExpiryMonths] = useState<number>(initialExpiryMonths);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
 
   const persist = useCallback(async (override?: {
-    enabled?: boolean; amounts?: number[]; message?: string; servicesEnabled?: boolean;
-    paymentLink?: string; paymentLink2?: string;
+    amounts?: number[]; message?: string; servicesEnabled?: boolean;
+    paymentLink?: string; paymentLink2?: string; expiryMonths?: number;
   }) => {
     setSaving(true);
     try {
@@ -224,12 +367,13 @@ function SettingsPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           merchantId,
-          enabled: override?.enabled ?? enabled,
+          enabled: true,
           amounts: (override?.amounts ?? amounts).filter((a) => a >= GIFT_CARD_MIN_AMOUNT && a <= GIFT_CARD_MAX_AMOUNT),
           message: (override?.message ?? message)?.trim() || null,
           servicesEnabled: override?.servicesEnabled ?? servicesEnabled,
           paymentLink: (override?.paymentLink ?? paymentLink)?.trim() || null,
           paymentLink2: (override?.paymentLink2 ?? paymentLink2)?.trim() || null,
+          expiryMonths: override?.expiryMonths ?? expiryMonths,
         }),
       });
       if (!res.ok) throw new Error('Failed');
@@ -241,7 +385,7 @@ function SettingsPanel({
     } finally {
       setSaving(false);
     }
-  }, [merchantId, enabled, amounts, message, servicesEnabled, paymentLink, paymentLink2, addToast, t, onChange]);
+  }, [merchantId, amounts, message, servicesEnabled, paymentLink, paymentLink2, expiryMonths, addToast, t, onChange]);
 
   const handleServicesToggle = () => {
     const next = !servicesEnabled;
@@ -249,46 +393,43 @@ function SettingsPanel({
     persist({ servicesEnabled: next });
   };
 
-  const handleToggle = () => {
-    const next = !enabled;
-    setEnabled(next);
-    persist({ enabled: next });
-  };
-
   const cleanAmounts = amounts.filter((a) => a > 0);
 
   return (
     <section className="bg-white border border-gray-100 rounded-2xl shadow-sm mb-6 overflow-hidden">
       <div className="p-6">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-base md:text-lg font-bold text-gray-900">
-              {t('programToggleTitle')}
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">{t('programToggleDesc')}</p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={enabled}
-            onClick={handleToggle}
-            disabled={saving}
-            className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-2 disabled:opacity-50 mt-1 ${
-              enabled ? 'bg-rose-500' : 'bg-gray-200'
-            }`}
-          >
-            <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
-                enabled ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
-        </div>
+        <div className="space-y-6">
+          {/* ─── 1. Liens de paiement (pré-requis) ─── */}
+            <div>
+              <label className="text-sm font-semibold text-gray-700 mb-1 block">
+                {t('programPaymentLinksLabel')}
+              </label>
+              <p className="text-xs text-gray-500 mb-3 leading-snug">
+                {t('programPaymentLinksHint')}
+              </p>
+              <div className="space-y-2.5">
+                <PaymentLinkField
+                  url={paymentLink}
+                  onUrlChange={(v) => { setPaymentLink(v); setDirty(true); }}
+                  placeholder={t('programPaymentLinkPlaceholder1')}
+                />
+                <PaymentLinkField
+                  url={paymentLink2}
+                  onUrlChange={(v) => { setPaymentLink2(v); setDirty(true); }}
+                  placeholder={t('programPaymentLinkPlaceholder2')}
+                />
+              </div>
+              {!paymentLink.trim() && !paymentLink2.trim() && (
+                <div className="mt-3 flex gap-2 items-start rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-900 leading-relaxed">{t('needPaymentLink')}</p>
+                </div>
+              )}
+            </div>
 
-        {/* Config (visible quand activé) */}
-        {enabled && (
-          <div className="mt-5 pt-5 border-t border-gray-100 space-y-5">
-            {/* Montants */}
+            <div className="border-t border-gray-100" />
+
+            {/* ─── 2. Montants suggérés ─── */}
             <div>
               <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
                 {t('programAmountsLabel')}
@@ -298,7 +439,7 @@ function SettingsPanel({
                 {amounts.map((amount, idx) => (
                   <div
                     key={idx}
-                    className="inline-flex items-center gap-1 bg-rose-50 border border-rose-200 rounded-full pl-3 pr-1 py-1"
+                    className="group inline-flex items-baseline gap-0.5 pl-3 pr-1 py-2 rounded-lg border border-gray-200 bg-white hover:border-rose-300 hover:bg-rose-50/40 transition-colors"
                   >
                     <input
                       type="number"
@@ -310,8 +451,9 @@ function SettingsPanel({
                         setAmounts((prev) => prev.map((a, i) => (i === idx ? v : a)));
                         setDirty(true);
                       }}
-                      className="w-12 bg-transparent text-sm font-bold text-rose-700 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-10 bg-transparent text-sm font-semibold text-gray-900 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
+                    <span className="text-xs font-medium text-gray-400">€</span>
                     <button
                       type="button"
                       aria-label={t('programAmountsRemove')}
@@ -319,7 +461,7 @@ function SettingsPanel({
                         setAmounts((prev) => prev.filter((_, i) => i !== idx));
                         setDirty(true);
                       }}
-                      className="w-6 h-6 rounded-full hover:bg-rose-100 text-rose-600 inline-flex items-center justify-center text-base leading-none touch-manipulation"
+                      className="ml-1 w-5 h-5 rounded-md text-gray-300 hover:text-rose-600 hover:bg-rose-100 inline-flex items-center justify-center text-sm leading-none touch-manipulation transition-colors"
                     >
                       ×
                     </button>
@@ -331,31 +473,14 @@ function SettingsPanel({
                     setAmounts((prev) => [...prev, 0]);
                     setDirty(true);
                   }}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border border-dashed border-rose-300 text-rose-700 hover:bg-rose-50 transition-colors touch-manipulation"
+                  className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-gray-500 border border-dashed border-gray-300 hover:border-rose-400 hover:text-rose-700 hover:bg-rose-50/40 transition-colors touch-manipulation"
                 >
                   + {t('programAmountsAdd')}
                 </button>
               </div>
             </div>
 
-            {/* Message */}
-            <div>
-              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
-                {t('programMessageLabel')}
-              </label>
-              <textarea
-                value={message}
-                onChange={(e) => {
-                  setMessage(e.target.value.slice(0, 300));
-                  setDirty(true);
-                }}
-                placeholder={t('programMessagePlaceholder')}
-                rows={2}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 resize-none"
-              />
-            </div>
-
-            {/* Sous-toggle : offrir une prestation */}
+            {/* ─── 3. Sous-toggle : offrir une prestation ─── */}
             <div className="flex items-center justify-between gap-3 rounded-xl bg-rose-50/40 border border-rose-100 px-4 py-3">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-gray-900">{t('programServicesToggleTitle')}</p>
@@ -379,35 +504,60 @@ function SettingsPanel({
               </button>
             </div>
 
-            {/* Liens paiement dédiés bons cadeaux */}
+            <div className="border-t border-gray-100" />
+
+            {/* ─── 4. Durée de validité ─── */}
             <div>
-              <label className="text-sm font-semibold text-gray-700 mb-1 block">
-                {t('programPaymentLinksLabel')}
+              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                Durée de validité du bon
               </label>
-              <p className="text-xs text-gray-500 mb-3 leading-snug">
-                {t('programPaymentLinksHint')}
+              <p className="text-xs text-gray-500 mb-2.5 leading-snug">
+                Délai pendant lequel le destinataire peut utiliser son bon. Au-delà, il est automatiquement retiré de sa carte fidélité.
               </p>
-
-              <div className="space-y-2.5">
-                <PaymentLinkField
-                  url={paymentLink}
-                  onUrlChange={(v) => { setPaymentLink(v); setDirty(true); }}
-                  placeholder={t('programPaymentLinkPlaceholder1')}
-                />
-                <PaymentLinkField
-                  url={paymentLink2}
-                  onUrlChange={(v) => { setPaymentLink2(v); setDirty(true); }}
-                  placeholder={t('programPaymentLinkPlaceholder2')}
-                />
+              <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-2">
+                {[3, 6, 12].map((m) => {
+                  const active = expiryMonths === m;
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => {
+                        setExpiryMonths(m);
+                        setDirty(true);
+                        persist({ expiryMonths: m });
+                      }}
+                      disabled={saving}
+                      className={`inline-flex items-baseline justify-center gap-1 px-4 py-2 rounded-lg border text-sm font-semibold transition-all touch-manipulation disabled:opacity-50 ${
+                        active
+                          ? 'border-rose-500 bg-rose-50 text-rose-700'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span>{m}</span>
+                      <span className={`text-xs font-medium ${active ? 'text-rose-600' : 'text-gray-400'}`}>mois</span>
+                    </button>
+                  );
+                })}
               </div>
+            </div>
 
-              {/* Warning inline si aucun lien renseigné — directement sous les champs */}
-              {!paymentLink.trim() && !paymentLink2.trim() && (
-                <div className="mt-3 flex gap-2 items-start rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5">
-                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-900 leading-relaxed">{t('needPaymentLink')}</p>
-                </div>
-              )}
+            <div className="border-t border-gray-100" />
+
+            {/* ─── 5. Message personnalisé ─── */}
+            <div>
+              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                {t('programMessageLabel')}
+              </label>
+              <textarea
+                value={message}
+                onChange={(e) => {
+                  setMessage(e.target.value.slice(0, 300));
+                  setDirty(true);
+                }}
+                placeholder={t('programMessagePlaceholder')}
+                rows={2}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 resize-none"
+              />
             </div>
 
             {dirty && cleanAmounts.length > 0 && (
@@ -423,8 +573,7 @@ function SettingsPanel({
                 </button>
               </div>
             )}
-          </div>
-        )}
+        </div>
       </div>
     </section>
   );
