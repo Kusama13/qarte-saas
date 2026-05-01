@@ -61,6 +61,7 @@ import {
   GiftCardMerchantNotificationEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
+import type { BookingConfirmationMode } from '@/emails/BookingConfirmationEmail';
 import logger from './logger';
 
 function checkResend() {
@@ -1029,7 +1030,7 @@ interface BookingConfirmationParams {
   totalPrice: number;
   currency?: 'EUR' | 'CHF';
   customerAddress?: string | null;
-  mode?: 'pending_deposit' | 'deposit_received' | 'confirmed';
+  mode?: BookingConfirmationMode;
   deposit?: {
     amount: number | null;
     percent: number | null;

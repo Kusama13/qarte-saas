@@ -549,7 +549,7 @@ export async function POST(request: NextRequest) {
           amount: deposit.amount,
           percent: deposit.percent,
           deadlineHours: deposit.deadline_hours,
-          links: deposit.links.map(l => ({ label: l.label, url: l.url })),
+          links: deposit.links,
         } : null,
         loyaltyCardUrl: `${getAppUrl()}/customer/card/${merchant.id}`,
         cancelPolicyDays: merchant.allow_customer_cancel ? (merchant.cancel_deadline_days ?? 1) : null,

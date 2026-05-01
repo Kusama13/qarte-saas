@@ -27,7 +27,7 @@ interface DepositLink {
 // - 'deposit_received' : envoyé quand le merchant valide l'acompte côté dashboard.
 //   Affiche "acompte reçu, RDV confirmé" + reste à payer + bouton carte fidélité.
 // - 'confirmed' : résa sans acompte. Standard, bouton carte fidélité présent.
-type BookingConfirmationMode = 'pending_deposit' | 'deposit_received' | 'confirmed';
+export type BookingConfirmationMode = 'pending_deposit' | 'deposit_received' | 'confirmed';
 
 interface BookingConfirmationEmailProps {
   shopName: string;

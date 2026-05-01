@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient, getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
-import { getTodayForCountry, formatPhoneNumber, getAllPhoneFormats, getAppUrl, getCurrencyForCountry } from '@/lib/utils';
+import { getTodayForCountry, formatPhoneNumber, getAllPhoneFormats } from '@/lib/utils';
 import { sendBookingSms } from '@/lib/sms';
-import { sendBookingConfirmationEmail } from '@/lib/email';
-import { buildDepositLinks } from '@/lib/payment-providers';
+import { sendDepositReceivedEmail } from '@/lib/booking-emails';
 import type { MerchantCountry } from '@/types';
-import type { EmailLocale } from '@/emails/translations';
 import logger from '@/lib/logger';
 import { requirePlanFeature } from '@/lib/api-helpers';
 import { recomputeDayTravel } from '@/lib/travel-recompute';
-import type { SupabaseClient } from '@supabase/supabase-js';
 
 async function verifyOwnership(supabase: Awaited<ReturnType<typeof createRouteHandlerSupabaseClient>>, merchantId: string, userId: string) {
   const { data } = await supabase
@@ -588,77 +585,3 @@ export async function DELETE(request: NextRequest) {
   }
 }
 
-// ── Email "acompte reçu" envoyé au client quand le merchant valide l acompte
-// dans le dashboard. On fetch les données nécessaires séparément (slot, merchant,
-// services) plutôt que de polluer le PATCH principal.
-async function sendDepositReceivedEmail(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabaseAdmin: SupabaseClient<any>,
-  merchantId: string,
-  slotId: string,
-  customerEmail: string
-): Promise<void> {
-  const [{ data: slot }, { data: merchant }] = await Promise.all([
-    supabaseAdmin
-      .from("merchant_planning_slots")
-      .select("slot_date, start_time, total_duration_minutes, customer_address, customer_id, planning_slot_services(service:merchant_services!service_id(name, price, duration))")
-      .eq("id", slotId)
-      .single(),
-    supabaseAdmin
-      .from("merchants")
-      .select("id, shop_name, locale, country, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days")
-      .eq("id", merchantId)
-      .single(),
-  ]);
-  if (!slot || !merchant) return;
-
-  const { data: customer } = slot.customer_id
-    ? await supabaseAdmin.from("customers").select("first_name").eq("id", slot.customer_id).single()
-    : { data: null };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const services = (slot.planning_slot_services || []).map((row: any) => row.service).filter(Boolean).map((s: any) => ({
-    name: s.name as string,
-    price: Number(s.price || 0),
-    duration: Number(s.duration || 30),
-  }));
-  if (services.length === 0) return; // rien à envoyer si pas de service
-
-  const totalPrice = services.reduce((sum: number, s: { price: number }) => sum + s.price, 0);
-  const totalDuration = slot.total_duration_minutes || services.reduce((sum: number, s: { duration: number }) => sum + s.duration, 0);
-  const depositAmount = merchant.deposit_amount
-    ? Number(merchant.deposit_amount)
-    : merchant.deposit_percent
-      ? Math.round(totalPrice * Number(merchant.deposit_percent) / 100)
-      : null;
-  const links = buildDepositLinks(
-    merchant.deposit_link,
-    merchant.deposit_link_label,
-    merchant.deposit_link_2,
-    merchant.deposit_link_2_label,
-  );
-  const currency = getCurrencyForCountry(merchant.country) as "EUR" | "CHF";
-
-  await sendBookingConfirmationEmail(customerEmail, {
-    shopName: merchant.shop_name,
-    clientFirstName: customer?.first_name || "",
-    date: slot.slot_date,
-    time: slot.start_time,
-    services,
-    totalDuration,
-    totalPrice,
-    currency,
-    customerAddress: slot.customer_address,
-    mode: "deposit_received",
-    deposit: depositAmount != null ? {
-      amount: depositAmount,
-      percent: merchant.deposit_percent || null,
-      deadlineHours: merchant.deposit_deadline_hours || null,
-      links: links.map(l => ({ label: l.label, url: l.url })),
-    } : null,
-    loyaltyCardUrl: `${getAppUrl()}/customer/card/${merchant.id}`,
-    cancelPolicyDays: merchant.allow_customer_cancel ? (merchant.cancel_deadline_days ?? 1) : null,
-    reschedulePolicyDays: merchant.allow_customer_reschedule ? (merchant.reschedule_deadline_days ?? 1) : null,
-    locale: (merchant.locale as EmailLocale) || "fr",
-  });
-}
