@@ -3233,6 +3233,8 @@
     "bonusReferral": "🎉 Bonus parrainage +1",
     "bonusWelcome": "🎁 Bonus nouveaux clients +1",
     "bonusOffer": "🎟️ Bonus offre +1",
+    "bonusGiftCard": "🎁 Bonus bon cadeau +1",
+    "bonusGeneric": "✨ Tampon bonus +1",
     "cagnotteRedeemed": "💰 Cagnotte{tierLabel} récupérée",
     "giftUsed": "🎁 Cadeau{tierLabel} utilisé",
     "adjustment": "Ajustement",

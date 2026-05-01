@@ -550,6 +550,12 @@ export default function CustomerCardPage({
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        // Capture la source AVANT de marquer le voucher used (sinon find()
+        // pourrait retourner stale). Source dicte le flagged_reason de l'optimistic
+        // update — doit matcher exactement ce que /api/vouchers/use a écrit côté
+        // serveur (cf. flaggedReasonForSource là-bas).
+        const usedVoucherSource = vouchers.find(v => v.id === voucherId)?.source || null;
+
         // 1. Mark voucher as used
         setVouchers(prev => prev.map(v =>
           v.id === voucherId ? { ...v, is_used: true, used_at: new Date().toISOString() } : v
@@ -559,8 +565,10 @@ export default function CustomerCardPage({
         if (data.bonus_stamp_added && data.new_stamps != null) {
           setCard(prev => prev ? { ...prev, current_stamps: data.new_stamps } : prev);
 
-          // Add bonus visit to local visits for immediate history display
           if (data.bonus_visit_id) {
+            const flaggedReason = usedVoucherSource === 'referral'
+              ? 'bonus_parrainage'
+              : `bonus_${usedVoucherSource || 'voucher'}`;
             setVisits(prev => [{
               id: data.bonus_visit_id,
               loyalty_card_id: card.id,
@@ -572,7 +580,7 @@ export default function CustomerCardPage({
               ip_address: null,
               ip_hash: null,
               status: 'confirmed' as VisitStatus,
-              flagged_reason: 'bonus_parrainage',
+              flagged_reason: flaggedReason,
             }, ...prev]);
           }
         }

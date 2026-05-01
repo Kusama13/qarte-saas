@@ -219,9 +219,13 @@ export default function HistorySection({
                   return item.reward_description || t('rewardUsed');
                 }
                 if (isBonusVoucher) {
-                  if (item.flagged_reason === 'bonus_welcome') return t('bonusWelcome');
-                  if (item.flagged_reason === 'bonus_offer') return t('bonusOffer');
-                  return t('bonusReferral');
+                  switch (item.flagged_reason) {
+                    case 'bonus_welcome': return t('bonusWelcome');
+                    case 'bonus_offer': return t('bonusOffer');
+                    case 'bonus_gift': return t('bonusGiftCard');
+                    case 'bonus_parrainage': return t('bonusReferral');
+                    default: return t('bonusGeneric');
+                  }
                 }
                 if (isRedemption) {
                   const tierLabel = merchant.tier2_enabled && item.tier ? ` ${t('tier', { number: item.tier })}` : '';
