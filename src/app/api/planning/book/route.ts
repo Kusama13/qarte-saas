@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
-import { formatPhoneNumber, validatePhone, getTrialStatus, getTimezoneForCountry, getAllPhoneFormats, getAppUrl } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getTrialStatus, getTimezoneForCountry, getAllPhoneFormats, getAppUrl, getCurrencyForCountry } from '@/lib/utils';
+import type { EmailLocale } from '@/emails/translations';
 import { computeDepositDeadline } from '@/lib/deposit';
 import { fromZonedTime } from 'date-fns-tz';
 import { setPhoneCookie } from '@/lib/customer-auth';
@@ -532,7 +533,7 @@ export async function POST(request: NextRequest) {
 
     // 10a-bis. Send confirmation email to client (fire-and-forget) — only if email provided
     if (trimmedEmail) {
-      const merchantCurrency: 'EUR' | 'CHF' = merchant.country === 'CH' ? 'CHF' : 'EUR';
+      const merchantCurrency = getCurrencyForCountry(merchant.country) as 'EUR' | 'CHF';
       sendBookingConfirmationEmail(trimmedEmail, {
         shopName: merchant.shop_name,
         clientFirstName: trimmedFirst,
@@ -552,7 +553,7 @@ export async function POST(request: NextRequest) {
         loyaltyCardUrl: `${getAppUrl()}/customer/card/${merchant.id}`,
         cancelPolicyDays: merchant.allow_customer_cancel ? (merchant.cancel_deadline_days ?? 1) : null,
         reschedulePolicyDays: merchant.allow_customer_reschedule ? (merchant.reschedule_deadline_days ?? 1) : null,
-        locale: (merchant.locale as 'fr' | 'en') || 'fr',
+        locale: (merchant.locale as EmailLocale) || 'fr',
       }).catch(err => logger.error('Booking confirmation email (client) failed:', err));
     }
 

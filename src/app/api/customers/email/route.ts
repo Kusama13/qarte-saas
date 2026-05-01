@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { getAuthenticatedPhone } from '@/lib/customer-auth';
-import { getAllPhoneFormats } from '@/lib/utils';
+import { getAllPhoneFormats, validateEmail } from '@/lib/utils';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
-const EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 // PUT: Customer sets / updates their email (modifiable any time)
 // DELETE: Customer removes their email
@@ -24,7 +23,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const trimmed = String(email).trim().toLowerCase();
-    if (trimmed.length > 254 || !EMAIL_REGEX.test(trimmed)) {
+    if (!validateEmail(trimmed)) {
       return NextResponse.json({ error: 'Email invalide' }, { status: 400 });
     }
 

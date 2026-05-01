@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Mail, Check, Loader2, Pencil, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { validateEmail } from '@/lib/utils';
 import type { Merchant } from '@/types';
 
 interface EmailSectionProps {
@@ -10,8 +11,6 @@ interface EmailSectionProps {
   customerId: string;
   initialEmail: string | null;
 }
-
-const EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 export default function EmailSection({ merchant, customerId, initialEmail }: EmailSectionProps) {
   const t = useTranslations('emailSection');
@@ -23,7 +22,7 @@ export default function EmailSection({ merchant, customerId, initialEmail }: Ema
 
   const handleSave = async () => {
     const trimmed = draft.trim().toLowerCase();
-    if (!EMAIL_REGEX.test(trimmed)) {
+    if (!validateEmail(trimmed)) {
       setError(t('invalid'));
       return;
     }

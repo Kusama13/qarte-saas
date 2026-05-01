@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Clock, ChevronRight, ChevronLeft, ChevronDown, Loader2, Gift, CreditCard, CalendarDays, Hourglass, Info, Crown } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
-import { formatTime, toBCP47, formatCurrency } from '@/lib/utils';
+import { formatTime, toBCP47, formatCurrency, validateEmail } from '@/lib/utils';
 import type { Merchant, MerchantCountry } from '@/types';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { AddressAutocomplete, type AddressSuggestion } from '@/components/ui/AddressAutocomplete';
@@ -282,7 +282,7 @@ export default function BookingModal({
     if (!firstName.trim() || !phone.trim()) return;
 
     const trimmedEmail = email.trim();
-    if (trimmedEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(trimmedEmail)) {
+    if (trimmedEmail && !validateEmail(trimmedEmail)) {
       setError(t('emailInvalid'));
       return;
     }
