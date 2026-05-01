@@ -52,9 +52,9 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
-import { cn, generateQRCode, getScanUrl, formatDoubleDays, formatPhoneForWhatsApp, COUNTRY_FLAGS } from '@/lib/utils';
+import { cn, generateQRCode, getScanUrl, formatDoubleDays, formatPhoneForWhatsApp, COUNTRY_FLAGS, formatContestMonth, formatCurrency } from '@/lib/utils';
 import { SHOP_TYPES } from '@/types';
-import type { Merchant as BaseMerchant, ShopType, MerchantCountry } from '@/types';
+import type { Merchant as BaseMerchant, ShopType, MerchantCountry, GiftCardStatus } from '@/types';
 
 // Extend canonical Merchant with admin-specific fields from offers
 interface Merchant extends BaseMerchant {
@@ -99,11 +99,7 @@ interface Stats {
 }
 
 interface GiftCardStats {
-  active: number;
-  used: number;
-  expired: number;
-  refunded: number;
-  pendingPayment: number;
+  byStatus: Record<GiftCardStatus, number>;
   totalRevenue: number;
 }
 
@@ -1288,19 +1284,15 @@ export default function MerchantDetailPage() {
           </p>
           {contestData.plannedPrizes.length > 0 ? (
             <div className="space-y-1">
-              {contestData.plannedPrizes.map(p => {
-                const [year, month] = p.contest_month.split('-');
-                const monthName = new Date(Number(year), Number(month) - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-                return (
-                  <div key={p.contest_month} className="flex items-start gap-3 px-3 py-2 rounded-lg bg-violet-50/40 border border-violet-100">
-                    <Sparkles className="w-3.5 h-3.5 text-violet-500 mt-0.5 flex-shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <span className="font-semibold text-gray-900 capitalize">{monthName}</span>
-                      <span className="text-gray-700"> · {p.prize_description}</span>
-                    </div>
+              {contestData.plannedPrizes.map(p => (
+                <div key={p.contest_month} className="flex items-start gap-3 px-3 py-2 rounded-lg bg-violet-50/40 border border-violet-100">
+                  <Sparkles className="w-3.5 h-3.5 text-violet-500 mt-0.5 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <span className="font-semibold text-gray-900">{formatContestMonth(p.contest_month)}</span>
+                    <span className="text-gray-700"> · {p.prize_description}</span>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           ) : (
             <p className="text-xs text-gray-400 px-3 py-2 bg-gray-50 rounded-lg">Aucun lot planifié pour les mois à venir.</p>
@@ -1313,30 +1305,26 @@ export default function MerchantDetailPage() {
               Historique tirages ({contestData.history.length})
             </p>
             <div className="space-y-1 max-h-[300px] overflow-y-auto">
-              {contestData.history.map(h => {
-                const [year, month] = h.contest_month.split('-');
-                const monthName = new Date(Number(year), Number(month) - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-                return (
-                  <div key={h.contest_month} className="flex items-start gap-3 px-3 py-2 rounded-lg bg-amber-50/40 border border-amber-100">
-                    <Trophy className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2 mb-0.5">
-                        <span className="font-semibold text-gray-900 capitalize text-sm">{monthName}</span>
-                        <span className="text-[10px] text-gray-500 font-medium">{h.participants_count} participant{h.participants_count > 1 ? 's' : ''}</span>
-                      </div>
-                      <p className="text-xs text-gray-600">🎁 {h.prize_description}</p>
-                      {h.winner_name ? (
-                        <p className="text-xs text-amber-700 mt-0.5">
-                          Gagnant : <span className="font-semibold">{h.winner_name}</span>
-                          {h.winner_phone && <span className="text-gray-500 ml-1">· {h.winner_phone}</span>}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-gray-400 mt-0.5">Aucun gagnant tiré</p>
-                      )}
+              {contestData.history.map(h => (
+                <div key={h.contest_month} className="flex items-start gap-3 px-3 py-2 rounded-lg bg-amber-50/40 border border-amber-100">
+                  <Trophy className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                      <span className="font-semibold text-gray-900 text-sm">{formatContestMonth(h.contest_month)}</span>
+                      <span className="text-[10px] text-gray-500 font-medium">{h.participants_count} participant{h.participants_count > 1 ? 's' : ''}</span>
                     </div>
+                    <p className="text-xs text-gray-600">🎁 {h.prize_description}</p>
+                    {h.winner_name ? (
+                      <p className="text-xs text-amber-700 mt-0.5">
+                        Gagnant : <span className="font-semibold">{h.winner_name}</span>
+                        {h.winner_phone && <span className="text-gray-500 ml-1">· {h.winner_phone}</span>}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-400 mt-0.5">Aucun gagnant tiré</p>
+                    )}
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -1354,7 +1342,7 @@ export default function MerchantDetailPage() {
               <span className="px-2 py-0.5 text-[10px] font-bold uppercase bg-gray-100 text-gray-500 rounded-full">Inactif</span>
             )}
             {giftCardStats && giftCardStats.totalRevenue > 0 && (
-              <span className="text-sm font-semibold text-gray-700">{Math.round(giftCardStats.totalRevenue)}€</span>
+              <span className="text-sm font-semibold text-gray-700">{formatCurrency(giftCardStats.totalRevenue, merchant.country, 'fr', 0)}</span>
             )}
           </span>
         }
@@ -1374,19 +1362,19 @@ export default function MerchantDetailPage() {
 
         {giftCardStats && (
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-            <CompactStat icon={Sparkles} value={giftCardStats.active} label="Actifs" color="emerald" />
-            <CompactStat icon={Check} value={giftCardStats.used} label="Utilisés" color="blue" />
-            <CompactStat icon={Hourglass} value={giftCardStats.pendingPayment} label="En attente paiement" color="amber" />
-            <CompactStat icon={XCircle} value={giftCardStats.expired} label="Expirés" color="gray" />
-            <CompactStat icon={Ban} value={giftCardStats.refunded} label="Remboursés" color="gray" />
+            <CompactStat icon={Sparkles} value={giftCardStats.byStatus.active} label="Actifs" color="emerald" />
+            <CompactStat icon={Check} value={giftCardStats.byStatus.used} label="Utilisés" color="blue" />
+            <CompactStat icon={Hourglass} value={giftCardStats.byStatus.pending_payment} label="En attente paiement" color="amber" />
+            <CompactStat icon={XCircle} value={giftCardStats.byStatus.expired} label="Expirés" color="gray" />
+            <CompactStat icon={Ban} value={giftCardStats.byStatus.cancelled} label="Annulés" color="gray" />
           </div>
         )}
 
         {giftCardStats && giftCardStats.totalRevenue > 0 && (
           <div className="p-3 bg-pink-50 rounded-lg border border-pink-200">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-pink-900 uppercase tracking-wide">Revenu cumulé (hors remboursés)</span>
-              <span className="text-lg font-black text-pink-700">{giftCardStats.totalRevenue.toFixed(0)}€</span>
+              <span className="text-xs font-semibold text-pink-900 uppercase tracking-wide">Revenu cumulé (hors annulés)</span>
+              <span className="text-lg font-black text-pink-700">{formatCurrency(giftCardStats.totalRevenue, merchant.country, 'fr', 0)}</span>
             </div>
           </div>
         )}

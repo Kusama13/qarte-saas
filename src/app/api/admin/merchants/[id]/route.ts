@@ -3,6 +3,7 @@ import { authorizeAdmin } from '@/lib/api-helpers';
 import logger from '@/lib/logger';
 import { z } from 'zod';
 import { getSmsUsageThisMonth, getEffectiveQuota } from '@/lib/sms';
+import type { GiftCardStatus } from '@/types';
 
 const patchSchema = z.union([
   z.object({ action: z.literal('restore') }),
@@ -114,11 +115,8 @@ export async function GET(
       supabaseAdmin.from('sms_logs').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).neq('status', 'failed'),
       supabaseAdmin.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('booked_online', true).not('client_name', 'is', null).is('primary_slot_id', null),
       supabaseAdmin.from('sms_pack_purchases').select('id, pack_size, status, amount_ttc_cents, paid_at, created_at, stripe_session_id').eq('merchant_id', merchantId).order('created_at', { ascending: false }).limit(20),
-      // Gift cards: status + amount snapshot for revenue & lifecycle stats
       supabaseAdmin.from('gift_cards').select('status, amount').eq('merchant_id', merchantId),
-      // Contest: planned prizes for current + next 5 months (sorted ascending)
       supabaseAdmin.from('merchant_contest_prizes').select('contest_month, prize_description, updated_at').eq('merchant_id', merchantId).gte('contest_month', new Date().toISOString().slice(0, 7)).order('contest_month', { ascending: true }).limit(6),
-      // Contest history: last 12 draws (oldest first kept for context, newest first here)
       supabaseAdmin.from('merchant_contests').select('contest_month, prize_description, winner_name, winner_phone, drawn_at, participants_count').eq('merchant_id', merchantId).not('drawn_at', 'is', null).order('drawn_at', { ascending: false }).limit(12),
     ]);
 
@@ -182,23 +180,21 @@ export async function GET(
 
     const smsPackHistory = smsPackHistoryRes.data || [];
 
-    // Gift cards aggregation
+    // Revenue = paid bons (excludes cancelled + pending_payment)
     const giftCards = giftCardsRes.data || [];
     const giftCardStats = giftCards.reduce(
       (acc, g) => {
-        const status = (g.status as string) || 'unknown';
-        if (status === 'active') acc.active += 1;
-        else if (status === 'used') acc.used += 1;
-        else if (status === 'expired') acc.expired += 1;
-        else if (status === 'refunded') acc.refunded += 1;
-        else if (status === 'pending_payment') acc.pendingPayment += 1;
-        // Revenue = paid bons (non-refunded). pending_payment counts toward potential rev only.
-        if (status !== 'refunded' && status !== 'pending_payment') {
+        const status = g.status as GiftCardStatus;
+        if (status in acc.byStatus) acc.byStatus[status] += 1;
+        if (status !== 'cancelled' && status !== 'pending_payment') {
           acc.totalRevenue += Number(g.amount || 0);
         }
         return acc;
       },
-      { active: 0, used: 0, expired: 0, refunded: 0, pendingPayment: 0, totalRevenue: 0 }
+      {
+        byStatus: { active: 0, used: 0, expired: 0, cancelled: 0, pending_payment: 0 } as Record<GiftCardStatus, number>,
+        totalRevenue: 0,
+      }
     );
 
     const contestData = {
