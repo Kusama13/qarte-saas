@@ -270,12 +270,12 @@ export default function PendingDepositsWidget({ merchantId, country, depositFixe
             <p className="mt-2 text-sm text-gray-600">
               {t('rejectConfirmBody', { name: confirmReject.client_name })}
             </p>
-            <div className="flex flex-col-reverse sm:flex-row gap-2 mt-5">
+            <div className="flex flex-col-reverse sm:flex-row gap-2.5 mt-5">
               <button
                 type="button"
                 onClick={() => setConfirmReject(null)}
                 disabled={busyId === confirmReject.id}
-                className="flex-1 h-10 rounded-xl bg-gray-100 text-gray-700 text-sm font-bold hover:bg-gray-200 transition-colors disabled:opacity-60"
+                className="flex-1 h-12 rounded-xl bg-gray-100 text-gray-700 text-sm font-bold hover:bg-gray-200 transition-colors disabled:opacity-60 touch-manipulation"
               >
                 {t('cancel')}
               </button>
@@ -283,7 +283,7 @@ export default function PendingDepositsWidget({ merchantId, country, depositFixe
                 type="button"
                 onClick={() => handleReject(confirmReject)}
                 disabled={busyId === confirmReject.id}
-                className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-60"
+                className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-60 touch-manipulation"
               >
                 {busyId === confirmReject.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
                 {t('rejectConfirmCta')}
