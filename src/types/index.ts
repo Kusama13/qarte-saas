@@ -170,6 +170,7 @@ export interface Merchant {
   // Monthly contest
   contest_enabled: boolean;
   contest_prize: string | null;
+  contest_missing_prize_alerted_at: string | null;
   // Gift cards (bons cadeaux — mig 138, services mig 140, payment links mig 141)
   gift_card_enabled: boolean;
   gift_card_amounts: number[];

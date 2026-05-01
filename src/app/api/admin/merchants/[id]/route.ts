@@ -85,6 +85,9 @@ export async function GET(
       smsSentRes,
       onlineBookingsRes,
       smsPackHistoryRes,
+      giftCardsRes,
+      plannedPrizesRes,
+      contestHistoryRes,
     ] = await Promise.all([
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
@@ -111,6 +114,12 @@ export async function GET(
       supabaseAdmin.from('sms_logs').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).neq('status', 'failed'),
       supabaseAdmin.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('booked_online', true).not('client_name', 'is', null).is('primary_slot_id', null),
       supabaseAdmin.from('sms_pack_purchases').select('id, pack_size, status, amount_ttc_cents, paid_at, created_at, stripe_session_id').eq('merchant_id', merchantId).order('created_at', { ascending: false }).limit(20),
+      // Gift cards: status + amount snapshot for revenue & lifecycle stats
+      supabaseAdmin.from('gift_cards').select('status, amount').eq('merchant_id', merchantId),
+      // Contest: planned prizes for current + next 5 months (sorted ascending)
+      supabaseAdmin.from('merchant_contest_prizes').select('contest_month, prize_description, updated_at').eq('merchant_id', merchantId).gte('contest_month', new Date().toISOString().slice(0, 7)).order('contest_month', { ascending: true }).limit(6),
+      // Contest history: last 12 draws (oldest first kept for context, newest first here)
+      supabaseAdmin.from('merchant_contests').select('contest_month, prize_description, winner_name, winner_phone, drawn_at, participants_count').eq('merchant_id', merchantId).not('drawn_at', 'is', null).order('drawn_at', { ascending: false }).limit(12),
     ]);
 
     // Compute push subscribers (same logic as before)
@@ -173,6 +182,30 @@ export async function GET(
 
     const smsPackHistory = smsPackHistoryRes.data || [];
 
+    // Gift cards aggregation
+    const giftCards = giftCardsRes.data || [];
+    const giftCardStats = giftCards.reduce(
+      (acc, g) => {
+        const status = (g.status as string) || 'unknown';
+        if (status === 'active') acc.active += 1;
+        else if (status === 'used') acc.used += 1;
+        else if (status === 'expired') acc.expired += 1;
+        else if (status === 'refunded') acc.refunded += 1;
+        else if (status === 'pending_payment') acc.pendingPayment += 1;
+        // Revenue = paid bons (non-refunded). pending_payment counts toward potential rev only.
+        if (status !== 'refunded' && status !== 'pending_payment') {
+          acc.totalRevenue += Number(g.amount || 0);
+        }
+        return acc;
+      },
+      { active: 0, used: 0, expired: 0, refunded: 0, pendingPayment: 0, totalRevenue: 0 }
+    );
+
+    const contestData = {
+      plannedPrizes: plannedPrizesRes.data || [],
+      history: contestHistoryRes.data || [],
+    };
+
     // Cycle alerts state (alert_X_sent_cycle === current cycle start ⇒ déjà envoyée ce cycle)
     const cycleStartDate = smsUsage.periodStart.slice(0, 10);
     const smsAlerts = {
@@ -212,6 +245,8 @@ export async function GET(
       },
       memberPrograms: memberProgramsRes.data || [],
       emailTrackings: emailTrackingsRes.data || [],
+      giftCardStats,
+      contestData,
     });
   } catch (error) {
     logger.error('Admin merchant stats error:', error);

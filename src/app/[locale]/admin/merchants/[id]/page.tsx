@@ -47,6 +47,9 @@ import {
   GraduationCap,
   Heart,
   Trophy,
+  Home,
+  Crown,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn, generateQRCode, getScanUrl, formatDoubleDays, formatPhoneForWhatsApp, COUNTRY_FLAGS } from '@/lib/utils';
@@ -93,6 +96,35 @@ interface Stats {
   planningBookingsCount: number;
   pendingDepositsCount: number;
   onlineBookingsCount: number;
+}
+
+interface GiftCardStats {
+  active: number;
+  used: number;
+  expired: number;
+  refunded: number;
+  pendingPayment: number;
+  totalRevenue: number;
+}
+
+interface ContestPlannedPrize {
+  contest_month: string;
+  prize_description: string;
+  updated_at: string;
+}
+
+interface ContestHistoryEntry {
+  contest_month: string;
+  prize_description: string;
+  winner_name: string | null;
+  winner_phone: string | null;
+  drawn_at: string | null;
+  participants_count: number;
+}
+
+interface ContestData {
+  plannedPrizes: ContestPlannedPrize[];
+  history: ContestHistoryEntry[];
 }
 
 interface MemberProgram {
@@ -414,9 +446,13 @@ export default function MerchantDetailPage() {
   const [emailCopied, setEmailCopied] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [emailTrackings, setEmailTrackings] = useState<{ reminder_day: number; sent_at: string }[]>([]);
+  const [giftCardStats, setGiftCardStats] = useState<GiftCardStats | null>(null);
+  const [contestData, setContestData] = useState<ContestData>({ plannedPrizes: [], history: [] });
   const [qrOpen, setQrOpen] = useState(false);
   const [loyaltyOpen, setLoyaltyOpen] = useState(true);
   const [vitrineOpen, setVitrineOpen] = useState(true);
+  const [contestOpen, setContestOpen] = useState(false);
+  const [giftCardsOpen, setGiftCardsOpen] = useState(false);
   const [smsAutomationsOpen, setSmsAutomationsOpen] = useState(false);
   const [emailsOpen, setEmailsOpen] = useState(false);
   const [bioOpen, setBioOpen] = useState(false);
@@ -434,6 +470,8 @@ export default function MerchantDetailPage() {
         setSmsCredit(data.smsCredit || null);
         setSmsPackHistory(data.smsPackHistory || []);
         setSmsAlerts(data.smsAlerts || null);
+        setGiftCardStats(data.giftCardStats || null);
+        setContestData(data.contestData || { plannedPrizes: [], history: [] });
         if (data.userEmail) setUserEmail(data.userEmail);
       } catch (error) {
         console.error('Error fetching merchant data:', error);
@@ -657,6 +695,15 @@ export default function MerchantDetailPage() {
           {/* Right: status + health + alerts */}
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
             {getStatusBadge(merchant)}
+            <span className={cn(
+              "inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full",
+              merchant.plan_tier === 'all_in'
+                ? "bg-violet-100 text-violet-700 border border-violet-200"
+                : "bg-blue-50 text-blue-700 border border-blue-200"
+            )}>
+              {merchant.plan_tier === 'all_in' ? <Crown className="w-3 h-3" /> : <Star className="w-3 h-3" />}
+              {merchant.plan_tier === 'all_in' ? 'All-in' : 'Fidélité'}
+            </span>
             <HealthDot score={healthScore} />
             {stats.totalCustomers === 0 && (
               <span className="px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full flex items-center gap-1">
@@ -991,9 +1038,6 @@ export default function MerchantDetailPage() {
           {merchant.student_offer_enabled && (
             <LoyaltyRow icon={GraduationCap} iconClass="text-blue-600" label="Offre étudiant" description={merchant.student_offer_description} />
           )}
-          {merchant.contest_enabled && (
-            <LoyaltyRow icon={Trophy} iconClass="text-amber-500" label="Jeu concours" description={merchant.contest_prize} />
-          )}
         </div>
 
         {merchant.referral_program_enabled && (merchant.referral_reward_referrer || merchant.referral_reward_referred) && (
@@ -1092,6 +1136,13 @@ export default function MerchantDetailPage() {
           <FeatureBadge active={merchant.welcome_offer_enabled} icon={<Gift className="w-3 h-3" />} label="Nouveaux clients" />
           <FeatureBadge active={merchant.show_public_page_on_card} icon={<Globe className="w-3 h-3" />} label="Lien sur carte" />
           {merchant.booking_mode && <FeatureBadge active icon={<Flame className="w-3 h-3" />} label={merchant.booking_mode === 'free' ? 'Mode Libre' : 'Mode Creneaux'} />}
+          {merchant.home_service_enabled && (
+            <FeatureBadge
+              active
+              icon={<Home className="w-3 h-3" />}
+              label={merchant.shop_lat != null && merchant.shop_lng != null ? 'Domicile (géocodé)' : 'Domicile (non géocodé)'}
+            />
+          )}
           {Number(merchant.buffer_minutes || 0) > 0 && <FeatureBadge active icon={<Clock className="w-3 h-3" />} label={`Buffer ${merchant.buffer_minutes}min`} />}
           {merchant.allow_customer_cancel && <FeatureBadge active icon={<XCircle className="w-3 h-3" />} label={`Annulation J-${merchant.cancel_deadline_days || 0}`} />}
           {merchant.allow_customer_reschedule && <FeatureBadge active icon={<CalendarDays className="w-3 h-3" />} label={`Modif J-${merchant.reschedule_deadline_days || 0}`} />}
@@ -1200,6 +1251,142 @@ export default function MerchantDetailPage() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+      </CollapsibleCard>
+
+      {/* ═══════════ JEU CONCOURS ═══════════ */}
+      <CollapsibleCard
+        icon={<Trophy className="w-4 h-4 text-violet-600" />}
+        title="Jeu concours"
+        badge={
+          <span className="flex items-center gap-1.5">
+            {merchant.contest_enabled ? (
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase bg-green-100 text-green-700 rounded-full">Actif</span>
+            ) : (
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase bg-gray-100 text-gray-500 rounded-full">Inactif</span>
+            )}
+            {merchant.contest_missing_prize_alerted_at && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase bg-amber-100 text-amber-700 rounded-full" title={`Alerte envoyée le ${formatDate(merchant.contest_missing_prize_alerted_at)}`}>
+                <AlertTriangle className="w-2.5 h-2.5" /> Alerte envoyée
+              </span>
+            )}
+          </span>
+        }
+        isOpen={contestOpen}
+        onToggle={() => setContestOpen(!contestOpen)}
+      >
+        <div className="rounded-xl border border-gray-100 bg-gray-50/40 px-3 py-2.5 text-sm">
+          <span className="font-semibold text-gray-900">Lot par défaut</span>
+          <span className="text-gray-500"> · {merchant.contest_prize || 'Non configuré (utilisera le lot du mois si défini)'}</span>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            Lots planifiés ({contestData.plannedPrizes.length})
+          </p>
+          {contestData.plannedPrizes.length > 0 ? (
+            <div className="space-y-1">
+              {contestData.plannedPrizes.map(p => {
+                const [year, month] = p.contest_month.split('-');
+                const monthName = new Date(Number(year), Number(month) - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                return (
+                  <div key={p.contest_month} className="flex items-start gap-3 px-3 py-2 rounded-lg bg-violet-50/40 border border-violet-100">
+                    <Sparkles className="w-3.5 h-3.5 text-violet-500 mt-0.5 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <span className="font-semibold text-gray-900 capitalize">{monthName}</span>
+                      <span className="text-gray-700"> · {p.prize_description}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 px-3 py-2 bg-gray-50 rounded-lg">Aucun lot planifié pour les mois à venir.</p>
+          )}
+        </div>
+
+        {contestData.history.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              Historique tirages ({contestData.history.length})
+            </p>
+            <div className="space-y-1 max-h-[300px] overflow-y-auto">
+              {contestData.history.map(h => {
+                const [year, month] = h.contest_month.split('-');
+                const monthName = new Date(Number(year), Number(month) - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                return (
+                  <div key={h.contest_month} className="flex items-start gap-3 px-3 py-2 rounded-lg bg-amber-50/40 border border-amber-100">
+                    <Trophy className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2 mb-0.5">
+                        <span className="font-semibold text-gray-900 capitalize text-sm">{monthName}</span>
+                        <span className="text-[10px] text-gray-500 font-medium">{h.participants_count} participant{h.participants_count > 1 ? 's' : ''}</span>
+                      </div>
+                      <p className="text-xs text-gray-600">🎁 {h.prize_description}</p>
+                      {h.winner_name ? (
+                        <p className="text-xs text-amber-700 mt-0.5">
+                          Gagnant : <span className="font-semibold">{h.winner_name}</span>
+                          {h.winner_phone && <span className="text-gray-500 ml-1">· {h.winner_phone}</span>}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-400 mt-0.5">Aucun gagnant tiré</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </CollapsibleCard>
+
+      {/* ═══════════ BONS CADEAUX ═══════════ */}
+      <CollapsibleCard
+        icon={<Gift className="w-4 h-4 text-pink-600" />}
+        title="Bons cadeaux"
+        badge={
+          <span className="flex items-center gap-1.5">
+            {merchant.gift_card_enabled ? (
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase bg-green-100 text-green-700 rounded-full">Actif</span>
+            ) : (
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase bg-gray-100 text-gray-500 rounded-full">Inactif</span>
+            )}
+            {giftCardStats && giftCardStats.totalRevenue > 0 && (
+              <span className="text-sm font-semibold text-gray-700">{Math.round(giftCardStats.totalRevenue)}€</span>
+            )}
+          </span>
+        }
+        isOpen={giftCardsOpen}
+        onToggle={() => setGiftCardsOpen(!giftCardsOpen)}
+      >
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="rounded-xl border border-gray-100 bg-gray-50/40 px-3 py-2.5">
+            <span className="font-semibold text-gray-900">Validité</span>
+            <span className="text-gray-500"> · {merchant.gift_card_expiry_months || 3} mois</span>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-gray-50/40 px-3 py-2.5">
+            <span className="font-semibold text-gray-900">Statut</span>
+            <span className="text-gray-500"> · {merchant.gift_card_enabled ? 'Vente activée' : 'Vente désactivée'}</span>
+          </div>
+        </div>
+
+        {giftCardStats && (
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <CompactStat icon={Sparkles} value={giftCardStats.active} label="Actifs" color="emerald" />
+            <CompactStat icon={Check} value={giftCardStats.used} label="Utilisés" color="blue" />
+            <CompactStat icon={Hourglass} value={giftCardStats.pendingPayment} label="En attente paiement" color="amber" />
+            <CompactStat icon={XCircle} value={giftCardStats.expired} label="Expirés" color="gray" />
+            <CompactStat icon={Ban} value={giftCardStats.refunded} label="Remboursés" color="gray" />
+          </div>
+        )}
+
+        {giftCardStats && giftCardStats.totalRevenue > 0 && (
+          <div className="p-3 bg-pink-50 rounded-lg border border-pink-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-pink-900 uppercase tracking-wide">Revenu cumulé (hors remboursés)</span>
+              <span className="text-lg font-black text-pink-700">{giftCardStats.totalRevenue.toFixed(0)}€</span>
             </div>
           </div>
         )}
