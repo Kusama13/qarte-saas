@@ -116,6 +116,7 @@
 | gift_card_enabled | BOOLEAN | `FALSE` | NOT NULL, mig 138. Active la vente de bons cadeaux sur la vitrine |
 | gift_card_amounts | JSONB | `[30,50,80,100]` | NOT NULL, mig 138. Array de montants suggérés (chips dans la modal vitrine + le client peut entrer un montant libre) |
 | gift_card_message | TEXT | NULL | mig 138, max 300 chars. Mot d'introduction affiché sous le titre de la modal vitrine |
+| gift_card_expiry_months | SMALLINT | `3` | NOT NULL, mig 145, CHECK 1-24. Durée de validité des bons en mois. Le destinataire a ce délai après confirmation pour utiliser son bon (segment 3/6/12 mois côté UI dashboard) |
 | show_public_page_on_card | BOOLEAN | `FALSE` | NOT NULL, mig 067 (toggle UI retire, colonne conservee) |
 | signup_source | TEXT | NULL | mig 068 |
 | locale | TEXT | `'fr'` | NOT NULL, mig 069 |
@@ -999,7 +1000,17 @@ Bons cadeaux offerts depuis la vitrine `/p/[slug]`. Cycle de vie distinct des `v
 | used_at | TIMESTAMPTZ | NULL | quand voucher consommé (set par hook dans /api/vouchers/use) |
 | cancelled_at | TIMESTAMPTZ | NULL | quand annulé |
 | cancellation_reason | TEXT | NULL | `merchant` / `auto_expired_3d` / `no_payment` |
-| expires_at | TIMESTAMPTZ | NULL | 12 mois après paid_at |
+| expires_at | TIMESTAMPTZ | NULL | mig 138, durée fixe 3 mois après paid_at à l'origine ; depuis mig 145 = `merchants.gift_card_expiry_months` (1-24, défaut 3) |
+| pdf_url | TEXT | NULL | mig 141, URL publique du PDF imprimable rendu par Satori (bucket `gift-cards-pdf`) |
+| sender_last_name | TEXT | NULL | mig 141, optionnel |
+| recipient_last_name | TEXT | NULL | mig 141, optionnel |
+| kind | TEXT | `'amount'` | mig 140, NOT NULL CHECK IN (`amount`, `services`) |
+| service_ids | UUID[] | NULL | mig 140, prestations choisies si kind=services |
+| service_snapshot | JSONB | NULL | mig 140, snapshot {id, name, price} au moment de l'achat (fallback si la presta est supprimée) |
+| scheduled_send_at | TIMESTAMPTZ | NULL | mig 142, date d'envoi différée au destinataire (anniversaire, Noël…). Cron `gift-cards-deliver` envoie SMS+email quand échue |
+| notified_at | TIMESTAMPTZ | NULL | mig 142, posé par le cron deliver après envoi (anti-double) |
+| image_url | TEXT | NULL | mig 143, URL publique du PNG du bon (bucket `gift-cards-pdf` aussi) — rendu Satori partagé avec le PDF, embarqué dans les emails offreur+destinataire |
+| expiry_reminder_sent_at | TIMESTAMPTZ | NULL | **mig 146**, posé par le cron `gift-cards-expire` passe 0 quand le SMS rappel J-7 a été envoyé. NULL = pas encore envoyé. 1 SMS max par bon (anti-spam) |
 | created_at | TIMESTAMPTZ | `NOW()` | NOT NULL |
 | updated_at | TIMESTAMPTZ | `NOW()` | NOT NULL — trigger auto |
 
@@ -1007,6 +1018,7 @@ Bons cadeaux offerts depuis la vitrine `/p/[slug]`. Cycle de vie distinct des `v
 - `idx_gift_cards_merchant_status (merchant_id, status, created_at DESC)` — page dashboard avec onglets
 - `idx_gift_cards_voucher (voucher_id) WHERE voucher_id IS NOT NULL` — lookup pour SMS offreur quand consommé
 - `idx_gift_cards_pending_old (created_at) WHERE status='pending_payment'` — cron auto-cancel
+- `idx_gift_cards_active_no_reminder (expires_at) WHERE status='active' AND expiry_reminder_sent_at IS NULL` — **mig 146**, scan rapide cron rappel J-7
 
 **Trigger** : `update_gift_cards_updated_at` → `update_updated_at_column()`
 
@@ -1309,6 +1321,13 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 132 | custom_service_price_decimal | ALTER COLUMN `custom_service_price` TYPE INTEGER → DECIMAL(10,2) sur `merchant_planning_slots` ET `booking_deposit_failures`, avec `USING (col::DECIMAL / 100)` pour ramener les valeurs deja stockees (cas test merchant) de centimes vers euros. Aligne sur `merchant_services.price` (decimal en euros) — sinon `formatCurrency(4000)` affichait "4 000 €" au lieu de "40 €" |
 | 138 | gift_cards | Table `gift_cards` (bons cadeaux offerts depuis vitrine, payés via lien externe merchant) + 3 colonnes `merchants` (`gift_card_enabled BOOLEAN`, `gift_card_amounts JSONB DEFAULT [30,50,80,100]`, `gift_card_message TEXT`) + extension `vouchers.source` CHECK avec `'gift'`. Indexes composé `(merchant_id, status, created_at DESC)` + dédié `voucher_id` (lookup SMS offreur quand consommé) + partiel `(created_at) WHERE status='pending_payment'` (cron auto-cancel). RLS merchant SELECT/UPDATE own, INSERT public via API service_role uniquement |
 | 139 | sms_gift_card_types | Étend `sms_logs.sms_type` CHECK avec 2 nouveaux types : `gift_card_received` (envoyé au destinataire à la confirmation paiement) et `gift_card_used` (envoyé à l'offreur quand le destinataire consomme). Tous les types existants conservés (reminder, confirmation, birthday, referral_reward, booking_*, marketing) |
+| 140 | gift_card_services | Mode "offrir une prestation" : `gift_cards.kind TEXT NOT NULL DEFAULT 'amount' CHECK IN ('amount','services')` + `service_ids UUID[]` + `service_snapshot JSONB` (snapshot {id,name,price} fallback si presta supprimée) |
+| 141 | gift_card_payment_pdf | `gift_cards.pdf_url TEXT` (PDF imprimable Satori, bucket gift-cards-pdf) + `sender_last_name`/`recipient_last_name TEXT` optionnels |
+| 142 | gift_card_scheduling | `gift_cards.scheduled_send_at TIMESTAMPTZ` (envoi différé destinataire pour anniv/Noël) + `notified_at TIMESTAMPTZ` (posé par cron `gift-cards-deliver`, anti-double) |
+| 143 | gift_card_image | `gift_cards.image_url TEXT` (PNG du bon rendu Satori, embarqué dans emails offreur+destinataire). Bucket `gift-cards-pdf` étendu pour accepter `image/png` |
+| 144 | gift_card_merchant_image | (Abandonné/cleanup) — feature image custom merchant ajoutée puis retirée par 145 |
+| 145 | gift_card_expiry_months_cleanup | `merchants.gift_card_expiry_months SMALLINT NOT NULL DEFAULT 3 CHECK 1-24` (durée validité bon personnalisable, segment 3/6/12 mois côté UI). DROP `merchants.gift_card_image_url` (feature 144 abandonnée) + DROP policy bucket `merchant-uploads` (suppression manuelle Supabase Storage requise) |
+| 146 | gift_card_expiry_reminder | `gift_cards.expiry_reminder_sent_at TIMESTAMPTZ` (rappel SMS J-7 destinataire avant expiration, 1 envoi max par bon) + index partiel `(expires_at) WHERE status='active' AND expiry_reminder_sent_at IS NULL` (scan rapide cron `gift-cards-expire` passe 0) |
 
 ---
 

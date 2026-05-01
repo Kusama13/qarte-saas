@@ -103,6 +103,9 @@ Validité : valable pendant l'abonnement actif. Perdus à la résiliation. Strip
 | `booking_cancelled` | Transactionnel | SMS Partner | SMS Partner | OVH |
 | `birthday` | Transactionnel (free Qarte) | SMS Partner | SMS Partner | OVH |
 | `referral_reward` | Transactionnel (free Qarte) | SMS Partner | SMS Partner | OVH |
+| `gift_card_received` | Transactionnel | SMS Partner | SMS Partner | OVH |
+| `gift_card_used` | Transactionnel | SMS Partner | SMS Partner | OVH |
+| `gift_card_expiry_reminder` (J-7 destinataire) | Transactionnel | SMS Partner | SMS Partner | OVH |
 | `review_request` | Marketing | OVH | OVH | OVH |
 | `voucher_expiry` | Marketing | OVH | OVH | OVH |
 | `campaign` | Marketing | OVH | OVH | OVH |
@@ -130,6 +133,7 @@ Catégorie distincte des SMS client-facing ci-dessus, **non concernée par le ro
 - **Routage marketing** : aucun routage. `sendMarketingSms()` appelle directement le wrapper OVH et logge `provider: 'ovh'` en dur.
 - **Wrappers** : [`ovh-sms.ts`](../src/lib/ovh-sms.ts) (signature inchangée) et [`sms-partner.ts`](../src/lib/sms-partner.ts) (signature analogue : `(phone, message) → { success, jobId?, error? }`, fire-and-forget, jamais d'exception).
 - **Tracé** : colonne `sms_logs.provider` (`'ovh' | 'sms_partner'`, default `'ovh'`). `sms_logs.ovh_job_id` stocke aussi le `message_id` SMS Partner — sémantique élargie : ID externe du provider quel qu'il soit. Pas de renommage pour préserver l'historique.
+- **Sanitize GSM-7** : [`sms-sanitize.ts`](../src/lib/sms-sanitize.ts) — helper `sanitizeSmsForGsm7()` remplace €/£/$ par EUR/GBP/USD avant l'envoi. Appliqué dans les **2 providers bas niveau** (ovh-sms + sms-partner) plutôt qu'au wrapper, pour catch-all TOUS les call sites (sendBookingSms, sendMarketingSms, sms-trial-marketing, /api/admin/test-sms, futurs callers). `sms_logs.message_body` conserve l'original (utile debug : voit ce que le système a tenté vs ce qui est parti). Les accents latins ne sont pas touchés (passent via GSM-7 extension table ou bascule UCS-2 = 2 SMS au lieu d'1, gérée par les carriers).
 
 #### Variables d'environnement
 
