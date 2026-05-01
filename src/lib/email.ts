@@ -1029,6 +1029,7 @@ interface BookingConfirmationParams {
   totalPrice: number;
   currency?: 'EUR' | 'CHF';
   customerAddress?: string | null;
+  mode?: 'pending_deposit' | 'deposit_received' | 'confirmed';
   deposit?: {
     amount: number | null;
     percent: number | null;
@@ -1045,14 +1046,16 @@ export async function sendBookingConfirmationEmail(
   to: string,
   params: BookingConfirmationParams
 ): Promise<SendEmailResult> {
-  const hasDeposit = !!(params.deposit && params.deposit.links.length > 0);
-  const subject = params.locale === 'en'
-    ? (hasDeposit
-        ? `Pay your deposit — ${params.shopName}`
-        : `Booking confirmed — ${params.shopName}`)
-    : (hasDeposit
-        ? `Réglez votre acompte — ${params.shopName}`
-        : `Réservation confirmée — ${params.shopName}`);
+  const isEn = params.locale === 'en';
+  const mode = params.mode ?? 'confirmed';
+  let subject: string;
+  if (mode === 'pending_deposit') {
+    subject = isEn ? `Pay your deposit — ${params.shopName}` : `Réglez votre acompte — ${params.shopName}`;
+  } else if (mode === 'deposit_received') {
+    subject = isEn ? `Deposit received — ${params.shopName}` : `Acompte reçu — ${params.shopName}`;
+  } else {
+    subject = isEn ? `Booking confirmed — ${params.shopName}` : `Réservation confirmée — ${params.shopName}`;
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return sendEmail(to, subject, BookingConfirmationEmail as any, params as any, {
     logLabel: 'Booking confirmation email',

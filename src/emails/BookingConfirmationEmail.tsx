@@ -21,6 +21,14 @@ interface DepositLink {
   url: string;
 }
 
+// 3 modes :
+// - 'pending_deposit' : envoyé après résa avec acompte requis. Affiche le bloc paiement,
+//   PAS le bouton carte fidélité (objectif unique = payer l'acompte).
+// - 'deposit_received' : envoyé quand le merchant valide l'acompte côté dashboard.
+//   Affiche "acompte reçu, RDV confirmé" + reste à payer + bouton carte fidélité.
+// - 'confirmed' : résa sans acompte. Standard, bouton carte fidélité présent.
+type BookingConfirmationMode = 'pending_deposit' | 'deposit_received' | 'confirmed';
+
 interface BookingConfirmationEmailProps {
   shopName: string;
   clientFirstName: string;
@@ -31,6 +39,7 @@ interface BookingConfirmationEmailProps {
   totalPrice: number;
   currency?: 'EUR' | 'CHF';
   customerAddress?: string | null;
+  mode?: BookingConfirmationMode;
   deposit?: {
     amount: number | null;
     percent: number | null;
@@ -65,6 +74,7 @@ export function BookingConfirmationEmail({
   totalPrice,
   currency = 'EUR',
   customerAddress,
+  mode = 'confirmed',
   deposit,
   loyaltyCardUrl,
   cancelPolicyDays,
@@ -72,35 +82,45 @@ export function BookingConfirmationEmail({
   locale = 'fr',
 }: BookingConfirmationEmailProps) {
   const isEn = locale === 'en';
-  const hasDeposit = !!(deposit && deposit.links.length > 0);
+  const isPending = mode === 'pending_deposit';
+  const isReceived = mode === 'deposit_received';
   const isHomeService = !!customerAddress;
+  const depositAmount = deposit?.amount ?? null;
+  const remainingBalance = isReceived && depositAmount != null ? Math.max(0, totalPrice - depositAmount) : null;
 
   const formattedDate = new Date(date + 'T12:00:00').toLocaleDateString(
     isEn ? 'en-US' : 'fr-FR',
     { weekday: 'long', day: 'numeric', month: 'long' }
   );
 
-  const preview = hasDeposit
-    ? (isEn
-        ? `Booking pending — pay your deposit at ${shopName}`
-        : `Réservation en attente — réglez votre acompte chez ${shopName}`)
-    : (isEn
-        ? `Booking confirmed at ${shopName}`
-        : `Réservation confirmée chez ${shopName}`);
+  let preview: string;
+  let headingText: string;
+  let intro: string;
+  if (isPending) {
+    preview = isEn ? `Booking pending — pay your deposit at ${shopName}` : `Réservation en attente — réglez votre acompte chez ${shopName}`;
+    headingText = isEn ? 'One last step ✨' : 'Une dernière étape ✨';
+    intro = isEn
+      ? `Hi ${clientFirstName}, here's the recap of your appointment at ${shopName}.`
+      : `Bonjour ${clientFirstName}, voici le récapitulatif de votre rendez-vous chez ${shopName}.`;
+  } else if (isReceived) {
+    preview = isEn ? `Deposit received — booking confirmed at ${shopName}` : `Acompte reçu — réservation confirmée chez ${shopName}`;
+    headingText = isEn ? 'Deposit received ✨' : 'Acompte reçu ✨';
+    intro = isEn
+      ? `Hi ${clientFirstName}, your deposit has been received and your booking at ${shopName} is now confirmed.`
+      : `Bonjour ${clientFirstName}, votre acompte a bien été reçu. Votre réservation chez ${shopName} est désormais confirmée.`;
+  } else {
+    preview = isEn ? `Booking confirmed at ${shopName}` : `Réservation confirmée chez ${shopName}`;
+    headingText = isEn ? 'Booking confirmed ✨' : 'Réservation confirmée ✨';
+    intro = isEn
+      ? `Hi ${clientFirstName}, here's the recap of your appointment at ${shopName}.`
+      : `Bonjour ${clientFirstName}, voici le récapitulatif de votre rendez-vous chez ${shopName}.`;
+  }
 
   return (
     <BaseLayout preview={preview} locale={locale}>
-      <Heading style={heading}>
-        {hasDeposit
-          ? (isEn ? 'One last step ✨' : 'Une dernière étape ✨')
-          : (isEn ? 'Booking confirmed ✨' : 'Réservation confirmée ✨')}
-      </Heading>
+      <Heading style={heading}>{headingText}</Heading>
 
-      <Text style={paragraph}>
-        {isEn
-          ? `Hi ${clientFirstName}, here's the recap of your appointment at ${shopName}.`
-          : `Bonjour ${clientFirstName}, voici le récapitulatif de votre rendez-vous chez ${shopName}.`}
-      </Text>
+      <Text style={paragraph}>{intro}</Text>
 
       <Section style={summaryBox}>
         <Text style={summaryRow}>
@@ -132,13 +152,13 @@ export function BookingConfirmationEmail({
         </Text>
       </Section>
 
-      {hasDeposit && deposit && (
+      {isPending && deposit && deposit.links.length > 0 && (
         <Section style={depositBox}>
           <Text style={depositTitle}>
             {isEn ? 'Deposit required to confirm' : 'Acompte à régler pour confirmer'}
           </Text>
           {deposit.amount != null && (
-            <Text style={depositAmount}>
+            <Text style={depositAmountStyle}>
               {formatPriceEmail(deposit.amount, currency, isEn)}
               {deposit.percent ? ` (${deposit.percent}%)` : ''}
             </Text>
@@ -160,7 +180,23 @@ export function BookingConfirmationEmail({
         </Section>
       )}
 
-      {!hasDeposit && (
+      {isReceived && depositAmount != null && remainingBalance != null && (
+        <Section style={receivedBox}>
+          <Text style={receivedTitle}>
+            {isEn ? 'Payment summary' : 'Récapitulatif du paiement'}
+          </Text>
+          <Text style={receivedRow}>
+            <span style={receivedLabel}>{isEn ? 'Deposit received' : 'Acompte reçu'}</span>
+            <span style={receivedValue}>{formatPriceEmail(depositAmount, currency, isEn)}</span>
+          </Text>
+          <Text style={receivedRow}>
+            <span style={receivedLabelBold}>{isEn ? 'Balance due on the day' : 'Reste à régler le jour du RDV'}</span>
+            <span style={receivedValueBold}>{formatPriceEmail(remainingBalance, currency, isEn)}</span>
+          </Text>
+        </Section>
+      )}
+
+      {!isPending && (
         <Text style={paragraph}>
           {isEn
             ? `${shopName} can't wait to welcome you. We'll send you a reminder the day before.`
@@ -168,11 +204,13 @@ export function BookingConfirmationEmail({
         </Text>
       )}
 
-      <Section style={buttonContainer}>
-        <Button style={secondaryButton} href={loyaltyCardUrl}>
-          {isEn ? 'View my loyalty card' : 'Voir ma carte de fidélité'}
-        </Button>
-      </Section>
+      {!isPending && (
+        <Section style={buttonContainer}>
+          <Button style={secondaryButton} href={loyaltyCardUrl}>
+            {isEn ? 'View my loyalty card' : 'Voir ma carte de fidélité'}
+          </Button>
+        </Section>
+      )}
 
       {(cancelPolicyDays || reschedulePolicyDays) && (
         <Text style={policyText}>
@@ -278,12 +316,61 @@ const depositTitle = {
   margin: '0 0 6px 0',
 };
 
-const depositAmount = {
+const depositAmountStyle = {
   color: '#7C2D12',
   fontSize: '28px',
   fontWeight: '800',
   lineHeight: '1.1',
   margin: '0 0 8px 0',
+};
+
+const receivedBox = {
+  backgroundColor: '#F0FDF4',
+  borderRadius: '14px',
+  padding: '20px 22px',
+  margin: '24px 0 20px 0',
+  border: '1px solid #BBF7D0',
+};
+
+const receivedTitle = {
+  color: '#166534',
+  fontSize: '12px',
+  fontWeight: '700',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.6px',
+  margin: '0 0 12px 0',
+};
+
+const receivedRow = {
+  display: 'block',
+  fontSize: '14px',
+  lineHeight: '1.5',
+  margin: '0 0 6px 0',
+};
+
+const receivedLabel = {
+  color: '#15803D',
+  fontWeight: '500',
+  display: 'inline-block',
+  width: '60%',
+};
+
+const receivedValue = {
+  color: '#15803D',
+  fontWeight: '600',
+};
+
+const receivedLabelBold = {
+  color: '#14532D',
+  fontWeight: '700',
+  display: 'inline-block',
+  width: '60%',
+};
+
+const receivedValueBold = {
+  color: '#14532D',
+  fontWeight: '800',
+  fontSize: '17px',
 };
 
 const depositDeadline = {

@@ -544,6 +544,7 @@ export async function POST(request: NextRequest) {
         totalPrice,
         currency: merchantCurrency,
         customerAddress: homeService ? customer_address ?? null : null,
+        mode: deposit ? 'pending_deposit' : 'confirmed',
         deposit: deposit ? {
           amount: deposit.amount,
           percent: deposit.percent,
