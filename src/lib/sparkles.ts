@@ -85,12 +85,18 @@ export function sparkle(opts: SparkleOptions = {}) {
   const ox = (origin.x ?? 0.5) * window.innerWidth;
   const oy = (origin.y ?? 0.5) * window.innerHeight;
 
-  // Reuse or create canvas
+  // Reuse or create canvas. Mounted on <html> (documentElement) plutôt que <body>
+  // pour rester HORS de l'arbre reconcilié par React. Quand React unmount/remount
+  // des composants pendant qu'une sparkle anime (ex: navigation Next pendant les
+  // 4s de l'animation), un canvas dans body déclenchait des conflits DOM qui se
+  // manifestaient en freeze visuel (React #310 "removeChild on wrong parent",
+  // même pattern que les extensions Google Translate). documentElement n'est
+  // jamais touché par React donc plus de conflit possible.
   if (!activeCanvas) {
     activeCanvas = document.createElement('canvas');
     activeCanvas.style.cssText =
       'position:fixed;inset:0;pointer-events:none;z-index:99999';
-    document.body.appendChild(activeCanvas);
+    document.documentElement.appendChild(activeCanvas);
   }
   const canvas = activeCanvas;
   canvas.width = window.innerWidth;
