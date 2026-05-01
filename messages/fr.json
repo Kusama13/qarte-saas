@@ -3173,6 +3173,7 @@
   "emailSection": {
     "title": "Mon email",
     "subtitle": "Pour recevoir vos confirmations de réservation",
+    "subtitleNoBooking": "Pour être prévenu(e) quand une récompense vous attend",
     "placeholder": "vous@exemple.com",
     "save": "Enregistrer",
     "cancel": "Annuler",

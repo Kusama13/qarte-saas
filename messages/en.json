@@ -3170,6 +3170,7 @@
   "emailSection": {
     "title": "My email",
     "subtitle": "To receive your booking confirmations",
+    "subtitleNoBooking": "To get notified when a reward is waiting for you",
     "placeholder": "you@example.com",
     "save": "Save",
     "cancel": "Cancel",

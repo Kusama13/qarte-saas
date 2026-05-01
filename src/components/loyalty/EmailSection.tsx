@@ -73,7 +73,7 @@ export default function EmailSection({ merchant, customerId, initialEmail }: Ema
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-gray-900 text-sm">{t('title')}</p>
-            <p className="text-xs text-gray-500">{t('subtitle')}</p>
+            <p className="text-xs text-gray-500">{t(merchant.auto_booking_enabled ? 'subtitle' : 'subtitleNoBooking')}</p>
           </div>
           {!editing && email && (
             <button
