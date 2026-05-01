@@ -1,3 +1,5 @@
+import { sanitizeSmsForGsm7 } from './sms-sanitize';
+
 const API_KEY = (process.env.SMS_PARTNER_API_KEY || '').trim();
 // Trim d'abord, fallback après — sinon une env var Vercel à "\n" passe le `||` et donne ""
 // après trim (cf. cas équivalent corrigé dans ovh-sms.ts).
@@ -64,7 +66,7 @@ export async function sendSmsPartner(phone: string, message: string): Promise<{ 
     const payload: Record<string, unknown> = {
       apiKey: API_KEY,
       phoneNumbers: `+${phone}`,
-      message,
+      message: sanitizeSmsForGsm7(message),
       sender: SMS_SENDER,
     };
     if (SANDBOX) payload.sandbox = 1;

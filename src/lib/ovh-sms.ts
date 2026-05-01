@@ -1,4 +1,5 @@
 import { createHash } from 'crypto';
+import { sanitizeSmsForGsm7 } from './sms-sanitize';
 
 const APP_KEY = (process.env.OVH_APP_KEY || '').trim();
 const APP_SECRET = (process.env.OVH_APP_SECRET || '').trim();
@@ -92,7 +93,7 @@ export async function sendSms(phone: string, message: string): Promise<{ success
 
   try {
     const jobBody: Record<string, unknown> = {
-      message,
+      message: sanitizeSmsForGsm7(message),
       receivers: [`+${phone}`],
       noStopClause: true,
       coding: '7bit',
