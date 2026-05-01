@@ -3167,6 +3167,16 @@
     "months": "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec",
     "saveBirthday": "Save my birthday"
   },
+  "emailSection": {
+    "title": "My email",
+    "subtitle": "To receive your booking confirmations",
+    "placeholder": "you@example.com",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "invalid": "Invalid email address",
+    "saveError": "Error saving"
+  },
   "redeemModal": {
     "tierLabel": "Tier {tier}",
     "cashbackValidated": "Cashback redeemed!",
@@ -3476,6 +3486,11 @@
     "lastName": "Last name (optional)",
     "lastNamePlaceholder": "Your last name",
     "phone": "Phone",
+    "email": "Email (optional)",
+    "emailPlaceholder": "you@example.com",
+    "emailHint": "To receive your booking confirmation by email.",
+    "emailHintWithDeposit": "To receive your confirmation and the deposit payment link by email.",
+    "emailInvalid": "Invalid email address",
     "next": "Next",
     "back": "Back",
     "confirmBooking": "Confirm booking",

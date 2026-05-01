@@ -45,6 +45,7 @@ import {
   CardSkeleton,
   CardHeader,
   BirthdaySection,
+  EmailSection,
   VoucherRewards,
   VoucherModals,
 } from '@/components/loyalty';
@@ -1208,6 +1209,15 @@ export default function CustomerCardPage({
         {/* Birthday Input */}
         {!isPreview && (
           <BirthdaySection merchant={merchant} customerId={card.customer_id} hasBirthday={hasBirthday} />
+        )}
+
+        {/* Email (optional, modifiable) */}
+        {!isPreview && card.customer && (
+          <EmailSection
+            merchant={merchant}
+            customerId={card.customer_id}
+            initialEmail={card.customer.email ?? null}
+          />
         )}
 
         {/* Push Notification Banner */}

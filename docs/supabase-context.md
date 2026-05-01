@@ -150,6 +150,7 @@
 | instagram_handle | TEXT | NULL | mig 073 |
 | tiktok_handle | TEXT | NULL | mig 073 |
 | facebook_url | TEXT | NULL | mig 073 |
+| email | TEXT | NULL | CHECK regex + length ≤254, mig 148 (modifiable depuis carte client) |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
 **Indexes** : `idx_customers_phone`, `idx_customers_merchant`, `idx_customers_birthday`
@@ -764,6 +765,7 @@ Single-row table : id, content (TEXT, default ''), updated_at
 | customer_lng | DOUBLE PRECISION | NULL | mig 134, longitude cliente |
 | travel_time_minutes | SMALLINT | NULL | mig 134, durée trajet entrant calculée (depuis cliente précédente ou marchand pour le 1er RDV). Recalculée par `recomputeDayTravel` après book/cancel/move/delete |
 | travel_time_overridden | BOOLEAN | `FALSE` | NOT NULL, mig 134, true si le merchant a fixé manuellement la durée — recompute auto skip ces slots (UI override différée v2) |
+| customer_email | TEXT | NULL | mig 148, snapshot email à la résa (utilisé pour envoyer la confirmation client). Indépendant de `customers.email` qui peut évoluer après. |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
 **RLS** : SELECT public (client_name IS NULL AND slot_date >= CURRENT_DATE), ALL merchant own
@@ -1329,6 +1331,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 145 | gift_card_expiry_months_cleanup | `merchants.gift_card_expiry_months SMALLINT NOT NULL DEFAULT 3 CHECK 1-24` (durée validité bon personnalisable, segment 3/6/12 mois côté UI). DROP `merchants.gift_card_image_url` (feature 144 abandonnée) + DROP policy bucket `merchant-uploads` (suppression manuelle Supabase Storage requise) |
 | 146 | gift_card_expiry_reminder | `gift_cards.expiry_reminder_sent_at TIMESTAMPTZ` (rappel SMS J-7 destinataire avant expiration, 1 envoi max par bon) + index partiel `(expires_at) WHERE status='active' AND expiry_reminder_sent_at IS NULL` (scan rapide cron `gift-cards-expire` passe 0) |
 | 147 | contest_monthly_prizes | Table `merchant_contest_prizes (merchant_id, contest_month VARCHAR(7), prize_description TEXT NOT NULL CHECK 1-300, created_at, updated_at, PK (merchant_id, contest_month))` pour planifier différents lots par mois (avril = coffret, mai = bon 30€…). Le cron `monthly-contest` lit ici en priorité, fallback sur `merchants.contest_prize`. RLS merchant manage own. Trigger `update_updated_at_column`. + Colonne `merchants.contest_missing_prize_alerted_at TIMESTAMPTZ` (idempotence du push+email envoyé J-5 par le cron `morning-jobs` quand le merchant n'a pas défini de lot pour le mois courant — max 1 alerte/mois via comparaison de la date) |
+| 148 | customer_email | `customers.email TEXT` (modifiable depuis la carte client via `EmailSection`, CHECK regex + length ≤254) + `merchant_planning_slots.customer_email TEXT` (snapshot à la résa). Email collecté optionnel dans `BookingModal` ; déclenche `BookingConfirmationEmail` (récap RDV + lien acompte si demandé + lien carte fidélité). Pas d'unicité (même email peut servir chez plusieurs marchands). Migrations 001-144+008b déplacées dans `supabase/migrations/old/` (référence historique uniquement, déjà appliquées prod). |
 
 ---
 

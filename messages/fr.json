@@ -3170,6 +3170,16 @@
     "months": "Jan,Fév,Mar,Avr,Mai,Juin,Juil,Août,Sep,Oct,Nov,Déc",
     "saveBirthday": "Enregistrer mon anniversaire"
   },
+  "emailSection": {
+    "title": "Mon email",
+    "subtitle": "Pour recevoir vos confirmations de réservation",
+    "placeholder": "vous@exemple.com",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "edit": "Modifier",
+    "invalid": "Adresse email invalide",
+    "saveError": "Erreur lors de l'enregistrement"
+  },
   "redeemModal": {
     "tierLabel": "Palier {tier}",
     "cashbackValidated": "Cagnotte validée !",
@@ -3479,6 +3489,11 @@
     "lastName": "Nom (optionnel)",
     "lastNamePlaceholder": "Votre nom",
     "phone": "Téléphone",
+    "email": "Email (optionnel)",
+    "emailPlaceholder": "vous@exemple.com",
+    "emailHint": "Pour recevoir votre confirmation de réservation par mail.",
+    "emailHintWithDeposit": "Pour recevoir votre confirmation et le lien pour régler l'acompte par mail.",
+    "emailInvalid": "Adresse email invalide",
     "next": "Suivant",
     "back": "Retour",
     "confirmBooking": "Confirmer la réservation",

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
-import { formatPhoneNumber, validatePhone, getTrialStatus, getTimezoneForCountry, getAllPhoneFormats } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getTrialStatus, getTimezoneForCountry, getAllPhoneFormats, getAppUrl } from '@/lib/utils';
 import { computeDepositDeadline } from '@/lib/deposit';
 import { fromZonedTime } from 'date-fns-tz';
 import { setPhoneCookie } from '@/lib/customer-auth';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
-import { sendBookingNotificationEmail } from '@/lib/email';
+import { sendBookingNotificationEmail, sendBookingConfirmationEmail } from '@/lib/email';
 import { sendMerchantPush } from '@/lib/merchant-push';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
@@ -30,6 +30,7 @@ const bookSchema = z.object({
   customer_address: z.string().min(3).max(300).optional(),
   customer_lat: z.number().min(-90).max(90).optional(),
   customer_lng: z.number().min(-180).max(180).optional(),
+  customer_email: z.string().email().max(254).optional(),
 });
 
 const MAX_TRAVEL_MINUTES = 60;
@@ -52,12 +53,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
     }
 
-    const { merchant_id, slot_date, slot_time, phone_number, first_name, last_name, service_ids, customer_address, customer_lat, customer_lng } = parsed.data;
+    const { merchant_id, slot_date, slot_time, phone_number, first_name, last_name, service_ids, customer_address, customer_lat, customer_lng, customer_email } = parsed.data;
+    const trimmedEmail = customer_email?.trim().toLowerCase() || null;
 
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, welcome_offer_enabled, welcome_offer_description, booking_mode, buffer_minutes, home_service_enabled, shop_lat, shop_lng')
+      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, welcome_offer_enabled, welcome_offer_description, booking_mode, buffer_minutes, home_service_enabled, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days')
       .eq('id', merchant_id)
       .single();
 
@@ -251,7 +253,7 @@ export async function POST(request: NextRequest) {
 
     const { data: existingCustomer } = await supabaseAdmin
       .from('customers')
-      .select('id')
+      .select('id, email')
       .in('phone_number', getAllPhoneFormats(formattedPhone))
       .eq('merchant_id', merchant_id)
       .maybeSingle();
@@ -260,6 +262,13 @@ export async function POST(request: NextRequest) {
 
     if (existingCustomer) {
       customerId = existingCustomer.id;
+      // Backfill / update email if the customer just provided a new one
+      if (trimmedEmail && trimmedEmail !== existingCustomer.email) {
+        await supabaseAdmin
+          .from('customers')
+          .update({ email: trimmedEmail })
+          .eq('id', existingCustomer.id);
+      }
     } else {
       // Create customer + loyalty card
       const { data: newCustomer } = await supabaseAdmin
@@ -269,6 +278,7 @@ export async function POST(request: NextRequest) {
           last_name: trimmedLast,
           phone_number: formattedPhone,
           merchant_id: merchant_id,
+          email: trimmedEmail,
         })
         .select('id')
         .single();
@@ -354,6 +364,7 @@ export async function POST(request: NextRequest) {
         client_name: clientName,
         client_phone: formattedPhone,
         customer_id: customerId,
+        customer_email: trimmedEmail,
         total_duration_minutes: totalDuration,
         booked_online: true,
         booked_at: bookedAt,
@@ -398,6 +409,7 @@ export async function POST(request: NextRequest) {
         client_name: clientName,
         client_phone: formattedPhone,
         customer_id: customerId,
+        customer_email: trimmedEmail,
         booked_online: true,
         booked_at: bookedAt,
       };
@@ -516,6 +528,32 @@ export async function POST(request: NextRequest) {
           travelTimeMinutes: homeService ? travelTimeIn : null,
         }
       ).catch(err => logger.error('Booking notification email failed:', err));
+    }
+
+    // 10a-bis. Send confirmation email to client (fire-and-forget) — only if email provided
+    if (trimmedEmail) {
+      const merchantCurrency: 'EUR' | 'CHF' = merchant.country === 'CH' ? 'CHF' : 'EUR';
+      sendBookingConfirmationEmail(trimmedEmail, {
+        shopName: merchant.shop_name,
+        clientFirstName: trimmedFirst,
+        date: slot_date,
+        time: slot_time,
+        services: serviceDetails,
+        totalDuration,
+        totalPrice,
+        currency: merchantCurrency,
+        customerAddress: homeService ? customer_address ?? null : null,
+        deposit: deposit ? {
+          amount: deposit.amount,
+          percent: deposit.percent,
+          deadlineHours: deposit.deadline_hours,
+          links: deposit.links.map(l => ({ label: l.label, url: l.url })),
+        } : null,
+        loyaltyCardUrl: `${getAppUrl()}/customer/card/${merchant.id}`,
+        cancelPolicyDays: merchant.allow_customer_cancel ? (merchant.cancel_deadline_days ?? 1) : null,
+        reschedulePolicyDays: merchant.allow_customer_reschedule ? (merchant.reschedule_deadline_days ?? 1) : null,
+        locale: (merchant.locale as 'fr' | 'en') || 'fr',
+      }).catch(err => logger.error('Booking confirmation email (client) failed:', err));
     }
 
     // 10b. Push notification to merchant (fire-and-forget)

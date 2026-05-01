@@ -37,6 +37,7 @@ import {
   AnnouncementMaPageEmail,
   WinBackEmail,
   BookingNotificationEmail,
+  BookingConfirmationEmail,
   BookingRescheduledEmail,
   BookingCancelledEmail,
   SmsQuotaEmail,
@@ -1015,6 +1016,46 @@ export async function sendBookingNotificationEmail(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return sendEmail(to, subject, BookingNotificationEmail as any, params as any, {
     logLabel: 'Booking notification email',
+  });
+}
+
+interface BookingConfirmationParams {
+  shopName: string;
+  clientFirstName: string;
+  date: string;
+  time: string;
+  services: { name: string; price: number; duration: number }[];
+  totalDuration: number;
+  totalPrice: number;
+  currency?: 'EUR' | 'CHF';
+  customerAddress?: string | null;
+  deposit?: {
+    amount: number | null;
+    percent: number | null;
+    deadlineHours: number | null;
+    links: { label: string | null; url: string }[];
+  } | null;
+  loyaltyCardUrl: string;
+  cancelPolicyDays?: number | null;
+  reschedulePolicyDays?: number | null;
+  locale: EmailLocale;
+}
+
+export async function sendBookingConfirmationEmail(
+  to: string,
+  params: BookingConfirmationParams
+): Promise<SendEmailResult> {
+  const hasDeposit = !!(params.deposit && params.deposit.links.length > 0);
+  const subject = params.locale === 'en'
+    ? (hasDeposit
+        ? `Pay your deposit — ${params.shopName}`
+        : `Booking confirmed — ${params.shopName}`)
+    : (hasDeposit
+        ? `Réglez votre acompte — ${params.shopName}`
+        : `Réservation confirmée — ${params.shopName}`);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return sendEmail(to, subject, BookingConfirmationEmail as any, params as any, {
+    logLabel: 'Booking confirmation email',
   });
 }
 

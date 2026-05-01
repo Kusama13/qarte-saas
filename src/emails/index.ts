@@ -34,6 +34,7 @@ export { BirthdayNotificationEmail } from './BirthdayNotificationEmail';
 export { AnnouncementMaPageEmail } from './AnnouncementMaPageEmail';
 export { WinBackEmail } from './WinBackEmail';
 export { BookingNotificationEmail } from './BookingNotificationEmail';
+export { BookingConfirmationEmail } from './BookingConfirmationEmail';
 export { BookingRescheduledEmail } from './BookingRescheduledEmail';
 export { BookingCancelledEmail } from './BookingCancelledEmail';
 export { VitrineReminderEmail } from './VitrineReminderEmail';

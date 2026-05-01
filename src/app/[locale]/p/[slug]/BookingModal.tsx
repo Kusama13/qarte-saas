@@ -106,6 +106,7 @@ export default function BookingModal({
   const [phoneCountry, setPhoneCountry] = useState<MerchantCountry>(country);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bookingResult, setBookingResult] = useState<{
@@ -249,6 +250,12 @@ export default function BookingModal({
   const handleSubmit = async () => {
     if (!firstName.trim() || !phone.trim()) return;
 
+    const trimmedEmail = email.trim();
+    if (trimmedEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(trimmedEmail)) {
+      setError(t('emailInvalid'));
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -264,6 +271,7 @@ export default function BookingModal({
           phone_country: phoneCountry,
           first_name: firstName.trim(),
           last_name: lastName.trim() || undefined,
+          ...(trimmedEmail && { customer_email: trimmedEmail }),
           service_ids: Array.from(selectedServiceIds),
           ...(isFreeMod && { booking_mode: 'free' }),
           ...(isHomeService && customerCoords && {
@@ -871,6 +879,22 @@ export default function BookingModal({
                       countries={['FR', 'BE', 'CH']}
                       className="px-4 py-2.5 text-sm border-transparent bg-gray-50 rounded-r-xl"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">{t('email')}</label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder={t('emailPlaceholder')}
+                      autoComplete="email"
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-sm transition-colors focus:outline-none focus:ring-2 focus:bg-white"
+                      style={{ '--tw-ring-color': `${p}40` } as React.CSSProperties}
+                      maxLength={254}
+                    />
+                    <p className="text-[11px] text-gray-400 mt-1 leading-snug">
+                      {stickyDeposit ? t('emailHintWithDeposit') : t('emailHint')}
+                    </p>
                   </div>
                 </div>
 

@@ -13,6 +13,7 @@ export { default as SocialLinks } from './SocialLinks';
 export { default as CardSkeleton } from './CardSkeleton';
 export { default as CardHeader } from './CardHeader';
 export { default as BirthdaySection } from './BirthdaySection';
+export { default as EmailSection } from './EmailSection';
 export { default as VoucherRewards } from './VoucherRewards';
 export { default as VoucherModals } from './VoucherModals';
 export { default as ReviewModal } from './ReviewModal';

@@ -362,6 +362,7 @@ export interface Customer {
   phone_number: string;
   first_name: string;
   last_name: string | null;
+  email: string | null;
   birth_month: number | null;
   birth_day: number | null;
   instagram_handle: string | null;
