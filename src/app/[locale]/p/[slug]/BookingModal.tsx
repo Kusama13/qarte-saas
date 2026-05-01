@@ -135,8 +135,29 @@ export default function BookingModal({
     has_services: boolean;
     has_amount: boolean;
   } | null>(null);
+  // Customer recognition: true once the lookup confirms an existing customer
+  // for this merchant (any phone hit). Drives email subtitle copy.
+  const [recognizedCustomer, setRecognizedCustomer] = useState<{
+    has_email: boolean;
+  } | null>(null);
   const memberLookupRef = useRef<ReturnType<typeof setTimeout>>();
   const memberAbortRef = useRef<AbortController>();
+
+  // Prefill phone from signed cookie on mount (returning customer in same browser).
+  // Cookie is HttpOnly → must be read via /api/customers/me-phone.
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/customers/me-phone')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!cancelled && data?.phone && !phone) {
+          setPhone(String(data.phone));
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     clearTimeout(memberLookupRef.current);
@@ -151,12 +172,22 @@ export default function BookingModal({
             const data = await res.json();
             setMemberBenefit(data.memberCard || null);
             setGiftCardBenefit(data.giftCards || null);
+            // Autofill profile fields (only when empty — never overwrite the user's typing)
+            if (data.profile) {
+              setRecognizedCustomer({ has_email: !!data.profile.email });
+              setFirstName(prev => prev.trim() ? prev : (data.profile.first_name || ''));
+              setLastName(prev => prev.trim() ? prev : (data.profile.last_name || ''));
+              setEmail(prev => prev.trim() ? prev : (data.profile.email || ''));
+            } else {
+              setRecognizedCustomer(null);
+            }
           }
         } catch { /* aborted or network error */ }
       }, 500);
     } else {
       setMemberBenefit(null);
       setGiftCardBenefit(null);
+      setRecognizedCustomer(null);
     }
     return () => { clearTimeout(memberLookupRef.current); memberAbortRef.current?.abort(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -893,7 +924,11 @@ export default function BookingModal({
                       maxLength={254}
                     />
                     <p className="text-[11px] text-gray-400 mt-1 leading-snug">
-                      {stickyDeposit ? t('emailHintWithDeposit') : t('emailHint')}
+                      {recognizedCustomer && !recognizedCustomer.has_email
+                        ? t('emailHintRecognized')
+                        : stickyDeposit
+                          ? t('emailHintWithDeposit')
+                          : t('emailHint')}
                     </p>
                   </div>
                 </div>

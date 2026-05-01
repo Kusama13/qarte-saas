@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     const { data: customer } = await supabaseAdmin
       .from('customers')
-      .select('id, first_name')
+      .select('id, first_name, last_name, email')
       .in('phone_number', phoneFormats)
       .eq('merchant_id', merchantId)
       .maybeSingle();
@@ -39,6 +39,12 @@ export async function GET(request: NextRequest) {
     if (!customer) {
       return NextResponse.json({ memberCard: null });
     }
+
+    const profile = {
+      first_name: customer.first_name,
+      last_name: customer.last_name,
+      email: customer.email,
+    };
 
     const nowIso = new Date().toISOString();
     const [{ data: memberCard }, { data: activeGiftCards }] = await Promise.all([
@@ -76,7 +82,7 @@ export async function GET(request: NextRequest) {
       : null;
 
     if (!memberCard) {
-      return NextResponse.json({ memberCard: null, giftCards, first_name: customer.first_name });
+      return NextResponse.json({ memberCard: null, giftCards, profile, first_name: customer.first_name });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -92,6 +98,7 @@ export async function GET(request: NextRequest) {
         benefit_label: program.benefit_label,
       },
       giftCards,
+      profile,
       first_name: customer.first_name,
     });
   } catch (error) {

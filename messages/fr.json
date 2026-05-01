@@ -3493,6 +3493,7 @@
     "emailPlaceholder": "vous@exemple.com",
     "emailHint": "Pour recevoir votre confirmation de réservation par mail.",
     "emailHintWithDeposit": "Pour recevoir votre confirmation et le lien pour régler l'acompte par mail.",
+    "emailHintRecognized": "Ajoutez votre email pour recevoir vos confirmations de RDV directement par mail.",
     "emailInvalid": "Adresse email invalide",
     "next": "Suivant",
     "back": "Retour",
