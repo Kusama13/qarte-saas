@@ -355,6 +355,21 @@ function CollapsibleCard({
 
 // --- WhatsApp message templates ---
 
+// Static class lookup pour status SMS campaign — Tailwind JIT ne purge pas
+// les classes presentes dans une string literale (vs les classes dynamiques
+// type `bg-${color}-100` qui sont silencieusement supprimees en prod).
+const SMS_CAMPAIGN_STATUS_CLASSES: Record<string, string> = {
+  done: 'bg-emerald-100 text-emerald-700',
+  failed: 'bg-red-100 text-red-700',
+  rejected: 'bg-gray-100 text-gray-700',
+  pending_review: 'bg-amber-100 text-amber-700',
+  default: 'bg-blue-100 text-blue-700',
+};
+
+function formatCampaignDate(iso: string): string {
+  return new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
 const ADMIN_CONTACT_NAME = 'Elodie';
 
 function getWhatsAppMarketing(name: string, _customers: number): { label: string; text: string }[] {
@@ -1438,19 +1453,18 @@ export default function MerchantDetailPage() {
             <div className="space-y-2">
               {smsCampaigns.map((c) => {
                 const audienceLabel = c.audience_filter?.filters?.map(f => f.type).join(', ') || '—';
-                const statusColor = c.status === 'done' ? 'emerald' : c.status === 'failed' ? 'red' : c.status === 'rejected' ? 'gray' : c.status === 'pending_review' ? 'amber' : 'blue';
+                const statusBadgeClass = SMS_CAMPAIGN_STATUS_CLASSES[c.status] || SMS_CAMPAIGN_STATUS_CLASSES.default;
+                const dateLabel = formatCampaignDate(c.sent_at || c.created_at);
                 return (
                   <div key={c.id} className="p-3 bg-white border border-gray-200 rounded-lg">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex-1 min-w-0">
                         <div className="text-xs text-gray-500 mb-1">
-                          {c.sent_at
-                            ? `Envoyée le ${new Date(c.sent_at).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`
-                            : `Créée le ${new Date(c.created_at).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`}
+                          {c.sent_at ? `Envoyée le ${dateLabel}` : `Créée le ${dateLabel}`}
                         </div>
                         <div className="text-xs text-gray-700 line-clamp-2 font-mono">{c.body}</div>
                       </div>
-                      <span className={cn("shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase", `bg-${statusColor}-100 text-${statusColor}-700`)}>
+                      <span className={cn("shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase", statusBadgeClass)}>
                         {c.status}
                       </span>
                     </div>

@@ -39,6 +39,18 @@ interface BookingModalProps {
 
 type Step = 'services' | 'address' | 'datetime' | 'info' | 'confirm';
 
+interface MemberLookupResponse {
+  memberCard: {
+    first_name: string;
+    discount_percent: number | null;
+    skip_deposit: boolean;
+    benefit_label: string;
+    program_name: string;
+  } | null;
+  giftCards: { count: number; total_amount: number; has_services: boolean; has_amount: boolean } | null;
+  profile: { first_name: string; last_name: string; email: string | null } | null;
+}
+
 function timeToMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);
   return h * 60 + m;
@@ -177,32 +189,33 @@ export default function BookingModal({
         try {
           const res = await fetch(`/api/member-cards/lookup?phone=${encodeURIComponent(phone)}&merchant_id=${merchant.id}&country=${phoneCountry}`, { signal: ctrl.signal });
           if (res.ok) {
-            const data = await res.json();
+            const data = await res.json() as MemberLookupResponse;
             setMemberBenefit(data.memberCard || null);
             setGiftCardBenefit(data.giftCards || null);
-            if (data.profile) {
-              const lastInitial = (data.profile.last_name || '').trim().charAt(0).toUpperCase();
+            const profile = data.profile;
+            if (profile) {
+              const lastInitial = (profile.last_name || '').trim().charAt(0).toUpperCase();
               setRecognition({
                 kind: 'known',
-                firstName: data.profile.first_name || '',
+                firstName: profile.first_name || '',
                 lastInitial: lastInitial ? `${lastInitial}.` : '',
-                hasEmail: !!data.profile.email,
+                hasEmail: !!profile.email,
               });
-              // Autofill profile fields (only when empty — never overwrite the user's typing).
-              // Track ce qu on a auto-rempli pour pouvoir clear sur "Modifier le numero".
+              // Auto-fill : only when empty (never overwrite user typing).
+              // Track ce qui a ete auto-rempli pour pouvoir clear sur "Modifier le numero".
               setFirstName(prev => {
                 if (prev.trim()) return prev;
-                if (data.profile.first_name) { setPrefilledFromLookup(p => ({ ...p, firstName: true })); return data.profile.first_name; }
+                if (profile.first_name) { setPrefilledFromLookup(p => ({ ...p, firstName: true })); return profile.first_name; }
                 return prev;
               });
               setLastName(prev => {
                 if (prev.trim()) return prev;
-                if (data.profile.last_name) { setPrefilledFromLookup(p => ({ ...p, lastName: true })); return data.profile.last_name; }
+                if (profile.last_name) { setPrefilledFromLookup(p => ({ ...p, lastName: true })); return profile.last_name; }
                 return prev;
               });
               setEmail(prev => {
                 if (prev.trim()) return prev;
-                if (data.profile.email) { setPrefilledFromLookup(p => ({ ...p, email: true })); return data.profile.email; }
+                if (profile.email) { setPrefilledFromLookup(p => ({ ...p, email: true })); return profile.email; }
                 return prev;
               });
             } else {

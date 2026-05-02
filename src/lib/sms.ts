@@ -483,10 +483,9 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
     if (logError) return false;
 
     // 8. Envoi via le provider sélectionné (sanitize GSM-7 fait au niveau provider).
-    // Transactionnel : pas de mention STOP OVH (LCEN exempte + gain place).
     const result = provider === 'sms_partner'
       ? await sendSmsPartner(phone, message)
-      : await sendSms(phone, message, false);
+      : await sendSms(phone, message, 'transactional');
 
     // 9. Update log with result. Refund pack if send failed.
     if (logRow?.id) {
@@ -582,8 +581,7 @@ export async function sendMarketingSms(
     }
 
     // 3. Send via OVH (sanitize GSM-7 fait au niveau provider).
-    // Marketing : OVH ajoute "STOP au 36180" auto (default addStopClause=true) — conforme CNIL.
-    const result = await sendSms(phone, body, true);
+    const result = await sendSms(phone, body, 'marketing');
 
     // 4. Update log + refund pack on failure
     if (logRow?.id) {

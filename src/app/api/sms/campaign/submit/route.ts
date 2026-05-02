@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate content (appends STOP, checks length/forbidden)
-    const validation = validateMarketingSms(body, { requireStop: true });
+    const validation = validateMarketingSms(body);
     if (!validation.ok) {
       return NextResponse.json({ error: 'Contenu invalide', errors: validation.errors }, { status: 400 });
     }

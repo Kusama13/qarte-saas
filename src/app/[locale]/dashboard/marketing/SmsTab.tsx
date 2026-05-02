@@ -27,7 +27,6 @@ import {
   SMS_LIMIT_SINGLE_UCS2,
   SMS_LIMIT_DOUBLE_UCS2,
   countSms,
-  appendStopIfMissing,
   resolveVariables,
   validateMarketingSms,
   isGsm7,
@@ -129,8 +128,7 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
 
   // Preview "tel quel" — pour le mockup iPhone affiche au merchant
   const previewBody = useMemo(() => {
-    const withStop = appendStopIfMissing(body || '');
-    return resolveVariables(withStop, {
+    return resolveVariables((body || '').trim(), {
       prenom: 'Sophie',
       shop_name: merchant?.shop_name || 'Ma boutique',
     });
@@ -151,7 +149,7 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
   const isGsm7Body = isGsm7(previewBody);
   const charCount = Array.from(dispatchBody).length;
   const smsCount = countSms(dispatchBody);
-  const validation = useMemo(() => validateMarketingSms(body || '', { requireStop: true }), [body]);
+  const validation = useMemo(() => validateMarketingSms(body || ''), [body]);
 
   // Limite affichee dans le compteur — toujours GSM-7 puisque dispatchBody l'est
   const smsLimitForCount = smsCount >= 2 ? SMS_LIMIT_DOUBLE : SMS_LIMIT_SINGLE;
@@ -193,20 +191,9 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
   }, [campaigns]);
   const frequencyWarning = campaignsThisMonth >= 3;
 
-  // Fetch quota au mount et apres chaque submit reussi
   useEffect(() => {
-    if (!merchant?.id) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`/api/sms/usage?merchantId=${merchant.id}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (!cancelled) setQuotaState({ sent: data.sent || 0, quota: data.quota || 100, packBalance: data.packBalance || 0 });
-        }
-      } catch { /* silent */ }
-    })();
-    return () => { cancelled = true; };
+    refreshQuota();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [merchant?.id]);
 
   useEffect(() => {
@@ -232,6 +219,14 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
     })();
     return () => { cancelled = true; };
   }, [merchant?.id, selectedFilters]);
+
+  const refreshQuota = () => {
+    if (!merchant?.id) return;
+    fetch(`/api/sms/usage?merchantId=${merchant.id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setQuotaState({ sent: d.sent || 0, quota: d.quota || 100, packBalance: d.packBalance || 0 }))
+      .catch(() => {});
+  };
 
   const fetchCampaigns = async () => {
     if (!merchant?.id) return;
@@ -289,19 +284,11 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
         setSubmitResult({ success: true, message: t('submitSuccess') });
         setBody('');
         fetchCampaigns();
-        // Refresh quota apres soumission
-        fetch(`/api/sms/usage?merchantId=${merchant.id}`)
-          .then(r => r.ok ? r.json() : null)
-          .then(d => d && setQuotaState({ sent: d.sent || 0, quota: d.quota || 100, packBalance: d.packBalance || 0 }))
-          .catch(() => {});
+        refreshQuota();
       } else if (res.status === 402 && data.error === 'quota_insufficient') {
-        // Race : audience a grossi entre check front et submit. Message + bouton via UI deja affichee.
+        // Race : audience a grossi entre check front et submit (rare).
         setSubmitResult({ success: false, message: data.message || 'Quota insuffisant. Achete un pack pour lancer cette campagne.' });
-        // Refresh quota pour mettre a jour l'UI
-        fetch(`/api/sms/usage?merchantId=${merchant.id}`)
-          .then(r => r.ok ? r.json() : null)
-          .then(d => d && setQuotaState({ sent: d.sent || 0, quota: d.quota || 100, packBalance: d.packBalance || 0 }))
-          .catch(() => {});
+        refreshQuota();
       } else {
         const errs = Array.isArray(data.errors) ? data.errors.join(' ') : data.error || t('submitError');
         setSubmitResult({ success: false, message: errs });

@@ -429,24 +429,27 @@ export async function sendNewMerchantNotification(
   }
 }
 
-export async function sendSmsCampaignSentEmail(
-  to: string,
-  shopName: string,
-  recipientCount: number,
-  smsPerRecipient: number,
-  totalSmsSent: number,
-  quotaUsed: number,
-  quotaTotal: number,
-  packBalance: number,
-  body: string,
-  bodyWasNormalized: boolean,
-  locale: EmailLocale = 'fr'
-): Promise<SendEmailResult> {
+export interface SendSmsCampaignSentEmailParams {
+  to: string;
+  shopName: string;
+  recipientCount: number;
+  smsPerRecipient: number;
+  totalSmsSent: number;
+  quotaUsed: number;
+  quotaTotal: number;
+  packBalance: number;
+  body: string;
+  bodyWasNormalized: boolean;
+  locale?: EmailLocale;
+}
+
+export async function sendSmsCampaignSentEmail(params: SendSmsCampaignSentEmailParams): Promise<SendEmailResult> {
+  const { to, shopName, recipientCount, totalSmsSent, locale = 'fr', ...rest } = params;
   return sendEmail(
     to,
     subj(locale, 'smsCampaignSent', { shopName, recipientCount: String(recipientCount) }),
     SmsCampaignSentEmail,
-    { shopName, recipientCount, smsPerRecipient, totalSmsSent, quotaUsed, quotaTotal, packBalance, body, bodyWasNormalized, locale },
+    { shopName, recipientCount, totalSmsSent, ...rest, locale },
     { logLabel: `SMS campaign sent confirmation (${recipientCount} recipients, ${totalSmsSent} SMS)` }
   );
 }

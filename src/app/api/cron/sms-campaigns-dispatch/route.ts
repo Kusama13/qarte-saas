@@ -28,6 +28,14 @@ interface MerchantRow {
   country: string | null;
   slug: string | null;
   billing_period_start: string | null;
+  user_id: string;
+  locale: string | null;
+  sms_pack_balance: number | null;
+  plan_tier: string | null;
+  sms_quota_override: number | null;
+  sms_quota_override_cycle_anchor: string | null;
+  billing_interval: string | null;
+  created_at: string | null;
 }
 
 // Per-campaign send cap — protects batch time + avoids cross-campaign starvation.
@@ -64,7 +72,7 @@ export async function GET(request: NextRequest) {
 
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, shop_name, country, slug, billing_period_start, subscription_status')
+      .select('id, shop_name, country, slug, billing_period_start, subscription_status, user_id, locale, sms_pack_balance, plan_tier, sms_quota_override, sms_quota_override_cycle_anchor, billing_interval, created_at')
       .eq('id', campaign.merchant_id)
       .single<MerchantRow & { subscription_status: string }>();
     if (!merchant) {
@@ -239,37 +247,29 @@ export async function GET(request: NextRequest) {
         })
         .eq('id', campaign.id);
 
-      if (finalSent > 0) {
-        const { data: userRow } = await supabaseAdmin
-          .from('merchants')
-          .select('user_id, locale, sms_pack_balance, plan_tier, sms_quota_override, sms_quota_override_cycle_anchor, billing_interval, created_at')
-          .eq('id', campaign.merchant_id)
-          .single<{ user_id: string; locale: string | null; sms_pack_balance: number | null; plan_tier: string | null; sms_quota_override: number | null; sms_quota_override_cycle_anchor: string | null; billing_interval: string | null; created_at: string | null }>();
-
-        if (userRow?.user_id) {
-          const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userRow.user_id);
-          const merchantEmail = authUser?.user?.email;
-          if (merchantEmail) {
-            const bodyWasNormalized = normalizedBody !== campaign.body.trim();
-            // Quota state apres l'envoi (incluant les SMS de cette campagne)
-            const usage = await getSmsUsageThisMonth(supabaseAdmin, campaign.merchant_id, merchant.billing_period_start, 100);
-            const quotaTotal = getEffectiveQuota(userRow, usage.periodStart);
-            const packBalance = Number(userRow.sms_pack_balance || 0);
-
-            void sendSmsCampaignSentEmail(
-              merchantEmail,
-              merchant.shop_name,
-              finalSent,
-              smsPerRecipient,
-              finalSent * smsPerRecipient,
-              usage.sent,
-              quotaTotal,
-              packBalance,
-              normalizedBody,
-              bodyWasNormalized,
-              (userRow.locale as 'fr' | 'en') || 'fr'
-            ).catch((err) => logger.error('SMS campaign sent email failed', { campaignId: campaign.id, err }));
-          }
+      if (finalSent > 0 && merchant.user_id) {
+        // Parallelise auth.admin.getUserById (GoTrue) + getSmsUsageThisMonth — independants.
+        const [authResult, usage] = await Promise.all([
+          supabaseAdmin.auth.admin.getUserById(merchant.user_id),
+          getSmsUsageThisMonth(supabaseAdmin, campaign.merchant_id, merchant.billing_period_start, 100),
+        ]);
+        const merchantEmail = authResult.data?.user?.email;
+        if (merchantEmail) {
+          const quotaTotal = getEffectiveQuota(merchant, usage.periodStart);
+          const packBalance = Number(merchant.sms_pack_balance || 0);
+          void sendSmsCampaignSentEmail({
+            to: merchantEmail,
+            shopName: merchant.shop_name,
+            recipientCount: finalSent,
+            smsPerRecipient,
+            totalSmsSent: finalSent * smsPerRecipient,
+            quotaUsed: usage.sent,
+            quotaTotal,
+            packBalance,
+            body: normalizedBody,
+            bodyWasNormalized: normalizedBody !== campaign.body.trim(),
+            locale: (merchant.locale as 'fr' | 'en') || 'fr',
+          }).catch((err) => logger.error('SMS campaign sent email failed', { campaignId: campaign.id, err }));
         }
       }
     }

@@ -49,7 +49,6 @@ export function normalizeToGsm7(body: string): string {
     } else if (GSM7_SET.has(ch)) {
       out += ch;
     }
-    // Sinon : drop (emoji, char rare hors GSM-7)
   }
   return out.replace(/[ \t]{2,}/g, ' ').replace(/\n[ \t]+/g, '\n').trim();
 }
@@ -71,24 +70,10 @@ export interface SmsValidationResult {
   finalBody: string;
   charCount: number;
   smsCount: SmsCount | 3;
-  containsStop: boolean;
 }
 
 export interface SmsValidationOptions {
-  requireStop?: boolean;
   maxChars?: number;
-}
-
-const STOP_RE = /\bstop\b/i;
-
-/**
- * @deprecated Conserve pour compat (composer preview/validation). N'ajoute plus
- * de suffix — OVH ajoute "STOP au 36180" auto via `noStopClause: false` au
- * dispatch. Les anciens templates contenant "STOP SMS" textuel sont aussi
- * nettoyes (sinon doublon).
- */
-export function appendStopIfMissing(body: string): string {
-  return body.trim();
 }
 
 /**
@@ -137,16 +122,15 @@ export function validateMarketingSms(
   body: string,
   options: SmsValidationOptions = {}
 ): SmsValidationResult {
-  const { requireStop = true, maxChars = SMS_LIMIT_MAX } = options;
+  const { maxChars = SMS_LIMIT_MAX } = options;
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  const final = requireStop ? appendStopIfMissing(body) : body.trim();
+  const final = body.trim();
   const charCount = final.length;
   const smsCount = countSms(final);
-  const containsStop = STOP_RE.test(final);
 
-  if (!body.trim()) errors.push('Le message est vide.');
+  if (!final) errors.push('Le message est vide.');
 
   if (charCount > maxChars) {
     errors.push(`Message trop long (${charCount} caractères, max ${maxChars}).`);
@@ -169,7 +153,6 @@ export function validateMarketingSms(
     finalBody: final,
     charCount,
     smsCount,
-    containsStop,
   };
 }
 
