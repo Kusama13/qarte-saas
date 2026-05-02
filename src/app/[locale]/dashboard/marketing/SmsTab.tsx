@@ -32,6 +32,7 @@ import {
   isGsm7,
   normalizeToGsm7,
   withOvhStopClause,
+  bodyHasPersonalization,
 } from '@/lib/sms-validator';
 import type { AudienceFilter } from '@/lib/sms-audience';
 import { getPlanFeatures } from '@/lib/plan-tiers';
@@ -104,6 +105,20 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
   // Quota state — fetched at mount + after submit
   const [quotaState, setQuotaState] = useState<{ sent: number; quota: number; packBalance: number } | null>(null);
 
+  // Breakdown personnalise — fetch quand body contient {prenom}.
+  // L'API calcule cote serveur (firstnames jamais exposes au client).
+  type Breakdown = {
+    totalSms: number;
+    distribution: { 1: number; 2: number; 3: number };
+    perRecipientAvg: number;
+    baselineSmsPerRecipient: number;
+    baselineTotalSms: number;
+    recipientsExtraCost: number;
+    longestFirstName: string | null;
+    longestFirstNameSmsCount: number;
+  };
+  const [breakdown, setBreakdown] = useState<Breakdown | null>(null);
+
   const [submitting, setSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState<{ success: boolean; message: string } | null>(null);
 
@@ -164,11 +179,16 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
     return Math.round(count * SMS_UNIT_COST_CENTS);
   }, [audienceCount, smsCount]);
 
-  // SMS demandes pour cette campagne (audience × SMS/destinataire)
+  // Detection {prenom} dans le body — declenche le fetch breakdown et la card UI
+  const personalized = bodyHasPersonalization(body || '');
+
+  // SMS demandes pour cette campagne. Si {prenom} et breakdown dispo, utilise
+  // le total reel (somme par destinataire). Sinon, count × baseline.
   const smsRequested = useMemo(() => {
+    if (breakdown && personalized) return breakdown.totalSms;
     if (audienceCount == null) return 0;
     return audienceCount * (smsCount === 3 ? 3 : smsCount);
-  }, [audienceCount, smsCount]);
+  }, [audienceCount, smsCount, breakdown, personalized]);
 
   // SMS dispo (quota_left + pack_balance)
   const smsAvailable = useMemo(() => {
@@ -196,29 +216,37 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [merchant?.id]);
 
+  // Le body est inclus dans la query SEULEMENT si personalized=true,
+  // pour declencher le calcul breakdown cote serveur.
   useEffect(() => {
     if (!merchant?.id) return;
     let cancelled = false;
-    (async () => {
+    const handle = setTimeout(async () => {
       setLoadingCount(true);
       try {
+        const payload: Record<string, unknown> = { merchantId: merchant.id, filters: selectedFilters };
+        if (personalized) payload.body = body;
         const res = await fetch('/api/sms/campaign/preview', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ merchantId: merchant.id, filters: selectedFilters }),
+          body: JSON.stringify(payload),
         });
         if (res.ok) {
           const data = await res.json();
-          if (!cancelled) setAudienceCount(data.count || 0);
+          if (!cancelled) {
+            setAudienceCount(data.count || 0);
+            setBreakdown(data.breakdown || null);
+          }
         }
       } catch {
         /* silent */
       } finally {
         if (!cancelled) setLoadingCount(false);
       }
-    })();
-    return () => { cancelled = true; };
-  }, [merchant?.id, selectedFilters]);
+    }, personalized ? 400 : 0);
+    return () => { cancelled = true; clearTimeout(handle); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [merchant?.id, selectedFilters, personalized, body]);
 
   const refreshQuota = () => {
     if (!merchant?.id) return;
@@ -542,13 +570,46 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
           <p className="mt-1.5 text-xs text-gray-500">{t('scheduleHelp')}</p>
         </div>
 
+        {/* Estimation SMS personnalisee — affichee si {prenom} et breakdown dispo */}
+        {personalized && breakdown && breakdown.totalSms > 0 && (
+          <div className="mt-4 rounded-xl bg-violet-50 border border-violet-200 p-3.5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-violet-900 uppercase tracking-wider">Estimation SMS</p>
+              <span className="text-xs font-semibold text-violet-700">{breakdown.totalSms} SMS au total</span>
+            </div>
+            {breakdown.recipientsExtraCost > 0 ? (
+              <>
+                <p className="text-xs text-violet-800 leading-relaxed mb-2">
+                  <strong>{breakdown.distribution[1]}</strong> client{breakdown.distribution[1] > 1 ? 'es' : 'e'} → 1 SMS
+                  {breakdown.distribution[2] > 0 && <> · <strong>{breakdown.distribution[2]}</strong> → 2 SMS</>}
+                  {breakdown.distribution[3] > 0 && <> · <strong>{breakdown.distribution[3]}</strong> → 3 SMS</>}
+                </p>
+                {breakdown.longestFirstName && (
+                  <p className="text-[11px] text-violet-700 italic mb-1">
+                    Cas concret : prénom court (Sophie) → 1 SMS · &quot;{breakdown.longestFirstName}&quot; → {breakdown.longestFirstNameSmsCount} SMS
+                  </p>
+                )}
+                <p className="text-[11px] text-violet-600">
+                  {breakdown.recipientsExtraCost} client{breakdown.recipientsExtraCost > 1 ? 'es' : 'e'} coûteront un SMS supplémentaire à cause de leur prénom plus long.
+                </p>
+              </>
+            ) : (
+              <p className="text-xs text-violet-700">
+                Tous les destinataires reçoivent {breakdown.baselineSmsPerRecipient} SMS, peu importe la longueur du prénom.
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Summary + submit */}
         <div className="mt-5 pt-4 border-t border-gray-100">
           <div className="flex items-center justify-between mb-2 text-xs">
             <span className="text-gray-500">SMS pour cette campagne</span>
             <span className="font-bold text-gray-900">
               {audienceCount && smsRequested > 0
-                ? `${audienceCount} × ${smsCount} = ${smsRequested} SMS`
+                ? (personalized && breakdown
+                    ? `${smsRequested} SMS (${audienceCount} destinataires)`
+                    : `${audienceCount} × ${smsCount} = ${smsRequested} SMS`)
                 : '—'}
             </span>
           </div>
