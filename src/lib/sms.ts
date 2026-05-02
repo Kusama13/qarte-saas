@@ -483,9 +483,19 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
     if (logError) return false;
 
     // 8. Envoi via le provider sélectionné (sanitize GSM-7 fait au niveau provider).
-    const result = provider === 'sms_partner'
+    let result = provider === 'sms_partner'
       ? await sendSmsPartner(phone, message)
       : await sendSms(phone, message, 'transactional');
+
+    // 8b. Fallback OVH si SMS Partner echoue (timeout, panne, blip reseau).
+    // Ne fallback pas l'inverse (OVH echec) — OVH est notre fallback ultime.
+    // Trace le provider final dans sms_logs pour diagnostic.
+    let finalProvider: 'sms_partner' | 'ovh' = provider;
+    if (!result.success && provider === 'sms_partner') {
+      console.warn(`[sms] SMS Partner failed for ${phone} (${result.error}), fallback to OVH`);
+      result = await sendSms(phone, message, 'transactional');
+      if (result.success) finalProvider = 'ovh';
+    }
 
     // 9. Update log with result. Refund pack if send failed.
     if (logRow?.id) {
@@ -494,6 +504,7 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
         status: result.success ? 'sent' : 'failed',
         error_message: result.error || null,
         cost_euro: 0,
+        provider: finalProvider,
       }).eq('id', logRow.id);
     }
     if (!result.success && consumedFromPack) {

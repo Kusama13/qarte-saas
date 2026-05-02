@@ -11,20 +11,24 @@ const SANDBOX = (process.env.SMS_PARTNER_SANDBOX || '').trim().toLowerCase() ===
 
 const SMS_PARTNER_ENDPOINT = 'https://api.smspartner.fr/v1/send';
 
-// Timeout court + 1 retry pour absorber les blips réseau transitoires
-// (cf. error_message="fetch failed" dans sms_logs — undici n'a jamais reçu de réponse).
-// On retry UNIQUEMENT sur erreur fetch bas niveau, pas sur réponses HTTP applicatives.
-const FETCH_TIMEOUT_MS = 5000;
+// Timeout + retry exponentiel pour absorber les blips reseau transitoires
+// et la latence ponctuelle de SMS Partner. Cas observe : timeout 5s trop court
+// → "This operation was aborted" pour confirmation_no_deposit, booking_cancelled etc.
+// (cf. sms_logs avec error_message="aborted" 2026-04-30 + 2026-05-02).
+// Retry UNIQUEMENT sur erreur fetch bas niveau, pas sur reponses HTTP applicatives.
+const FETCH_TIMEOUT_MS = 10000;
+const MAX_ATTEMPTS = 3;
+const BACKOFF_MS = [400, 1500]; // entre attempt 0→1 et 1→2
 
 async function fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), FETCH_TIMEOUT_MS);
     try {
       return await fetch(url, { ...init, signal: ac.signal });
     } catch (err) {
-      if (attempt === 1) throw err;
-      await new Promise((r) => setTimeout(r, 400));
+      if (attempt === MAX_ATTEMPTS - 1) throw err;
+      await new Promise((r) => setTimeout(r, BACKOFF_MS[attempt] || 1500));
     } finally {
       clearTimeout(timer);
     }

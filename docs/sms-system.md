@@ -85,7 +85,7 @@ Validité : valable pendant l'abonnement actif. Perdus à la résiliation. Strip
 3. **Blocage** — `{ success: false, blocked: true }`
 
 ### Fonctions d'envoi
-- `sendBookingSms()` — transactionnel (rappels, confirmations, parrainage, birthday). Check `PAID_STATUSES` + quota/pack + dedup par slot/phone/type/jour. **Routage provider** : pays détecté FR/BE → SMS Partner (si `SMS_PARTNER_ENABLED=true`), sinon OVH.
+- `sendBookingSms()` — transactionnel (rappels, confirmations, parrainage, birthday). Check `PAID_STATUSES` + quota/pack + dedup par slot/phone/type/jour. **Routage provider** : pays détecté FR/BE → SMS Partner (si `SMS_PARTNER_ENABLED=true`), sinon OVH. **Fallback automatique vers OVH si SMS Partner échoue** (timeout/panne) — `sms_logs.provider` reflète le provider qui a vraiment envoyé. SMS Partner : timeout 10s + 3 attempts avec backoff 400ms→1500ms (cf. [sms-partner.ts](../src/lib/sms-partner.ts)).
 - `sendMarketingSms()` — marketing (campaign, welcome, review_request, voucher_expiry, referral_invite, inactive_reminder, near_reward). Check `PAID_STATUSES` + quota/pack. **Toujours via OVH** (tous pays). Refund pack si envoi fail ou si insert log fail.
 
 ### Providers SMS — dispatch et rollback
