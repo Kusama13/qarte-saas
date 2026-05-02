@@ -59,6 +59,7 @@ import {
   GiftCardActivatedEmail,
   GiftCardReceivedEmail,
   GiftCardMerchantNotificationEmail,
+  SmsCampaignSentEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import type { BookingConfirmationMode } from '@/emails/BookingConfirmationEmail';
@@ -426,6 +427,26 @@ export async function sendNewMerchantNotification(
     logger.error('Error sending new merchant notification', error);
     return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
+}
+
+export async function sendSmsCampaignSentEmail(
+  to: string,
+  shopName: string,
+  recipientCount: number,
+  smsPerRecipient: number,
+  totalSmsSent: number,
+  costEur: string,
+  body: string,
+  bodyWasNormalized: boolean,
+  locale: EmailLocale = 'fr'
+): Promise<SendEmailResult> {
+  return sendEmail(
+    to,
+    subj(locale, 'smsCampaignSent', { shopName, recipientCount: String(recipientCount) }),
+    SmsCampaignSentEmail,
+    { shopName, recipientCount, smsPerRecipient, totalSmsSent, costEur, body, bodyWasNormalized, locale },
+    { logLabel: `SMS campaign sent confirmation (${recipientCount} recipients, ${totalSmsSent} SMS)` }
+  );
 }
 
 // Notification interne nouvelle campagne SMS soumise (always FR — internal)

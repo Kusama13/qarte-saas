@@ -85,7 +85,7 @@ async function ovhRequest(method: string, path: string, body?: Record<string, un
  * @param phone E.164 without + (e.g. "33612345678")
  * @param message SMS body (max 160 chars for single SMS)
  */
-export async function sendSms(phone: string, message: string): Promise<{ success: boolean; jobId?: string; error?: string }> {
+export async function sendSms(phone: string, message: string): Promise<{ success: boolean; jobId?: string; error?: string; creditExhausted?: boolean }> {
   if (!APP_KEY || !APP_SECRET || !CONSUMER_KEY || !SMS_SERVICE) {
     console.error('[ovh-sms] Missing OVH SMS environment variables');
     return { success: false, error: 'Missing OVH config' };
@@ -121,7 +121,11 @@ export async function sendSms(phone: string, message: string): Promise<{ success
         ovhCode ? `(${ovhCode})` : '',
       ].filter(Boolean).join(' ').trim();
       console.error(`[ovh-sms] Send failed: ${errMsg}`);
-      return { success: false, error: errMsg };
+      // HTTP 402 ou message "Not enough credits" → solde OVH epuisé.
+      // Signale le creditExhausted pour que le dispatch stop net (au lieu de
+      // boucler sur tous les destinataires restants en pure perte).
+      const creditExhausted = status === 402 || /not enough credits/i.test(ovhMsg || '');
+      return { success: false, error: errMsg, creditExhausted };
     }
 
     const jobIds = (data as { ids?: number[] })?.ids;

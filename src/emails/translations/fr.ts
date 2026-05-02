@@ -73,6 +73,7 @@ export const fr = {
     smsQuotaWarning: '{shopName}, plus que 10% de SMS — achète un pack',
     smsQuotaReached: '{shopName}, quota SMS terminé — envois suspendus',
     smsPackPurchase: '{shopName}, ton pack de {packSize} SMS est crédité',
+    smsCampaignSent: '{shopName}, ta campagne SMS a été envoyée à {recipientCount} clientes',
   },
 
   baseLayout: {

@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { verifyCronAuth } from '@/lib/cron-helpers';
 import { sendMarketingSms, PAID_STATUSES, SMS_UNIT_COST_CENTS } from '@/lib/sms';
+import { sendSmsCampaignSentEmail } from '@/lib/email';
 import { isLegalSendTime, nextLegalSlot } from '@/lib/sms-compliance';
 import { resolveAudienceUnion } from '@/lib/sms-audience';
 import type { AudienceFilter } from '@/lib/sms-audience';
-import { resolveVariables, appendStopIfMissing, countSms } from '@/lib/sms-validator';
+import { resolveVariables, appendStopIfMissing, countSms, normalizeToGsm7 } from '@/lib/sms-validator';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -18,6 +19,7 @@ interface CampaignRow {
   body: string;
   audience_filter: Record<string, unknown>;
   scheduled_at: string | null;
+  pending_phones: string[] | null;
 }
 
 interface MerchantRow {
@@ -47,7 +49,7 @@ export async function GET(request: NextRequest) {
 
   const { data: pending } = await supabaseAdmin
     .from('sms_campaigns')
-    .select('id, merchant_id, body, audience_filter, scheduled_at')
+    .select('id, merchant_id, body, audience_filter, scheduled_at, pending_phones')
     .eq('status', 'scheduled')
     .lte('scheduled_at', new Date().toISOString())
     .order('scheduled_at', { ascending: true })
@@ -100,26 +102,43 @@ export async function GET(request: NextRequest) {
       .update({ status: 'sending' })
       .eq('id', campaign.id);
 
-    // Re-resolve audience at send time (opt-outs may have been added since submit).
-    const rawFilter = campaign.audience_filter as { filters?: AudienceFilter[] };
-    const filters: AudienceFilter[] = rawFilter?.filters || [];
-    const audience = await resolveAudienceUnion(supabaseAdmin, campaign.merchant_id, filters);
+    // Si pending_phones non-vide → reprise apres echec credit OVH : on ne
+    // reresoud PAS l'audience pour ne pas re-envoyer aux destinataires deja
+    // servis lors du dispatch precedent. Sinon resolution normale.
+    const hasPendingPhones = (campaign.pending_phones?.length ?? 0) > 0;
+    let phonesToSend: string[];
+    if (hasPendingPhones) {
+      phonesToSend = campaign.pending_phones || [];
+    } else {
+      const rawFilter = campaign.audience_filter as { filters?: AudienceFilter[] };
+      const filters: AudienceFilter[] = rawFilter?.filters || [];
+      const audience = await resolveAudienceUnion(supabaseAdmin, campaign.merchant_id, filters);
+      phonesToSend = audience.phones;
+    }
 
-    if (audience.count === 0) {
+    if (phonesToSend.length === 0) {
       await supabaseAdmin
         .from('sms_campaigns')
-        .update({ status: 'done', sent_at: new Date().toISOString(), recipient_count: 0 })
+        .update({ status: 'done', sent_at: new Date().toISOString(), recipient_count: 0, pending_phones: [] })
         .eq('id', campaign.id);
       continue;
     }
 
-    const finalBodyTemplate = appendStopIfMissing(campaign.body);
+    // Normalise le body en GSM-7 (retire emojis + remplace smart quotes/dashes)
+    // pour eviter de basculer en UCS-2 et payer 2 SMS au lieu d'1. Le merchant
+    // a explicitement opte pour ce comportement (voir mig 149 / fix countSms).
+    const normalizedBody = normalizeToGsm7(campaign.body);
+    const finalBodyTemplate = appendStopIfMissing(normalizedBody);
     const smsPerRecipient = countSms(finalBodyTemplate);
 
     let sentCount = 0;
     let blockedHit = false;
+    let creditExhausted = false;
+    const phonesQueue = phonesToSend.slice(0, PER_CAMPAIGN_CAP);
+    let nextPhoneIdx = 0;
 
-    for (const phone of audience.phones.slice(0, PER_CAMPAIGN_CAP)) {
+    for (; nextPhoneIdx < phonesQueue.length; nextPhoneIdx++) {
+      const phone = phonesQueue[nextPhoneIdx];
       if (Date.now() - startedAt > 280_000) break;
 
       const message = resolveVariables(finalBodyTemplate, {
@@ -140,6 +159,7 @@ export async function GET(request: NextRequest) {
           results.sent++;
         } else {
           results.failed++;
+          if (result.creditExhausted) { creditExhausted = true; break; }
           if (result.blocked) { blockedHit = true; break; }
         }
       } catch (err) {
@@ -148,30 +168,102 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Si bloqué par quota en cours de route et rien d'envoyé → re-scheduler dans 1h.
+    // Phones non encore tentes (apres break) → stockes pour le prochain dispatch
+    const remainingPhones = phonesQueue.slice(nextPhoneIdx + (creditExhausted || blockedHit ? 1 : 0));
+
+    // Si credit OVH epuise → re-scheduler +1h, garder remaining + déjà envoyés cumulés
+    // Si bloqué par quota Qarte (pack/free) et rien d'envoyé → re-scheduler aussi
     // Sinon done/failed selon qu'au moins un SMS a été envoyé.
     const costCentsActual = sentCount * smsPerRecipient * SMS_UNIT_COST_CENTS;
-    if (blockedHit && sentCount === 0) {
+    if (creditExhausted) {
+      // Cumul du recipient_count si reprise (pour ne pas perdre le compte des envois precedents)
+      const { data: prev } = await supabaseAdmin
+        .from('sms_campaigns')
+        .select('recipient_count, cost_cents')
+        .eq('id', campaign.id)
+        .single<{ recipient_count: number | null; cost_cents: number | null }>();
+      const cumulSent = (prev?.recipient_count || 0) + sentCount;
+      const cumulCost = (prev?.cost_cents || 0) + Math.round(costCentsActual);
+      await supabaseAdmin
+        .from('sms_campaigns')
+        .update({
+          status: 'scheduled',
+          scheduled_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          review_note: `Credit OVH epuise — ${remainingPhones.length} destinataires en attente, retente dans 1h.`,
+          pending_phones: remainingPhones,
+          recipient_count: cumulSent,
+          cost_cents: cumulCost,
+        })
+        .eq('id', campaign.id);
+      results.rescheduled++;
+      logger.warn('Campaign paused — OVH credit exhausted', {
+        campaignId: campaign.id,
+        sentThisRun: sentCount,
+        cumulSent,
+        remaining: remainingPhones.length,
+      });
+    } else if (blockedHit && sentCount === 0) {
       await supabaseAdmin
         .from('sms_campaigns')
         .update({
           status: 'scheduled',
           scheduled_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
           review_note: 'Quota SMS épuisé — retenté dans 1h (achetez un pack pour débloquer).',
+          pending_phones: remainingPhones,
         })
         .eq('id', campaign.id);
       results.rescheduled++;
     } else {
+      // Si reprise (hasPendingPhones), cumuler avec recipient_count/cost_cents precedents
+      let finalSent = sentCount;
+      let finalCost = Math.round(costCentsActual);
+      if (hasPendingPhones) {
+        const { data: prev } = await supabaseAdmin
+          .from('sms_campaigns')
+          .select('recipient_count, cost_cents')
+          .eq('id', campaign.id)
+          .single<{ recipient_count: number | null; cost_cents: number | null }>();
+        finalSent = (prev?.recipient_count || 0) + sentCount;
+        finalCost = (prev?.cost_cents || 0) + Math.round(costCentsActual);
+      }
       await supabaseAdmin
         .from('sms_campaigns')
         .update({
-          status: sentCount > 0 ? 'done' : 'failed',
+          status: finalSent > 0 ? 'done' : 'failed',
           sent_at: new Date().toISOString(),
-          recipient_count: sentCount,
-          cost_cents: Math.round(costCentsActual),
+          recipient_count: finalSent,
+          cost_cents: finalCost,
+          pending_phones: [],
           review_note: blockedHit ? 'Quota SMS atteint pendant l\'envoi.' : null,
         })
         .eq('id', campaign.id);
+
+      if (finalSent > 0) {
+        const { data: userRow } = await supabaseAdmin
+          .from('merchants')
+          .select('user_id, locale')
+          .eq('id', campaign.merchant_id)
+          .single<{ user_id: string; locale: string | null }>();
+
+        if (userRow?.user_id) {
+          const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userRow.user_id);
+          const merchantEmail = authUser?.user?.email;
+          if (merchantEmail) {
+            const bodyWasNormalized = normalizedBody !== campaign.body.trim();
+            void sendSmsCampaignSentEmail(
+              merchantEmail,
+              merchant.shop_name,
+              finalSent,
+              smsPerRecipient,
+              finalSent * smsPerRecipient,
+              (finalCost / 100).toFixed(2),
+              normalizedBody,
+              bodyWasNormalized,
+              (userRow.locale as 'fr' | 'en') || 'fr'
+            ).catch((err) => logger.error('SMS campaign sent email failed', { campaignId: campaign.id, err }));
+          }
+        }
+      }
     }
   }
 

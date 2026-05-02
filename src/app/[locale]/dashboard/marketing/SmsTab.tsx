@@ -24,10 +24,14 @@ import {
   SMS_LIMIT_SINGLE,
   SMS_LIMIT_DOUBLE,
   SMS_LIMIT_MAX,
+  SMS_LIMIT_SINGLE_UCS2,
+  SMS_LIMIT_DOUBLE_UCS2,
   countSms,
   appendStopIfMissing,
   resolveVariables,
   validateMarketingSms,
+  isGsm7,
+  normalizeToGsm7,
 } from '@/lib/sms-validator';
 import type { AudienceFilter } from '@/lib/sms-audience';
 import { getPlanFeatures } from '@/lib/plan-tiers';
@@ -123,9 +127,19 @@ export default function SmsTab() {
     });
   }, [body, merchant?.shop_name]);
 
-  const charCount = previewBody.length;
+  const isGsm7Body = isGsm7(previewBody);
+  const charCount = Array.from(previewBody).length;
   const smsCount = countSms(previewBody);
   const validation = useMemo(() => validateMarketingSms(body || '', { requireStop: true }), [body]);
+
+  // Limite à afficher dans le compteur — bascule sur UCS-2 (70/134) si emojis présents
+  const smsLimitForCount = isGsm7Body
+    ? (smsCount >= 2 ? SMS_LIMIT_DOUBLE : SMS_LIMIT_SINGLE)
+    : (smsCount >= 2 ? SMS_LIMIT_DOUBLE_UCS2 : SMS_LIMIT_SINGLE_UCS2);
+
+  const handleNormalize = () => {
+    setBody(normalizeToGsm7(body));
+  };
 
   const costEstimate = useMemo(() => {
     if (audienceCount == null) return null;
@@ -331,7 +345,7 @@ export default function SmsTab() {
             ))}
           </div>
           <div className={`text-xs font-bold ${charColor}`}>
-            {charCount} / {smsCount >= 2 ? SMS_LIMIT_DOUBLE : SMS_LIMIT_SINGLE} — {smsCountLabel}
+            {charCount} / {smsLimitForCount} — {smsCountLabel}
           </div>
         </div>
 
@@ -362,6 +376,29 @@ export default function SmsTab() {
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {/* Alerte UCS-2 — emojis ou caracteres speciaux qui doublent le coût */}
+        {!isGsm7Body && body.trim() && validation.errors.length === 0 && (
+          <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-3 flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-amber-600" />
+            <div className="flex-1">
+              <p className="text-xs font-bold text-amber-900 mb-1">
+                Attention : emojis ou caractères spéciaux détectés
+              </p>
+              <p className="text-xs text-amber-800 leading-relaxed">
+                Les opérateurs facturent 2 SMS au lieu d&apos;1 par destinataire (limite passe de 160 à 70 caractères).
+                Tu peux les retirer pour garder un envoi à 1 SMS — le texte reste lisible.
+              </p>
+              <button
+                type="button"
+                onClick={handleNormalize}
+                className="mt-2 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition-colors"
+              >
+                Retirer les emojis
+              </button>
+            </div>
           </div>
         )}
 

@@ -1580,6 +1580,14 @@ Source : `src/emails/translations/fr.ts`. Les `<strong>...</strong>` ont été c
 - Heading: `{context} clientes ont demandé la résa en ligne`
 - Hook: `Plusieurs clientes ont voulu prendre RDV en ligne chez {shopName} mais la feature résa n'est pas active dans ton plan actuel.`
 
+#### smsCampaignSent
+- **Subject** : `{shopName}, ta campagne SMS a été envoyée à {recipientCount} clientes`
+- **Preview** : `Ta campagne SMS a touché {recipientCount} clientes`
+- **Heading** : `Campagne envoyée ✅`
+- **Body** : récap stats (destinataires, SMS/dest, total SMS, coût €) + message envoyé en monospace + note ambre si normalisation appliquée (emojis retirés pour éviter UCS-2 = 2 SMS)
+- **CTA** : `Voir les stats` → `/dashboard/marketing?tab=sms`
+- **Trigger** : cron `/api/cron/sms-campaigns-dispatch` après status='done' avec sentCount > 0
+
 #### tier2Upsell
 - **Subject** : `Tes meilleurs clients méritent plus`
 - **Preview** : `Tes meilleurs clients méritent plus`

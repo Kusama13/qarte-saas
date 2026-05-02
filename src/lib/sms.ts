@@ -521,6 +521,8 @@ export interface SendMarketingSmsParams {
 export interface SendMarketingSmsResult {
   success: boolean;
   blocked?: boolean;
+  /** Solde OVH epuise (HTTP 402). Distinct de blocked (quota Qarte) car necessite recharge externe. */
+  creditExhausted?: boolean;
   error?: string;
 }
 
@@ -593,7 +595,12 @@ export async function sendMarketingSms(
       await refundPackOne(supabase, merchantId);
     }
 
-    return { success: result.success, error: result.error };
+    return {
+      success: result.success,
+      error: result.error,
+      blocked: result.creditExhausted,
+      creditExhausted: result.creditExhausted,
+    };
   } catch (err) {
     console.error(`[sms] Marketing error to ${phone}:`, err);
     return { success: false, error: 'exception' };

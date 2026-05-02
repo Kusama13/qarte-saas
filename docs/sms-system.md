@@ -30,7 +30,8 @@ Header = titre "Campagnes" + sous-titre "Remplis ton agenda et booste ton chiffr
 - Composer "Rédiger mon SMS" :
   - Dropdown **Inspirations** (3 suggestions : Offre spéciale, Nouveau produit ou service, Événement dans le salon — dans [`src/lib/sms-templates.ts`](../src/lib/sms-templates.ts))
   - Textarea + boutons insertion `{prenom}` `{shop_name}`
-  - Compteur live 1/2/3 SMS (vert/orange/rouge)
+  - Compteur live 1/2/3 SMS (vert/orange/rouge) — bascule auto entre limites GSM-7 (160/306) et UCS-2 (70/134) selon contenu
+  - **Alerte UCS-2** : si emoji ou char hors GSM-7 détecté (apostrophe typo `’`, tirets long `—`, etc.), bandeau ambre + bouton "Retirer les emojis" qui appelle `normalizeToGsm7()`. Filet de sécurité au dispatch : la normalisation est aussi appliquée systématiquement avant envoi pour éviter de payer 2 SMS au lieu d'1 ([src/lib/sms-validator.ts](../src/lib/sms-validator.ts) `isGsm7` + `normalizeToGsm7`)
   - Preview mockup iPhone avec variables remplacées (Sophie + vrai shop_name)
   - **Audience multi-select** (chips) : toutes / inactives 14/30/60/90j / nouvelles 30j / VIP 5+ tampons / anniversaires du mois / voucher non utilisé 7j+. "Toutes" est exclusif.
   - Schedule (immédiat / planifié)
@@ -209,9 +210,15 @@ Admin /admin/sms onglet "Modération"
 
 Cron /api/cron/sms-campaigns-dispatch (*/15min)
   → SELECT WHERE status='scheduled' AND scheduled_at <= NOW()
-  → re-check subscription, compliance, audience (opt-outs récents)
-  → sendMarketingSms en boucle, stop si blocked quota
-  → status → done | failed | scheduled (re-try +1h si bloqué en cours)
+  → re-check subscription, compliance
+  → Si pending_phones non-vide : envoi cible sur cette liste (reprise apres crédit OVH épuisé)
+    Sinon : resolve audience (opt-outs récents)
+  → normalizeToGsm7(body) — retire emojis/smart quotes (1 SMS au lieu de 2 UCS-2)
+  → sendMarketingSms en boucle :
+    - Stop si quota Qarte épuisé (blocked) → re-schedule +1h
+    - Stop si crédit OVH épuisé (HTTP 402, creditExhausted) → save remaining phones dans pending_phones + re-schedule +1h, cumul recipient_count
+  → status → done | failed | scheduled
+  → Si done : sendSmsCampaignSentEmail(merchant) — récap destinataires/coût/message + note si normalisation
 ```
 
 ### Automatisations

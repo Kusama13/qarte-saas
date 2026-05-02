@@ -49,6 +49,7 @@ export { SlotReleasedEmail } from './SlotReleasedEmail';
 export { AmbassadorWelcomeEmail } from './AmbassadorWelcomeEmail';
 export { SmsQuotaEmail } from './SmsQuotaEmail';
 export { SmsPackPurchaseEmail } from './SmsPackPurchaseEmail';
+export { SmsCampaignSentEmail } from './SmsCampaignSentEmail';
 export { ActivationStalledEmail } from './ActivationStalledEmail';
 export { UpgradeAllInEmail, type UpgradeTrigger } from './UpgradeAllInEmail';
 export { GiftCardOrderConfirmationEmail } from './GiftCardOrderConfirmationEmail';
