@@ -3,8 +3,8 @@ import { z } from 'zod';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { resolveAudienceUnion } from '@/lib/sms-audience';
 import type { AudienceFilter } from '@/lib/sms-audience';
-import { countSms, validateMarketingSms } from '@/lib/sms-validator';
-import { SMS_UNIT_COST_CENTS } from '@/lib/sms';
+import { countSms, validateMarketingSms, normalizeToGsm7, appendStopIfMissing } from '@/lib/sms-validator';
+import { SMS_UNIT_COST_CENTS, getSmsUsageThisMonth, getEffectiveQuota } from '@/lib/sms';
 import { isLegalSendTime, nextLegalSlot } from '@/lib/sms-compliance';
 import { getPlanFeatures } from '@/lib/plan-tiers';
 import { triggerUpgradeAllInEmail } from '@/lib/upgrade-triggers';
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, country, subscription_status, plan_tier, shop_name')
+      .select('id, country, subscription_status, plan_tier, shop_name, billing_period_start, sms_pack_balance, sms_quota_override, sms_quota_override_cycle_anchor, billing_interval, created_at')
       .eq('id', merchantId)
       .eq('user_id', user.id)
       .single();
@@ -78,8 +78,35 @@ export async function POST(request: NextRequest) {
     const compliance = isLegalSendTime(requestedAt, merchant.country || 'FR');
     const effectiveAt = compliance.ok ? requestedAt : nextLegalSlot(requestedAt, merchant.country || 'FR');
 
-    const smsCount = countSms(validation.finalBody);
-    const costCentsInt = Math.round(resolved.count * smsCount * SMS_UNIT_COST_CENTS);
+    // Calcul du nombre de SMS effectif APRES normalisation GSM-7 — meme logique que
+    // le dispatch (qui retire emojis/smart quotes pour eviter UCS-2 = 2 SMS).
+    // Sinon le merchant payerait pour 2 SMS alors qu'1 seul partira.
+    const normalizedBody = normalizeToGsm7(validation.finalBody);
+    const finalBodyForCount = appendStopIfMissing(normalizedBody);
+    const smsCount = countSms(finalBodyForCount);
+    const totalSmsRequested = resolved.count * smsCount;
+    const costCentsInt = Math.round(totalSmsRequested * SMS_UNIT_COST_CENTS);
+
+    // Check quota strict avant insert — bloque la soumission si SMS demandes > dispo
+    // (quota mensuel restant + pack achete). Force le merchant a acheter un pack.
+    const usage = await getSmsUsageThisMonth(supabaseAdmin, merchantId, merchant.billing_period_start, 100);
+    const quotaTotal = getEffectiveQuota(merchant, usage.periodStart);
+    const quotaLeft = Math.max(0, quotaTotal - usage.sent);
+    const packBalance = Number(merchant.sms_pack_balance || 0);
+    const smsAvailable = quotaLeft + packBalance;
+    if (totalSmsRequested > smsAvailable) {
+      return NextResponse.json(
+        {
+          error: 'quota_insufficient',
+          message: `Cette campagne demande ${totalSmsRequested} SMS mais seulement ${smsAvailable} sont dispo (${quotaLeft} inclus + ${packBalance} pack). Achete un pack pour la lancer.`,
+          requested: totalSmsRequested,
+          available: smsAvailable,
+          quotaLeft,
+          packBalance,
+        },
+        { status: 402 },
+      );
+    }
 
     const { data: campaign, error: insertError } = await supabaseAdmin
       .from('sms_campaigns')

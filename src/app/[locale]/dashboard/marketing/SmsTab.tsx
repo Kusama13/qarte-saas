@@ -84,7 +84,11 @@ function formatCostCents(cents: number | null): string {
   return (cents / 100).toFixed(2) + ' €';
 }
 
-export default function SmsTab() {
+interface SmsTabProps {
+  onBuyPack?: () => void;
+}
+
+export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
   const t = useTranslations('marketing.smsTab');
   const { merchant } = useMerchant();
 
@@ -96,6 +100,9 @@ export default function SmsTab() {
 
   const [audienceCount, setAudienceCount] = useState<number | null>(null);
   const [loadingCount, setLoadingCount] = useState(false);
+
+  // Quota state — fetched at mount + after submit
+  const [quotaState, setQuotaState] = useState<{ sent: number; quota: number; packBalance: number } | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -119,6 +126,7 @@ export default function SmsTab() {
     });
   };
 
+  // Preview "tel quel" — pour le mockup iPhone affiche au merchant
   const previewBody = useMemo(() => {
     const withStop = appendStopIfMissing(body || '');
     return resolveVariables(withStop, {
@@ -127,15 +135,25 @@ export default function SmsTab() {
     });
   }, [body, merchant?.shop_name]);
 
+  // Body REELLEMENT envoye (normalise pour eviter UCS-2 = 2 SMS).
+  // Le compteur SMS et le coût sont bases sur celui-ci, pour que ce qui est
+  // affiche corresponde a ce qui sera facture/envoye.
+  const dispatchBody = useMemo(() => {
+    const normalized = normalizeToGsm7(body || '');
+    const withStop = appendStopIfMissing(normalized);
+    return resolveVariables(withStop, {
+      prenom: '', // Au dispatch reel, prenom = ''
+      shop_name: merchant?.shop_name || 'Ma boutique',
+    });
+  }, [body, merchant?.shop_name]);
+
   const isGsm7Body = isGsm7(previewBody);
-  const charCount = Array.from(previewBody).length;
-  const smsCount = countSms(previewBody);
+  const charCount = Array.from(dispatchBody).length;
+  const smsCount = countSms(dispatchBody);
   const validation = useMemo(() => validateMarketingSms(body || '', { requireStop: true }), [body]);
 
-  // Limite à afficher dans le compteur — bascule sur UCS-2 (70/134) si emojis présents
-  const smsLimitForCount = isGsm7Body
-    ? (smsCount >= 2 ? SMS_LIMIT_DOUBLE : SMS_LIMIT_SINGLE)
-    : (smsCount >= 2 ? SMS_LIMIT_DOUBLE_UCS2 : SMS_LIMIT_SINGLE_UCS2);
+  // Limite affichee dans le compteur — toujours GSM-7 puisque dispatchBody l'est
+  const smsLimitForCount = smsCount >= 2 ? SMS_LIMIT_DOUBLE : SMS_LIMIT_SINGLE;
 
   const handleNormalize = () => {
     setBody(normalizeToGsm7(body));
@@ -146,6 +164,37 @@ export default function SmsTab() {
     const count = audienceCount * (smsCount === 3 ? 3 : smsCount);
     return Math.round(count * SMS_UNIT_COST_CENTS);
   }, [audienceCount, smsCount]);
+
+  // SMS demandes pour cette campagne (audience × SMS/destinataire)
+  const smsRequested = useMemo(() => {
+    if (audienceCount == null) return 0;
+    return audienceCount * (smsCount === 3 ? 3 : smsCount);
+  }, [audienceCount, smsCount]);
+
+  // SMS dispo (quota_left + pack_balance)
+  const smsAvailable = useMemo(() => {
+    if (!quotaState) return null;
+    const quotaLeft = Math.max(0, quotaState.quota - quotaState.sent);
+    return quotaLeft + quotaState.packBalance;
+  }, [quotaState]);
+
+  const insufficientQuota = smsAvailable !== null && smsRequested > 0 && smsRequested > smsAvailable;
+
+  // Fetch quota au mount et apres chaque submit reussi
+  useEffect(() => {
+    if (!merchant?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/sms/usage?merchantId=${merchant.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) setQuotaState({ sent: data.sent || 0, quota: data.quota || 100, packBalance: data.packBalance || 0 });
+        }
+      } catch { /* silent */ }
+    })();
+    return () => { cancelled = true; };
+  }, [merchant?.id]);
 
   useEffect(() => {
     if (!merchant?.id) return;
@@ -227,6 +276,19 @@ export default function SmsTab() {
         setSubmitResult({ success: true, message: t('submitSuccess') });
         setBody('');
         fetchCampaigns();
+        // Refresh quota apres soumission
+        fetch(`/api/sms/usage?merchantId=${merchant.id}`)
+          .then(r => r.ok ? r.json() : null)
+          .then(d => d && setQuotaState({ sent: d.sent || 0, quota: d.quota || 100, packBalance: d.packBalance || 0 }))
+          .catch(() => {});
+      } else if (res.status === 402 && data.error === 'quota_insufficient') {
+        // Race : audience a grossi entre check front et submit. Message + bouton via UI deja affichee.
+        setSubmitResult({ success: false, message: data.message || 'Quota insuffisant. Achete un pack pour lancer cette campagne.' });
+        // Refresh quota pour mettre a jour l'UI
+        fetch(`/api/sms/usage?merchantId=${merchant.id}`)
+          .then(r => r.ok ? r.json() : null)
+          .then(d => d && setQuotaState({ sent: d.sent || 0, quota: d.quota || 100, packBalance: d.packBalance || 0 }))
+          .catch(() => {});
       } else {
         const errs = Array.isArray(data.errors) ? data.errors.join(' ') : data.error || t('submitError');
         setSubmitResult({ success: false, message: errs });
@@ -482,18 +544,51 @@ export default function SmsTab() {
 
         {/* Summary + submit */}
         <div className="mt-5 pt-4 border-t border-gray-100">
-          <div className="flex items-center justify-between mb-3 text-xs">
-            <span className="text-gray-500">{t('estimatedCost')}</span>
+          <div className="flex items-center justify-between mb-2 text-xs">
+            <span className="text-gray-500">SMS pour cette campagne</span>
             <span className="font-bold text-gray-900">
-              {audienceCount && costEstimate != null
-                ? `${audienceCount} × ${smsCount} SMS = ${formatCostCents(costEstimate)} HT`
+              {audienceCount && smsRequested > 0
+                ? `${audienceCount} × ${smsCount} = ${smsRequested} SMS`
                 : '—'}
             </span>
           </div>
+          {quotaState && (
+            <div className="flex items-center justify-between mb-3 text-xs">
+              <span className="text-gray-500">Quota dispo</span>
+              <span className="font-semibold text-gray-700">
+                {smsAvailable} SMS ({Math.max(0, quotaState.quota - quotaState.sent)} inclus + {quotaState.packBalance} pack)
+              </span>
+            </div>
+          )}
+
+          {/* Alerte quota insuffisant — bloque le submit */}
+          {insufficientQuota && (
+            <div className="mb-3 rounded-xl bg-red-50 border border-red-200 p-3 flex items-start gap-3">
+              <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-red-600" />
+              <div className="flex-1">
+                <p className="text-xs font-bold text-red-900 mb-1">
+                  Quota insuffisant
+                </p>
+                <p className="text-xs text-red-800 leading-relaxed mb-2">
+                  Cette campagne demande <strong>{smsRequested} SMS</strong> mais tu n&apos;en as que <strong>{smsAvailable}</strong> de dispo ce cycle.
+                  Achète un pack pour la lancer.
+                </p>
+                {onBuyPack && (
+                  <button
+                    type="button"
+                    onClick={onBuyPack}
+                    className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors"
+                  >
+                    Acheter un pack
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           <button
             onClick={handleSubmit}
-            disabled={submitting || !validation.ok || !body.trim() || audienceCount === 0 || (scheduleMode === 'later' && !scheduleDate)}
+            disabled={submitting || !validation.ok || !body.trim() || audienceCount === 0 || (scheduleMode === 'later' && !scheduleDate) || insufficientQuota}
             className="w-full py-3 bg-[#4b0082] hover:bg-[#4b0082]/90 text-white font-bold text-sm rounded-xl active:scale-[0.98] touch-manipulation transition-all disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

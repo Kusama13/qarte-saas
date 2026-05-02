@@ -186,7 +186,7 @@ export default function MarketingPushPage() {
         />
       )}
 
-      {activeTab === 'sms' && <SmsTab />}
+      {activeTab === 'sms' && <SmsTab onBuyPack={() => setShowBuyPack(true)} />}
 
       {activeTab === 'automations' && (
         <AutomationsTab
