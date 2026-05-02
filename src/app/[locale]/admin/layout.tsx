@@ -21,7 +21,6 @@ import {
   MessageSquare,
   Eye,
   MessageCircleQuestion,
-  Bug,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -37,7 +36,6 @@ const navItems = [
   { href: '/admin/sms', icon: MessageSquare, label: 'SMS' },
   { href: '/admin/announcements', icon: Bell, label: 'Annonces' },
   { href: '/admin/demos', icon: Eye, label: 'Démos' },
-  { href: '/admin/debug', icon: Bug, label: 'Debug PWA' },
 ];
 
 export default function AdminLayout({

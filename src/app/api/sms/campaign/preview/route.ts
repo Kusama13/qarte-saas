@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
-import { resolveAudienceUnion } from '@/lib/sms-audience';
+import { resolveAudienceUnion, resolveAudienceWithNames } from '@/lib/sms-audience';
 import type { AudienceFilter } from '@/lib/sms-audience';
+import { bodyHasPersonalization, computeCampaignSmsBreakdown } from '@/lib/sms-validator';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -19,6 +20,8 @@ const FilterSchema = z.discriminatedUnion('type', [
 const BodySchema = z.object({
   merchantId: z.string().uuid(),
   filters: z.array(FilterSchema).min(1).max(10),
+  /** Optional. Si fourni et contient {prenom}, retourne breakdown personnalise. */
+  body: z.string().max(500).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -27,7 +30,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Paramètres invalides' }, { status: 400 });
     }
-    const { merchantId, filters } = parsed.data;
+    const { merchantId, filters, body } = parsed.data;
 
     const supabase = await createRouteHandlerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -35,11 +38,19 @@ export async function POST(request: NextRequest) {
 
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id')
+      .select('id, shop_name')
       .eq('id', merchantId)
       .eq('user_id', user.id)
-      .single();
+      .single<{ id: string; shop_name: string }>();
     if (!merchant) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+
+    // Si body fourni avec {prenom} -> breakdown personnalise (firstnames cote
+    // serveur, jamais exposes au client).
+    if (body && bodyHasPersonalization(body)) {
+      const { count, recipients } = await resolveAudienceWithNames(supabaseAdmin, merchantId, filters as AudienceFilter[]);
+      const breakdown = computeCampaignSmsBreakdown(body, recipients, merchant.shop_name);
+      return NextResponse.json({ count, breakdown });
+    }
 
     const { count } = await resolveAudienceUnion(supabaseAdmin, merchantId, filters as AudienceFilter[]);
     return NextResponse.json({ count });

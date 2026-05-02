@@ -6,7 +6,7 @@ import { sendSmsCampaignSentEmail } from '@/lib/email';
 import { isLegalSendTime, nextLegalSlot } from '@/lib/sms-compliance';
 import { resolveAudienceUnion } from '@/lib/sms-audience';
 import type { AudienceFilter } from '@/lib/sms-audience';
-import { resolveVariables, countSms, normalizeToGsm7, withOvhStopClause } from '@/lib/sms-validator';
+import { resolveVariables, countSms, normalizeToGsm7, withOvhStopClause, bodyHasPersonalization } from '@/lib/sms-validator';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -132,15 +132,32 @@ export async function GET(request: NextRequest) {
       continue;
     }
 
-    // Normalise le body en GSM-7 (retire emojis + remplace smart quotes/dashes)
-    // pour eviter de basculer en UCS-2 et payer 2 SMS au lieu d'1.
-    // Le smsCount est calcule sur body + " STOP au 36180" (qu'OVH ajoute auto)
-    // pour refleter le SMS reellement envoye.
+    // Normalise le body en GSM-7 (retire emojis + smart quotes) pour eviter
+    // de basculer en UCS-2 et payer 2 SMS au lieu d'1.
     const normalizedBody = normalizeToGsm7(campaign.body);
     const finalBodyTemplate = normalizedBody.trim();
-    const smsPerRecipient = countSms(withOvhStopClause(finalBodyTemplate));
+    const usesPersonalization = bodyHasPersonalization(finalBodyTemplate);
+
+    // Si {prenom}, on fetch les firstnames via la table customers (1 query batch).
+    // Sinon, prenom='' (comportement avant) — pas de query supplementaire.
+    let firstNameByPhone: Map<string, string | null> = new Map();
+    if (usesPersonalization && phonesToSend.length > 0) {
+      const { data: cust } = await supabaseAdmin
+        .from('customers')
+        .select('phone_number, first_name')
+        .eq('merchant_id', campaign.merchant_id)
+        .in('phone_number', phonesToSend);
+      for (const c of (cust || []) as { phone_number: string; first_name: string | null }[]) {
+        firstNameByPhone.set(c.phone_number, c.first_name);
+      }
+    }
+
+    // Baseline SMS count (avec prenom='') — utilise pour l'email recap quand
+    // pas de personnalisation, et comme fallback de smsPerRecipient.
+    const baselineSmsPerRecipient = countSms(withOvhStopClause(resolveVariables(finalBodyTemplate, { prenom: '', shop_name: merchant.shop_name })));
 
     let sentCount = 0;
+    let actualTotalSms = 0;
     let blockedHit = false;
     let creditExhausted = false;
     const phonesQueue = phonesToSend.slice(0, PER_CAMPAIGN_CAP);
@@ -150,10 +167,12 @@ export async function GET(request: NextRequest) {
       const phone = phonesQueue[nextPhoneIdx];
       if (Date.now() - startedAt > 280_000) break;
 
+      const prenom = usesPersonalization ? ((firstNameByPhone.get(phone) || '').trim().slice(0, 50)) : '';
       const message = resolveVariables(finalBodyTemplate, {
-        prenom: '',
+        prenom,
         shop_name: merchant.shop_name,
       });
+      const thisSmsCount = countSms(withOvhStopClause(message));
 
       try {
         const result = await sendMarketingSms(supabaseAdmin, {
@@ -165,6 +184,7 @@ export async function GET(request: NextRequest) {
 
         if (result.success) {
           sentCount++;
+          actualTotalSms += thisSmsCount;
           results.sent++;
         } else {
           results.failed++;
@@ -180,10 +200,9 @@ export async function GET(request: NextRequest) {
     // Phones non encore tentes (apres break) → stockes pour le prochain dispatch
     const remainingPhones = phonesQueue.slice(nextPhoneIdx + (creditExhausted || blockedHit ? 1 : 0));
 
-    // Si credit OVH epuise → re-scheduler +1h, garder remaining + déjà envoyés cumulés
-    // Si bloqué par quota Qarte (pack/free) et rien d'envoyé → re-scheduler aussi
-    // Sinon done/failed selon qu'au moins un SMS a été envoyé.
-    const costCentsActual = sentCount * smsPerRecipient * SMS_UNIT_COST_CENTS;
+    // Coût = somme reelle des SMS envoyes (pas count*moyenne) — necessaire car
+    // {prenom} long peut faire basculer un destinataire en 2 SMS.
+    const costCentsActual = actualTotalSms * SMS_UNIT_COST_CENTS;
     if (creditExhausted) {
       // Cumul du recipient_count si reprise (pour ne pas perdre le compte des envois precedents)
       const { data: prev } = await supabaseAdmin
@@ -257,12 +276,16 @@ export async function GET(request: NextRequest) {
         if (merchantEmail) {
           const quotaTotal = getEffectiveQuota(merchant, usage.periodStart);
           const packBalance = Number(merchant.sms_pack_balance || 0);
+          // Total SMS reel = somme cumulee. smsPerRecipient affiche dans le mail
+          // est la moyenne (peut etre fractionnaire si personnalisation).
+          const totalSmsThisCampaign = (hasPendingPhones ? (Math.round((finalCost - Math.round(actualTotalSms * SMS_UNIT_COST_CENTS)) / SMS_UNIT_COST_CENTS) + actualTotalSms) : actualTotalSms);
+          const avgSmsPerRecipient = finalSent > 0 ? Math.round((totalSmsThisCampaign / finalSent) * 10) / 10 : baselineSmsPerRecipient;
           void sendSmsCampaignSentEmail({
             to: merchantEmail,
             shopName: merchant.shop_name,
             recipientCount: finalSent,
-            smsPerRecipient,
-            totalSmsSent: finalSent * smsPerRecipient,
+            smsPerRecipient: avgSmsPerRecipient,
+            totalSmsSent: totalSmsThisCampaign,
             quotaUsed: usage.sent,
             quotaTotal,
             packBalance,

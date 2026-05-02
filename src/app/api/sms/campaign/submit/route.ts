@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
-import { resolveAudienceUnion } from '@/lib/sms-audience';
+import { resolveAudienceUnion, resolveAudienceWithNames } from '@/lib/sms-audience';
 import type { AudienceFilter } from '@/lib/sms-audience';
-import { countSms, validateMarketingSms, normalizeToGsm7, withOvhStopClause } from '@/lib/sms-validator';
+import { countSms, validateMarketingSms, normalizeToGsm7, withOvhStopClause, bodyHasPersonalization, computeCampaignSmsBreakdown } from '@/lib/sms-validator';
 import { SMS_UNIT_COST_CENTS, getSmsUsageThisMonth, getEffectiveQuota } from '@/lib/sms';
 import { isLegalSendTime, nextLegalSlot } from '@/lib/sms-compliance';
 import { getPlanFeatures } from '@/lib/plan-tiers';
@@ -67,25 +67,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Contenu invalide', errors: validation.errors }, { status: 400 });
     }
 
-    // Resolve audience snapshot (union of selected filters)
-    const resolved = await resolveAudienceUnion(supabaseAdmin, merchantId, filters as AudienceFilter[]);
-    if (resolved.count === 0) {
-      return NextResponse.json({ error: 'Audience vide — aucun destinataire éligible.' }, { status: 400 });
+    // Resolve audience. Si le body contient {prenom}, on fetch aussi les
+    // first_names pour calculer le SMS count *par destinataire* (un prenom
+    // long peut faire basculer en 2 SMS — cf computeCampaignSmsBreakdown).
+    const usesPersonalization = bodyHasPersonalization(validation.finalBody);
+    let recipientCount: number;
+    let totalSmsRequested: number;
+    let smsCount: number;
+    if (usesPersonalization) {
+      const { count, recipients } = await resolveAudienceWithNames(supabaseAdmin, merchantId, filters as AudienceFilter[]);
+      if (count === 0) {
+        return NextResponse.json({ error: 'Audience vide — aucun destinataire éligible.' }, { status: 400 });
+      }
+      const breakdown = computeCampaignSmsBreakdown(validation.finalBody, recipients, merchant.shop_name);
+      recipientCount = count;
+      totalSmsRequested = breakdown.totalSms;
+      smsCount = breakdown.baselineSmsPerRecipient;
+    } else {
+      const resolved = await resolveAudienceUnion(supabaseAdmin, merchantId, filters as AudienceFilter[]);
+      if (resolved.count === 0) {
+        return NextResponse.json({ error: 'Audience vide — aucun destinataire éligible.' }, { status: 400 });
+      }
+      const normalized = normalizeToGsm7(validation.finalBody);
+      smsCount = countSms(withOvhStopClause(normalized));
+      recipientCount = resolved.count;
+      totalSmsRequested = recipientCount * smsCount;
     }
 
-    // Determine effective scheduled_at: either user-provided (shifted to legal slot) or nextLegalSlot(now)
     const requestedAt = scheduledAt ? new Date(scheduledAt) : new Date();
     const compliance = isLegalSendTime(requestedAt, merchant.country || 'FR');
     const effectiveAt = compliance.ok ? requestedAt : nextLegalSlot(requestedAt, merchant.country || 'FR');
 
-    // Calcul du nombre de SMS effectif APRES normalisation GSM-7 + ajout de la
-    // mention STOP qu'OVH ajoute auto (`noStopClause: false`). Sans ces deux
-    // simulations, le merchant pourrait etre facture pour 2 SMS au lieu d'1
-    // (emojis qui forcent UCS-2) ou 2 SMS au lieu d'1 (mention STOP +17 chars).
-    const normalizedBody = normalizeToGsm7(validation.finalBody);
-    const finalBodyForCount = withOvhStopClause(normalizedBody);
-    const smsCount = countSms(finalBodyForCount);
-    const totalSmsRequested = resolved.count * smsCount;
     const costCentsInt = Math.round(totalSmsRequested * SMS_UNIT_COST_CENTS);
 
     // Check quota strict avant insert — bloque la soumission si SMS demandes > dispo
@@ -116,7 +128,7 @@ export async function POST(request: NextRequest) {
         kind: 'custom',
         body: validation.finalBody,
         audience_filter: { filters },
-        recipient_count: resolved.count,
+        recipient_count: recipientCount,
         status: 'pending_review',
         scheduled_at: effectiveAt.toISOString(),
         cost_cents: costCentsInt,
@@ -131,7 +143,7 @@ export async function POST(request: NextRequest) {
 
     void sendNewSmsCampaignNotification(
       (merchant.shop_name as string) || 'Commerce',
-      resolved.count,
+      recipientCount,
       smsCount,
       costCentsInt,
       validation.finalBody,
@@ -142,7 +154,7 @@ export async function POST(request: NextRequest) {
       campaignId: campaign.id,
       status: campaign.status,
       scheduledAt: campaign.scheduled_at,
-      recipientCount: resolved.count,
+      recipientCount,
       smsCount,
       costCents: costCentsInt,
       complianceAdjusted: !compliance.ok,

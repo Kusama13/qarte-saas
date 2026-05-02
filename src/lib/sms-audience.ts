@@ -50,6 +50,42 @@ export type CustomerEmbed = {
   phone_number?: string | null;
 };
 
+export interface Recipient {
+  phone: string;
+  firstName: string | null;
+}
+
+/**
+ * Resolve audience + attache first_name de chaque destinataire.
+ * Utilise quand le body contient {prenom} (personnalisation reelle au dispatch).
+ * 2 queries : (1) phones via filters existants, (2) batch fetch firstnames.
+ */
+export async function resolveAudienceWithNames(
+  supabase: SupabaseClient,
+  merchantId: string,
+  filters: AudienceFilter[]
+): Promise<{ count: number; recipients: Recipient[] }> {
+  const { phones } = await resolveAudienceUnion(supabase, merchantId, filters);
+  if (phones.length === 0) return { count: 0, recipients: [] };
+
+  const { data } = await supabase
+    .from('customers')
+    .select('phone_number, first_name')
+    .eq('merchant_id', merchantId)
+    .in('phone_number', phones);
+
+  const nameByPhone = new Map<string, string | null>();
+  for (const c of (data || []) as { phone_number: string; first_name: string | null }[]) {
+    nameByPhone.set(c.phone_number, c.first_name);
+  }
+
+  const recipients: Recipient[] = phones.map(phone => ({
+    phone,
+    firstName: nameByPhone.get(phone) ?? null,
+  }));
+  return { count: recipients.length, recipients };
+}
+
 export async function fetchOptedOutPhones(
   supabase: SupabaseClient,
   merchantId: string
