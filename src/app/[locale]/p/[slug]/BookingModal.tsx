@@ -135,11 +135,18 @@ export default function BookingModal({
     has_services: boolean;
     has_amount: boolean;
   } | null>(null);
-  // Customer recognition: true once the lookup confirms an existing customer
-  // for this merchant (any phone hit). Drives email subtitle copy.
-  const [recognizedCustomer, setRecognizedCustomer] = useState<{
-    has_email: boolean;
-  } | null>(null);
+  // Customer recognition state machine — drives the welcome banner, the
+  // prefill badges et la copy de l email hint. Phone-first flow : on demande
+  // le numero AVANT le nom/prenom et on auto-fill si le client est reconnu.
+  type RecognitionState =
+    | { kind: 'idle' }
+    | { kind: 'loading' }
+    | { kind: 'unknown' }
+    | { kind: 'known'; firstName: string; lastInitial: string; hasEmail: boolean };
+  const [recognition, setRecognition] = useState<RecognitionState>({ kind: 'idle' });
+  // Track which fields were auto-filled (vs user-typed) so on "Modifier le
+  // numero" on les clear sans risquer d effacer la saisie volontaire.
+  const [prefilledFromLookup, setPrefilledFromLookup] = useState<{ firstName: boolean; lastName: boolean; email: boolean }>({ firstName: false, lastName: false, email: false });
   const memberLookupRef = useRef<ReturnType<typeof setTimeout>>();
   const memberAbortRef = useRef<AbortController>();
 
@@ -163,6 +170,7 @@ export default function BookingModal({
     clearTimeout(memberLookupRef.current);
     memberAbortRef.current?.abort();
     if (phone.length >= 10) {
+      setRecognition({ kind: 'loading' });
       memberLookupRef.current = setTimeout(async () => {
         const ctrl = new AbortController();
         memberAbortRef.current = ctrl;
@@ -172,26 +180,58 @@ export default function BookingModal({
             const data = await res.json();
             setMemberBenefit(data.memberCard || null);
             setGiftCardBenefit(data.giftCards || null);
-            // Autofill profile fields (only when empty — never overwrite the user's typing)
             if (data.profile) {
-              setRecognizedCustomer({ has_email: !!data.profile.email });
-              setFirstName(prev => prev.trim() ? prev : (data.profile.first_name || ''));
-              setLastName(prev => prev.trim() ? prev : (data.profile.last_name || ''));
-              setEmail(prev => prev.trim() ? prev : (data.profile.email || ''));
+              const lastInitial = (data.profile.last_name || '').trim().charAt(0).toUpperCase();
+              setRecognition({
+                kind: 'known',
+                firstName: data.profile.first_name || '',
+                lastInitial: lastInitial ? `${lastInitial}.` : '',
+                hasEmail: !!data.profile.email,
+              });
+              // Autofill profile fields (only when empty — never overwrite the user's typing).
+              // Track ce qu on a auto-rempli pour pouvoir clear sur "Modifier le numero".
+              setFirstName(prev => {
+                if (prev.trim()) return prev;
+                if (data.profile.first_name) { setPrefilledFromLookup(p => ({ ...p, firstName: true })); return data.profile.first_name; }
+                return prev;
+              });
+              setLastName(prev => {
+                if (prev.trim()) return prev;
+                if (data.profile.last_name) { setPrefilledFromLookup(p => ({ ...p, lastName: true })); return data.profile.last_name; }
+                return prev;
+              });
+              setEmail(prev => {
+                if (prev.trim()) return prev;
+                if (data.profile.email) { setPrefilledFromLookup(p => ({ ...p, email: true })); return data.profile.email; }
+                return prev;
+              });
             } else {
-              setRecognizedCustomer(null);
+              setRecognition({ kind: 'unknown' });
             }
+          } else {
+            setRecognition({ kind: 'unknown' });
           }
         } catch { /* aborted or network error */ }
       }, 500);
     } else {
       setMemberBenefit(null);
       setGiftCardBenefit(null);
-      setRecognizedCustomer(null);
+      setRecognition({ kind: 'idle' });
     }
     return () => { clearTimeout(memberLookupRef.current); memberAbortRef.current?.abort(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phone, phoneCountry, merchant.id]);
+
+  // Handler "Ce n est pas vous ? Modifier le numero" : clear le phone +
+  // les champs auto-remplis (sans toucher a ce que l user a tape lui-meme).
+  const handleChangeNumber = () => {
+    setPhone('');
+    if (prefilledFromLookup.firstName) setFirstName('');
+    if (prefilledFromLookup.lastName) setLastName('');
+    if (prefilledFromLookup.email) setEmail('');
+    setPrefilledFromLookup({ firstName: false, lastName: false, email: false });
+    setRecognition({ kind: 'idle' });
+  };
 
   const skipDeposit = Boolean(memberBenefit?.skip_deposit) || Boolean(giftCardBenefit && giftCardBenefit.count > 0);
 
@@ -876,30 +916,7 @@ export default function BookingModal({
                 <p className="text-sm font-semibold text-gray-700 mb-3">{t('yourInfo')}</p>
 
                 <div className="space-y-3 mb-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1">{t('firstName')} *</label>
-                    <input
-                      type="text"
-                      value={firstName}
-                      onChange={e => setFirstName(e.target.value)}
-                      placeholder={t('firstNamePlaceholder')}
-                      className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-sm transition-colors focus:outline-none focus:ring-2 focus:bg-white"
-                      style={{ '--tw-ring-color': `${p}40` } as React.CSSProperties}
-                      maxLength={100}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1">{t('lastName')}</label>
-                    <input
-                      type="text"
-                      value={lastName}
-                      onChange={e => setLastName(e.target.value)}
-                      placeholder={t('lastNamePlaceholder')}
-                      className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-sm transition-colors focus:outline-none focus:ring-2 focus:bg-white"
-                      style={{ '--tw-ring-color': `${p}40` } as React.CSSProperties}
-                      maxLength={100}
-                    />
-                  </div>
+                  {/* Phone d'abord — pivot pour reconnaissance */}
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 mb-1">{t('phone')} *</label>
                     <PhoneInput
@@ -908,23 +925,105 @@ export default function BookingModal({
                       country={phoneCountry}
                       onCountryChange={setPhoneCountry}
                       countries={['FR', 'BE', 'CH']}
+                      autoFocus
                       className="px-4 py-2.5 text-sm border-transparent bg-gray-50 rounded-r-xl"
                     />
                   </div>
+
+                  {/* Bandeau reconnaissance */}
+                  {recognition.kind === 'loading' && (
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 text-xs text-gray-500">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>{t('lookingUp')}</span>
+                    </div>
+                  )}
+                  {recognition.kind === 'known' && (
+                    <div
+                      className="px-3 py-2.5 rounded-xl flex items-start gap-2.5"
+                      style={{ backgroundColor: `${p}10`, border: `1px solid ${p}30` }}
+                    >
+                      <span className="text-base leading-none mt-0.5">👋</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-gray-900">
+                          {t('welcomeBack', { name: recognition.firstName + (recognition.lastInitial ? ` ${recognition.lastInitial}` : '') })}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleChangeNumber}
+                          className="text-[11px] text-gray-500 hover:text-gray-700 underline mt-0.5"
+                        >
+                          {t('notYouChangeNumber')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Prenom (auto-rempli si reconnu) */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1">{t('email')}</label>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1.5">
+                      {t('firstName')} *
+                      {prefilledFromLookup.firstName && firstName.trim() && (
+                        <span className="text-[10px] font-medium text-emerald-600 flex items-center gap-0.5">
+                          <Check className="w-2.5 h-2.5" /> {t('prefilledFromPhone')}
+                        </span>
+                      )}
+                    </label>
+                    <input
+                      type="text"
+                      value={firstName}
+                      onChange={e => { setFirstName(e.target.value); if (prefilledFromLookup.firstName) setPrefilledFromLookup(p => ({ ...p, firstName: false })); }}
+                      placeholder={t('firstNamePlaceholder')}
+                      autoComplete="given-name"
+                      className={`w-full px-4 py-2.5 border border-transparent rounded-xl text-sm transition-colors focus:outline-none focus:ring-2 focus:bg-white ${prefilledFromLookup.firstName ? 'bg-emerald-50/50' : 'bg-gray-50'}`}
+                      style={{ '--tw-ring-color': `${p}40` } as React.CSSProperties}
+                      maxLength={100}
+                    />
+                  </div>
+
+                  {/* Nom (auto-rempli si reconnu) */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1.5">
+                      {t('lastName')}
+                      {prefilledFromLookup.lastName && lastName.trim() && (
+                        <span className="text-[10px] font-medium text-emerald-600 flex items-center gap-0.5">
+                          <Check className="w-2.5 h-2.5" /> {t('prefilledFromPhone')}
+                        </span>
+                      )}
+                    </label>
+                    <input
+                      type="text"
+                      value={lastName}
+                      onChange={e => { setLastName(e.target.value); if (prefilledFromLookup.lastName) setPrefilledFromLookup(p => ({ ...p, lastName: false })); }}
+                      placeholder={t('lastNamePlaceholder')}
+                      autoComplete="family-name"
+                      className={`w-full px-4 py-2.5 border border-transparent rounded-xl text-sm transition-colors focus:outline-none focus:ring-2 focus:bg-white ${prefilledFromLookup.lastName ? 'bg-emerald-50/50' : 'bg-gray-50'}`}
+                      style={{ '--tw-ring-color': `${p}40` } as React.CSSProperties}
+                      maxLength={100}
+                    />
+                  </div>
+
+                  {/* Email (auto-rempli si reconnu) */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1.5">
+                      {t('email')}
+                      {prefilledFromLookup.email && email.trim() && (
+                        <span className="text-[10px] font-medium text-emerald-600 flex items-center gap-0.5">
+                          <Check className="w-2.5 h-2.5" /> {t('prefilledFromPhone')}
+                        </span>
+                      )}
+                    </label>
                     <input
                       type="email"
                       value={email}
-                      onChange={e => setEmail(e.target.value)}
+                      onChange={e => { setEmail(e.target.value); if (prefilledFromLookup.email) setPrefilledFromLookup(p => ({ ...p, email: false })); }}
                       placeholder={t('emailPlaceholder')}
                       autoComplete="email"
-                      className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-sm transition-colors focus:outline-none focus:ring-2 focus:bg-white"
+                      className={`w-full px-4 py-2.5 border border-transparent rounded-xl text-sm transition-colors focus:outline-none focus:ring-2 focus:bg-white ${prefilledFromLookup.email ? 'bg-emerald-50/50' : 'bg-gray-50'}`}
                       style={{ '--tw-ring-color': `${p}40` } as React.CSSProperties}
                       maxLength={254}
                     />
                     <p className="text-[11px] text-gray-400 mt-1 leading-snug">
-                      {recognizedCustomer && !recognizedCustomer.has_email
+                      {recognition.kind === 'known' && !recognition.hasEmail
                         ? t('emailHintRecognized')
                         : stickyDeposit
                           ? t('emailHintWithDeposit')

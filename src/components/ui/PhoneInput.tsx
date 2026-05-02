@@ -115,6 +115,8 @@ export function PhoneInput({
         <input
           ref={inputRef}
           type="tel"
+          inputMode="tel"
+          autoComplete="tel-national"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={config.placeholder}
