@@ -60,7 +60,13 @@ interface HistoryLog {
   status: string;
   error_message: string | null;
   created_at: string;
+  provider: 'ovh' | 'sms_partner' | null;
 }
+
+const PROVIDER_BADGE: Record<string, { label: string; pill: string }> = {
+  ovh:         { label: 'OVH',         pill: 'bg-sky-100 text-sky-700' },
+  sms_partner: { label: 'SMS Partner', pill: 'bg-fuchsia-100 text-fuchsia-700' },
+};
 
 const CATEGORY_CONFIG: Record<string, { label: string; pill: string }> = {
   rappel:       { label: 'Rappel RDV',   pill: 'bg-indigo-100 text-indigo-700' },
@@ -667,6 +673,7 @@ export default function AdminSmsPage() {
                       <th className="px-4 py-2">Type</th>
                       <th className="px-4 py-2">Tél</th>
                       <th className="px-4 py-2">Statut</th>
+                      <th className="px-4 py-2">Provider</th>
                       <th className="px-4 py-2">Message</th>
                     </tr>
                   </thead>
@@ -719,6 +726,13 @@ export default function AdminSmsPage() {
                                 {log.status === 'failed' ? 'Échec' : log.status === 'skipped' ? 'Ignoré' : 'Envoyé'}
                               </span>
                             </td>
+                            <td className="px-4 py-2.5">
+                              {log.provider && PROVIDER_BADGE[log.provider] ? (
+                                <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ${PROVIDER_BADGE[log.provider].pill}`}>
+                                  {PROVIDER_BADGE[log.provider].label}
+                                </span>
+                              ) : <span className="text-gray-300 text-xs">—</span>}
+                            </td>
                             <td className="px-4 py-2.5 text-xs text-gray-600 max-w-[200px]">
                               <div className="flex items-center gap-1">
                                 <span className="truncate">{log.message_body}</span>
@@ -732,7 +746,7 @@ export default function AdminSmsPage() {
                           </tr>
                           {isExpanded && (
                             <tr className="bg-gray-50 border-b border-gray-100">
-                              <td colSpan={7} className="px-4 py-3">
+                              <td colSpan={8} className="px-4 py-3">
                                 <div className="bg-white rounded-xl border border-gray-100 p-3">
                                   <p className="text-xs text-gray-800 whitespace-pre-wrap leading-relaxed">{log.message_body}</p>
                                   {log.error_message && (

@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
     const [smsRes, mktRes] = await Promise.all([
       supabaseAdmin
         .from('sms_logs')
-        .select('id, merchant_id, phone_to, sms_type, message_body, status, error_message, created_at', { count: 'exact' })
+        .select('id, merchant_id, phone_to, sms_type, message_body, status, error_message, created_at, provider', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(0, fetchLimit - 1),
       supabaseAdmin
@@ -130,6 +130,7 @@ export async function GET(request: NextRequest) {
       id: string; merchant_id: string; phone_to: string | null;
       sms_type: string; message_body: string; status: string;
       error_message: string | null; created_at: string; _source: 'sms' | 'essai';
+      provider: string | null;
     };
 
     const merged: MergedRow[] = [
@@ -139,6 +140,7 @@ export async function GET(request: NextRequest) {
         message_body: r.message_body as string, status: r.status as string,
         error_message: (r.error_message as string | null) ?? null,
         created_at: r.created_at as string, _source: 'sms' as const,
+        provider: (r.provider as string | null) ?? null,
       })),
       ...(mktRes.data || []).map((r) => ({
         id: r.id as string, merchant_id: r.merchant_id as string,
@@ -146,6 +148,7 @@ export async function GET(request: NextRequest) {
         message_body: r.body as string, status: r.status as string,
         error_message: (r.error_message as string | null) ?? null,
         created_at: r.sent_at as string, _source: 'essai' as const,
+        provider: null,
       })),
     ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -174,6 +177,7 @@ export async function GET(request: NextRequest) {
         status: row.status,
         error_message: row.error_message,
         created_at: row.created_at,
+        provider: row.provider,
       };
     });
 
@@ -181,7 +185,7 @@ export async function GET(request: NextRequest) {
     // Specific category (sms_logs only)
     let q = supabaseAdmin
       .from('sms_logs')
-      .select('id, merchant_id, phone_to, sms_type, message_body, status, error_message, created_at', { count: 'exact' })
+      .select('id, merchant_id, phone_to, sms_type, message_body, status, error_message, created_at, provider', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1);
 
@@ -207,6 +211,7 @@ export async function GET(request: NextRequest) {
       status: row.status as string,
       error_message: (row.error_message as string | null) ?? null,
       created_at: row.created_at as string,
+      provider: (row.provider as string | null) ?? null,
     }));
     total = count || 0;
   }
