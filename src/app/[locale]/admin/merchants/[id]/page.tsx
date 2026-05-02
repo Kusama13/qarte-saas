@@ -123,6 +123,19 @@ interface ContestData {
   history: ContestHistoryEntry[];
 }
 
+interface SmsCampaignRow {
+  id: string;
+  body: string;
+  audience_filter: { filters?: Array<{ type: string }> } | null;
+  recipient_count: number | null;
+  status: string;
+  scheduled_at: string | null;
+  sent_at: string | null;
+  cost_cents: number | null;
+  created_at: string;
+  review_note: string | null;
+}
+
 interface MemberProgram {
   id: string;
   name: string;
@@ -444,11 +457,13 @@ export default function MerchantDetailPage() {
   const [emailTrackings, setEmailTrackings] = useState<{ reminder_day: number; sent_at: string }[]>([]);
   const [giftCardStats, setGiftCardStats] = useState<GiftCardStats | null>(null);
   const [contestData, setContestData] = useState<ContestData>({ plannedPrizes: [], history: [] });
+  const [smsCampaigns, setSmsCampaigns] = useState<SmsCampaignRow[]>([]);
   const [qrOpen, setQrOpen] = useState(false);
   const [loyaltyOpen, setLoyaltyOpen] = useState(true);
   const [vitrineOpen, setVitrineOpen] = useState(true);
   const [contestOpen, setContestOpen] = useState(false);
   const [giftCardsOpen, setGiftCardsOpen] = useState(false);
+  const [smsCampaignsOpen, setSmsCampaignsOpen] = useState(false);
   const [smsAutomationsOpen, setSmsAutomationsOpen] = useState(false);
   const [emailsOpen, setEmailsOpen] = useState(false);
   const [bioOpen, setBioOpen] = useState(false);
@@ -468,6 +483,7 @@ export default function MerchantDetailPage() {
         setSmsAlerts(data.smsAlerts || null);
         setGiftCardStats(data.giftCardStats || null);
         setContestData(data.contestData || { plannedPrizes: [], history: [] });
+        setSmsCampaigns(data.smsCampaigns || []);
         if (data.userEmail) setUserEmail(data.userEmail);
       } catch (error) {
         console.error('Error fetching merchant data:', error);
@@ -1377,6 +1393,82 @@ export default function MerchantDetailPage() {
               <span className="text-lg font-black text-pink-700">{formatCurrency(giftCardStats.totalRevenue, merchant.country, 'fr', 0)}</span>
             </div>
           </div>
+        )}
+      </CollapsibleCard>
+
+      {/* ═══════════ CAMPAGNES SMS ═══════════ */}
+      <CollapsibleCard
+        icon={<MessageCircle className="w-4 h-4 text-violet-600" />}
+        title="Campagnes SMS"
+        badge={<span className="text-xs font-semibold text-gray-500">{smsCampaigns.length}</span>}
+        isOpen={smsCampaignsOpen}
+        onToggle={() => setSmsCampaignsOpen(!smsCampaignsOpen)}
+      >
+        {smsCampaigns.length === 0 ? (
+          <p className="text-sm text-gray-500 italic">Aucune campagne SMS envoyée.</p>
+        ) : (
+          <>
+            {/* Frequence : compte par mois calendaire */}
+            {(() => {
+              const byMonth = new Map<string, number>();
+              for (const c of smsCampaigns) {
+                if (c.status !== 'done') continue;
+                const m = (c.sent_at || c.created_at).slice(0, 7);
+                byMonth.set(m, (byMonth.get(m) || 0) + 1);
+              }
+              const sortedMonths = [...byMonth.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 6);
+              if (sortedMonths.length === 0) return null;
+              return (
+                <div className="mb-3 p-3 bg-violet-50 rounded-lg border border-violet-200">
+                  <div className="text-xs font-bold text-violet-900 uppercase tracking-wide mb-2">Fréquence (campagnes envoyées)</div>
+                  <div className="flex flex-wrap gap-2">
+                    {sortedMonths.map(([month, count]) => {
+                      const heavy = count >= 4;
+                      return (
+                        <span key={month} className={cn("px-2 py-1 rounded-md text-xs font-semibold", heavy ? "bg-amber-100 text-amber-800" : "bg-violet-100 text-violet-800")}>
+                          {month} : {count} {heavy && '⚠️'}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
+            <div className="space-y-2">
+              {smsCampaigns.map((c) => {
+                const audienceLabel = c.audience_filter?.filters?.map(f => f.type).join(', ') || '—';
+                const statusColor = c.status === 'done' ? 'emerald' : c.status === 'failed' ? 'red' : c.status === 'rejected' ? 'gray' : c.status === 'pending_review' ? 'amber' : 'blue';
+                return (
+                  <div key={c.id} className="p-3 bg-white border border-gray-200 rounded-lg">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs text-gray-500 mb-1">
+                          {c.sent_at
+                            ? `Envoyée le ${new Date(c.sent_at).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                            : `Créée le ${new Date(c.created_at).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`}
+                        </div>
+                        <div className="text-xs text-gray-700 line-clamp-2 font-mono">{c.body}</div>
+                      </div>
+                      <span className={cn("shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase", `bg-${statusColor}-100 text-${statusColor}-700`)}>
+                        {c.status}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
+                      <span><strong className="text-gray-900">{c.recipient_count ?? 0}</strong> destinataires</span>
+                      <span>Audience : <strong className="text-gray-900">{audienceLabel}</strong></span>
+                      {c.cost_cents != null && c.cost_cents > 0 && (
+                        <span><strong className="text-gray-900">{c.cost_cents / 100} €</strong> (quota)</span>
+                      )}
+                    </div>
+                    {c.review_note && (
+                      <div className="mt-1.5 text-xs text-amber-700 italic">{c.review_note}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </CollapsibleCard>
 

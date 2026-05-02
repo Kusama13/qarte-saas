@@ -85,7 +85,11 @@ async function ovhRequest(method: string, path: string, body?: Record<string, un
  * @param phone E.164 without + (e.g. "33612345678")
  * @param message SMS body (max 160 chars for single SMS)
  */
-export async function sendSms(phone: string, message: string): Promise<{ success: boolean; jobId?: string; error?: string; creditExhausted?: boolean }> {
+/**
+ * Envoie un SMS via OVH.
+ * @param addStopClause Si true (defaut), OVH ajoute "STOP au 36180" en fin de SMS — necessaire pour le marketing (CNIL/LCEN). Pour le transactionnel, passer false (gain ~17 chars + plus propre dans le SMS).
+ */
+export async function sendSms(phone: string, message: string, addStopClause: boolean = true): Promise<{ success: boolean; jobId?: string; error?: string; creditExhausted?: boolean }> {
   if (!APP_KEY || !APP_SECRET || !CONSUMER_KEY || !SMS_SERVICE) {
     console.error('[ovh-sms] Missing OVH SMS environment variables');
     return { success: false, error: 'Missing OVH config' };
@@ -95,7 +99,12 @@ export async function sendSms(phone: string, message: string): Promise<{ success
     const jobBody: Record<string, unknown> = {
       message: sanitizeSmsForGsm7(message),
       receivers: [`+${phone}`],
-      noStopClause: true,
+      // noStopClause inverse de addStopClause : false = OVH ajoute "STOP au 36180" auto.
+      // STOP au 36180 = numero gratuit ARCEP, gere nativement par OVH (blackliste auto le numero).
+      // ATTENTION : la blackliste OVH est globale au compte, pas par sender — donc un STOP impacte
+      // tous les merchants Qarte. Acceptable tant qu'aucun client ne partage plusieurs merchants.
+      // Migration future vers lien court par-merchant prevue (cf. roadmap).
+      noStopClause: !addStopClause,
       coding: '7bit',
     };
     // Use named sender if configured, otherwise use OVH short number

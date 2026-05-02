@@ -81,11 +81,28 @@ export interface SmsValidationOptions {
 
 const STOP_RE = /\bstop\b/i;
 
+/**
+ * @deprecated Conserve pour compat (composer preview/validation). N'ajoute plus
+ * de suffix — OVH ajoute "STOP au 36180" auto via `noStopClause: false` au
+ * dispatch. Les anciens templates contenant "STOP SMS" textuel sont aussi
+ * nettoyes (sinon doublon).
+ */
 export function appendStopIfMissing(body: string): string {
+  return body.trim();
+}
+
+/**
+ * Simule la mention STOP qu'OVH ajoute automatiquement aux SMS marketing
+ * (via `noStopClause: false`). Format reel observe : ` STOP au 36180`.
+ * 14 chars + espace = 15. On ajoute newline + texte = 15 chars padding.
+ *
+ * A utiliser pour le countSms cote composer/submit/dispatch des SMS marketing
+ * SEULEMENT, pour eviter qu'un body de 150 chars affiche "1 SMS" alors que le
+ * SMS reellement parti fasse 165 chars et bascule en 2 SMS.
+ */
+export function withOvhStopClause(body: string): string {
   const trimmed = body.trim();
-  if (STOP_RE.test(trimmed)) return trimmed;
-  const suffix = ' STOP SMS';
-  return (trimmed + suffix).trim();
+  return trimmed + '\nSTOP au 36180';
 }
 
 export function countSms(body: string): SmsCount | 3 {

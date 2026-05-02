@@ -32,6 +32,7 @@ import {
   validateMarketingSms,
   isGsm7,
   normalizeToGsm7,
+  withOvhStopClause,
 } from '@/lib/sms-validator';
 import type { AudienceFilter } from '@/lib/sms-audience';
 import { getPlanFeatures } from '@/lib/plan-tiers';
@@ -135,16 +136,16 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
     });
   }, [body, merchant?.shop_name]);
 
-  // Body REELLEMENT envoye (normalise pour eviter UCS-2 = 2 SMS).
-  // Le compteur SMS et le coût sont bases sur celui-ci, pour que ce qui est
-  // affiche corresponde a ce qui sera facture/envoye.
+  // Body REELLEMENT envoye, incluant la mention "STOP au 36180" qu'OVH ajoute
+  // auto au dispatch. Le compteur SMS doit en tenir compte sinon un body de
+  // 150 chars passerait silencieusement de 1 a 2 SMS apres ajout OVH.
   const dispatchBody = useMemo(() => {
     const normalized = normalizeToGsm7(body || '');
-    const withStop = appendStopIfMissing(normalized);
-    return resolveVariables(withStop, {
+    const resolved = resolveVariables(normalized, {
       prenom: '', // Au dispatch reel, prenom = ''
       shop_name: merchant?.shop_name || 'Ma boutique',
     });
+    return withOvhStopClause(resolved);
   }, [body, merchant?.shop_name]);
 
   const isGsm7Body = isGsm7(previewBody);
@@ -179,6 +180,18 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
   }, [quotaState]);
 
   const insufficientQuota = smsAvailable !== null && smsRequested > 0 && smsRequested > smsAvailable;
+
+  // Frequence : compte les campagnes envoyees ce mois calendaire (pour soft warning).
+  // 3+ campagnes/mois = taux de désinscription qui monte fortement (best practice secteur).
+  const campaignsThisMonth = useMemo(() => {
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    return campaigns.filter(c => {
+      const ref = c.sent_at || c.created_at;
+      return c.status === 'done' && ref?.startsWith(monthKey);
+    }).length;
+  }, [campaigns]);
+  const frequencyWarning = campaignsThisMonth >= 3;
 
   // Fetch quota au mount et apres chaque submit reussi
   useEffect(() => {
@@ -558,6 +571,22 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
               <span className="font-semibold text-gray-700">
                 {smsAvailable} SMS ({Math.max(0, quotaState.quota - quotaState.sent)} inclus + {quotaState.packBalance} pack)
               </span>
+            </div>
+          )}
+
+          {/* Soft warning : frequence excessive (3+ campagnes/mois) */}
+          {frequencyWarning && !insufficientQuota && (
+            <div className="mb-3 rounded-xl bg-amber-50 border border-amber-200 p-3 flex items-start gap-3">
+              <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-amber-600" />
+              <div className="flex-1">
+                <p className="text-xs font-bold text-amber-900 mb-1">
+                  {campaignsThisMonth} campagne{campaignsThisMonth > 1 ? 's' : ''} déjà envoyée{campaignsThisMonth > 1 ? 's' : ''} ce mois
+                </p>
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  Au-delà de 3 campagnes par mois, le taux de désinscription augmente fortement (perte définitive de clientes).
+                  Tu peux continuer si c&apos;est justifié (lancement, événement…), mais privilégie 1-2 envois bien ciblés.
+                </p>
+              </div>
             </div>
           )}
 

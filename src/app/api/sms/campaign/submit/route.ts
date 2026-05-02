@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { resolveAudienceUnion } from '@/lib/sms-audience';
 import type { AudienceFilter } from '@/lib/sms-audience';
-import { countSms, validateMarketingSms, normalizeToGsm7, appendStopIfMissing } from '@/lib/sms-validator';
+import { countSms, validateMarketingSms, normalizeToGsm7, withOvhStopClause } from '@/lib/sms-validator';
 import { SMS_UNIT_COST_CENTS, getSmsUsageThisMonth, getEffectiveQuota } from '@/lib/sms';
 import { isLegalSendTime, nextLegalSlot } from '@/lib/sms-compliance';
 import { getPlanFeatures } from '@/lib/plan-tiers';
@@ -78,11 +78,12 @@ export async function POST(request: NextRequest) {
     const compliance = isLegalSendTime(requestedAt, merchant.country || 'FR');
     const effectiveAt = compliance.ok ? requestedAt : nextLegalSlot(requestedAt, merchant.country || 'FR');
 
-    // Calcul du nombre de SMS effectif APRES normalisation GSM-7 — meme logique que
-    // le dispatch (qui retire emojis/smart quotes pour eviter UCS-2 = 2 SMS).
-    // Sinon le merchant payerait pour 2 SMS alors qu'1 seul partira.
+    // Calcul du nombre de SMS effectif APRES normalisation GSM-7 + ajout de la
+    // mention STOP qu'OVH ajoute auto (`noStopClause: false`). Sans ces deux
+    // simulations, le merchant pourrait etre facture pour 2 SMS au lieu d'1
+    // (emojis qui forcent UCS-2) ou 2 SMS au lieu d'1 (mention STOP +17 chars).
     const normalizedBody = normalizeToGsm7(validation.finalBody);
-    const finalBodyForCount = appendStopIfMissing(normalizedBody);
+    const finalBodyForCount = withOvhStopClause(normalizedBody);
     const smsCount = countSms(finalBodyForCount);
     const totalSmsRequested = resolved.count * smsCount;
     const costCentsInt = Math.round(totalSmsRequested * SMS_UNIT_COST_CENTS);

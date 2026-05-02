@@ -6,7 +6,7 @@ import { sendSmsCampaignSentEmail } from '@/lib/email';
 import { isLegalSendTime, nextLegalSlot } from '@/lib/sms-compliance';
 import { resolveAudienceUnion } from '@/lib/sms-audience';
 import type { AudienceFilter } from '@/lib/sms-audience';
-import { resolveVariables, appendStopIfMissing, countSms, normalizeToGsm7 } from '@/lib/sms-validator';
+import { resolveVariables, countSms, normalizeToGsm7, withOvhStopClause } from '@/lib/sms-validator';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -125,11 +125,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Normalise le body en GSM-7 (retire emojis + remplace smart quotes/dashes)
-    // pour eviter de basculer en UCS-2 et payer 2 SMS au lieu d'1. Le merchant
-    // a explicitement opte pour ce comportement (voir mig 149 / fix countSms).
+    // pour eviter de basculer en UCS-2 et payer 2 SMS au lieu d'1.
+    // Le smsCount est calcule sur body + " STOP au 36180" (qu'OVH ajoute auto)
+    // pour refleter le SMS reellement envoye.
     const normalizedBody = normalizeToGsm7(campaign.body);
-    const finalBodyTemplate = appendStopIfMissing(normalizedBody);
-    const smsPerRecipient = countSms(finalBodyTemplate);
+    const finalBodyTemplate = normalizedBody.trim();
+    const smsPerRecipient = countSms(withOvhStopClause(finalBodyTemplate));
 
     let sentCount = 0;
     let blockedHit = false;

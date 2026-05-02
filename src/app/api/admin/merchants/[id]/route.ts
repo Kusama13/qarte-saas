@@ -89,6 +89,7 @@ export async function GET(
       giftCardsRes,
       plannedPrizesRes,
       contestHistoryRes,
+      smsCampaignsRes,
     ] = await Promise.all([
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
@@ -118,6 +119,7 @@ export async function GET(
       supabaseAdmin.from('gift_cards').select('status, amount').eq('merchant_id', merchantId),
       supabaseAdmin.from('merchant_contest_prizes').select('contest_month, prize_description, updated_at').eq('merchant_id', merchantId).gte('contest_month', new Date().toISOString().slice(0, 7)).order('contest_month', { ascending: true }).limit(6),
       supabaseAdmin.from('merchant_contests').select('contest_month, prize_description, winner_name, winner_phone, drawn_at, participants_count').eq('merchant_id', merchantId).not('drawn_at', 'is', null).order('drawn_at', { ascending: false }).limit(12),
+      supabaseAdmin.from('sms_campaigns').select('id, body, audience_filter, recipient_count, status, scheduled_at, sent_at, cost_cents, created_at, review_note').eq('merchant_id', merchantId).order('created_at', { ascending: false }).limit(30),
     ]);
 
     // Compute push subscribers (same logic as before)
@@ -243,6 +245,7 @@ export async function GET(
       emailTrackings: emailTrackingsRes.data || [],
       giftCardStats,
       contestData,
+      smsCampaigns: smsCampaignsRes.data || [],
     });
   } catch (error) {
     logger.error('Admin merchant stats error:', error);

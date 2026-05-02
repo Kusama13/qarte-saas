@@ -235,8 +235,8 @@ export async function GET(request: NextRequest) {
       const locale = m.locale || 'fr';
       const first = customer?.first_name ? `${customer.first_name}, ` : '';
       const body = locale === 'en'
-        ? `${first}congrats on your reward at ${m.shop_name}! A quick Google review would mean a lot: ${reviewLink}. STOP SMS`
-        : `${first}félicitations pour votre récompense chez ${m.shop_name} ! Votre avis Google ferait la différence : ${reviewLink}. STOP SMS`;
+        ? `${first}congrats on your reward at ${m.shop_name}! A quick Google review would mean a lot: ${reviewLink}.`
+        : `${first}félicitations pour votre récompense chez ${m.shop_name} ! Votre avis Google ferait la différence : ${reviewLink}.`;
 
       const result = await sendMarketingSms(supabase, {
         merchantId: m.id,
@@ -291,8 +291,8 @@ export async function GET(request: NextRequest) {
       const locale = m.locale || 'fr';
       const first = customer?.first_name ? `${customer.first_name}, ` : '';
       const body = locale === 'en'
-        ? `${first}your reward at ${m.shop_name} expires in 7 days. Come pick it up! STOP SMS`
-        : `${first}votre cadeau chez ${m.shop_name} expire dans 7 jours. Passez vite en profiter ! STOP SMS`;
+        ? `${first}your reward at ${m.shop_name} expires in 7 days. Come pick it up!`
+        : `${first}votre cadeau chez ${m.shop_name} expire dans 7 jours. Passez vite en profiter !`;
 
       const result = await sendMarketingSms(supabase, {
         merchantId: m.id,
@@ -379,8 +379,8 @@ export async function GET(request: NextRequest) {
       const rFor = merchantRefs.referral_reward_referred;
       const rYou = merchantRefs.referral_reward_referrer;
       const body = locale === 'en'
-        ? `${first}love ${m.shop_name}? Refer a friend — she gets ${rFor}, you get ${rYou}. STOP SMS`
-        : `${first}vous aimez ${m.shop_name} ? Parrainez une amie — elle obtient ${rFor}, vous ${rYou}. STOP SMS`;
+        ? `${first}love ${m.shop_name}? Refer a friend — she gets ${rFor}, you get ${rYou}.`
+        : `${first}vous aimez ${m.shop_name} ? Parrainez une amie — elle obtient ${rFor}, vous ${rYou}.`;
 
       const result = await sendMarketingSms(supabase, {
         merchantId: m.id,
@@ -455,8 +455,8 @@ export async function GET(request: NextRequest) {
       const locale = m.locale || 'fr';
       const first = customer.first_name ? `${customer.first_name}, ` : '';
       const body = locale === 'en'
-        ? `${first}it's been a while! We'd love to see you back at ${m.shop_name}. STOP SMS`
-        : `${first}ça fait un moment ! Nous serions ravis de vous revoir chez ${m.shop_name}. STOP SMS`;
+        ? `${first}it's been a while! We'd love to see you back at ${m.shop_name}.`
+        : `${first}ça fait un moment ! Nous serions ravis de vous revoir chez ${m.shop_name}.`;
 
       const result = await sendMarketingSms(supabase, {
         merchantId: m.id,
@@ -531,8 +531,8 @@ export async function GET(request: NextRequest) {
       const first = customer?.first_name ? `${customer.first_name}, ` : '';
       const tierSuffix = match.tier === 2 ? (locale === 'en' ? ' (level 2)' : ' (palier 2)') : '';
       const body = locale === 'en'
-        ? `${first}one more stamp before your reward${tierSuffix} at ${m.shop_name}: ${match.reward}! See you soon. STOP SMS`
-        : `${first}plus qu'un tampon avant votre récompense${tierSuffix} chez ${m.shop_name} : ${match.reward} ! À bientôt. STOP SMS`;
+        ? `${first}one more stamp before your reward${tierSuffix} at ${m.shop_name}: ${match.reward}! See you soon.`
+        : `${first}plus qu'un tampon avant votre récompense${tierSuffix} chez ${m.shop_name} : ${match.reward} ! À bientôt.`;
 
       const result = await sendMarketingSms(supabase, {
         merchantId: m.id,
