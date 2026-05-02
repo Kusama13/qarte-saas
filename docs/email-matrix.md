@@ -1584,7 +1584,11 @@ Source : `src/emails/translations/fr.ts`. Les `<strong>...</strong>` ont été c
 - **Subject** : `{shopName}, ta campagne SMS a été envoyée à {recipientCount} clientes`
 - **Preview** : `Ta campagne SMS a touché {recipientCount} clientes`
 - **Heading** : `Campagne envoyée ✅`
-- **Body** : récap stats (destinataires, SMS/dest, total SMS, coût €) + message envoyé en monospace + note ambre si normalisation appliquée (emojis retirés pour éviter UCS-2 = 2 SMS)
+- **Body** :
+  - Bloc stats vert : destinataires, SMS/dest, total SMS envoyés (PAS de coût € — les SMS sont décomptés du quota inclus, pas facturés à part)
+  - Bloc quota violet : `{quotaUsed} / {quotaTotal} SMS utilisés ce cycle` + `+ {packBalance} SMS dispo dans ton pack` (si pack) + note italique `Inclus dans ton abonnement — aucun frais supplémentaire pour cette campagne.`
+  - Bloc message envoyé en monospace
+  - Note ambre si normalisation appliquée (emojis retirés pour éviter UCS-2 = 2 SMS)
 - **CTA** : `Voir les stats` → `/dashboard/marketing?tab=sms`
 - **Trigger** : cron `/api/cron/sms-campaigns-dispatch` après status='done' avec sentCount > 0
 

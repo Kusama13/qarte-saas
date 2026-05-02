@@ -9,7 +9,12 @@ interface SmsCampaignSentEmailProps {
   recipientCount: number;
   smsPerRecipient: number;
   totalSmsSent: number;
-  costEur: string;
+  /** SMS deja consommes ce cycle (incluant cette campagne). Quota inclus dans l abonnement. */
+  quotaUsed: number;
+  /** Quota mensuel inclus (typiquement 100 pour all_in). */
+  quotaTotal: number;
+  /** Solde du pack SMS achete en plus (0 si pas de pack). */
+  packBalance: number;
   body: string;
   bodyWasNormalized?: boolean;
   dashboardUrl?: string;
@@ -21,7 +26,9 @@ export function SmsCampaignSentEmail({
   recipientCount,
   smsPerRecipient,
   totalSmsSent,
-  costEur,
+  quotaUsed,
+  quotaTotal,
+  packBalance,
   body,
   bodyWasNormalized = false,
   dashboardUrl = 'https://getqarte.com/dashboard/marketing?tab=sms',
@@ -55,8 +62,24 @@ export function SmsCampaignSentEmail({
         <Text style={statRow}>
           <strong>{isEn ? 'Total SMS sent:' : 'Total SMS envoyés :'}</strong> {totalSmsSent}
         </Text>
-        <Text style={statRow}>
-          <strong>{isEn ? 'Total cost:' : 'Coût total :'}</strong> {costEur} €
+      </Section>
+
+      <Section style={quotaBox}>
+        <Text style={quotaLabel}>
+          {isEn ? 'YOUR MONTHLY QUOTA' : 'TON QUOTA MENSUEL'}
+        </Text>
+        <Text style={quotaMain}>
+          {quotaUsed} / {quotaTotal} {isEn ? 'SMS used this cycle' : 'SMS utilisés ce cycle'}
+        </Text>
+        {packBalance > 0 && (
+          <Text style={quotaSecondary}>
+            + {packBalance} {isEn ? 'SMS available in your pack' : 'SMS dispo dans ton pack'}
+          </Text>
+        )}
+        <Text style={quotaNote}>
+          {isEn
+            ? 'Included in your subscription — no extra charge for this campaign.'
+            : 'Inclus dans ton abonnement — aucun frais supplémentaire pour cette campagne.'}
         </Text>
       </Section>
 
@@ -122,6 +145,47 @@ const statRow = {
   fontSize: '15px',
   lineHeight: '1.5',
   margin: '0 0 6px 0',
+};
+
+const quotaBox = {
+  backgroundColor: '#FAF5FF',
+  borderRadius: '12px',
+  padding: '16px 20px',
+  margin: '0 0 24px 0',
+  border: '1px solid #E9D5FF',
+};
+
+const quotaLabel = {
+  color: '#7E22CE',
+  fontSize: '12px',
+  fontWeight: '700',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.5px',
+  margin: '0 0 6px 0',
+};
+
+const quotaMain = {
+  color: '#1F2937',
+  fontSize: '16px',
+  fontWeight: '600',
+  lineHeight: '1.4',
+  margin: '0 0 4px 0',
+};
+
+const quotaSecondary = {
+  color: '#6B21A8',
+  fontSize: '13px',
+  fontWeight: '500',
+  lineHeight: '1.4',
+  margin: '0 0 6px 0',
+};
+
+const quotaNote = {
+  color: '#7E22CE',
+  fontSize: '12px',
+  fontStyle: 'italic' as const,
+  lineHeight: '1.4',
+  margin: '4px 0 0 0',
 };
 
 const messageBox = {

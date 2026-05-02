@@ -435,7 +435,9 @@ export async function sendSmsCampaignSentEmail(
   recipientCount: number,
   smsPerRecipient: number,
   totalSmsSent: number,
-  costEur: string,
+  quotaUsed: number,
+  quotaTotal: number,
+  packBalance: number,
   body: string,
   bodyWasNormalized: boolean,
   locale: EmailLocale = 'fr'
@@ -444,7 +446,7 @@ export async function sendSmsCampaignSentEmail(
     to,
     subj(locale, 'smsCampaignSent', { shopName, recipientCount: String(recipientCount) }),
     SmsCampaignSentEmail,
-    { shopName, recipientCount, smsPerRecipient, totalSmsSent, costEur, body, bodyWasNormalized, locale },
+    { shopName, recipientCount, smsPerRecipient, totalSmsSent, quotaUsed, quotaTotal, packBalance, body, bodyWasNormalized, locale },
     { logLabel: `SMS campaign sent confirmation (${recipientCount} recipients, ${totalSmsSent} SMS)` }
   );
 }

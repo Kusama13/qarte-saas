@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { verifyCronAuth } from '@/lib/cron-helpers';
-import { sendMarketingSms, PAID_STATUSES, SMS_UNIT_COST_CENTS } from '@/lib/sms';
+import { sendMarketingSms, PAID_STATUSES, SMS_UNIT_COST_CENTS, getSmsUsageThisMonth, getEffectiveQuota } from '@/lib/sms';
 import { sendSmsCampaignSentEmail } from '@/lib/email';
 import { isLegalSendTime, nextLegalSlot } from '@/lib/sms-compliance';
 import { resolveAudienceUnion } from '@/lib/sms-audience';
@@ -241,22 +241,29 @@ export async function GET(request: NextRequest) {
       if (finalSent > 0) {
         const { data: userRow } = await supabaseAdmin
           .from('merchants')
-          .select('user_id, locale')
+          .select('user_id, locale, sms_pack_balance, plan_tier, sms_quota_override, sms_quota_override_cycle_anchor, billing_interval, created_at')
           .eq('id', campaign.merchant_id)
-          .single<{ user_id: string; locale: string | null }>();
+          .single<{ user_id: string; locale: string | null; sms_pack_balance: number | null; plan_tier: string | null; sms_quota_override: number | null; sms_quota_override_cycle_anchor: string | null; billing_interval: string | null; created_at: string | null }>();
 
         if (userRow?.user_id) {
           const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userRow.user_id);
           const merchantEmail = authUser?.user?.email;
           if (merchantEmail) {
             const bodyWasNormalized = normalizedBody !== campaign.body.trim();
+            // Quota state apres l'envoi (incluant les SMS de cette campagne)
+            const usage = await getSmsUsageThisMonth(supabaseAdmin, campaign.merchant_id, merchant.billing_period_start, 100);
+            const quotaTotal = getEffectiveQuota(userRow, usage.periodStart);
+            const packBalance = Number(userRow.sms_pack_balance || 0);
+
             void sendSmsCampaignSentEmail(
               merchantEmail,
               merchant.shop_name,
               finalSent,
               smsPerRecipient,
               finalSent * smsPerRecipient,
-              (finalCost / 100).toFixed(2),
+              usage.sent,
+              quotaTotal,
+              packBalance,
               normalizedBody,
               bodyWasNormalized,
               (userRow.locale as 'fr' | 'en') || 'fr'
