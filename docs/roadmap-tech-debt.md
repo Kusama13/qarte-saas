@@ -26,6 +26,14 @@ Boucle `while (hasMoreUsers) listUsers({ perPage: 1000 })` sur l'intégralité d
 
 ## P1 — Élevé
 
+### A. Audit migration 149 + impact onboarding milestone "1ère résa en ligne" `[stab][a-faire]`
+`supabase/migrations/149_milestone_booking_count_online_only.sql` + `src/app/api/cron/email-engagement/route.ts:159-181` + RPC `merchant_milestone_stats` (mig 133+149)
+La RPC `merchant_milestone_stats.booking_count` filtrait toutes les `merchant_planning_slots` non-blocked (mig 133), incluant les saisies manuelles dashboard. Mig 149 ajoute `AND booked_online = true`. À auditer :
+1. **Cas observé** : `letjbeauty@hotmail.com` 2026-05-02 → push notif "Premiere reservation en ligne !" envoyée alors que la marchande n'avait fait qu'une saisie manuelle (Armande, 20/05). Mail `firstBooking` (-105) sans doute envoyé aussi par même cron.
+2. **Audit** : vérifier si d'autres merchants ont reçu mail `firstBooking` à tort depuis la mise en prod de mig 133. Query `pending_email_tracking WHERE reminder_day = -105` × cross-check `merchant_planning_slots WHERE booked_online=true` pour voir les faux positifs historiques.
+3. **Impact onboarding** : la mig 149 réduit le nombre de mails milestone envoyés. Vérifier que le cron continue de bien déclencher quand une vraie 1ère résa en ligne arrive (test e2e via vitrine `/p/[slug]`).
+4. **Doublon possible** : la mig 149 dit `booked_online = true` mais `audit src/app/api/admin/merchants/[id]/route.ts:116` filtre déjà `eq('booked_online', true)`. Cohérence vérifiée mais à re-confirmer après refactor éventuel.
+
 ### 4. OVH SMS sans timeout, retry ni circuit breaker `[stab]`
 `src/lib/ovh-sms.ts:43-57,64-111`
 `fetch` sans `AbortController` — un hang OVH bloque jusqu'au timeout Vercel (30s). Aucun retry exponentiel. Aucun circuit breaker. Une maintenance OVH 10 min = SMS perdus définitivement.
