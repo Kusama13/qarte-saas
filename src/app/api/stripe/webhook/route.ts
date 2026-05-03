@@ -86,7 +86,7 @@ export async function POST(request: Request) {
           .eq('id', purchaseId)
           .eq('status', 'pending')
           .select('id, merchant_id, pack_size')
-          .single();
+          .maybeSingle();
 
         if (!purchase) {
           logger.debug('SMS pack already paid or not found:', purchaseId);
@@ -176,7 +176,7 @@ export async function POST(request: Request) {
         .eq('id', merchantId)
         .neq('subscription_status', 'active')
         .select('shop_name, user_id, trial_ends_at, locale, country, plan_tier')
-        .single();
+        .maybeSingle();
 
       if (!merchant) {
         // Either merchant not found or already active — skip email
@@ -243,7 +243,7 @@ export async function POST(request: Request) {
         })
         .eq('stripe_subscription_id', subscription.id)
         .select('shop_name, user_id')
-        .single();
+        .maybeSingle();
 
       if (!merchant) {
         logger.debug('Webhook subscription.deleted: no merchant matched stripe_subscription_id:', subscription.id);
@@ -266,7 +266,7 @@ export async function POST(request: Request) {
         })
         .eq('stripe_customer_id', invoice.customer as string)
         .select('shop_name, user_id, locale')
-        .single();
+        .maybeSingle();
 
       // Envoyer l'email de paiement échoué (await pour serverless)
       if (merchant) {
@@ -296,7 +296,7 @@ export async function POST(request: Request) {
         .eq('stripe_customer_id', invoice.customer as string)
         .eq('subscription_status', 'past_due')
         .select('shop_name, user_id, locale, plan_tier, billing_interval, created_at')
-        .single();
+        .maybeSingle();
 
       // Email de confirmation si paiement récupéré (past_due → active)
       if (merchant) {
@@ -357,7 +357,7 @@ export async function POST(request: Request) {
           .from('merchants')
           .select('subscription_status')
           .eq('stripe_subscription_id', subscription.id)
-          .single();
+          .maybeSingle();
 
         if (existingMerchant && (existingMerchant.subscription_status === 'active' || existingMerchant.subscription_status === 'canceling')) {
           if (existingMerchant.subscription_status === 'canceling') wasReactivated = true;
@@ -371,7 +371,7 @@ export async function POST(request: Request) {
           .from('merchants')
           .select('subscription_status')
           .eq('stripe_subscription_id', subscription.id)
-          .single();
+          .maybeSingle();
 
         if (existingMerchant?.subscription_status === 'canceling') {
           wasReactivated = true;
@@ -397,7 +397,7 @@ export async function POST(request: Request) {
         .update(updatePayload)
         .eq('stripe_subscription_id', subscription.id)
         .select('id, shop_name, user_id, locale')
-        .single();
+        .maybeSingle();
 
       if (!updatedMerchant) {
         logger.debug('Webhook subscription.updated: no merchant matched stripe_subscription_id:', subscription.id);
