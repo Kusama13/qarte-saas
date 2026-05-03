@@ -459,10 +459,10 @@ export default function BookingModal({
       <motion.div
         initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 30, opacity: 0 }}
         onClick={e => e.stopPropagation()}
-        className="bg-white rounded-3xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-3xl w-full max-w-md shadow-2xl flex flex-col max-h-[90dvh]"
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-white rounded-t-3xl border-b border-gray-100 px-5 py-4 flex items-center justify-between">
+        <div className="shrink-0 bg-white rounded-t-3xl border-b border-gray-100 px-5 py-4 flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-gray-900">
               {step === 'confirm'
@@ -484,7 +484,7 @@ export default function BookingModal({
 
         {/* Step indicator */}
         {step !== 'confirm' && (
-          <div className="px-5 pt-3 pb-1 flex gap-1.5">
+          <div className="shrink-0 px-5 pt-3 pb-1 flex gap-1.5">
             {indicatorSteps.map((_, i) => (
               <div
                 key={i}
@@ -495,7 +495,7 @@ export default function BookingModal({
           </div>
         )}
 
-        <div className="p-5">
+        <div className="flex-1 overflow-y-auto min-h-0 p-5">
           <AnimatePresence mode="wait">
             {/* ── STEP 1: Services ── */}
             {step === 'services' && (
@@ -675,41 +675,6 @@ export default function BookingModal({
                 {!durationAvailable && selectedServiceIds.size > 0 && (
                   <p className="text-xs text-red-500 font-medium mb-3">{t('durationTooLong')}</p>
                 )}
-
-                {/* Sticky bottom bar */}
-                <div className="sticky bottom-0 -mx-5 -mb-5 mt-4 px-5 py-3 bg-white/95 backdrop-blur-sm border-t border-gray-100 flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    {selectedServiceIds.size === 0 ? (
-                      <p className="text-[12px] text-gray-500">{t('selectAtLeastOne')}</p>
-                    ) : (
-                      <>
-                        <p className="text-[11px] text-gray-500 font-medium">
-                          {t('categoryServicesCount', { count: selectedServiceIds.size })} · {hasDurationEstimate ? '~' : ''}{formatDuration(totalDuration, locale)}
-                        </p>
-                        <p className="text-sm font-bold text-gray-900 leading-tight">
-                          {formatCurrency(displayPrice, country, locale)}
-                          {stickyDeposit && (
-                            <span className="text-[10px] font-medium text-gray-500 ml-1.5">
-                              · {stickyDeposit.isFullPayment
-                                ? t('depositFullPaymentShort')
-                                : t('depositIncluded', { amount: formatCurrency(stickyDeposit.amount, country, locale) })}
-                            </span>
-                          )}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setStep(isHomeService ? 'address' : isFreeMod ? 'datetime' : 'info')}
-                    disabled={selectedServiceIds.size === 0 || !durationAvailable}
-                    className="shrink-0 px-5 py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center gap-2"
-                    style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
-                  >
-                    {t('next')}
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
               </motion.div>
             )}
 
@@ -736,27 +701,6 @@ export default function BookingModal({
                 {customerAddress && !customerCoords && (
                   <p className="mt-2 text-[11px] text-gray-500">{t('addressNeedSelect')}</p>
                 )}
-
-                <div className="sticky bottom-0 -mx-5 -mb-5 mt-6 px-5 py-3 bg-white/95 backdrop-blur-sm border-t border-gray-100 flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setStep('services')}
-                    className="px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-1"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    {t('back')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStep('datetime')}
-                    disabled={!customerCoords}
-                    className="ml-auto shrink-0 px-5 py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center gap-2"
-                    style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
-                  >
-                    {t('next')}
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
               </motion.div>
             )}
 
@@ -901,25 +845,6 @@ export default function BookingModal({
                   </div>
                 )}
 
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setStep(isHomeService ? 'address' : 'services')}
-                    className="flex-1 py-3 rounded-xl font-bold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all"
-                  >
-                    {t('back')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStep('info')}
-                    disabled={!selectedDate || !selectedTime}
-                    className="flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center justify-center gap-2"
-                    style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
-                  >
-                    {t('next')}
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
               </motion.div>
             )}
 
@@ -1126,32 +1051,6 @@ export default function BookingModal({
                 {error && (
                   <p className="text-xs text-red-500 font-medium mb-3">{error}</p>
                 )}
-
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => { setStep(isFreeMod ? 'datetime' : 'services'); setError(null); }}
-                    className="flex-1 py-3 rounded-xl font-bold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
-                  >
-                    {t('back')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={submitting || !firstName.trim() || !phone.trim()}
-                    className="flex-[2] py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center justify-center gap-2"
-                    style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
-                  >
-                    {submitting ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        {t('confirmBooking')}
-                        <Check className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-                </div>
               </motion.div>
             )}
 
@@ -1325,6 +1224,117 @@ export default function BookingModal({
             )}
           </AnimatePresence>
         </div>
+
+        {/* Footer commun — hors AnimatePresence pour rester collé en bas (sticky cassé par les transforms motion). */}
+        {step !== 'confirm' && (
+          <div className="shrink-0 px-5 py-3 bg-white border-t border-gray-100 rounded-b-3xl pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+            {step === 'services' && (
+              <div className="flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  {selectedServiceIds.size === 0 ? (
+                    <p className="text-[12px] text-gray-500">{t('selectAtLeastOne')}</p>
+                  ) : (
+                    <>
+                      <p className="text-[11px] text-gray-500 font-medium">
+                        {t('categoryServicesCount', { count: selectedServiceIds.size })} · {hasDurationEstimate ? '~' : ''}{formatDuration(totalDuration, locale)}
+                      </p>
+                      <p className="text-sm font-bold text-gray-900 leading-tight">
+                        {formatCurrency(displayPrice, country, locale)}
+                        {stickyDeposit && (
+                          <span className="text-[10px] font-medium text-gray-500 ml-1.5">
+                            · {stickyDeposit.isFullPayment
+                              ? t('depositFullPaymentShort')
+                              : t('depositIncluded', { amount: formatCurrency(stickyDeposit.amount, country, locale) })}
+                          </span>
+                        )}
+                      </p>
+                    </>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStep(isHomeService ? 'address' : isFreeMod ? 'datetime' : 'info')}
+                  disabled={selectedServiceIds.size === 0 || !durationAvailable}
+                  className="shrink-0 px-5 py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center gap-2"
+                  style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
+                >
+                  {t('next')}
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            {step === 'address' && (
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStep('services')}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-1"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  {t('back')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStep('datetime')}
+                  disabled={!customerCoords}
+                  className="ml-auto shrink-0 px-5 py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center gap-2"
+                  style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
+                >
+                  {t('next')}
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            {step === 'datetime' && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(isHomeService ? 'address' : 'services')}
+                  className="flex-1 py-3 rounded-xl font-bold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all"
+                >
+                  {t('back')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStep('info')}
+                  disabled={!selectedDate || !selectedTime}
+                  className="flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+                  style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
+                >
+                  {t('next')}
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            {step === 'info' && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setStep(isFreeMod ? 'datetime' : 'services'); setError(null); }}
+                  className="flex-1 py-3 rounded-xl font-bold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+                >
+                  {t('back')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={submitting || !firstName.trim() || !phone.trim()}
+                  className="flex-[2] py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+                  style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
+                >
+                  {submitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      {t('confirmBooking')}
+                      <Check className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );

@@ -29,6 +29,29 @@ function daysUntil(slotDate: string, today: string): number {
   return Math.floor((slot.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+type CustomServiceFields = {
+  custom_service_name: string | null;
+  custom_service_duration: number | null;
+  custom_service_price: number | null;
+  custom_service_color: string | null;
+};
+
+const NULL_CUSTOM_SERVICE: CustomServiceFields = {
+  custom_service_name: null,
+  custom_service_duration: null,
+  custom_service_price: null,
+  custom_service_color: null,
+};
+
+function pickCustomService(slot: CustomServiceFields): CustomServiceFields {
+  return {
+    custom_service_name: slot.custom_service_name,
+    custom_service_duration: slot.custom_service_duration,
+    custom_service_price: slot.custom_service_price,
+    custom_service_color: slot.custom_service_color,
+  };
+}
+
 // ── Shared pre-checks ────────────────────────────────────────────────
 
 async function commonChecks(
@@ -148,10 +171,7 @@ export async function DELETE(request: NextRequest) {
           deposit_deadline_at: null,
           booked_online: false,
           booked_at: null,
-          custom_service_name: null,
-          custom_service_duration: null,
-          custom_service_price: null,
-          custom_service_color: null,
+          ...NULL_CUSTOM_SERVICE,
         })
         .eq('id', slot_id);
 
@@ -264,10 +284,7 @@ export async function PATCH(request: NextRequest) {
           total_duration_minutes: duration,
           booked_online: true,
           booked_at: new Date().toISOString(),
-          custom_service_name: slot.custom_service_name,
-          custom_service_duration: slot.custom_service_duration,
-          custom_service_price: slot.custom_service_price,
-          custom_service_color: slot.custom_service_color,
+          ...pickCustomService(slot),
         })
         .select('id')
         .single();
@@ -326,10 +343,7 @@ export async function PATCH(request: NextRequest) {
             deposit_deadline_at: null,
             booked_online: false,
             booked_at: null,
-            custom_service_name: null,
-            custom_service_duration: null,
-            custom_service_price: null,
-            custom_service_color: null,
+            ...NULL_CUSTOM_SERVICE,
           })
           .eq('id', slot_id);
 
@@ -348,10 +362,7 @@ export async function PATCH(request: NextRequest) {
             deposit_deadline_at: null,
             booked_online: true,
             booked_at: new Date().toISOString(),
-            custom_service_name: slot.custom_service_name,
-            custom_service_duration: slot.custom_service_duration,
-            custom_service_price: slot.custom_service_price,
-            custom_service_color: slot.custom_service_color,
+            ...pickCustomService(slot),
           })
           .eq('id', targetSlot.id);
 
