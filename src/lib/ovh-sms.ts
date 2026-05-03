@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import { sanitizeSmsForGsm7 } from './sms-sanitize';
+import logger from './logger';
 
 const APP_KEY = (process.env.OVH_APP_KEY || '').trim();
 const APP_SECRET = (process.env.OVH_APP_SECRET || '').trim();
@@ -93,7 +94,7 @@ export type SmsKind = 'marketing' | 'transactional';
  */
 export async function sendSms(phone: string, message: string, kind: SmsKind = 'marketing'): Promise<{ success: boolean; jobId?: string; error?: string; creditExhausted?: boolean }> {
   if (!APP_KEY || !APP_SECRET || !CONSUMER_KEY || !SMS_SERVICE) {
-    console.error('[ovh-sms] Missing OVH SMS environment variables');
+    logger.error('[ovh-sms] Missing OVH SMS environment variables');
     return { success: false, error: 'Missing OVH config' };
   }
 
@@ -130,7 +131,7 @@ export async function sendSms(phone: string, message: string, kind: SmsKind = 'm
         ovhMsg || 'OVH error',
         ovhCode ? `(${ovhCode})` : '',
       ].filter(Boolean).join(' ').trim();
-      console.error(`[ovh-sms] Send failed: ${errMsg}`);
+      logger.error(`[ovh-sms] Send failed: ${errMsg}`);
       // HTTP 402 ou message "Not enough credits" → solde OVH epuisé.
       // Signale le creditExhausted pour que le dispatch stop net (au lieu de
       // boucler sur tous les destinataires restants en pure perte).
@@ -143,7 +144,7 @@ export async function sendSms(phone: string, message: string, kind: SmsKind = 'm
     return { success: true, jobId };
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
-    console.error(`[ovh-sms] Error: ${errMsg}`);
+    logger.error(`[ovh-sms] Error: ${errMsg}`);
     return { success: false, error: errMsg };
   }
 }

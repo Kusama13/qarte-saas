@@ -4,6 +4,7 @@ import { sendSmsPartner } from './sms-partner';
 import { detectPhoneCountry } from './utils';
 import { notifyMerchantQuotaAlert } from './sms-alerts';
 import { getPlanFeatures } from './plan-tiers';
+import logger from './logger';
 import type { PlanTier, SubscriptionStatus } from '@/types';
 
 type SmsProvider = 'ovh' | 'sms_partner';
@@ -513,7 +514,7 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
 
     return result.success;
   } catch (err) {
-    console.error(`[sms] Error sending ${smsType} to ${phone}:`, err);
+    logger.error(`[sms] Error sending ${smsType} to ${phone}:`, err);
     return false;
   }
 }
@@ -613,7 +614,7 @@ export async function sendMarketingSms(
       creditExhausted: result.creditExhausted,
     };
   } catch (err) {
-    console.error(`[sms] Marketing error to ${phone}:`, err);
+    logger.error(`[sms] Marketing error to ${phone}:`, err);
     return { success: false, error: 'exception' };
   }
 }

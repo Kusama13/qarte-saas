@@ -1,4 +1,5 @@
 import { sanitizeSmsForGsm7 } from './sms-sanitize';
+import logger from './logger';
 
 const API_KEY = (process.env.SMS_PARTNER_API_KEY || '').trim();
 // Trim d'abord, fallback après — sinon une env var Vercel à "\n" passe le `||` et donne ""
@@ -62,7 +63,7 @@ type SmsPartnerResponse = SmsPartnerSuccess | SmsPartnerError;
  */
 export async function sendSmsPartner(phone: string, message: string): Promise<{ success: boolean; jobId?: string; error?: string }> {
   if (!API_KEY) {
-    console.error('[sms-partner] Missing SMS_PARTNER_API_KEY');
+    logger.error('[sms-partner] Missing SMS_PARTNER_API_KEY');
     return { success: false, error: 'Missing SMS Partner config' };
   }
 
@@ -89,14 +90,14 @@ export async function sendSmsPartner(phone: string, message: string): Promise<{ 
         ? data.errors.map(e => e.message).filter(Boolean).join('; ')
         : (data && 'message' in data ? data.message : null);
       const errMsg = `[HTTP ${res.status}] SMS Partner error (code ${errCode})${errDetail ? `: ${errDetail}` : ''}`;
-      console.error(`[sms-partner] Send failed: ${errMsg}`);
+      logger.error(`[sms-partner] Send failed: ${errMsg}`);
       return { success: false, error: errMsg };
     }
 
     return { success: true, jobId: String(data.message_id) };
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
-    console.error(`[sms-partner] Error: ${errMsg}`);
+    logger.error(`[sms-partner] Error: ${errMsg}`);
     return { success: false, error: errMsg };
   }
 }
