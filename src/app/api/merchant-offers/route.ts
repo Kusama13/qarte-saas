@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import logger from '@/lib/logger';
+import { parseDiscountPercent } from '@/lib/booking-pricing';
 
 // GET: list offers for a merchant (public or authenticated)
 export async function GET(request: NextRequest) {
@@ -87,13 +88,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'La description ne doit pas dépasser 500 caractères' }, { status: 400 });
     }
 
-    let normalizedDiscount: number | null = null;
-    if (discountPercent !== undefined && discountPercent !== null && discountPercent !== '') {
-      const n = Number(discountPercent);
-      if (!Number.isInteger(n) || n < 1 || n > 100) {
-        return NextResponse.json({ error: 'La réduction doit être un entier entre 1 et 100' }, { status: 400 });
-      }
-      normalizedDiscount = n;
+    let normalizedDiscount: number | null;
+    try {
+      normalizedDiscount = parseDiscountPercent(discountPercent);
+    } catch {
+      return NextResponse.json({ error: 'La réduction doit être un entier entre 1 et 100' }, { status: 400 });
     }
 
     const { data: merchant } = await supabase
@@ -200,14 +199,10 @@ export async function PATCH(request: NextRequest) {
     }
     const discountValue = updates.discount_percent ?? updates.discountPercent;
     if (discountValue !== undefined) {
-      if (discountValue === null || discountValue === '') {
-        safeUpdates.discount_percent = null;
-      } else {
-        const n = Number(discountValue);
-        if (!Number.isInteger(n) || n < 1 || n > 100) {
-          return NextResponse.json({ error: 'La réduction doit être un entier entre 1 et 100' }, { status: 400 });
-        }
-        safeUpdates.discount_percent = n;
+      try {
+        safeUpdates.discount_percent = parseDiscountPercent(discountValue);
+      } catch {
+        return NextResponse.json({ error: 'La réduction doit être un entier entre 1 et 100' }, { status: 400 });
       }
     }
 

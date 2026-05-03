@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { useTranslations } from 'next-intl';
+import { parseDiscountPercent } from '@/lib/booking-pricing';
 import type { Merchant } from '@/types';
 
 export interface WelcomeSectionHandle {
@@ -39,11 +40,11 @@ const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(fun
 
     let normalizedDiscount: number | null = null;
     if (onlineBooking && welcomeEnabled && welcomeDiscountPercent.trim()) {
-      const n = Number(welcomeDiscountPercent.trim());
-      if (!Number.isInteger(n) || n < 1 || n > 100) {
+      try {
+        normalizedDiscount = parseDiscountPercent(welcomeDiscountPercent.trim());
+      } catch {
         throw new Error(t('welcomeDiscountInvalid'));
       }
-      normalizedDiscount = n;
     }
 
     setSaveError('');

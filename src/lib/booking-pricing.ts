@@ -6,6 +6,23 @@
  * Cumul : member × welcome × promo (multiplicatif), arrondi à l'euro le plus proche.
  */
 
+export const MIN_DISCOUNT_PERCENT = 1;
+export const MAX_DISCOUNT_PERCENT = 100;
+
+/**
+ * Parse une valeur (string | number | null | undefined) vers un % de réduction
+ * valide. Retourne `null` si la valeur est vide (= pas de réduction = champ optionnel).
+ * Throw si la valeur est fournie mais hors plage [1, 100] ou non-entière.
+ */
+export function parseDiscountPercent(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < MIN_DISCOUNT_PERCENT || n > MAX_DISCOUNT_PERCENT) {
+    throw new Error(`Discount percent must be an integer between ${MIN_DISCOUNT_PERCENT} and ${MAX_DISCOUNT_PERCENT}`);
+  }
+  return n;
+}
+
 export type AppliedDiscounts = {
   member?: number;
   welcome?: number;

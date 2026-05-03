@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { getTodayForCountry } from '@/lib/utils';
+import { parseDiscountPercent } from '@/lib/booking-pricing';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { useTranslations } from 'next-intl';
 import type { Merchant } from '@/types';
@@ -67,13 +68,11 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
       if (promoEnabled && (!promoTitle.trim() || !promoDescription.trim())) throw new Error(t('promoFieldsRequired'));
 
       // Validation du % côté client (entier 1-100, vide accepté = pas de réduction calculée)
-      let normalizedDiscount: number | null = null;
-      if (promoDiscountPercent.trim()) {
-        const n = Number(promoDiscountPercent.trim());
-        if (!Number.isInteger(n) || n < 1 || n > 100) {
-          throw new Error(t('promoDiscountInvalid'));
-        }
-        normalizedDiscount = n;
+      let normalizedDiscount: number | null;
+      try {
+        normalizedDiscount = parseDiscountPercent(promoDiscountPercent.trim());
+      } catch {
+        throw new Error(t('promoDiscountInvalid'));
       }
 
       if (promoEnabled) {

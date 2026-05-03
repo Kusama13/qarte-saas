@@ -6,6 +6,7 @@ import { sendBookingSms } from '@/lib/sms';
 import { recomputeDayTravel } from '@/lib/travel-recompute';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
+import { validateAppliedDiscounts } from '@/lib/applied-discounts';
 
 const schema = z.object({
   merchantId: z.string().uuid(),
@@ -58,43 +59,14 @@ export async function POST(request: NextRequest) {
     if (!m) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     if (m.booking_mode !== 'free') return NextResponse.json({ error: 'Mode non applicable' }, { status: 400 });
 
-    // Validation server-side des réductions appliquées (anti-spoof)
-    // applied_offer_id <-> applied_offer_percent : doivent être cohérents et matcher l'offre du merchant
-    if ((applied_offer_id && !applied_offer_percent) || (!applied_offer_id && applied_offer_percent)) {
-      return NextResponse.json({ error: 'applied_offer_id et applied_offer_percent doivent être fournis ensemble' }, { status: 400 });
-    }
-    if (applied_offer_id && applied_offer_percent) {
-      const supabaseAdminCheck = getSupabaseAdmin();
-      const { data: offer } = await supabaseAdminCheck
-        .from('merchant_offers')
-        .select('id, discount_percent, active, expires_at')
-        .eq('id', applied_offer_id)
-        .eq('merchant_id', merchantId)
-        .maybeSingle();
-      if (!offer || !offer.active || offer.discount_percent !== applied_offer_percent) {
-        return NextResponse.json({ error: 'Offre invalide ou réduction non cohérente' }, { status: 400 });
-      }
-      if (offer.expires_at && new Date(offer.expires_at) < new Date()) {
-        return NextResponse.json({ error: 'Offre expirée' }, { status: 400 });
-      }
-    }
-    // applied_welcome_percent : doit matcher merchants.welcome_offer_discount_percent + client éligible (1ère résa)
-    if (applied_welcome_percent) {
-      if (!m.welcome_offer_enabled || m.welcome_offer_discount_percent !== applied_welcome_percent) {
-        return NextResponse.json({ error: 'Welcome non disponible ou pourcentage incohérent' }, { status: 400 });
-      }
-      if (customer_id) {
-        const supabaseAdminCheck = getSupabaseAdmin();
-        const { data: existingCard } = await supabaseAdminCheck
-          .from('loyalty_cards')
-          .select('id')
-          .eq('customer_id', customer_id)
-          .eq('merchant_id', merchantId)
-          .maybeSingle();
-        if (existingCard) {
-          return NextResponse.json({ error: 'Welcome non applicable : client déjà inscrit' }, { status: 400 });
-        }
-      }
+    const discountValidation = await validateAppliedDiscounts(
+      getSupabaseAdmin(),
+      merchantId,
+      customer_id,
+      { applied_offer_id, applied_offer_percent, applied_welcome_percent },
+    );
+    if (!discountValidation.ok) {
+      return NextResponse.json({ error: discountValidation.error }, { status: discountValidation.status });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
