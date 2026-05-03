@@ -23,15 +23,28 @@ const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(fun
   const t = useTranslations('publicPage');
   const [welcomeEnabled, setWelcomeEnabled] = useState(false);
   const [welcomeDescription, setWelcomeDescription] = useState('');
+  const [welcomeDiscountPercent, setWelcomeDiscountPercent] = useState<string>('');
   const [saveError, setSaveError] = useState('');
+
+  const onlineBooking = !!merchant.auto_booking_enabled;
 
   useEffect(() => {
     setWelcomeEnabled(merchant.welcome_offer_enabled || false);
     setWelcomeDescription(merchant.welcome_offer_description || '');
+    setWelcomeDiscountPercent(merchant.welcome_offer_discount_percent != null ? String(merchant.welcome_offer_discount_percent) : '');
   }, [merchant]);
 
   const save = async () => {
     if (welcomeEnabled && !welcomeDescription.trim()) throw new Error(t('welcomeDescRequired'));
+
+    let normalizedDiscount: number | null = null;
+    if (onlineBooking && welcomeEnabled && welcomeDiscountPercent.trim()) {
+      const n = Number(welcomeDiscountPercent.trim());
+      if (!Number.isInteger(n) || n < 1 || n > 100) {
+        throw new Error(t('welcomeDiscountInvalid'));
+      }
+      normalizedDiscount = n;
+    }
 
     setSaveError('');
     const res = await fetch('/api/merchants/referral-config', {
@@ -44,6 +57,7 @@ const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(fun
         referral_reward_referred: merchant.referral_reward_referred,
         welcome_offer_enabled: welcomeEnabled,
         welcome_offer_description: welcomeEnabled ? welcomeDescription.trim() : null,
+        welcome_offer_discount_percent: normalizedDiscount,
       }),
     });
 
@@ -86,29 +100,89 @@ const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(fun
 
       {welcomeEnabled && (
         <div className="space-y-3 mt-3">
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
-              {t('welcomeDescLabel')} <span className="text-red-400">*</span>
-            </label>
-            <Input
-              placeholder={t('welcomeDescPlaceholder')}
-              value={welcomeDescription}
-              onChange={(e) => setWelcomeDescription(e.target.value)}
-              className="h-10 text-sm"
-            />
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {[t('welcomeSugg1'), t('welcomeSugg2'), t('welcomeSugg3')].map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setWelcomeDescription(s)}
-                  className="px-2.5 py-1 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200 transition-colors"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
+          {onlineBooking ? (
+            <>
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                  {t('welcomeDiscountLabel')}
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={100}
+                    step={1}
+                    placeholder="15"
+                    value={welcomeDiscountPercent}
+                    onChange={(e) => setWelcomeDiscountPercent(e.target.value.replace(/[^\d]/g, ''))}
+                    className="h-10 text-sm w-20 text-center"
+                  />
+                  <span className="text-sm font-semibold text-gray-700">%</span>
+                </div>
+                {welcomeDiscountPercent.trim() ? (
+                  <p className="text-[11px] text-emerald-600 mt-1.5 leading-snug">
+                    {t('welcomeDiscountActiveHelp', { percent: welcomeDiscountPercent.trim() })}
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-amber-700 mt-1.5 leading-snug">
+                    {t('welcomeLegacyHelp')}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                  {t('welcomeDescLabel')} <span className="text-red-400">*</span>
+                </label>
+                <Input
+                  placeholder={t('welcomeDescPlaceholder')}
+                  value={welcomeDescription}
+                  onChange={(e) => setWelcomeDescription(e.target.value)}
+                  className="h-10 text-sm"
+                />
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {[t('welcomeSugg1'), t('welcomeSugg2'), t('welcomeSugg3')].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setWelcomeDescription(s)}
+                      className="px-2.5 py-1 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200 transition-colors"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                  {t('welcomeDescLabel')} <span className="text-red-400">*</span>
+                </label>
+                <Input
+                  placeholder={t('welcomeDescPlaceholder')}
+                  value={welcomeDescription}
+                  onChange={(e) => setWelcomeDescription(e.target.value)}
+                  className="h-10 text-sm"
+                />
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {[t('welcomeSugg1'), t('welcomeSugg2'), t('welcomeSugg3')].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setWelcomeDescription(s)}
+                      className="px-2.5 py-1 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200 transition-colors"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className="text-[11px] text-gray-500 leading-snug">
+                {t('welcomeOfflineHelp')}
+              </p>
+            </>
+          )}
         </div>
       )}
 

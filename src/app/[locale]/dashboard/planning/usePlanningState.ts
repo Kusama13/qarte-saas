@@ -353,6 +353,9 @@ export function usePlanningState() {
     send_sms?: boolean;
     send_sms_cancel?: boolean;
     delete_if_empty?: boolean;
+    applied_offer_id?: string | null;
+    applied_offer_percent?: number | null;
+    applied_welcome_percent?: number | null;
   }) => {
     if (!merchant) return;
     setSaving(true);

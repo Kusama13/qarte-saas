@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     // Public: only active, non-expired offers
     const { data, error } = await supabase
       .from('merchant_offers')
-      .select('id, title, description, expires_at')
+      .select('id, title, description, expires_at, discount_percent')
       .eq('merchant_id', merchantId)
       .eq('active', true)
       .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { merchantId, title, description, expiresAt } = body;
+    const { merchantId, title, description, expiresAt, discountPercent } = body;
 
     if (!merchantId || !title?.trim() || !description?.trim()) {
       return NextResponse.json({ error: 'merchantId, title et description requis' }, { status: 400 });
@@ -85,6 +85,15 @@ export async function POST(request: NextRequest) {
     }
     if (description.trim().length > 500) {
       return NextResponse.json({ error: 'La description ne doit pas dépasser 500 caractères' }, { status: 400 });
+    }
+
+    let normalizedDiscount: number | null = null;
+    if (discountPercent !== undefined && discountPercent !== null && discountPercent !== '') {
+      const n = Number(discountPercent);
+      if (!Number.isInteger(n) || n < 1 || n > 100) {
+        return NextResponse.json({ error: 'La réduction doit être un entier entre 1 et 100' }, { status: 400 });
+      }
+      normalizedDiscount = n;
     }
 
     const { data: merchant } = await supabase
@@ -111,6 +120,7 @@ export async function POST(request: NextRequest) {
         title: title.trim(),
         description: description.trim(),
         expires_at: normalizedExpiry,
+        discount_percent: normalizedDiscount,
         active: true,
       })
       .select()
@@ -187,6 +197,18 @@ export async function PATCH(request: NextRequest) {
         normalized = `${normalized}T23:59:59`;
       }
       safeUpdates.expires_at = normalized;
+    }
+    const discountValue = updates.discount_percent ?? updates.discountPercent;
+    if (discountValue !== undefined) {
+      if (discountValue === null || discountValue === '') {
+        safeUpdates.discount_percent = null;
+      } else {
+        const n = Number(discountValue);
+        if (!Number.isInteger(n) || n < 1 || n > 100) {
+          return NextResponse.json({ error: 'La réduction doit être un entier entre 1 et 100' }, { status: 400 });
+        }
+        safeUpdates.discount_percent = n;
+      }
     }
 
     const { error } = await supabase

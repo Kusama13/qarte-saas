@@ -15,6 +15,7 @@ import { getPlanFeatures } from '@/lib/plan-tiers';
 import { getTravelTime, type Coords } from '@/lib/travel-time';
 import { recomputeDayTravel } from '@/lib/travel-recompute';
 import { buildDepositLinks } from '@/lib/payment-providers';
+import { computeBookingPrice } from '@/lib/booking-pricing';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, welcome_offer_enabled, welcome_offer_description, booking_mode, buffer_minutes, home_service_enabled, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days')
+      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, welcome_offer_enabled, welcome_offer_description, welcome_offer_discount_percent, booking_mode, buffer_minutes, home_service_enabled, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days')
       .eq('id', merchant_id)
       .single();
 
@@ -299,8 +300,10 @@ export async function POST(request: NextRequest) {
           .select('id')
           .single();
 
-        // Auto-create welcome voucher if enabled
-        if (newCard && merchant.welcome_offer_enabled && merchant.welcome_offer_description) {
+        // Auto-create welcome voucher if welcome enabled in LEGACY mode (no discount %).
+        // If welcome_offer_discount_percent is set, the discount is applied immediately
+        // to the booking price below — no voucher needed (cf. mig 153).
+        if (newCard && merchant.welcome_offer_enabled && merchant.welcome_offer_description && !merchant.welcome_offer_discount_percent) {
           await supabaseAdmin
             .from('vouchers')
             .insert({
@@ -316,29 +319,52 @@ export async function POST(request: NextRequest) {
     }
 
     // 6b. Check if customer is a loyal client (member card) for discount/deposit skip
+    // + fetch active promo offer in parallel
     let memberDiscount: number | null = null;
     let memberSkipDeposit = false;
-    if (customerId) {
-      const { data: mc } = await supabaseAdmin
-        .from('member_cards')
-        .select('id, valid_until, program:member_programs!inner(discount_percent, skip_deposit, merchant_id)')
-        .eq('customer_id', customerId)
-        .eq('program.merchant_id', merchant_id)
-        .gt('valid_until', new Date().toISOString())
+    const [memberRes, activeOfferRes] = await Promise.all([
+      customerId
+        ? supabaseAdmin
+            .from('member_cards')
+            .select('id, valid_until, program:member_programs!inner(discount_percent, skip_deposit, merchant_id)')
+            .eq('customer_id', customerId)
+            .eq('program.merchant_id', merchant_id)
+            .gt('valid_until', new Date().toISOString())
+            .limit(1)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      supabaseAdmin
+        .from('merchant_offers')
+        .select('id, discount_percent')
+        .eq('merchant_id', merchant_id)
+        .eq('active', true)
+        .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
+        .order('created_at', { ascending: false })
         .limit(1)
-        .maybeSingle();
-      if (mc) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const prog = mc.program as any;
-        memberDiscount = prog?.discount_percent || null;
-        memberSkipDeposit = prog?.skip_deposit || false;
-      }
+        .maybeSingle(),
+    ]);
+
+    if (memberRes.data) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const prog = (memberRes.data as any).program;
+      memberDiscount = prog?.discount_percent || null;
+      memberSkipDeposit = prog?.skip_deposit || false;
     }
 
-    // Apply member discount to totalPrice
-    if (memberDiscount) {
-      totalPrice = Math.round(rawTotalPrice * (1 - memberDiscount / 100));
-    }
+    const activeOffer = activeOfferRes.data;
+    const promoPercent = activeOffer?.discount_percent ?? null;
+    const welcomePercent = (isNewCustomer && merchant.welcome_offer_enabled && merchant.welcome_offer_discount_percent)
+      ? merchant.welcome_offer_discount_percent
+      : null;
+
+    // Apply discounts (member × welcome × promo) via single source of truth
+    const priceResult = computeBookingPrice({
+      totalPrice: rawTotalPrice,
+      memberPercent: memberDiscount,
+      welcomePercent,
+      promoPercent,
+    });
+    totalPrice = priceResult.finalPrice;
 
     // 7. Create/block slot(s)
     const hasDeposit = !!merchant.deposit_link && !memberSkipDeposit;
@@ -356,6 +382,16 @@ export async function POST(request: NextRequest) {
     let bookedSlotId: string;
     let slotsBlocked = 1;
 
+    // Snapshots des % appliqués pour historique fidèle (cf. mig 153)
+    const appliedDiscountFields: Record<string, unknown> = {};
+    if (promoPercent && activeOffer) {
+      appliedDiscountFields.applied_offer_id = activeOffer.id;
+      appliedDiscountFields.applied_offer_percent = promoPercent;
+    }
+    if (welcomePercent) {
+      appliedDiscountFields.applied_welcome_percent = welcomePercent;
+    }
+
     if (isFreeMod) {
       // Mode libre: INSERT one slot (no filler slots)
       const insertData: Record<string, unknown> = {
@@ -369,6 +405,7 @@ export async function POST(request: NextRequest) {
         total_duration_minutes: totalDuration,
         booked_online: true,
         booked_at: bookedAt,
+        ...appliedDiscountFields,
       };
       if (hasDeposit) {
         insertData.deposit_confirmed = false;
@@ -413,6 +450,7 @@ export async function POST(request: NextRequest) {
         customer_email: trimmedEmail,
         booked_online: true,
         booked_at: bookedAt,
+        ...appliedDiscountFields,
       };
       if (hasDeposit) {
         baseData.deposit_confirmed = false;

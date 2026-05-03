@@ -10,17 +10,18 @@ import type { Merchant, MerchantCountry } from '@/types';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { AddressAutocomplete, type AddressSuggestion } from '@/components/ui/AddressAutocomplete';
 import { detectPaymentProvider } from '@/lib/payment-providers';
+import { computeBookingPrice } from '@/lib/booking-pricing';
 
 type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
 type ServiceCategory = { id: string; name: string; position: number };
 type PlanningSlotPublic = { slot_date: string; start_time: string };
-type PromoOffer = { id: string; title: string; description: string; expires_at: string | null };
+type PromoOffer = { id: string; title: string; description: string; expires_at: string | null; discount_percent: number | null };
 
 type MerchantBooking = Pick<
   Merchant,
   'id' | 'shop_name' | 'primary_color' | 'secondary_color' | 'country' | 'booking_message' |
   'auto_booking_enabled' | 'deposit_link' | 'deposit_percent' | 'deposit_amount' |
-  'welcome_offer_enabled' | 'welcome_offer_description' | 'subscription_status' | 'booking_mode' |
+  'welcome_offer_enabled' | 'welcome_offer_description' | 'welcome_offer_discount_percent' | 'subscription_status' | 'booking_mode' |
   'allow_customer_cancel' | 'cancel_deadline_days' | 'allow_customer_reschedule' | 'reschedule_deadline_days' |
   'home_service_enabled'
 >;
@@ -258,9 +259,26 @@ export default function BookingModal({
     () => selectedServices.reduce((sum, s) => sum + Number(s.price || 0), 0),
     [selectedServices]
   );
-  const displayPrice = memberBenefit?.discount_percent
-    ? Math.round(totalPrice * (1 - memberBenefit.discount_percent / 100))
-    : totalPrice;
+
+  // Welcome appliqué de manière "optimiste" : si on n'a pas encore reconnu la cliente
+  // (idle/loading/unknown), on suppose nouveau client → -welcome%. Si la cliente est
+  // reconnue (kind === 'known'), on ne l'applique pas. Le serveur revérifie strictement
+  // (loyalty_card existante) à la création de la résa.
+  const isFirstBookingOptimistic = recognition.kind !== 'known';
+  const welcomeApplicablePercent = (
+    isFirstBookingOptimistic
+    && merchant.welcome_offer_enabled
+    && merchant.welcome_offer_discount_percent
+  ) ? merchant.welcome_offer_discount_percent : null;
+  const promoApplicablePercent = promoOffer?.discount_percent ?? null;
+
+  const priceResult = useMemo(() => computeBookingPrice({
+    totalPrice,
+    memberPercent: memberBenefit?.discount_percent,
+    welcomePercent: welcomeApplicablePercent,
+    promoPercent: promoApplicablePercent,
+  }), [totalPrice, memberBenefit?.discount_percent, welcomeApplicablePercent, promoApplicablePercent]);
+  const displayPrice = priceResult.finalPrice;
 
   const totalDuration = useMemo(
     () => selectedServices.reduce((sum, s) => sum + (s.duration || 30), 0),
@@ -438,17 +456,20 @@ export default function BookingModal({
       : ['services', 'info'];
   const currentStepIdx = indicatorSteps.indexOf(step);
 
-  // Sticky bar deposit info
+  // Sticky bar deposit info — calculé sur displayPrice (pas totalPrice) pour
+  // refléter les réductions appliquées (member/welcome/promo). Sinon le merchant
+  // perd la cohérence : la cliente verrait un acompte 50% sur 35€ alors qu'elle
+  // paie 28€ après réductions.
   const stickyDeposit = useMemo(() => {
     if (!merchant.deposit_link) return null;
     if (!merchant.deposit_percent && !merchant.deposit_amount) return null;
-    if (totalPrice <= 0 || skipDeposit) return null;
+    if (displayPrice <= 0 || skipDeposit) return null;
     const rawDeposit = merchant.deposit_amount
       ? Number(merchant.deposit_amount)
-      : Math.round(totalPrice * (merchant.deposit_percent || 0) / 100);
-    const capped = Math.min(rawDeposit, totalPrice);
-    return { amount: capped, isFullPayment: rawDeposit >= totalPrice };
-  }, [merchant.deposit_link, merchant.deposit_percent, merchant.deposit_amount, totalPrice, skipDeposit]);
+      : Math.round(displayPrice * (merchant.deposit_percent || 0) / 100);
+    const capped = Math.min(rawDeposit, displayPrice);
+    return { amount: capped, isFullPayment: rawDeposit >= displayPrice };
+  }, [merchant.deposit_link, merchant.deposit_percent, merchant.deposit_amount, displayPrice, skipDeposit]);
 
   return (
     <motion.div
@@ -626,7 +647,29 @@ export default function BookingModal({
                 {promoOffer && (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-100 mb-3">
                     <Gift className="w-4 h-4 text-amber-500 shrink-0" />
-                    <p className="text-xs text-amber-700 font-medium">{promoOffer.title} — {promoOffer.description}</p>
+                    <p className="text-xs text-amber-700 font-medium flex-1 leading-snug">
+                      <span className="font-bold">{promoOffer.title}</span>
+                      {promoOffer.discount_percent && (
+                        <span className="ml-1.5 inline-block bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md align-middle">
+                          -{promoOffer.discount_percent}%
+                        </span>
+                      )}
+                      <span className="opacity-80"> — {promoOffer.description}</span>
+                    </p>
+                  </div>
+                )}
+
+                {/* Welcome banner — affiché uniquement si applicable (1ère résa optimiste) */}
+                {welcomeApplicablePercent && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-50 border border-rose-100 mb-3">
+                    <Gift className="w-4 h-4 text-rose-500 shrink-0" />
+                    <p className="text-xs text-rose-700 font-medium flex-1 leading-snug">
+                      <span className="font-bold">{t('welcomeBannerTitle')}</span>
+                      <span className="ml-1.5 inline-block bg-rose-100 text-rose-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md align-middle">
+                        -{welcomeApplicablePercent}%
+                      </span>
+                      <span className="opacity-80"> — {t('welcomeBannerSubtitle')}</span>
+                    </p>
                   </div>
                 )}
 
@@ -637,21 +680,38 @@ export default function BookingModal({
                       <span className="text-gray-500">{hasDurationEstimate ? t('totalDurationEstimate') : t('totalDuration')}</span>
                       <span className="font-bold text-gray-900">{hasDurationEstimate ? '~' : ''}{formatDuration(totalDuration, locale)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-sm items-start">
                       <span className="text-gray-500">{t('totalPrice')}</span>
-                      <span className="flex items-center gap-1.5">
-                        {memberBenefit?.discount_percent && totalPrice !== displayPrice && (
-                          <span className="text-xs text-gray-500 line-through">{formatCurrency(totalPrice, country, locale)}</span>
+                      <div className="flex flex-col items-end">
+                        <span className="flex items-center gap-1.5">
+                          {totalPrice !== displayPrice && (
+                            <span className="text-xs text-gray-500 line-through">{formatCurrency(totalPrice, country, locale)}</span>
+                          )}
+                          <span className="font-bold text-gray-900">{formatCurrency(displayPrice, country, locale)}</span>
+                        </span>
+                        {priceResult.hasDiscount && (
+                          <span className="text-[10px] text-emerald-600 mt-0.5 leading-tight">
+                            {[
+                              priceResult.appliedDiscounts.member && t('discountMember', { percent: priceResult.appliedDiscounts.member }),
+                              priceResult.appliedDiscounts.welcome && t('discountWelcome', { percent: priceResult.appliedDiscounts.welcome }),
+                              priceResult.appliedDiscounts.promo && t('discountPromo', { percent: priceResult.appliedDiscounts.promo }),
+                            ].filter(Boolean).join(' · ')}
+                          </span>
                         )}
-                        <span className="font-bold text-gray-900">{formatCurrency(displayPrice, country, locale)}</span>
-                      </span>
+                      </div>
                     </div>
-                    {merchant.deposit_link && (merchant.deposit_percent || merchant.deposit_amount) && totalPrice > 0 && !skipDeposit && (() => {
+                    {/* Mention pour offre descriptive (pas de discount calculé) — évite que la cliente arrive en boutique sans en parler */}
+                    {promoOffer && !promoOffer.discount_percent && (
+                      <p className="text-[11px] text-amber-700 italic text-right leading-snug pt-0.5">
+                        {t('promoApplyInShop', { title: promoOffer.title })}
+                      </p>
+                    )}
+                    {merchant.deposit_link && (merchant.deposit_percent || merchant.deposit_amount) && displayPrice > 0 && !skipDeposit && (() => {
                       const rawDeposit = merchant.deposit_amount
                         ? Number(merchant.deposit_amount)
-                        : Math.round(totalPrice * (merchant.deposit_percent || 0) / 100);
-                      const isFullPayment = rawDeposit >= totalPrice;
-                      const cappedDeposit = Math.min(rawDeposit, totalPrice);
+                        : Math.round(displayPrice * (merchant.deposit_percent || 0) / 100);
+                      const isFullPayment = rawDeposit >= displayPrice;
+                      const cappedDeposit = Math.min(rawDeposit, displayPrice);
                       return (
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-500">

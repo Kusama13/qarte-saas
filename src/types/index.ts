@@ -112,6 +112,7 @@ export interface Merchant {
   // Welcome offer
   welcome_offer_enabled: boolean;
   welcome_offer_description: string | null;
+  welcome_offer_discount_percent: number | null;
   welcome_referral_code: string | null;
   // Birthday gift
   birthday_gift_enabled: boolean;
@@ -242,6 +243,10 @@ export interface PlanningSlot {
   customer_lng?: number | null;
   travel_time_minutes?: number | null;
   travel_time_overridden?: boolean;
+  // Réductions appliquées (snapshots, mig 153)
+  applied_offer_id?: string | null;
+  applied_offer_percent?: number | null;
+  applied_welcome_percent?: number | null;
   planning_slot_services?: PlanningSlotService[];
   planning_slot_photos?: PlanningSlotPhoto[];
   planning_slot_result_photos?: PlanningSlotResultPhoto[];

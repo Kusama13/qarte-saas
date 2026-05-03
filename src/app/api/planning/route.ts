@@ -215,6 +215,9 @@ const updateSlotSchema = z.object({
   // Mode libre: après avoir vidé un slot (annulation), on le supprime entièrement.
   // Évite le slot fantôme qui bloque la recréation sur le même horaire.
   delete_if_empty: z.boolean().optional(),
+  applied_offer_id: z.string().uuid().nullable().optional(),
+  applied_offer_percent: z.number().int().min(1).max(100).nullable().optional(),
+  applied_welcome_percent: z.number().int().min(1).max(100).nullable().optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -233,7 +236,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
     }
 
-    const { slotId, merchantId, client_name, client_phone, customer_id, service_ids, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, notes, deposit_confirmed, customer_address, customer_lat, customer_lng, send_sms, send_sms_cancel, delete_if_empty } = parsed.data;
+    const { slotId, merchantId, client_name, client_phone, customer_id, service_ids, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, notes, deposit_confirmed, customer_address, customer_lat, customer_lng, send_sms, send_sms_cancel, delete_if_empty, applied_offer_id, applied_offer_percent, applied_welcome_percent } = parsed.data;
 
     if (!await verifyOwnership(supabase, merchantId, user.id)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
@@ -297,11 +300,61 @@ export async function PATCH(request: NextRequest) {
       updateData.customer_lng = null;
       updateData.travel_time_minutes = null;
       updateData.travel_time_overridden = false;
+      // Reset réductions appliquées
+      updateData.applied_offer_id = null;
+      updateData.applied_offer_percent = null;
+      updateData.applied_welcome_percent = null;
     } else {
       if (custom_service_duration !== undefined) updateData.custom_service_duration = custom_service_duration;
       if (custom_service_name !== undefined) updateData.custom_service_name = custom_service_name?.trim() || null;
       if (custom_service_price !== undefined) updateData.custom_service_price = custom_service_price;
       if (custom_service_color !== undefined) updateData.custom_service_color = custom_service_color;
+      // Réductions appliquées : validation anti-spoof
+      if ((applied_offer_id && !applied_offer_percent) || (!applied_offer_id && applied_offer_percent)) {
+        return NextResponse.json({ error: 'applied_offer_id et applied_offer_percent doivent être fournis ensemble' }, { status: 400 });
+      }
+      if (applied_offer_id !== undefined) {
+        if (applied_offer_id && applied_offer_percent) {
+          const { data: offer } = await supabaseAdmin
+            .from('merchant_offers')
+            .select('id, discount_percent, active, expires_at')
+            .eq('id', applied_offer_id)
+            .eq('merchant_id', merchantId)
+            .maybeSingle();
+          if (!offer || !offer.active || offer.discount_percent !== applied_offer_percent) {
+            return NextResponse.json({ error: 'Offre invalide ou réduction non cohérente' }, { status: 400 });
+          }
+          if (offer.expires_at && new Date(offer.expires_at) < new Date()) {
+            return NextResponse.json({ error: 'Offre expirée' }, { status: 400 });
+          }
+        }
+        updateData.applied_offer_id = applied_offer_id;
+        updateData.applied_offer_percent = applied_offer_percent;
+      }
+      if (applied_welcome_percent !== undefined) {
+        if (applied_welcome_percent) {
+          const { data: welcomeMerchant } = await supabaseAdmin
+            .from('merchants')
+            .select('welcome_offer_enabled, welcome_offer_discount_percent')
+            .eq('id', merchantId)
+            .maybeSingle();
+          if (!welcomeMerchant?.welcome_offer_enabled || welcomeMerchant.welcome_offer_discount_percent !== applied_welcome_percent) {
+            return NextResponse.json({ error: 'Welcome non disponible ou pourcentage incohérent' }, { status: 400 });
+          }
+          if (customer_id) {
+            const { data: existingCard } = await supabaseAdmin
+              .from('loyalty_cards')
+              .select('id')
+              .eq('customer_id', customer_id)
+              .eq('merchant_id', merchantId)
+              .maybeSingle();
+            if (existingCard) {
+              return NextResponse.json({ error: 'Welcome non applicable : client déjà inscrit' }, { status: 400 });
+            }
+          }
+        }
+        updateData.applied_welcome_percent = applied_welcome_percent;
+      }
       // Home service: address (only persisted when client info present AND
       // home_service_enabled — defense in depth, mirrors manual-booking gate).
       if (customer_address !== undefined) {

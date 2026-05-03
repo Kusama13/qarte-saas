@@ -26,6 +26,7 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
   const [promoTitle, setPromoTitle] = useState('');
   const [promoDescription, setPromoDescription] = useState('');
   const [promoExpiresAt, setPromoExpiresAt] = useState('');
+  const [promoDiscountPercent, setPromoDiscountPercent] = useState<string>('');
   const [promoOfferId, setPromoOfferId] = useState<string | null>(null);
   const [studentEnabled, setStudentEnabled] = useState(merchant.student_offer_enabled || false);
   const [studentDescription, setStudentDescription] = useState(merchant.student_offer_description || '');
@@ -41,6 +42,7 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
           setPromoTitle(offer.title);
           setPromoDescription(offer.description);
           setPromoExpiresAt(offer.expires_at ? offer.expires_at.split('T')[0] : '');
+          setPromoDiscountPercent(offer.discount_percent != null ? String(offer.discount_percent) : '');
           const isExpired = offer.expires_at && new Date(offer.expires_at) < new Date();
           setPromoEnabled(offer.active && !isExpired);
         }
@@ -64,6 +66,16 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
 
       if (promoEnabled && (!promoTitle.trim() || !promoDescription.trim())) throw new Error(t('promoFieldsRequired'));
 
+      // Validation du % côté client (entier 1-100, vide accepté = pas de réduction calculée)
+      let normalizedDiscount: number | null = null;
+      if (promoDiscountPercent.trim()) {
+        const n = Number(promoDiscountPercent.trim());
+        if (!Number.isInteger(n) || n < 1 || n > 100) {
+          throw new Error(t('promoDiscountInvalid'));
+        }
+        normalizedDiscount = n;
+      }
+
       if (promoEnabled) {
         if (promoOfferId) {
           await fetch('/api/merchant-offers', {
@@ -76,6 +88,7 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
               title: promoTitle.trim(),
               description: promoDescription.trim(),
               expires_at: promoExpiresAt || null,
+              discountPercent: normalizedDiscount,
             }),
           });
         } else {
@@ -87,6 +100,7 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
               title: promoTitle.trim(),
               description: promoDescription.trim(),
               expiresAt: promoExpiresAt || null,
+              discountPercent: normalizedDiscount,
             }),
           });
           const data = await res.json();
@@ -150,6 +164,25 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
                 </button>
               ))}
             </div>
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+              {t('promoDiscountLabel')} <span className="text-[11px] font-normal text-gray-500">{t('promoDiscountOptional')}</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={1}
+                max={100}
+                step={1}
+                placeholder="10"
+                value={promoDiscountPercent}
+                onChange={(e) => setPromoDiscountPercent(e.target.value.replace(/[^\d]/g, ''))}
+                className="h-10 text-sm w-20 text-center"
+              />
+              <span className="text-sm font-semibold text-gray-700">%</span>
+            </div>
+            <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">{t('promoDiscountHelp')}</p>
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-700 mb-1.5 block">

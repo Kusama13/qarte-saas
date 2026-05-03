@@ -2528,6 +2528,7 @@ export default function PlanningDashboard() {
             depositPercent={merchant.deposit_percent}
             depositAmount={merchant.deposit_amount}
             subscriptionStatus={merchant.subscription_status}
+            welcomeOfferDiscountPercent={merchant.welcome_offer_discount_percent}
             onDraftChange={updateDraft}
             onSave={handleUpdateSlot}
             onDelete={handleDeleteSlot}

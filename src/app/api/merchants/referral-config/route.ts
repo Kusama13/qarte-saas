@@ -11,6 +11,7 @@ const referralConfigSchema = z.object({
   referral_reward_referred: z.string().max(200).nullable().optional(),
   welcome_offer_enabled: z.boolean().optional(),
   welcome_offer_description: z.string().max(200).nullable().optional(),
+  welcome_offer_discount_percent: z.number().int().min(1).max(100).nullable().optional(),
 });
 
 export async function PUT(request: NextRequest) {
@@ -36,6 +37,7 @@ export async function PUT(request: NextRequest) {
       referral_reward_referred,
       welcome_offer_enabled,
       welcome_offer_description,
+      welcome_offer_discount_percent,
     } = parsed.data;
 
     // Verify ownership
@@ -66,6 +68,7 @@ export async function PUT(request: NextRequest) {
     if (welcome_offer_enabled !== undefined) {
       updateData.welcome_offer_enabled = welcome_offer_enabled;
       updateData.welcome_offer_description = welcome_offer_enabled ? welcome_offer_description : null;
+      updateData.welcome_offer_discount_percent = welcome_offer_enabled ? (welcome_offer_discount_percent ?? null) : null;
       if (welcomeCode) {
         updateData.welcome_referral_code = welcomeCode;
       }

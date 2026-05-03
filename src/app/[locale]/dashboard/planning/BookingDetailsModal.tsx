@@ -13,6 +13,7 @@ import type { PlanningSlot, CustomerSearchResult, BookingMode } from '@/types';
 import { formatTime, formatCurrency, toBCP47, getTimezoneForCountry, displayPhoneNumber, detectPhoneCountry } from '@/lib/utils';
 import { downloadIcs } from '@/lib/ics';
 import { compressOfferImage } from '@/lib/image-compression';
+import { computeBookingPrice } from '@/lib/booking-pricing';
 import { timeToMinutes, minutesToTime, roundUp5, formatDuration, getSlotServiceIds, colorBorderStyle, computeDepositAmount, CUSTOM_SERVICE_DEFAULT_NAME, formatDateLong, endTimeFromStart } from './utils';
 import CustomServicePicker from './CustomServicePicker';
 import type { BookingDraft, ServiceWithDuration } from './usePlanningState';
@@ -53,6 +54,7 @@ interface BookingDetailsModalProps {
   depositPercent?: number | null;
   depositAmount?: number | null;
   subscriptionStatus?: string | null;
+  welcomeOfferDiscountPercent?: number | null;
   onDraftChange: (partial: Partial<BookingDraft>) => void;
   onSave: (slotId: string, data: {
     client_name: string | null;
@@ -70,6 +72,9 @@ interface BookingDetailsModalProps {
     send_sms?: boolean;
     send_sms_cancel?: boolean;
     delete_if_empty?: boolean;
+    applied_offer_id?: string | null;
+    applied_offer_percent?: number | null;
+    applied_welcome_percent?: number | null;
   }) => Promise<void>;
   onDelete: (slotId: string) => Promise<void>;
   onShiftSlot: (slotId: string, newTime: string, newDate?: string, force?: boolean, sendSms?: boolean) => Promise<{ success: boolean; error?: string }>;
@@ -99,6 +104,7 @@ export default function BookingDetailsModal({
   depositPercent,
   depositAmount: depositFixed,
   subscriptionStatus,
+  welcomeOfferDiscountPercent,
   onDraftChange,
   onSave,
   onDelete,
@@ -132,6 +138,30 @@ export default function BookingDetailsModal({
 
   const isPaid = subscriptionStatus === 'active' || subscriptionStatus === 'canceling' || subscriptionStatus === 'past_due';
   const [sendSms, setSendSms] = useState(false);
+
+  // Réductions appliquées (state local, init depuis le slot existant)
+  const [activePromo, setActivePromo] = useState<{ id: string; title: string; discount_percent: number } | null>(null);
+  const [applyPromo, setApplyPromo] = useState<boolean>(!!slot.applied_offer_id);
+  const [applyWelcome, setApplyWelcome] = useState<boolean>(!!slot.applied_welcome_percent);
+
+  // Fetch active promo offer for the merchant (publicView)
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/merchant-offers?merchantId=${merchantId}&public=true`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled) return;
+        const offer = data?.offers?.find((o: { discount_percent: number | null }) => o.discount_percent != null);
+        if (offer) setActivePromo({ id: offer.id, title: offer.title, discount_percent: offer.discount_percent });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [merchantId]);
+
+  // Welcome toggle visible si discount % configuré ET (nouveau client OU déjà appliqué sur ce slot).
+  // Pour un client existant non-bénéficiaire, le merchant doit utiliser le ClientSelectModal
+  // (checkbox welcome au moment de la création) — décision UX pour éviter une route eligibility dédiée.
+  const showWelcomeToggle = !!welcomeOfferDiscountPercent && (!draft.customerId || !!slot.applied_welcome_percent);
   const [depositSendSms, setDepositSendSms] = useState(false);
 
   const [addressDraft, setAddressDraft] = useState(slot.customer_address || '');
@@ -337,6 +367,16 @@ export default function BookingDetailsModal({
     };
   }, [draft.serviceIds, draft.customService, serviceMap]);
 
+  // Prix après réductions (promo + welcome) — computeBookingPrice est la source unique de vérité
+  const priceWithDiscounts = useMemo(() => {
+    if (totalPrice == null) return null;
+    return computeBookingPrice({
+      totalPrice,
+      promoPercent: applyPromo && activePromo ? activePromo.discount_percent : null,
+      welcomePercent: applyWelcome && welcomeOfferDiscountPercent ? welcomeOfferDiscountPercent : null,
+    });
+  }, [totalPrice, applyPromo, activePromo, applyWelcome, welcomeOfferDiscountPercent]);
+
   const durationLabel = useMemo(() => {
     const hasAnySelection = draft.serviceIds.length > 0 || !!draft.customService;
     if (!hasAnySelection) return null;
@@ -383,6 +423,12 @@ export default function BookingDetailsModal({
   };
 
   const handleSave = () => {
+    const promoPayload = applyPromo && activePromo
+      ? { applied_offer_id: activePromo.id, applied_offer_percent: activePromo.discount_percent }
+      : { applied_offer_id: null, applied_offer_percent: null };
+    const welcomePayload = applyWelcome && welcomeOfferDiscountPercent
+      ? { applied_welcome_percent: welcomeOfferDiscountPercent }
+      : { applied_welcome_percent: null };
     onSave(slot.id, {
       client_name: draft.clientName.trim() || null,
       client_phone: draft.clientPhone.trim() || null,
@@ -400,6 +446,8 @@ export default function BookingDetailsModal({
         customer_lng: addressDraft.trim() ? addressLng : null,
       }),
       ...(sendSms && { send_sms: true }),
+      ...promoPayload,
+      ...welcomePayload,
     });
   };
 
@@ -820,10 +868,62 @@ export default function BookingDetailsModal({
 
               {(durationLabel || totalPrice) && (
                 <div className="mt-2 space-y-1.5">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     {durationLabel && <p className={`text-xs font-medium ${totalMinutes.hasUnknown ? 'text-amber-600' : 'text-indigo-600'}`}>{durationLabel}</p>}
-                    {totalPrice !== null && <p className="text-xs font-medium text-emerald-600">{t('totalPrice', { price: formatCurrency(totalPrice, merchantCountry, locale) })}</p>}
+                    {totalPrice !== null && (
+                      <p className="text-xs font-medium text-emerald-600 flex items-center gap-1.5">
+                        {priceWithDiscounts && priceWithDiscounts.hasDiscount ? (
+                          <>
+                            <span className="text-gray-400 line-through font-normal">{formatCurrency(totalPrice, merchantCountry, locale)}</span>
+                            <span>{t('totalPrice', { price: formatCurrency(priceWithDiscounts.finalPrice, merchantCountry, locale) })}</span>
+                          </>
+                        ) : (
+                          <span>{t('totalPrice', { price: formatCurrency(totalPrice, merchantCountry, locale) })}</span>
+                        )}
+                      </p>
+                    )}
                   </div>
+
+                  {/* Section Réductions — visible si au moins 1 réduction est applicable */}
+                  {totalPrice !== null && (activePromo || showWelcomeToggle) && (
+                    <div className="rounded-lg border border-gray-200 bg-white px-2.5 py-2 space-y-1.5">
+                      {showWelcomeToggle && (
+                        <button
+                          type="button"
+                          onClick={() => setApplyWelcome(!applyWelcome)}
+                          className="w-full flex items-center gap-2 text-left hover:bg-rose-50/50 rounded px-1 py-0.5 transition-colors"
+                        >
+                          <span className={`flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${applyWelcome ? 'bg-rose-500 border-rose-500' : 'border-gray-300'}`}>
+                            {applyWelcome && <Check className="w-3 h-3 text-white" />}
+                          </span>
+                          <span className="text-xs text-gray-700 font-medium">
+                            {t('discountApplyWelcome', { percent: welcomeOfferDiscountPercent || 0 })}
+                          </span>
+                        </button>
+                      )}
+                      {activePromo && (
+                        <button
+                          type="button"
+                          onClick={() => setApplyPromo(!applyPromo)}
+                          className="w-full flex items-center gap-2 text-left hover:bg-amber-50/50 rounded px-1 py-0.5 transition-colors"
+                        >
+                          <span className={`flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${applyPromo ? 'bg-amber-500 border-amber-500' : 'border-gray-300'}`}>
+                            {applyPromo && <Check className="w-3 h-3 text-white" />}
+                          </span>
+                          <span className="text-xs text-gray-700 font-medium">
+                            {t('discountApplyPromo', { title: activePromo.title, percent: activePromo.discount_percent })}
+                          </span>
+                        </button>
+                      )}
+                      {priceWithDiscounts && priceWithDiscounts.hasDiscount && (
+                        <p className="text-[11px] text-emerald-700 font-semibold pt-0.5 pl-6">
+                          {t('discountSavingsLabel', {
+                            amount: formatCurrency(totalPrice - priceWithDiscounts.finalPrice, merchantCountry, locale),
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  )}
                   {slot.deposit_confirmed !== null && totalPrice !== null && (() => {
                     const depAmt = computeDepositAmount(totalPrice, depositFixed, depositPercent);
                     if (!depAmt) return null;

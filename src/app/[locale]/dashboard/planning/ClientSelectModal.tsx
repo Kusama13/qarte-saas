@@ -298,9 +298,11 @@ export default function ClientSelectModal({
           )}
 
           {/* Voucher grants (only for new client creation) */}
-          {canCreate && (merchant?.welcome_offer_enabled || activeOffers.length > 0) && (
+          {/* Welcome legacy mode (voucher post-résa) : visible si welcome activé sans % de réduction.
+              Si % saisi, le merchant applique la réduction directement dans BookingDetailsModal (pas ici). */}
+          {canCreate && ((merchant?.welcome_offer_enabled && !merchant?.welcome_offer_discount_percent) || activeOffers.length > 0) && (
             <div className="space-y-2 p-3 rounded-xl bg-gray-50 border border-gray-100">
-              {merchant?.welcome_offer_enabled && (
+              {merchant?.welcome_offer_enabled && !merchant?.welcome_offer_discount_percent && (
                 <label className="flex items-center gap-2.5 cursor-pointer">
                   <input
                     type="checkbox"
