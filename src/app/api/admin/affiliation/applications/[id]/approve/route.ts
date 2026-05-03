@@ -4,6 +4,7 @@ import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { sendAmbassadorWelcomeEmail } from '@/lib/email';
 import logger from '@/lib/logger';
+import { PG_UNIQUE_VIOLATION } from '@/lib/postgres-errors';
 
 const approveSchema = z.object({
   slug: z.string().min(3).max(50).regex(/^[a-z0-9-]+$/).optional(),
@@ -83,7 +84,7 @@ export async function POST(
         break;
       }
       // Retry on unique constraint violation (slug collision)
-      if (error.code !== '23505') {
+      if (error.code !== PG_UNIQUE_VIOLATION) {
         logger.error('Affiliate link insert error:', error);
         return NextResponse.json({ error: 'Erreur création lien' }, { status: 500 });
       }

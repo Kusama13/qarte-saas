@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
 import { resend, EMAIL_FROM } from '@/lib/resend';
 import logger from '@/lib/logger';
+import { PG_UNIQUE_VIOLATION } from '@/lib/postgres-errors';
 
 const applySchema = z.object({
   first_name: z.string().min(2).max(50).trim(),
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (error) {
-      if (error.code === '23505') {
+      if (error.code === PG_UNIQUE_VIOLATION) {
         return NextResponse.json(
           { error: 'Une candidature avec cet email est déjà en cours d\'examen.' },
           { status: 409 }

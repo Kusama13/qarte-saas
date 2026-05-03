@@ -9,6 +9,7 @@ import type { EmailLocale } from '@/emails/translations';
 import { sendCapiPurchaseEvent } from '@/lib/facebook-capi';
 import { toBCP47, getCurrencyForCountry } from '@/lib/utils';
 import { getCreditedSmsCount, getBonusSms, type PackSize } from '@/lib/sms-pack-pricing';
+import { PG_UNIQUE_VIOLATION } from '@/lib/postgres-errors';
 import type { SubscriptionStatus, PlanTier } from '@/types';
 
 /** Map a Stripe price ID to our internal tier. Returns null if unknown
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
     .insert({ event_id: event.id, event_type: event.type });
 
   if (dedupErr) {
-    if (dedupErr.code === '23505') {
+    if (dedupErr.code === PG_UNIQUE_VIOLATION) {
       logger.info('Stripe webhook dedup: already processed', { event_id: event.id, type: event.type });
       return NextResponse.json({ received: true, duplicate: true });
     }

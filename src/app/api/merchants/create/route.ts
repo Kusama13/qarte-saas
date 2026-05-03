@@ -4,6 +4,7 @@ import logger from '@/lib/logger';
 import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
 import { sendWelcomeEmail, sendNewMerchantNotification, cancelScheduledEmail } from '@/lib/email';
 import { generateSlug, generateScanCode, generateReferralCode, formatPhoneNumber } from '@/lib/utils';
+import { PG_UNIQUE_VIOLATION } from '@/lib/postgres-errors';
 import type { MerchantCountry } from '@/types';
 
 // Client avec service role (bypass RLS)
@@ -149,7 +150,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       // Race condition: UNIQUE violation = un autre appel a créé le merchant entre-temps
-      if (error.code === '23505') {
+      if (error.code === PG_UNIQUE_VIOLATION) {
         const { data: raceExisting } = await supabaseAdmin
           .from('merchants')
           .select()
