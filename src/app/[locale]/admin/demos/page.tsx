@@ -31,6 +31,7 @@ function DemoLink({ href, label, icon: Icon, color, variant = 'filled' }: { href
     <Link
       href={href}
       target="_blank"
+      rel="noopener noreferrer"
       className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors"
       style={variant === 'filled'
         ? { background: color, color: '#fff' }
