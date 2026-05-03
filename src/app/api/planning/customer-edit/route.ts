@@ -72,7 +72,7 @@ async function commonChecks(
   const [slotResult, customerResult] = await Promise.all([
     supabaseAdmin
       .from('merchant_planning_slots')
-      .select('id, slot_date, start_time, client_name, client_phone, customer_id, booked_online, primary_slot_id, total_duration_minutes')
+      .select('id, slot_date, start_time, client_name, client_phone, customer_id, booked_online, primary_slot_id, total_duration_minutes, custom_service_name, custom_service_duration, custom_service_price, custom_service_color')
       .eq('id', slotId)
       .eq('merchant_id', merchantId)
       .single(),
@@ -148,6 +148,10 @@ export async function DELETE(request: NextRequest) {
           deposit_deadline_at: null,
           booked_online: false,
           booked_at: null,
+          custom_service_name: null,
+          custom_service_duration: null,
+          custom_service_price: null,
+          custom_service_color: null,
         })
         .eq('id', slot_id);
 
@@ -247,7 +251,7 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: 'Un RDV existe deja a cette heure' }, { status: 409 });
       }
 
-      // Create new slot with booking data
+      // Create new slot with booking data (incl. prestation sur mesure si présente)
       const { data: newSlot, error: insertErr } = await supabaseAdmin
         .from('merchant_planning_slots')
         .insert({
@@ -260,6 +264,10 @@ export async function PATCH(request: NextRequest) {
           total_duration_minutes: duration,
           booked_online: true,
           booked_at: new Date().toISOString(),
+          custom_service_name: slot.custom_service_name,
+          custom_service_duration: slot.custom_service_duration,
+          custom_service_price: slot.custom_service_price,
+          custom_service_color: slot.custom_service_color,
         })
         .select('id')
         .single();
@@ -318,6 +326,10 @@ export async function PATCH(request: NextRequest) {
             deposit_deadline_at: null,
             booked_online: false,
             booked_at: null,
+            custom_service_name: null,
+            custom_service_duration: null,
+            custom_service_price: null,
+            custom_service_color: null,
           })
           .eq('id', slot_id);
 
@@ -336,6 +348,10 @@ export async function PATCH(request: NextRequest) {
             deposit_deadline_at: null,
             booked_online: true,
             booked_at: new Date().toISOString(),
+            custom_service_name: slot.custom_service_name,
+            custom_service_duration: slot.custom_service_duration,
+            custom_service_price: slot.custom_service_price,
+            custom_service_color: slot.custom_service_color,
           })
           .eq('id', targetSlot.id);
 

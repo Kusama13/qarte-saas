@@ -771,7 +771,7 @@ Single-row table : id, content (TEXT, default ''), updated_at
 **RLS** : SELECT public (client_name IS NULL AND slot_date >= CURRENT_DATE), ALL merchant own
 **Indexes** : `idx_planning_slots_merchant_date`, `idx_planning_slots_customer` (partial, NOT NULL), `idx_planning_slots_primary_slot_id` (partial, NOT NULL), `idx_planning_slots_deposit_deadline` (mig 089, partial : `deposit_confirmed=false AND deposit_deadline_at IS NOT NULL AND primary_slot_id IS NULL` — speed up cron deposit scan a 500 slots), `idx_planning_slots_booked` (mig 089, partial : `client_name IS NOT NULL` — speed up onglet Reservations dashboard), UNIQUE(merchant_id, slot_date, start_time)
 
-**RPC** : `move_booking(merchant_id, source_slot_id, target_date, target_time)` (mig 091, étendue mig 136 pour transférer/reset les 5 champs home_service)
+**RPC** : `move_booking(merchant_id, source_slot_id, target_date, target_time)` (mig 091, étendue mig 136 pour les 5 champs home_service, mig 151 pour les 4 champs custom_service_*)
 
 ### 2.36 planning_slot_services (mig 071)
 
@@ -1334,6 +1334,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 148 | customer_email | `customers.email TEXT` (modifiable depuis la carte client via `EmailSection`, CHECK regex + length ≤254) + `merchant_planning_slots.customer_email TEXT` (snapshot à la résa). Email collecté optionnel dans `BookingModal` ; déclenche `BookingConfirmationEmail` (récap RDV + lien acompte si demandé + lien carte fidélité). Pas d'unicité (même email peut servir chez plusieurs marchands). Migrations 001-144+008b déplacées dans `supabase/migrations/old/` (référence historique uniquement, déjà appliquées prod). |
 | 149 | milestone_booking_count_online_only | Recrée `merchant_milestone_stats(uuid[])` (mig 133) avec `AND booked_online = true` dans le lateral join `b`. Bug : la milestone "Premiere reservation en ligne" du cron `/api/cron/email-engagement` se déclenchait sur la 1re saisie manuelle dashboard (compteur `booking_count` ne distinguait pas manuel vs vitrine). Cas observé : letjbeauty@hotmail.com 2026-05-02. |
 | 150 | sms_campaign_pending_phones | `sms_campaigns.pending_phones JSONB DEFAULT '[]'`. Stocke les numeros non envoyes apres echec credit OVH (HTTP 402) detecte par `sendSms`. Le dispatch detecte le flag `creditExhausted`, break la boucle, sauve les phones restants + re-schedule a +1h. Au dispatch suivant, `pending_phones` non-vide → envoi cible (pas de re-resolution audience pour eviter doublons). Cumul `recipient_count`/`cost_cents` en cas de reprise. Vide a la fin (status='done'). |
+| 151 | move_booking_custom_service | Recrée `move_booking` (mig 091/136) pour transférer ET reset les 4 champs presta sur mesure (`custom_service_name/duration/price/color`, mig 130). Bug : déplacer un RDV avec presta custom laissait la presta orpheline sur l'ancien créneau et la cible la perdait (drag&drop merchant + self-reschedule mode créneaux). Côté TS : `customer-edit/route.ts` aussi patché (SELECT slot, free mode INSERT, slot mode fallback clear+fill, DELETE slot mode clear). |
 
 ---
 
