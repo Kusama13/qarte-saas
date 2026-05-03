@@ -110,12 +110,6 @@ La logique des breaks `if (Date.now() - startedAt > 250_000) break` existe et li
 ### Index `sms_logs(merchant_id, sms_type, created_at DESC)` — créé en migration mais appliqué ? `[scal]`
 La migration `123_sms_logs_dedup_index.sql` crée bien l'index `CONCURRENTLY`. **Question** : a-t-elle été exécutée en prod ? Le CLAUDE.md précise que les migrations sont appliquées manuellement dans Supabase SQL Editor.
 
-### Item A — Audit migration 149 + impact onboarding milestone "1ère résa en ligne" `[stab]`
-`supabase/migrations/149_milestone_booking_count_online_only.sql` + `src/app/api/cron/email-engagement/route.ts:159-181` + RPC `merchant_milestone_stats` (mig 133+149)
-Mig 149 corrige le filtre `booked_online = true`. À auditer encore :
-1. Vérifier si d'autres merchants ont reçu mail `firstBooking` à tort historiquement (query `pending_email_tracking WHERE reminder_day = -105` × cross-check `merchant_planning_slots WHERE booked_online=true`).
-2. Test e2e via vitrine `/p/[slug]` que le cron déclenche bien la milestone sur une vraie 1ère résa en ligne.
-
 ---
 
 ## Historique — items fixés
@@ -132,6 +126,8 @@ Mig 149 corrige le filtre `booked_online = true`. À auditer encore :
 | **P1 A** | Mig 149 milestone `booked_online=true` | (déjà avant) | 149 |
 | **P2 #18** | `console.error` → `logger.error` SMS stack | `f0d86435` | — |
 | **Bonus** | Refactor `PG_UNIQUE_VIOLATION` constante (4 fichiers) | `ee174fbb` | — |
+| **Item A** | Push milestone `firstScan`/`firstBooking` dédoublonnée via tracking email (faux positif post-mig149 : push "vient de réserver" envoyé jours après la résa) | `303c3fba` | — |
+| **Bonus** | A11y modals (role=dialog + aria-modal) + warn destructif OfferModal + cancelBookingConfirm i18n | `9e41dae7` | — |
 
 ### Items déprio (théoriques au scale 5K, on est à ~800 merchants)
 
