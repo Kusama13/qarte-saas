@@ -56,6 +56,23 @@ export async function POST(request: Request) {
 
   logger.debug('Webhook event:', event.type);
 
+  // Dedup : Stripe retente jusqu'à 3× en 24h sur timeout/5xx, ce qui
+  // re-déclenche les emails non-idempotents. INSERT event.id en tête ;
+  // conflit PK → déjà traité, return 200 direct. Si la table de tracking
+  // tombe en erreur (cas extrême), on continue plutôt que bloquer tous les
+  // webhooks — risque accepté de duplicat dans ce scénario rare.
+  const { error: dedupErr } = await supabase
+    .from('processed_stripe_events')
+    .insert({ event_id: event.id, event_type: event.type });
+
+  if (dedupErr) {
+    if (dedupErr.code === '23505') {
+      logger.info('Stripe webhook dedup: already processed', { event_id: event.id, type: event.type });
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+    logger.error('Stripe webhook dedup tracking failed', { event_id: event.id, error: dedupErr });
+  }
+
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object;
