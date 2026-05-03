@@ -8,13 +8,13 @@ const supabaseAdmin = getSupabaseAdmin();
 
 /**
  * GET — Indique si la cliente authentifiee a au moins 1 acompte en attente
- * chez le merchant donne. Utilise par la vitrine /p/[slug] pour afficher
- * un shortcut "Payer l'acompte" en plus du shortcut "Mes RDV & fidelite".
+ * chez le merchant donne. Reservee pour usages futurs (toast, notification) ;
+ * la vitrine /p/[slug] n'utilise plus cet endpoint car les liens y sont
+ * permanents (Instagram in-app browser strip les cookies, perso impossible).
  *
  * Reponse : { hasPending: boolean }
  *
- * Auth : cookie qarte_cust requis. Si pas de cookie -> hasPending: false
- * (la vitrine ne montre meme pas le shortcut existant dans ce cas).
+ * Auth : cookie qarte_cust requis. Si pas de cookie -> hasPending: false.
  */
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
@@ -29,7 +29,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Find the customer for this merchant + phone (cross-border lookup)
     const { data: customer } = await supabaseAdmin
       .from('customers')
       .select('id, merchants!inner(country)')
@@ -45,7 +44,6 @@ export async function GET(request: NextRequest) {
     const country = Array.isArray(merchantCountry) ? merchantCountry[0]?.country : merchantCountry?.country;
     const today = getTodayForCountry(country);
 
-    // Count pending deposits on future bookings for this customer
     const { count } = await supabaseAdmin
       .from('merchant_planning_slots')
       .select('id', { count: 'exact', head: true })

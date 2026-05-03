@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Flame, Trophy, CalendarDays, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard, Hourglass, Sparkles, Tag } from 'lucide-react';
+import { Gift, Users, Flame, Trophy, CalendarDays, CalendarCheck, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard, Hourglass, Sparkles, Tag } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import { SuspendedBanner } from '@/components/shared/SuspendedBanner';
@@ -18,7 +18,6 @@ import { Link } from '@/i18n/navigation';
 import type { Merchant, MerchantCountry } from '@/types';
 import type { OpeningHours } from '@/lib/opening-hours';
 import { getPlanFeatures } from '@/lib/plan-tiers';
-import { hasCustomerCookie } from '@/lib/customer-auth-shared';
 
 type DaySlot = OpeningHours[string];
 
@@ -167,20 +166,9 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const pgcT = useTranslations('giftCards');
   const locale = useLocale();
 
-  // Read cookie client-side to avoid cookies() in server component (breaks ISR)
-  const [hasPhoneCookie, setHasPhoneCookie] = useState(false);
-  const [hasPendingDeposit, setHasPendingDeposit] = useState(false);
-  useEffect(() => {
-    const cookied = hasCustomerCookie();
-    setHasPhoneCookie(cookied);
-    if (!cookied || isDemo) return;
-    const ctrl = new AbortController();
-    fetch(`/api/customers/pending-deposits?merchantId=${merchant.id}`, { signal: ctrl.signal })
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => { if (data?.hasPending) setHasPendingDeposit(true); })
-      .catch(() => {});
-    return () => ctrl.abort();
-  }, [merchant.id, isDemo]);
+  // Liens espace cliente : permanents (les liens depuis Instagram in-app browser
+  // strip les cookies, donc impossible de personnaliser de facon fiable).
+  const depositConfigured = !!(merchant.deposit_link || merchant.deposit_percent || merchant.deposit_amount);
   const p = merchant.primary_color;
   const s = merchant.secondary_color || merchant.primary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
@@ -445,91 +433,6 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
 
       {/* ── CONTENU ── */}
       <div className="mx-auto lg:max-w-lg px-4 pb-20 space-y-3 relative">
-
-        {/* ── RETURNING VISITOR SHORTCUT ── */}
-        {hasPhoneCookie && !isDemo && (
-          <motion.a
-            href={`/customer/card/${merchant.id}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.18, duration: 0.4 }}
-            className="group relative block rounded-2xl overflow-hidden active:scale-[0.99] transition-transform"
-            style={{
-              background: `linear-gradient(135deg, ${p}, ${s})`,
-              boxShadow: `0 8px 24px -6px ${p}55, inset 0 0 0 1px rgba(255,255,255,0.12)`,
-            }}
-          >
-            {/* Shimmer sweep */}
-            <motion.div
-              animate={{ x: ['-150%', '200%'] }}
-              transition={{ duration: 2.4, ease: 'easeInOut' }}
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent skew-x-12 pointer-events-none"
-            />
-            {/* Radial glow */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{ background: 'radial-gradient(circle at 85% 50%, rgba(255,255,255,0.18), transparent 60%)' }}
-            />
-            {/* Watermark icon */}
-            <CreditCard className="absolute -right-3 -bottom-3 w-24 h-24 text-white/10 pointer-events-none" strokeWidth={1.5} />
-
-            <div className="relative flex items-center gap-3.5 px-4 py-3.5">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-white/20 backdrop-blur-sm border border-white/30">
-                <CreditCard className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-black text-white/70 uppercase tracking-[0.14em] mb-0.5">
-                  {t('returningShortcutEyebrow')}
-                </p>
-                <p className="text-[15px] font-black text-white leading-tight tracking-tight">
-                  {t('returningShortcutTitle')}
-                </p>
-                <p className="text-[11px] text-white/75 mt-0.5 font-medium truncate">
-                  {t('returningShortcutSubtitle')}
-                </p>
-              </div>
-              <div className="w-7 h-7 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0 border border-white/30 group-hover:bg-white/30 transition-colors">
-                <ChevronRight className="w-4 h-4 text-white" />
-              </div>
-            </div>
-          </motion.a>
-        )}
-
-        {/* ── PENDING DEPOSIT SHORTCUT ── */}
-        {hasPhoneCookie && hasPendingDeposit && !isDemo && (
-          <motion.a
-            href={`/customer/card/${merchant.id}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.22, duration: 0.4 }}
-            className="group relative block rounded-2xl overflow-hidden bg-white border-2 border-amber-300 shadow-md shadow-amber-200/40 active:scale-[0.99] transition-transform"
-          >
-            <motion.div
-              animate={{ opacity: [0.35, 0.55, 0.35] }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-              className="absolute inset-0 bg-gradient-to-r from-amber-50 via-amber-100/60 to-amber-50 pointer-events-none"
-            />
-            <div className="relative flex items-center gap-3.5 px-4 py-3.5">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-amber-100 border border-amber-200">
-                <Hourglass className="w-5 h-5 text-amber-700" strokeWidth={2.25} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-black text-amber-700 uppercase tracking-[0.14em] mb-0.5">
-                  {t('pendingDepositEyebrow')}
-                </p>
-                <p className="text-[15px] font-black text-gray-900 leading-tight tracking-tight">
-                  {t('pendingDepositTitle')}
-                </p>
-                <p className="text-[11px] text-gray-600 mt-0.5 font-medium truncate">
-                  {t('pendingDepositSubtitle')}
-                </p>
-              </div>
-              <div className="w-7 h-7 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center shrink-0 group-hover:bg-amber-200 transition-colors">
-                <ChevronRight className="w-4 h-4 text-amber-700" />
-              </div>
-            </div>
-          </motion.a>
-        )}
 
         {/* ── MINI BIO ── */}
         {merchant.bio && (
@@ -802,6 +705,53 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 </>
               );
             })()}
+
+            {/* Action secondaire : retrouver sa reservation (+ acompte si configure).
+                Hairline border = "ce qui suit est secondaire" (mode libre + creneau). */}
+            {merchant.auto_booking_enabled && tierAllowsBooking && !isDemo && (
+              <div className="mt-4 pt-3 border-t border-gray-100">
+                {depositConfigured ? (
+                  <a
+                    href={`/customer/card/${merchant.id}`}
+                    className="flex items-center gap-3 px-2 py-2 -mx-2 rounded-lg transition-colors hover:bg-amber-50/60"
+                  >
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-amber-50 border border-amber-100">
+                      <Hourglass className="w-4 h-4 text-amber-700" strokeWidth={2.25} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-semibold text-gray-900 leading-tight">
+                        {t('bookingDepositLinkTitle')}
+                      </p>
+                      <p className="text-[11px] text-gray-500 mt-0.5 leading-tight">
+                        {t('bookingDepositLinkSubtitle')}
+                      </p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" strokeWidth={2.25} />
+                  </a>
+                ) : (
+                  <a
+                    href={`/customer/card/${merchant.id}`}
+                    className="flex items-center gap-3 px-2 py-2 -mx-2 rounded-lg transition-colors hover:bg-gray-50"
+                  >
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border"
+                      style={{ backgroundColor: `${p}10`, borderColor: `${p}25` }}
+                    >
+                      <CalendarCheck className="w-4 h-4" style={{ color: p }} strokeWidth={2.25} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-semibold text-gray-900 leading-tight">
+                        {t('bookingLinkTitle')}
+                      </p>
+                      <p className="text-[11px] text-gray-500 mt-0.5 leading-tight">
+                        {t('bookingLinkSubtitle')}
+                      </p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" strokeWidth={2.25} />
+                  </a>
+                )}
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -967,15 +917,20 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           </OfferCard>
         )}
 
-        {/* Label carte simulée */}
-        <motion.p
+        {/* Label carte simulée + sous-titre */}
+        <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.35 }}
-          className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 px-1 pt-2"
+          className="px-1 pt-2"
         >
-          {t('loyaltyCard')}
-        </motion.p>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
+            {t('loyaltyCard')}
+          </p>
+          <p className="text-[11px] text-gray-500 font-medium mt-0.5">
+            {t('loyaltyNote')}
+          </p>
+        </motion.div>
 
         {/* SimulatedCard — LE centerpiece */}
         <motion.div
@@ -995,15 +950,24 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           />
         </motion.div>
 
-        {/* Note carte fidélité */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.45, duration: 0.4 }}
-          className="text-center text-[11px] text-gray-500 font-medium -mt-1"
-        >
-          {t('loyaltyNote')}
-        </motion.p>
+        {/* Lien permanent vers la carte de fidelite cliente, sous le palier 1. */}
+        {!isDemo && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.35 }}
+          >
+            <a
+              href={`/customer/card/${merchant.id}`}
+              className="flex items-center justify-center gap-1.5 text-[12px] font-semibold transition-opacity hover:opacity-70"
+              style={{ color: p }}
+            >
+              <CreditCard className="w-3.5 h-3.5 shrink-0" strokeWidth={2.25} />
+              {t('loyaltyInlineLink')}
+              <ChevronRight className="w-3.5 h-3.5 shrink-0" strokeWidth={2.25} />
+            </a>
+          </motion.div>
+        )}
 
         {/* Tier 2 */}
         {merchant.tier2_enabled && (merchant.tier2_reward_description || (isCagnotte && merchant.cagnotte_tier2_percent)) && (
