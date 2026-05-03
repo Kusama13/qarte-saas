@@ -1137,7 +1137,8 @@
       "offerImage": "Image",
       "offerExpiration": "Expiration",
       "close": "Close",
-      "deactivate": "Deactivate"
+      "deactivate": "Deactivate",
+      "deactivateWarning": "Your clients will no longer see this offer in their loyalty space."
     },
     "automations": {
       "birthdayGift": "Birthday gift",

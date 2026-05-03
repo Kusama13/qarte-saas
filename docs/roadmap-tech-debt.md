@@ -95,6 +95,11 @@ Aucun logger périodique du nombre de connexions Supabase Realtime concurrentes.
 SELECT explicite OK aujourd'hui mais pas de test qui empêche un futur ajout accidentel de PII.
 **Fix** : test automatique vérifiant la shape retournée + commentaire explicite "ne jamais ajouter PII ici".
 
+### #24. Modals dashboard : pas de focus trap clavier `[a11y]`
+`src/components/ui/Modal.tsx` + `src/app/[locale]/dashboard/planning/PlanningModal.tsx` + modals hand-rolled (`marketing/Modals.tsx`, `BuyPackModal.tsx`, `ClientSelectModal.tsx`).
+`role="dialog"` + `aria-modal="true"` + `aria-label` ajoutés (sprint 2026-05-03), mais Tab sort encore du modal et navigue dans la page de fond. PRODUCT.md cible WCAG AA → vrai gap.
+**Fix** : intégrer `focus-trap-react` (ou implémentation maison ~30 LoC) dans les 2 shells partagés. Auto-focus du premier élément focusable à l'ouverture, restitution du focus au déclencheur à la fermeture.
+
 ---
 
 ## À investiguer (statut incertain)

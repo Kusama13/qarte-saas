@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, ReactNode } from 'react';
+import { useEffect, useId, useRef, ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
@@ -15,6 +15,7 @@ interface ModalProps {
 
 export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
 
   useBodyScrollLock(isOpen);
 
@@ -47,6 +48,9 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
         className={cn(
           'relative w-full bg-white rounded-2xl shadow-sm border border-slate-100 animate-slide-up',
           sizes[size]
@@ -54,9 +58,10 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       >
         {title && (
           <div className="flex items-center justify-between p-6 border-b border-slate-100">
-            <h2 className="text-base font-bold text-slate-900">{title}</h2>
+            <h2 id={titleId} className="text-base font-bold text-slate-900">{title}</h2>
             <button
               onClick={onClose}
+              aria-label="Fermer"
               className="p-2 transition-colors rounded-lg hover:bg-slate-100 active:scale-95 touch-manipulation"
             >
               <X className="w-5 h-5 text-slate-500" />
@@ -66,6 +71,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
         {!title && (
           <button
             onClick={onClose}
+            aria-label="Fermer"
             className="absolute p-2 transition-colors rounded-lg top-4 right-4 hover:bg-slate-100 active:scale-95 touch-manipulation"
           >
             <X className="w-5 h-5 text-slate-500" />

@@ -35,6 +35,9 @@ export function HowItWorksModal({ show, onClose }: HowItWorksModalProps) {
           onClick={onClose}
         >
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('howItWorksTitle')}
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -47,7 +50,7 @@ export function HowItWorksModal({ show, onClose }: HowItWorksModalProps) {
                 <HelpCircle className="w-5 h-5 text-indigo-500" />
                 {t('howItWorksTitle')}
               </h2>
-              <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+              <button onClick={onClose} aria-label={t('close')} className="p-1 hover:bg-gray-100 rounded-lg">
                 <X className="w-5 h-5 text-gray-400" />
               </button>
             </div>
@@ -172,6 +175,9 @@ export function OfferModal({ show, onClose, title, description, imageUrl, expire
           onClick={onClose}
         >
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('activeOffer')}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
@@ -183,7 +189,7 @@ export function OfferModal({ show, onClose, title, description, imageUrl, expire
                 <Gift className="w-5 h-5 text-emerald-500" />
                 {t('activeOffer')}
               </h2>
-              <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+              <button onClick={onClose} aria-label={t('close')} className="p-1 hover:bg-gray-100 rounded-lg">
                 <X className="w-5 h-5 text-gray-400" />
               </button>
             </div>
@@ -220,10 +226,14 @@ export function OfferModal({ show, onClose, title, description, imageUrl, expire
               </div>
             </div>
 
-            <div className="flex gap-2 mt-6">
+            <div className="mt-6 rounded-xl bg-red-50 border border-red-100 p-3 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-red-700 leading-relaxed">{t('deactivateWarning')}</p>
+            </div>
+            <div className="flex flex-col-reverse sm:flex-row gap-2 mt-3">
               <button
                 onClick={onClose}
-                className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                className="sm:w-auto px-4 py-2.5 bg-white text-gray-700 font-bold rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
               >
                 {t('close')}
               </button>

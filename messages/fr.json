@@ -1123,7 +1123,8 @@
       "offerImage": "Image",
       "offerExpiration": "Expiration",
       "close": "Fermer",
-      "deactivate": "Désactiver"
+      "deactivate": "Désactiver",
+      "deactivateWarning": "Tes clientes ne verront plus cette offre dans leur espace fidélité."
     },
     "automations": {
       "birthdayGift": "Cadeau anniversaire",

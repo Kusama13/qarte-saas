@@ -1335,7 +1335,7 @@ export default function BookingDetailsModal({
                   className="flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl bg-white text-red-600 border border-red-200 text-sm font-bold hover:bg-red-50 hover:border-red-300 transition-colors disabled:opacity-50"
                 >
                   <Trash2 className="w-4 h-4" />
-                  {t('cancel')}
+                  {t('cancelBookingConfirm')}
                 </button>
               </div>
             ) : (

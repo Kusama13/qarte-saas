@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 
 type ModalSize = 'sm' | 'md' | 'lg';
 type IconTint = 'gray' | 'red' | 'amber' | 'indigo' | 'emerald' | 'violet';
@@ -25,10 +25,12 @@ const TINT: Record<IconTint, string> = {
 export default function PlanningModal({
   onClose,
   size = 'md',
+  ariaLabel,
   children,
 }: {
   onClose: () => void;
   size?: ModalSize;
+  ariaLabel?: string;
   children: ReactNode;
 }) {
   return (
@@ -40,6 +42,9 @@ export default function PlanningModal({
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label={ariaLabel}
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 50, opacity: 0 }}
@@ -86,7 +91,7 @@ export function ModalHeader({
       </div>
       <div className="flex items-center gap-1 shrink-0">
         {actions}
-        <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 active:scale-95 touch-manipulation transition-colors">
+        <button onClick={onClose} aria-label="Fermer" className="p-2 rounded-lg hover:bg-slate-100 active:scale-95 touch-manipulation transition-colors">
           <X className="w-5 h-5 text-slate-400" />
         </button>
       </div>
