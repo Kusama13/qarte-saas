@@ -144,6 +144,9 @@ export async function GET(request: NextRequest) {
 
         for (const m of firstScanMerchants) {
           if (!m.pwa_installed_at) continue;
+          // Skip si email -100 deja envoye (evite push retardatoire pour milestone ancien
+          // — sinon merchant qui installe la PWA des mois apres recoit "Premier client" trompeur)
+          if (globalTrackingSet.has(`${m.id}:-100`)) continue;
           pushPromises.push(sendMerchantPush({
             supabase, merchantId: m.id, notificationType: 'onboarding_first_scan', referenceId: m.id,
             title: m.locale === 'en' ? 'First client scanned!' : 'Premier client fidélisé !',
@@ -170,6 +173,10 @@ export async function GET(request: NextRequest) {
 
           for (const m of firstBookingMerchants) {
             if (!m.pwa_installed_at) continue;
+            // Skip si email -105 deja envoye (faux positif historique pre-mig149 ou
+            // PWA installee tardivement). Sinon push "vient de reserver" arrive
+            // plusieurs jours/mois apres la resa reelle.
+            if (globalTrackingSet.has(`${m.id}:-105`)) continue;
             pushPromises.push(sendMerchantPush({
               supabase, merchantId: m.id, notificationType: 'onboarding_first_booking', referenceId: m.id,
               title: m.locale === 'en' ? 'First online booking!' : 'Premiere reservation en ligne !',
