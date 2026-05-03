@@ -32,8 +32,9 @@ export async function POST(request: NextRequest) {
     const parsed = redeemSchema.safeParse(body);
 
     if (!parsed.success) {
+      logger.warn('cagnotte-redeem-public invalid payload:', parsed.error.issues);
       return NextResponse.json(
-        { error: 'Données invalides', details: parsed.error.issues },
+        { error: 'Données invalides' },
         { status: 400 }
       );
     }
