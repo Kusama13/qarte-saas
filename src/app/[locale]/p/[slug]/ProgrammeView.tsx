@@ -18,6 +18,7 @@ import { Link } from '@/i18n/navigation';
 import type { Merchant, MerchantCountry } from '@/types';
 import type { OpeningHours } from '@/lib/opening-hours';
 import { getPlanFeatures } from '@/lib/plan-tiers';
+import { writeLoginIntent, type LoginIntent } from '@/lib/customer-login-intent';
 
 type DaySlot = OpeningHours[string];
 
@@ -166,9 +167,18 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const pgcT = useTranslations('giftCards');
   const locale = useLocale();
 
-  // Liens espace cliente : permanents (les liens depuis Instagram in-app browser
-  // strip les cookies, donc impossible de personnaliser de facon fiable).
+  // Liens espace cliente : permanents (Instagram in-app browser strip les
+  // cookies, perso impossible). Au clic, on pose le contexte d'origine en
+  // sessionStorage pour que /customer adapte wording + redirect post-login.
   const depositConfigured = !!(merchant.deposit_link || merchant.deposit_percent || merchant.deposit_amount);
+  const handleLoginIntent = (intent: NonNullable<LoginIntent>) => {
+    if (isDemo) return;
+    writeLoginIntent({
+      intent,
+      fromShop: merchant.shop_name,
+      returnTo: `/customer/card/${merchant.id}`,
+    });
+  };
   const p = merchant.primary_color;
   const s = merchant.secondary_color || merchant.primary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
@@ -713,6 +723,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 {depositConfigured ? (
                   <a
                     href={`/customer/card/${merchant.id}`}
+                    onClick={() => handleLoginIntent('deposit')}
                     className="flex items-center gap-3 px-2 py-2 -mx-2 rounded-lg transition-colors hover:bg-amber-50/60"
                   >
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-amber-50">
@@ -731,6 +742,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 ) : (
                   <a
                     href={`/customer/card/${merchant.id}`}
+                    onClick={() => handleLoginIntent('booking')}
                     className="flex items-center gap-3 px-2 py-2 -mx-2 rounded-lg transition-colors hover:bg-gray-50"
                   >
                     <div
@@ -959,6 +971,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           >
             <a
               href={`/customer/card/${merchant.id}`}
+              onClick={() => handleLoginIntent('loyalty')}
               className="flex items-center justify-center gap-1.5 text-[12px] font-semibold transition-opacity hover:opacity-70"
               style={{ color: p }}
             >

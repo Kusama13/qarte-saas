@@ -134,7 +134,9 @@ La migration `123_sms_logs_dedup_index.sql` crée bien l'index `CONCURRENTLY`. *
 | # | Item | Commit | Mig |
 |---|---|---|---|
 | **UX vitrine** | Liens permanents fidélité + réservation/acompte sur `/p/[slug]` (drop bandeau cookie-gated cassé par HttpOnly + Instagram in-app strip) | `2fcc614a` | — |
-| **Polish vitrine** | Wording interrogatif (`Un acompte à régler ?` vs affirmatif) + icône `Wallet` (vs `Hourglass` urgent) + ambre soft sans border | (à push) | — |
+| **Polish vitrine** | Wording interrogatif (`Un acompte à régler ?` vs affirmatif) + icône `Wallet` (vs `Hourglass` urgent) + ambre soft sans border | `68db52bf` | — |
+| **UX `/customer`** | Page login adaptive selon intent (loyalty/booking/deposit) + pill "Vous arrivez de {shop}" + sessionStorage passe `{intent, fromShop, returnTo}` depuis vitrine + redirect post-login vers carte d'origine. Bandeau landing aligné `Accéder à mon espace` | (à push) | — |
+| **Sec/refacto** | Extract `src/lib/customer-login-intent.ts` (single source of truth pour storage key + types + helpers) + fix open-redirect mini-bug (`//evil.com` était toléré par `startsWith('/')` naïf) + lookup tables vs ternaires nestées | (à push) | — |
 
 ### Items déprio (théoriques au scale 5K, on est à ~800 merchants)
 

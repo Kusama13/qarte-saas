@@ -14,6 +14,33 @@ import { formatPhoneNumber, validatePhone } from '@/lib/utils';
 import { COUNTRIES_BY_LOCALE } from '@/types';
 import type { MerchantCountry } from '@/types';
 import AuthBackground from '@/components/shared/AuthBackground';
+import {
+  readLoginIntent,
+  clearLoginIntent,
+  type LoginCtx,
+  type LoginIntent,
+} from '@/lib/customer-login-intent';
+
+const HERO_KEYS: Record<NonNullable<LoginIntent>, string> = {
+  loyalty: 'heroLoyalty',
+  booking: 'heroBooking',
+  deposit: 'heroDeposit',
+};
+
+const SUBTITLE_KEYS: Record<NonNullable<LoginIntent>, { plain: string; shop: string }> = {
+  loyalty: { plain: 'subtitleLoyalty', shop: 'subtitleLoyaltyShop' },
+  booking: { plain: 'subtitleBooking', shop: 'subtitleBookingShop' },
+  deposit: { plain: 'subtitleDeposit', shop: 'subtitleDepositShop' },
+};
+
+const NOT_FOUND_KEYS: Record<NonNullable<LoginIntent>, { plain: string; shop: string }> = {
+  loyalty: { plain: 'notFound', shop: 'notFound' },
+  booking: { plain: 'notFoundBooking', shop: 'notFoundBookingShop' },
+  deposit: { plain: 'notFoundDeposit', shop: 'notFoundDepositShop' },
+};
+
+const HELPER_BOOKING = { lead: 'newHereBooking', accent: 'bookAction', tail: 'bookActionDesc' };
+const HELPER_GENERIC = { lead: 'newHere', accent: 'scanQr', tail: 'scanQrDesc' };
 
 /* ── Main page ─────────────────────────────────────────── */
 export default function CustomerLoginPage() {
@@ -26,19 +53,23 @@ export default function CustomerLoginPage() {
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState('');
+  const [ctx, setCtx] = useState<LoginCtx>({ intent: null, fromShop: null, returnTo: null });
 
-  // Check if already logged in via HttpOnly cookie
   useEffect(() => {
+    const stored = readLoginIntent();
+    setCtx(stored);
+
     const checkAuth = async () => {
       try {
         const res = await fetch('/api/customers/me');
         const data = await res.json();
         if (data.authenticated) {
-          router.replace('/customer/cards');
+          clearLoginIntent();
+          router.replace(stored.returnTo || '/customer/cards');
           return;
         }
       } catch {
-        // Not authenticated
+        // network error -> treat as unauthenticated, show login form
       }
       setChecking(false);
     };
@@ -68,19 +99,28 @@ export default function CustomerLoginPage() {
       const data = await response.json();
 
       if (!data.found) {
-        setError(t('notFound'));
+        const notFoundKey = ctx.intent
+          ? NOT_FOUND_KEYS[ctx.intent][ctx.fromShop ? 'shop' : 'plain']
+          : 'notFound';
+        setError(t(notFoundKey, ctx.fromShop ? { shop: ctx.fromShop } : undefined));
         setLoading(false);
         return;
       }
 
-      // Redirect to cards page — cookie is already set by the API
-      router.push('/customer/cards');
+      clearLoginIntent();
+      router.push(ctx.returnTo || '/customer/cards');
     } catch (err) {
       console.error('Error:', err);
       setError(t('searchError'));
       setLoading(false);
     }
   };
+
+  const heroKey = ctx.intent ? HERO_KEYS[ctx.intent] : 'heroGeneric';
+  const subtitleKey = ctx.intent
+    ? SUBTITLE_KEYS[ctx.intent][ctx.fromShop ? 'shop' : 'plain']
+    : 'subtitleGeneric';
+  const helper = ctx.intent === 'booking' || ctx.intent === 'deposit' ? HELPER_BOOKING : HELPER_GENERIC;
 
   if (checking) {
     return (
@@ -113,11 +153,16 @@ export default function CustomerLoginPage() {
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
           <div className="text-center mb-8">
+            {ctx.fromShop && (
+              <span className="inline-block mb-3 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold">
+                {t('contextPill', { shop: ctx.fromShop })}
+              </span>
+            )}
             <h1 className="text-4xl font-black text-gray-900 leading-none mb-3">
-              {t('myCards')}
+              {t(heroKey)}
             </h1>
             <p className="text-base text-gray-400 font-medium">
-              {t('findCards')}
+              {t(subtitleKey, ctx.fromShop ? { shop: ctx.fromShop } : undefined)}
             </p>
           </div>
 
@@ -169,7 +214,7 @@ export default function CustomerLoginPage() {
             transition={{ duration: 0.5, delay: 0.5 }}
           >
             <p className="text-sm text-gray-500 leading-relaxed">
-              {t('newHere')} <span className="font-bold text-indigo-600">{t('scanQr')}</span> {t('scanQrDesc')}
+              {t(helper.lead)} <span className="font-bold text-indigo-600">{t(helper.accent)}</span> {t(helper.tail)}
             </p>
           </motion.div>
         </motion.div>
