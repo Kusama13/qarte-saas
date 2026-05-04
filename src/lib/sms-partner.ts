@@ -104,9 +104,10 @@ export async function sendSmsPartner(phone: string, message: string): Promise<{ 
 }
 
 /**
- * Solde de crédits SMS Partner restants (en unités SMS).
- * GET /v1/me?apiKey=... — retourne un user object avec un champ "credits"
- * (string ou number selon les versions). On normalise en number.
+ * Solde de crédits SMS Partner restants (en unités SMS standard).
+ * GET /v1/me?apiKey=... — la réponse renvoie un objet `credits` :
+ *   { creditSms: number, creditSmsECO: number, creditHlr: number, balance: "10.5", currency: "EUR", ... }
+ * On retourne `creditSms` (SMS standards utilisés pour le transactionnel FR/BE).
  * Returns null si la requête échoue ou si l'API key est absente.
  */
 export async function getSmsPartnerCredit(): Promise<number | null> {
@@ -114,12 +115,9 @@ export async function getSmsPartnerCredit(): Promise<number | null> {
   try {
     const url = `${SMS_PARTNER_ME_ENDPOINT}?apiKey=${encodeURIComponent(API_KEY)}`;
     const res = await fetchWithRetry(url, { method: 'GET' });
-    const data = await res.json().catch(() => null) as Record<string, unknown> | null;
-    if (!res.ok || !data) return null;
-    // SMS Partner renvoie data.credits (number) — fallback sur d'autres noms vus dans la nature
-    const raw = data.credits ?? data.creditsLeft ?? data.balance ?? data.smsCredits;
-    if (raw == null) return null;
-    const credits = Number(raw);
+    const data = await res.json().catch(() => null) as { credits?: { creditSms?: number } } | null;
+    if (!res.ok || !data?.credits) return null;
+    const credits = Number(data.credits.creditSms);
     return Number.isFinite(credits) ? credits : null;
   } catch (err) {
     logger.error(`[sms-partner] getSmsPartnerCredit error: ${err instanceof Error ? err.message : String(err)}`);

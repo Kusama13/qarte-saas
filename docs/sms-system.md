@@ -196,6 +196,30 @@ git push  # auto-deploy Vercel
 ### Alertes conso
 `notifyMerchantQuotaAlert()` dans [`src/lib/sms-alerts.ts`](../src/lib/sms-alerts.ts) — push PWA merchant + email `SmsQuotaEmail` FR/EN, dédupliqué par cycle via `sms_alert_{80,100}_sent_cycle`.
 
+### Monitoring crédits providers (OVH + SMS Partner)
+Surveillance du **solde de crédits chez les providers eux-mêmes** (différent de la conso merchant — c'est le solde Qarte chez OVH / SMS Partner).
+
+**Helpers** :
+- `getOvhCredit()` dans [`src/lib/ovh-sms.ts`](../src/lib/ovh-sms.ts) — `GET /sms/{service}` réutilise `ovhRequest()` (HMAC-SHA1)
+- `getSmsPartnerCredit()` dans [`src/lib/sms-partner.ts`](../src/lib/sms-partner.ts) — `GET /v1/me?apiKey=...` lit `data.credits.creditSms` (SMS standards)
+- Les deux retournent `number | null` (null = config absente ou erreur réseau)
+
+**Constantes** ([`src/lib/sms-constants.ts`](../src/lib/sms-constants.ts)) :
+- `SMS_CREDIT_LOW_THRESHOLD = 50` — seuil alerte mail
+- `SMS_CREDIT_WARN_THRESHOLD = 200` — seuil "à recharger bientôt" (UI uniquement)
+- `SMS_CREDIT_RESET_THRESHOLD = 75` — seuil de re-armement (anti-spam alerte)
+
+**Affichage admin** (`/admin/sms` Aperçu) :
+- Route [`/api/admin/sms/credits`](../src/app/api/admin/sms/credits/route.ts) — fetch parallèle OVH + SMS Partner, **cache module-level 5min** (Next.js `revalidate` ne fonctionne pas sur route avec `authorizeAdmin` qui rend la route dynamique)
+- Composant `ProviderCreditCard` : couleur emerald (≥200) / amber (50-199) / red (<50) / gray (null=Indisponible)
+
+**Cron daily** ([`/api/cron/sms-credits-check`](../src/app/api/cron/sms-credits-check/route.ts)) :
+- Schedule : **0 8 * * *** (8h UTC = 9-10h Paris) dans `vercel.json`
+- Pour chaque provider : si crédit `<50` → `sendSmsCreditLowEmail` à `contact@getqarte.com` (template aligné sur `sendNewMerchantNotificationEmail`)
+- Dédup : `app_config(key='sms_credit_alert_{ovh,partner}_last_sent_at', value={sent_at: ISO})` — pas de re-spam tant que pas de reset
+- Reset auto : si crédit remonté ≥75 (= LOW × 1.5), efface le flag → prochain passage sous 50 ré-alerte
+- Provider unavailable (null) : skip silencieux, pas d'alerte (probable config manquante / blip réseau, pas une vraie urgence)
+
 ### Campagnes manuelles
 ```
 merchant rédige dans SmsTab (audience multi-select)
