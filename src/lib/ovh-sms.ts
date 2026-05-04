@@ -82,6 +82,24 @@ async function ovhRequest(method: string, path: string, body?: Record<string, un
 }
 
 /**
+ * Solde de crédits SMS OVH restants (en unités SMS, pas en euros).
+ * Réutilisé par /api/admin/sms/credits (UI) + cron sms-credits-check (alerte mail).
+ * Returns null si la requête échoue ou si la config OVH est absente.
+ */
+export async function getOvhCredit(): Promise<number | null> {
+  if (!APP_KEY || !APP_SECRET || !CONSUMER_KEY || !SMS_SERVICE) return null;
+  try {
+    const { ok, data } = await ovhRequest('GET', `/sms/${SMS_SERVICE}`);
+    if (!ok || !data || typeof data !== 'object') return null;
+    const credits = (data as { creditsLeft?: number }).creditsLeft;
+    return typeof credits === 'number' ? credits : null;
+  } catch (err) {
+    logger.error(`[ovh-sms] getOvhCredit error: ${err instanceof Error ? err.message : String(err)}`);
+    return null;
+  }
+}
+
+/**
  * Send an SMS via OVH. Fire-and-forget — never throws.
  * @param phone E.164 without + (e.g. "33612345678")
  * @param message SMS body (max 160 chars for single SMS)

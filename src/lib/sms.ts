@@ -7,7 +7,7 @@ import { getPlanFeatures } from './plan-tiers';
 import logger from './logger';
 import type { PlanTier, SubscriptionStatus } from '@/types';
 
-type SmsProvider = 'ovh' | 'sms_partner';
+export type SmsProvider = 'ovh' | 'sms_partner';
 
 /** Tolere "true ", " TRUE", "True" — un espace invisible dans une env var Vercel
  *  faisait silencieusement tomber tout le routage SMS Partner sur OVH. */

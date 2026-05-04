@@ -3525,7 +3525,7 @@
     "yourInfo": "Vos coordonnées",
     "firstName": "Prénom",
     "firstNamePlaceholder": "Votre prénom",
-    "lastName": "Nom (optionnel)",
+    "lastName": "Nom",
     "lastNamePlaceholder": "Votre nom",
     "phone": "Téléphone",
     "email": "Email (optionnel)",

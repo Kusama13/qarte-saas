@@ -11,6 +11,7 @@ const SMS_SENDER =
 const SANDBOX = (process.env.SMS_PARTNER_SANDBOX || '').trim().toLowerCase() === 'true';
 
 const SMS_PARTNER_ENDPOINT = 'https://api.smspartner.fr/v1/send';
+const SMS_PARTNER_ME_ENDPOINT = 'https://api.smspartner.fr/v1/me';
 
 // Timeout + retry exponentiel pour absorber les blips reseau transitoires
 // et la latence ponctuelle de SMS Partner. Cas observe : timeout 5s trop court
@@ -99,5 +100,29 @@ export async function sendSmsPartner(phone: string, message: string): Promise<{ 
     const errMsg = err instanceof Error ? err.message : String(err);
     logger.error(`[sms-partner] Error: ${errMsg}`);
     return { success: false, error: errMsg };
+  }
+}
+
+/**
+ * Solde de crédits SMS Partner restants (en unités SMS).
+ * GET /v1/me?apiKey=... — retourne un user object avec un champ "credits"
+ * (string ou number selon les versions). On normalise en number.
+ * Returns null si la requête échoue ou si l'API key est absente.
+ */
+export async function getSmsPartnerCredit(): Promise<number | null> {
+  if (!API_KEY) return null;
+  try {
+    const url = `${SMS_PARTNER_ME_ENDPOINT}?apiKey=${encodeURIComponent(API_KEY)}`;
+    const res = await fetchWithRetry(url, { method: 'GET' });
+    const data = await res.json().catch(() => null) as Record<string, unknown> | null;
+    if (!res.ok || !data) return null;
+    // SMS Partner renvoie data.credits (number) — fallback sur d'autres noms vus dans la nature
+    const raw = data.credits ?? data.creditsLeft ?? data.balance ?? data.smsCredits;
+    if (raw == null) return null;
+    const credits = Number(raw);
+    return Number.isFinite(credits) ? credits : null;
+  } catch (err) {
+    logger.error(`[sms-partner] getSmsPartnerCredit error: ${err instanceof Error ? err.message : String(err)}`);
+    return null;
   }
 }

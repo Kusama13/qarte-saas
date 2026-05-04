@@ -105,6 +105,7 @@ export async function GET(request: NextRequest) {
         status: row.status as string,
         error_message: (row.error_message as string | null) ?? null,
         created_at: row.sent_at as string,
+        provider: 'ovh' as const,
       };
     });
     total = count || 0;
@@ -148,7 +149,7 @@ export async function GET(request: NextRequest) {
         message_body: r.body as string, status: r.status as string,
         error_message: (r.error_message as string | null) ?? null,
         created_at: r.sent_at as string, _source: 'essai' as const,
-        provider: null,
+        provider: 'ovh' as const,
       })),
     ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 

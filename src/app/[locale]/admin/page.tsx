@@ -7,8 +7,6 @@ import {
   Users,
   Clock,
   CreditCard,
-  AlertTriangle,
-  ArrowRight,
   TrendingUp,
   Calendar,
   Percent,
@@ -18,7 +16,6 @@ import {
   StickyNote,
   Target,
   MessageCircle,
-  Mail,
   ChevronRight,
   Save,
   Loader2,
@@ -58,15 +55,6 @@ interface Merchant {
   double_days_enabled: boolean;
   shield_enabled: boolean;
   tier2_enabled: boolean;
-}
-
-interface ActionMerchant extends Merchant {
-  email?: string;
-  lastScanDate?: string | null;
-  scansLast7Days?: number;
-  daysSinceCreation?: number;
-  daysUntilTrialEnd?: number;
-  daysSinceLastScan?: number | null;
 }
 
 interface Task {
@@ -134,10 +122,6 @@ export default function AdminDashboardPage() {
   const [recentMerchants, setRecentMerchants] = useState<Merchant[]>([]);
 
   // Action segments
-  const [trialsNoScan, setTrialsNoScan] = useState<ActionMerchant[]>([]);
-  const [trialsExpiring, setTrialsExpiring] = useState<ActionMerchant[]>([]);
-  const [noProgram, setNoProgram] = useState<ActionMerchant[]>([]);
-  const [inactive7Days, setInactive7Days] = useState<ActionMerchant[]>([]);
 
   // Notes
   const [notes, setNotes] = useState('');
@@ -192,21 +176,6 @@ export default function AdminDashboardPage() {
       supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, billing_period_start, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode, bio, planning_enabled, auto_booking_enabled, booking_mode, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, shield_enabled, tier2_enabled').order('created_at', { ascending: false }).limit(10),
     ]);
 
-    // Fetch merchant emails via API
-    let emailMap: Record<string, string> = {};
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const emailRes = await fetch('/api/admin/merchant-emails', {
-          headers: { 'Authorization': `Bearer ${session.access_token}` },
-        });
-        if (emailRes.ok) {
-          const emailData = await emailRes.json();
-          emailMap = emailData.emails || {};
-        }
-      }
-    } catch { /* silent */ }
-
     const superAdminUserIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
     const merchants = (allMerchants || []).filter((m: Merchant) => !superAdminUserIds.has(m.user_id));
 
@@ -217,21 +186,10 @@ export default function AdminDashboardPage() {
       : supabase.from('customers').select('*', { count: 'exact', head: true });
     const { count: totalCustomers } = await customerCountQuery;
 
-    // Build visits maps
-    const merchantsWithAnyVisit = new Set<string>();
-    const lastVisitMap = new Map<string, string>();
+    // Build 7d scans map (used for weeklyActive count)
     const scans7dMap = new Map<string, number>();
-
     (allVisits || []).forEach((v: { merchant_id: string; visited_at: string }) => {
-      merchantsWithAnyVisit.add(v.merchant_id);
-      const visitDate = new Date(v.visited_at);
-
-      const existing = lastVisitMap.get(v.merchant_id);
-      if (!existing || visitDate > new Date(existing)) {
-        lastVisitMap.set(v.merchant_id, v.visited_at);
-      }
-
-      if (visitDate >= sevenDaysAgo) {
+      if (new Date(v.visited_at) >= sevenDaysAgo) {
         scans7dMap.set(v.merchant_id, (scans7dMap.get(v.merchant_id) || 0) + 1);
       }
     });
@@ -265,60 +223,6 @@ export default function AdminDashboardPage() {
       resaEnLigne: resaEnLigne.length,
       modeLibre: modeLibre.length,
     });
-
-    // Helper to enrich merchant for action segments
-    const enrichMerchant = (m: Merchant): ActionMerchant => {
-      const lastScan = lastVisitMap.get(m.id) || null;
-      const daysSinceLastScan = lastScan ? Math.floor((now.getTime() - new Date(lastScan).getTime()) / (1000 * 60 * 60 * 24)) : null;
-      const daysUntilTrialEnd = m.trial_ends_at ? Math.ceil((new Date(m.trial_ends_at).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : undefined;
-      return {
-        ...m,
-        email: emailMap[m.user_id],
-        lastScanDate: lastScan,
-        scansLast7Days: scans7dMap.get(m.id) || 0,
-        daysSinceCreation: Math.floor((now.getTime() - new Date(m.created_at).getTime()) / (1000 * 60 * 60 * 24)),
-        daysUntilTrialEnd,
-        daysSinceLastScan,
-      };
-    };
-
-    // Segment 1: Trials without any scan
-    setTrialsNoScan(
-      trial.filter((m: Merchant) => !merchantsWithAnyVisit.has(m.id))
-        .map(enrichMerchant)
-        .sort((a: ActionMerchant, b: ActionMerchant) => (a.daysSinceCreation || 0) - (b.daysSinceCreation || 0))
-    );
-
-    // Segment 2: Trials expiring in ≤3 days
-    setTrialsExpiring(
-      trial.filter((m: Merchant) => {
-        if (!m.trial_ends_at) return false;
-        const daysLeft = Math.ceil((new Date(m.trial_ends_at).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        return daysLeft >= 0 && daysLeft <= 3;
-      })
-        .map(enrichMerchant)
-        .sort((a: ActionMerchant, b: ActionMerchant) => (a.daysUntilTrialEnd || 0) - (b.daysUntilTrialEnd || 0))
-    );
-
-    // Segment 3: No program configured (no reward_description)
-    setNoProgram(
-      merchants.filter((m: Merchant) => m.reward_description === null && (m.subscription_status === 'trial' || m.subscription_status === 'active'))
-        .map(enrichMerchant)
-    );
-
-    // Segment 4: Inactive 7+ days (trial or active merchants with last scan > 7 days ago, excluding those with no scan at all)
-    setInactive7Days(
-      merchants.filter((m: Merchant) => {
-        if (m.subscription_status !== 'trial' && m.subscription_status !== 'active') return false;
-        if (!merchantsWithAnyVisit.has(m.id)) return false;
-        const lastScan = lastVisitMap.get(m.id);
-        if (!lastScan) return false;
-        const daysSince = Math.floor((now.getTime() - new Date(lastScan).getTime()) / (1000 * 60 * 60 * 24));
-        return daysSince >= 7;
-      })
-        .map(enrichMerchant)
-        .sort((a: ActionMerchant, b: ActionMerchant) => (b.daysSinceLastScan || 0) - (a.daysSinceLastScan || 0))
-    );
 
     // Recent merchants (for bottom row)
     setRecentMerchants(
@@ -550,8 +454,6 @@ export default function AdminDashboardPage() {
     ? Math.round((stats.activeMerchants / (stats.activeMerchants + stats.canceledMerchants)) * 100)
     : 0;
 
-  const totalActions = trialsNoScan.length + trialsExpiring.length + noProgram.length + inactive7Days.length;
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
       day: 'numeric',
@@ -617,92 +519,6 @@ export default function AdminDashboardPage() {
         <StatCard label="Mode Libre" value={stats.modeLibre} icon={Calendar} color="purple" />
       </div>
 
-
-      {/* Actions du jour */}
-      {totalActions > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-50 rounded-lg">
-              <Target className="w-5 h-5 text-red-600" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-slate-900">Actions du jour</h2>
-              <p className="text-xs text-slate-500">{totalActions} commerçant{totalActions > 1 ? 's' : ''} à contacter</p>
-            </div>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-4">
-            {/* Segment 1: Essais sans scan */}
-            {trialsNoScan.length > 0 && (
-              <ActionSegment
-                title="Essais SANS scan"
-                subtitle="N'ont jamais testé le produit"
-                count={trialsNoScan.length}
-                color="red"
-                merchants={trialsNoScan}
-                contextLabel={(m) => `Inscrit il y a ${m.daysSinceCreation}j`}
-                openWhatsApp={openWhatsApp}
-              />
-            )}
-
-            {/* Segment 2: Essais expirant */}
-            {trialsExpiring.length > 0 && (
-              <ActionSegment
-                title="Essais expirant"
-                subtitle="≤ 3 jours restants"
-                count={trialsExpiring.length}
-                color="orange"
-                merchants={trialsExpiring}
-                contextLabel={(m) => m.daysUntilTrialEnd === 0 ? "Expire aujourd'hui" : `Expire dans ${m.daysUntilTrialEnd}j`}
-                openWhatsApp={openWhatsApp}
-              />
-            )}
-
-            {/* Segment 3: Sans programme */}
-            {noProgram.length > 0 && (
-              <ActionSegment
-                title="Sans programme"
-                subtitle="Récompense non configurée"
-                count={noProgram.length}
-                color="amber"
-                merchants={noProgram}
-                contextLabel={(m) => `Inscrit il y a ${m.daysSinceCreation}j`}
-                openWhatsApp={openWhatsApp}
-              />
-            )}
-
-            {/* Segment 4: Inactifs 7+ jours */}
-            {inactive7Days.length > 0 && (
-              <ActionSegment
-                title="Inactifs 7+ jours"
-                subtitle="Aucun scan récent"
-                count={inactive7Days.length}
-                color="gray"
-                merchants={inactive7Days}
-                contextLabel={(m) => m.daysSinceLastScan !== null ? `Dernier scan il y a ${m.daysSinceLastScan}j` : 'Jamais scanné'}
-                openWhatsApp={openWhatsApp}
-              />
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Funnel → voir Analytics */}
-      <Link
-        href="/admin/analytics"
-        className="flex items-center justify-between bg-white rounded-lg border border-slate-100 shadow-md p-5 hover:bg-slate-50 transition-colors group"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-[#5167fc]/10 rounded-lg">
-            <ArrowRight className="w-5 h-5 text-[#5167fc]" />
-          </div>
-          <div>
-            <h2 className="font-semibold text-slate-900">Funnel de conversion</h2>
-            <p className="text-xs text-slate-500">Voir le funnel complet dans Analytics</p>
-          </div>
-        </div>
-        <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-[#5167fc] transition-colors" />
-      </Link>
 
       {/* Main Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
@@ -1128,81 +944,4 @@ function StatCard({
   );
 }
 
-// ============================================
-// ACTION SEGMENT COMPONENT
-// ============================================
-function ActionSegment({
-  title,
-  subtitle,
-  count,
-  color,
-  merchants,
-  contextLabel,
-  openWhatsApp,
-}: {
-  title: string;
-  subtitle: string;
-  count: number;
-  color: 'red' | 'orange' | 'amber' | 'gray';
-  merchants: ActionMerchant[];
-  contextLabel: (m: ActionMerchant) => string;
-  openWhatsApp: (phone: string, name?: string) => void;
-}) {
-  const colorConfig = {
-    red: { bg: 'bg-red-50', border: 'border-red-100', badge: 'bg-red-100 text-red-700', icon: 'text-red-600', iconBg: 'bg-red-50' },
-    orange: { bg: 'bg-orange-50', border: 'border-orange-100', badge: 'bg-orange-100 text-orange-700', icon: 'text-orange-600', iconBg: 'bg-orange-50' },
-    amber: { bg: 'bg-amber-50', border: 'border-amber-100', badge: 'bg-amber-100 text-amber-700', icon: 'text-amber-600', iconBg: 'bg-amber-50' },
-    gray: { bg: 'bg-slate-50', border: 'border-slate-100', badge: 'bg-slate-100 text-slate-700', icon: 'text-slate-500', iconBg: 'bg-slate-50' },
-  };
-  const c = colorConfig[color];
-
-  return (
-    <div className={cn("rounded-lg border shadow-sm overflow-hidden", c.border)}>
-      <div className={cn("px-4 py-3 flex items-center justify-between", c.bg)}>
-        <div className="flex items-center gap-2">
-          <AlertTriangle className={cn("w-4 h-4", c.icon)} />
-          <div>
-            <span className="text-sm font-semibold text-slate-900">{title}</span>
-            <span className="text-xs text-slate-500 ml-2">{subtitle}</span>
-          </div>
-        </div>
-        <span className={cn("px-2 py-0.5 text-xs font-bold rounded-full", c.badge)}>{count}</span>
-      </div>
-      <div className="divide-y divide-slate-100 max-h-[200px] overflow-y-auto bg-white">
-        {merchants.map((m) => (
-          <div key={m.id} className="px-4 py-2.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
-            <Link href={`/admin/merchants/${m.id}`} className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900 truncate">{m.shop_name}</p>
-              <p className="text-xs text-slate-400">{contextLabel(m)}</p>
-            </Link>
-            <div className="flex items-center gap-1.5 shrink-0">
-              {m.phone && (
-                <button
-                  onClick={(e) => { e.preventDefault(); openWhatsApp(m.phone, m.shop_name); }}
-                  className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                  title="WhatsApp"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                </button>
-              )}
-              {m.email && (
-                <a
-                  href={`mailto:${m.email}`}
-                  className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  title="Email"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Mail className="w-4 h-4" />
-                </a>
-              )}
-              <Link href={`/admin/merchants/${m.id}`}>
-                <ChevronRight className="w-4 h-4 text-slate-300" />
-              </Link>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 

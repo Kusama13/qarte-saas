@@ -429,6 +429,59 @@ export async function sendNewMerchantNotification(
   }
 }
 
+/**
+ * Alerte mail à contact@getqarte.com quand le crédit SMS d'un provider passe sous le seuil.
+ * Pattern aligné sur sendNewMerchantNotificationEmail. Cron sms-credits-check appelle ça.
+ */
+export async function sendSmsCreditLowEmail(params: {
+  provider: import('./sms').SmsProvider;
+  creditsLeft: number;
+  threshold: number;
+}): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  const providerLabel = params.provider === 'ovh' ? 'OVH' : 'SMS Partner';
+  const providerScope = params.provider === 'ovh'
+    ? 'tout marketing + transactionnel CH (et fallback FR/BE si SMS Partner off)'
+    : 'transactionnel FR/BE';
+  const rechargeUrl = params.provider === 'ovh'
+    ? 'https://eu.ovh.com/manager/#/sms/'
+    : 'https://my.smspartner.fr/';
+
+  try {
+    const htmlContent = `
+      <h2>⚠️ Crédit SMS bas — ${providerLabel}</h2>
+      <p>Le crédit ${providerLabel} est passé sous le seuil d'alerte (${params.threshold} SMS).</p>
+      <p><strong>Solde actuel :</strong> ${params.creditsLeft} SMS</p>
+      <p><strong>Provider :</strong> ${providerLabel} (${providerScope})</p>
+      <p><strong>Recharge :</strong> <a href="${rechargeUrl}">${rechargeUrl}</a></p>
+      <p><strong>Date :</strong> ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}</p>
+      <p style="color:#666;font-size:12px;margin-top:24px">Cette alerte ne se répétera pas tant que le crédit n'est pas remonté au-dessus de ${params.threshold * 1.5} puis redescendu.</p>
+    `;
+    const textContent = `Crédit SMS bas — ${providerLabel}\n\nSolde : ${params.creditsLeft} SMS (seuil ${params.threshold}).\nProvider : ${providerLabel} (${providerScope}).\nRecharge : ${rechargeUrl}\nDate : ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`;
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to: 'contact@getqarte.com',
+      subject: `⚠️ Crédit SMS bas — ${providerLabel} à ${params.creditsLeft} SMS`,
+      html: htmlContent,
+      text: textContent,
+    });
+
+    if (error) {
+      logger.error('Failed to send SMS credit low alert', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`SMS credit low alert sent for ${providerLabel} (${params.creditsLeft} SMS left)`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending SMS credit low alert', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
 export interface SendSmsCampaignSentEmailParams {
   to: string;
   shopName: string;

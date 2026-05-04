@@ -3522,7 +3522,7 @@
     "yourInfo": "Your details",
     "firstName": "First name",
     "firstNamePlaceholder": "Your first name",
-    "lastName": "Last name (optional)",
+    "lastName": "Last name",
     "lastNamePlaceholder": "Your last name",
     "phone": "Phone",
     "email": "Email (optional)",

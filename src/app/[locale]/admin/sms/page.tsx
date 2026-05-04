@@ -16,6 +16,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { displayPhoneWithFlag, formatCurrency } from '@/lib/utils';
+import { SMS_CREDIT_LOW_THRESHOLD, SMS_CREDIT_WARN_THRESHOLD } from '@/lib/sms-constants';
 
 interface MerchantSms {
   merchant_id: string;
@@ -24,7 +25,9 @@ interface MerchantSms {
   quota?: number;
   sent_this_month: number;
   free_remaining: number;
-  overage_cost: number;
+  pack_balance: number;
+  total_remaining: number;
+  overage_count: number;
   period_start: string;
   period_end: string;
 }
@@ -145,6 +148,26 @@ function MetricCard({ label, value, sub }: { label: string; value: string | numb
   );
 }
 
+function ProviderCreditCard({ label, credits }: { label: string; credits: number | null }) {
+  // <SMS_CREDIT_LOW_THRESHOLD = rouge (cron envoie l'email d'alerte au même seuil)
+  // <SMS_CREDIT_WARN_THRESHOLD = ambre (à surveiller, pas d'alerte mail)
+  const view =
+    credits === null
+      ? { color: 'text-gray-400', sub: 'Indisponible' }
+      : credits < SMS_CREDIT_LOW_THRESHOLD
+        ? { color: 'text-red-600', sub: '⚠ Recharge urgente' }
+        : credits < SMS_CREDIT_WARN_THRESHOLD
+          ? { color: 'text-amber-600', sub: 'À recharger bientôt' }
+          : { color: 'text-emerald-600', sub: 'OK' };
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">{label}</p>
+      <p className={`text-2xl font-bold mt-1 ${view.color}`}>{credits === null ? '—' : `${credits} SMS`}</p>
+      <p className="text-xs text-gray-400 mt-0.5">{view.sub}</p>
+    </div>
+  );
+}
+
 function formatDate(iso: string | null): string {
   if (!iso) return '—';
   return new Date(iso).toLocaleString('fr-FR', {
@@ -188,6 +211,7 @@ export default function AdminSmsPage() {
 
   const [failures, setFailures] = useState<SmsFailure[]>([]);
   const [loadingFailures, setLoadingFailures] = useState(false);
+  const [failuresFetched, setFailuresFetched] = useState(false);
   const [processing, setProcessing] = useState<string | null>(null);
   const [rejectNoteById, setRejectNoteById] = useState<Record<string, string>>({});
   const [showRejectFormFor, setShowRejectFormFor] = useState<string | null>(null);
@@ -209,6 +233,18 @@ export default function AdminSmsPage() {
     const res = await fetch('/api/admin/sms');
     if (res.ok) setData(await res.json());
     setLoadingOverview(false);
+  }, []);
+
+  const [providerCredits, setProviderCredits] = useState<{ ovh: number | null; sms_partner: number | null } | null>(null);
+  const fetchProviderCredits = useCallback(async () => {
+    const res = await fetch('/api/admin/sms/credits');
+    if (res.ok) {
+      const body = await res.json();
+      setProviderCredits({
+        ovh: body.ovh?.available ? body.ovh.credits : null,
+        sms_partner: body.sms_partner?.available ? body.sms_partner.credits : null,
+      });
+    }
   }, []);
 
   const fetchPending = useCallback(async () => {
@@ -234,6 +270,7 @@ export default function AdminSmsPage() {
       }
     } finally {
       setLoadingFailures(false);
+      setFailuresFetched(true);
     }
   }, []);
 
@@ -257,9 +294,9 @@ export default function AdminSmsPage() {
     if (res.ok) setPacksData(await res.json());
   }, []);
 
-  useEffect(() => { fetchOverview(); fetchPending(); }, [fetchOverview, fetchPending]);
+  useEffect(() => { fetchOverview(); fetchPending(); fetchProviderCredits(); }, [fetchOverview, fetchPending, fetchProviderCredits]);
   useEffect(() => { if (tab === 'overview' && !packsData) fetchPacks(); }, [tab, packsData, fetchPacks]);
-  useEffect(() => { if (tab === 'failures' && failures.length === 0 && !loadingFailures) fetchFailures(); }, [tab, failures.length, loadingFailures, fetchFailures]);
+  useEffect(() => { if (tab === 'failures' && !failuresFetched && !loadingFailures) fetchFailures(); }, [tab, failuresFetched, loadingFailures, fetchFailures]);
   useEffect(() => { if (tab === 'history') fetchHistory(historyCategory, historyPage); }, [tab, historyCategory, historyPage, fetchHistory]);
 
   const handleApprove = async (id: string) => {
@@ -386,6 +423,13 @@ export default function AdminSmsPage() {
               </button>
             </div>
 
+            {providerCredits && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                <ProviderCreditCard label="Crédit OVH" credits={providerCredits.ovh} />
+                <ProviderCreditCard label="Crédit SMS Partner" credits={providerCredits.sms_partner} />
+              </div>
+            )}
+
             {packsData && (
               <div className="mb-6">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
@@ -460,7 +504,7 @@ export default function AdminSmsPage() {
                         <th className="px-4 py-2">Tier</th>
                         <th className="px-4 py-2">Cycle</th>
                         <th className="px-4 py-2 text-right">Envoyés / Quota</th>
-                        <th className="px-4 py-2 text-right">Restant gratuit</th>
+                        <th className="px-4 py-2 text-right">Restant total</th>
                         <th className="px-4 py-2 text-right">Dépassement</th>
                       </tr>
                     </thead>
@@ -484,13 +528,16 @@ export default function AdminSmsPage() {
                           </td>
                           <td className="px-4 py-2.5 text-sm text-right text-gray-600">{m.sent_this_month} / {m.quota || 100}</td>
                           <td className="px-4 py-2.5 text-sm text-right">
-                            <span className={`font-medium ${m.free_remaining === 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                              {m.free_remaining}
+                            <span className={`font-medium ${m.total_remaining === 0 ? 'text-red-600' : m.free_remaining === 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                              {m.total_remaining}
                             </span>
+                            {m.pack_balance > 0 && (
+                              <span className="ml-1 text-[10px] text-gray-400">({m.free_remaining}+{m.pack_balance} pack)</span>
+                            )}
                           </td>
                           <td className="px-4 py-2.5 text-sm text-right">
-                            {m.overage_cost > 0 ? (
-                              <span className="font-medium text-amber-600">{m.overage_cost.toFixed(2)}€</span>
+                            {m.overage_count > 0 ? (
+                              <span className="font-medium text-amber-600">{m.overage_count} SMS</span>
                             ) : (
                               <span className="text-gray-300">—</span>
                             )}
