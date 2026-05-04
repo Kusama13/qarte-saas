@@ -9,8 +9,10 @@ import {
   ArrowLeft,
   Loader2,
   Check,
-  Gift,
   Clock,
+  Store,
+  CalendarCheck,
+  Heart,
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { PhoneInput } from '@/components/ui/PhoneInput';
@@ -223,29 +225,19 @@ export default function CompleteProfilePage() {
                 {t('subtitle')}
               </p>
 
-              {/* Mini stamp card teaser */}
               <div className="mt-4 flex items-center justify-center gap-2">
-                {[...Array(6)].map((_, i) => (
-                  <div
-                    key={i}
-                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                      i < 5
-                        ? 'bg-gradient-to-br from-primary to-secondary text-white shadow-sm shadow-primary/20'
-                        : 'relative border-2 border-dashed border-primary/30 text-primary/40 overflow-hidden'
-                    }`}
-                  >
-                    {i < 5 ? (
-                      <Check className="w-3.5 h-3.5" />
-                    ) : (
-                      <>
-                        <Gift className="w-3.5 h-3.5 relative z-10" />
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-[shimmer_2s_infinite] -skew-x-12" />
-                      </>
-                    )}
+                {([
+                  { Icon: Store, key: 'pillVitrine', bg: 'bg-violet-50', border: 'border-violet-100', icon: 'text-violet-600', text: 'text-violet-700' },
+                  { Icon: CalendarCheck, key: 'pillPlanning', bg: 'bg-cyan-50', border: 'border-cyan-100', icon: 'text-cyan-600', text: 'text-cyan-700' },
+                  { Icon: Heart, key: 'pillFidelite', bg: 'bg-rose-50', border: 'border-rose-100', icon: 'text-rose-600', text: 'text-rose-700' },
+                ] as const).map(({ Icon, key, bg, border, icon, text }) => (
+                  <div key={key} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full ${bg} border ${border}`}>
+                    <Icon className={`w-3.5 h-3.5 ${icon}`} />
+                    <span className={`text-[11px] font-semibold ${text}`}>{t(key)}</span>
                   </div>
                 ))}
               </div>
-              <p className="mt-1.5 text-xs text-gray-400">
+              <p className="mt-2 text-xs text-gray-400">
                 {t('clientsWillLove')}
               </p>
             </div>

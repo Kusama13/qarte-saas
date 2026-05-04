@@ -11,6 +11,7 @@ import { PhoneInput } from '@/components/ui/PhoneInput';
 import { AddressAutocomplete, type AddressSuggestion } from '@/components/ui/AddressAutocomplete';
 import { detectPaymentProvider } from '@/lib/payment-providers';
 import { computeBookingPrice } from '@/lib/booking-pricing';
+import { BOOKING_HORIZON_DAYS } from '@/lib/booking-window';
 
 type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
 type ServiceCategory = { id: string; name: string; position: number };
@@ -774,7 +775,7 @@ export default function BookingModal({
                   const bcp47 = toBCP47(locale);
                   const today = new Date(); today.setHours(0, 0, 0, 0);
                   const todayStr = today.toISOString().split('T')[0];
-                  const maxDate = new Date(today.getFullYear(), today.getMonth() + 3, 0); // last day of today+3 months
+                  const maxDate = new Date(today); maxDate.setDate(today.getDate() + BOOKING_HORIZON_DAYS);
                   const maxDateStr = maxDate.toISOString().split('T')[0];
 
                   const year = calMonth.getFullYear();

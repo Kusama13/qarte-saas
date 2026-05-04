@@ -7,6 +7,7 @@ import { SHOP_TYPES } from '@/types';
 import type { Metadata } from 'next';
 import { isDemoSlug, getDemoMerchantData } from '@/lib/demo-merchants';
 import { getTodayForCountry, extractCityFromAddress } from '@/lib/utils';
+import { BOOKING_HORIZON_DAYS } from '@/lib/booking-window';
 import DemoNav from './DemoNav';
 
 // SEO-optimised, terser shop labels for the title tag (no slashes, no compound forms).
@@ -73,7 +74,7 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
 
   const today = getTodayForCountry((merchant as any).country);
   const todayDate = new Date(today);
-  todayDate.setDate(todayDate.getDate() + 60);
+  todayDate.setDate(todayDate.getDate() + BOOKING_HORIZON_DAYS);
   const endDate = todayDate.toISOString().split('T')[0];
 
   const isFreeMod = (merchant as any).booking_mode === 'free';

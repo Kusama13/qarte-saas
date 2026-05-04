@@ -8,6 +8,7 @@ import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 import { requirePlanFeature } from '@/lib/api-helpers';
 import { recomputeDayTravel } from '@/lib/travel-recompute';
+import { BOOKING_HORIZON_DAYS } from '@/lib/booking-window';
 import { validateAppliedDiscounts } from '@/lib/applied-discounts';
 
 async function verifyOwnership(supabase: Awaited<ReturnType<typeof createRouteHandlerSupabaseClient>>, merchantId: string, userId: string) {
@@ -44,8 +45,8 @@ export async function GET(request: NextRequest) {
         .single();
       const today = getTodayForCountry(merchantRow?.country);
       const todayDate = new Date(today);
-      todayDate.setDate(todayDate.getDate() + 60);
-      const sixtyDaysLater = todayDate.toISOString().split('T')[0];
+      todayDate.setDate(todayDate.getDate() + BOOKING_HORIZON_DAYS);
+      const horizonDate = todayDate.toISOString().split('T')[0];
 
       const { data, error } = await supabaseAdmin
         .from('merchant_planning_slots')
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
         .eq('merchant_id', merchantId)
         .is('client_name', null)
         .gte('slot_date', today)
-        .lte('slot_date', sixtyDaysLater)
+        .lte('slot_date', horizonDate)
         .order('slot_date')
         .order('start_time');
 

@@ -137,6 +137,14 @@ La migration `123_sms_logs_dedup_index.sql` crée bien l'index `CONCURRENTLY`. *
 | **Polish vitrine** | Wording interrogatif (`Un acompte à régler ?` vs affirmatif) + icône `Wallet` (vs `Hourglass` urgent) + ambre soft sans border | `68db52bf` | — |
 | **UX `/customer`** | Page login adaptive selon intent (loyalty/booking/deposit) + pill "Vous arrivez de {shop}" + sessionStorage passe `{intent, fromShop, returnTo}` depuis vitrine + redirect post-login vers carte d'origine. Bandeau landing aligné `Accéder à mon espace` | (à push) | — |
 | **Sec/refacto** | Extract `src/lib/customer-login-intent.ts` (single source of truth pour storage key + types + helpers) + fix open-redirect mini-bug (`//evil.com` était toléré par `startsWith('/')` naïf) + lookup tables vs ternaires nestées | (à push) | — |
+| **Copy signup** | Refonte 2 étapes signup : titre étape 2 ("Crée ta carte fidélité" → "Présente ton salon en 30 secondes") + tutoiement systématique (vouvoiement leftovers fixed) + labels concrets ("Le nom de ton salon", "Ton métier") + visuel tampons → 3 pills triple promesse (Vitrine/Résas/Fidélité). Cross-step CTA harmonisé "Lancer mon essai gratuit". Passe au filtre ux-writing + signup-flow-cro + copywriting skills. | (à push) | — |
+| **Copy planning** | RDV → Résa sur 24 labels merchant-facing planning (action/stats/empty/settings/warnings/service à domicile body). Client-facing intact (SMS templates, emails, vitrine cliente, allowCustomerCancelDesc/RescheduleDesc) — terme "RDV" garde sa place côté cliente. + "Ajouter un RDV" → "Ajouter une réservation" (modal nouveau RDV manuel). | (à push) | — |
+| **Booking horizon** | Cap public passé de 60j → **90j** côtés slot mode + libre + fetch SSR vitrine. Constante `BOOKING_HORIZON_DAYS` extraite dans `src/lib/booking-window.ts` (single source of truth, importée par `api/planning/route.ts`, `p/[slug]/page.tsx`, `p/[slug]/BookingModal.tsx`, dashboard `planning/page.tsx`). Hint i18n `autoBookingHint` interpolé via `{days}` placeholder pour rester en sync. | (à push) | — |
+
+### Notes ouvertes
+
+- **Booking horizon configurable par merchant (1/2/3 mois)** — discuté, **pas fait**. Default 90j couvre 80%+ des cas, anti-pattern "Zoho settings sprawl" (PRODUCT.md). À faire si 2+ merchants demandent explicitement.
+- **Bloquer une plage open-ended** — discuté, **pas fait**. Sémantique différente du "horizon", + complexe à coder. À faire si demande client (congé long, fermeture prolongée).
 
 ### Items déprio (théoriques au scale 5K, on est à ~800 merchants)
 

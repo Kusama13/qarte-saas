@@ -37,6 +37,7 @@ import { useToast } from '@/components/ui/Toast';
 import { Link } from '@/i18n/navigation';
 import { usePullToRefreshRegister } from '@/components/shared/PullToRefresh';
 import { hasValidOpeningHours } from '@/lib/opening-hours';
+import { BOOKING_HORIZON_DAYS } from '@/lib/booking-window';
 
 const VIEW_MODE_KEY = 'qarte_planning_view';
 const VIEW_MODES = ['day', '2day', 'week'] as const;
@@ -1271,7 +1272,7 @@ export default function PlanningDashboard() {
                     </div>
                     <div className="min-w-0">
                       <h2 className="text-sm font-bold text-gray-800">{t('autoBookingTitle')}</h2>
-                      <p className="text-[11px] text-gray-400 mt-0.5">{autoBookingEnabled ? t('autoBookingHint') : t('autoBookingOffHint')}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">{autoBookingEnabled ? t('autoBookingHint', { days: BOOKING_HORIZON_DAYS }) : t('autoBookingOffHint')}</p>
                     </div>
                   </div>
                   <button
