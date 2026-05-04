@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Flame, Trophy, CalendarDays, CalendarCheck, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard, Hourglass, Sparkles, Tag } from 'lucide-react';
+import { Gift, Users, Flame, Trophy, CalendarDays, CalendarCheck, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard, Wallet, Sparkles, Tag } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import { SuspendedBanner } from '@/components/shared/SuspendedBanner';
@@ -715,8 +715,8 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                     href={`/customer/card/${merchant.id}`}
                     className="flex items-center gap-3 px-2 py-2 -mx-2 rounded-lg transition-colors hover:bg-amber-50/60"
                   >
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-amber-50 border border-amber-100">
-                      <Hourglass className="w-4 h-4 text-amber-700" strokeWidth={2.25} />
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-amber-50">
+                      <Wallet className="w-4 h-4 text-amber-700" strokeWidth={2.25} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[12px] font-semibold text-gray-900 leading-tight">

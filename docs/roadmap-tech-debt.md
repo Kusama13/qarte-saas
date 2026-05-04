@@ -129,6 +129,13 @@ La migration `123_sms_logs_dedup_index.sql` crée bien l'index `CONCURRENTLY`. *
 | **Item A** | Push milestone `firstScan`/`firstBooking` dédoublonnée via tracking email (faux positif post-mig149 : push "vient de réserver" envoyé jours après la résa) | `303c3fba` | — |
 | **Bonus** | A11y modals (role=dialog + aria-modal) + warn destructif OfferModal + cancelBookingConfirm i18n | `9e41dae7` | — |
 
+### Sprint 2026-05-04
+
+| # | Item | Commit | Mig |
+|---|---|---|---|
+| **UX vitrine** | Liens permanents fidélité + réservation/acompte sur `/p/[slug]` (drop bandeau cookie-gated cassé par HttpOnly + Instagram in-app strip) | `2fcc614a` | — |
+| **Polish vitrine** | Wording interrogatif (`Un acompte à régler ?` vs affirmatif) + icône `Wallet` (vs `Hourglass` urgent) + ambre soft sans border | (à push) | — |
+
 ### Items déprio (théoriques au scale 5K, on est à ~800 merchants)
 
 - **P0 #2** Cron `sms-hourly` N+1 queries — couvert par timeouts actuels
