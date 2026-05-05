@@ -16,7 +16,7 @@ import {
   GIFT_CARD_MIN_AMOUNT,
   GIFT_CARD_MAX_AMOUNT,
 } from '@/lib/gift-cards';
-import { detectPaymentProvider } from '@/lib/payment-providers';
+import { detectPaymentProvider, normalizePaymentLink, isValidPaymentLink } from '@/lib/payment-providers';
 import type { GiftCard, GiftCardStatus } from '@/types';
 
 type Tab = 'pending_payment' | 'active' | 'used' | 'cancelled';
@@ -371,8 +371,8 @@ function SettingsPanel({
           amounts: (override?.amounts ?? amounts).filter((a) => a >= GIFT_CARD_MIN_AMOUNT && a <= GIFT_CARD_MAX_AMOUNT),
           message: (override?.message ?? message)?.trim() || null,
           servicesEnabled: override?.servicesEnabled ?? servicesEnabled,
-          paymentLink: (override?.paymentLink ?? paymentLink)?.trim() || null,
-          paymentLink2: (override?.paymentLink2 ?? paymentLink2)?.trim() || null,
+          paymentLink: normalizePaymentLink(override?.paymentLink ?? paymentLink),
+          paymentLink2: normalizePaymentLink(override?.paymentLink2 ?? paymentLink2),
           expiryMonths: override?.expiryMonths ?? expiryMonths,
         }),
       });
@@ -586,22 +586,34 @@ function PaymentLinkField({
   onUrlChange: (v: string) => void;
   placeholder: string;
 }) {
-  const detected = url.trim() ? detectPaymentProvider(url.trim()) : null;
+  const normalized = normalizePaymentLink(url);
+  const detected = normalized ? detectPaymentProvider(normalized) : null;
+  const looksInvalid = !!normalized && !isValidPaymentLink(url);
   return (
-    <div className="relative">
-      <input
-        type="url"
-        value={url}
-        onChange={(e) => onUrlChange(e.target.value)}
-        placeholder={placeholder}
-        maxLength={500}
-        className={`w-full px-3.5 py-2.5 ${detected ? 'pr-28' : ''} rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 placeholder:text-gray-400`}
-      />
-      {detected && (
-        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
-          <Check className="w-2.5 h-2.5" />
-          {detected}
-        </span>
+    <div>
+      <div className="relative">
+        <input
+          type="url"
+          value={url}
+          onChange={(e) => onUrlChange(e.target.value)}
+          placeholder={placeholder}
+          maxLength={500}
+          className={`w-full px-3.5 py-2.5 ${detected ? 'pr-28' : ''} rounded-xl border text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 placeholder:text-gray-400 ${
+            looksInvalid ? 'border-amber-300 bg-amber-50/30' : 'border-gray-200'
+          }`}
+        />
+        {detected && (
+          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+            <Check className="w-2.5 h-2.5" />
+            {detected}
+          </span>
+        )}
+      </div>
+      {looksInvalid && (
+        <p className="mt-1.5 flex items-start gap-1.5 text-[11px] text-amber-700 leading-snug">
+          <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
+          <span>Ça ne ressemble pas à un lien. Colle l&apos;URL complète depuis ton compte (ex&nbsp;: revolut.me/tonpseudo).</span>
+        </p>
       )}
     </div>
   );
