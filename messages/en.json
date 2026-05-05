@@ -2437,7 +2437,20 @@
     "helpStep4": "Everything is <b>automatic</b> — no action needed on your part!",
     "helpGotIt": "Got it!",
     "referredQuickSuggestions": "-10% on first visit,-20% on first visit,-30% on first visit",
-    "referrerQuickSuggestions": "-10% on next visit,-20% on next visit,-30% on next visit"
+    "referrerQuickSuggestions": "-10% on next visit,-20% on next visit,-30% on next visit",
+    "validateAction": "Mark as used",
+    "validateReferredHint": "Marks the referee reward as used and triggers the referrer's reward",
+    "validateReferrerHint": "Marks the referrer reward as used",
+    "validateReferredTitle": "Referee reward used",
+    "validateReferrerTitle": "Referrer reward used",
+    "validateReferredDesc": "<name></name> used their reward in store. Checking this also triggers the referrer's reward (automatic push + SMS).",
+    "validateReferrerDesc": "<name></name> used their reward in store. It will be marked as used.",
+    "validateReasonLabel": "A short note for your history (3 words is fine)",
+    "validateReasonPlaceholder": "E.g. no phone today",
+    "validateReasonTooShort": "Add a quick note (3 chars minimum)",
+    "validateCancel": "Cancel",
+    "validateConfirm": "Mark as used",
+    "validateError": "Validation failed. Please retry."
   },
   "onboarding": {
     "close": "Close",

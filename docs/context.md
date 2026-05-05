@@ -508,7 +508,8 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 ### Parrainage
 - `GET /api/referrals?code=` — Info code parrainage
 - `POST /api/referrals` — Inscription filleul (cree customer + carte + voucher)
-- `POST /api/vouchers/use` — Consommer voucher (auto-cree voucher parrain si referral). Bonus +1 stamp sauf birthday et sauf si visite confirmee aujourd'hui (evite double stamp scan+voucher)
+- `POST /api/vouchers/use` — Consommer voucher (helper partagé `completeReferralAfterReferredUse` extrait dans `src/lib/referral-completion.ts` qui crée le voucher parrain + push + SMS si filleul). Bonus +1 stamp sauf birthday et sauf si visite confirmee aujourd'hui (evite double stamp scan+voucher)
+- `POST /api/referrals/[id]/validate` (mig 156) — Marque manuellement un voucher de parrainage utilisé depuis le dashboard (cliente sans téléphone, scan oublié). Body `{side: 'referred'\|'referrer', reason}` (raison min 3 chars stockée dans `vouchers.manual_validation_reason` + `manually_validated_by` pour audit). `side='referred'` réutilise le helper `completeReferralAfterReferredUse` → même pipeline que le scan client. Auth via `authorizeMerchant` après lookup referral.
 - `POST /api/merchants/referral-config` — Config parrainage + offre nouveaux clients (merchant auth)
 
 ### Offre nouveaux clients

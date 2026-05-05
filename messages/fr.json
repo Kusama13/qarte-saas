@@ -2427,7 +2427,20 @@
     "helpStep4": "Tout est <b>automatique</b> — aucune action de ta part n'est nécessaire !",
     "helpGotIt": "Compris !",
     "referredQuickSuggestions": "-10% sur la 1ère visite,-20% sur la 1ère visite,-30% sur la 1ère visite",
-    "referrerQuickSuggestions": "-10% sur la prochaine visite,-20% sur la prochaine visite,-30% sur la prochaine visite"
+    "referrerQuickSuggestions": "-10% sur la prochaine visite,-20% sur la prochaine visite,-30% sur la prochaine visite",
+    "validateAction": "Marquer comme utilisée",
+    "validateReferredHint": "Marque la récompense filleul comme utilisée et déclenche celle du parrain",
+    "validateReferrerHint": "Marque la récompense parrain comme utilisée",
+    "validateReferredTitle": "Récompense filleul utilisée",
+    "validateReferrerTitle": "Récompense parrain utilisée",
+    "validateReferredDesc": "<name></name> a utilisé sa récompense en boutique. En la cochant, le parrain reçoit automatiquement la sienne (push + SMS).",
+    "validateReferrerDesc": "<name></name> a utilisé sa récompense en boutique. Elle sera cochée comme utilisée.",
+    "validateReasonLabel": "Une note pour ton historique (3 mots suffisent)",
+    "validateReasonPlaceholder": "Ex: pas de téléphone aujourd'hui",
+    "validateReasonTooShort": "Ajoute une petite note (3 caractères minimum)",
+    "validateCancel": "Annuler",
+    "validateConfirm": "Marquer comme utilisée",
+    "validateError": "Erreur lors de la validation. Réessaie."
   },
   "onboarding": {
     "close": "Fermer",

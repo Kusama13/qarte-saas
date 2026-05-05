@@ -13,8 +13,10 @@ import {
   HelpCircle,
   X,
   Flower2,
+  CheckCircle2,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
+import { Modal } from '@/components/ui/Modal';
 import { getSupabase } from '@/lib/supabase';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { formatDate } from '@/lib/utils';
@@ -24,10 +26,21 @@ interface ReferralRow {
   id: string;
   status: ReferralStatus;
   created_at: string;
+  referred_voucher_id: string | null;
+  referrer_voucher_id: string | null;
   referrer_customer: { first_name: string; last_name: string | null } | null;
   referred_customer: { first_name: string; last_name: string | null } | null;
   referred_voucher: { is_used: boolean; used_at: string | null } | null;
   referrer_voucher: { is_used: boolean; used_at: string | null } | null;
+}
+
+type ValidationSide = 'referred' | 'referrer';
+
+interface ValidationTarget {
+  referralId: string;
+  side: ValidationSide;
+  filleulName: string;
+  parrainName: string;
 }
 
 export default function ReferralsPage() {
@@ -47,6 +60,12 @@ export default function ReferralsPage() {
   const [showHelp, setShowHelp] = useState(false);
   const [saveError, setSaveError] = useState('');
 
+  // Manual validation modal state
+  const [validationTarget, setValidationTarget] = useState<ValidationTarget | null>(null);
+  const [validationReason, setValidationReason] = useState('');
+  const [validating, setValidating] = useState(false);
+  const [validationError, setValidationError] = useState('');
+
   // Derived stats from referrals array
   // Filter out welcome entries (referrer_customer === null) — those belong to Ma Page, not referrals
   const realReferrals = useMemo(() => referrals.filter(r => r.referrer_customer !== null), [referrals]);
@@ -57,6 +76,58 @@ export default function ReferralsPage() {
   const referredSuggestions = t('referredQuickSuggestions').split(',');
   const referrerSuggestions = t('referrerQuickSuggestions').split(',');
 
+  const customerName = (c: { first_name: string; last_name: string | null } | null) => {
+    if (!c) return '—';
+    return c.last_name ? `${c.first_name} ${c.last_name[0]}.` : c.first_name;
+  };
+
+  // Bouton vs statut : statut = pill plat 24px, bouton = pill bordé ≥36px tactile (PRODUCT.md ≥44 sur le hit area via padding).
+  // Wording unifié mobile/desktop : "Marquer comme utilisée".
+  const renderSideBadge = (r: ReferralRow, side: ValidationSide) => {
+    const isUsed = side === 'referred' ? r.referred_voucher?.is_used : r.referrer_voucher?.is_used;
+    const voucherId = side === 'referred' ? r.referred_voucher_id : r.referrer_voucher_id;
+
+    if (isUsed) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
+          <Check className="w-3 h-3" /> {t('statusUsed')}
+        </span>
+      );
+    }
+
+    if (voucherId) {
+      const hint = side === 'referred' ? t('validateReferredHint') : t('validateReferrerHint');
+      return (
+        <button
+          type="button"
+          onClick={() => openValidation(r, side)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-full bg-white border border-emerald-300 text-emerald-700 text-xs font-semibold hover:bg-emerald-50 active:scale-95 touch-manipulation transition-colors"
+          title={hint}
+        >
+          <CheckCircle2 className="w-3.5 h-3.5" /> {t('validateAction')}
+        </button>
+      );
+    }
+
+    if (side === 'referred') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold">
+          <Clock className="w-3 h-3" /> {t('statusPending')}
+        </span>
+      );
+    }
+
+    if (r.status === 'completed') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">
+          <Gift className="w-3 h-3" /> {t('statusCreated')}
+        </span>
+      );
+    }
+
+    return null;
+  };
+
   useEffect(() => {
     if (merchantLoading || !merchant) return;
 
@@ -64,30 +135,83 @@ export default function ReferralsPage() {
     setRewardReferrer(merchant.referral_reward_referrer || '');
     setRewardReferred(merchant.referral_reward_referred || '');
 
-    const fetchReferrals = async () => {
-      const { data, error } = await supabase
-        .from('referrals')
-        .select(`
-          id,
-          status,
-          created_at,
-          referrer_customer:referrer_customer_id(first_name, last_name),
-          referred_customer:referred_customer_id(first_name, last_name),
-          referred_voucher:referred_voucher_id(is_used, used_at),
-          referrer_voucher:referrer_voucher_id(is_used, used_at)
-        `)
-        .eq('merchant_id', merchant.id)
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (!error && data) {
-        setReferrals(data as unknown as ReferralRow[]);
-      }
-      setLoading(false);
-    };
-
     fetchReferrals();
   }, [merchant, merchantLoading, supabase]);
+
+  const fetchReferrals = async () => {
+    if (!merchant) return;
+    const { data, error } = await supabase
+      .from('referrals')
+      .select(`
+        id,
+        status,
+        created_at,
+        referred_voucher_id,
+        referrer_voucher_id,
+        referrer_customer:referrer_customer_id(first_name, last_name),
+        referred_customer:referred_customer_id(first_name, last_name),
+        referred_voucher:referred_voucher_id(is_used, used_at),
+        referrer_voucher:referrer_voucher_id(is_used, used_at)
+      `)
+      .eq('merchant_id', merchant.id)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (!error && data) {
+      setReferrals(data as unknown as ReferralRow[]);
+    }
+    setLoading(false);
+  };
+
+  const openValidation = (r: ReferralRow, side: ValidationSide) => {
+    setValidationReason('');
+    setValidationError('');
+    setValidationTarget({
+      referralId: r.id,
+      side,
+      filleulName: customerName(r.referred_customer),
+      parrainName: customerName(r.referrer_customer),
+    });
+  };
+
+  const closeValidation = () => {
+    if (validating) return;
+    setValidationTarget(null);
+    setValidationReason('');
+    setValidationError('');
+  };
+
+  const submitValidation = async () => {
+    if (!validationTarget) return;
+    const reason = validationReason.trim();
+    if (reason.length < 3) {
+      setValidationError(t('validateReasonTooShort'));
+      return;
+    }
+    setValidating(true);
+    setValidationError('');
+    try {
+      const res = await fetch(`/api/referrals/${validationTarget.referralId}/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ side: validationTarget.side, reason }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setValidationError(body?.error || t('validateError'));
+        setValidating(false);
+        return;
+      }
+      await fetchReferrals();
+      setValidationTarget(null);
+      setValidationReason('');
+      setValidationError('');
+    } catch {
+      setValidationError(t('validateError'));
+    } finally {
+      setValidating(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!merchant) return;
@@ -123,11 +247,6 @@ export default function ReferralsPage() {
       </div>
     );
   }
-
-  const customerName = (c: { first_name: string; last_name: string | null } | null) => {
-    if (!c) return '—';
-    return c.last_name ? `${c.first_name} ${c.last_name[0]}.` : c.first_name;
-  };
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -321,42 +440,24 @@ export default function ReferralsPage() {
               </div>
             ) : (
               <>
-                {/* Mobile: cards */}
+                {/* Mobile: cards — chaque side sur sa ligne avec badge/bouton à droite (évite confusion bouton/statut côte à côte) */}
                 <div className="md:hidden divide-y divide-slate-100">
                   {realReferrals.map((r) => (
-                    <div key={r.id} className="p-4 space-y-2">
+                    <div key={r.id} className="p-4 space-y-3">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{t('thReferrer')}</p>
-                          <p className="text-sm font-semibold text-slate-900 truncate">{customerName(r.referrer_customer)}</p>
-                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{t('thReferred')}</span>
                         <span className="text-xs text-slate-400 tabular-nums shrink-0">{formatDate(r.created_at)}</span>
                       </div>
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{t('thReferred')}</p>
-                        <p className="text-sm font-semibold text-slate-900 truncate">{customerName(r.referred_customer)}</p>
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold text-slate-900 truncate min-w-0 flex-1">{customerName(r.referred_customer)}</p>
+                        <div className="shrink-0">{renderSideBadge(r, 'referred')}</div>
                       </div>
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {r.referred_voucher?.is_used ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold">
-                            <Check className="w-3 h-3" /> {t('statusUsed')}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[11px] font-semibold">
-                            <Clock className="w-3 h-3" /> {t('statusPending')}
-                          </span>
-                        )}
-                        {r.status === 'completed' && (
-                          r.referrer_voucher?.is_used ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold">
-                              <Check className="w-3 h-3" /> {t('statusUsed')}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold">
-                              <Gift className="w-3 h-3" /> {t('statusCreated')}
-                            </span>
-                          )
-                        )}
+                      <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100">
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">{t('thReferrer')}</span>
+                          <p className="text-sm font-semibold text-slate-900 truncate">{customerName(r.referrer_customer)}</p>
+                        </div>
+                        {r.status === 'completed' && <div className="shrink-0">{renderSideBadge(r, 'referrer')}</div>}
                       </div>
                     </div>
                   ))}
@@ -386,31 +487,11 @@ export default function ReferralsPage() {
                           <td className="px-6 py-3.5 text-sm text-gray-500 tabular-nums">
                             {formatDate(r.created_at)}
                           </td>
+                          <td className="px-6 py-3.5">{renderSideBadge(r, 'referred')}</td>
                           <td className="px-6 py-3.5">
-                            {r.referred_voucher?.is_used ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
-                                <Check className="w-3 h-3" /> {t('statusUsed')}
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold">
-                                <Clock className="w-3 h-3" /> {t('statusPending')}
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-6 py-3.5">
-                            {r.status === 'completed' ? (
-                              r.referrer_voucher?.is_used ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
-                                  <Check className="w-3 h-3" /> {t('statusUsed')}
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">
-                                  <Gift className="w-3 h-3" /> {t('statusCreated')}
-                                </span>
-                              )
-                            ) : (
-                              <span className="text-xs text-gray-400">—</span>
-                            )}
+                            {r.status === 'completed'
+                              ? renderSideBadge(r, 'referrer')
+                              : <span className="text-xs text-gray-400">—</span>}
                           </td>
                         </tr>
                       ))}
@@ -471,6 +552,70 @@ export default function ReferralsPage() {
           </div>
         </div>
       )}
+
+      <Modal isOpen={!!validationTarget} onClose={closeValidation} size="md">
+        {validationTarget && (
+          <>
+            <div className="flex items-center gap-2.5 mb-3 pr-8">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">
+                {validationTarget.side === 'referred'
+                  ? t('validateReferredTitle')
+                  : t('validateReferrerTitle')}
+              </h3>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+              {validationTarget.side === 'referred'
+                ? t.rich('validateReferredDesc', {
+                    name: () => <strong className="text-gray-900">{validationTarget.filleulName}</strong>,
+                  })
+                : t.rich('validateReferrerDesc', {
+                    name: () => <strong className="text-gray-900">{validationTarget.parrainName}</strong>,
+                  })}
+            </p>
+
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              {t('validateReasonLabel')}
+            </label>
+            <textarea
+              value={validationReason}
+              onChange={(e) => setValidationReason(e.target.value)}
+              placeholder={t('validateReasonPlaceholder')}
+              rows={2}
+              maxLength={140}
+              disabled={validating}
+              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none disabled:bg-gray-50 disabled:cursor-not-allowed"
+            />
+
+            {validationError && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                {validationError}
+              </div>
+            )}
+
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                onClick={closeValidation}
+                disabled={validating}
+                className="px-4 py-2.5 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
+              >
+                {t('validateCancel')}
+              </button>
+              <button
+                onClick={submitValidation}
+                disabled={validating || validationReason.trim().length < 3}
+                className="px-5 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {validating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                {t('validateConfirm')}
+              </button>
+            </div>
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

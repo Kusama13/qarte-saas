@@ -1,23 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
-import webpush from 'web-push';
 import { getAuthenticatedPhone } from '@/lib/customer-auth';
 import { getTodayForCountry, getTrialStatus } from '@/lib/utils';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { sendBookingSms } from '@/lib/sms';
 import { formatCurrencyForSms } from '@/lib/utils';
 import { formatGiftCardServicesLabel } from '@/lib/gift-cards';
+import { completeReferralAfterReferredUse } from '@/lib/referral-completion';
 import type { GiftCardServiceSnapshot } from '@/types';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
-
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
-if (vapidPublicKey && vapidPrivateKey) {
-  webpush.setVapidDetails('mailto:contact@getqarte.com', vapidPublicKey, vapidPrivateKey);
-}
 
 const useVoucherSchema = z.object({
   voucher_id: z.string().uuid(),
@@ -246,148 +240,12 @@ export async function POST(request: NextRequest) {
       sendGiftUsedSmsToSender().catch(() => {});
     }
 
-    // 4. Vérifier si c'est un voucher filleul → auto-créer le voucher parrain
-    let isReferral = false;
-
-    const { data: referral } = await supabaseAdmin
-      .from('referrals')
-      .select('*')
-      .eq('referred_voucher_id', voucher_id)
-      .eq('status', 'pending')
-      .maybeSingle();
-
-    if (referral) {
-      isReferral = true;
-
-      // Récupérer le merchant pour la description de la récompense parrain
-      const { data: merchant } = await supabaseAdmin
-        .from('merchants')
-        .select('referral_reward_referrer, shop_name, locale, subscription_status, referral_reward_sms_enabled')
-        .eq('id', referral.merchant_id)
-        .single();
-
-      if (merchant?.referral_reward_referrer) {
-        // Créer le voucher parrain (expire dans 30 jours)
-        const { data: referrerVoucher } = await supabaseAdmin
-          .from('vouchers')
-          .insert({
-            loyalty_card_id: referral.referrer_card_id,
-            merchant_id: referral.merchant_id,
-            customer_id: referral.referrer_customer_id,
-            reward_description: merchant.referral_reward_referrer,
-            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          })
-          .select()
-          .single();
-
-        // Mettre à jour le referral → completed
-        if (referrerVoucher) {
-          await supabaseAdmin
-            .from('referrals')
-            .update({
-              referrer_voucher_id: referrerVoucher.id,
-              status: 'completed',
-            })
-            .eq('id', referral.id);
-
-          // 5. Push notification au parrain (fire-and-forget)
-          if (vapidPublicKey && vapidPrivateKey) {
-            const sendPushToParrain = async () => {
-              try {
-                // Trouver le phone du parrain
-                const { data: referrerCustomer } = await supabaseAdmin
-                  .from('customers')
-                  .select('phone_number')
-                  .eq('id', referral.referrer_customer_id)
-                  .single();
-
-                if (!referrerCustomer?.phone_number) return;
-
-                // Cross-merchant: trouver tous les customer IDs avec ce numéro
-                const { data: allReferrerCustomers } = await supabaseAdmin
-                  .from('customers')
-                  .select('id')
-                  .eq('phone_number', referrerCustomer.phone_number);
-
-                const referrerIds = (allReferrerCustomers || []).map(c => c.id);
-                if (referrerIds.length === 0) return;
-
-                const { data: pushSubs } = await supabaseAdmin
-                  .from('push_subscriptions')
-                  .select('endpoint, p256dh, auth')
-                  .in('customer_id', referrerIds);
-
-                if (!pushSubs || pushSubs.length === 0) return;
-
-                const filleulName = customer.first_name || 'Votre filleul·e';
-                const shopName = merchant?.shop_name || 'Qarte';
-
-                await Promise.allSettled(
-                  pushSubs.map(async (sub) => {
-                    try {
-                      await webpush.sendNotification(
-                        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-                        JSON.stringify({
-                          title: shopName,
-                          body: `${filleulName} a utilisé sa récompense ! Votre cadeau vous attend 🎁`,
-                          icon: '/icon-192.png',
-                          url: `/customer/card/${referral.merchant_id}`,
-                          tag: 'qarte-referral-reward',
-                        })
-                      );
-                    } catch (pushErr: unknown) {
-                      const webPushError = pushErr as { statusCode?: number };
-                      if (webPushError?.statusCode === 404 || webPushError?.statusCode === 410) {
-                        await supabaseAdmin
-                          .from('push_subscriptions')
-                          .delete()
-                          .eq('endpoint', sub.endpoint);
-                      }
-                    }
-                  })
-                );
-              } catch (pushError) {
-                // Never let push failure crash the request, but log it
-                logger.error('Push notification to referrer failed:', pushError);
-              }
-            };
-
-            // Fire-and-forget
-            sendPushToParrain().catch(() => {});
-          }
-
-          // SMS to referrer (fire-and-forget)
-          const { data: referrerForSms } = await supabaseAdmin
-            .from('customers')
-            .select('phone_number')
-            .eq('id', referral.referrer_customer_id)
-            .single();
-
-          const referralSmsEnabled = (merchant as { referral_reward_sms_enabled?: boolean | null })?.referral_reward_sms_enabled !== false;
-          let optedOut = false;
-          if (referrerForSms?.phone_number && referralSmsEnabled) {
-            const { data: optOut } = await supabaseAdmin
-              .from('sms_opt_outs')
-              .select('phone_number')
-              .eq('merchant_id', referral.merchant_id)
-              .eq('phone_number', referrerForSms.phone_number)
-              .maybeSingle();
-            optedOut = !!optOut;
-          }
-          if (referrerForSms?.phone_number && merchant && referralSmsEnabled && !optedOut) {
-            sendBookingSms(supabaseAdmin, {
-              merchantId: referral.merchant_id,
-              phone: referrerForSms.phone_number,
-              shopName: merchant.shop_name,
-              smsType: 'referral_reward',
-              locale: merchant.locale || 'fr',
-              subscriptionStatus: merchant.subscription_status,
-              reward: merchant.referral_reward_referrer || '',
-            }).catch(() => {});
-          }
-        }
-      }
-    }
+    // 4. Si voucher filleul → helper crée le voucher parrain + push + SMS (idempotent).
+    const isReferral = await completeReferralAfterReferredUse(
+      supabaseAdmin,
+      voucher_id,
+      customer.first_name || null,
+    );
 
     return NextResponse.json({
       success: true,
