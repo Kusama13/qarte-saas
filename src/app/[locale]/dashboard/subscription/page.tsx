@@ -141,33 +141,26 @@ export default function SubscriptionPage() {
   // Features par tier. `all_in` utilise "inheritsFromFidelity" + liste des extras uniquement.
   const fidelityFeatures = [
     t('featureStampsCashback'),
-    t('featureGoogleReviews'),
-    t('featureUnlimitedClients'),
     t('featureProPage'),
+    t('featureGoogleReviews'),
     t('featureReferral'),
-    t('featureDuoOffer'),
-    t('featureQrNfc'),
+    t('featureWelcome'),
   ];
-  // Highlight le bonus +20 SMS/mois sur l'annuel — la ligne SMS swap selon billingPlan,
-  // 100 ou 120 mis en valeur indigo pour signaler la différence.
   const smsAccent = (chunks: React.ReactNode) => (
     <span className="font-bold text-indigo-600">{chunks}</span>
   );
-  const smsFeatureLine = billingPlan === 'annual'
-    ? t.rich('featureSmsAnnual', { accent: smsAccent })
-    : t.rich('featureSmsMonthly', { accent: smsAccent });
-  const allInExtrasFeatures = [
+  // SMS swap selon l'intervalle (100 mensuel / 120 annuel). On l'expose en fonction
+  // pour pouvoir le builder soit selon le toggle UI (cards pricing), soit selon
+  // l'abonnement réel du merchant (récap post-souscription, cf. paidInterval ↓).
+  const buildAllInExtras = (interval: BillingInterval): React.ReactNode[] => [
     t('featurePlanning'),
-    smsFeatureLine,
+    interval === 'annual'
+      ? t.rich('featureSmsAnnual', { accent: smsAccent })
+      : t.rich('featureSmsMonthly', { accent: smsAccent }),
     t('featureSmsCampaigns'),
-    t('featureContest'),
     t('featureMemberPrograms'),
   ];
-  // Liste complète des features actives du tier courant (pour le mode payant summary).
-  const activeFeaturesByTier: Record<PlanTier, React.ReactNode[]> = {
-    fidelity: fidelityFeatures,
-    all_in: [...fidelityFeatures, ...allInExtrasFeatures],
-  };
+  const allInExtrasFeatures = buildAllInExtras(billingPlan);
 
   useEffect(() => {
     if (searchParams.get('success') === 'true') {
@@ -470,6 +463,11 @@ export default function SubscriptionPage() {
     : merchant?.billing_interval === 'annual' ? 'annual' : 'monthly';
   const statusTone: 'active' | 'canceling' | 'past_due' = isCanceling ? 'canceling' : isPastDue ? 'past_due' : 'active';
   const statusLabel = isCanceling ? t('statusCanceling') : isPastDue ? t('statusPastDue') : t('statusActive');
+  // Récap features post-souscription : ligne SMS basée sur l'abonnement réel (paidInterval),
+  // pas sur le toggle UI (qui ne s'applique qu'aux cartes pricing pré-souscription).
+  const paidActiveFeatures: React.ReactNode[] = effectiveTier === 'all_in'
+    ? [...fidelityFeatures, ...buildAllInExtras(paidInterval)]
+    : fidelityFeatures;
 
   return (
     <div className="max-w-5xl mx-auto stagger-fade-in">
@@ -539,7 +537,7 @@ export default function SubscriptionPage() {
               statusLabel={statusLabel}
               statusTone={statusTone}
               nextBillingDate={null}
-              includedFeatures={activeFeaturesByTier[effectiveTier]}
+              includedFeatures={paidActiveFeatures}
               canChangeTier={canChangeTier}
               isLegacy={isLegacy}
               onChangeTier={() => setShowChangeTierModal(true)}

@@ -76,17 +76,12 @@ export default function PlanCard({
           <span className="text-xl font-bold text-slate-900 tabular-nums">{priceSep}{decPart}</span>
           <span className="text-sm text-slate-400 ml-1">{t('perMonth')}</span>
         </div>
-        <div className="mt-1.5 flex items-center gap-2 flex-wrap text-xs">
-          {interval === 'annual' && annualOriginal && (
-            <span className="text-slate-400">
-              <span className="line-through tabular-nums">{annualOriginal}</span>{' '}
-              <span className="font-bold text-slate-700 tabular-nums">→ {totalLabel}</span>
-            </span>
-          )}
-          {interval === 'monthly' && (
-            <span className="text-slate-400 tabular-nums">{totalLabel}</span>
-          )}
-        </div>
+        {interval === 'annual' && annualOriginal && (
+          <div className="mt-1.5 flex items-center gap-2 flex-wrap text-xs text-slate-400">
+            <span className="line-through tabular-nums">{annualOriginal}</span>
+            <span className="font-bold text-slate-700 tabular-nums">→ {totalLabel}</span>
+          </div>
+        )}
       </div>
 
       <ul className="space-y-2.5 mb-6 flex-1">
