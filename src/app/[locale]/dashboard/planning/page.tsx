@@ -187,6 +187,9 @@ export default function PlanningDashboard() {
 
   // Manual booking modal (free mode)
   const [showManualBookingModal, setShowManualBookingModal] = useState(false);
+  // Si non-null, on est en mode "rebook depuis archive d'acompte échoué" : à la création
+  // réussie, on supprime l'archive correspondante (la résa originale ne reviendra pas).
+  const [manualSourceFailureId, setManualSourceFailureId] = useState<string | null>(null);
   const [manualDate, setManualDate] = useState('');
   const [manualStartTime, setManualStartTime] = useState('09:00');
   const [manualServiceIds, setManualServiceIds] = useState<string[]>([]);
@@ -225,12 +228,24 @@ export default function PlanningDashboard() {
   }, [manualServiceIds, manualCustomService, serviceMap]);
 
 
-  const openManualBookingModal = (date: string) => {
-    setManualDate(date);
-    setManualStartTime('09:00');
-    setManualServiceIds([]);
-    setManualCustomService(null);
-    setManualNotes('');
+  // Helper unique pour ouvrir le modal manual booking — soit fresh (openManualBookingModal),
+  // soit pré-rempli depuis une archive d'acompte échoué (openManualBookingFromFailure).
+  // Reset systématique des flags transients (step/error/conflict/grants/SMS) puis applique le prefill.
+  const openManualBookingModalWith = (prefill: {
+    sourceFailureId: string | null;
+    date: string;
+    startTime: string;
+    serviceIds: string[];
+    customService: CustomServiceDraft | null;
+    notes: string;
+    draft: { clientName: string; clientPhone: string; customerId: string | null };
+  }) => {
+    setManualSourceFailureId(prefill.sourceFailureId);
+    setManualDate(prefill.date);
+    setManualStartTime(prefill.startTime);
+    setManualServiceIds(prefill.serviceIds);
+    setManualCustomService(prefill.customService);
+    setManualNotes(prefill.notes);
     setManualShowSocial(false);
     setManualShowAllServices(false);
     setManualGrantWelcome(false);
@@ -242,8 +257,13 @@ export default function PlanningDashboard() {
     setManualCustomerAddress('');
     setManualCustomerLat(null);
     setManualCustomerLng(null);
-    updateDraft({ clientName: '', clientPhone: '', customerId: null, phoneCountry: merchant?.country as MerchantCountry || 'FR', instagramHandle: '', tiktokHandle: '', facebookUrl: '' });
-    // Fetch active offers for grant options
+    updateDraft({
+      clientName: prefill.draft.clientName,
+      clientPhone: prefill.draft.clientPhone,
+      customerId: prefill.draft.customerId,
+      phoneCountry: merchant?.country as MerchantCountry || 'FR',
+      instagramHandle: '', tiktokHandle: '', facebookUrl: '',
+    });
     if (merchant?.id) {
       fetch(`/api/merchant-offers?merchantId=${merchant.id}&public=true`)
         .then(r => r.ok ? r.json() : { offers: [] })
@@ -251,6 +271,40 @@ export default function PlanningDashboard() {
         .catch(() => {});
     }
     setShowManualBookingModal(true);
+  };
+
+  const openManualBookingModal = (date: string) => openManualBookingModalWith({
+    sourceFailureId: null,
+    date,
+    startTime: '09:00',
+    serviceIds: [],
+    customService: null,
+    notes: '',
+    draft: { clientName: '', clientPhone: '', customerId: null },
+  });
+
+  // À la création réussie, l'archive d'acompte échoué est supprimée automatiquement
+  // (cf. handleManualBookingSubmit success path → manualSourceFailureId).
+  const openManualBookingFromFailure = (failure: BookingDepositFailure) => {
+    setBringBackFailure(null);
+    openManualBookingModalWith({
+      sourceFailureId: failure.id,
+      date: failure.original_slot_date,
+      startTime: failure.original_start_time.slice(0, 5),
+      serviceIds: failure.service_ids || [],
+      customService: failure.custom_service_duration ? {
+        name: failure.custom_service_name || '',
+        duration: failure.custom_service_duration,
+        price: failure.custom_service_price || 0,
+        color: failure.custom_service_color || '#4f46e5',
+      } : null,
+      notes: failure.notes || '',
+      draft: {
+        clientName: failure.client_name || '',
+        clientPhone: failure.client_phone || '',
+        customerId: failure.customer_id || null,
+      },
+    });
   };
 
   const handleManualBookingSubmit = async (force = false) => {
@@ -317,6 +371,13 @@ export default function PlanningDashboard() {
             body: JSON.stringify({ customer_id: bookingData.customer_id, merchant_id: merchant.id, type: 'offer', offer_id: manualGrantOfferId }),
           }).catch(() => {});
         }
+      }
+      // Si on rebookait depuis une archive d'acompte échoué, on la supprime maintenant
+      // que la résa est recréée ailleurs (sans relancer d'acompte — le merchant a déjà
+      // décidé du flow dans le modal bring-back avant d'arriver ici).
+      if (manualSourceFailureId) {
+        deleteDepositFailure(manualSourceFailureId);
+        setManualSourceFailureId(null);
       }
       await fetchSlots();
       invalidateUpcoming();
@@ -2503,6 +2564,7 @@ export default function PlanningDashboard() {
             locale={locale}
             saving={saving}
             onBringBack={bringBackDepositFailure}
+            onPickAnotherSlot={bookingMode === 'free' ? () => openManualBookingFromFailure(bringBackFailure) : undefined}
             onClose={() => { setBringBackFailure(null); fetchSlots(); invalidateUpcoming(); }}
           />
         )}

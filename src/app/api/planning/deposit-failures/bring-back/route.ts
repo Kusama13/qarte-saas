@@ -234,7 +234,13 @@ export async function POST(request: NextRequest) {
       .eq('merchant_id', merchantId);
 
     if (sendSms && failure.client_phone) {
-      const smsType = markDepositConfirmed ? 'confirmation_deposit' : 'confirmation_no_deposit';
+      // 3 cas : (a) acompte marqué reçu → confirmation_deposit ;
+      //        (b) acompte demandé + merchant a un lien → deposit_request (avec lien) ;
+      //        (c) sinon → confirmation_no_deposit (cas legacy / pas de deposit_link configuré).
+      const smsType: 'confirmation_deposit' | 'deposit_request' | 'confirmation_no_deposit' =
+        markDepositConfirmed ? 'confirmation_deposit'
+          : (hasDeposit && merchant.deposit_link) ? 'deposit_request'
+          : 'confirmation_no_deposit';
       sendBookingSms(supabaseAdmin, {
         merchantId,
         slotId: restoredSlotId,
@@ -243,6 +249,7 @@ export async function POST(request: NextRequest) {
         date: slotDate,
         time: slotTimeShort,
         smsType,
+        depositLink: smsType === 'deposit_request' ? merchant.deposit_link : undefined,
         locale: merchant.locale || 'fr',
         subscriptionStatus: merchant.subscription_status,
       }).catch(err => logger.error('Bring-back SMS failed:', err));

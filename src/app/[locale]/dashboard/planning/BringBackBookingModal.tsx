@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Undo2, CheckCircle2, Link2, MessageSquare } from 'lucide-react';
+import { Undo2, CheckCircle2, Link2, MessageSquare, CalendarClock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { BookingDepositFailure } from '@/types';
 import { formatTime, formatPhoneLabel, formatCurrency } from '@/lib/utils';
@@ -16,15 +16,19 @@ interface Props {
   merchantCountry: string;
   locale: string;
   saving: boolean;
-  onBringBack: (failureId: string, opts: { markDepositConfirmed: boolean; sendSms: boolean; customService: CustomServiceDraft | null; customOverridden: boolean }) => Promise<{ success: boolean; error?: string }>;
+  onBringBack: (failureId: string, opts: { markDepositConfirmed: boolean; sendSms: boolean; customService: CustomServiceDraft | null; customOverridden: boolean }) => Promise<{ success: boolean; error?: string; conflict?: boolean }>;
+  // Optionnel : si fourni, un bouton "Choisir un autre créneau" s'affiche en cas de conflit.
+  // Absent en mode créneaux (pas de manual booking modal — le merchant doit cliquer un slot vide).
+  onPickAnotherSlot?: () => void;
   onClose: () => void;
 }
 
-export default function BringBackBookingModal({ failure, services, merchantCountry, locale, saving, onBringBack, onClose }: Props) {
+export default function BringBackBookingModal({ failure, services, merchantCountry, locale, saving, onBringBack, onPickAnotherSlot, onClose }: Props) {
   const t = useTranslations('planning');
   const [markDepositConfirmed, setMarkDepositConfirmed] = useState(false);
   const [sendSms, setSendSms] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasConflict, setHasConflict] = useState(false);
 
   // Hydrate la prestation custom depuis l'archive failure (si presente)
   const initialCustom: CustomServiceDraft | null = failure.custom_service_duration
@@ -48,9 +52,11 @@ export default function BringBackBookingModal({ failure, services, merchantCount
 
   const handleConfirm = async () => {
     setError(null);
+    setHasConflict(false);
     const res = await onBringBack(failure.id, { markDepositConfirmed, sendSms, customService, customOverridden: customDirty });
     if (!res.success) {
       setError(res.error || t('errorGeneric'));
+      setHasConflict(!!res.conflict);
       return;
     }
     onClose();
@@ -112,8 +118,8 @@ export default function BringBackBookingModal({ failure, services, merchantCount
               />
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <Link2 className="w-3.5 h-3.5 text-indigo-600" />
-                  <span className="text-sm font-semibold text-gray-800">{t('bringBackRequestDeposit')}</span>
+                  <Link2 className={`w-3.5 h-3.5 ${!markDepositConfirmed ? 'text-indigo-600' : 'text-gray-400'}`} />
+                  <span className={`text-sm font-semibold ${!markDepositConfirmed ? 'text-gray-900' : 'text-gray-500'}`}>{t('bringBackRequestDeposit')}</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-0.5">{t('bringBackRequestDepositHint')}</p>
               </div>
@@ -127,15 +133,15 @@ export default function BringBackBookingModal({ failure, services, merchantCount
               />
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="text-sm font-semibold text-gray-800">{t('bringBackMarkConfirmed')}</span>
+                  <CheckCircle2 className={`w-3.5 h-3.5 ${markDepositConfirmed ? 'text-emerald-600' : 'text-gray-400'}`} />
+                  <span className={`text-sm font-semibold ${markDepositConfirmed ? 'text-gray-900' : 'text-gray-500'}`}>{t('bringBackMarkConfirmed')}</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-0.5">{t('bringBackMarkConfirmedHint')}</p>
               </div>
             </label>
           </div>
 
-          {/* SMS */}
+          {/* SMS — libellé dynamique selon le choix : confirmation simple OU lien de paiement */}
           {failure.client_phone && (
             <label className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-white cursor-pointer hover:bg-gray-50 transition-colors">
               <input
@@ -146,15 +152,34 @@ export default function BringBackBookingModal({ failure, services, merchantCount
               />
               <div className="flex items-center gap-1.5 min-w-0">
                 <MessageSquare className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                <span className="text-sm text-gray-800">{t('bringBackSendSms')}</span>
+                <span className="text-sm text-gray-800">
+                  {markDepositConfirmed ? t('bringBackSendSms') : t('bringBackSendDepositSms')}
+                </span>
               </div>
             </label>
           )}
 
           {error && (
-            <p className="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
-              {error}
-            </p>
+            <div className="space-y-2">
+              <p className="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+                {error}
+              </p>
+              {hasConflict && onPickAnotherSlot && (
+                <button
+                  type="button"
+                  onClick={onPickAnotherSlot}
+                  className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-sm font-bold bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 transition-colors"
+                >
+                  <CalendarClock className="w-4 h-4" />
+                  {t('bringBackPickAnotherSlot')}
+                </button>
+              )}
+              {hasConflict && !onPickAnotherSlot && (
+                <p className="text-xs text-gray-500 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+                  {t('bringBackConflictSlotsHint')}
+                </p>
+              )}
+            </div>
           )}
         </div>
 

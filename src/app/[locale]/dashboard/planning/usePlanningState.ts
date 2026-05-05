@@ -230,7 +230,7 @@ export function usePlanningState() {
   const bringBackDepositFailure = useCallback(async (
     failureId: string,
     opts: { markDepositConfirmed: boolean; sendSms: boolean; customService?: CustomServiceDraft | null; customOverridden?: boolean },
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<{ success: boolean; error?: string; conflict?: boolean }> => {
     if (!merchant) return { success: false, error: 'Merchant non chargé' };
     try {
       const { customService, customOverridden, ...rest } = opts;
@@ -249,7 +249,7 @@ export function usePlanningState() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        return { success: false, error: data.error || 'Erreur' };
+        return { success: false, error: data.error || 'Erreur', conflict: res.status === 409 };
       }
       setDepositFailures(prev => prev.filter(f => f.id !== failureId));
       setUpcomingFetched(false);
