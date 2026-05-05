@@ -123,6 +123,25 @@ export async function authorizeMerchant(
 }
 
 /**
+ * Module-level TTL cache keyed by string|number — pour les routes admin
+ * dont `authorizeAdmin` rend la route dynamic et bloque Next `revalidate`.
+ * Cache process-local : se réinitialise au cold start.
+ */
+export function createTtlCache<TKey extends string | number, TValue>(ttlMs: number) {
+  const store = new Map<TKey, { at: number; payload: TValue }>();
+  return {
+    get(key: TKey): TValue | null {
+      const entry = store.get(key);
+      if (!entry || Date.now() - entry.at >= ttlMs) return null;
+      return entry.payload;
+    },
+    set(key: TKey, payload: TValue): void {
+      store.set(key, { at: Date.now(), payload });
+    },
+  };
+}
+
+/**
  * Check that the merchant's plan tier grants access to a given feature.
  * Returns a 403 NextResponse if not, or null if the feature is available.
  *

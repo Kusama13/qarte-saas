@@ -50,20 +50,18 @@ export async function GET(request: NextRequest) {
     const d90Date = d90.split('T')[0];
     const d30Date = d30.split('T')[0];
 
+    // growth payload (cards / customers count / referrals / vouchers) déplacé dans
+    // /api/admin/analytics/growth pour réduire la charge de cette route principale.
     const [
       merchantsRes,
       superAdminsRes,
       visitsRes,
-      cardsRes,
-      totalCustomersRes,
       pushHistoryRes,
       pushAutomationsRes,
       pendingEmailsRes,
       reactivationRes,
-      referralsRes,
       slotsRes,
       offersRes,
-      vouchersRes,
       servicesRes,
       photosRes,
       firstVisitsRes,
@@ -74,16 +72,12 @@ export async function GET(request: NextRequest) {
         .select('id, user_id, shop_name, signup_source, created_at, subscription_status, plan_tier, billing_interval, billing_period_start, trial_ends_at, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, planning_enabled, auto_booking_enabled, shield_enabled, tier2_enabled, pwa_installed_at, logo_url, review_link, booking_url, loyalty_mode, booking_mode'),
       supabaseAdmin.from('super_admins').select('user_id'),
       supabaseAdmin.from('visits').select('merchant_id, visited_at').gte('visited_at', d90),
-      supabaseAdmin.from('loyalty_cards').select('created_at').gte('created_at', d90),
-      supabaseAdmin.from('customers').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('push_history').select('sent_count'),
       supabaseAdmin.from('push_automations').select('welcome_sent, close_to_reward_sent, reward_ready_sent, inactive_reminder_sent, reward_reminder_sent, events_sent'),
       supabaseAdmin.from('pending_email_tracking').select('reminder_day'),
       supabaseAdmin.from('reactivation_email_tracking').select('day_sent'),
-      supabaseAdmin.from('referrals').select('status'),
       supabaseAdmin.from('merchant_planning_slots').select('client_name').gte('slot_date', d90Date),
       supabaseAdmin.from('merchant_offers').select('active, claim_count'),
-      supabaseAdmin.from('vouchers').select('source'),
       supabaseAdmin.from('merchant_services').select('merchant_id'),
       supabaseAdmin.from('merchant_photos').select('merchant_id'),
       supabaseAdmin.rpc('get_first_visit_per_merchant'),
@@ -98,7 +92,6 @@ export async function GET(request: NextRequest) {
     const merchants = ((merchantsRes.data || []) as MerchantRow[]).filter((m) => !adminIds.has(m.user_id));
     const merchantMap = new Map(merchants.map((m) => [m.id, m]));
     const visits = visitsRes.data || [];
-    const cards = cardsRes.data || [];
 
     const isPaid = (s: string) => PAID_STATUS_SET.has(s);
 
@@ -280,19 +273,6 @@ export async function GET(request: NextRequest) {
     const activeOffers = offers.filter((o) => o.active).length;
     const totalClaims = offers.reduce((s, o) => s + (o.claim_count || 0), 0);
 
-    // ── Customer growth ──
-    const newByDate: Record<string, number> = {};
-    for (const c of cards) {
-      const date = c.created_at?.split('T')[0];
-      if (date) newByDate[date] = (newByDate[date] || 0) + 1;
-    }
-    const referrals = referralsRes.data || [];
-    const vouchersBySource: Record<string, number> = {};
-    for (const v of vouchersRes.data || []) {
-      const src = v.source || 'autre';
-      vouchersBySource[src] = (vouchersBySource[src] || 0) + 1;
-    }
-
     // ── Nouveaux abonnés payants par mois (12 derniers mois) ──
     // Proxy date conversion = trial_ends_at (trial 7j → ≈ date 1ère facture).
     // Inclut les canceled (ils ont payé à un moment donné).
@@ -441,16 +421,7 @@ export async function GET(request: NextRequest) {
         bookingSlots: { created: slotsCreated, booked: slotsBooked, conversionRate: slotsCreated > 0 ? Math.round((slotsBooked / slotsCreated) * 100) : 0 },
         offers: { active: activeOffers, totalClaims },
       },
-      growth: {
-        totalCustomers: totalCustomersRes.count || 0,
-        newCustomersTrend: toTrend(newByDate).filter((d) => d.date >= d30Date),
-        referrals: {
-          total: referrals.length,
-          pending: referrals.filter((r) => r.status === 'pending').length,
-          completed: referrals.filter((r) => r.status === 'completed').length,
-        },
-        vouchersBySource: toArray(vouchersBySource),
-      },
+      // growth payload moved to /api/admin/analytics/growth (cf. GrowthTab)
     });
   } catch (err) {
     console.error('[admin/analytics]', err);

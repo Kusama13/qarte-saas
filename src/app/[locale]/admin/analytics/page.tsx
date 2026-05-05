@@ -19,6 +19,10 @@ import {
   Area,
   BarChart,
   Bar,
+  LineChart,
+  Line,
+  ComposedChart,
+  Legend,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -104,12 +108,7 @@ interface AnalyticsData {
     bookingSlots: { created: number; booked: number; conversionRate: number };
     offers: { active: number; totalClaims: number };
   };
-  growth: {
-    totalCustomers: number;
-    newCustomersTrend: TrendPoint[];
-    referrals: { total: number; pending: number; completed: number };
-    vouchersBySource: { source: string; count: number }[];
-  };
+  // growth payload est désormais fetché séparément par GrowthTab via /api/admin/analytics/growth
 }
 
 const BRAND = '#4b0082';
@@ -249,7 +248,7 @@ export default function AnalyticsPage() {
       {active === 'activation' && <ActivationTab data={data.activation} />}
       {active === 'engagement' && <EngagementTab data={data.engagement} />}
       {active === 'automations' && <AutomationsTab data={data.automations} />}
-      {active === 'growth' && <GrowthTab data={data.growth} />}
+      {active === 'growth' && <GrowthTab />}
     </div>
   );
 }
@@ -598,76 +597,246 @@ function AutomationsTab({ data }: { data: AnalyticsData['automations'] }) {
 
 /* ─── Growth ─── */
 
-function GrowthTab({ data }: { data: AnalyticsData['growth'] }) {
-  const newCustomers30d = data.newCustomersTrend.reduce((s, d) => s + d.count, 0);
-  const totalVouchers = data.vouchersBySource.reduce((s, v) => s + v.count, 0);
+interface GrowthWeek {
+  weekStart: string;
+  label: string;
+  bookingsOnline: number;
+  bookingsManual: number;
+  newCustomers: number;
+  newCards: number;
+  scans: number;
+  signups: number;
+  paidConversions: number;
+  marketingSms: number;
+  giftCardsPaidAmount: number;
+}
+
+interface GrowthRolling {
+  netNewPaying4w: number;
+  netNewPaying4wPrev: number;
+  wau: number;
+  mau: number;
+  wauMauRatio: number;
+  bookingOnlineShare: number;
+  cohort4wRetention: number;
+  giftCardsPaidAmount4w: number;
+}
+
+interface GrowthCumulative {
+  totalCustomers: number;
+  referrals: { total: number; pending: number; completed: number };
+  vouchersBySource: { source: string; count: number }[];
+}
+
+interface GrowthPayload {
+  weeks: GrowthWeek[];
+  rolling: GrowthRolling;
+  cumulative: GrowthCumulative;
+  weeksBack: number;
+}
+
+function deltaSign(curr: number, prev: number): { txt: string; cls: string } {
+  if (prev === 0 && curr === 0) return { txt: '–', cls: 'text-gray-400' };
+  if (prev === 0) return { txt: 'nouveau', cls: 'text-emerald-600' };
+  const pct = Math.round(((curr - prev) / prev) * 100);
+  if (pct === 0) return { txt: '±0%', cls: 'text-gray-500' };
+  return {
+    txt: `${pct > 0 ? '+' : ''}${pct}%`,
+    cls: pct > 0 ? 'text-emerald-600' : 'text-red-500',
+  };
+}
+
+function GrowthTab() {
+  const supabase = getSupabase();
+  const [growth, setGrowth] = useState<GrowthPayload | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        const res = await fetch('/api/admin/analytics/growth?weeks=16', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) throw new Error('fetch failed');
+        const payload = await res.json();
+        if (!cancelled) setGrowth(payload);
+      } catch (err) {
+        console.error('growth fetch', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [supabase]);
+
+  if (!growth) {
+    return (
+      <div className="space-y-5">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex items-center justify-center">
+          <Loader2 className="w-6 h-6 text-violet-600 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  const r = growth.rolling;
+  const cum = growth.cumulative;
+  const totalVouchers = cum.vouchersBySource.reduce((s, v) => s + v.count, 0);
+  const netNewDelta = deltaSign(r.netNewPaying4w, r.netNewPaying4wPrev);
+
+  // Prépare 3 datasets dérivés de growth.weeks
+  const bookingsData = growth.weeks.map((w) => ({
+    label: w.label,
+    'En ligne': w.bookingsOnline,
+    'Manuel': w.bookingsManual,
+  }));
+
+  const acquisitionData = growth.weeks.map((w) => ({
+    label: w.label,
+    'Nouveaux clients': w.newCustomers,
+    'Nouvelles cartes': w.newCards,
+    'Scans': w.scans,
+  }));
+
+  const funnelData = growth.weeks.map((w) => ({
+    label: w.label,
+    'Inscrits': w.signups,
+    'Convertis payant': w.paidConversions,
+  }));
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="Total clients" value={formatNum(data.totalCustomers)} accent="text-emerald-600" />
-        <KpiCard label="Nouveaux 30j" value={formatNum(newCustomers30d)} />
-        <KpiCard label="Parrainages" value={formatNum(data.referrals.total)} sub={`${data.referrals.completed} complétés · ${data.referrals.pending} en attente`} />
-        <KpiCard label="Vouchers émis" value={formatNum(totalVouchers)} />
+      {/* ─── KPIs rolling ─── */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <KpiCard
+          label="Net new paying 4 sem."
+          value={formatNum(r.netNewPaying4w)}
+          sub={`vs ${formatNum(r.netNewPaying4wPrev)} 4 sem. avant · ${netNewDelta.txt}`}
+          accent={netNewDelta.cls}
+        />
+        <KpiCard
+          label="WAU / MAU"
+          value={`${Math.round(r.wauMauRatio * 100)}%`}
+          sub={`${formatNum(r.wau)} actifs 7j · ${formatNum(r.mau)} actifs 30j`}
+          accent="text-indigo-600"
+        />
+        <KpiCard
+          label="Part résa en ligne"
+          value={`${Math.round(r.bookingOnlineShare * 100)}%`}
+          sub="online / (online + manuel) — 4 sem."
+          accent="text-violet-600"
+        />
+        <KpiCard
+          label="Cohort retention 4 sem."
+          value={`${Math.round(r.cohort4wRetention * 100)}%`}
+          sub="signups [56j ; 28j[ encore actifs/trial"
+          accent="text-emerald-600"
+        />
+        <KpiCard
+          label="Bons cadeaux 4 sem."
+          value={formatEur(r.giftCardsPaidAmount4w)}
+          sub="payés (CA brut)"
+          accent="text-amber-600"
+        />
       </div>
 
-      <ChartCard title="Nouveaux clients — 30 jours">
-        <ResponsiveContainer width="100%" height={260}>
-          <AreaChart data={data.newCustomersTrend}>
-            <defs>
-              <linearGradient id="gradCustomers" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={EMERALD} stopOpacity={0.3} />
-                <stop offset="100%" stopColor={EMERALD} stopOpacity={0} />
-              </linearGradient>
-            </defs>
+      {/* ─── Chart 1 : Réservations vitrine vs manuel (stacked) ─── */}
+      <ChartCard title="Réservations créées par semaine — vitrine vs manuel">
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart data={bookingsData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-            <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(d: string) => d.slice(5)} />
+            <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
             <Tooltip />
-            <Area type="monotone" dataKey="count" stroke={EMERALD} fill="url(#gradCustomers)" strokeWidth={2} />
-          </AreaChart>
+            <Legend wrapperStyle={{ fontSize: 12 }} />
+            <Bar dataKey="En ligne" stackId="b" fill={BRAND} radius={[0, 0, 0, 0]} />
+            <Bar dataKey="Manuel" stackId="b" fill="#c4b5fd" radius={[4, 4, 0, 0]} />
+          </BarChart>
         </ResponsiveContainer>
+        <p className="text-[11px] text-gray-400 mt-2">
+          Online via vitrine `/p/[slug]` · Manuel = créé par le merchant. Données depuis mig 088 (oct. 2025).
+        </p>
       </ChartCard>
 
+      {/* ─── Chart 2 : Acquisition + scans (multi-line) ─── */}
+      <ChartCard title="Acquisition et engagement par semaine">
+        <ResponsiveContainer width="100%" height={280}>
+          <LineChart data={acquisitionData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+            <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+            <Tooltip />
+            <Legend wrapperStyle={{ fontSize: 12 }} />
+            <Line type="monotone" dataKey="Nouveaux clients" stroke={EMERALD} strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="Nouvelles cartes" stroke="#8b5cf6" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="Scans" stroke={INDIGO} strokeWidth={2} dot={false} />
+          </LineChart>
+        </ResponsiveContainer>
+        <p className="text-[11px] text-gray-400 mt-2">
+          Clients = humains uniques (`customers.created_at`) · Cartes = émises côté merchants (`loyalty_cards.created_at`) · Scans = `visits.visited_at`.
+        </p>
+      </ChartCard>
+
+      {/* ─── Chart 3 : Funnel SaaS (combo) ─── */}
+      <ChartCard title="Funnel SaaS par semaine — inscrits vs convertis payant">
+        <ResponsiveContainer width="100%" height={260}>
+          <ComposedChart data={funnelData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+            <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+            <Tooltip />
+            <Legend wrapperStyle={{ fontSize: 12 }} />
+            <Bar dataKey="Inscrits" fill="#a5b4fc" radius={[4, 4, 0, 0]} />
+            <Line type="monotone" dataKey="Convertis payant" stroke={BRAND} strokeWidth={2.5} dot={{ r: 3 }} />
+          </ComposedChart>
+        </ResponsiveContainer>
+        <p className="text-[11px] text-gray-400 mt-2">
+          Convertis = trial_ends_at en sem. avec `subscription_status` payant ou canceled (proxy date 1ère facture).
+        </p>
+      </ChartCard>
+
+      {/* ─── Section bottom : signaux complémentaires ─── */}
       <div className="grid md:grid-cols-2 gap-4">
-        <ChartCard title="Parrainages">
+        <ChartCard title="Parrainages (cumulés)">
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between text-sm mb-1">
                 <span className="font-medium text-gray-700">Complétés</span>
-                <span className="text-gray-500">{data.referrals.completed}</span>
+                <span className="text-gray-500">{cum.referrals.completed}</span>
               </div>
               <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full bg-emerald-500"
-                  style={{ width: `${data.referrals.total > 0 ? (data.referrals.completed / data.referrals.total) * 100 : 0}%` }}
+                  style={{ width: `${cum.referrals.total > 0 ? (cum.referrals.completed / cum.referrals.total) * 100 : 0}%` }}
                 />
               </div>
             </div>
             <div>
               <div className="flex items-center justify-between text-sm mb-1">
                 <span className="font-medium text-gray-700">En attente</span>
-                <span className="text-gray-500">{data.referrals.pending}</span>
+                <span className="text-gray-500">{cum.referrals.pending}</span>
               </div>
               <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full bg-amber-400"
-                  style={{ width: `${data.referrals.total > 0 ? (data.referrals.pending / data.referrals.total) * 100 : 0}%` }}
+                  style={{ width: `${cum.referrals.total > 0 ? (cum.referrals.pending / cum.referrals.total) * 100 : 0}%` }}
                 />
               </div>
             </div>
             <p className="text-xs text-gray-400 pt-2">
               Taux de complétion :{' '}
               <span className="font-semibold text-gray-600">
-                {data.referrals.total > 0 ? ((data.referrals.completed / data.referrals.total) * 100).toFixed(1) : '0'}%
+                {cum.referrals.total > 0 ? ((cum.referrals.completed / cum.referrals.total) * 100).toFixed(1) : '0'}%
               </span>
+              {' · '}Total clients plateforme : <span className="font-semibold text-gray-600">{formatNum(cum.totalCustomers)}</span>
+              {' · '}Vouchers émis : <span className="font-semibold text-gray-600">{formatNum(totalVouchers)}</span>
             </p>
           </div>
         </ChartCard>
 
-        <ChartCard title="Vouchers par source">
+        <ChartCard title="Vouchers par source (cumulés)">
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={data.vouchersBySource} layout="vertical">
+            <BarChart data={cum.vouchersBySource} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
               <YAxis type="category" dataKey="source" tick={{ fontSize: 11 }} width={100} />
@@ -677,6 +846,28 @@ function GrowthTab({ data }: { data: AnalyticsData['growth'] }) {
           </ResponsiveContainer>
         </ChartCard>
       </div>
+
+      {/* ─── Mini-chart : SMS marketing trial ─── */}
+      <ChartCard title="SMS marketing aux merchants en essai (par semaine)">
+        <ResponsiveContainer width="100%" height={180}>
+          <AreaChart data={growth.weeks.map((w) => ({ label: w.label, count: w.marketingSms }))}>
+            <defs>
+              <linearGradient id="gradMktSms" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={AMBER} stopOpacity={0.25} />
+                <stop offset="100%" stopColor={AMBER} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+            <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+            <Tooltip />
+            <Area type="monotone" dataKey="count" stroke={AMBER} fill="url(#gradMktSms)" strokeWidth={2} />
+          </AreaChart>
+        </ResponsiveContainer>
+        <p className="text-[11px] text-gray-400 mt-2">
+          Volume des SMS de relance envoyés aux essais (`merchant_marketing_sms_logs status=sent`).
+        </p>
+      </ChartCard>
     </div>
   );
 }

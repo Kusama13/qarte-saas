@@ -144,6 +144,14 @@ La migration `123_sms_logs_dedup_index.sql` crée bien l'index `CONCURRENTLY`. *
 | **Admin home cleanup** | Suppression bloc "Actions du jour" (4 sections : RDV demain, vouchers expirent, milestones, inactifs) + composant `ActionSegment` + barre Funnel conversion + types/maps/states orphelins (-265 LoC). | `8d46c0d1` | — |
 | **Admin SMS overview** | Dépassement affiché en SMS (pas en €), nouvelle colonne "Restant total" avec breakdown `(free + pack)` pour visu globale de la conso restante d'un merchant qui a acheté un pack. Provider `'ovh'` désormais tracé pour SMS marketing trial (était `null`). Bug fix : onglet "Échecs SMS" tournait en boucle quand 0 résultat (flag `failuresFetched`). | `8d46c0d1` | — |
 
+### Sprint 2026-05-05
+
+| # | Item | Commit | Mig |
+|---|---|---|---|
+| **Subscription page** | Bug fix recap PaidStatusCard utilisait toggle UI (default `'annual'`) → merchant All-In **mensuel** voyait "120 SMS/mois" au lieu de 100. Helper `buildAllInExtras(interval)` branche sur `paidInterval` Stripe réel. + épuration listes Fidélité 7→5 / Tout-en-un extras 5→4 (drop redondants Clients illimités/Offre duo/QR+NFC, drop concours, ajout Offre nouveaux clients). + i18n drop "+20 en annuel" / "bonus annuel" sur featureSms* (confusion 120 dans vue mensuelle). + PlanCard drop duplication prix mensuel. | `b01b332b` | — |
+| **Bring-back SMS** | Bug fix : "Relancer l'acompte" envoyait `confirmation_no_deposit` (sans lien) au lieu d'un vrai SMS de demande. Nouveau type `deposit_request` avec template FR/EN incluant `merchant.deposit_link`. Dedup scopé à 1h pour ce type (vs forever) afin d'autoriser une 2e relance légitime sur même slot mode créneaux. + Bug fix UX : icônes Link2/CheckCircle2 muted en gray-400 quand option non sélectionnée + libellé SMS dynamique selon le choix. + Conflit créneau (404) : nouveau bouton "Choisir un autre créneau" qui ouvre `BookingDetailsModal` manual booking pré-rempli (date/heure/services/custom/client/notes), suppression auto de l'archive à la création réussie. | `ab48b91e` | **154** ⚠️ à appliquer |
+| **Admin Growth tab** | Refonte complète (sénior data eng audit) : 5 KPI cards rolling 4 sem (net new paying + delta vs 4 sem avant, WAU/MAU, share online, cohort 4w retention, gift cards CA) + 3 charts hebdo (BarChart stacked vitrine vs manuel, LineChart acquisition+scans, ComposedChart funnel SaaS) + mini-chart marketing SMS trial. RPCs Postgres `admin_growth_weekly(weeks_back)` + `admin_growth_rolling()` (Europe/Paris, exclusion super_admins via LEFT JOIN anti-join). Nouvelle route `/api/admin/analytics/growth` séparée + cache module-level keyé sur weeksBack. Helper partagé `createTtlCache<TKey,TValue>` extrait dans `api-helpers.ts` (refacto sms/credits aussi). Bug fix : ancienne route comptait "newCustomersTrend" via `loyalty_cards.created_at` → 2× les clientes multi-merchant ; remplacé par split clean customers (humans) vs cards (merchants). Allègement route principale : 4 queries inutiles supprimées (cards/customers/referrals/vouchers). | (à push) | **155** ⚠️ à appliquer (CROSS JOIN fix) |
+
 ### Notes ouvertes
 
 - **Booking horizon configurable par merchant (1/2/3 mois)** — discuté, **pas fait**. Default 90j couvre 80%+ des cas, anti-pattern "Zoho settings sprawl" (PRODUCT.md). À faire si 2+ merchants demandent explicitement.
@@ -164,3 +172,6 @@ La migration `123_sms_logs_dedup_index.sql` crée bien l'index `CONCURRENTLY`. *
 | 150 | `sms_campaign_pending_phones` | à confirmer appliquée |
 | 151 | `move_booking_custom_service` | ⚠️ à appliquer |
 | 152 | `processed_stripe_events` | ⚠️ à appliquer |
+| 153 | `offer_discount` (mig 153 doc dans supabase-context.md) | à confirmer |
+| 154 | `sms_deposit_request` + cleanup `gift_card_expiry_reminder` (CHECK étendu, NOT VALID + VALIDATE) | ⚠️ à appliquer |
+| 155 | `admin_growth_weekly` (RPC + index) — note : CROSS JOIN fix après 1ère tentative (erreur 42P01 si appliqué avant le fix) | ⚠️ à ré-appliquer |
