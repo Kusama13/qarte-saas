@@ -7,6 +7,7 @@ import { recomputeDayTravel } from '@/lib/travel-recompute';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 import { validateAppliedDiscounts } from '@/lib/applied-discounts';
+import { buildServiceLines } from '@/lib/booking-pricing';
 
 const schema = z.object({
   merchantId: z.string().uuid(),
@@ -59,17 +60,21 @@ export async function POST(request: NextRequest) {
     if (!m) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     if (m.booking_mode !== 'free') return NextResponse.json({ error: 'Mode non applicable' }, { status: 400 });
 
+    const supabaseAdmin = getSupabaseAdmin();
+
+    const serviceLines = await buildServiceLines(supabaseAdmin, merchantId, service_ids, custom_service_price);
+
     const discountValidation = await validateAppliedDiscounts(
-      getSupabaseAdmin(),
+      supabaseAdmin,
       merchantId,
       customer_id,
       { applied_offer_id, applied_offer_percent, applied_welcome_percent },
+      serviceLines,
     );
     if (!discountValidation.ok) {
       return NextResponse.json({ error: discountValidation.error }, { status: discountValidation.status });
     }
-
-    const supabaseAdmin = getSupabaseAdmin();
+    const appliedOfferAmount = discountValidation.applied_offer_amount;
     const buffer = m.buffer_minutes ?? 0;
     const country = (phone_country || m.country || 'FR') as MerchantCountry;
     const formattedPhone = client_phone ? formatPhoneNumber(client_phone.trim(), country) : null;
@@ -130,6 +135,7 @@ export async function POST(request: NextRequest) {
         custom_service_color: custom_service_color ?? null,
         applied_offer_id: applied_offer_id ?? null,
         applied_offer_percent: applied_offer_percent ?? null,
+        applied_offer_amount: appliedOfferAmount,
         applied_welcome_percent: applied_welcome_percent ?? null,
         ...(hasAddressText && {
           customer_address: customer_address!.trim(),

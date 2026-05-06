@@ -6,6 +6,7 @@ import {
   Loader2,
   Check,
   GraduationCap,
+  ChevronDown,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { getTodayForCountry } from '@/lib/utils';
@@ -29,27 +30,44 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
   const [promoExpiresAt, setPromoExpiresAt] = useState('');
   const [promoDiscountPercent, setPromoDiscountPercent] = useState<string>('');
   const [promoOfferId, setPromoOfferId] = useState<string | null>(null);
+  const [promoTargetServiceIds, setPromoTargetServiceIds] = useState<string[]>([]);
+  const [services, setServices] = useState<Array<{ id: string; name: string; price: number }>>([]);
+  const [targetPickerOpen, setTargetPickerOpen] = useState(false);
   const [studentEnabled, setStudentEnabled] = useState(merchant.student_offer_enabled || false);
   const [studentDescription, setStudentDescription] = useState(merchant.student_offer_description || '');
 
   useEffect(() => {
-    const fetchOffers = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(`/api/merchant-offers?merchantId=${merchant.id}`);
-        const data = await res.json();
-        if (res.ok && data.offers?.length > 0) {
-          const offer = data.offers[0];
+        const [offersRes, svcRes] = await Promise.all([
+          fetch(`/api/merchant-offers?merchantId=${merchant.id}`),
+          fetch(`/api/services?merchantId=${merchant.id}`),
+        ]);
+        const offersData = await offersRes.json();
+        if (offersRes.ok && offersData.offers?.length > 0) {
+          const offer = offersData.offers[0];
           setPromoOfferId(offer.id);
           setPromoTitle(offer.title);
           setPromoDescription(offer.description);
           setPromoExpiresAt(offer.expires_at ? offer.expires_at.split('T')[0] : '');
           setPromoDiscountPercent(offer.discount_percent != null ? String(offer.discount_percent) : '');
+          setPromoTargetServiceIds(Array.isArray(offer.target_service_ids) ? offer.target_service_ids : []);
           const isExpired = offer.expires_at && new Date(offer.expires_at) < new Date();
           setPromoEnabled(offer.active && !isExpired);
         }
+        if (svcRes.ok) {
+          const svcData = await svcRes.json();
+          if (Array.isArray(svcData.services)) {
+            setServices(svcData.services.map((s: { id: string; name: string; price: number | string }) => ({
+              id: s.id,
+              name: s.name,
+              price: Number(s.price || 0),
+            })));
+          }
+        }
       } catch { /* silent */ }
     };
-    fetchOffers();
+    fetchData();
   }, [merchant]);
 
   const handleSave = () => {
@@ -75,6 +93,13 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
         throw new Error(t('promoDiscountInvalid'));
       }
 
+      // Promo ciblée : si % vide on ne stocke pas de cible (sans réduction
+      // calculée la cible n'a aucun effet → évite la confusion UX).
+      // Si tous les services sont sélectionnés → on envoie null (= toutes prestations).
+      const targetsPayload = (normalizedDiscount && promoTargetServiceIds.length > 0 && promoTargetServiceIds.length < services.length)
+        ? promoTargetServiceIds
+        : null;
+
       if (promoEnabled) {
         if (promoOfferId) {
           await fetch('/api/merchant-offers', {
@@ -88,6 +113,7 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
               description: promoDescription.trim(),
               expires_at: promoExpiresAt || null,
               discountPercent: normalizedDiscount,
+              targetServiceIds: targetsPayload,
             }),
           });
         } else {
@@ -100,6 +126,7 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
               description: promoDescription.trim(),
               expiresAt: promoExpiresAt || null,
               discountPercent: normalizedDiscount,
+              targetServiceIds: targetsPayload,
             }),
           });
           const data = await res.json();
@@ -183,6 +210,65 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
             </div>
             <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">{t('promoDiscountHelp')}</p>
           </div>
+
+          {/* Multi-select prestations ciblées (mig 157). Visible uniquement si % > 0
+              car sans réduction calculée, cibler n'a aucun effet visible. */}
+          {promoDiscountPercent && services.length > 0 && (
+            <div>
+              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                {t('promoTargetLabel')}
+              </label>
+              <button
+                type="button"
+                onClick={() => setTargetPickerOpen(!targetPickerOpen)}
+                className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-sm hover:border-amber-300 transition-colors"
+              >
+                <span className="truncate text-gray-700">
+                  {promoTargetServiceIds.length === 0 || promoTargetServiceIds.length === services.length
+                    ? t('promoTargetAll')
+                    : t('promoTargetCount', { count: promoTargetServiceIds.length })}
+                </span>
+                <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${targetPickerOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {targetPickerOpen && (
+                <div className="mt-2 max-h-56 overflow-y-auto rounded-xl border border-gray-200 bg-white p-2 space-y-1">
+                  <label className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-amber-50 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={promoTargetServiceIds.length === 0 || promoTargetServiceIds.length === services.length}
+                      onChange={(e) => setPromoTargetServiceIds(e.target.checked ? [] : services.map((s) => s.id))}
+                      className="w-4 h-4 rounded border-gray-300 text-amber-500 focus:ring-amber-500"
+                    />
+                    <span className="text-sm font-semibold text-gray-700">{t('promoTargetAll')}</span>
+                  </label>
+                  <div className="border-t border-gray-100 my-1" />
+                  {services.map((s) => {
+                    const all = promoTargetServiceIds.length === 0;
+                    const checked = all || promoTargetServiceIds.includes(s.id);
+                    return (
+                      <label key={s.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-amber-50 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            const baseline = all ? services.map((x) => x.id) : promoTargetServiceIds;
+                            const next = e.target.checked
+                              ? Array.from(new Set([...baseline, s.id]))
+                              : baseline.filter((id) => id !== s.id);
+                            setPromoTargetServiceIds(next);
+                          }}
+                          className="w-4 h-4 rounded border-gray-300 text-amber-500 focus:ring-amber-500"
+                        />
+                        <span className="text-sm text-gray-700 flex-1 truncate">{s.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+              <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">{t('promoTargetHelp')}</p>
+            </div>
+          )}
+
           <div>
             <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
               {t('promoDescLabel')} <span className="text-red-400">*</span>

@@ -1,10 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { ServiceLine } from './booking-pricing';
 
 /**
  * Validation server-side des réductions appliquées sur un slot de planning.
  * Empêche le spoofing : un client malveillant ne peut pas envoyer un
  * applied_offer_percent supérieur à celui de l'offre, ni appliquer welcome
  * sur un client qui a déjà une loyalty_card chez le merchant.
+ *
+ * Mig 157 : si l'offre est ciblée (`target_service_ids`), recalcule le montant
+ * € économisé per-line. Le résultat (`applied_offer_amount`) est retourné pour
+ * que la route appelante puisse le snapshoter sur le slot.
  *
  * Réutilisé par /api/planning/manual-booking + /api/planning PATCH.
  */
@@ -16,7 +21,7 @@ export type AppliedDiscountPayload = {
 };
 
 export type AppliedDiscountValidation =
-  | { ok: true }
+  | { ok: true; applied_offer_amount: number | null }
   | { ok: false; error: string; status: number };
 
 export async function validateAppliedDiscounts(
@@ -24,6 +29,7 @@ export async function validateAppliedDiscounts(
   merchantId: string,
   customerId: string | null | undefined,
   payload: AppliedDiscountPayload,
+  serviceLines: ServiceLine[] = [],
 ): Promise<AppliedDiscountValidation> {
   const { applied_offer_id, applied_offer_percent, applied_welcome_percent } = payload;
 
@@ -31,10 +37,11 @@ export async function validateAppliedDiscounts(
     return { ok: false, error: 'applied_offer_id et applied_offer_percent doivent être fournis ensemble', status: 400 };
   }
 
+  let appliedOfferAmount: number | null = null;
   if (applied_offer_id && applied_offer_percent) {
     const { data: offer } = await supabase
       .from('merchant_offers')
-      .select('id, discount_percent, active, expires_at')
+      .select('id, discount_percent, active, expires_at, target_service_ids')
       .eq('id', applied_offer_id)
       .eq('merchant_id', merchantId)
       .maybeSingle();
@@ -43,6 +50,17 @@ export async function validateAppliedDiscounts(
     }
     if (offer.expires_at && new Date(offer.expires_at) < new Date()) {
       return { ok: false, error: 'Offre expirée', status: 400 };
+    }
+    const targets = (offer.target_service_ids as string[] | null) || null;
+    if (targets && targets.length > 0) {
+      const set = new Set(targets);
+      const targeted = serviceLines.filter((l) => set.has(l.id));
+      appliedOfferAmount = Math.round(
+        targeted.reduce((s, l) => s + Number(l.price || 0) * applied_offer_percent / 100, 0),
+      );
+    } else {
+      const total = serviceLines.reduce((s, l) => s + Number(l.price || 0), 0);
+      appliedOfferAmount = Math.round(total * applied_offer_percent / 100);
     }
   }
 
@@ -68,5 +86,5 @@ export async function validateAppliedDiscounts(
     }
   }
 
-  return { ok: true };
+  return { ok: true, applied_offer_amount: appliedOfferAmount };
 }

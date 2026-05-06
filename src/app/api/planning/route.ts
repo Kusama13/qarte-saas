@@ -10,6 +10,7 @@ import { requirePlanFeature } from '@/lib/api-helpers';
 import { recomputeDayTravel } from '@/lib/travel-recompute';
 import { BOOKING_HORIZON_DAYS } from '@/lib/booking-window';
 import { validateAppliedDiscounts } from '@/lib/applied-discounts';
+import { buildServiceLines } from '@/lib/booking-pricing';
 
 async function verifyOwnership(supabase: Awaited<ReturnType<typeof createRouteHandlerSupabaseClient>>, merchantId: string, userId: string) {
   const { data } = await supabase
@@ -305,17 +306,22 @@ export async function PATCH(request: NextRequest) {
       // Reset réductions appliquées
       updateData.applied_offer_id = null;
       updateData.applied_offer_percent = null;
+      updateData.applied_offer_amount = null;
       updateData.applied_welcome_percent = null;
     } else {
       if (custom_service_duration !== undefined) updateData.custom_service_duration = custom_service_duration;
       if (custom_service_name !== undefined) updateData.custom_service_name = custom_service_name?.trim() || null;
       if (custom_service_price !== undefined) updateData.custom_service_price = custom_service_price;
       if (custom_service_color !== undefined) updateData.custom_service_color = custom_service_color;
+
+      const discountServiceLines = await buildServiceLines(supabaseAdmin, merchantId, service_ids, custom_service_price);
+
       const discountValidation = await validateAppliedDiscounts(
         supabaseAdmin,
         merchantId,
         customer_id ?? null,
         { applied_offer_id, applied_offer_percent, applied_welcome_percent },
+        discountServiceLines,
       );
       if (!discountValidation.ok) {
         return NextResponse.json({ error: discountValidation.error }, { status: discountValidation.status });
@@ -323,6 +329,7 @@ export async function PATCH(request: NextRequest) {
       if (applied_offer_id !== undefined) {
         updateData.applied_offer_id = applied_offer_id;
         updateData.applied_offer_percent = applied_offer_percent;
+        updateData.applied_offer_amount = discountValidation.applied_offer_amount;
       }
       if (applied_welcome_percent !== undefined) {
         updateData.applied_welcome_percent = applied_welcome_percent;

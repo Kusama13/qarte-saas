@@ -1,7 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import { SupabaseClient } from '@supabase/supabase-js';
 import logger from '@/lib/logger';
 import { parseDiscountPercent } from '@/lib/booking-pricing';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Valide que `targetServiceIds` est soit null/vide (= promo universelle),
+ * soit un tableau d'UUID appartenant tous au merchant. Retourne la liste
+ * normalisée (null si vide) ou une NextResponse d'erreur.
+ */
+async function validateTargetServiceIds(
+  supabase: SupabaseClient,
+  merchantId: string,
+  raw: unknown,
+): Promise<string[] | null | NextResponse> {
+  if (raw === null || raw === undefined) return null;
+  if (!Array.isArray(raw)) {
+    return NextResponse.json({ error: 'targetServiceIds doit être un tableau' }, { status: 400 });
+  }
+  if (raw.length === 0) return null;
+  if (!raw.every((id): id is string => typeof id === 'string' && UUID_RE.test(id))) {
+    return NextResponse.json({ error: 'targetServiceIds : UUIDs invalides' }, { status: 400 });
+  }
+  const unique = Array.from(new Set(raw));
+  const { data, error } = await supabase
+    .from('merchant_services')
+    .select('id')
+    .eq('merchant_id', merchantId)
+    .in('id', unique);
+  if (error || !data || data.length !== unique.length) {
+    return NextResponse.json({ error: 'targetServiceIds : prestation inconnue ou non autorisée' }, { status: 400 });
+  }
+  return unique;
+}
 
 // GET: list offers for a merchant (public or authenticated)
 export async function GET(request: NextRequest) {
@@ -19,7 +52,7 @@ export async function GET(request: NextRequest) {
     // Public: only active, non-expired offers
     const { data, error } = await supabase
       .from('merchant_offers')
-      .select('id, title, description, expires_at, discount_percent')
+      .select('id, title, description, expires_at, discount_percent, target_service_ids')
       .eq('merchant_id', merchantId)
       .eq('active', true)
       .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
@@ -75,7 +108,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { merchantId, title, description, expiresAt, discountPercent } = body;
+    const { merchantId, title, description, expiresAt, discountPercent, targetServiceIds } = body;
 
     if (!merchantId || !title?.trim() || !description?.trim()) {
       return NextResponse.json({ error: 'merchantId, title et description requis' }, { status: 400 });
@@ -94,6 +127,9 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json({ error: 'La réduction doit être un entier entre 1 et 100' }, { status: 400 });
     }
+
+    const normalizedTargets = await validateTargetServiceIds(supabase, merchantId, targetServiceIds);
+    if (normalizedTargets instanceof NextResponse) return normalizedTargets;
 
     const { data: merchant } = await supabase
       .from('merchants')
@@ -120,6 +156,7 @@ export async function POST(request: NextRequest) {
         description: description.trim(),
         expires_at: normalizedExpiry,
         discount_percent: normalizedDiscount,
+        target_service_ids: normalizedTargets,
         active: true,
       })
       .select()
@@ -204,6 +241,12 @@ export async function PATCH(request: NextRequest) {
       } catch {
         return NextResponse.json({ error: 'La réduction doit être un entier entre 1 et 100' }, { status: 400 });
       }
+    }
+    const targetsValue = updates.target_service_ids ?? updates.targetServiceIds;
+    if (targetsValue !== undefined) {
+      const normalized = await validateTargetServiceIds(supabase, merchantId, targetsValue);
+      if (normalized instanceof NextResponse) return normalized;
+      safeUpdates.target_service_ids = normalized;
     }
 
     const { error } = await supabase

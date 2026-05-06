@@ -87,7 +87,7 @@ function OfferCard({
 }
 type ServiceCategory = { id: string; name: string; position: number };
 type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
-type PromoOffer = { id: string; title: string; description: string; expires_at: string | null; discount_percent: number | null };
+type PromoOffer = { id: string; title: string; description: string; expires_at: string | null; discount_percent: number | null; target_service_ids: string[] | null };
 
 type PlanningSlotPublic = { slot_date: string; start_time: string };
 

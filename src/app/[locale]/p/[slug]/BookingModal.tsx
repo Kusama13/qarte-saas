@@ -16,7 +16,7 @@ import { BOOKING_HORIZON_DAYS } from '@/lib/booking-window';
 type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
 type ServiceCategory = { id: string; name: string; position: number };
 type PlanningSlotPublic = { slot_date: string; start_time: string };
-type PromoOffer = { id: string; title: string; description: string; expires_at: string | null; discount_percent: number | null };
+type PromoOffer = { id: string; title: string; description: string; expires_at: string | null; discount_percent: number | null; target_service_ids: string[] | null };
 
 type MerchantBooking = Pick<
   Merchant,
@@ -261,24 +261,36 @@ export default function BookingModal({
     [selectedServices]
   );
 
-  // Welcome appliqué de manière "optimiste" : si on n'a pas encore reconnu la cliente
-  // (idle/loading/unknown), on suppose nouveau client → -welcome%. Si la cliente est
-  // reconnue (kind === 'known'), on ne l'applique pas. Le serveur revérifie strictement
-  // (loyalty_card existante) à la création de la résa.
-  const isFirstBookingOptimistic = recognition.kind !== 'known';
-  const welcomeApplicablePercent = (
-    isFirstBookingOptimistic
-    && merchant.welcome_offer_enabled
-    && merchant.welcome_offer_discount_percent
+  // Welcome n'est appliqué qu'une fois la cliente confirmée nouvelle (lookup OK).
+  // Avant la saisie du numéro (idle/loading) on affiche un teaser sans réduire le
+  // prix → pas de bait-and-switch quand une cliente connue tape son numéro et
+  // voit le total "remonter". Le serveur revérifie strictement (loyalty_card)
+  // à la création de la résa.
+  const welcomeConfiguredPercent = (
+    merchant.welcome_offer_enabled && merchant.welcome_offer_discount_percent
   ) ? merchant.welcome_offer_discount_percent : null;
+  const welcomeApplicablePercent = recognition.kind === 'unknown' ? welcomeConfiguredPercent : null;
+  const showWelcomeTeaser = !!welcomeConfiguredPercent && (recognition.kind === 'idle' || recognition.kind === 'loading');
   const promoApplicablePercent = promoOffer?.discount_percent ?? null;
+  const promoTargetServiceIds = promoOffer?.target_service_ids ?? null;
+  const promoIsTargeted = !!promoTargetServiceIds && promoTargetServiceIds.length > 0;
+  const promoTargetSet = useMemo(
+    () => promoIsTargeted ? new Set(promoTargetServiceIds!) : null,
+    [promoIsTargeted, promoTargetServiceIds],
+  );
+
+  const serviceLinesForPricing = useMemo(
+    () => selectedServices.map((s) => ({ id: s.id, price: Number(s.price || 0) })),
+    [selectedServices],
+  );
 
   const priceResult = useMemo(() => computeBookingPrice({
-    totalPrice,
+    serviceLines: serviceLinesForPricing,
     memberPercent: memberBenefit?.discount_percent,
     welcomePercent: welcomeApplicablePercent,
     promoPercent: promoApplicablePercent,
-  }), [totalPrice, memberBenefit?.discount_percent, welcomeApplicablePercent, promoApplicablePercent]);
+    promoTargetServiceIds,
+  }), [serviceLinesForPricing, memberBenefit?.discount_percent, welcomeApplicablePercent, promoApplicablePercent, promoTargetServiceIds]);
   const displayPrice = priceResult.finalPrice;
 
   const totalDuration = useMemo(
@@ -527,6 +539,7 @@ export default function BookingModal({
                 {(() => {
                   const renderServiceBtn = (svc: Service) => {
                     const selected = selectedServiceIds.has(svc.id);
+                    const isPromoTargeted = !!promoTargetSet && promoTargetSet.has(svc.id) && !!promoApplicablePercent;
                     return (
                       <button
                         key={svc.id}
@@ -548,7 +561,14 @@ export default function BookingModal({
                           {selected && <Check className="w-3 h-3 text-white" />}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900">{svc.name}</p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-sm font-semibold text-gray-900">{svc.name}</p>
+                            {isPromoTargeted && (
+                              <span className="inline-block bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md align-middle">
+                                -{promoApplicablePercent}%
+                              </span>
+                            )}
+                          </div>
                           {svc.duration && (
                             <p className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5">
                               <Clock className="w-3 h-3" />
@@ -556,9 +576,18 @@ export default function BookingModal({
                             </p>
                           )}
                         </div>
-                        <p className="text-sm font-bold text-gray-700 shrink-0">
-                          {svc.price_from && <span className="text-[10px] font-normal text-gray-500">{t('from')} </span>}
-                          {formatCurrency(Number(svc.price), country, locale)}
+                        <p className="text-sm font-bold text-gray-700 shrink-0 flex items-baseline gap-1">
+                          {isPromoTargeted ? (
+                            <>
+                              <span className="text-[11px] font-normal text-gray-400 line-through">{formatCurrency(Number(svc.price), country, locale)}</span>
+                              <span>{formatCurrency(Math.round(Number(svc.price) * (1 - promoApplicablePercent! / 100)), country, locale)}</span>
+                            </>
+                          ) : (
+                            <>
+                              {svc.price_from && <span className="text-[10px] font-normal text-gray-500">{t('from')} </span>}
+                              {formatCurrency(Number(svc.price), country, locale)}
+                            </>
+                          )}
                         </p>
                       </button>
                     );
@@ -644,23 +673,47 @@ export default function BookingModal({
                   );
                 })()}
 
-                {/* Promo offer banner */}
-                {promoOffer && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-100 mb-3">
-                    <Gift className="w-4 h-4 text-amber-500 shrink-0" />
-                    <p className="text-xs text-amber-700 font-medium flex-1 leading-snug">
-                      <span className="font-bold">{promoOffer.title}</span>
-                      {promoOffer.discount_percent && (
-                        <span className="ml-1.5 inline-block bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md align-middle">
-                          -{promoOffer.discount_percent}%
-                        </span>
-                      )}
-                      <span className="opacity-80"> — {promoOffer.description}</span>
+                {/* Promo offer banner — si ciblée, on liste les prestations concernées
+                    pour que la cliente sache où le -X% s'applique */}
+                {promoOffer && (() => {
+                  const targetedNames = promoIsTargeted
+                    ? services.filter((s) => promoTargetSet!.has(s.id)).map((s) => s.name)
+                    : null;
+                  const targetSuffix = targetedNames && targetedNames.length > 0
+                    ? ` ${t('promoTargetedSuffix', { services: targetedNames.join(', ') })}`
+                    : '';
+                  return (
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-100 mb-3">
+                      <Gift className="w-4 h-4 text-amber-500 shrink-0" />
+                      <p className="text-xs text-amber-700 font-medium flex-1 leading-snug">
+                        <span className="font-bold">{promoOffer.title}</span>
+                        {promoOffer.discount_percent && (
+                          <span className="ml-1.5 inline-block bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md align-middle">
+                            -{promoOffer.discount_percent}%{targetSuffix}
+                          </span>
+                        )}
+                        <span className="opacity-80"> — {promoOffer.description}</span>
+                      </p>
+                    </div>
+                  );
+                })()}
+
+                {/* Welcome teaser — avant saisie/pendant lookup : on annonce l'offre
+                    sans réduire le prix (évite l'effet "le prix remonte" pour les clientes connues) */}
+                {showWelcomeTeaser && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-50/60 border border-rose-100 mb-3">
+                    <Gift className="w-4 h-4 text-rose-500 shrink-0" />
+                    <p className="text-xs text-rose-700 font-medium flex-1 leading-snug">
+                      <span className="font-bold">{t('welcomeTeaserTitle')}</span>
+                      <span className="ml-1.5 inline-block bg-rose-100 text-rose-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md align-middle">
+                        -{welcomeConfiguredPercent}%
+                      </span>
+                      <span className="opacity-80"> {t('welcomeTeaserSubtitle')}</span>
                     </p>
                   </div>
                 )}
 
-                {/* Welcome banner — affiché uniquement si applicable (1ère résa optimiste) */}
+                {/* Welcome banner — réduction effectivement appliquée (cliente confirmée nouvelle) */}
                 {welcomeApplicablePercent && (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-50 border border-rose-100 mb-3">
                     <Gift className="w-4 h-4 text-rose-500 shrink-0" />
@@ -695,7 +748,11 @@ export default function BookingModal({
                             {[
                               priceResult.appliedDiscounts.member && t('discountMember', { percent: priceResult.appliedDiscounts.member }),
                               priceResult.appliedDiscounts.welcome && t('discountWelcome', { percent: priceResult.appliedDiscounts.welcome }),
-                              priceResult.appliedDiscounts.promo && t('discountPromo', { percent: priceResult.appliedDiscounts.promo }),
+                              priceResult.appliedDiscounts.promo && (
+                                promoIsTargeted && priceResult.appliedDiscounts.promoAmount
+                                  ? t('discountPromoAmount', { amount: formatCurrency(priceResult.appliedDiscounts.promoAmount, country, locale) })
+                                  : t('discountPromo', { percent: priceResult.appliedDiscounts.promo })
+                              ),
                             ].filter(Boolean).join(' · ')}
                           </span>
                         )}

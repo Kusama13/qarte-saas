@@ -335,7 +335,7 @@ export async function POST(request: NextRequest) {
         : Promise.resolve({ data: null }),
       supabaseAdmin
         .from('merchant_offers')
-        .select('id, discount_percent')
+        .select('id, discount_percent, target_service_ids')
         .eq('merchant_id', merchant_id)
         .eq('active', true)
         .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
@@ -351,18 +351,22 @@ export async function POST(request: NextRequest) {
       memberSkipDeposit = prog?.skip_deposit || false;
     }
 
-    const activeOffer = activeOfferRes.data;
+    const activeOffer = activeOfferRes.data as { id: string; discount_percent: number | null; target_service_ids: string[] | null } | null;
     const promoPercent = activeOffer?.discount_percent ?? null;
+    const promoTargetServiceIds = activeOffer?.target_service_ids ?? null;
     const welcomePercent = (isNewCustomer && merchant.welcome_offer_enabled && merchant.welcome_offer_discount_percent)
       ? merchant.welcome_offer_discount_percent
       : null;
 
-    // Apply discounts (member × welcome × promo) via single source of truth
+    // Apply discounts (member × welcome × promo) via single source of truth.
+    // Mig 157 : promo peut être ciblée sur certaines prestations seulement.
+    const serviceLines = services.map((s) => ({ id: s.id, price: Number(s.price || 0) }));
     const priceResult = computeBookingPrice({
-      totalPrice: rawTotalPrice,
+      serviceLines,
       memberPercent: memberDiscount,
       welcomePercent,
       promoPercent,
+      promoTargetServiceIds,
     });
     totalPrice = priceResult.finalPrice;
 
@@ -382,11 +386,12 @@ export async function POST(request: NextRequest) {
     let bookedSlotId: string;
     let slotsBlocked = 1;
 
-    // Snapshots des % appliqués pour historique fidèle (cf. mig 153)
+    // Snapshots des % appliqués pour historique fidèle (mig 153 + mig 157 amount)
     const appliedDiscountFields: Record<string, unknown> = {};
-    if (promoPercent && activeOffer) {
+    if (promoPercent && activeOffer && priceResult.appliedDiscounts.promoAmount) {
       appliedDiscountFields.applied_offer_id = activeOffer.id;
       appliedDiscountFields.applied_offer_percent = promoPercent;
+      appliedDiscountFields.applied_offer_amount = priceResult.appliedDiscounts.promoAmount;
     }
     if (welcomePercent) {
       appliedDiscountFields.applied_welcome_percent = welcomePercent;

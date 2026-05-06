@@ -13,7 +13,7 @@ import type { PlanningSlot, CustomerSearchResult, BookingMode } from '@/types';
 import { formatTime, formatCurrency, toBCP47, getTimezoneForCountry, displayPhoneNumber, detectPhoneCountry } from '@/lib/utils';
 import { downloadIcs } from '@/lib/ics';
 import { compressOfferImage } from '@/lib/image-compression';
-import { computeBookingPrice } from '@/lib/booking-pricing';
+import { computeBookingPrice, CUSTOM_SERVICE_LINE_ID } from '@/lib/booking-pricing';
 import { timeToMinutes, minutesToTime, roundUp5, formatDuration, getSlotServiceIds, colorBorderStyle, computeDepositAmount, CUSTOM_SERVICE_DEFAULT_NAME, formatDateLong, endTimeFromStart } from './utils';
 import CustomServicePicker from './CustomServicePicker';
 import type { BookingDraft, ServiceWithDuration } from './usePlanningState';
@@ -140,7 +140,7 @@ export default function BookingDetailsModal({
   const [sendSms, setSendSms] = useState(false);
 
   // Réductions appliquées (state local, init depuis le slot existant)
-  const [activePromo, setActivePromo] = useState<{ id: string; title: string; discount_percent: number } | null>(null);
+  const [activePromo, setActivePromo] = useState<{ id: string; title: string; discount_percent: number; target_service_ids: string[] | null } | null>(null);
   const [applyPromo, setApplyPromo] = useState<boolean>(!!slot.applied_offer_id);
   const [applyWelcome, setApplyWelcome] = useState<boolean>(!!slot.applied_welcome_percent);
 
@@ -152,7 +152,12 @@ export default function BookingDetailsModal({
       .then(data => {
         if (cancelled) return;
         const offer = data?.offers?.find((o: { discount_percent: number | null }) => o.discount_percent != null);
-        if (offer) setActivePromo({ id: offer.id, title: offer.title, discount_percent: offer.discount_percent });
+        if (offer) setActivePromo({
+          id: offer.id,
+          title: offer.title,
+          discount_percent: offer.discount_percent,
+          target_service_ids: Array.isArray(offer.target_service_ids) ? offer.target_service_ids : null,
+        });
       })
       .catch(() => {});
     return () => { cancelled = true; };
@@ -367,15 +372,26 @@ export default function BookingDetailsModal({
     };
   }, [draft.serviceIds, draft.customService, serviceMap]);
 
-  // Prix après réductions (promo + welcome) — computeBookingPrice est la source unique de vérité
+  // Prix après réductions (promo + welcome) — computeBookingPrice est la source unique de vérité.
+  // Mig 157 : on passe les serviceLines pour que la promo ciblée s'applique
+  // uniquement aux prestations concernées.
   const priceWithDiscounts = useMemo(() => {
     if (totalPrice == null) return null;
+    const lines: Array<{ id: string; price: number }> = [];
+    for (const sid of draft.serviceIds) {
+      const svc = serviceMap.get(sid);
+      if (svc?.price) lines.push({ id: sid, price: svc.price });
+    }
+    if (draft.customService?.price) {
+      lines.push({ id: CUSTOM_SERVICE_LINE_ID, price: draft.customService.price });
+    }
     return computeBookingPrice({
-      totalPrice,
+      serviceLines: lines,
       promoPercent: applyPromo && activePromo ? activePromo.discount_percent : null,
       welcomePercent: applyWelcome && welcomeOfferDiscountPercent ? welcomeOfferDiscountPercent : null,
+      promoTargetServiceIds: activePromo?.target_service_ids ?? null,
     });
-  }, [totalPrice, applyPromo, activePromo, applyWelcome, welcomeOfferDiscountPercent]);
+  }, [totalPrice, draft.serviceIds, draft.customService, serviceMap, applyPromo, activePromo, applyWelcome, welcomeOfferDiscountPercent]);
 
   const durationLabel = useMemo(() => {
     const hasAnySelection = draft.serviceIds.length > 0 || !!draft.customService;
@@ -901,20 +917,33 @@ export default function BookingDetailsModal({
                           </span>
                         </button>
                       )}
-                      {activePromo && (
-                        <button
-                          type="button"
-                          onClick={() => setApplyPromo(!applyPromo)}
-                          className="w-full flex items-center gap-2 text-left hover:bg-amber-50/50 rounded px-1 py-0.5 transition-colors"
-                        >
-                          <span className={`flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${applyPromo ? 'bg-amber-500 border-amber-500' : 'border-gray-300'}`}>
-                            {applyPromo && <Check className="w-3 h-3 text-white" />}
-                          </span>
-                          <span className="text-xs text-gray-700 font-medium">
-                            {t('discountApplyPromo', { title: activePromo.title, percent: activePromo.discount_percent })}
-                          </span>
-                        </button>
-                      )}
+                      {activePromo && (() => {
+                        const targets = activePromo.target_service_ids;
+                        const targetedNames = targets && targets.length > 0
+                          ? services.filter((s) => targets.includes(s.id)).map((s) => s.name)
+                          : null;
+                        return (
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setApplyPromo(!applyPromo)}
+                              className="w-full flex items-center gap-2 text-left hover:bg-amber-50/50 rounded px-1 py-0.5 transition-colors"
+                            >
+                              <span className={`flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${applyPromo ? 'bg-amber-500 border-amber-500' : 'border-gray-300'}`}>
+                                {applyPromo && <Check className="w-3 h-3 text-white" />}
+                              </span>
+                              <span className="text-xs text-gray-700 font-medium">
+                                {t('discountApplyPromo', { title: activePromo.title, percent: activePromo.discount_percent })}
+                              </span>
+                            </button>
+                            {targetedNames && targetedNames.length > 0 && (
+                              <p className="text-[10px] text-amber-700 italic pl-6 mt-0.5 leading-snug">
+                                {t('discountPromoTargetedHint', { services: targetedNames.join(', ') })}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()}
                       {priceWithDiscounts && priceWithDiscounts.hasDiscount && (
                         <p className="text-[11px] text-emerald-700 font-semibold pt-0.5 pl-6">
                           {t('discountSavingsLabel', {
