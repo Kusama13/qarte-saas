@@ -14,6 +14,7 @@ import logger from './logger';
  */
 
 export type TrialSmsType =
+  | 'example_vitrine'         // T+15min après signup — exemple de vitrine + WhatsApp
   | 'celebration_fidelity'   // check-in 48h variante B (fidélité seule)
   | 'celebration_planning'   // fallback rare (planning seul)
   | 'celebration_vitrine'    // check-in 48h variante C (vitrine seule)
@@ -24,12 +25,13 @@ export type TrialSmsType =
 
 export type TierRecommended = 'fidelity' | 'all_in' | null;
 
-type DedupFlagColumn = 'celebration_sms_sent_at' | 'pre_loss_sms_sent_at' | 'churn_sms_sent_at';
+type DedupFlagColumn = 'example_vitrine_sms_sent_at' | 'celebration_sms_sent_at' | 'pre_loss_sms_sent_at' | 'churn_sms_sent_at';
 
 /** Mapping total vers la colonne de dédup. TS garantit l'exhaustivité si un
  *  nouveau TrialSmsType est ajouté → compile-time safety. Les 5 variantes du
  *  check-in 48h partagent celebration_sms_sent_at (1 SMS max sur la vie). */
 const DEDUP_FLAG: Record<TrialSmsType, DedupFlagColumn> = {
+  example_vitrine: 'example_vitrine_sms_sent_at',
   celebration_fidelity: 'celebration_sms_sent_at',
   celebration_planning: 'celebration_sms_sent_at',
   celebration_vitrine: 'celebration_sms_sent_at',
@@ -47,6 +49,7 @@ interface MerchantGatingInfo {
   no_contact: boolean;
   email_unsubscribed_at: string | null;
   marketing_sms_opted_out: boolean;
+  example_vitrine_sms_sent_at: string | null;
   celebration_sms_sent_at: string | null;
   pre_loss_sms_sent_at: string | null;
   churn_sms_sent_at: string | null;

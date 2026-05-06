@@ -4,20 +4,31 @@ import type { TierRecommended, TrialSmsType } from './sms-trial-marketing';
 /**
  * Copy SMS marketing trial v3 (check-in 48h).
  * Pas d'emoji, pas de firstName (merchant a uniquement shop_name).
- * Sender alpha "Qarte" (pas d'URL pour éviter filtres anti-spam).
+ * Sender alpha "Qarte". 2 liens courts SMS Partner :
+ * - SIGNIN_URL → page sign-in merchant (default, dashboard si déjà loggué)
+ * - QR_URL    → page QR download (CTA "scanne-la ici" direct)
  *
  * Voir docs/sms-system.md pour détails.
  */
 
+/** Liens courts créés manuellement chez SMS Partner / Cuttly. */
+const SIGNIN_URL = 'https://ptnr.fr/1Vvx2D';
+const QR_URL = 'https://ptnr.fr/1Vvxut';
+const EXAMPLE_VITRINE_URL = 'https://cll.re/1VvxCB';
+
+/** SMS envoyé ~15 min après signup pour montrer un exemple de page vitrine. */
+export function exampleVitrineSmsBody(shopName: string): string {
+  return `${shopName}, exemple de page vitrine Qarte : ${EXAMPLE_VITRINE_URL}. ecris nous sur whatsapp si tu as des questions`;
+}
+
 /**
  * Choisit la variante + le corps du SMS check-in 48h selon l'état du merchant.
- * 4 variantes :
+ * 5 variantes :
  * - A (checkin_nudge)      : aucun pilier atteint, nudge configuration
  * - B (celebration_fidelity): seulement fidélité → célébration + next step vitrine
  * - C (celebration_vitrine) : seulement vitrine → célébration + next step 1re cliente
  * - D (checkin_combo)       : 2+ piliers atteints → célébration combinée
- *
- * Cas rare : planning seul sans fidélité → fallback celebration_planning.
+ * - E (celebration_planning): planning seul sans fidélité → fallback rare
  */
 export function checkInSmsSelection(
   activation: ActivationDetails,
@@ -28,21 +39,21 @@ export function checkInSmsSelection(
   if (activation.score >= 2) {
     return {
       smsType: 'checkin_combo',
-      body: `Bravo ${shopName}, top depart : 1re cliente fidelisee et vitrine en ligne. Qarte bosse pour toi, ouvre l'app.`,
+      body: `${shopName}, top depart ! 1re cliente dans la carte + page vitrine OK : ${SIGNIN_URL}`,
     };
   }
 
   if (fidelity) {
     return {
       smsType: 'celebration_fidelity',
-      body: `Bravo ${shopName}, 1re cliente fidelisee. Qarte fait le taf. Prochaine etape : complete ta vitrine pour Google. Ouvre l'app.`,
+      body: `${shopName}, 1re cliente dans la carte ! Etape suivante : ta page vitrine. ${SIGNIN_URL}`,
     };
   }
 
   if (vitrine) {
     return {
       smsType: 'celebration_vitrine',
-      body: `Ta vitrine ${shopName} est en ligne sur Google. Il manque juste ta 1re cliente fidelisee : scanne-la depuis Qarte.`,
+      body: `${shopName}, ta page vitrine est en ligne ! Manque plus que ta 1re cliente. Ton QR : ${QR_URL}`,
     };
   }
 
@@ -50,14 +61,14 @@ export function checkInSmsSelection(
     // Fallback rarissime (planning sans fidélité ni vitrine)
     return {
       smsType: 'celebration_planning',
-      body: `Bravo ${shopName}, 1re resa en ligne. Le planning bosse pour toi. Ouvre Qarte.`,
+      body: `${shopName}, 1re resa en ligne ! Active ta carte fidelite pour fideliser : ${SIGNIN_URL}`,
     };
   }
 
   // S0 — rien configuré à 48h
   return {
     smsType: 'checkin_nudge',
-    body: `${shopName}, ca fait 2 jours chez Qarte. Lance ton 1er scan ou complete ta vitrine en 5 min pour demarrer. Ouvre l'app.`,
+    body: `${shopName}, J+2 sur Qarte. Scanne ta 1re cliente ou prepare ta page vitrine, 5 min : ${SIGNIN_URL}`,
   };
 }
 
@@ -75,15 +86,15 @@ export function preLossSmsBody(
   const bookings = stats.bookingCount ?? 0;
 
   if (tierRecommended === 'all_in') {
-    return `Plus que 24h chez Qarte. ${shopName} a ${customers} clientes et ${bookings} resas. Garde tout (resa + fidelite) pour 24EUR/mois — ouvre Qarte.`;
+    return `${shopName}, J-1. ${customers} clientes et ${bookings} resas a garder. Resa + fidelite pour 24EUR/mois : ${SIGNIN_URL}`;
   }
   if (tierRecommended === 'fidelity') {
-    return `Plus que 24h chez Qarte. ${shopName} a deja ${customers} clientes fidelisees. Garde ta carte fidelite pour 19EUR/mois — ouvre Qarte.`;
+    return `${shopName}, J-1. ${customers} clientes qui reviennent. Garde ta carte fidelite pour 19EUR/mois : ${SIGNIN_URL}`;
   }
   // Aucune reco (signal mixte / faible)
-  return `Plus que 24h chez Qarte. ${shopName} a ${customers} clientes fidelisees. Garde ton compte pour 19EUR/mois — ouvre Qarte.`;
+  return `${shopName}, J-1. Garde ton compte pour 19EUR/mois et continue avec Qarte : ${SIGNIN_URL}`;
 }
 
 export function churnSurveySmsBody(shopName: string): string {
-  return `Qarte: on a rate quelque chose avec ${shopName}. 2 min pour nous dire quoi? On rouvre ton compte 7j, et -25% x3 mois si c'est le prix. Lien dans l'email envoye.`;
+  return `${shopName}, dis-nous ce qui a coince en 2 min. On te rouvre 7j, -25% x3 mois si besoin : ${SIGNIN_URL}`;
 }
