@@ -254,6 +254,7 @@ export default function CompleteProfilePage() {
                 type="text"
                 label={t('shopNameLabel')}
                 placeholder={t('shopNamePlaceholder')}
+                helperText={t('shopNameHelper')}
                 value={formData.shopName}
                 onChange={(e) =>
                   setFormData({ ...formData, shopName: e.target.value })

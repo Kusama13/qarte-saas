@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, X, Heart } from 'lucide-react';
+import { Check, X, Heart, Smartphone } from 'lucide-react';
 import Image from 'next/image';
 import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
@@ -157,7 +157,7 @@ export function HeroSection({ topLogos = [] }: { topLogos?: HeroLogo[] } = {}) {
             {t('subtitle')}
           </p>
 
-          <div className="flex flex-col items-center xl:items-start gap-3 w-full sm:w-auto pt-2">
+          <div className="flex flex-col items-center xl:items-start gap-2 w-full sm:w-auto pt-2">
             <Link
               href="/auth/merchant/signup"
               onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
@@ -165,7 +165,11 @@ export function HeroSection({ topLogos = [] }: { topLogos?: HeroLogo[] } = {}) {
             >
               <span>{t('ctaPrimary')}</span>
             </Link>
-            <p className="text-xs text-gray-600 font-medium text-center">{t('ctaSubtext')}</p>
+            <p className="text-xs text-gray-600 font-medium text-center xl:text-left">{t('ctaSubtext')}</p>
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 border border-indigo-100 px-3 py-1 mt-1">
+              <Smartphone className="w-3.5 h-3.5 text-indigo-600" />
+              <p className="text-xs font-semibold text-indigo-700">{t('appBadge')}</p>
+            </div>
           </div>
         </div>
 
