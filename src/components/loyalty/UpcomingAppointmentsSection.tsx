@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatTime, getTodayForCountry, customServiceDisplayName } from '@/lib/utils';
 import { detectPaymentProvider, buildDepositLinks } from '@/lib/payment-providers';
+import { useToast } from '@/components/ui/Toast';
 import type { MerchantCountry } from '@/types';
 
 interface AppointmentSlot {
@@ -64,6 +65,7 @@ export default function UpcomingAppointmentsSection({
 }: UpcomingAppointmentsSectionProps) {
   const t = useTranslations('customerCard');
   const locale = useLocale();
+  const { addToast } = useToast();
 
   // Cancel state
   const [cancellingId, setCancellingId] = useState<string | null>(null);
@@ -188,6 +190,7 @@ export default function UpcomingAppointmentsSection({
       if (res.ok) {
         setConfirmCancelSlot(null);
         onCancelled?.(slotId);
+        addToast(t('bookingCancelled'), 'success');
       } else {
         const data = await res.json();
         setError(data.error || t('cancelError'));
@@ -220,6 +223,7 @@ export default function UpcomingAppointmentsSection({
           setRescheduleSlot(null);
           setRescheduleSuccess(false);
           onRescheduled?.(rescheduleSlot.id, data.new_slot_id);
+          addToast(t('bookingRescheduled'), 'success');
         }, 1500);
       } else {
         const data = await res.json();
