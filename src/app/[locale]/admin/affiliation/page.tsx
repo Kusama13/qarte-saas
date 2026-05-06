@@ -52,6 +52,21 @@ interface AffiliateLink {
   merchants: AffiliateMerchant[];
 }
 
+interface MerchantReferral {
+  id: string;
+  shop_name: string;
+  slug: string;
+  created_at: string;
+  subscription_status: string;
+  trial_ends_at: string | null;
+  referred_by_merchant_id: string;
+  parent: {
+    id: string;
+    shop_name: string;
+    slug: string;
+  } | null;
+}
+
 interface AmbassadorApplication {
   id: string;
   first_name: string;
@@ -102,11 +117,15 @@ export default function AffiliationPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Tab + Applications state
-  const [tab, setTab] = useState<'links' | 'applications'>('links');
+  const [tab, setTab] = useState<'links' | 'applications' | 'merchants'>('links');
   const [applications, setApplications] = useState<AmbassadorApplication[]>([]);
   const [appLoading, setAppLoading] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [slugOverrides, setSlugOverrides] = useState<Record<string, string>>({});
+
+  // Parrainage merchant->merchant state
+  const [merchantReferrals, setMerchantReferrals] = useState<MerchantReferral[]>([]);
+  const [merchantRefLoading, setMerchantRefLoading] = useState(false);
 
   const pendingApps: AmbassadorApplication[] = useMemo(() => applications.filter(a => a.status === 'pending'), [applications]);
   const processedApps: AmbassadorApplication[] = useMemo(() => applications.filter(a => a.status !== 'pending'), [applications]);
@@ -202,10 +221,30 @@ export default function AffiliationPage() {
     }
   };
 
+  const fetchMerchantReferrals = useCallback(async () => {
+    try {
+      setMerchantRefLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch('/api/admin/affiliation/merchant-referrals', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMerchantReferrals(data.referrals || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch merchant referrals:', err);
+    } finally {
+      setMerchantRefLoading(false);
+    }
+  }, [supabase]);
+
   useEffect(() => {
     fetchLinks();
     fetchApplications();
-  }, [fetchLinks, fetchApplications]);
+    fetchMerchantReferrals();
+  }, [fetchLinks, fetchApplications, fetchMerchantReferrals]);
 
   const openCreate = () => {
     setEditingLink(null);
@@ -380,7 +419,71 @@ export default function AffiliationPage() {
             </span>
           )}
         </button>
+        <button
+          onClick={() => setTab('merchants')}
+          className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+            tab === 'merchants' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Parrainages merchants ({merchantReferrals.length})
+        </button>
       </div>
+
+      {/* Merchant referrals tab */}
+      {tab === 'merchants' && (
+        <div className="space-y-4">
+          {merchantRefLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-[#5167fc]" />
+            </div>
+          ) : merchantReferrals.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
+              <div className="p-4 rounded-2xl bg-gray-50 inline-block mb-4">
+                <Users className="w-10 h-10 text-gray-300" />
+              </div>
+              <p className="font-semibold text-gray-900">Aucun parrainage merchant</p>
+              <p className="text-sm text-gray-500 mt-1">Les merchants inscrits via le lien <code className="text-xs bg-gray-100 px-1 rounded">?ref=&lt;slug&gt;</code> d&apos;un autre merchant apparaitront ici.</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-semibold">Filleul</th>
+                    <th className="px-4 py-3 text-left font-semibold">Parrain</th>
+                    <th className="px-4 py-3 text-left font-semibold">Statut</th>
+                    <th className="px-4 py-3 text-left font-semibold">Inscrit le</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {merchantReferrals.map((r) => (
+                    <tr key={r.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-gray-900">{r.shop_name}</p>
+                        <p className="text-xs text-gray-400 font-mono">{r.slug}</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        {r.parent ? (
+                          <>
+                            <p className="font-medium text-gray-700">{r.parent.shop_name}</p>
+                            <p className="text-xs text-gray-400 font-mono">{r.parent.slug}</p>
+                          </>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">supprimé</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">{statusBadge(r.subscription_status)}</td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {new Date(r.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Applications tab */}
       {tab === 'applications' && (

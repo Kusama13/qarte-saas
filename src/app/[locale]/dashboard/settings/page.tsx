@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { formatPhoneNumber, validatePhone, formatDate, PHONE_CONFIG, toBCP47 } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, formatDate, PHONE_CONFIG, toBCP47, getAppUrl } from '@/lib/utils';
 import { isPlanningHidden } from '@/lib/plan-tiers';
 import { SHOP_TYPES, type ShopType, COUNTRIES } from '@/types';
 import type { Merchant } from '@/types';
@@ -248,35 +248,32 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Parrainage - en haut */}
-      {merchant?.referral_code && (
-        <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white rounded-2xl border border-slate-100 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="shrink-0 w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center">
-              <Gift className="w-4 h-4 md:w-5 md:h-5 text-emerald-600" strokeWidth={2.25} />
+      {/* Lien d'affiliation merchant->merchant */}
+      {merchant?.slug && (() => {
+        const affiliationLink = `${getAppUrl()}/?ref=${merchant.slug}`;
+        return (
+          <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white rounded-2xl border border-slate-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="shrink-0 w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center">
+                <Gift className="w-4 h-4 md:w-5 md:h-5 text-emerald-600" strokeWidth={2.25} />
+              </div>
+              <h2 className="text-base md:text-xl font-bold text-gray-900">
+                {t('referralTitle')}
+              </h2>
             </div>
-            <h2 className="text-base md:text-xl font-bold text-gray-900">
-              {t('referralTitle')}
-            </h2>
-          </div>
 
-          <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-            {t.rich('referralDesc', { b: (chunks) => <strong className="font-semibold text-gray-800">{chunks}</strong> })}
-          </p>
+            <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+              {t.rich('referralDesc', { b: (chunks) => <strong className="font-semibold text-gray-800">{chunks}</strong> })}
+            </p>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-2xl bg-white/80 border border-emerald-100 mb-4">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">{t('referralCodeLabel')}</p>
-              <p className="text-lg font-mono font-bold text-[#4b0082] truncate">{merchant.referral_code}</p>
-            </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 mb-4">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(merchant.referral_code);
+                  navigator.clipboard.writeText(affiliationLink);
                   setReferralCopied(true);
                   setTimeout(() => setReferralCopied(false), 2000);
                 }}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl bg-[#4b0082]/10 text-[#4b0082] hover:bg-[#4b0082]/20 active:scale-[0.98] touch-manipulation transition-all"
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium rounded-xl bg-[#4b0082]/10 text-[#4b0082] hover:bg-[#4b0082]/20 active:scale-[0.98] touch-manipulation transition-all"
               >
                 {referralCopied ? (
                   <><Check className="w-4 h-4" /> {t('referralCopied')}</>
@@ -286,28 +283,28 @@ export default function SettingsPage() {
               </button>
               <button
                 onClick={() => {
-                  const text = t('referralShareText', { code: merchant.referral_code });
+                  const text = t('referralShareText', { link: affiliationLink });
                   if (navigator.share) {
-                    navigator.share({ text }).catch(() => {});
+                    navigator.share({ text, url: affiliationLink }).catch(() => {});
                   } else {
                     navigator.clipboard.writeText(text);
                     setReferralCopied(true);
                     setTimeout(() => setReferralCopied(false), 2000);
                   }
                 }}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98] touch-manipulation transition-all"
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98] touch-manipulation transition-all"
               >
                 <Share2 className="w-4 h-4" />
                 {t('referralShare')}
               </button>
             </div>
-          </div>
 
-          <p className="text-xs text-gray-500">
-            {t('referralFooter')}
-          </p>
-        </div>
-      )}
+            <p className="text-xs text-gray-500">
+              {t('referralFooter')}
+            </p>
+          </div>
+        );
+      })()}
 
       <div className="mb-6 md:mb-8 p-5 md:p-8 bg-white rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-start justify-between gap-4">

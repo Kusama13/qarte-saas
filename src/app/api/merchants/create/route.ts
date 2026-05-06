@@ -129,6 +129,23 @@ export async function POST(request: NextRequest) {
       spa: 8, estheticienne: 10, tatouage: 8, autre: 10,
     };
 
+    // Affiliation merchant->merchant : si signup_source est `affiliate_<slug>`
+    // et que <slug> matche un merchant existant, on stocke le parrain.
+    let referred_by_merchant_id: string | null = null;
+    if (typeof signup_source === 'string' && signup_source.startsWith('affiliate_')) {
+      const refSlug = signup_source.slice('affiliate_'.length);
+      if (/^[a-z0-9-]+$/.test(refSlug)) {
+        const { data: refMerchant } = await supabaseAdmin
+          .from('merchants')
+          .select('id')
+          .eq('slug', refSlug)
+          .maybeSingle();
+        if (refMerchant && refMerchant.id !== user_id) {
+          referred_by_merchant_id = refMerchant.id;
+        }
+      }
+    }
+
     const { data, error } = await supabaseAdmin
       .from('merchants')
       .insert({
@@ -143,6 +160,7 @@ export async function POST(request: NextRequest) {
         country: merchantCountry,
         stamps_required: defaultStamps[shop_type] || 10,
         ...(signup_source && { signup_source: String(signup_source).slice(0, 100) }),
+        ...(referred_by_merchant_id && { referred_by_merchant_id }),
         ...(locale === 'en' && { locale: 'en' }),
       })
       .select()
