@@ -60,6 +60,8 @@ import {
   GiftCardReceivedEmail,
   GiftCardMerchantNotificationEmail,
   SmsCampaignSentEmail,
+  AffiliationWelcomeEmail,
+  AffiliateConversionEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import type { BookingConfirmationMode } from '@/emails/BookingConfirmationEmail';
@@ -225,6 +227,27 @@ export async function sendWelcomeEmail(
   locale: EmailLocale = 'fr'
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'welcome', { shopName }), WelcomeEmail, { shopName, slug, locale }, { logLabel: 'Welcome email' });
+}
+
+export async function sendAffiliationWelcomeEmail(
+  to: string,
+  shopName: string,
+  parentShopName: string | null,
+  locale: EmailLocale = 'fr'
+): Promise<SendEmailResult> {
+  const subject = parentShopName
+    ? subj(locale, 'affiliationWelcome', { parentShopName })
+    : subj(locale, 'affiliationWelcomeNoParent');
+  return sendEmail(to, subject, AffiliationWelcomeEmail, { shopName, parentShopName, locale }, { logLabel: 'Affiliation welcome email' });
+}
+
+export async function sendAffiliateConversionEmail(
+  to: string,
+  parentShopName: string,
+  filleulShopName: string,
+  locale: EmailLocale = 'fr'
+): Promise<SendEmailResult> {
+  return sendEmail(to, subj(locale, 'affiliateConversion', { filleulShopName }), AffiliateConversionEmail, { parentShopName, filleulShopName, locale }, { logLabel: 'Affiliate conversion email' });
 }
 
 interface TrialEndingStats {

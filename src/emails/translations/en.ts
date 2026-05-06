@@ -74,6 +74,9 @@ export const en = {
     smsQuotaReached: '{shopName}, SMS quota done — sends suspended',
     smsPackPurchase: '{shopName}, your pack of {packSize} SMS is credited',
     smsCampaignSent: '{shopName}, your SMS campaign was sent to {recipientCount} clients',
+    affiliationWelcome: '{parentShopName} gives you $10 off Qarte',
+    affiliationWelcomeNoParent: 'Welcome to Qarte — $10 off',
+    affiliateConversion: '+$10 for you: {filleulShopName} subscribed to Qarte',
   },
 
   baseLayout: {
@@ -1078,5 +1081,27 @@ export const en = {
     footer: 'If you have a question about your pack, just reply to this email.',
     signature: 'The Qarte team 💜',
   },
-} as const;
 
+  affiliationWelcome: {
+    preview: 'Code {code} inside this email — applies to all plans',
+    heading: 'Welcome {shopName}!',
+    introWithParent: '<strong>{parentShopName}</strong> told you about Qarte — a big thank you to them. As a welcome gift, here is <strong>$10 off</strong> your 1st month, on any plan.',
+    introNoParent: 'You signed up via a Qarte affiliate link. As a welcome gift, here is <strong>$10 off</strong> your 1st month, on any plan.',
+    codeLabel: 'Your discount code',
+    codeHint: 'Enter it in the "Promo code" field when subscribing. The discount applies automatically.',
+    cta: 'Activate my subscription',
+    helpText: 'Questions? Reply to this email or WhatsApp us anytime.',
+    signature: 'The Qarte team',
+  },
+
+  affiliateConversion: {
+    preview: 'Our team will apply your reward within 48h',
+    heading: 'Thank you {parentShopName}!',
+    intro: '<strong>{filleulShopName}</strong> just subscribed to Qarte through your link — well done.',
+    rewardTitle: 'Your reward',
+    rewardBody: '<strong>$10 off</strong> will be credited on your next invoice <strong>by our team within 48h</strong>. Nothing to do, we handle it.',
+    cta: 'View my subscription',
+    nudge: 'Keep sharing your link: every new paid signup earns you $10.',
+    signature: 'The Qarte team',
+  },
+} as const;

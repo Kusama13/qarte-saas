@@ -4,7 +4,7 @@ import { getSmsQuotaFor, isLegacyMerchant } from '@/lib/plan-tiers';
 import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 import logger from '@/lib/logger';
-import { sendSubscriptionConfirmedEmail, sendPaymentFailedEmail, sendSubscriptionCanceledEmail, sendSubscriptionReactivatedEmail, sendSmsPackPurchaseEmail, sendNewSmsPackPurchaseNotification } from '@/lib/email';
+import { sendSubscriptionConfirmedEmail, sendPaymentFailedEmail, sendSubscriptionCanceledEmail, sendSubscriptionReactivatedEmail, sendSmsPackPurchaseEmail, sendNewSmsPackPurchaseNotification, sendAffiliateConversionEmail } from '@/lib/email';
 import type { EmailLocale } from '@/emails/translations';
 import { sendCapiPurchaseEvent } from '@/lib/facebook-capi';
 import { toBCP47, getCurrencyForCountry } from '@/lib/utils';
@@ -303,6 +303,50 @@ export async function POST(request: Request) {
       const invoice = event.data.object;
 
       logger.debug('Payment succeeded for customer:', invoice.customer);
+
+      // Affiliation : seul le 1er paiement (billing_reason='subscription_create')
+      // declenche la notification parrain. Skip pour tous les renewals (cycle).
+      if (invoice.billing_reason === 'subscription_create') {
+        const { data: filleul } = await supabase
+          .from('merchants')
+          .select('id, shop_name, referred_by_merchant_id')
+          .eq('stripe_customer_id', invoice.customer as string)
+          .maybeSingle();
+
+        if (filleul?.referred_by_merchant_id) {
+          // Stripe peut retry ce webhook, d'ou le claim atomique : seul le
+          // worker qui gagne le UPDATE conditional envoie l'email.
+          const { data: claimed } = await supabase
+            .from('merchants')
+            .update({ affiliate_parent_notified_at: new Date().toISOString() })
+            .eq('id', filleul.id)
+            .is('affiliate_parent_notified_at', null)
+            .select('id')
+            .maybeSingle();
+
+          if (claimed) {
+            const { data: parent } = await supabase
+              .from('merchants')
+              .select('shop_name, user_id, locale')
+              .eq('id', filleul.referred_by_merchant_id)
+              .maybeSingle();
+
+            if (parent?.user_id) {
+              const { data: parentUser } = await supabase.auth.admin.getUserById(parent.user_id);
+              if (parentUser?.user?.email) {
+                await sendAffiliateConversionEmail(
+                  parentUser.user.email,
+                  parent.shop_name,
+                  filleul.shop_name,
+                  mLocale(parent),
+                ).catch((err) => {
+                  logger.error('Failed to send affiliate conversion email', err);
+                });
+              }
+            }
+          }
+        }
+      }
 
       // Restore to active if was past_due
       const { data: merchant } = await supabase

@@ -56,3 +56,5 @@ export { GiftCardOrderConfirmationEmail } from './GiftCardOrderConfirmationEmail
 export { GiftCardActivatedEmail } from './GiftCardActivatedEmail';
 export { GiftCardReceivedEmail } from './GiftCardReceivedEmail';
 export { GiftCardMerchantNotificationEmail } from './GiftCardMerchantNotificationEmail';
+export { AffiliationWelcomeEmail } from './AffiliationWelcomeEmail';
+export { AffiliateConversionEmail } from './AffiliateConversionEmail';

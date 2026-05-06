@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import logger from '@/lib/logger';
 import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
-import { sendWelcomeEmail, sendNewMerchantNotification, cancelScheduledEmail } from '@/lib/email';
+import { sendWelcomeEmail, sendAffiliationWelcomeEmail, sendNewMerchantNotification, cancelScheduledEmail } from '@/lib/email';
 import { generateSlug, generateScanCode, generateReferralCode, formatPhoneNumber } from '@/lib/utils';
 import { PG_UNIQUE_VIOLATION } from '@/lib/postgres-errors';
 import type { MerchantCountry } from '@/types';
@@ -132,16 +132,18 @@ export async function POST(request: NextRequest) {
     // Affiliation merchant->merchant : si signup_source est `affiliate_<slug>`
     // et que <slug> matche un merchant existant, on stocke le parrain.
     let referred_by_merchant_id: string | null = null;
+    let parentShopName: string | null = null;
     if (typeof signup_source === 'string' && signup_source.startsWith('affiliate_')) {
       const refSlug = signup_source.slice('affiliate_'.length);
       if (/^[a-z0-9-]+$/.test(refSlug)) {
         const { data: refMerchant } = await supabaseAdmin
           .from('merchants')
-          .select('id')
+          .select('id, shop_name, user_id')
           .eq('slug', refSlug)
           .maybeSingle();
-        if (refMerchant && refMerchant.id !== user_id) {
+        if (refMerchant && refMerchant.user_id !== user_id) {
           referred_by_merchant_id = refMerchant.id;
+          parentShopName = refMerchant.shop_name;
         }
       }
     }
@@ -221,10 +223,24 @@ export async function POST(request: NextRequest) {
       }
 
       // Welcome email en priorité (Resend API call #2)
+      // Si parraine par un autre merchant : email affiliation (code promo)
+      // AU LIEU du welcome standard. parentShopName resolu en amont du
+      // slug lookup, pas de requete supplementaire.
       const emailLocale = locale === 'en' ? 'en' : 'fr';
-      await sendWelcomeEmail(userData.user.email, trimmedShopName, slug, emailLocale).catch((err) => {
-        logger.error('Failed to send welcome email', err);
-      });
+      if (referred_by_merchant_id) {
+        await sendAffiliationWelcomeEmail(
+          userData.user.email,
+          trimmedShopName,
+          parentShopName,
+          emailLocale,
+        ).catch((err) => {
+          logger.error('Failed to send affiliation welcome email', err);
+        });
+      } else {
+        await sendWelcomeEmail(userData.user.email, trimmedShopName, slug, emailLocale).catch((err) => {
+          logger.error('Failed to send welcome email', err);
+        });
+      }
 
       // Track welcome email in pending_email_tracking for admin visibility
       await supabaseAdmin.from('pending_email_tracking').insert({

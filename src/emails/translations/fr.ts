@@ -74,6 +74,9 @@ export const fr = {
     smsQuotaReached: '{shopName}, quota SMS terminé — envois suspendus',
     smsPackPurchase: '{shopName}, ton pack de {packSize} SMS est crédité',
     smsCampaignSent: '{shopName}, ta campagne SMS a été envoyée à {recipientCount} clientes',
+    affiliationWelcome: '{parentShopName} t\'offre 10€ sur Qarte',
+    affiliationWelcomeNoParent: 'Bienvenue sur Qarte — 10€ offerts',
+    affiliateConversion: '+10€ pour toi : {filleulShopName} s\'abonne à Qarte',
   },
 
   baseLayout: {
@@ -1078,5 +1081,27 @@ export const fr = {
     footer: 'Si tu as une question sur ton pack, r\u00e9ponds simplement \u00e0 cet email.',
     signature: 'L\'\u00e9quipe Qarte 💜',
   },
-} as const;
 
+  affiliationWelcome: {
+    preview: 'Code {code} dans cet email — applicable sur tous les plans',
+    heading: 'Bienvenue {shopName} !',
+    introWithParent: '<strong>{parentShopName}</strong> t\'a parlé de Qarte — un grand merci à eux. En cadeau de bienvenue, voici <strong>10€ de réduction</strong> sur ton 1er mois d\'abonnement, peu importe le plan choisi.',
+    introNoParent: 'Tu t\'es inscrit via un lien d\'affiliation Qarte. En cadeau de bienvenue, voici <strong>10€ de réduction</strong> sur ton 1er mois d\'abonnement, peu importe le plan choisi.',
+    codeLabel: 'Ton code de réduction',
+    codeHint: 'Saisis-le dans le champ « Code promo » au moment de t\'abonner. La réduction s\'applique automatiquement.',
+    cta: 'Activer mon abonnement',
+    helpText: 'Une question ? Réponds à cet email ou écris-nous sur WhatsApp.',
+    signature: 'L\'équipe Qarte',
+  },
+
+  affiliateConversion: {
+    preview: 'Notre équipe applique ta récompense sous 48h',
+    heading: 'Merci {parentShopName} !',
+    intro: '<strong>{filleulShopName}</strong> vient de s\'abonner à Qarte grâce à ton lien — bien joué.',
+    rewardTitle: 'Ta récompense',
+    rewardBody: '<strong>10€ de réduction</strong> seront crédités sur ta prochaine facture <strong>par notre équipe sous 48h</strong>. Tu n\'as rien à faire, on s\'en occupe.',
+    cta: 'Voir mon abonnement',
+    nudge: 'Continue à partager ton lien : chaque nouvelle inscription payante te rapporte 10€.',
+    signature: 'L\'équipe Qarte',
+  },
+} as const;
