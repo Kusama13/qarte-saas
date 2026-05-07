@@ -14,7 +14,7 @@ import { Input, PhoneInput } from '@/components/ui';
 import { AddressAutocomplete, type AddressSuggestion } from '@/components/ui/AddressAutocomplete';
 import { getSupabase } from '@/lib/supabase';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
-import { formatPhoneNumber, toLocalPhone, PHONE_COUNTRIES } from '@/lib/utils';
+import { formatPhoneNumber, toLocalPhone, PHONE_COUNTRIES, isValidUrl, normalizeUrl } from '@/lib/utils';
 import type { Merchant, MerchantCountry } from '@/types';
 
 interface InfoSectionProps {
@@ -98,11 +98,14 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
     }
   };
 
+  const addressInvalid = !!address.trim() && !addressCoords;
+  const bookingUrlInvalid = !!bookingUrl.trim() && !isValidUrl(bookingUrl);
+  const canSave = !addressInvalid && !bookingUrlInvalid;
+
   const handleSave = () => {
+    if (!canSave) return;
     save(async () => {
-      const normalizedUrl = bookingUrl.trim()
-        ? (/^https?:\/\//i.test(bookingUrl.trim()) ? bookingUrl.trim() : `https://${bookingUrl.trim()}`)
-        : null;
+      const normalizedUrl = normalizeUrl(bookingUrl) || null;
 
       const { error } = await supabase
         .from('merchants')
@@ -163,6 +166,9 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
               }}
               className="h-10 text-sm"
             />
+            {address.trim() && !addressCoords && (
+              <p className="text-xs text-amber-600 mt-1">{t('infoAddressNotGeocoded')}</p>
+            )}
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-700 mb-1.5 block">{t('infoBio')}</label>
@@ -301,9 +307,13 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
           placeholder={t('infoBookingPlaceholder')}
           value={bookingUrl}
           onChange={(e) => setBookingUrl(e.target.value)}
-          className="h-10 text-sm"
+          className={`h-10 text-sm ${bookingUrlInvalid ? 'border-amber-400 focus:border-amber-500' : ''}`}
         />
-        <p className="text-xs text-gray-400 mt-1">{t('infoBookingHint')}</p>
+        {bookingUrlInvalid ? (
+          <p className="text-xs text-amber-600 mt-1">{t('infoBookingInvalid')}</p>
+        ) : (
+          <p className="text-xs text-gray-400 mt-1">{t('infoBookingHint')}</p>
+        )}
       </div>
 
       {/* ── Réseaux sociaux ── */}
@@ -373,8 +383,8 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
         <button
           type="button"
           onClick={handleSave}
-          disabled={saving}
-          className={`w-full py-2.5 rounded-xl text-sm font-bold active:scale-[0.98] touch-manipulation transition-all flex items-center justify-center gap-2 ${
+          disabled={saving || !canSave}
+          className={`w-full py-2.5 rounded-xl text-sm font-bold active:scale-[0.98] touch-manipulation transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 ${
             saved
               ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
               : 'bg-[#4b0082] text-white hover:bg-[#4b0082]/90'
@@ -383,6 +393,11 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : null}
           {saving ? t('infoSaving') : saved ? t('infoSaved') : t('infoSave')}
         </button>
+        {!canSave && (
+          <p className="text-xs text-amber-600 mt-2 text-center">
+            {t('infoSaveBlocked')}
+          </p>
+        )}
       </div>
     </div>
   );

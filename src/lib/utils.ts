@@ -763,6 +763,20 @@ export function normalizeUrl(url: string): string {
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
 
+/** True si la chaine ressemble a un URL valide (apres normalisation). Usage : warning UI sur input.
+ *  host.length >= 4 filtre des typos courts (`a.b`, `localhost`) sans bloquer les TLD valides
+ *  les plus courts (`a.co` = 4 chars passe). */
+export function isValidUrl(raw: string | null | undefined): boolean {
+  const normalized = normalizeUrl(raw ?? '');
+  if (!normalized) return false;
+  try {
+    const host = new URL(normalized).hostname;
+    return host.includes('.') && host.length >= 4;
+  } catch {
+    return false;
+  }
+}
+
 export function getAppUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 }

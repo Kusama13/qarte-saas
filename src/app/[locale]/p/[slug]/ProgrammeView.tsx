@@ -22,13 +22,6 @@ import { writeLoginIntent, type LoginIntent } from '@/lib/customer-login-intent'
 
 type DaySlot = OpeningHours[string];
 
-// Pure: structural signature of a day. Two days merge in the grouped view
-// only when their full signature matches (break diffs must NOT collapse).
-function slotSignature(slot: DaySlot): string {
-  if (!slot) return 'CLOSED';
-  return `OPEN|${slot.open}|${slot.close}|${slot.break_start || ''}|${slot.break_end || ''}`;
-}
-
 function isOpenNow(slot: DaySlot, nowHHMM: string): boolean {
   if (!slot) return false;
   if (nowHHMM < slot.open || nowHHMM >= slot.close) return false;
@@ -36,7 +29,19 @@ function isOpenNow(slot: DaySlot, nowHHMM: string): boolean {
   return true;
 }
 
+function isOnBreak(slot: DaySlot, nowHHMM: string): boolean {
+  if (!slot || !slot.break_start || !slot.break_end) return false;
+  if (nowHHMM < slot.open || nowHHMM >= slot.close) return false;
+  return nowHHMM >= slot.break_start && nowHHMM < slot.break_end;
+}
+
 type Photo = { id: string; url: string; position: number };
+
+const HOURS_BADGE_STYLES = {
+  open:   { wrap: 'bg-emerald-50 text-emerald-700', dot: 'bg-emerald-500', labelKey: 'openNow' as const },
+  break:  { wrap: 'bg-amber-50 text-amber-700',     dot: 'bg-amber-500',   labelKey: 'onBreak' as const },
+  closed: { wrap: 'bg-gray-100 text-gray-500',      dot: 'bg-gray-400',    labelKey: 'closedNow' as const },
+} as const;
 
 const OFFER_TIERS = {
   emerald: { border: 'border-emerald-200/70', bg: 'bg-emerald-50/50', iconBg: 'bg-emerald-100', iconText: 'text-emerald-600', labelText: 'text-emerald-700', ctaBg: 'bg-emerald-600 hover:bg-emerald-700' },
@@ -186,6 +191,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [servicesExpanded, setServicesExpanded] = useState(false);
   const [planningExpanded, setPlanningExpanded] = useState(false);
+  const [hoursExpanded, setHoursExpanded] = useState(false);
   const [promoOffer, setPromoOffer] = useState<PromoOffer | null>(null);
   // Online booking: mode créneaux needs pre-generated slots, mode libre needs at least one open day
   // + tier gating: Fidélité tier doesn't get the booking module on the public page
@@ -213,29 +219,21 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
 
   const formatSlotHours = (slot: DaySlot): string => {
     if (!slot) return t('closed');
+    const ft = (h: string) => formatTime(h, locale);
     if (slot.break_start && slot.break_end) {
-      return `${slot.open}–${slot.break_start}, ${slot.break_end}–${slot.close}`;
+      return `${ft(slot.open)}–${ft(slot.break_start)} · ${ft(slot.break_end)}–${ft(slot.close)}`;
     }
-    return `${slot.open}–${slot.close}`;
+    return `${ft(slot.open)}–${ft(slot.close)}`;
   };
-  const formatGroupLabel = (days: number[]): string => {
-    if (days.length === 1) return DAY_LABELS_SHORT[days[0] - 1];
-    return `${DAY_LABELS_SHORT[days[0] - 1]}–${DAY_LABELS_SHORT[days[days.length - 1] - 1]}`;
-  };
-  const groupedHours = useMemo(() => {
-    if (!hours) return [] as { days: number[]; slot: DaySlot }[];
-    const out: { days: number[]; slot: DaySlot; sig: string }[] = [];
-    for (let d = 1; d <= 7; d++) {
-      const slot = hours[String(d)] ?? null;
-      const sig = slotSignature(slot);
-      const last = out[out.length - 1];
-      if (last && last.sig === sig) last.days.push(d);
-      else out.push({ days: [d], slot, sig });
-    }
-    return out.map(({ days, slot }) => ({ days, slot }));
-  }, [hours]);
   const todaySlot = hours?.[todayKey] ?? null;
+  const onBreak = isOnBreak(todaySlot, merchantNowHHMM);
   const openNow = isOpenNow(todaySlot, merchantNowHHMM);
+  const hoursStatus: 'open' | 'break' | 'closed' = onBreak ? 'break' : openNow ? 'open' : 'closed';
+  const hoursBadge = HOURS_BADGE_STYLES[hoursStatus];
+  // 1 ligne par jour (pas de regroupement) reste plus scannable au depliage manuel.
+  const otherDays = hours
+    ? [1, 2, 3, 4, 5, 6, 7].filter(d => d !== todayDayNum).map(d => ({ day: d, slot: hours[String(d)] ?? null }))
+    : [];
 
   // Fetch active promo offer (or use demo data)
   useEffect(() => {
@@ -509,44 +507,67 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.14em]">
                 {t('hours')}
               </p>
-              <span
-                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                  openNow ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'
-                }`}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full ${openNow ? 'bg-emerald-500' : 'bg-gray-400'}`} />
-                {openNow ? t('openNow') : t('closedNow')}
+              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold ${hoursBadge.wrap}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${hoursBadge.dot}`} />
+                {t(hoursBadge.labelKey)}
               </span>
             </div>
-            <div className="space-y-0.5">
-              {groupedHours.map((group) => {
-                const isTodayGroup = group.days.includes(todayDayNum);
-                return (
-                  <div
-                    key={group.days.join('-')}
-                    className="flex items-baseline justify-between gap-3 px-2 py-1.5 rounded-lg"
-                    style={isTodayGroup ? { backgroundColor: `${p}0F` } : undefined}
+            {(() => {
+              const renderHoursRow = (day: number, slot: DaySlot, isToday: boolean) => (
+                <div
+                  key={day}
+                  className="flex items-baseline justify-between gap-3 px-2 py-1.5 rounded-lg"
+                  style={isToday ? { backgroundColor: `${p}0F` } : undefined}
+                >
+                  <span
+                    className={`text-[12.5px] shrink-0 ${isToday ? 'font-bold' : 'font-semibold text-gray-700'}`}
+                    style={isToday ? { color: p } : undefined}
                   >
-                    <span
-                      className={`text-[12.5px] shrink-0 ${isTodayGroup ? 'font-bold' : 'font-semibold text-gray-700'}`}
-                      style={isTodayGroup ? { color: p } : undefined}
-                    >
-                      {formatGroupLabel(group.days)}
-                    </span>
-                    <span
-                      className={`text-[12.5px] text-right tabular-nums ${
-                        group.slot
-                          ? isTodayGroup ? 'font-semibold' : 'font-medium text-gray-700'
-                          : 'font-medium text-gray-400'
-                      }`}
-                      style={isTodayGroup && group.slot ? { color: p } : undefined}
-                    >
-                      {formatSlotHours(group.slot)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                    {DAY_LABELS_SHORT[day - 1]}
+                  </span>
+                  <span
+                    className={`text-[12.5px] text-right tabular-nums ${
+                      slot
+                        ? isToday ? 'font-semibold' : 'font-medium text-gray-700'
+                        : 'font-medium text-gray-400'
+                    }`}
+                    style={isToday && slot ? { color: p } : undefined}
+                  >
+                    {formatSlotHours(slot)}
+                  </span>
+                </div>
+              );
+              return (
+                <>
+                  {renderHoursRow(todayDayNum, todaySlot, true)}
+                  <AnimatePresence initial={false}>
+                    {hoursExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                        className="overflow-hidden space-y-0.5 pt-0.5"
+                      >
+                        {otherDays.map(({ day, slot }) => renderHoursRow(day, slot, false))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
+              );
+            })()}
+            {otherDays.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setHoursExpanded(v => !v)}
+                className="mt-2 w-full flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] font-semibold text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                {hoursExpanded ? t('hideOtherDays') : t('seeAllDays')}
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${hoursExpanded ? 'rotate-180' : ''}`}
+                />
+              </button>
+            )}
           </motion.div>
         )}
 
