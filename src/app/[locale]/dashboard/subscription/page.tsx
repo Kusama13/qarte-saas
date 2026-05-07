@@ -159,6 +159,7 @@ export default function SubscriptionPage() {
       : t.rich('featureSmsMonthly', { accent: smsAccent }),
     t('featureSmsCampaigns'),
     t('featureMemberPrograms'),
+    t('featureGiftCards'),
   ];
   const allInExtrasFeatures = buildAllInExtras(billingPlan);
 

@@ -1,4 +1,7 @@
 {
+  "planUpgradeCta": {
+    "discoverAllIn": "Découvrir Tout-en-un"
+  },
   "common": {
     "save": "Enregistrer",
     "cancel": "Annuler",
@@ -973,9 +976,11 @@
       "title": "Mes SMS",
       "includedUsage": "{sent}/{quota} inclus ce cycle",
       "packBalance": "+ {balance} dans mon pack",
+      "packOnlyBalance": "{balance} SMS dans mon pack",
       "buyPack": "Acheter un pack",
       "warningMessage": "Tu approches de la limite. Anticipe avec un pack pour éviter l'interruption.",
       "blockedMessage": "Ton quota SMS est terminé. Merci d'acheter un pack pour continuer à envoyer.",
+      "packOnlyBlockedMessage": "Prends un pack SMS pour lancer tes premières campagnes.",
       "historyToggle": "Mes derniers achats",
       "historyEmpty": "Aucun pack acheté pour le moment.",
       "historyRefunded": "Remboursé",
@@ -1011,8 +1016,8 @@
       "redirecting": "Redirection…"
     },
     "smsTab": {
-      "upgradeTitle": "Les campagnes SMS sont incluses dans Tout-en-un",
-      "upgradeDesc": "Rédige tes campagnes marketing, choisis ton audience, validation par notre équipe et envoi au bon créneau légal. Passe en Tout-en-un pour activer.",
+      "upgradeTitle": "Fais revenir tes clientes avec un SMS",
+      "upgradeDesc": "Cible tes inactives, annonce une promo, remplis un mardi creux. Tu rédiges, on valide ensemble et on envoie au bon créneau légal.",
       "composerTitle": "Rédiger mon SMS",
       "suggestions": "Inspirations",
       "messageLabel": "Message",
@@ -1164,9 +1169,9 @@
       "planningDisabledHint": "Active d'abord le planning en ligne pour utiliser ce rappel.",
       "googleReviewMissingHint": "Ajoute ton lien Google Review dans les paramètres pour activer cette automatisation.",
       "rewardMissingHint": "Configure la récompense de ton programme de fidélité pour activer cette automatisation.",
-      "tierUpgradeHint": "Réservé au tier Tout-en-un — passe sur l'offre complète pour l'activer.",
-      "fidelityBannerTitle": "Tu es en Fidélité 19€",
-      "fidelityBannerDesc": "Les SMS anniversaire et récompense parrainage partent automatiquement — sans consommer ton quota. Les autres automatisations nécessitent Tout-en-un.",
+      "tierUpgradeHint": "Disponible sur l'offre complète.",
+      "fidelityBannerTitle": "Tu es en plan Fidélité",
+      "fidelityBannerDesc": "Les SMS anniversaire et récompense parrainage partent tout seuls, sans toucher à ton quota. Pour les rappels de RDV, les avis Google et les autres automatisations, c'est sur l'offre complète.",
       "reviewSms": "Félicitations + avis Google",
       "reviewSmsDesc": "SMS envoyé 2h après chaque récompense utilisée (palier 1 ou 2). Une seule relance par client tous les 60 jours pour éviter la sur-sollicitation.",
       "reviewSmsTemplate": "Sophie, félicitations pour votre récompense chez {shop} ! Votre avis Google ferait la différence : {link}.",
@@ -1242,8 +1247,8 @@
     }
   },
   "members": {
-    "upgradeTitle": "Les programmes Membres VIP sont inclus dans Tout-en-un",
-    "upgradeDesc": "Crée des programmes de fidélisation premium (avantage permanent, durée libre, skip-acompte). Passe en Tout-en-un pour activer.",
+    "upgradeTitle": "Crée des abonnements pour tes meilleures clientes",
+    "upgradeDesc": "Brushing illimité, -10% à vie, pose offerte chaque mois. Tu fixes l'avantage et la durée, elles s'engagent — un revenu récurrent qui te suit chaque mois.",
     "title": "Clients fidèles",
     "subtitle": "Récompense tes meilleurs clients",
     "howItWorks": "Comment ça marche ?",
@@ -1744,7 +1749,7 @@
     "changeTierTitle": "Choisis ton plan",
     "changeTierDesc": "Changement immédiat avec calcul au prorata.",
     "changeTierCurrent": "Plan actuel",
-    "changeTierDowngradeWarning": "Tu perdras : planning, résa en ligne, programmes Membres, jeu concours, campagnes SMS.",
+    "changeTierDowngradeWarning": "Tu garderas la fidélité, ta vitrine et le parrainage. Tu mettras de côté : planning, résa en ligne, programmes Membres, bons cadeaux, jeu concours, et ton quota SMS mensuel (les packs restent disponibles).",
     "changeTierProrationNote": "Stripe ajustera ta prochaine facture en fonction du temps déjà payé.",
     "upgradeSuccess": "Tu es passé en Tout-en-un — tout est débloqué.",
     "downgradeSuccess": "Tu es passé en Fidélité.",
@@ -1813,6 +1818,7 @@
     "featureDuoOffer": "Offre duo",
     "featureContest": "Jeu concours mensuel",
     "featureMemberPrograms": "Programmes membres (abonnements)",
+    "featureGiftCards": "Bons cadeaux à offrir",
     "featureSmsCampaigns": "Campagnes SMS à tes clientes",
     "featureReminders": "Rappels automatiques",
     "featureDashboard": "Statistiques en temps r\u00e9el",
@@ -1936,8 +1942,8 @@
   },
   "planning": {
     "title": "Planning",
-    "upgradeTitle": "Le planning est inclus dans Tout-en-un",
-    "upgradeDesc": "Crée des créneaux, accepte les réservations en ligne avec ou sans acompte, gère ton agenda. Passe en Tout-en-un pour débloquer.",
+    "upgradeTitle": "Tes résas tombent pendant que tu travailles",
+    "upgradeDesc": "Tes clientes réservent en ligne 24h/24, paient un acompte si tu veux, et ton agenda se remplit tout seul. Plus de téléphone à décrocher entre deux clientes.",
     "visiblePublic": "Visible sur ta page publique",
     "hiddenPublic": "Masqué de ta page publique",
     "active": "Actif",
@@ -3655,8 +3661,8 @@
   "contest": {
     "pageTitle": "Jeu concours mensuel",
     "pageDesc": "Une raison de revenir, chaque mois",
-    "upgradeTitle": "Le jeu concours est inclus dans Tout-en-un",
-    "upgradeDesc": "Tirage au sort mensuel parmi tes clientes fidèles, story d'annonce et de gagnante prêtes à publier. Passe en Tout-en-un pour activer.",
+    "upgradeTitle": "Booste ta visibilité Insta avec un concours",
+    "upgradeDesc": "Un tirage au sort par mois parmi tes clientes fidèles, plus la story d'annonce et de gagnante prêtes à publier. Tes clientes te taggent, leurs copines découvrent ton salon.",
     "title": "Tirage au sort",
     "desc": "un gagnant chaque mois",
     "hint": "Les clientes qui réservent pendant le mois participent automatiquement au tirage.",
@@ -4036,6 +4042,8 @@
     "finalDesc": "Remplis le formulaire ci-dessus et commence à toucher ta commission dès le premier abonnement."
   },
   "giftCards": {
+    "upgradeTitle": "Vends des bons cadeaux toute l'année",
+    "upgradeDesc": "Noël, anniversaires, fête des mères — tes clientes offrent un montant ou une prestation à leurs proches. Tu encaisses sans avoir un RDV à gérer, et tu fais venir de nouvelles têtes.",
     "pageTitle": "Bons cadeaux",
     "pageDesc": "Reçois et gère les bons cadeaux offerts par tes clientes",
     "tabPending": "À valider",

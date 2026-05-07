@@ -6,8 +6,6 @@ import type { AudienceFilter } from '@/lib/sms-audience';
 import { countSms, validateMarketingSms, normalizeToGsm7, withOvhStopClause, bodyHasPersonalization, computeCampaignSmsBreakdown } from '@/lib/sms-validator';
 import { SMS_UNIT_COST_CENTS, getSmsUsageThisMonth, getEffectiveQuota } from '@/lib/sms';
 import { isLegalSendTime, nextLegalSlot } from '@/lib/sms-compliance';
-import { getPlanFeatures } from '@/lib/plan-tiers';
-import { triggerUpgradeAllInEmail } from '@/lib/upgrade-triggers';
 import { sendNewSmsCampaignNotification } from '@/lib/email';
 import logger from '@/lib/logger';
 
@@ -49,17 +47,10 @@ export async function POST(request: NextRequest) {
       .single();
     if (!merchant) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 
-    if (!getPlanFeatures(merchant).marketingSms) {
-      // Trigger UpgradeAllInEmail (dedup 14j via pending_email_tracking code -330)
-      // Fire-and-forget : ne bloque pas la réponse 403
-      void triggerUpgradeAllInEmail(supabaseAdmin, merchant.id, 'sms_campaign_blocked').catch((e) =>
-        console.warn('[upgrade-trigger] failed', e),
-      );
-      return NextResponse.json(
-        { error: 'plan_tier_required', message: 'Les campagnes SMS marketing nécessitent le plan Tout-en-un.' },
-        { status: 403 },
-      );
-    }
+    // Note : depuis que Fidélité a marketingSms=true (envoi possible via pack),
+    // le vrai blocage est `quotaLeft + packBalance >= recipients` plus bas (402).
+    // Le trigger UpgradeAllInEmail historique ne déclenche plus ici — l'utilisateur
+    // peut acheter un pack OU upgrader, on laisse le choix.
 
     // Validate content (appends STOP, checks length/forbidden)
     const validation = validateMarketingSms(body);

@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { useToast } from '@/components/ui/Toast';
+import { getPlanFeatures } from '@/lib/plan-tiers';
+import PlanUpgradeCTA from '@/components/dashboard/PlanUpgradeCTA';
 import { formatCurrency, formatPhoneLabel } from '@/lib/utils';
 import {
   GIFT_CARD_DEFAULT_AMOUNTS,
@@ -58,7 +60,7 @@ export default function GiftCardsPage() {
   const enabled = merchant?.gift_card_enabled ?? false;
 
   const fetchData = useCallback(async () => {
-    if (!merchant?.id) return;
+    if (!merchant?.id || !getPlanFeatures(merchant).giftCards) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/gift-cards?merchantId=${merchant.id}`);
@@ -85,6 +87,17 @@ export default function GiftCardsPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (!getPlanFeatures(merchant).giftCards) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-10">
+        <PlanUpgradeCTA
+          title={t('upgradeTitle')}
+          description={t('upgradeDesc')}
+        />
       </div>
     );
   }

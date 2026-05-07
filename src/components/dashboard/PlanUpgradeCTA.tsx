@@ -1,6 +1,7 @@
 'use client';
 
 import { Lock, ArrowRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 
 interface PlanUpgradeCTAProps {
@@ -17,9 +18,11 @@ interface PlanUpgradeCTAProps {
 export default function PlanUpgradeCTA({
   title,
   description,
-  cta = 'Passer en Tout-en-un',
+  cta,
   className = '',
 }: PlanUpgradeCTAProps) {
+  const t = useTranslations('planUpgradeCta');
+  const ctaLabel = cta ?? t('discoverAllIn');
   return (
     <div className={`rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-8 md:p-12 text-center ${className}`}>
       <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200/50 mb-5">
@@ -31,7 +34,7 @@ export default function PlanUpgradeCTA({
         href="/dashboard/subscription"
         className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all"
       >
-        {cta}
+        {ctaLabel}
         <ArrowRight className="w-4 h-4" />
       </Link>
     </div>

@@ -90,12 +90,15 @@ export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePan
     );
   }
 
-  const percent = Math.min(100, Math.round((usage.sent / usage.quota) * 100));
+  // Mode pack-only (Fidélité) : pas de quota mensuel, le merchant doit acheter
+  // un pack pour envoyer des campagnes. Pas de barre de progression dans ce mode.
+  const packOnly = usage.quota === 0;
+  const percent = packOnly ? 0 : Math.min(100, Math.round((usage.sent / usage.quota) * 100));
   const quotaDepleted = usage.remaining === 0;
   const packEmpty = usage.packBalance === 0;
-  const blocked = quotaDepleted && packEmpty;
+  const blocked = packOnly ? packEmpty : (quotaDepleted && packEmpty);
   // Warning visuel uniquement si pas de pack en backup (sinon on bascule en silence dessus)
-  const warning = percent >= 80 && !blocked && packEmpty;
+  const warning = !packOnly && percent >= 80 && !blocked && packEmpty;
 
   const barColor = blocked
     ? 'bg-red-500'
@@ -125,31 +128,35 @@ export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePan
         </button>
       </div>
 
-      <div className="mt-3">
-        <div className="flex items-baseline justify-between mb-1.5">
-          <span className="text-xs text-gray-500">
-            {t('includedUsage', { sent: usage.sent, quota: usage.quota })}
-          </span>
-          <span className="text-xs font-semibold text-gray-700">{percent}%</span>
+      {!packOnly && (
+        <div className="mt-3">
+          <div className="flex items-baseline justify-between mb-1.5">
+            <span className="text-xs text-gray-500">
+              {t('includedUsage', { sent: usage.sent, quota: usage.quota })}
+            </span>
+            <span className="text-xs font-semibold text-gray-700">{percent}%</span>
+          </div>
+          <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className={`h-full ${barColor} transition-all`}
+              style={{ width: `${percent}%` }}
+            />
+          </div>
         </div>
-        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-          <div
-            className={`h-full ${barColor} transition-all`}
-            style={{ width: `${percent}%` }}
-          />
-        </div>
-      </div>
+      )}
 
       <div className="mt-3 flex items-center justify-between text-xs">
         <span className="text-gray-500">
-          {t('packBalance', { balance: usage.packBalance })}
+          {packOnly
+            ? t('packOnlyBalance', { balance: usage.packBalance })
+            : t('packBalance', { balance: usage.packBalance })}
         </span>
       </div>
 
       {blocked && (
         <div className="mt-3 flex items-start gap-2 rounded-xl bg-red-100 p-2.5 text-xs text-red-800">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-          <span className="font-medium">{t('blockedMessage')}</span>
+          <span className="font-medium">{packOnly ? t('packOnlyBlockedMessage') : t('blockedMessage')}</span>
         </div>
       )}
       {warning && !blocked && (

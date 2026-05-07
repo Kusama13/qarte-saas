@@ -13,13 +13,18 @@ import type { Merchant, PlanTier, PlanningIntent, SubscriptionStatus } from '@/t
 
 export interface PlanFeatures {
   /** Quota mensuel pour SMS marketing comptabilisés. 0 pour Fidélité (les SMS auto inclus
-   *  ne comptent pas — voir FIDELITY_FREE_SMS_TYPES dans sms.ts). */
+   *  ne comptent pas — voir FIDELITY_FREE_SMS_TYPES dans sms.ts ; les campagnes manuelles
+   *  sont possibles via achat de pack uniquement). */
   smsQuota: number;
   planning: boolean;
   bookingOnline: boolean;
+  /** Accès aux campagnes SMS manuelles. Fidélité y a accès aussi mais avec quota=0
+   *  → ils doivent acheter un pack avant d'envoyer (cf submit/route.ts qui check
+   *  `quotaLeft + packBalance >= recipients`). */
   marketingSms: boolean;
   memberPrograms: boolean;
   contest: boolean;
+  giftCards: boolean;
 }
 
 export const PLAN_TIERS: Record<PlanTier, PlanFeatures> = {
@@ -27,9 +32,10 @@ export const PLAN_TIERS: Record<PlanTier, PlanFeatures> = {
     smsQuota: 0,
     planning: false,
     bookingOnline: false,
-    marketingSms: false,
+    marketingSms: true,
     memberPrograms: false,
     contest: false,
+    giftCards: false,
   },
   all_in: {
     smsQuota: 100,
@@ -38,6 +44,7 @@ export const PLAN_TIERS: Record<PlanTier, PlanFeatures> = {
     marketingSms: true,
     memberPrograms: true,
     contest: true,
+    giftCards: true,
   },
 };
 
@@ -162,6 +169,9 @@ export function hasMemberPrograms(merchant: MerchantLike | null | undefined) {
 }
 export function hasContest(merchant: MerchantLike | null | undefined) {
   return getPlanFeatures(merchant).contest;
+}
+export function hasGiftCards(merchant: MerchantLike | null | undefined) {
+  return getPlanFeatures(merchant).giftCards;
 }
 
 /**

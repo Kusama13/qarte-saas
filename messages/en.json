@@ -1,4 +1,7 @@
 {
+  "planUpgradeCta": {
+    "discoverAllIn": "Discover All-in-one"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",
@@ -987,9 +990,11 @@
       "title": "My SMS",
       "includedUsage": "{sent}/{quota} included this cycle",
       "packBalance": "+ {balance} in my pack",
+      "packOnlyBalance": "{balance} SMS in my pack",
       "buyPack": "Buy a pack",
       "warningMessage": "You're approaching the limit. Get a pack to avoid interruption.",
       "blockedMessage": "Your SMS quota is done. Please buy a pack to continue sending.",
+      "packOnlyBlockedMessage": "Grab an SMS pack to launch your first campaigns.",
       "historyToggle": "My recent purchases",
       "historyEmpty": "No pack purchased yet.",
       "historyRefunded": "Refunded",
@@ -1025,8 +1030,8 @@
       "redirecting": "Redirecting…"
     },
     "smsTab": {
-      "upgradeTitle": "SMS campaigns are part of All-in-one",
-      "upgradeDesc": "Write marketing campaigns, pick your audience, get team validation and sending at the right legal slot. Switch to All-in-one to activate.",
+      "upgradeTitle": "Bring your clients back with one SMS",
+      "upgradeDesc": "Reach your inactive ones, announce a promo, fill a quiet Tuesday. You write it, we validate together, and we send at the right legal slot.",
       "composerTitle": "Compose my SMS",
       "suggestions": "Starters",
       "messageLabel": "Message",
@@ -1178,9 +1183,9 @@
       "planningDisabledHint": "Enable online booking first to use this reminder.",
       "googleReviewMissingHint": "Add your Google Review link in your settings to enable this automation.",
       "rewardMissingHint": "Set your loyalty reward to enable this automation.",
-      "tierUpgradeHint": "All-in-one tier only — upgrade to unlock this.",
-      "fidelityBannerTitle": "You're on Loyalty 19€",
-      "fidelityBannerDesc": "Birthday and referral reward SMS are sent automatically — no quota consumed. Other automations require All-in-one.",
+      "tierUpgradeHint": "Available on the full plan.",
+      "fidelityBannerTitle": "You're on the Loyalty plan",
+      "fidelityBannerDesc": "Birthday and referral reward SMS go out on their own, no quota used. For booking reminders, Google reviews and other automations, that's on the full plan.",
       "reviewSms": "Congrats + Google review",
       "reviewSmsDesc": "SMS sent 2h after each reward claimed (tier 1 or 2). Once per customer per 60-day window to avoid over-solicitation.",
       "reviewSmsTemplate": "Sophie, congrats on your reward at {shop}! A quick Google review would mean a lot: {link}.",
@@ -1256,8 +1261,8 @@
     }
   },
   "members": {
-    "upgradeTitle": "VIP Member programs are part of All-in-one",
-    "upgradeDesc": "Build premium loyalty programs (permanent perks, custom duration, skip-deposit). Switch to All-in-one to activate.",
+    "upgradeTitle": "Create memberships for your best clients",
+    "upgradeDesc": "Unlimited blowouts, -10% for life, a free service every month. Set the perk and the duration, they commit — recurring revenue you can count on each month.",
     "title": "Loyal Clients",
     "subtitle": "Reward your best clients",
     "howItWorks": "How it works?",
@@ -1755,7 +1760,7 @@
     "changeTierTitle": "Choose your plan",
     "changeTierDesc": "Immediate change with prorated billing.",
     "changeTierCurrent": "Current",
-    "changeTierDowngradeWarning": "You will lose: scheduling, online booking, Member programs, monthly contest, SMS campaigns.",
+    "changeTierDowngradeWarning": "You'll keep loyalty, your shop page and referrals. You'll set aside: scheduling, online booking, Member programs, gift cards, monthly contest, and your monthly SMS quota (packs stay available).",
     "changeTierProrationNote": "Stripe will adjust your next invoice based on what you've already paid.",
     "upgradeSuccess": "You're now on All-in-one — everything is unlocked.",
     "downgradeSuccess": "You're now on Loyalty.",
@@ -1824,6 +1829,7 @@
     "featureDuoOffer": "Duo offer",
     "featureContest": "Monthly contest",
     "featureMemberPrograms": "Member programs (subscriptions)",
+    "featureGiftCards": "Gift cards to offer",
     "featureSmsCampaigns": "SMS campaigns to your clients",
     "featureReminders": "Automatic reminders",
     "featureDashboard": "Real-time analytics",
@@ -1946,8 +1952,8 @@
   },
   "planning": {
     "title": "Schedule",
-    "upgradeTitle": "Scheduling is part of All-in-one",
-    "upgradeDesc": "Create slots, accept online bookings with or without deposits, manage your calendar. Switch to All-in-one to unlock.",
+    "upgradeTitle": "Bookings drop in while you work",
+    "upgradeDesc": "Your clients book online 24/7, pay a deposit if you want, and your calendar fills itself. No more answering the phone between two clients.",
     "visiblePublic": "Visible on your public page",
     "hiddenPublic": "Hidden from your public page",
     "active": "Active",
@@ -3652,8 +3658,8 @@
   "contest": {
     "pageTitle": "Monthly contest",
     "pageDesc": "A reason to come back, every month",
-    "upgradeTitle": "Monthly contest is part of All-in-one",
-    "upgradeDesc": "Random monthly draw among loyal clients, ready-to-post announcement and winner stories. Switch to All-in-one to activate.",
+    "upgradeTitle": "Boost your Insta visibility with a contest",
+    "upgradeDesc": "A monthly draw among your loyal clients, plus the announcement and winner stories ready to post. Your clients tag you, their friends discover your salon.",
     "title": "Monthly draw",
     "desc": "one winner every month",
     "hint": "Clients who book during the month are automatically entered in the draw.",
@@ -4033,6 +4039,8 @@
     "finalDesc": "Fill out the form above and start earning from the first subscription."
   },
   "giftCards": {
+    "upgradeTitle": "Sell gift cards all year round",
+    "upgradeDesc": "Christmas, birthdays, Mother's Day — your clients gift an amount or a service to their loved ones. You get paid without managing a booking, and you bring in new faces.",
     "pageTitle": "Gift cards",
     "pageDesc": "Receive and manage gift cards offered by your customers",
     "tabPending": "To validate",

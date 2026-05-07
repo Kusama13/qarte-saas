@@ -36,6 +36,7 @@ import {
   sendGiftCardMerchantNotificationEmail,
 } from '@/lib/email';
 import { sendMerchantPush } from '@/lib/merchant-push';
+import { getPlanFeatures } from '@/lib/plan-tiers';
 import logger from '@/lib/logger';
 import type { MerchantCountry } from '@/types';
 
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
       .select(
-        'id, slug, shop_name, country, locale, primary_color, secondary_color, gift_card_enabled, gift_card_services_enabled, gift_card_payment_link, gift_card_payment_link_label, gift_card_payment_link_2, gift_card_payment_link_2_label, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, trial_ends_at, subscription_status, deleted_at, user_id',
+        'id, slug, shop_name, country, locale, primary_color, secondary_color, gift_card_enabled, gift_card_services_enabled, gift_card_payment_link, gift_card_payment_link_label, gift_card_payment_link_2, gift_card_payment_link_2_label, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, trial_ends_at, subscription_status, plan_tier, deleted_at, user_id',
       )
       .eq('id', data.merchant_id)
       .is('deleted_at', null)
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Salon introuvable' }, { status: 404 });
     }
 
-    if (!merchant.gift_card_enabled) {
+    if (!merchant.gift_card_enabled || !getPlanFeatures(merchant).giftCards) {
       return NextResponse.json(
         { error: 'Les bons cadeaux ne sont pas activés pour ce salon' },
         { status: 403 },

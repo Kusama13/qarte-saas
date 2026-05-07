@@ -1156,7 +1156,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
         )}
 
         {/* ── BON CADEAU (offrir) ── */}
-        {merchant.gift_card_enabled && !isSuspended && (
+        {merchant.gift_card_enabled && !isSuspended && getPlanFeatures(merchant).giftCards && (
           <motion.button
             type="button"
             onClick={isDemo ? noOp : () => setGiftCardOpen(true)}
