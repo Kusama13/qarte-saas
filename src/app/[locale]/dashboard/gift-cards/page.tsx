@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { useToast } from '@/components/ui/Toast';
-import { getPlanFeatures } from '@/lib/plan-tiers';
+import { hasGiftCards } from '@/lib/plan-tiers';
 import PlanUpgradeCTA from '@/components/dashboard/PlanUpgradeCTA';
 import { formatCurrency, formatPhoneLabel } from '@/lib/utils';
 import {
@@ -60,7 +60,7 @@ export default function GiftCardsPage() {
   const enabled = merchant?.gift_card_enabled ?? false;
 
   const fetchData = useCallback(async () => {
-    if (!merchant?.id || !getPlanFeatures(merchant).giftCards) return;
+    if (!merchant?.id || !hasGiftCards(merchant)) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/gift-cards?merchantId=${merchant.id}`);
@@ -91,7 +91,7 @@ export default function GiftCardsPage() {
     );
   }
 
-  if (!getPlanFeatures(merchant).giftCards) {
+  if (!hasGiftCards(merchant)) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-10">
         <PlanUpgradeCTA

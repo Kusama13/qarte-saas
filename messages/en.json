@@ -1,8 +1,6 @@
 {
-  "planUpgradeCta": {
-    "discoverAllIn": "Discover All-in-one"
-  },
   "common": {
+    "discoverAllIn": "Discover All-in-one",
     "save": "Save",
     "cancel": "Cancel",
     "loading": "Loading...",

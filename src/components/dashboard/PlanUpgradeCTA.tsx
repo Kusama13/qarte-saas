@@ -21,7 +21,7 @@ export default function PlanUpgradeCTA({
   cta,
   className = '',
 }: PlanUpgradeCTAProps) {
-  const t = useTranslations('planUpgradeCta');
+  const t = useTranslations('common');
   const ctaLabel = cta ?? t('discoverAllIn');
   return (
     <div className={`rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-8 md:p-12 text-center ${className}`}>

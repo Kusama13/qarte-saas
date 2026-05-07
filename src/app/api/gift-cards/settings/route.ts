@@ -17,7 +17,7 @@ import {
   GIFT_CARD_DEFAULT_AMOUNTS,
 } from '@/lib/gift-cards';
 import { detectPaymentProvider } from '@/lib/payment-providers';
-import { getPlanFeatures } from '@/lib/plan-tiers';
+import { hasGiftCards } from '@/lib/plan-tiers';
 import logger from '@/lib/logger';
 
 // Accepte une URL valide OU une chaîne vide / null (= effacer le lien)
@@ -60,14 +60,14 @@ export async function PATCH(request: NextRequest) {
     // Ownership check + tier gating
     const { data: merchant } = await supabase
       .from('merchants')
-      .select('id, subscription_status, plan_tier')
+      .select('id, plan_tier, subscription_status')
       .eq('id', merchantId)
       .eq('user_id', user.id)
       .single();
     if (!merchant) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
-    if (!getPlanFeatures(merchant).giftCards) {
+    if (!hasGiftCards(merchant)) {
       return NextResponse.json(
         { error: 'plan_tier_required', message: 'Les bons cadeaux nécessitent le plan Tout-en-un.' },
         { status: 403 },

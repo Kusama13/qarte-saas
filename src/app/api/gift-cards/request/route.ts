@@ -36,7 +36,7 @@ import {
   sendGiftCardMerchantNotificationEmail,
 } from '@/lib/email';
 import { sendMerchantPush } from '@/lib/merchant-push';
-import { getPlanFeatures } from '@/lib/plan-tiers';
+import { hasGiftCards } from '@/lib/plan-tiers';
 import logger from '@/lib/logger';
 import type { MerchantCountry } from '@/types';
 
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Salon introuvable' }, { status: 404 });
     }
 
-    if (!merchant.gift_card_enabled || !getPlanFeatures(merchant).giftCards) {
+    if (!merchant.gift_card_enabled || !hasGiftCards(merchant)) {
       return NextResponse.json(
         { error: 'Les bons cadeaux ne sont pas activés pour ce salon' },
         { status: 403 },

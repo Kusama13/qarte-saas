@@ -17,7 +17,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import type { Merchant, MerchantCountry } from '@/types';
 import type { OpeningHours } from '@/lib/opening-hours';
-import { getPlanFeatures } from '@/lib/plan-tiers';
+import { getPlanFeatures, hasGiftCards } from '@/lib/plan-tiers';
 import { writeLoginIntent, type LoginIntent } from '@/lib/customer-login-intent';
 
 type DaySlot = OpeningHours[string];
@@ -197,6 +197,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   // + tier gating: Fidélité tier doesn't get the booking module on the public page
   const isFreeMod = merchant.booking_mode === 'free';
   const tierAllowsBooking = isDemo || getPlanFeatures(merchant).bookingOnline;
+  const tierAllowsGiftCards = hasGiftCards(merchant);
   const canBookOnline = tierAllowsBooking && merchant.auto_booking_enabled && (
     isFreeMod
       ? Object.values(merchant.opening_hours ?? {}).some(h => h !== null)
@@ -1156,7 +1157,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
         )}
 
         {/* ── BON CADEAU (offrir) ── */}
-        {merchant.gift_card_enabled && !isSuspended && getPlanFeatures(merchant).giftCards && (
+        {merchant.gift_card_enabled && !isSuspended && tierAllowsGiftCards && (
           <motion.button
             type="button"
             onClick={isDemo ? noOp : () => setGiftCardOpen(true)}
