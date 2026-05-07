@@ -359,7 +359,15 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
 
       {/* ── HERO ── */}
       <section className="lg:mx-auto lg:max-w-lg relative">
-        <div className="flex flex-col items-center pt-12 pb-6 px-6 text-center">
+        <div className="flex flex-col items-center pt-8 pb-6 px-6 text-center">
+          <a
+            href="https://getqarte.com?utm_source=vitrine&utm_medium=referral&utm_content=top_badge"
+            target="_blank"
+            rel="noopener"
+            className="mb-5 text-[11px] font-medium text-gray-400 hover:text-indigo-600 active:opacity-70 transition-colors tracking-wide"
+          >
+            sur <span className="font-bold text-indigo-500">Qarte</span>
+          </a>
           <motion.div
             initial={{ opacity: 0, scale: 0.82, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1214,7 +1222,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
 
         {/* ── FOOTER LINKTREE-STYLE ── */}
         <motion.a
-          href="https://getqarte.com/auth/merchant/signup?ref=vitrine-en-ligne"
+          href="https://getqarte.com?utm_source=vitrine&utm_medium=referral&utm_content=footer_cta"
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => { trackCtaClick('vitrine_footer_cta', 'vitrine_page'); }}
