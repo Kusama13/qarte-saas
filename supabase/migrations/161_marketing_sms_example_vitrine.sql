@@ -1,6 +1,8 @@
--- Mig 161 — Catch-up consolide : 146 + 147 + 149 + fix CHECK marketing_sms_logs
+-- Mig 161 — Catch-up consolide : 124 + 146 + 147 + 149 + fix CHECK marketing_sms_logs
 -- ════════════════════════════════════════════════════════════════════════
 -- Migrations manquantes en prod identifiees via introspection 2026-05-07 :
+--   - 124 : merchant_planning_slots.attendance_status + index + backfill
+--           (cron morning-jobs plantait quotidiennement a 07:00 UTC sans cette colonne)
 --   - 146 : gift_cards.expiry_reminder_sent_at + index partiel
 --   - 147 : merchant_contest_prizes table + RLS + colonne contest_missing_prize_alerted_at
 --   - 149 : RPC merchant_milestone_stats avec booking_count online-only
@@ -8,6 +10,24 @@
 --
 -- Tout est idempotent (IF NOT EXISTS / OR REPLACE / DROP IF EXISTS).
 -- Safe a relancer.
+
+-- ─── 124 — Slot attendance status (pour stats no-show + cron auto-mark) ─
+ALTER TABLE merchant_planning_slots
+  ADD COLUMN IF NOT EXISTS attendance_status VARCHAR(12)
+  CHECK (attendance_status IN ('pending', 'attended', 'no_show', 'cancelled'));
+
+CREATE INDEX IF NOT EXISTS idx_planning_slots_attendance
+  ON merchant_planning_slots(merchant_id, attendance_status, slot_date)
+  WHERE attendance_status IS NOT NULL;
+
+-- Backfill : slots passes avec client_name = presumes "attended"
+UPDATE merchant_planning_slots
+SET attendance_status = 'attended'
+WHERE attendance_status IS NULL
+  AND client_name IS NOT NULL
+  AND client_name <> '__blocked__'
+  AND slot_date < CURRENT_DATE;
+
 
 -- ─── 146 — Gift cards : rappel SMS J-7 avant expiration ─────────────────
 ALTER TABLE gift_cards
