@@ -3,10 +3,13 @@
  * Réutilisé par BookingModal (vitrine), BookingDetailsModal (manual), et les
  * routes API qui valident/stockent le prix côté serveur (book, manual-booking).
  *
- * Règle : pas de cumul. On applique UNE seule offre, celle qui économise le
- * plus d'euros à la cliente (member vs welcome vs promo). Comparaison en EUR
- * et non en % parce qu'une promo ciblée à 30% sur 1 prestation peut être
- * plus rentable qu'un welcome global à 15% selon le panier.
+ * Règles :
+ *   - Member fidèle : TOUJOURS cumulé (statut permanent VIP, le merchant a
+ *     pris la décision de récompenser ses meilleures clientes).
+ *   - Welcome vs Promo : pas de cumul entre elles, on garde la plus rentable
+ *     en EUR (comparaison en EUR car promo ciblée 30% sur 1 prestation peut
+ *     battre welcome global 15% selon le panier).
+ *   - Final = total - memberAmount - max(welcomeAmount, promoAmount)
  *
  * Mig 157 : la promo peut être ciblée sur un sous-ensemble de prestations
  * (`promoTargetServiceIds`). Dans ce cas le calcul se fait per-line.
@@ -99,8 +102,10 @@ export function computeBookingPrice(opts: BookingPriceOpts): BookingPriceResult 
     ? new Set(opts.promoTargetServiceIds)
     : null;
 
-  // Calcul de l'economie potentielle de chaque offre, en EUR.
+  // Member fidele : toujours cumule.
   const memberAmount = total * memberPct / 100;
+
+  // Welcome vs Promo : on garde la plus rentable en EUR.
   const welcomeAmount = total * welcomePct / 100;
   let promoAmount = 0;
   if (promoPct > 0) {
@@ -109,25 +114,22 @@ export function computeBookingPrice(opts: BookingPriceOpts): BookingPriceResult 
       : opts.serviceLines;
     promoAmount = eligibleLines.reduce((s, l) => s + Number(l.price || 0) * promoPct / 100, 0);
   }
+  type SecondWinner = 'welcome' | 'promo' | null;
+  let secondWinner: SecondWinner = null;
+  let secondAmount = 0;
+  if (welcomeAmount > secondAmount) { secondWinner = 'welcome'; secondAmount = welcomeAmount; }
+  if (promoAmount > secondAmount)   { secondWinner = 'promo';   secondAmount = promoAmount; }
 
-  // Pas de cumul : on garde la meilleure offre uniquement.
-  type Winner = 'member' | 'welcome' | 'promo' | null;
-  let winner: Winner = null;
-  let bestAmount = 0;
-  if (memberAmount > bestAmount)  { winner = 'member';  bestAmount = memberAmount; }
-  if (welcomeAmount > bestAmount) { winner = 'welcome'; bestAmount = welcomeAmount; }
-  if (promoAmount > bestAmount)   { winner = 'promo';   bestAmount = promoAmount; }
-
-  const finalPrice = Math.round(total - bestAmount);
+  const finalPrice = Math.round(total - memberAmount - secondAmount);
 
   return {
     rawPrice: total,
     finalPrice,
     appliedDiscounts: {
-      member:  winner === 'member'  ? memberPct  : undefined,
-      welcome: winner === 'welcome' ? welcomePct : undefined,
-      promo:   winner === 'promo'   ? promoPct   : undefined,
-      promoAmount: winner === 'promo' ? Math.round(promoAmount) : undefined,
+      member:  memberAmount > 0 ? memberPct : undefined,
+      welcome: secondWinner === 'welcome' ? welcomePct : undefined,
+      promo:   secondWinner === 'promo'   ? promoPct   : undefined,
+      promoAmount: secondWinner === 'promo' ? Math.round(promoAmount) : undefined,
     },
     hasDiscount: finalPrice < total,
   };
