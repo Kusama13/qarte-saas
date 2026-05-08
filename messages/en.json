@@ -2831,6 +2831,7 @@
     "promoTargetedSuffix": "on {services}",
     "promoTargetedSentence": "Get -{percent}% on {services}",
     "promoTargetedLead": "Get -{percent}% on",
+    "promoCalculatedAtBooking": "Discount calculated at booking",
     "promoInstructionsBooking": "Book a slot to automatically receive your voucher in your loyalty card.",
     "studentOfferTitle": "Student offer",
     "studentOfferHint": "Student ID required",

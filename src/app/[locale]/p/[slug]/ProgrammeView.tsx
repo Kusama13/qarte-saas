@@ -500,6 +500,11 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                   promoOffer.description
                 )}
               </p>
+              {!!promoOffer.discount_percent && (
+                <p className="text-[11px] text-gray-500 italic mt-1 leading-snug">
+                  {t('promoCalculatedAtBooking')}
+                </p>
+              )}
               {promoOffer.expires_at && (
                 <p className="text-[11px] text-amber-800 font-medium mt-1.5 leading-snug">
                   {t('validUntil', { date: new Date(promoOffer.expires_at).toLocaleDateString(toBCP47(locale)) })}
@@ -900,27 +905,13 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               );
             }
             const { svc, isLast } = item;
-            // Promo s'applique a ce service si :
-            //   - Targeted : svc.id est dans la liste cible
-            //   - Universelle : target_service_ids est null/vide -> tout le monde
-            const svcHasPromo = !!promoOffer?.discount_percent && (
-              promoTargetSet ? promoTargetSet.has(svc.id) : true
-            );
-            const promoPct = svcHasPromo ? promoOffer!.discount_percent! : 0;
             return (
               <div
                 key={svc.id}
                 className={`py-3 ${!isLast && !(idx === visibleItems.length - 1 && !servicesExpanded) ? 'border-b border-gray-100/80' : ''}`}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                    <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
-                    {svcHasPromo && (
-                      <span className="inline-block bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md align-middle">
-                        -{promoPct}%
-                      </span>
-                    )}
-                  </div>
+                  <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
                   <div className="flex items-center gap-2 shrink-0 ml-4">
                     {svc.duration && (
                       <span className="text-[11px] text-gray-500 flex items-center gap-0.5">
@@ -928,19 +919,10 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                         {fmtDuration(svc.duration)}
                       </span>
                     )}
-                    {svcHasPromo ? (
-                      <p className="text-[13px] font-bold text-gray-900 flex items-baseline gap-1">
-                        <span className="text-[11px] font-normal text-gray-400 line-through">
-                          {formatCurrency(Number(svc.price), merchant.country, locale)}
-                        </span>
-                        <span>{formatCurrency(Math.round(Number(svc.price) * (1 - promoPct / 100)), merchant.country, locale)}</span>
-                      </p>
-                    ) : (
-                      <p className="text-[13px] font-bold text-gray-900">
-                        {svc.price_from && <span className="text-[11px] font-normal text-gray-500">{t('priceFrom')}</span>}
-                        {formatCurrency(Number(svc.price), merchant.country, locale)}
-                      </p>
-                    )}
+                    <p className="text-[13px] font-bold text-gray-900">
+                      {svc.price_from && <span className="text-[11px] font-normal text-gray-500">{t('priceFrom')}</span>}
+                      {formatCurrency(Number(svc.price), merchant.country, locale)}
+                    </p>
                   </div>
                 </div>
                 {svc.description && (

@@ -2834,6 +2834,7 @@
     "promoTargetedSuffix": "sur {services}",
     "promoTargetedSentence": "Bénéficiez de -{percent}% sur {services}",
     "promoTargetedLead": "Bénéficiez de -{percent}% sur",
+    "promoCalculatedAtBooking": "Réduction calculée au moment de la réservation",
     "promoInstructionsBooking": "Réservez un créneau pour recevoir votre bon automatiquement dans votre carte de fidélité.",
     "studentOfferTitle": "Offre étudiante",
     "studentOfferHint": "Carte étudiante obligatoire",
