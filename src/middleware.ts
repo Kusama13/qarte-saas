@@ -166,7 +166,11 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/manifest.webmanifest',
-    // Match all paths except: /api, /_next, /_vercel, and static files (with dots)
-    '/((?!api|_next|_vercel|.*\\..*).*)',
+    // Match all paths except: /api, /_next, /_vercel, /auth/callback (route handler
+    // hors segment [locale], cf bypass explicite plus haut), et fichiers statiques.
+    // Le double garde-fou (matcher + bypass) evite la regression si le bypass est
+    // retire plus tard et protege automatiquement tout futur route handler ajoute
+    // sous /auth/callback (ex: /auth/callback/something).
+    '/((?!api|_next|_vercel|auth/callback|.*\\..*).*)',
   ],
 };
