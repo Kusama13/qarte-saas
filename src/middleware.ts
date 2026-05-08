@@ -49,6 +49,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Supabase auth callback : route handler hors segment [locale], bypass next-intl
+  // pour éviter que le middleware tente de servir /fr/auth/callback (404)
+  if (pathname.startsWith('/auth/callback')) {
+    return NextResponse.next();
+  }
+
   // Get bare path for auth route matching
   const barePath = getBarePath(pathname);
 

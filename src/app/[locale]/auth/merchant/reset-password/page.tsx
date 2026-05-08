@@ -24,6 +24,14 @@ function ResetPasswordContent() {
 
   useEffect(() => {
     const checkSession = async () => {
+      // Si /auth/callback a remonté une erreur (lien expiré, code déjà consommé...),
+      // arrête tout de suite : pas de session valide pour update password.
+      if (searchParams.get('auth_error')) {
+        setValidSession(false);
+        setChecking(false);
+        return;
+      }
+
       // Vérifier si l'utilisateur a une session valide (via le lien email)
       const { data: { session } } = await supabase.auth.getSession();
 
@@ -70,6 +78,11 @@ function ResetPasswordContent() {
       if (updateError) {
         throw updateError;
       }
+
+      // Purge la session "recovery" pour forcer une re-connexion avec le nouveau
+      // password (sinon le middleware redirige direct vers /dashboard et le user
+      // ne voit jamais la confirmation ni ne valide que le nouveau password marche).
+      await supabase.auth.signOut();
 
       setSuccess(true);
 
