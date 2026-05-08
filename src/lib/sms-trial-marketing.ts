@@ -101,7 +101,13 @@ export async function sendTrialMarketingSms(params: {
   // 1. Gating
   const skipReason = checkTrialSmsGating(merchant, smsType);
   if (skipReason) {
-    logger.info('trial_sms_skipped', { merchantId: merchant.id, smsType, reason: skipReason });
+    // Pour illegal_time, expose le sous-motif (holiday, sunday, before/after legal hour)
+    // sinon impossible de distinguer "blocage par design jour ferie" d'un vrai bug.
+    let detail: string | undefined;
+    if (skipReason === 'illegal_time') {
+      detail = isLegalSendTime(new Date(), merchant.country || 'FR').reason;
+    }
+    logger.info('trial_sms_skipped', { merchantId: merchant.id, smsType, reason: skipReason, detail });
     return { success: false, skipped: skipReason };
   }
 

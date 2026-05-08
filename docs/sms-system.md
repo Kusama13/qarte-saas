@@ -291,6 +291,8 @@ Opt-outs batch-fetched une fois par merchant via `fetchOptedOutPhones()`. Dedup 
 ### Compliance
 [`src/lib/sms-compliance.ts`](../src/lib/sms-compliance.ts) — heures légales 10h-20h lun-sam, pas dim/jours fériés FR/BE/CH (hardcodés 2026-2027). Appliqué à toutes les sections marketing du cron + dispatch campaign.
 
+**Logging skip detail (mai 2026)** : `sendTrialMarketingSms` enrichit le log `trial_sms_skipped` avec un champ `detail` quand le skip est `illegal_time` (sous-motif `holiday` / `sunday` / `before_legal_hour` / `after_legal_hour`). Évite le faux diagnostic "cron cassé" quand c'est juste un jour férié (cas observé 2026-05-08 Victoire 1945, 22h de silence apparent).
+
 ### Validator
 [`src/lib/sms-validator.ts`](../src/lib/sms-validator.ts) — 160 (1 SMS) / 306 (2 SMS) / max 306, mots interdits, STOP auto, variables résolues.
 
