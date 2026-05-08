@@ -1,7 +1,7 @@
 'use client';
 
 import { Link } from '@/i18n/navigation';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type TrialSeverity = 'calm' | 'warning' | 'urgent';
@@ -49,7 +49,8 @@ export default function StatusBanner({
   description,
   linkAsButton,
 }: StatusBannerProps) {
-  const showIcon = variant !== 'trial' || severity !== 'calm';
+  const isCalmTrial = variant === 'trial' && severity === 'calm';
+  const showIcon = !isCalmTrial;
 
   const baseClasses = 'mx-3 mt-3 p-3 rounded-xl text-sm';
   const variantClass = variant === 'trial'
@@ -59,6 +60,7 @@ export default function StatusBanner({
   return (
     <div className={cn(baseClasses, variantClass)}>
       {showIcon && <AlertTriangle className="w-4 h-4 inline mr-1.5" />}
+      {isCalmTrial && <Sparkles className="w-3.5 h-3.5 inline mr-1.5 text-primary-500" />}
       <span className={variant === 'grace' ? 'font-bold' : 'font-medium'}>
         {message}
       </span>
