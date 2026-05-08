@@ -815,12 +815,15 @@ export default function BookingModal({
                             </span>
                           </div>
                           {!isFullPayment && remaining > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-500">{t('depositRemaining')}</span>
-                              <span className="font-semibold text-gray-700">
-                                {formatCurrency(remaining, country, locale)}
-                              </span>
-                            </div>
+                            <>
+                              <div className="border-t border-gray-200/70 my-1" />
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-500">{t('depositRemaining')}</span>
+                                <span className="font-semibold text-gray-700">
+                                  {formatCurrency(remaining, country, locale)}
+                                </span>
+                              </div>
+                            </>
                           )}
                           {fixedExceedsTotal && (
                             <p className="text-[11px] text-gray-500 italic leading-snug">
@@ -1397,21 +1400,9 @@ export default function BookingModal({
                   {selectedServiceIds.size === 0 ? (
                     <p className="text-[12px] text-gray-500">{t('selectAtLeastOne')}</p>
                   ) : (
-                    <>
-                      <p className="text-[11px] text-gray-500 font-medium">
-                        {t('categoryServicesCount', { count: selectedServiceIds.size })} · {hasDurationEstimate ? '~' : ''}{formatDuration(totalDuration, locale)}
-                      </p>
-                      <p className="text-sm font-bold text-gray-900 leading-tight">
-                        {formatCurrency(displayPrice, country, locale)}
-                        {stickyDeposit && (
-                          <span className="text-[10px] font-medium text-gray-500 ml-1.5">
-                            · {stickyDeposit.isFullPayment
-                              ? t('depositFullPaymentShort')
-                              : t('depositIncluded', { amount: formatCurrency(stickyDeposit.amount, country, locale) })}
-                          </span>
-                        )}
-                      </p>
-                    </>
+                    <p className="text-sm font-semibold text-gray-700 leading-tight">
+                      {t('categoryServicesCount', { count: selectedServiceIds.size })} · {hasDurationEstimate ? '~' : ''}{formatDuration(totalDuration, locale)}
+                    </p>
                   )}
                 </div>
                 <button
