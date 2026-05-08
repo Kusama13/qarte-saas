@@ -972,15 +972,21 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 - Pages merchant indexables mais PAS dans le sitemap (evite les sitelinks Google sous getqarte.com)
 - `/scan/` et `/customer/` : noindex + robots disallow
 
-### Blog (3 articles SEO/AEO — refresh avril 2026)
+### Blog (7 articles SEO/AEO — refresh avril-mai 2026)
 - **Strategie funnel** : TOFU (acquisition) + MOFU (pain point) + BOFU (commercial intent)
-- **Optimisation AEO** : answer-first paragraphs 40-60 mots, tables comparatives, statistiques sourcees (Square, BrightLocal, Bain, Beauty Business France), FAQPage schema reutilise dans le contenu visible
-- **Articles actifs** :
+- **Optimisation AEO** : answer-first paragraphs 40-60 mots, tables comparatives, statistiques sourcees (Square, BrightLocal, Bain, Beauty Business France), FAQPage + Article + Organization + SoftwareApplication + WebPage schema graph-linked via @id (mai 2026)
+- **Articles actifs** (registre `src/data/blog-articles.ts`) :
+  - `/blog/acompte-rdv-salon-sans-commission` — BOFU mai 2026, angle "100% acompte direct sur compte pro via lien Revolut/PayPal/SumUp", tableau commissions Planity 1,80% / Booksy 2,49% / Treatwell jusqu'a 25% (6 min)
+  - `/blog/avis-planity-booksy-ne-tappartiennent-pas` — MOFU avril 2026, avis Google vs marketplace (5 min)
+  - `/blog/ne-pas-mettre-lien-planity-bio-instagram` — MOFU avril 2026, anti-bait Instagram bio (5 min)
+  - `/blog/clients-planity-booksy-ne-reviennent-jamais` — MOFU avril 2026, retention vs trafic marketplace (5 min)
   - `/blog/comment-attirer-clientes-salon-beaute` — TOFU, 12 strategies acquisition (10 min)
   - `/blog/eviter-no-show-salon-rendez-vous` — MOFU, methode 6 etapes anti-no-show + modele CGV (8 min)
   - `/blog/logiciel-reservation-en-ligne-salon-beaute` — BOFU, comparatif Planity/Treatwell/Booksy/Qarte (9 min)
-- **Structure** : `src/app/[locale]/blog/<slug>/{page.tsx, layout.tsx}` — page client avec JSON-LD inline, layout server avec `generateMetadata` locale-aware
+- **Structure** : `src/app/[locale]/blog/<slug>/page.tsx` — page client avec JSON-LD inline, layout `[locale]/blog/layout.tsx` server avec `generateMetadata` locale-aware
+- **Schema graph (mai 2026, article acompte-rdv-salon-sans-commission)** : Organization + SoftwareApplication (offers 24€/240€/Trial 7j) + WebPage + ImageObject + BreadcrumbList + Article (mentions des concurrents) + FAQPage, tous interconnectes via `@id`. Pattern a propager sur les autres articles
 - **Email update** (`ProductUpdateEmail.tsx`) : lien pointe sur article comparatif logiciels (BOFU intent)
+- **Process redaction** : `seo-audit` + `ai-seo` + `copywriting` + `schema-markup` skills, plus passe agent senior SEO (recherche concurrence reelle + volumes + SERP audit) avant brief, plus 3 agents audit en parallele post-redaction (copywriting + ai-seo + schema-markup) avant publication
 
 ---
 

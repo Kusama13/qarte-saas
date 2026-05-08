@@ -16,6 +16,16 @@ export interface BlogArticle {
  */
 export const BLOG_ARTICLES: BlogArticle[] = [
   {
+    slug: 'acompte-rdv-salon-sans-commission',
+    title: 'Acompte salon : pourquoi tu perds 0,72€ sur chaque RDV (et comment encaisser 100% direct sur ton compte)',
+    description:
+      'Planity prélève 1,80%, Booksy 2,49%, Treatwell jusqu\'à 25% sur tes acomptes. Découvre comment encaisser 100% en 24h via ton lien Revolut, PayPal ou SumUp. 0€ commission Qarte.',
+    readTime: '6 min',
+    category: 'Argent & commissions',
+    date: '2026-05-08',
+    image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
     slug: 'comment-attirer-clientes-salon-beaute',
     title: 'Comment attirer plus de clientes dans son salon de beauté : 12 stratégies qui marchent en 2026',
     description:
