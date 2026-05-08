@@ -166,16 +166,22 @@ export default function BookingModal({
 
   // Prefill phone from signed cookie on mount (returning customer in same browser).
   // Cookie is HttpOnly → must be read via /api/customers/me-phone.
+  // Le flag phoneCookieChecked evite un flash du teaser welcome : sans lui, le
+  // teaser apparait pendant ~300ms puis disparait pour les clientes connues
+  // (cookie present → setPhone → lookup → recognition='known' → teaser cache).
+  const [phoneCookieChecked, setPhoneCookieChecked] = useState(false);
   useEffect(() => {
     let cancelled = false;
     fetch('/api/customers/me-phone')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (!cancelled && data?.phone && !phone) {
-          setPhone(String(data.phone));
-        }
+        if (cancelled) return;
+        if (data?.phone && !phone) setPhone(String(data.phone));
+        setPhoneCookieChecked(true);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setPhoneCookieChecked(true);
+      });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -270,7 +276,7 @@ export default function BookingModal({
     merchant.welcome_offer_enabled && merchant.welcome_offer_discount_percent
   ) ? merchant.welcome_offer_discount_percent : null;
   const welcomeApplicablePercent = recognition.kind === 'unknown' ? welcomeConfiguredPercent : null;
-  const showWelcomeTeaser = !!welcomeConfiguredPercent && (recognition.kind === 'idle' || recognition.kind === 'loading');
+  const showWelcomeTeaser = !!welcomeConfiguredPercent && phoneCookieChecked && (recognition.kind === 'idle' || recognition.kind === 'loading');
   const promoApplicablePercent = promoOffer?.discount_percent ?? null;
   const promoTargetServiceIds = promoOffer?.target_service_ids ?? null;
   const promoIsTargeted = !!promoTargetServiceIds && promoTargetServiceIds.length > 0;

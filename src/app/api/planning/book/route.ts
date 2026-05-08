@@ -378,13 +378,15 @@ export async function POST(request: NextRequest) {
 
     // Snapshots des % appliqués pour historique fidèle (mig 153 + mig 157 amount)
     const appliedDiscountFields: Record<string, unknown> = {};
-    if (promoPercent && activeOffer && priceResult.appliedDiscounts.promoAmount) {
+    // Snapshot uniquement l'offre qui a "gagne" la comparaison (computeBookingPrice
+    // applique une seule offre, la plus rentable en EUR — pas de cumul).
+    if (priceResult.appliedDiscounts.promo && activeOffer && priceResult.appliedDiscounts.promoAmount) {
       appliedDiscountFields.applied_offer_id = activeOffer.id;
-      appliedDiscountFields.applied_offer_percent = promoPercent;
+      appliedDiscountFields.applied_offer_percent = priceResult.appliedDiscounts.promo;
       appliedDiscountFields.applied_offer_amount = priceResult.appliedDiscounts.promoAmount;
     }
-    if (welcomePercent) {
-      appliedDiscountFields.applied_welcome_percent = welcomePercent;
+    if (priceResult.appliedDiscounts.welcome) {
+      appliedDiscountFields.applied_welcome_percent = priceResult.appliedDiscounts.welcome;
     }
 
     if (isFreeMod) {

@@ -906,7 +906,11 @@ export default function BookingDetailsModal({
                       {showWelcomeToggle && (
                         <button
                           type="button"
-                          onClick={() => setApplyWelcome(!applyWelcome)}
+                          onClick={() => {
+                            const next = !applyWelcome;
+                            setApplyWelcome(next);
+                            if (next) setApplyPromo(false); // pas de cumul
+                          }}
                           className="w-full flex items-center gap-2 text-left hover:bg-rose-50/50 rounded px-1 py-0.5 transition-colors"
                         >
                           <span className={`flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${applyWelcome ? 'bg-rose-500 border-rose-500' : 'border-gray-300'}`}>
@@ -926,7 +930,11 @@ export default function BookingDetailsModal({
                           <div>
                             <button
                               type="button"
-                              onClick={() => setApplyPromo(!applyPromo)}
+                              onClick={() => {
+                                const next = !applyPromo;
+                                setApplyPromo(next);
+                                if (next) setApplyWelcome(false); // pas de cumul
+                              }}
                               className="w-full flex items-center gap-2 text-left hover:bg-amber-50/50 rounded px-1 py-0.5 transition-colors"
                             >
                               <span className={`flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${applyPromo ? 'bg-amber-500 border-amber-500' : 'border-gray-300'}`}>

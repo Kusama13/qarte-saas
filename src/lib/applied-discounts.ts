@@ -37,6 +37,13 @@ export async function validateAppliedDiscounts(
     return { ok: false, error: 'applied_offer_id et applied_offer_percent doivent être fournis ensemble', status: 400 };
   }
 
+  // Pas de cumul : une seule offre par booking. Rejette si promo + welcome sont
+  // tous les 2 set. La cliente ne peut beneficier que de la meilleure des deux
+  // (calcule par computeBookingPrice cote client).
+  if (applied_offer_percent && applied_welcome_percent) {
+    return { ok: false, error: 'Une seule offre peut être appliquée par booking (pas de cumul)', status: 400 };
+  }
+
   let appliedOfferAmount: number | null = null;
   if (applied_offer_id && applied_offer_percent) {
     const { data: offer } = await supabase

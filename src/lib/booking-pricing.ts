@@ -3,11 +3,13 @@
  * Réutilisé par BookingModal (vitrine), BookingDetailsModal (manual), et les
  * routes API qui valident/stockent le prix côté serveur (book, manual-booking).
  *
- * Cumul : member × welcome × promo (multiplicatif), arrondi à l'euro le plus proche.
+ * Règle : pas de cumul. On applique UNE seule offre, celle qui économise le
+ * plus d'euros à la cliente (member vs welcome vs promo). Comparaison en EUR
+ * et non en % parce qu'une promo ciblée à 30% sur 1 prestation peut être
+ * plus rentable qu'un welcome global à 15% selon le panier.
  *
  * Mig 157 : la promo peut être ciblée sur un sous-ensemble de prestations
- * (`promoTargetServiceIds`). Dans ce cas le calcul se fait per-line pour la
- * promo seulement ; member et welcome restent appliqués au total.
+ * (`promoTargetServiceIds`). Dans ce cas le calcul se fait per-line.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -90,11 +92,16 @@ export type BookingPriceOpts = {
 export function computeBookingPrice(opts: BookingPriceOpts): BookingPriceResult {
   const total = opts.serviceLines.reduce((s, l) => s + Number(l.price || 0), 0);
 
+  const memberPct = opts.memberPercent && opts.memberPercent > 0 ? opts.memberPercent : 0;
+  const welcomePct = opts.welcomePercent && opts.welcomePercent > 0 ? opts.welcomePercent : 0;
   const promoPct = opts.promoPercent && opts.promoPercent > 0 ? opts.promoPercent : 0;
   const targets = opts.promoTargetServiceIds && opts.promoTargetServiceIds.length > 0
     ? new Set(opts.promoTargetServiceIds)
     : null;
 
+  // Calcul de l'economie potentielle de chaque offre, en EUR.
+  const memberAmount = total * memberPct / 100;
+  const welcomeAmount = total * welcomePct / 100;
   let promoAmount = 0;
   if (promoPct > 0) {
     const eligibleLines = targets
@@ -103,21 +110,24 @@ export function computeBookingPrice(opts: BookingPriceOpts): BookingPriceResult 
     promoAmount = eligibleLines.reduce((s, l) => s + Number(l.price || 0) * promoPct / 100, 0);
   }
 
-  let p = total - promoAmount;
-  if (opts.memberPercent && opts.memberPercent > 0)   p *= 1 - opts.memberPercent / 100;
-  if (opts.welcomePercent && opts.welcomePercent > 0) p *= 1 - opts.welcomePercent / 100;
+  // Pas de cumul : on garde la meilleure offre uniquement.
+  type Winner = 'member' | 'welcome' | 'promo' | null;
+  let winner: Winner = null;
+  let bestAmount = 0;
+  if (memberAmount > bestAmount)  { winner = 'member';  bestAmount = memberAmount; }
+  if (welcomeAmount > bestAmount) { winner = 'welcome'; bestAmount = welcomeAmount; }
+  if (promoAmount > bestAmount)   { winner = 'promo';   bestAmount = promoAmount; }
 
-  const finalPrice = Math.round(p);
-  const promoApplied = promoAmount > 0;
+  const finalPrice = Math.round(total - bestAmount);
 
   return {
     rawPrice: total,
     finalPrice,
     appliedDiscounts: {
-      member: opts.memberPercent || undefined,
-      welcome: opts.welcomePercent || undefined,
-      promo: promoApplied ? promoPct : undefined,
-      promoAmount: promoApplied ? Math.round(promoAmount) : undefined,
+      member:  winner === 'member'  ? memberPct  : undefined,
+      welcome: winner === 'welcome' ? welcomePct : undefined,
+      promo:   winner === 'promo'   ? promoPct   : undefined,
+      promoAmount: winner === 'promo' ? Math.round(promoAmount) : undefined,
     },
     hasDiscount: finalPrice < total,
   };
