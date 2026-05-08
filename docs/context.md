@@ -436,7 +436,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **+1 tampon à la conso** : `/api/vouchers/use` retire le skip same-day pour `source='gift'` — la cliente garde son bonus tampon même si elle a scanné le QR le jour même (geste "extra" du bon cadeau).
 - **Mention non remboursable partout** : PDF (footer), email destinataire (ligne Usage), modal Voir carte fidélité (bandeau ambre), modal vitrine pré-achat (sous validityNote — légalement important).
 - **Rappel SMS J-7** (mig 146) : `gift_cards.expiry_reminder_sent_at TIMESTAMPTZ` + index partiel `(expires_at) WHERE status='active' AND expiry_reminder_sent_at IS NULL`. Cron `gift-cards-expire` étendu : passe 0 = SELECT bons actifs expirant dans ≤7j sans rappel envoyé, `Promise.allSettled` pour batch SMS, batch single UPDATE après. Nouveau SmsType `gift_card_expiry_reminder` (FR/EN, GSM-7 safe).
-- **Vitrine refactor** : Welcome (emerald) + Promo (amber) + Concours (violet) unifiés via `<OfferCard>` component (3 tiers). Bon cadeau "offrir" déplacé après Avantages exclusifs (intent différent — pour quelqu'un d'autre).
+- **Vitrine refactor** : Welcome (emerald) + Promo (amber) initialement unifiés via `<OfferCard>` component. Mai 2026 : composant supprimé après refonte custom des banners promo + concours (layout flex avec valeur hero à droite en `primary_color` merchant — `-X%` pour promo, `J-X` pour concours). Bon cadeau "offrir" déplacé après Avantages exclusifs (intent différent — pour quelqu'un d'autre).
 - **Modals consommation** : Detail "Voir" et Celebration adaptés pour `source='gift'` (titre "Votre bon cadeau ✨" / "Bon cadeau activé 🎁", icône Sparkles décoratif animé, copy chaleureux "C'est officiel, votre bon a été utilisé chez {salon}").
 - **Carte fidélité** : `voucher.source='gift'` affiche maintenant "Bon cadeau" au lieu de "Récompense" (clé i18n `voucherRewards.giftCard`).
 
@@ -932,14 +932,16 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 3. Horaires (liste verticale par groupes de jours consecutifs aux horaires strictement identiques — ex: `Lun–Ven · 10:00–14:00, 16:00–20:00` / `Sam · 10:00–14:00` / `Dim · Fermé`. Groupage via `slotSignature()` qui fusionne uniquement si `open|close|break_start|break_end` sont egaux. Pastille **Ouvert / Fermé** (emerald / gris) en haut a droite calculee depuis l'heure courante du fuseau merchant via `isOpenNow()` (gere la pause dejeuner). Ligne du jour courant highlight bg `${primary}0F` + texte couleur merchant)
 4. Planning disponibilites (si `planning_enabled` : banniere message libre + creneaux **90j glissants** groupes par mois, preview 4 jours + bouton "Voir plus", creneaux du jour passes masques automatiquement). Cap public defini par constante `BOOKING_HORIZON_DAYS` dans `src/lib/booking-window.ts` (single source of truth, importee par `api/planning/route.ts`, `p/[slug]/page.tsx`, `BookingModal.tsx`, dashboard `planning/page.tsx`)
 5. Offre nouveaux clients (CTA conditionnel si `welcome_offer_enabled`, pointe vers `/scan/{code}?welcome=`)
-5b. Offre promo (amber, depuis `merchant_offers`, CTA vers `/scan/{code}?offer={id}`)
-6. Carte fidelite simulee ("Carte de fidelite" + texte explicatif recompenses)
-7. Palier 2 (si `tier2_enabled`)
-8. Avantages exclusifs (anniversaire, parrainage, jours bonus)
-9. Galerie photos realisations (lightbox, grid 3 cols, max 6 photos depuis `merchant_photos`)
-10. Prestations (collapsible, ferme par defaut, "Mes prestations", icone gradient + glow)
-11. Reseaux sociaux (icones Instagram/Facebook/TikTok/WhatsApp/Snapchat). **WhatsApp auto-format** : si le merchant saisit `06 12 34 56 78` dans le dashboard, `normalizeSocialUrl('whatsapp')` dans `public-page/InfoSection.tsx` appelle `formatPhoneNumber()` pour convertir en E.164 selon `merchant.country` avant de generer `https://wa.me/33612345678`. Supporte les 10 pays PHONE_CONFIG.
-12. CTA merchant ("Cree ta page beaute gratuitement")
+5b. Offre promo (amber custom layout flex, depuis `merchant_offers`, valeur `-X%` à droite en `primary_color` merchant, CTA vers `/scan/{code}?offer={id}` si `!canBookOnline`)
+6. Prestations (collapsible, ferme par defaut, "Mes prestations", icone gradient + glow)
+6b. **Jeu concours du mois** (violet custom layout flex, juste apres prestations pour visibilite max — mai 2026 : sorti de "Avantages exclusifs", ré-positionné après prestations + redesign matching promo banner). Visible si `contest_enabled && contest_prize`. Valeur `J-{daysUntilContestDraw}` à droite en `primary_color` merchant (countdown jusqu'au 1er du mois prochain = date du tirage cron `monthly-contest`). Crée urgence subtile pour pousser à reserver MAINTENANT et participer au tirage.
+7. Carte fidelite simulee ("Carte de fidelite" + texte explicatif recompenses)
+8. Palier 2 (si `tier2_enabled`)
+9. Avantages exclusifs (anniversaire, parrainage, jours bonus)
+10. Bon cadeau "offrir" (gradient merchant primary→secondary, si `gift_card_enabled` + tier `all_in`)
+11. Galerie photos realisations (lightbox, grid 3 cols, max 6 photos depuis `merchant_photos`)
+12. Reseaux sociaux (icones Instagram/Facebook/TikTok/WhatsApp/Snapchat). **WhatsApp auto-format** : si le merchant saisit `06 12 34 56 78` dans le dashboard, `normalizeSocialUrl('whatsapp')` dans `public-page/InfoSection.tsx` appelle `formatPhoneNumber()` pour convertir en E.164 selon `merchant.country` avant de generer `https://wa.me/33612345678`. Supporte les 10 pays PHONE_CONFIG.
+13. CTA merchant ("Cree ta page beaute gratuitement")
 
 **Design :** glassmorphism (`bg-white/70 backdrop-blur-sm border-white/60`) sur sections avantages, prestations, photos. Badge hero : "Qarte — La fidelite digitale des pros de la beaute et du bien-etre".
 

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Flame, Trophy, CalendarDays, CalendarCheck, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard, Wallet, Sparkles, Tag } from 'lucide-react';
+import { Gift, Users, Flame, Trophy, CalendarDays, CalendarCheck, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard, Wallet, Tag } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import { SuspendedBanner } from '@/components/shared/SuspendedBanner';
@@ -43,53 +43,6 @@ const HOURS_BADGE_STYLES = {
   closed: { wrap: 'bg-gray-100 text-gray-500',      dot: 'bg-gray-400',    labelKey: 'closedNow' as const },
 } as const;
 
-const OFFER_TIERS = {
-  emerald: { border: 'border-emerald-200/70', bg: 'bg-emerald-50/50', iconBg: 'bg-emerald-100', iconText: 'text-emerald-600', labelText: 'text-emerald-700', ctaBg: 'bg-emerald-600 hover:bg-emerald-700' },
-  amber:   { border: 'border-amber-200/70',   bg: 'bg-amber-50/50',   iconBg: 'bg-amber-100',   iconText: 'text-amber-600',   labelText: 'text-amber-700',   ctaBg: 'bg-amber-600 hover:bg-amber-700' },
-  violet:  { border: 'border-violet-200/60',  bg: 'bg-violet-50/40',  iconBg: 'bg-violet-100',  iconText: 'text-violet-600',  labelText: 'text-violet-700',  ctaBg: '' },
-} as const;
-
-type OfferTier = keyof typeof OFFER_TIERS;
-
-function OfferCard({
-  tier, icon: Icon, label, delay, cta, children,
-}: {
-  tier: OfferTier;
-  icon: typeof Sparkles;
-  label: ReactNode;
-  delay: number;
-  cta?: { href: string; text: string; onClick?: (e: React.MouseEvent) => void };
-  children: ReactNode;
-}) {
-  const c = OFFER_TIERS[tier];
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay, ease: 'easeOut' }}
-      className={`rounded-2xl overflow-hidden border ${c.border} ${c.bg}`}
-    >
-      <div className="px-4 py-4 flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-xl ${c.iconBg} flex items-center justify-center shrink-0`}>
-          <Icon className={`w-5 h-5 ${c.iconText}`} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className={`text-[10px] font-bold uppercase tracking-[0.14em] ${c.labelText}`}>{label}</p>
-          {children}
-        </div>
-        {cta && (
-          <a
-            href={cta.href}
-            onClick={cta.onClick}
-            className={`shrink-0 px-3.5 py-2.5 rounded-xl text-[12px] font-bold text-white transition-colors ${c.ctaBg}`}
-          >
-            {cta.text}
-          </a>
-        )}
-      </div>
-    </motion.div>
-  );
-}
 type ServiceCategory = { id: string; name: string; position: number };
 type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
 type PromoOffer = { id: string; title: string; description: string; expires_at: string | null; discount_percent: number | null; target_service_ids: string[] | null };
@@ -325,6 +278,13 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const hasCategories = serviceCategories.length > 0;
   const categoryIds = useMemo(() => new Set(serviceCategories.map(c => c.id)), [serviceCategories]);
   const uncategorized = useMemo(() => services.filter(svc => !svc.category_id || !categoryIds.has(svc.category_id)), [services, categoryIds]);
+
+  // Tirage concours : 1er du mois prochain. Affiche J-X pour creer urgence subtile.
+  const daysUntilContestDraw = useMemo(() => {
+    const now = new Date();
+    const firstNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return Math.max(1, Math.ceil((firstNextMonth.getTime() - now.getTime()) / (24 * 3600 * 1000)));
+  }, []);
 
   // Promo ciblee : set des service ids concernes (null si promo universelle ou pas de promo)
   const promoIsTargeted = !!promoOffer?.target_service_ids && promoOffer.target_service_ids.length > 0;
@@ -984,6 +944,39 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           );
         })()}
 
+        {/* ── JEU CONCOURS DU MOIS ── (juste apres prestations pour visibilite max) */}
+        {merchant.contest_enabled && merchant.contest_prize && (
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.32, ease: 'easeOut' }}
+            className="rounded-xl border border-violet-200/80 bg-violet-50 px-4 py-3.5 flex items-center gap-3"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-bold text-gray-900 leading-tight">
+                {t('contestBadge')}
+              </p>
+              <p className="text-[12px] text-gray-600 mt-1 leading-snug">
+                <span className="text-violet-800 font-semibold">{t('contestPrizeLabel')} :</span> {merchant.contest_prize}
+              </p>
+              <p className="text-[11px] text-gray-500 italic mt-1 leading-snug">
+                {t('contestHint')}
+              </p>
+            </div>
+            <div className="shrink-0 text-right">
+              <div
+                className="leading-none tabular-nums text-3xl font-extrabold tracking-tight"
+                style={{ color: merchant.primary_color || '#4b0082' }}
+              >
+                J-{daysUntilContestDraw}
+              </div>
+              <p className="text-[10px] uppercase tracking-wide text-gray-500 mt-1">
+                {t('contestCountdownLabel')}
+              </p>
+            </div>
+          </motion.div>
+        )}
+
         {/* Label carte simulée + sous-titre */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -1216,13 +1209,6 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               <ChevronRight className="w-5 h-5 text-white/70 shrink-0 group-hover:translate-x-0.5 transition-transform" />
             </div>
           </motion.button>
-        )}
-
-        {merchant.contest_enabled && merchant.contest_prize && (
-          <OfferCard tier="violet" icon={Trophy} label={t('contestBadge')} delay={0.52}>
-            <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">{t('contestDesc')}</p>
-            <p className="text-[14px] font-bold mt-0.5 text-gray-900">{merchant.contest_prize}</p>
-          </OfferCard>
         )}
 
         {/* ── GALERIE PHOTOS ── */}
