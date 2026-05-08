@@ -175,11 +175,40 @@ git push  # auto-deploy Vercel
 - Pas de coupure : entre le changement de var et la fin du redeploy, les fonctions actives continuent leur trafic normalement.
 - Le code SMS Partner reste en place mais n'est plus appelé — réactivable instantanément.
 
+#### Robustesse transactionnelle (mig 162, mai 2026)
+
+Refonte profonde post-incident "this operation was aborted" + audit ([`src/lib/sms.ts`](../src/lib/sms.ts) `sendWithIntelligentFallback`).
+
+**Classification d'erreur** ([`sms-error-classifier.ts`](../src/lib/sms-error-classifier.ts)) — 8 classes : `success`, `invalid_phone`, `no_credit`, `rate_limit`, `timeout`, `server_error`, `config_error`, `unknown`. Dépend du provider :
+- OVH : `errorCode` extrait du body `(INVALID_RECEIVER)` → `invalid_phone`, HTTP 402 → `no_credit`, etc.
+- SMS Partner : code per-numéro `errors[0].code` prime sur `code` top-level (incident 2026-05-08 : code 55 top-level vague vs code 9 per-numéro précis). Codes 1/10 → `config_error`, 2/9/55 → `invalid_phone`, 11 → `no_credit`.
+
+**Décision fallback** :
+| Erreur | Action |
+|---|---|
+| `invalid_phone` | Pas de fallback. Après 2 confirmations sur 2 providers → ajout `sms_phone_blacklist`. Pre-check `isPhoneBlacklisted()` skip à la source. |
+| `config_error` | Pas de fallback. Alerte admin email `sales@getqarte.com` (dedup 30min). |
+| `no_credit` | Fallback autre provider + alerte admin. |
+| `rate_limit` / `server_error` / `unknown` | Fallback safe sur l'autre provider (timeout 8s × 3 retries via [`fetch-with-retry.ts`](../src/lib/fetch-with-retry.ts)). |
+| `timeout` SMS Partner | **PAS de fallback immédiat** (ambigu, peut être déjà parti). Status `pending_verify` + `verify_after = NOW + 10min`. Attend DLR webhook. |
+| `timeout` OVH | Fallback impossible (OVH = fallback ultime du flow FR/BE quand SMS Partner échoue). |
+
+**Webhook DLR SMS Partner** ([`/api/sms-partner/dlr`](../src/app/api/sms-partner/dlr/route.ts)) : auth via secret query string `SMS_PARTNER_DLR_SECRET`. SMS Partner POSTe `{status: 'delivered'|'not delivered'|'waiting', msgId, phone, ...}`. On match `sms_logs.provider_msg_id` (index `idx_sms_logs_provider_msg_id`) :
+- `delivered` → `status='sent'` final, `delivery_status='delivered'`
+- `not delivered` → trigger fallback OVH inline + log
+- `waiting` → patience, re-tick
+
+**Cron `sms-verify`** ([`/api/cron/sms-verify`](../src/app/api/cron/sms-verify/route.ts), `*/10 * * * *`) — backstop pour les `pending_verify` dont le DLR n'arrive jamais (perdu, urlDlr non passé, etc.). Promise.allSettled chunked par 5 + early exit time budget 50s/60s. Latence end-to-end max : 10min après envoi.
+
+**Cron `sms-batch-audit`** ([`/api/cron/sms-batch-audit`](../src/app/api/cron/sms-batch-audit/route.ts), `30 19 * * *` UTC) — filet de sécurité quotidien. Vérifie chaque slot demain a un `sms_logs reminder_j1` valide (sent/delivered/pending_verify), re-envoie défensivement les manquants via `sendBookingSms`. Si > 5% manquants → alerte admin. **Garde-fou anti-prématurité** : check `app_config.sms_evening_last_run_at` < 6h, sinon skip (sinon trigger manuel à 8h UTC re-envoie tous les rappels du jour, cf incident 2026-05-08).
+
+**Hors scope** : marketing campagnes (`sms_campaigns`) + trial marketing (`merchant_marketing_sms_logs`) restent **OVH only**, pas de fallback ni retry.
+
 #### Limites connues
 
-- ⚠️ **Pas de fallback automatique** : si SMS Partner répond une erreur API (clé invalide, solde épuisé, numéro rejeté), le SMS est marqué `failed` en DB. Aucun retry automatique vers OVH. Décision UX : éviter les double-envois fantômes. Si besoin futur, ajouter ~10 lignes dans `sendBookingSms` (try SMS Partner → fallback OVH si `result.success === false`).
 - ⚠️ **Suisse non couverte** par SMS Partner (compte non habilité). Détection automatique via préfixe `41` → fallback OVH. Si le compte est étendu un jour, modifier `selectTransactionalProvider()` dans [`sms.ts`](../src/lib/sms.ts) pour inclure `CH`.
 - ⚠️ **Restriction horaire SMS commerciaux** : SMS Partner applique par défaut la restriction légale française (pas d'envoi 20h-8h, dimanches/jours fériés). Pour les transactionnels (rappels J-0), demander au support SMS Partner de désactiver cette contrainte sur la clé API utilisée. Compte Qarte actuel : restriction levée (avril 2026).
+- ⚠️ **Pas de signature HMAC** côté webhook DLR SMS Partner (non documenté chez eux). Auth uniquement via secret query string `SMS_PARTNER_DLR_SECRET`. Si compromis → regénérer + redéployer + l'env Vercel se met à jour.
 
 #### Tarification merchant — inchangée par le routage
 
