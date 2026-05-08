@@ -276,7 +276,12 @@ export default function BookingModal({
     merchant.welcome_offer_enabled && merchant.welcome_offer_discount_percent
   ) ? merchant.welcome_offer_discount_percent : null;
   const welcomeApplicablePercent = recognition.kind === 'unknown' ? welcomeConfiguredPercent : null;
-  const showWelcomeTeaser = !!welcomeConfiguredPercent && phoneCookieChecked && (recognition.kind === 'idle' || recognition.kind === 'loading');
+  // Le banner welcome devient un message de CONFIRMATION : visible uniquement
+  // quand la cliente est confirmee nouvelle (kind='unknown'). Plus de transition
+  // visible -> cache (cas cliente connue avec cookie prefill qui declenchait
+  // banner ~300ms puis disparaissait). Cote nouvelle : nothing -> banner reste
+  // affiche durablement avec line-through sur le prix. Stable, zero flash.
+  const showWelcomeTeaser = !!welcomeConfiguredPercent && recognition.kind === 'unknown';
   const promoApplicablePercent = promoOffer?.discount_percent ?? null;
   const promoTargetServiceIds = promoOffer?.target_service_ids ?? null;
   const promoIsTargeted = !!promoTargetServiceIds && promoTargetServiceIds.length > 0;
@@ -679,58 +684,73 @@ export default function BookingModal({
                   );
                 })()}
 
-                {/* Promo offer banner — si ciblée, on liste les prestations concernées
-                    pour que la cliente sache où le -X% s'applique */}
+                {/* Promo offer banner : 2 lignes typo + chiffre %. Bg amber tinted
+                    pour distinguer du blanc du modal. Le chiffre porte l'urgence
+                    visuelle, colorise primary_color merchant. */}
                 {promoOffer && (() => {
                   const targetedNames = promoIsTargeted
                     ? services.filter((s) => promoTargetSet!.has(s.id)).map((s) => s.name)
                     : null;
-                  const targetSuffix = targetedNames && targetedNames.length > 0
-                    ? ` ${t('promoTargetedSuffix', { services: targetedNames.join(', ') })}`
-                    : '';
+                  const isTargeted = targetedNames && targetedNames.length > 0 && promoOffer.discount_percent;
                   return (
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-100 mb-3">
-                      <Gift className="w-4 h-4 text-amber-500 shrink-0" />
-                      <p className="text-xs text-amber-700 font-medium flex-1 leading-snug">
-                        <span className="font-bold">{promoOffer.title}</span>
-                        {promoOffer.discount_percent && (
-                          <span className="ml-1.5 inline-block bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md align-middle">
-                            -{promoOffer.discount_percent}%{targetSuffix}
-                          </span>
-                        )}
-                        <span className="opacity-80"> — {promoOffer.description}</span>
-                      </p>
+                    <div className="rounded-xl border border-amber-200/80 bg-amber-50 px-3 py-2.5 flex items-center gap-3 mb-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-bold text-gray-900 leading-tight truncate">
+                          {promoOffer.title}
+                        </p>
+                        <p className="text-[11px] text-gray-600 leading-snug">
+                          {isTargeted ? (
+                            <>
+                              {t('promoTargetedLead', { percent: promoOffer.discount_percent! })}{' '}
+                              <span className="text-amber-800 font-semibold">{targetedNames!.join(', ')}</span>
+                            </>
+                          ) : (
+                            promoOffer.description
+                          )}
+                        </p>
+                      </div>
+                      {promoOffer.discount_percent ? (
+                        <div
+                          className="shrink-0 leading-none tabular-nums text-2xl font-extrabold tracking-tight"
+                          style={{ color: merchant.primary_color || '#4b0082' }}
+                        >
+                          -{promoOffer.discount_percent}%
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })()}
 
-                {/* Welcome teaser — avant saisie/pendant lookup : on annonce l'offre
-                    sans réduire le prix (évite l'effet "le prix remonte" pour les clientes connues) */}
+                {/* Welcome teaser : meme langage visuel que le promo banner (2 lignes
+                    typo + chiffre %), bg rose pour distinguer du promo amber. Disparait
+                    des que le lookup tranche : si nouvelle, la reduction passe dans le
+                    recap prix (line-through) ; si connue, plus rien (faux espoir). */}
                 {showWelcomeTeaser && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-50/60 border border-rose-100 mb-3">
-                    <Gift className="w-4 h-4 text-rose-500 shrink-0" />
-                    <p className="text-xs text-rose-700 font-medium flex-1 leading-snug">
-                      <span className="font-bold">{t('welcomeTeaserTitle')}</span>
-                      <span className="ml-1.5 inline-block bg-rose-100 text-rose-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md align-middle">
-                        -{welcomeConfiguredPercent}%
-                      </span>
-                      <span className="opacity-80"> {t('welcomeTeaserSubtitle')}</span>
-                    </p>
+                  <>
+                  <div className="rounded-xl border border-rose-200/80 bg-rose-50 px-3 py-2.5 flex items-center gap-3 mb-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-bold text-gray-900 leading-tight">
+                        {t('welcomeTeaserTitle')}
+                      </p>
+                      <p className="text-[11px] text-gray-600 leading-snug mt-0.5">
+                        {t('welcomeTeaserSubtitle')}
+                      </p>
+                    </div>
+                    <div
+                      className="shrink-0 leading-none tabular-nums text-2xl font-extrabold tracking-tight"
+                      style={{ color: merchant.primary_color || '#4b0082' }}
+                    >
+                      -{welcomeConfiguredPercent}%
+                    </div>
                   </div>
-                )}
-
-                {/* Welcome banner — réduction effectivement appliquée (cliente confirmée nouvelle) */}
-                {welcomeApplicablePercent && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-50 border border-rose-100 mb-3">
-                    <Gift className="w-4 h-4 text-rose-500 shrink-0" />
-                    <p className="text-xs text-rose-700 font-medium flex-1 leading-snug">
-                      <span className="font-bold">{t('welcomeBannerTitle')}</span>
-                      <span className="ml-1.5 inline-block bg-rose-100 text-rose-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md align-middle">
-                        -{welcomeApplicablePercent}%
-                      </span>
-                      <span className="opacity-80"> — {t('welcomeBannerSubtitle')}</span>
+                  {/* Hint pas de cumul : visible si les 2 banners coexistent (welcome + promo
+                      tous deux configures et applicables a cette cliente nouvelle). */}
+                  {promoOffer && (
+                    <p className="text-[11px] text-gray-500 mb-3 px-1 leading-snug italic">
+                      {t('offersBestOnlyHint')}
                     </p>
-                  </div>
+                  )}
+                  </>
                 )}
 
                 {/* Totals */}

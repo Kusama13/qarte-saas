@@ -326,6 +326,13 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const categoryIds = useMemo(() => new Set(serviceCategories.map(c => c.id)), [serviceCategories]);
   const uncategorized = useMemo(() => services.filter(svc => !svc.category_id || !categoryIds.has(svc.category_id)), [services, categoryIds]);
 
+  // Promo ciblee : set des service ids concernes (null si promo universelle ou pas de promo)
+  const promoIsTargeted = !!promoOffer?.target_service_ids && promoOffer.target_service_ids.length > 0;
+  const promoTargetSet = useMemo(
+    () => promoIsTargeted ? new Set(promoOffer!.target_service_ids!) : null,
+    [promoIsTargeted, promoOffer],
+  );
+
   const fmtDuration = (min: number) => {
     if (min < 60) return `${min} min`;
     const h = Math.floor(min / 60);
@@ -466,6 +473,63 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             </p>
           </motion.div>
         )}
+
+        {/* ── PROMO OFFER ── (juste apres la bio pour maximiser visibilite) */}
+        {promoOffer && (canBookOnline || merchant.scan_code) && (() => {
+          const targetedNames = promoIsTargeted
+            ? services.filter((sv) => promoTargetSet!.has(sv.id)).map((sv) => sv.name)
+            : null;
+          return (
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.22, ease: 'easeOut' }}
+            className="rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-3.5 flex items-center gap-3"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-bold text-gray-900 leading-tight truncate">
+                {promoOffer.title}
+              </p>
+              <p className="text-[12px] text-gray-600 mt-1 leading-snug">
+                {targetedNames && targetedNames.length > 0 && promoOffer.discount_percent ? (
+                  <>
+                    {t('promoTargetedLead', { percent: promoOffer.discount_percent })}{' '}
+                    <span className="text-amber-800 font-semibold">{targetedNames.join(', ')}</span>
+                  </>
+                ) : (
+                  promoOffer.description
+                )}
+              </p>
+              {promoOffer.expires_at && (
+                <p className="text-[11px] text-amber-800 font-medium mt-1.5 leading-snug">
+                  {t('validUntil', { date: new Date(promoOffer.expires_at).toLocaleDateString(toBCP47(locale)) })}
+                </p>
+              )}
+              {!canBookOnline && (
+                <p className="text-[11px] text-gray-500 mt-1 leading-snug">
+                  {t('promoInstructions')}
+                </p>
+              )}
+            </div>
+            {promoOffer.discount_percent ? (
+              <div
+                className="shrink-0 leading-none tabular-nums text-3xl font-extrabold tracking-tight"
+                style={{ color: merchant.primary_color || '#4b0082' }}
+              >
+                -{promoOffer.discount_percent}%
+              </div>
+            ) : !canBookOnline && merchant.scan_code ? (
+              <a
+                href={`/scan/${merchant.scan_code}?offer=${promoOffer.id}`}
+                className="shrink-0 px-3.5 py-2 rounded-xl text-[12px] font-bold text-white transition-colors"
+                style={{ backgroundColor: merchant.primary_color || '#4b0082' }}
+              >
+                {t('enjoyNow')}
+              </a>
+            ) : null}
+          </motion.div>
+          );
+        })()}
 
         {/* CTA principal */}
         {hasBooking && (
@@ -836,13 +900,27 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               );
             }
             const { svc, isLast } = item;
+            // Promo s'applique a ce service si :
+            //   - Targeted : svc.id est dans la liste cible
+            //   - Universelle : target_service_ids est null/vide -> tout le monde
+            const svcHasPromo = !!promoOffer?.discount_percent && (
+              promoTargetSet ? promoTargetSet.has(svc.id) : true
+            );
+            const promoPct = svcHasPromo ? promoOffer!.discount_percent! : 0;
             return (
               <div
                 key={svc.id}
                 className={`py-3 ${!isLast && !(idx === visibleItems.length - 1 && !servicesExpanded) ? 'border-b border-gray-100/80' : ''}`}
               >
                 <div className="flex items-center justify-between">
-                  <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
+                  <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                    <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
+                    {svcHasPromo && (
+                      <span className="inline-block bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md align-middle">
+                        -{promoPct}%
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 shrink-0 ml-4">
                     {svc.duration && (
                       <span className="text-[11px] text-gray-500 flex items-center gap-0.5">
@@ -850,10 +928,19 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                         {fmtDuration(svc.duration)}
                       </span>
                     )}
-                    <p className="text-[13px] font-bold text-gray-900">
-                      {svc.price_from && <span className="text-[11px] font-normal text-gray-500">{t('priceFrom')}</span>}
-                      {formatCurrency(Number(svc.price), merchant.country, locale)}
-                    </p>
+                    {svcHasPromo ? (
+                      <p className="text-[13px] font-bold text-gray-900 flex items-baseline gap-1">
+                        <span className="text-[11px] font-normal text-gray-400 line-through">
+                          {formatCurrency(Number(svc.price), merchant.country, locale)}
+                        </span>
+                        <span>{formatCurrency(Math.round(Number(svc.price) * (1 - promoPct / 100)), merchant.country, locale)}</span>
+                      </p>
+                    ) : (
+                      <p className="text-[13px] font-bold text-gray-900">
+                        {svc.price_from && <span className="text-[11px] font-normal text-gray-500">{t('priceFrom')}</span>}
+                        {formatCurrency(Number(svc.price), merchant.country, locale)}
+                      </p>
+                    )}
                   </div>
                 </div>
                 {svc.description && (
@@ -914,29 +1001,6 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             </motion.div>
           );
         })()}
-
-        {promoOffer && (canBookOnline || merchant.scan_code) && (
-          <OfferCard
-            tier="amber"
-            icon={Tag}
-            label={promoOffer.title}
-            delay={0.32}
-            cta={!canBookOnline && merchant.scan_code ? {
-              href: `/scan/${merchant.scan_code}?offer=${promoOffer.id}`,
-              text: t('enjoyNow'),
-            } : undefined}
-          >
-            <p className="text-[14px] font-bold text-gray-900 leading-snug mt-0.5">
-              {promoOffer.description}
-            </p>
-            <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">
-              {canBookOnline ? t('promoInstructionsBooking') : t('promoInstructions')}
-              {promoOffer.expires_at && (
-                <span className="font-semibold text-amber-700"> {t('validUntil', { date: new Date(promoOffer.expires_at).toLocaleDateString(toBCP47(locale)) })}</span>
-              )}
-            </p>
-          </OfferCard>
-        )}
 
         {/* Label carte simulée + sous-titre */}
         <motion.div

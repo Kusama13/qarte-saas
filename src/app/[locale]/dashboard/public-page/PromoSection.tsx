@@ -257,9 +257,15 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
                           checked={checked}
                           onChange={(e) => {
                             const baseline = all ? services.map((x) => x.id) : promoTargetServiceIds;
-                            const next = e.target.checked
-                              ? Array.from(new Set([...baseline, s.id]))
-                              : baseline.filter((id) => id !== s.id);
+                            if (e.target.checked) {
+                              setPromoTargetServiceIds(Array.from(new Set([...baseline, s.id])));
+                              return;
+                            }
+                            // Empeche length=0 via uncheck individuel : convention
+                            // 0 = toutes (snap-back). L'user doit utiliser "Toutes
+                            // les prestations" s'il veut le mode all explicite.
+                            const next = baseline.filter((id) => id !== s.id);
+                            if (next.length === 0) return;
                             setPromoTargetServiceIds(next);
                           }}
                           className="w-4 h-4 rounded border-gray-300 text-amber-500 focus:ring-amber-500"
