@@ -6,7 +6,9 @@ export function computeDepositAmount(
   depositPercent?: number | null,
 ): number | null {
   if (depositFixed) return Math.min(depositFixed, totalPrice);
-  if (depositPercent) return Math.min(Math.round(totalPrice * depositPercent / 100), totalPrice);
+  // Garde precision au centime : Math.round(0.40) = 0 cassait l'affichage
+  // (acompte 10% sur 4 EUR -> 0 EUR au lieu de 0,40 EUR).
+  if (depositPercent) return Math.min(Math.round(totalPrice * depositPercent) / 100, totalPrice);
   return null;
 }
 

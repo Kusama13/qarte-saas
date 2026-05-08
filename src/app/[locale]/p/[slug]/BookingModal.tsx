@@ -490,7 +490,7 @@ export default function BookingModal({
     if (displayPrice <= 0 || skipDeposit) return null;
     const rawDeposit = merchant.deposit_amount
       ? Number(merchant.deposit_amount)
-      : Math.round(displayPrice * (merchant.deposit_percent || 0) / 100);
+      : Math.round(displayPrice * (merchant.deposit_percent || 0)) / 100;
     const capped = Math.min(rawDeposit, displayPrice);
     return { amount: capped, isFullPayment: rawDeposit >= displayPrice };
   }, [merchant.deposit_link, merchant.deposit_percent, merchant.deposit_amount, displayPrice, skipDeposit]);
@@ -752,19 +752,32 @@ export default function BookingModal({
                           )}
                           <span className="font-bold text-gray-900">{formatCurrency(displayPrice, country, locale)}</span>
                         </span>
-                        {priceResult.hasDiscount && (
-                          <span className="text-[10px] text-emerald-600 mt-0.5 leading-tight">
-                            {[
-                              priceResult.appliedDiscounts.member && t('discountMember', { percent: priceResult.appliedDiscounts.member }),
-                              priceResult.appliedDiscounts.welcome && t('discountWelcome', { percent: priceResult.appliedDiscounts.welcome }),
-                              priceResult.appliedDiscounts.promo && (
-                                promoIsTargeted && priceResult.appliedDiscounts.promoAmount
-                                  ? t('discountPromoAmount', { amount: formatCurrency(priceResult.appliedDiscounts.promoAmount, country, locale) })
-                                  : t('discountPromo', { percent: priceResult.appliedDiscounts.promo })
-                              ),
-                            ].filter(Boolean).join(' · ')}
-                          </span>
-                        )}
+                        {priceResult.hasDiscount && (() => {
+                          const memberAmt = priceResult.appliedDiscounts.member
+                            ? Math.round(totalPrice * priceResult.appliedDiscounts.member) / 100
+                            : 0;
+                          const welcomeAmt = priceResult.appliedDiscounts.welcome
+                            ? Math.round(totalPrice * priceResult.appliedDiscounts.welcome) / 100
+                            : 0;
+                          const promoAmt = priceResult.appliedDiscounts.promoAmount ?? (
+                            priceResult.appliedDiscounts.promo
+                              ? Math.round(totalPrice * priceResult.appliedDiscounts.promo) / 100
+                              : 0
+                          );
+                          return (
+                            <span className="text-[11px] text-emerald-600 mt-1 leading-tight flex flex-col items-end gap-0.5">
+                              {memberAmt > 0 && (
+                                <span>{t('discountMemberAmount', { amount: formatCurrency(memberAmt, country, locale) })}</span>
+                              )}
+                              {welcomeAmt > 0 && (
+                                <span>{t('discountWelcomeAmount', { amount: formatCurrency(welcomeAmt, country, locale) })}</span>
+                              )}
+                              {promoAmt > 0 && (
+                                <span>{t('discountPromoAmount', { amount: formatCurrency(promoAmt, country, locale) })}</span>
+                              )}
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
                     {/* Mention pour offre descriptive (pas de discount calculé) — évite que la cliente arrive en boutique sans en parler */}
@@ -777,7 +790,7 @@ export default function BookingModal({
                       const isFixedDeposit = !!merchant.deposit_amount;
                       const rawDeposit = isFixedDeposit
                         ? Number(merchant.deposit_amount)
-                        : Math.round(displayPrice * (merchant.deposit_percent || 0) / 100);
+                        : Math.round(displayPrice * (merchant.deposit_percent || 0)) / 100;
                       const isFullPayment = rawDeposit >= displayPrice;
                       const cappedDeposit = Math.min(rawDeposit, displayPrice);
                       // Cas particulier : acompte fixe > total (apres reduction). On remplace

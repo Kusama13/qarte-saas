@@ -3551,6 +3551,8 @@
     "discountWelcome": "Welcome -{percent}%",
     "discountPromo": "Promo -{percent}%",
     "discountPromoAmount": "Promo -{amount}",
+    "discountMemberAmount": "Loyalty member −{amount}",
+    "discountWelcomeAmount": "Welcome −{amount}",
     "promoTargetedSuffix": "on {services}",
     "promoTargetedSentence": "Get -{percent}% on {services}",
     "promoTargetedLead": "Get -{percent}% on",

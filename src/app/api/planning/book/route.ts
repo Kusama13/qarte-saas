@@ -525,7 +525,7 @@ export async function POST(request: NextRequest) {
     const depositAmount = merchant.deposit_amount
       ? Number(merchant.deposit_amount)
       : merchant.deposit_percent
-        ? Math.round(totalPrice * merchant.deposit_percent / 100)
+        ? Math.round(totalPrice * merchant.deposit_percent) / 100
         : null;
 
     const links = buildDepositLinks(
