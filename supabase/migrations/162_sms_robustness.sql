@@ -28,7 +28,9 @@ ALTER TABLE sms_logs
   ADD COLUMN IF NOT EXISTS provider_msg_id TEXT,
   ADD COLUMN IF NOT EXISTS fallback_attempted_at TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS dlr_received_at TIMESTAMPTZ,
-  ADD COLUMN IF NOT EXISTS verify_after TIMESTAMPTZ;
+  ADD COLUMN IF NOT EXISTS verify_after TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS delivery_status TEXT
+    CHECK (delivery_status IN ('delivered', 'not_delivered', 'waiting'));
 
 COMMENT ON COLUMN sms_logs.error_class IS
   'Classification metier de l''erreur. Decide si fallback safe (timeout/server_error) ou inutile (invalid_phone). NULL = pas d''erreur.';
@@ -40,6 +42,8 @@ COMMENT ON COLUMN sms_logs.dlr_received_at IS
   'Timestamp de reception du DLR webhook (SMS Partner). NULL si pas de DLR (OVH ou pas encore recu).';
 COMMENT ON COLUMN sms_logs.verify_after IS
   'Pour status=pending_verify : apres ce timestamp, le cron sms-verify decide (DLR reçu? → done; sinon → fallback OVH). Typiquement NOW()+10min.';
+COMMENT ON COLUMN sms_logs.delivery_status IS
+  'Statut DLR raw retourne par SMS Partner : delivered/not_delivered/waiting. Distinct du `status` (notre etat interne sent/failed/pending_verify/delivered).';
 
 -- ─── 3. Indexes hot path : cron sms-verify + webhook DLR lookup ────────
 -- Composite (status, verify_after) pour cron qui filtre sur les 2.
