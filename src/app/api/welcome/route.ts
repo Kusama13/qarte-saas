@@ -172,14 +172,12 @@ export async function POST(request: NextRequest) {
     const customerId = newCustomer.id;
     const cardId = newCard.id;
 
-    // 6. Créer le voucher welcome (expire dans 30 jours) UNIQUEMENT pour les
-    // merchants sans résa en ligne (auto_booking_enabled=false). Pour les
-    // merchants avec résa en ligne, la réduction welcome est appliquée
-    // directement au booking via welcome_offer_discount_percent — pas de
-    // voucher autonome dans la carte fidélité.
-    let welcomeVoucher: { id: string } | null = null;
+    // 6+7. Voucher welcome + referral UNIQUEMENT pour les merchants sans resa
+    // en ligne (auto_booking=false). Pour les merchants avec resa en ligne, la
+    // reduction welcome est appliquee directement au booking via
+    // welcome_offer_discount_percent (mig 153) — pas de voucher autonome.
     if (!merchant.auto_booking_enabled) {
-      const { data: createdVoucher, error: voucherError } = await supabaseAdmin
+      const { data: welcomeVoucher, error: voucherError } = await supabaseAdmin
         .from('vouchers')
         .insert({
           loyalty_card_id: cardId,
@@ -192,15 +190,11 @@ export async function POST(request: NextRequest) {
         .select()
         .single();
 
-      if (voucherError || !createdVoucher) {
+      if (voucherError || !welcomeVoucher) {
         logger.error('Welcome voucher creation error:', voucherError);
         return NextResponse.json({ error: 'Erreur lors de la création de la récompense' }, { status: 500 });
       }
-      welcomeVoucher = createdVoucher;
-    }
 
-    // 7. Créer le referral record uniquement si voucher créé (cas auto_booking=false)
-    if (welcomeVoucher) {
       const { error: referralError } = await supabaseAdmin
         .from('referrals')
         .insert({
@@ -216,7 +210,6 @@ export async function POST(request: NextRequest) {
 
       if (referralError) {
         logger.error('Welcome referral creation error:', referralError);
-        // Rollback: delete the voucher since referral tracking failed
         await supabaseAdmin.from('vouchers').delete().eq('id', welcomeVoucher.id);
         return NextResponse.json({ error: 'Erreur lors de la création de la récompense' }, { status: 500 });
       }

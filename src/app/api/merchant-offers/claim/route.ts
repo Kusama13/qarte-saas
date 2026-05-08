@@ -217,20 +217,21 @@ export async function POST(request: NextRequest) {
       cardId = newCard.id;
     }
 
-    // 5. Incrémenter le compteur AVANT de créer le voucher (atomique — évite les race conditions)
-    const { data: claimSuccess } = await supabaseAdmin.rpc('increment_offer_claim', {
-      p_offer_id: offer.id,
-    });
-
-    if (!claimSuccess) {
-      return NextResponse.json({ error: 'Cette offre n\'est plus disponible' }, { status: 410 });
-    }
-
-    // 6. Créer le voucher offre (expire dans 30 jours) UNIQUEMENT pour les
-    // merchants sans résa en ligne (auto_booking_enabled=false). Avec résa en
-    // ligne, la promo est appliquée directement au booking via le BookingModal
-    // (mig 153 applied_offer_*) — pas de voucher autonome dans la carte fidélité.
+    // 5+6. Pour les merchants avec resa en ligne (auto_booking=true), la promo
+    // est appliquee directement au booking via le BookingModal (mig 153
+    // applied_offer_*). Pas de voucher autonome dans la carte fidelite, et
+    // surtout pas d'incrementation du claim_count : le claim "reel" se fait
+    // au moment du booking (sinon on epuiserait max_claims sans aucun voucher
+    // ni resa concrets).
     if (!merchant.auto_booking_enabled) {
+      const { data: claimSuccess } = await supabaseAdmin.rpc('increment_offer_claim', {
+        p_offer_id: offer.id,
+      });
+
+      if (!claimSuccess) {
+        return NextResponse.json({ error: 'Cette offre n\'est plus disponible' }, { status: 410 });
+      }
+
       const { data: offerVoucher, error: voucherError } = await supabaseAdmin
         .from('vouchers')
         .insert({
@@ -247,7 +248,6 @@ export async function POST(request: NextRequest) {
 
       if (voucherError || !offerVoucher) {
         logger.error('Offer voucher creation error:', voucherError);
-        // Rollback: decrement claim count since voucher creation failed
         await supabaseAdmin.rpc('decrement_offer_claim', { p_offer_id: offer.id });
         return NextResponse.json({ error: 'Erreur lors de la création du bon' }, { status: 500 });
       }
