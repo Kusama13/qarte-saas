@@ -270,6 +270,15 @@ export async function GET(request: NextRequest) {
       logger.error('SMS reminders error:', smsError);
     }
 
+    // Write last-run flag pour que sms-batch-audit (19h30 UTC) sache que evening
+    // a bien tourne avant de re-envoyer defensivement les reminder_j1 manquants.
+    // Sans ce flag : audit triggered manuellement avant 17h UTC enverrait les
+    // rappels prematurement (cf incident test 2026-05-08).
+    await supabase.from('app_config').upsert({
+      key: 'sms_evening_last_run_at',
+      value: { ran_at: new Date().toISOString(), sent: smsResults.sent, errors: smsResults.errors },
+    }, { onConflict: 'key' });
+
     logger.info('Evening cron completed', { ...results, depositWarned, smsReminders: smsResults });
     return NextResponse.json({ success: true, ...results, depositWarned, smsReminders: smsResults });
   } catch (error) {

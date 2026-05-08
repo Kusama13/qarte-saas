@@ -43,6 +43,29 @@ export async function GET(request: NextRequest) {
     errors: 0,
   };
 
+  // Garde-fou : on ne re-envoie pas defensivement si le cron evening n'a pas
+  // tourne dans les 6 dernieres heures. Sinon on enverrait les reminder_j1
+  // PREMATUREMENT (avant l'heure prevue par evening). Cas observe lors du
+  // test e2e 2026-05-08 ou un trigger manuel a 8h UTC a re-envoye 9 rappels
+  // 11h trop tot. Le cron evening ecrit `sms_evening_last_run_at` a la fin
+  // de son run.
+  const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+  const { data: eveningCfg } = await supabase
+    .from('app_config')
+    .select('value')
+    .eq('key', 'sms_evening_last_run_at')
+    .maybeSingle();
+  const eveningRanAt = (eveningCfg?.value as { ran_at?: string } | null)?.ran_at;
+  if (!eveningRanAt || Date.now() - new Date(eveningRanAt).getTime() > SIX_HOURS_MS) {
+    logger.warn('[cron sms-batch-audit] Evening cron has not run in last 6h, skip audit to avoid premature resend', { eveningRanAt });
+    return NextResponse.json({
+      ok: true,
+      skipped: 'evening_not_run_recently',
+      eveningRanAt: eveningRanAt || null,
+      results,
+    });
+  }
+
   try {
     const globalSmsConfig = await getGlobalSmsConfig(supabase);
     if (!globalSmsConfig.reminder_enabled) {
