@@ -129,7 +129,10 @@ export function computeBookingPrice(opts: BookingPriceOpts): BookingPriceResult 
       member:  memberAmount > 0 ? memberPct : undefined,
       welcome: secondWinner === 'welcome' ? welcomePct : undefined,
       promo:   secondWinner === 'promo'   ? promoPct   : undefined,
-      promoAmount: secondWinner === 'promo' ? Math.round(promoAmount) : undefined,
+      // Garde la precision au centime : Math.round(0.50) = 1 cassait le
+      // breakdown affiche (cliente voyait 'Promo -1€' alors que la promo
+      // avait vraiment retire 0,50€).
+      promoAmount: secondWinner === 'promo' ? Math.round(promoAmount * 100) / 100 : undefined,
     },
     hasDiscount: finalPrice < total,
   };
