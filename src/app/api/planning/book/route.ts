@@ -300,21 +300,11 @@ export async function POST(request: NextRequest) {
           .select('id')
           .single();
 
-        // Auto-create welcome voucher if welcome enabled in LEGACY mode (no discount %).
-        // If welcome_offer_discount_percent is set, the discount is applied immediately
-        // to the booking price below — no voucher needed (cf. mig 153).
-        if (newCard && merchant.welcome_offer_enabled && merchant.welcome_offer_description && !merchant.welcome_offer_discount_percent) {
-          await supabaseAdmin
-            .from('vouchers')
-            .insert({
-              loyalty_card_id: newCard.id,
-              merchant_id: merchant_id,
-              customer_id: newCustomer.id,
-              reward_description: merchant.welcome_offer_description,
-              source: 'welcome',
-              expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-            });
-        }
+        // Pas de voucher welcome ici : ce code ne tourne que pour les merchants
+        // auto_booking_enabled (vitrine), donc la reduction welcome est appliquee
+        // directement au booking via welcome_offer_discount_percent. Si le merchant
+        // n'a pas configure de %, son offre n'a aucun effet — un warning UI dans
+        // /dashboard/public-page le pousse a saisir le %.
       }
     }
 

@@ -172,44 +172,54 @@ export async function POST(request: NextRequest) {
     const customerId = newCustomer.id;
     const cardId = newCard.id;
 
-    // 6. Créer le voucher welcome (expire dans 30 jours)
-    const { data: welcomeVoucher, error: voucherError } = await supabaseAdmin
-      .from('vouchers')
-      .insert({
-        loyalty_card_id: cardId,
-        merchant_id: merchant.id,
-        customer_id: customerId,
-        reward_description: merchant.welcome_offer_description || 'Offre nouveaux clients',
-        source: 'welcome',
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      })
-      .select()
-      .single();
+    // 6. Créer le voucher welcome (expire dans 30 jours) UNIQUEMENT pour les
+    // merchants sans résa en ligne (auto_booking_enabled=false). Pour les
+    // merchants avec résa en ligne, la réduction welcome est appliquée
+    // directement au booking via welcome_offer_discount_percent — pas de
+    // voucher autonome dans la carte fidélité.
+    let welcomeVoucher: { id: string } | null = null;
+    if (!merchant.auto_booking_enabled) {
+      const { data: createdVoucher, error: voucherError } = await supabaseAdmin
+        .from('vouchers')
+        .insert({
+          loyalty_card_id: cardId,
+          merchant_id: merchant.id,
+          customer_id: customerId,
+          reward_description: merchant.welcome_offer_description || 'Offre nouveaux clients',
+          source: 'welcome',
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        })
+        .select()
+        .single();
 
-    if (voucherError || !welcomeVoucher) {
-      logger.error('Welcome voucher creation error:', voucherError);
-      return NextResponse.json({ error: 'Erreur lors de la création de la récompense' }, { status: 500 });
+      if (voucherError || !createdVoucher) {
+        logger.error('Welcome voucher creation error:', voucherError);
+        return NextResponse.json({ error: 'Erreur lors de la création de la récompense' }, { status: 500 });
+      }
+      welcomeVoucher = createdVoucher;
     }
 
-    // 7. Créer le referral record (parrain = Qarte = null, status completed)
-    const { error: referralError } = await supabaseAdmin
-      .from('referrals')
-      .insert({
-        merchant_id: merchant.id,
-        referrer_customer_id: null,
-        referrer_card_id: null,
-        referred_customer_id: customerId,
-        referred_card_id: cardId,
-        referred_voucher_id: welcomeVoucher.id,
-        referrer_voucher_id: null,
-        status: 'completed',
-      });
+    // 7. Créer le referral record uniquement si voucher créé (cas auto_booking=false)
+    if (welcomeVoucher) {
+      const { error: referralError } = await supabaseAdmin
+        .from('referrals')
+        .insert({
+          merchant_id: merchant.id,
+          referrer_customer_id: null,
+          referrer_card_id: null,
+          referred_customer_id: customerId,
+          referred_card_id: cardId,
+          referred_voucher_id: welcomeVoucher.id,
+          referrer_voucher_id: null,
+          status: 'completed',
+        });
 
-    if (referralError) {
-      logger.error('Welcome referral creation error:', referralError);
-      // Rollback: delete the voucher since referral tracking failed
-      await supabaseAdmin.from('vouchers').delete().eq('id', welcomeVoucher.id);
-      return NextResponse.json({ error: 'Erreur lors de la création de la récompense' }, { status: 500 });
+      if (referralError) {
+        logger.error('Welcome referral creation error:', referralError);
+        // Rollback: delete the voucher since referral tracking failed
+        await supabaseAdmin.from('vouchers').delete().eq('id', welcomeVoucher.id);
+        return NextResponse.json({ error: 'Erreur lors de la création de la récompense' }, { status: 500 });
+      }
     }
 
     // 8. Retourner succès

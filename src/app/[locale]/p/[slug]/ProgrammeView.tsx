@@ -915,27 +915,6 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           );
         })()}
 
-        {merchant.welcome_offer_enabled && merchant.welcome_offer_description && (canBookOnline || (merchant.welcome_referral_code && merchant.scan_code)) && (
-          <OfferCard
-            tier="emerald"
-            icon={Sparkles}
-            label={t('welcomeOffer')}
-            delay={0.28}
-            cta={!canBookOnline && merchant.scan_code ? {
-              href: isDemo ? '#' : `/scan/${merchant.scan_code}?welcome=${merchant.welcome_referral_code}`,
-              text: t('enjoyNow'),
-              onClick: isDemo ? noOp : undefined,
-            } : undefined}
-          >
-            <p className="text-[14px] font-bold text-gray-900 leading-snug mt-0.5">
-              {merchant.welcome_offer_description}
-            </p>
-            <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">
-              {canBookOnline ? t('signUpToEnjoyBooking') : t('signUpToEnjoy')}
-            </p>
-          </OfferCard>
-        )}
-
         {promoOffer && (canBookOnline || merchant.scan_code) && (
           <OfferCard
             tier="amber"

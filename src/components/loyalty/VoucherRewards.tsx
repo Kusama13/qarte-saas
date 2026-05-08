@@ -15,7 +15,17 @@ interface VoucherRewardsProps {
 export default function VoucherRewards({ vouchers, merchant, onSelectVoucher }: VoucherRewardsProps) {
   const t = useTranslations('voucherRewards');
   const locale = useLocale();
-  const unusedVouchers = vouchers.filter(v => !v.is_used);
+  // Pour les merchants avec resa en ligne, les offres welcome+promo sont
+  // appliquees directement au booking (mig 153) — on masque ces vouchers
+  // legacy de la carte fidelite. Les vouchers en DB expirent naturellement
+  // (30j). Birthday + referral + autres sources restent visibles.
+  const unusedVouchers = vouchers.filter(v => {
+    if (v.is_used) return false;
+    if (merchant.auto_booking_enabled && (v.source === 'welcome' || v.source === 'offer')) {
+      return false;
+    }
+    return true;
+  });
   if (unusedVouchers.length === 0) return null;
 
   // Group by reward_description

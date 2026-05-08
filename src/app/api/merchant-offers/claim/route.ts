@@ -226,26 +226,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Cette offre n\'est plus disponible' }, { status: 410 });
     }
 
-    // 6. Créer le voucher offre (expire dans 30 jours)
-    const { data: offerVoucher, error: voucherError } = await supabaseAdmin
-      .from('vouchers')
-      .insert({
-        loyalty_card_id: cardId,
-        merchant_id: merchant.id,
-        customer_id: customerId,
-        reward_description: offer.description,
-        source: 'offer',
-        offer_id: offer.id,
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      })
-      .select()
-      .single();
+    // 6. Créer le voucher offre (expire dans 30 jours) UNIQUEMENT pour les
+    // merchants sans résa en ligne (auto_booking_enabled=false). Avec résa en
+    // ligne, la promo est appliquée directement au booking via le BookingModal
+    // (mig 153 applied_offer_*) — pas de voucher autonome dans la carte fidélité.
+    if (!merchant.auto_booking_enabled) {
+      const { data: offerVoucher, error: voucherError } = await supabaseAdmin
+        .from('vouchers')
+        .insert({
+          loyalty_card_id: cardId,
+          merchant_id: merchant.id,
+          customer_id: customerId,
+          reward_description: offer.description,
+          source: 'offer',
+          offer_id: offer.id,
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        })
+        .select()
+        .single();
 
-    if (voucherError || !offerVoucher) {
-      logger.error('Offer voucher creation error:', voucherError);
-      // Rollback: decrement claim count since voucher creation failed
-      await supabaseAdmin.rpc('decrement_offer_claim', { p_offer_id: offer.id });
-      return NextResponse.json({ error: 'Erreur lors de la création du bon' }, { status: 500 });
+      if (voucherError || !offerVoucher) {
+        logger.error('Offer voucher creation error:', voucherError);
+        // Rollback: decrement claim count since voucher creation failed
+        await supabaseAdmin.rpc('decrement_offer_claim', { p_offer_id: offer.id });
+        return NextResponse.json({ error: 'Erreur lors de la création du bon' }, { status: 500 });
+      }
     }
 
     return NextResponse.json({

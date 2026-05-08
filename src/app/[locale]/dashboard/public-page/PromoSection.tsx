@@ -209,6 +209,11 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
               <span className="text-sm font-semibold text-gray-700">%</span>
             </div>
             <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">{t('promoDiscountHelp')}</p>
+            {!!merchant.auto_booking_enabled && !promoDiscountPercent.trim() && (
+              <p className="text-[11px] text-amber-700 mt-1.5 leading-snug font-medium">
+                {t('promoDiscountMissingWarn')}
+              </p>
+            )}
           </div>
 
           {/* Multi-select prestations ciblées (mig 157). Visible uniquement si % > 0
