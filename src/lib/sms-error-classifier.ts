@@ -71,12 +71,14 @@ export function classifySmsPartnerError(result: ProviderResult): SmsErrorClass {
   // AbortError de fetch (timeout 10s × 3 retries)
   if (err.includes('aborted') || err.includes('timeout')) return 'timeout';
 
-  // Codes erreur SMS Partner explicites (extraits du format "code N" dans error_message)
-  // Format genere par sms-partner.ts: "[HTTP X] SMS Partner error (code N): ..."
+  // Codes erreur SMS Partner explicites (extraits du format "code N" dans error_message).
+  // Format genere par sms-partner.ts: "[HTTP X] SMS Partner error (code N): ..." ou
+  // N peut etre soit le code top-level, soit le code per-numero (errors[0].code) qui prime.
   if (err.includes('code 1)') || err.includes('code 10)')) return 'config_error'; // API key
   if (err.includes('code 2)')) return 'invalid_phone'; // phone required (mal forme)
-  if (err.includes('code 9)')) return 'invalid_phone'; // contrainte (format/date)
+  if (err.includes('code 9)')) return 'invalid_phone'; // contrainte format (ex: pas un mobile)
   if (err.includes('code 11)')) return 'no_credit';
+  if (err.includes('code 55)')) return 'invalid_phone'; // top-level "aucun numero a envoyer"
 
   // HTTP status (sms-partner.ts inclut `[HTTP {status}]` dans l'error)
   if (err.includes('[http 401]') || err.includes('[http 403]')) return 'config_error';

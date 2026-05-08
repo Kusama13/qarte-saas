@@ -42,7 +42,8 @@ interface SmsPartnerSuccess {
 interface SmsPartnerError {
   success: false;
   code: number;
-  errors?: Array<{ elementId?: string; message?: string }>;
+  // errors[] contient le detail par numero. `code` est string ("9", "10") ici, vs number top-level.
+  errors?: Array<{ elementId?: string; phoneNumber?: string; code?: string; message?: string }>;
   message?: string;
 }
 
@@ -81,7 +82,12 @@ export async function sendSmsPartner(phone: string, message: string): Promise<{ 
     const data = await res.json().catch(() => null) as SmsPartnerResponse | null;
 
     if (!res.ok || !data || data.success !== true) {
-      const errCode = data && 'code' in data ? data.code : 'unknown';
+      // SMS Partner peut renvoyer un `code` top-level generique (ex: 55 "Aucun numero a envoyer")
+      // PLUS un `errors[].code` per-numero plus precis (ex: 9 "telephone invalide").
+      // On utilise le code per-numero en priorite car c'est lui qui porte la vraie cause.
+      const topLevelCode = data && 'code' in data ? data.code : 'unknown';
+      const perNumberCode = (data && 'errors' in data && data.errors?.length && data.errors[0].code) ? data.errors[0].code : null;
+      const errCode = perNumberCode ?? topLevelCode;
       const errDetail = (data && 'errors' in data && data.errors?.length)
         ? data.errors.map(e => e.message).filter(Boolean).join('; ')
         : (data && 'message' in data ? data.message : null);
