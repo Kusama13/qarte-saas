@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import { sanitizeSmsForGsm7 } from './sms-sanitize';
+import { fetchWithRetry } from './fetch-with-retry';
 import logger from './logger';
 
 const APP_KEY = (process.env.OVH_APP_KEY || '').trim();
@@ -35,28 +36,8 @@ function sign(method: string, url: string, body: string, timestamp: number): str
   return `$1$${hash}`;
 }
 
-// Timeout court + 1 retry pour absorber les blips réseau transitoires
-// (cf. error_message="fetch failed" dans sms_logs — undici n'a jamais reçu de réponse).
-// On retry UNIQUEMENT sur erreur fetch bas niveau, pas sur HTTP 4xx/5xx.
-const FETCH_TIMEOUT_MS = 5000;
-
-async function fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const ac = new AbortController();
-    const timer = setTimeout(() => ac.abort(), FETCH_TIMEOUT_MS);
-    try {
-      return await fetch(url, { ...init, signal: ac.signal });
-    } catch (err) {
-      if (attempt === 1) throw err;
-      // backoff bref avant le 2e essai
-      await new Promise((r) => setTimeout(r, 400));
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  // unreachable
-  throw new Error('fetchWithRetry: unreachable');
-}
+// Timeout 8s × 3 attempts via fetch-with-retry helper partage. Aligne sur SMS Partner.
+// Audit 2026-05-08 : 5s/2 tentatives causait "aborted" alors que provider avait dispatche.
 
 async function ovhRequest(method: string, path: string, body?: Record<string, unknown>): Promise<{ ok: boolean; data: unknown; status: number }> {
   const url = `${OVH_BASE}${path}`;

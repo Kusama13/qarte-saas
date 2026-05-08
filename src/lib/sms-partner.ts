@@ -1,4 +1,5 @@
 import { sanitizeSmsForGsm7 } from './sms-sanitize';
+import { fetchWithRetry } from './fetch-with-retry';
 import logger from './logger';
 
 const API_KEY = (process.env.SMS_PARTNER_API_KEY || '').trim();
@@ -9,34 +10,25 @@ const SMS_SENDER =
   ((process.env.OVH_SMS_SENDER || '').trim()) ||
   'Qarte';
 const SANDBOX = (process.env.SMS_PARTNER_SANDBOX || '').trim().toLowerCase() === 'true';
+// URL absolue de notre endpoint webhook DLR. SMS Partner POSTe ici quand le statut
+// du SMS change (delivered/not delivered/waiting). Cf /api/sms-partner/dlr.
+// Inclut un secret en query string (pas de signature HMAC documentee cote SMS Partner).
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || '').trim();
+const DLR_SECRET = (process.env.SMS_PARTNER_DLR_SECRET || '').trim();
+const DLR_URL = APP_URL && DLR_SECRET ? `${APP_URL}/api/sms-partner/dlr?secret=${DLR_SECRET}` : '';
+// Warn (pas throw) au boot si la config DLR est incomplete cote SMS Partner.
+// Sans DLR : le cron sms-verify reste fallback ultime mais on perd la confirmation
+// rapide de livraison + on cumule du delai.
+if (API_KEY && !DLR_URL) {
+  logger.warn('[sms-partner] urlDlr disabled — set NEXT_PUBLIC_APP_URL + SMS_PARTNER_DLR_SECRET to enable delivery webhook (faster verify, fewer doublons)');
+}
 
 const SMS_PARTNER_ENDPOINT = 'https://api.smspartner.fr/v1/send';
 const SMS_PARTNER_ME_ENDPOINT = 'https://api.smspartner.fr/v1/me';
 
-// Timeout + retry exponentiel pour absorber les blips reseau transitoires
-// et la latence ponctuelle de SMS Partner. Cas observe : timeout 5s trop court
-// → "This operation was aborted" pour confirmation_no_deposit, booking_cancelled etc.
-// (cf. sms_logs avec error_message="aborted" 2026-04-30 + 2026-05-02).
-// Retry UNIQUEMENT sur erreur fetch bas niveau, pas sur reponses HTTP applicatives.
-const FETCH_TIMEOUT_MS = 10000;
-const MAX_ATTEMPTS = 3;
-const BACKOFF_MS = [400, 1500]; // entre attempt 0→1 et 1→2
-
-async function fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const ac = new AbortController();
-    const timer = setTimeout(() => ac.abort(), FETCH_TIMEOUT_MS);
-    try {
-      return await fetch(url, { ...init, signal: ac.signal });
-    } catch (err) {
-      if (attempt === MAX_ATTEMPTS - 1) throw err;
-      await new Promise((r) => setTimeout(r, BACKOFF_MS[attempt] || 1500));
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  throw new Error('fetchWithRetry: unreachable');
-}
+// SMS Partner peut etre lent : timeout 10s × 3 tentatives via fetch-with-retry helper.
+// Incident 2026-04-30 + 2026-05-02 : 5s causait "aborted" massif (faux negatifs).
+const SMS_PARTNER_TIMEOUT_MS = 10000;
 
 interface SmsPartnerSuccess {
   success: true;
@@ -76,12 +68,15 @@ export async function sendSmsPartner(phone: string, message: string): Promise<{ 
       sender: SMS_SENDER,
     };
     if (SANDBOX) payload.sandbox = 1;
+    // urlDlr = callback POST quand SMS Partner finalise la livraison (delivered/not delivered).
+    // Permet d'eviter les doublons (on attend le DLR avant de fallback sur OVH en cas de timeout).
+    if (DLR_URL) payload.urlDlr = DLR_URL;
 
     const res = await fetchWithRetry(SMS_PARTNER_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-    });
+    }, { timeoutMs: SMS_PARTNER_TIMEOUT_MS });
 
     const data = await res.json().catch(() => null) as SmsPartnerResponse | null;
 
@@ -114,7 +109,7 @@ export async function getSmsPartnerCredit(): Promise<number | null> {
   if (!API_KEY) return null;
   try {
     const url = `${SMS_PARTNER_ME_ENDPOINT}?apiKey=${encodeURIComponent(API_KEY)}`;
-    const res = await fetchWithRetry(url, { method: 'GET' });
+    const res = await fetchWithRetry(url, { method: 'GET' }, { timeoutMs: SMS_PARTNER_TIMEOUT_MS });
     const data = await res.json().catch(() => null) as { credits?: { creditSms?: number } } | null;
     if (!res.ok || !data?.credits) return null;
     const credits = Number(data.credits.creditSms);

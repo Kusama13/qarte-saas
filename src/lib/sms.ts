@@ -4,6 +4,9 @@ import { sendSmsPartner } from './sms-partner';
 import { detectPhoneCountry } from './utils';
 import { notifyMerchantQuotaAlert } from './sms-alerts';
 import { getPlanFeatures } from './plan-tiers';
+import { classifyOvhError, classifySmsPartnerError, type SmsErrorClass } from './sms-error-classifier';
+import { isPhoneBlacklisted, recordInvalidPhone } from './sms-blacklist';
+import { notifySmsAdmin } from './sms-admin-alerts';
 import logger from './logger';
 import type { PlanTier, SubscriptionStatus } from '@/types';
 
@@ -476,11 +479,31 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
       }
     }
 
-    // 6. Sélection du provider selon le pays (FR/BE → SMS Partner, CH → OVH).
+    // 6. Selection du provider selon le pays (FR/BE → SMS Partner, CH → OVH).
     const provider = selectTransactionalProvider(phone);
 
+    // 6b. Pre-check blacklist : skip a la source si numero deja confirme invalide
+    // (evite de cramer du credit). Cf mig 162 + sms-blacklist.ts.
+    if (await isPhoneBlacklisted(supabase, phone)) {
+      logger.warn('[sms] Phone blacklisted, skip send', { phone, smsType });
+      // On insere quand meme un log pour traçabilite (status=failed, error_class=invalid_phone)
+      await supabase.from('sms_logs').insert({
+        merchant_id: merchantId,
+        slot_id: slotId || null,
+        phone_to: phone,
+        sms_type: smsType,
+        message_body: message,
+        status: 'failed',
+        cost_euro: 0,
+        provider,
+        error_class: 'invalid_phone',
+        error_message: 'Phone blacklisted (previously confirmed invalid)',
+      });
+      if (consumedFromPack) await refundPackOne(supabase, merchantId);
+      return false;
+    }
+
     // 7. Insert log FIRST (prevents concurrent duplicate sends via unique constraint)
-    // Cost = 0 (free quota or pre-paid pack). No overage anymore.
     const { data: logRow, error: logError } = await supabase.from('sms_logs').insert({
       merchant_id: merchantId,
       slot_id: slotId || null,
@@ -492,47 +515,146 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
       provider,
     }).select('id').maybeSingle();
 
-    // Unique constraint violation = already sent (concurrent dedup) → refund the pack consumption
-    if (logError && consumedFromPack) {
-      await refundPackOne(supabase, merchantId);
-    }
-
-    // Unique constraint violation = already sent (concurrent dedup)
+    // Unique constraint violation = already sent (concurrent dedup) → refund pack
+    if (logError && consumedFromPack) await refundPackOne(supabase, merchantId);
     if (logError) return false;
 
-    // 8. Envoi via le provider sélectionné (sanitize GSM-7 fait au niveau provider).
-    let result = provider === 'sms_partner'
-      ? await sendSmsPartner(phone, message)
-      : await sendSms(phone, message, 'transactional');
+    // 8. Envoi avec fallback intelligent (cf sms-error-classifier.ts).
+    const outcome = await sendWithIntelligentFallback(supabase, provider, phone, message);
 
-    // 8b. Fallback OVH si SMS Partner echoue (timeout, panne, blip reseau).
-    // Ne fallback pas l'inverse (OVH echec) — OVH est notre fallback ultime.
-    // Trace le provider final dans sms_logs pour diagnostic.
-    let finalProvider: 'sms_partner' | 'ovh' = provider;
-    if (!result.success && provider === 'sms_partner') {
-      console.warn(`[sms] SMS Partner failed for ${phone} (${result.error}), fallback to OVH`);
-      result = await sendSms(phone, message, 'transactional');
-      if (result.success) finalProvider = 'ovh';
-    }
-
-    // 9. Update log with result. Refund pack if send failed.
+    // 9. Update log avec le resultat final.
     if (logRow?.id) {
-      await supabase.from('sms_logs').update({
-        ovh_job_id: result.jobId || null,
-        status: result.success ? 'sent' : 'failed',
-        error_message: result.error || null,
-        cost_euro: 0,
-        provider: finalProvider,
-      }).eq('id', logRow.id);
+      const updateRow: Record<string, unknown> = {
+        provider: outcome.finalProvider,
+        provider_msg_id: outcome.msgId || null,
+        ovh_job_id: outcome.msgId || null, // back-compat (mig 162 va deprecate ce field)
+        error_class: outcome.errorClass,
+        error_message: outcome.errorMessage,
+        status: outcome.status,
+      };
+      if (outcome.fallbackAttempted) updateRow.fallback_attempted_at = new Date().toISOString();
+      if (outcome.status === 'pending_verify') {
+        updateRow.verify_after = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+      }
+      await supabase.from('sms_logs').update(updateRow).eq('id', logRow.id);
     }
-    if (!result.success && consumedFromPack) {
+
+    // 10. Side effects async (fire-and-forget, ne bloquent pas le retour).
+    void handleErrorSideEffects(supabase, outcome, phone);
+
+    // Refund pack si echec definitif (pas si pending_verify — on retentera).
+    if (outcome.status === 'failed' && consumedFromPack) {
       await refundPackOne(supabase, merchantId);
     }
 
-    return result.success;
+    // Retour : success si delivered/sent OU pending_verify (on optimise pour le caller, le verify se fait async).
+    return outcome.status !== 'failed';
   } catch (err) {
     logger.error(`[sms] Error sending ${smsType} to ${phone}:`, err);
     return false;
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Intelligent fallback : decide selon la classe d'erreur si on retry sur
+// l'autre provider, si on attend un DLR (timeout SMS Partner), ou si on
+// abandonne (invalid_phone, config_error).
+// ────────────────────────────────────────────────────────────────────────
+
+interface SendOutcome {
+  status: 'sent' | 'failed' | 'pending_verify';
+  finalProvider: SmsProvider;
+  msgId?: string;
+  errorClass: SmsErrorClass | null;
+  errorMessage: string | null;
+  fallbackAttempted: boolean;
+}
+
+async function sendWithIntelligentFallback(
+  _supabase: SupabaseClient,
+  primary: SmsProvider,
+  phone: string,
+  message: string,
+): Promise<SendOutcome> {
+  // 1. Tentative sur le provider primary
+  const r1 = primary === 'sms_partner'
+    ? await sendSmsPartner(phone, message)
+    : await sendSms(phone, message, 'transactional');
+
+  const class1 = primary === 'sms_partner' ? classifySmsPartnerError(r1) : classifyOvhError(r1);
+
+  if (r1.success) {
+    return { status: 'sent', finalProvider: primary, msgId: r1.jobId, errorClass: 'success', errorMessage: null, fallbackAttempted: false };
+  }
+
+  // 2. Erreurs non-fallback-ables (invalid_phone, config_error) → echec direct
+  if (class1 === 'invalid_phone' || class1 === 'config_error') {
+    return { status: 'failed', finalProvider: primary, errorClass: class1, errorMessage: r1.error || null, fallbackAttempted: false };
+  }
+
+  // 3. Timeout sur SMS Partner → ambigu, attendre DLR (pas de fallback immediat)
+  // OVH timeout → fallback safe (OVH n'a pas de DLR fiable, doublon < perte)
+  if (class1 === 'timeout' && primary === 'sms_partner') {
+    return { status: 'pending_verify', finalProvider: primary, errorClass: 'timeout', errorMessage: r1.error || null, fallbackAttempted: false };
+  }
+
+  // 4. Fallback safe sur l'autre provider (timeout OVH, no_credit, server_error, rate_limit, unknown)
+  // Pas de fallback si primary etait deja OVH (notre fallback ultime — sauf si on autorise SMS Partner pour CH plus tard, hors scope).
+  if (primary === 'ovh') {
+    return { status: 'failed', finalProvider: 'ovh', errorClass: class1, errorMessage: r1.error || null, fallbackAttempted: false };
+  }
+
+  // primary = sms_partner, on essaie OVH
+  logger.warn('[sms] Fallback to OVH', { phone, errorClass: class1, error: r1.error });
+  const r2 = await sendSms(phone, message, 'transactional');
+  const class2 = classifyOvhError(r2);
+
+  if (r2.success) {
+    return { status: 'sent', finalProvider: 'ovh', msgId: r2.jobId, errorClass: 'success', errorMessage: null, fallbackAttempted: true };
+  }
+
+  // 2 echecs : on log le pire des deux + flag fallback_attempted
+  return {
+    status: 'failed',
+    finalProvider: 'ovh',
+    errorClass: class2,
+    errorMessage: `[${primary}] ${r1.error || 'unknown'} | [ovh] ${r2.error || 'unknown'}`,
+    fallbackAttempted: true,
+  };
+}
+
+/**
+ * Effets de bord post-envoi : blacklist phone si invalid, alerte admin si critique.
+ * Fire-and-forget — ne bloque pas le caller.
+ */
+async function handleErrorSideEffects(
+  supabase: SupabaseClient,
+  outcome: SendOutcome,
+  phone: string,
+): Promise<void> {
+  try {
+    if (outcome.errorClass === 'invalid_phone') {
+      await recordInvalidPhone(supabase, phone, outcome.finalProvider, outcome.errorMessage || 'invalid phone reported by provider');
+    }
+    if (outcome.errorClass === 'config_error') {
+      await notifySmsAdmin(supabase, 'config_error', {
+        message: `Erreur de configuration ${outcome.finalProvider} detectee a l'envoi d'un SMS transactionnel. Verifie les env vars Vercel (cle API, signature, consumer key).`,
+        details: { provider: outcome.finalProvider, error: outcome.errorMessage || 'unknown' },
+        cta: { label: 'Ouvrir Vercel env', url: 'https://vercel.com/judes-projects-967485ba/qarte-saas/settings/environment-variables' },
+      });
+    }
+    if (outcome.errorClass === 'no_credit') {
+      const kind = outcome.finalProvider === 'ovh' ? 'no_credit_ovh' : 'no_credit_sms_partner';
+      await notifySmsAdmin(supabase, kind, {
+        message: `Le crédit ${outcome.finalProvider} est épuisé. Les SMS échouent. Recharge urgente.`,
+        details: { provider: outcome.finalProvider },
+        cta: outcome.finalProvider === 'ovh'
+          ? { label: 'Recharger OVH', url: 'https://eu.ovh.com/manager/#/sms/' }
+          : { label: 'Recharger SMS Partner', url: 'https://my.smspartner.fr/' },
+      });
+    }
+  } catch (err) {
+    logger.error('[sms] handleErrorSideEffects exception', { err: String(err) });
   }
 }
 
