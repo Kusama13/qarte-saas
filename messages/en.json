@@ -3567,6 +3567,7 @@
     "depositFullPayment": "Full payment",
     "depositFullAmountRequired": "You pay the full amount",
     "depositFullAmountHint": "The deposit amount exceeds the total: you pay everything now.",
+    "depositRemaining": "To pay on the day",
     "yourInfo": "Your details",
     "firstName": "First name",
     "firstNamePlaceholder": "Your first name",

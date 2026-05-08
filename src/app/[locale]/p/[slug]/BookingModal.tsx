@@ -797,6 +797,7 @@ export default function BookingModal({
                       // le label par un message explicite + petit hint, plutot que "Paiement
                       // integral" qui peut surprendre la cliente.
                       const fixedExceedsTotal = isFixedDeposit && isFullPayment;
+                      const remaining = Math.max(0, displayPrice - cappedDeposit);
                       return (
                         <>
                           <div className="flex justify-between text-sm">
@@ -813,6 +814,14 @@ export default function BookingModal({
                               {formatCurrency(cappedDeposit, country, locale)}
                             </span>
                           </div>
+                          {!isFullPayment && remaining > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-500">{t('depositRemaining')}</span>
+                              <span className="font-semibold text-gray-700">
+                                {formatCurrency(remaining, country, locale)}
+                              </span>
+                            </div>
+                          )}
                           {fixedExceedsTotal && (
                             <p className="text-[11px] text-gray-500 italic leading-snug">
                               {t('depositFullAmountHint')}
