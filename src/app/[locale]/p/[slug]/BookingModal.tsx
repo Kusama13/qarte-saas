@@ -774,24 +774,38 @@ export default function BookingModal({
                       </p>
                     )}
                     {merchant.deposit_link && (merchant.deposit_percent || merchant.deposit_amount) && displayPrice > 0 && !skipDeposit && (() => {
-                      const rawDeposit = merchant.deposit_amount
+                      const isFixedDeposit = !!merchant.deposit_amount;
+                      const rawDeposit = isFixedDeposit
                         ? Number(merchant.deposit_amount)
                         : Math.round(displayPrice * (merchant.deposit_percent || 0) / 100);
                       const isFullPayment = rawDeposit >= displayPrice;
                       const cappedDeposit = Math.min(rawDeposit, displayPrice);
+                      // Cas particulier : acompte fixe > total (apres reduction). On remplace
+                      // le label par un message explicite + petit hint, plutot que "Paiement
+                      // integral" qui peut surprendre la cliente.
+                      const fixedExceedsTotal = isFixedDeposit && isFullPayment;
                       return (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">
-                            {isFullPayment
-                              ? t('depositFullPayment')
-                              : merchant.deposit_amount
-                                ? t('depositFixedLabel')
-                                : t('depositLabel', { percent: merchant.deposit_percent || 0 })}
-                          </span>
-                          <span className="font-bold" style={{ color: p }}>
-                            {formatCurrency(cappedDeposit, country, locale)}
-                          </span>
-                        </div>
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">
+                              {fixedExceedsTotal
+                                ? t('depositFullAmountRequired')
+                                : isFullPayment
+                                  ? t('depositFullPayment')
+                                  : isFixedDeposit
+                                    ? t('depositFixedLabel')
+                                    : t('depositLabel', { percent: merchant.deposit_percent || 0 })}
+                            </span>
+                            <span className="font-bold" style={{ color: p }}>
+                              {formatCurrency(cappedDeposit, country, locale)}
+                            </span>
+                          </div>
+                          {fixedExceedsTotal && (
+                            <p className="text-[11px] text-gray-500 italic leading-snug">
+                              {t('depositFullAmountHint')}
+                            </p>
+                          )}
+                        </>
                       );
                     })()}
                   </div>

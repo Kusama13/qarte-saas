@@ -3563,6 +3563,8 @@
     "depositLabel": "Deposit ({percent}%)",
     "depositFixedLabel": "Deposit",
     "depositFullPayment": "Full payment",
+    "depositFullAmountRequired": "You pay the full amount",
+    "depositFullAmountHint": "The deposit amount exceeds the total: you pay everything now.",
     "yourInfo": "Your details",
     "firstName": "First name",
     "firstNamePlaceholder": "Your first name",

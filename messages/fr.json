@@ -3566,6 +3566,8 @@
     "depositLabel": "Acompte ({percent}%)",
     "depositFixedLabel": "Acompte",
     "depositFullPayment": "Paiement intégral",
+    "depositFullAmountRequired": "Vous devez payer tout le montant",
+    "depositFullAmountHint": "L'acompte demandé dépasse le total : vous réglez tout maintenant.",
     "yourInfo": "Vos coordonnées",
     "firstName": "Prénom",
     "firstNamePlaceholder": "Votre prénom",
