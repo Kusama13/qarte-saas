@@ -550,7 +550,6 @@ export default function BookingModal({
                 {(() => {
                   const renderServiceBtn = (svc: Service) => {
                     const selected = selectedServiceIds.has(svc.id);
-                    const isPromoTargeted = !!promoTargetSet && promoTargetSet.has(svc.id) && !!promoApplicablePercent;
                     return (
                       <button
                         key={svc.id}
@@ -572,14 +571,7 @@ export default function BookingModal({
                           {selected && <Check className="w-3 h-3 text-white" />}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <p className="text-sm font-semibold text-gray-900">{svc.name}</p>
-                            {isPromoTargeted && (
-                              <span className="inline-block bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md align-middle">
-                                -{promoApplicablePercent}%
-                              </span>
-                            )}
-                          </div>
+                          <p className="text-sm font-semibold text-gray-900">{svc.name}</p>
                           {svc.duration && (
                             <p className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5">
                               <Clock className="w-3 h-3" />
@@ -587,18 +579,9 @@ export default function BookingModal({
                             </p>
                           )}
                         </div>
-                        <p className="text-sm font-bold text-gray-700 shrink-0 flex items-baseline gap-1">
-                          {isPromoTargeted ? (
-                            <>
-                              <span className="text-[11px] font-normal text-gray-400 line-through">{formatCurrency(Number(svc.price), country, locale)}</span>
-                              <span>{formatCurrency(Math.round(Number(svc.price) * (1 - promoApplicablePercent! / 100)), country, locale)}</span>
-                            </>
-                          ) : (
-                            <>
-                              {svc.price_from && <span className="text-[10px] font-normal text-gray-500">{t('from')} </span>}
-                              {formatCurrency(Number(svc.price), country, locale)}
-                            </>
-                          )}
+                        <p className="text-sm font-bold text-gray-700 shrink-0">
+                          {svc.price_from && <span className="text-[10px] font-normal text-gray-500">{t('from')} </span>}
+                          {formatCurrency(Number(svc.price), country, locale)}
                         </p>
                       </button>
                     );
