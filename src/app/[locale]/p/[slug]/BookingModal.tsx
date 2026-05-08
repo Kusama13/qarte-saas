@@ -11,6 +11,7 @@ import { PhoneInput } from '@/components/ui/PhoneInput';
 import { AddressAutocomplete, type AddressSuggestion } from '@/components/ui/AddressAutocomplete';
 import { detectPaymentProvider } from '@/lib/payment-providers';
 import { computeBookingPrice } from '@/lib/booking-pricing';
+import { computeDepositInfo } from '@/lib/deposit';
 import { BOOKING_HORIZON_DAYS } from '@/lib/booking-window';
 
 type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
@@ -484,16 +485,11 @@ export default function BookingModal({
   // refléter les réductions appliquées (member/welcome/promo). Sinon le merchant
   // perd la cohérence : la cliente verrait un acompte 50% sur 35€ alors qu'elle
   // paie 28€ après réductions.
-  const stickyDeposit = useMemo(() => {
-    if (!merchant.deposit_link) return null;
-    if (!merchant.deposit_percent && !merchant.deposit_amount) return null;
-    if (displayPrice <= 0 || skipDeposit) return null;
-    const rawDeposit = merchant.deposit_amount
-      ? Number(merchant.deposit_amount)
-      : Math.round(displayPrice * (merchant.deposit_percent || 0)) / 100;
-    const capped = Math.min(rawDeposit, displayPrice);
-    return { amount: capped, isFullPayment: rawDeposit >= displayPrice };
+  const depositInfo = useMemo(() => {
+    if (!merchant.deposit_link || skipDeposit) return null;
+    return computeDepositInfo(displayPrice, merchant.deposit_amount, merchant.deposit_percent);
   }, [merchant.deposit_link, merchant.deposit_percent, merchant.deposit_amount, displayPrice, skipDeposit]);
+  const stickyDeposit = depositInfo;
 
   return (
     <motion.div
@@ -752,32 +748,19 @@ export default function BookingModal({
                           )}
                           <span className="font-bold text-gray-900">{formatCurrency(displayPrice, country, locale)}</span>
                         </span>
-                        {priceResult.hasDiscount && (() => {
-                          const memberAmt = priceResult.appliedDiscounts.member
-                            ? Math.round(totalPrice * priceResult.appliedDiscounts.member) / 100
-                            : 0;
-                          const welcomeAmt = priceResult.appliedDiscounts.welcome
-                            ? Math.round(totalPrice * priceResult.appliedDiscounts.welcome) / 100
-                            : 0;
-                          const promoAmt = priceResult.appliedDiscounts.promoAmount ?? (
-                            priceResult.appliedDiscounts.promo
-                              ? Math.round(totalPrice * priceResult.appliedDiscounts.promo) / 100
-                              : 0
-                          );
-                          return (
-                            <span className="text-[11px] text-emerald-600 mt-1 leading-tight flex flex-col items-end gap-0.5">
-                              {memberAmt > 0 && (
-                                <span>{t('discountMemberAmount', { amount: formatCurrency(memberAmt, country, locale) })}</span>
-                              )}
-                              {welcomeAmt > 0 && (
-                                <span>{t('discountWelcomeAmount', { amount: formatCurrency(welcomeAmt, country, locale) })}</span>
-                              )}
-                              {promoAmt > 0 && (
-                                <span>{t('discountPromoAmount', { amount: formatCurrency(promoAmt, country, locale) })}</span>
-                              )}
-                            </span>
-                          );
-                        })()}
+                        {priceResult.hasDiscount && (
+                          <span className="text-[11px] text-emerald-600 mt-1 leading-tight flex flex-col items-end gap-0.5">
+                            {priceResult.appliedDiscounts.memberAmount && (
+                              <span>{t('discountMemberAmount', { amount: formatCurrency(priceResult.appliedDiscounts.memberAmount, country, locale) })}</span>
+                            )}
+                            {priceResult.appliedDiscounts.welcomeAmount && (
+                              <span>{t('discountWelcomeAmount', { amount: formatCurrency(priceResult.appliedDiscounts.welcomeAmount, country, locale) })}</span>
+                            )}
+                            {priceResult.appliedDiscounts.promoAmount && (
+                              <span>{t('discountPromoAmount', { amount: formatCurrency(priceResult.appliedDiscounts.promoAmount, country, locale) })}</span>
+                            )}
+                          </span>
+                        )}
                       </div>
                     </div>
                     {/* Mention pour offre descriptive (pas de discount calculé) — évite que la cliente arrive en boutique sans en parler */}
@@ -786,53 +769,40 @@ export default function BookingModal({
                         {t('promoApplyInShop', { title: promoOffer.title })}
                       </p>
                     )}
-                    {merchant.deposit_link && (merchant.deposit_percent || merchant.deposit_amount) && displayPrice > 0 && !skipDeposit && (() => {
-                      const isFixedDeposit = !!merchant.deposit_amount;
-                      const rawDeposit = isFixedDeposit
-                        ? Number(merchant.deposit_amount)
-                        : Math.round(displayPrice * (merchant.deposit_percent || 0)) / 100;
-                      const isFullPayment = rawDeposit >= displayPrice;
-                      const cappedDeposit = Math.min(rawDeposit, displayPrice);
-                      // Cas particulier : acompte fixe > total (apres reduction). On remplace
-                      // le label par un message explicite + petit hint, plutot que "Paiement
-                      // integral" qui peut surprendre la cliente.
-                      const fixedExceedsTotal = isFixedDeposit && isFullPayment;
-                      const remaining = Math.max(0, displayPrice - cappedDeposit);
-                      return (
-                        <>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-500">
-                              {fixedExceedsTotal
-                                ? t('depositFullAmountRequired')
-                                : isFullPayment
-                                  ? t('depositFullPayment')
-                                  : isFixedDeposit
-                                    ? t('depositFixedLabel')
-                                    : t('depositLabel', { percent: merchant.deposit_percent || 0 })}
-                            </span>
-                            <span className="font-bold" style={{ color: p }}>
-                              {formatCurrency(cappedDeposit, country, locale)}
-                            </span>
-                          </div>
-                          {!isFullPayment && remaining > 0 && (
-                            <>
-                              <div className="border-t border-gray-200/70 my-1" />
-                              <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">{t('depositRemaining')}</span>
-                                <span className="font-semibold text-gray-700">
-                                  {formatCurrency(remaining, country, locale)}
-                                </span>
-                              </div>
-                            </>
-                          )}
-                          {fixedExceedsTotal && (
-                            <p className="text-[11px] text-gray-500 italic leading-snug">
-                              {t('depositFullAmountHint')}
-                            </p>
-                          )}
-                        </>
-                      );
-                    })()}
+                    {depositInfo && (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">
+                            {depositInfo.fixedExceedsTotal
+                              ? t('depositFullAmountRequired')
+                              : depositInfo.isFullPayment
+                                ? t('depositFullPayment')
+                                : depositInfo.isFixedDeposit
+                                  ? t('depositFixedLabel')
+                                  : t('depositLabel', { percent: merchant.deposit_percent || 0 })}
+                          </span>
+                          <span className="font-bold" style={{ color: p }}>
+                            {formatCurrency(depositInfo.amount, country, locale)}
+                          </span>
+                        </div>
+                        {!depositInfo.isFullPayment && depositInfo.remaining > 0 && (
+                          <>
+                            <div className="border-t border-gray-200/70 my-1" />
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-500">{t('depositRemaining')}</span>
+                              <span className="font-semibold text-gray-700">
+                                {formatCurrency(depositInfo.remaining, country, locale)}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                        {depositInfo.fixedExceedsTotal && (
+                          <p className="text-[11px] text-gray-500 italic leading-snug">
+                            {t('depositFullAmountHint')}
+                          </p>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
 

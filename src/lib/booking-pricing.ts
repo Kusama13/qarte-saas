@@ -69,7 +69,11 @@ export async function buildServiceLines(
 
 export type AppliedDiscounts = {
   member?: number;
+  /** Montant € réellement économisé par le member (precision centime). */
+  memberAmount?: number;
   welcome?: number;
+  /** Montant € réellement économisé par le welcome (precision centime). */
+  welcomeAmount?: number;
   promo?: number;
   /** Montant € réellement économisé par la promo (utile quand ciblée par service). */
   promoAmount?: number;
@@ -122,17 +126,20 @@ export function computeBookingPrice(opts: BookingPriceOpts): BookingPriceResult 
 
   const finalPrice = Math.round(total - memberAmount - secondAmount);
 
+  // Precision centime sur tous les amounts : Math.round entier cassait l'affichage
+  // (ex: promoAmount 0,50€ devenait 1€ via Math.round(0.50)=1).
+  const round = (x: number) => Math.round(x * 100) / 100;
+
   return {
     rawPrice: total,
     finalPrice,
     appliedDiscounts: {
-      member:  memberAmount > 0 ? memberPct : undefined,
-      welcome: secondWinner === 'welcome' ? welcomePct : undefined,
-      promo:   secondWinner === 'promo'   ? promoPct   : undefined,
-      // Garde la precision au centime : Math.round(0.50) = 1 cassait le
-      // breakdown affiche (cliente voyait 'Promo -1€' alors que la promo
-      // avait vraiment retire 0,50€).
-      promoAmount: secondWinner === 'promo' ? Math.round(promoAmount * 100) / 100 : undefined,
+      member:        memberAmount > 0 ? memberPct : undefined,
+      memberAmount:  memberAmount > 0 ? round(memberAmount) : undefined,
+      welcome:       secondWinner === 'welcome' ? welcomePct : undefined,
+      welcomeAmount: secondWinner === 'welcome' ? round(welcomeAmount) : undefined,
+      promo:         secondWinner === 'promo'   ? promoPct   : undefined,
+      promoAmount:   secondWinner === 'promo'   ? round(promoAmount) : undefined,
     },
     hasDiscount: finalPrice < total,
   };

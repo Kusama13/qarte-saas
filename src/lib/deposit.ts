@@ -13,6 +13,46 @@ export function computeDepositAmount(
 }
 
 /**
+ * Synthese complete du deposit pour le UI (sticky bar + totals box). Single
+ * source of truth : evite la duplication observee dans BookingModal qui
+ * recalculait rawDeposit/isFullPayment/cappedDeposit dans 2 endroits avec
+ * les memes inputs.
+ */
+export type DepositInfo = {
+  amount: number;
+  rawDeposit: number;
+  isFullPayment: boolean;
+  isFixedDeposit: boolean;
+  fixedExceedsTotal: boolean;
+  remaining: number;
+};
+
+export function computeDepositInfo(
+  totalPrice: number,
+  depositFixed?: number | null,
+  depositPercent?: number | null,
+): DepositInfo | null {
+  if (totalPrice <= 0) return null;
+  const isFixedDeposit = !!depositFixed;
+  const rawDeposit = isFixedDeposit
+    ? Number(depositFixed)
+    : depositPercent
+      ? Math.round(totalPrice * depositPercent) / 100
+      : 0;
+  if (rawDeposit <= 0) return null;
+  const amount = Math.min(rawDeposit, totalPrice);
+  const isFullPayment = rawDeposit >= totalPrice;
+  return {
+    amount,
+    rawDeposit,
+    isFullPayment,
+    isFixedDeposit,
+    fixedExceedsTotal: isFixedDeposit && isFullPayment,
+    remaining: Math.max(0, totalPrice - amount),
+  };
+}
+
+/**
  * Deposit deadline with silent-night grace: if the raw deadline falls between 22h and 9h
  * merchant-local, it's pushed to 9h next morning so the merchant doesn't have to confirm
  * at night. Capped at RDV - 4h.
