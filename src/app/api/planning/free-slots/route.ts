@@ -17,6 +17,7 @@ const querySchema = z.object({
   totalDuration: z.coerce.number().int().min(1).max(600),
   customerLat: z.coerce.number().min(-90).max(90).optional(),
   customerLng: z.coerce.number().min(-180).max(180).optional(),
+  excludeSlotId: z.string().uuid().optional(),
 });
 
 function timeToMinutes(time: string): number {
@@ -49,13 +50,14 @@ export async function GET(request: NextRequest) {
       totalDuration: searchParams.get('totalDuration'),
       customerLat: searchParams.get('customerLat') ?? undefined,
       customerLng: searchParams.get('customerLng') ?? undefined,
+      excludeSlotId: searchParams.get('excludeSlotId') ?? undefined,
     });
 
     if (!parsed.success) {
       return NextResponse.json({ error: 'Paramètres invalides' }, { status: 400 });
     }
 
-    const { merchantId, date, totalDuration, customerLat, customerLng } = parsed.data;
+    const { merchantId, date, totalDuration, customerLat, customerLng, excludeSlotId } = parsed.data;
 
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
@@ -107,13 +109,17 @@ export async function GET(request: NextRequest) {
     }
 
     // 4. Fetch existing booked slots for this day (primary slots only, no filler)
-    const { data: bookedSlots } = await supabaseAdmin
+    // excludeSlotId : utilisé quand on déplace un RDV — sinon le RDV en cours bloque
+    // ses propres créneaux actuels comme conflit.
+    let bookedSlotsQuery = supabaseAdmin
       .from('merchant_planning_slots')
       .select('start_time, total_duration_minutes, customer_lat, customer_lng')
       .eq('merchant_id', merchantId)
       .eq('slot_date', date)
       .not('client_name', 'is', null)
       .is('primary_slot_id', null);
+    if (excludeSlotId) bookedSlotsQuery = bookedSlotsQuery.neq('id', excludeSlotId);
+    const { data: bookedSlots } = await bookedSlotsQuery;
 
     // Build occupied ranges: [startMins, endMins) inclusive of buffer after
     type Booking = { start: number; end: number; coords: Coords | null };

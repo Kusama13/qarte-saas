@@ -516,10 +516,15 @@ export default function BookingDetailsModal({
   const moveDateFreeSlots = useMemo(() => {
     if (!moveMode || bookingMode !== 'slots') return [];
     const source = slotsByDate.has(moveDate) ? (slotsByDate.get(moveDate) || []) : (moveTargetDaySlots || []);
+    // Treat the booking being moved (primary + child slots) as free — sinon ses propres
+    // créneaux actuels sont vus comme "occupés" et bloquent les candidats qui les chevauchent.
     const daySlots = source
-      .filter(s => !s.primary_slot_id)
+      .filter(s => !s.primary_slot_id || s.primary_slot_id === slot.id)
       .sort((a, b) => a.start_time.localeCompare(b.start_time));
-    const empty = daySlots.filter(s => s.id !== slot.id && !s.client_name);
+    const empty = daySlots.filter(s => {
+      if (s.id === slot.id || s.primary_slot_id === slot.id) return true;
+      return !s.client_name;
+    });
     // Each slot is implicitly 30 min in créneaux mode. Number of consecutive slots needed:
     const needed = Math.max(1, Math.ceil(bookingDuration / 30));
     if (needed === 1) return empty;
@@ -539,7 +544,7 @@ export default function BookingDetailsModal({
     if (!moveMode || bookingMode !== 'free') { setFreeModeSlots([]); return; }
     const controller = new AbortController();
     setFreeModeLoading(true);
-    fetch(`/api/planning/free-slots?merchantId=${merchantId}&date=${moveDate}&totalDuration=${bookingDuration}`, { signal: controller.signal })
+    fetch(`/api/planning/free-slots?merchantId=${merchantId}&date=${moveDate}&totalDuration=${bookingDuration}&excludeSlotId=${slot.id}`, { signal: controller.signal })
       .then(r => r.ok ? r.json() : { slots: [] })
       .then(data => {
         if (controller.signal.aborted) return;
@@ -552,7 +557,7 @@ export default function BookingDetailsModal({
         setFreeModeLoading(false);
       });
     return () => controller.abort();
-  }, [moveMode, bookingMode, moveDate, merchantId, bookingDuration]);
+  }, [moveMode, bookingMode, moveDate, merchantId, bookingDuration, slot.id]);
 
   const handleMoveConfirm = async () => {
     if (!moveTime) {
