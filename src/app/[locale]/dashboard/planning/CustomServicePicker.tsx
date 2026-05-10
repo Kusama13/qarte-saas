@@ -71,9 +71,6 @@ export default function CustomServicePicker({ value, onChange, country, locale, 
             <span className="font-medium truncate">
               {value.name?.trim() || CUSTOM_SERVICE_DEFAULT_NAME}
             </span>
-            <span className="text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-white/60 text-indigo-700 border border-indigo-200 shrink-0">
-              {t('customServiceBadge')}
-            </span>
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-gray-400 shrink-0 ml-2">
             {value.price > 0 && (
