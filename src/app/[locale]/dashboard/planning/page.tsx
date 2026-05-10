@@ -2288,7 +2288,7 @@ export default function PlanningDashboard() {
                       </button>
                       <button
                         onClick={() => setManualStep(2)}
-                        disabled={!manualDate || !manualStartTime || manualServiceIds.length === 0 || !!manualConflict}
+                        disabled={!manualDate || !manualStartTime || (manualServiceIds.length === 0 && !manualCustomService) || !!manualConflict}
                         className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
                         {t('next')}
