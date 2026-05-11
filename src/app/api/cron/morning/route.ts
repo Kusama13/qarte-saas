@@ -13,6 +13,7 @@ import {
   sendPostSurveyFollowUpEmail,
   sendPostSurveyLastChanceEmail,
 } from '@/lib/email';
+import { sendPastDueSms } from '@/lib/sms-past-due';
 import type { EmailLocale } from '@/emails/translations';
 import { getTrialStatus } from '@/lib/utils';
 import {
@@ -43,6 +44,7 @@ export async function GET(request: NextRequest) {
     postSurveyEmails: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     reactivation: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     dunning: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    dunningSms: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     incompleteRelance: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     gracePeriodSetup: { processed: 0, sent: 0, skipped: 0, errors: 0 },
   };
@@ -346,6 +348,58 @@ export async function GET(request: NextRequest) {
     sectionStatuses.push({ name: 'dunning', status: 'ok' });
   } catch (error) {
     sectionStatuses.push({ name: 'dunning', status: 'error', error: String(error) });
+  }
+
+  // ==================== DUNNING — SMS J+2 ====================
+  // SMS step 1 (J0) envoye par Stripe webhook. SMS step 2 (J+2) ici.
+  // Cf. mig 163 + src/lib/sms-past-due.ts (guards: no_contact, blacklist, atomic claim).
+  if (isTimedOut()) { sectionStatuses.push({ name: 'dunningSms', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
+    // Re-fetch des merchants past_due avec les colonnes SMS-specific (absentes du prefetch).
+    // Set restreint en pratique → query rapide.
+    const pastDueIds = allMerchantsList
+      .filter(m => m.subscription_status === 'past_due' && !m.no_contact)
+      .map(m => m.id);
+
+    if (pastDueIds.length > 0) {
+      const { data: pastDueDetails } = await supabase
+        .from('merchants')
+        .select('id, shop_name, phone, country, no_contact, deleted_at, subscription_status, updated_at, past_due_sms1_sent_at, past_due_sms2_sent_at')
+        .in('id', pastDueIds);
+
+      for (const merchant of pastDueDetails || []) {
+        results.dunningSms.processed++;
+
+        // Filtre temporel : SMS 2 part a >= 2 jours apres la bascule en past_due.
+        const updatedAt = new Date(merchant.updated_at);
+        const daysSince = Math.floor((now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysSince < 2) { results.dunningSms.skipped++; continue; }
+
+        // Skip si SMS 2 deja envoye (dedup colonne, mais double-check ici evite query inutile).
+        if (merchant.past_due_sms2_sent_at) { results.dunningSms.skipped++; continue; }
+
+        // Si SMS 1 jamais parti (webhook rate, no_contact ajoute apres, etc.), tenter SMS 1 d'abord.
+        // Le helper gere les 2 cas via le param `step`.
+        const step: 1 | 2 = merchant.past_due_sms1_sent_at ? 2 : 1;
+
+        try {
+          const result = await sendPastDueSms({ supabase, merchant, step });
+          if (result.success) {
+            results.dunningSms.sent++;
+            await rateLimitDelay();
+          } else {
+            results.dunningSms.skipped++;
+          }
+        } catch (err) {
+          results.dunningSms.errors++;
+          logger.error('[dunningSms] send failed', { merchantId: merchant.id, step, error: String(err) });
+        }
+      }
+    }
+
+    sectionStatuses.push({ name: 'dunningSms', status: 'ok' });
+  } catch (error) {
+    sectionStatuses.push({ name: 'dunningSms', status: 'error', error: String(error) });
   }
 
   // ==================== INCOMPLETE SIGNUP RELANCE (T+24h) ====================

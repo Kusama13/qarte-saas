@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 import logger from '@/lib/logger';
 import { sendSubscriptionConfirmedEmail, sendPaymentFailedEmail, sendSubscriptionCanceledEmail, sendSubscriptionReactivatedEmail, sendSmsPackPurchaseEmail, sendNewSmsPackPurchaseNotification, sendAffiliateConversionEmail } from '@/lib/email';
+import { sendPastDueSms, resetPastDueSmsFlags } from '@/lib/sms-past-due';
 import type { EmailLocale } from '@/emails/translations';
 import { sendCapiPurchaseEvent } from '@/lib/facebook-capi';
 import { toBCP47, getCurrencyForCountry } from '@/lib/utils';
@@ -283,7 +284,7 @@ export async function POST(request: Request) {
           updated_at: new Date().toISOString(),
         })
         .eq('stripe_customer_id', invoice.customer as string)
-        .select('shop_name, user_id, locale')
+        .select('id, shop_name, user_id, locale, phone, country, no_contact, deleted_at, subscription_status, past_due_sms1_sent_at, past_due_sms2_sent_at')
         .maybeSingle();
 
       // Envoyer l'email de paiement échoué (await pour serverless)
@@ -294,6 +295,12 @@ export async function POST(request: Request) {
             logger.error('Failed to send payment failed email', err);
           });
         }
+
+        // SMS dunning step 1 (J0) — fire-and-forget, ne bloque pas le webhook
+        // Tous les guards (no_contact, blacklist, atomic claim) sont dans sendPastDueSms.
+        await sendPastDueSms({ supabase, merchant, step: 1 }).catch((err) => {
+          logger.error('Failed to send past_due SMS step 1', err);
+        });
       }
 
       break;
@@ -357,8 +364,13 @@ export async function POST(request: Request) {
         })
         .eq('stripe_customer_id', invoice.customer as string)
         .eq('subscription_status', 'past_due')
-        .select('shop_name, user_id, locale, plan_tier, billing_interval, created_at')
+        .select('id, shop_name, user_id, locale, plan_tier, billing_interval, created_at')
         .maybeSingle();
+
+      // Reset des flags SMS dunning : prochain cycle past_due repart proprement
+      if (merchant) {
+        await resetPastDueSmsFlags(supabase, merchant.id);
+      }
 
       // Email de confirmation si paiement récupéré (past_due → active)
       if (merchant) {
