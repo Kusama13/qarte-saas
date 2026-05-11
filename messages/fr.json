@@ -2822,6 +2822,8 @@
     "planningAutoHint": "Cliquez sur un créneau pour réserver directement.",
     "viewMoreSlots": "Voir plus",
     "collapseSlots": "Voir moins",
+    "noSlotsAvailable": "Aucun créneau disponible pour le moment",
+    "noSlotsAvailableHint": "De nouveaux créneaux seront ajoutés bientôt. Reviens y jeter un œil !",
     "myServices": "Mes prestations",
     "serviceSingular": "{count} prestation",
     "servicePlural": "{count} prestations",

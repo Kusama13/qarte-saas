@@ -2819,6 +2819,8 @@
     "planningAutoHint": "Click on a slot to book directly.",
     "viewMoreSlots": "View more",
     "collapseSlots": "Show less",
+    "noSlotsAvailable": "No slots available right now",
+    "noSlotsAvailableHint": "New slots will be added soon — check back later!",
     "myServices": "Our services",
     "serviceSingular": "{count} service",
     "servicePlural": "{count} services",

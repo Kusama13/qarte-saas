@@ -268,7 +268,10 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
     }
     return grouped;
   }, [planningSlots, merchant.planning_enabled, todayLocal, nowTime]);
-  const hasPlanning = merchant.planning_enabled && (isFreeMod ? canBookOnline : planningByMonth.length > 0);
+  // En mode creneaux, on affiche la section meme sans slots dispo (empty state explicite
+  // vs disparition silencieuse). Mode libre garde son gate canBookOnline (horaires requis).
+  const hasPlanning = merchant.planning_enabled && (isFreeMod ? canBookOnline : true);
+  const slotsEmpty = !isFreeMod && merchant.planning_enabled && planningByMonth.length === 0;
   const messageExpired = merchant.planning_message_expires && merchant.planning_message_expires < todayLocal;
   const hasPublicMessage = !!merchant.planning_message && !messageExpired;
   const hasBookingMessage = !!merchant.booking_message;
@@ -655,7 +658,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 (section "MESSAGE PUBLIC" sans planning) garde les conditions, sinon le
                 merchant sans planning Qarte n'aurait aucun endroit pour les afficher. */}
 
-            {merchant.auto_booking_enabled && !isFreeMod && (
+            {merchant.auto_booking_enabled && !isFreeMod && !slotsEmpty && (
               <p className="text-[11px] text-emerald-500 font-medium mb-3">{t('planningAutoHint')}</p>
             )}
 
@@ -673,8 +676,20 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               </button>
             )}
 
+            {/* Empty state mode creneaux : aucun creneau publie */}
+            {slotsEmpty && (
+              <div
+                className="rounded-xl px-4 py-5 text-center"
+                style={{ background: `${p}06`, border: `1px dashed ${p}30` }}
+              >
+                <CalendarDays className="w-5 h-5 mx-auto mb-2" style={{ color: p }} strokeWidth={2} />
+                <p className="text-[13px] font-semibold text-gray-700">{t('noSlotsAvailable')}</p>
+                <p className="text-[11px] text-gray-500 mt-1">{t('noSlotsAvailableHint')}</p>
+              </div>
+            )}
+
             {/* Slots by month — preview 4 days, expandable (mode créneaux only) */}
-            {!isFreeMod && (() => {
+            {!isFreeMod && !slotsEmpty && (() => {
               const PREVIEW_DAYS = 4;
               const allDays = planningByMonth.flatMap(mg => mg.days);
               const totalDays = allDays.length;
