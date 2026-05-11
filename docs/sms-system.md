@@ -107,6 +107,8 @@ Validité : valable pendant l'abonnement actif. Perdus à la résiliation. Strip
 | `gift_card_received` | Transactionnel | SMS Partner | SMS Partner | OVH |
 | `gift_card_used` | Transactionnel | SMS Partner | SMS Partner | OVH |
 | `gift_card_expiry_reminder` (J-7 destinataire) | Transactionnel | SMS Partner | SMS Partner | OVH |
+| `past_due_initial` (dunning J0) | Transactionnel critique (Qarte→merchant) | SMS Partner | SMS Partner | OVH |
+| `past_due_reminder` (dunning J+2) | Transactionnel critique (Qarte→merchant) | SMS Partner | SMS Partner | OVH |
 | `review_request` | Marketing | OVH | OVH | OVH |
 | `voucher_expiry` | Marketing | OVH | OVH | OVH |
 | `campaign` | Marketing | OVH | OVH | OVH |
@@ -215,6 +217,40 @@ Refonte profonde post-incident "this operation was aborted" + audit ([`src/lib/s
 - 0,075€/SMS quota/pack peu importe le provider.
 - 1 SMS = 1 unité décrémentée du quota gratuit (100/cycle) ou du `sms_pack_balance`.
 - Le calcul agrège les deux providers : `getSmsUsageThisMonth()` dans [`sms.ts`](../src/lib/sms.ts) ne filtre **jamais** par provider. Voir aussi `getSmsQuotaStatus()`, `consumePackOne()`, `refundPackOne()`, RPC `credit_sms_pack` — tous indépendants du provider.
+
+#### Dunning past_due — SMS J0 + J+2 (mig 163, mai 2026)
+
+2 SMS transactionnels critiques envoyés au **merchant** (pas à sa cliente) en complément des 4 emails dunning existants (`paymentFailed` step 1/2/3/4 à J0/J+3/J+7/J+10). Helper unique [`src/lib/sms-past-due.ts`](../src/lib/sms-past-due.ts) `sendPastDueSms({ supabase, merchant, step })` :
+
+| Step | Type | Trigger | Quand |
+|---|---|---|---|
+| 1 | `past_due_initial` | Stripe webhook `invoice.payment_failed` | Immédiat (fire-and-forget après l'email step 1) |
+| 2 | `past_due_reminder` | Cron `morning` section "DUNNING — SMS J+2" | `daysSince(updated_at) >= 2 AND past_due_sms2_sent_at IS NULL` |
+
+**Logging** : table séparée `merchant_marketing_sms_logs` (canal Qarte→merchant, comme trial marketing), pas `sms_logs`. **N'impacte pas le quota merchant** — coût absorbé par Qarte (logué dans `cost_euro` pour billing interne).
+
+**Routage provider** : SMS Partner pour FR/BE, OVH pour CH (réutilise `selectProvider(phone)` interne au helper, identique à la règle générale transactionnelle).
+
+**Anti-doublon (atomic claim)** : 2 colonnes dedup sur `merchants` — `past_due_sms1_sent_at` / `past_due_sms2_sent_at` (mig 163). Le helper fait un `UPDATE WHERE flag IS NULL AND subscription_status='past_due'` puis vérifie `claimed?.id` — le 2ème worker concurrent (race webhook/cron) voit 0 row updated et skip avec `{skipped: 'already_sent'}`. Si l'envoi échoue après le claim, **rollback automatique** du flag (`UPDATE flag = NULL`) pour qu'une prochaine tentative puisse retenter.
+
+**Reset cycle** : sur `invoice.payment_succeeded`, `resetPastDueSmsFlags(supabase, merchantId)` remet les 2 flags à NULL — si le merchant retombe en past_due plus tard, le cycle SMS repart proprement avec step 1.
+
+**Garde-fou narrative** : step 2 ne part jamais sans step 1 (`if (step === 2 && !past_due_sms1_sent_at) skip`). Côté cron : si `past_due_sms1_sent_at IS NULL` (webhook raté), on envoie step 1 plutôt que step 2 (cohérence narrative > rattrapage strict du timing).
+
+**Guards en cascade** (early-return ordré) :
+1. `deleted_at` (soft-deleted) → skip
+2. `no_contact` (full opt-out merchant) → skip
+3. `subscription_status !== 'past_due'` (résolu entre temps) → skip
+4. Phone invalide (`< 8 chars`) → skip
+5. `isPhoneBlacklisted()` (mig 162) → skip
+6. Step 2 sans step 1 → skip
+7. Atomic claim échoué (race) → skip
+
+**Pas d'opt-out marketing requis** : caractère transactionnel critique (info compte). Ne respecte PAS `marketing_sms_opted_out` ni `sms_opt_outs`. **Seul `merchants.no_contact = true` bloque** (full opt-out admin).
+
+**Templates** ([`sms-past-due.ts`](../src/lib/sms-past-due.ts) `buildBody`) — < 160 chars GSM-7, tutoiement, pas de mention STOP :
+- Step 1 : `Qarte: ton paiement vient d'echouer. Mets a jour ta carte pour ne pas perdre tes donnees: https://getqarte.com/dashboard/subscription`
+- Step 2 : `Qarte: paiement toujours en attente. Regularise pour ne pas perdre tes donnees: https://getqarte.com/dashboard/subscription`
 
 ### Helpers
 - `fetchOptedOutPhones(supabase, merchantId)` — Set des téléphones opt-out, utilisé par crons + audience resolver

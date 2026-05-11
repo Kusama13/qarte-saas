@@ -409,10 +409,31 @@ activite    │  INACTIVE DAY 30                    │
             │
     J+0     ▼
     ┌─────────────────────────────────────┐
-    │  PAYMENT FAILED STEP 1              │
+    │  PAYMENT FAILED STEP 1 (email)      │
     │  Objet: "Un souci avec ta carte"    │
     │  Pas de tracking code (webhook)     │
     │  Declencheur: invoice.payment_failed│
+    └─────────────────────────────────────┘
+            +
+    ┌─────────────────────────────────────┐
+    │  SMS past_due_initial (mig 163)     │
+    │  "Qarte: ton paiement vient         │
+    │   d'echouer. Mets a jour ta carte…" │
+    │  Trigger: webhook invoice.failed    │
+    │  Provider: SMS Partner FR/BE / OVH  │
+    │  Dedup: past_due_sms1_sent_at       │
+    │  Cout absorbe par Qarte             │
+    └─────────────────────────────────────┘
+            │
+    J+2     ▼
+    ┌─────────────────────────────────────┐
+    │  SMS past_due_reminder (mig 163)    │
+    │  "Qarte: paiement toujours en       │
+    │   attente. Regularise…"             │
+    │  Trigger: cron morning              │
+    │   (daysSince(updated_at) >= 2)      │
+    │  Dedup: past_due_sms2_sent_at       │
+    │  Garde-fou : skip si sms1 absent    │
     └─────────────────────────────────────┘
             │
     J+3     ▼
@@ -444,7 +465,12 @@ activite    │  INACTIVE DAY 30                    │
             │
     Si paiement OK → SUBSCRIPTION CONFIRMED
     (invoice.payment_succeeded webhook)
+    + reset des 2 flags past_due_sms*_sent_at à NULL
+      (resetPastDueSmsFlags) → cycle suivant repart
+      avec SMS 1 + SMS 2 dispo
 ```
+
+> **Note SMS dunning** : les 2 SMS sont **transactionnels critiques** (info compte). Ils ne respectent PAS `marketing_sms_opted_out` — seul `merchants.no_contact = true` (full opt-out admin) les bloque. Logués dans `merchant_marketing_sms_logs` (canal Qarte→merchant), pas `sms_logs`. Cf. [`docs/sms-system.md`](sms-system.md) section "Dunning past_due" et [`src/lib/sms-past-due.ts`](../src/lib/sms-past-due.ts).
 
 ---
 

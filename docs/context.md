@@ -716,10 +716,23 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 | subscription.updated (cancel_at_period_end) | `canceling` | SubscriptionCanceledEmail |
 | subscription.updated (canceling→active) | `active` | SubscriptionReactivatedEmail |
 | subscription.deleted | `canceled` | — |
-| invoice.payment_failed | `past_due` | PaymentFailedEmail |
-| invoice.payment_succeeded (recovery) | `active` | SubscriptionConfirmedEmail |
+| invoice.payment_failed | `past_due` | PaymentFailedEmail + **SMS past_due_initial** (mig 163) |
+| invoice.payment_succeeded (recovery) | `active` | SubscriptionConfirmedEmail + **resetPastDueSmsFlags** (mig 163) |
 
 **Grace period** : 3 jours apres expiration (lecture seule), suppression apres 3 jours.
+
+### Dunning past_due (mig 163, mai 2026)
+Sequence complete quand un merchant tombe en `past_due` :
+- **J0** : `PaymentFailedEmail step 1` (webhook) + **SMS `past_due_initial`** (Qarte→merchant via SMS Partner FR/BE / OVH CH, fire-and-forget post-webhook)
+- **J+2** : **SMS `past_due_reminder`** (cron `morning`, gate `daysSince(updated_at) >= 2 AND past_due_sms2_sent_at IS NULL`)
+- **J+3** : `PaymentFailedEmail step 2`
+- **J+7** : `PaymentFailedEmail step 3`
+- **J+10** : `PaymentFailedEmail step 4`
+
+Helper unique [`src/lib/sms-past-due.ts`](../src/lib/sms-past-due.ts) `sendPastDueSms({supabase, merchant, step})` avec atomic claim sur `merchants.past_due_sms{1,2}_sent_at` (race-safe webhook/cron) + rollback flag si echec envoi + reset des 2 flags sur `invoice.payment_succeeded`. **Caractere transactionnel critique** (info compte) : ne respecte PAS `marketing_sms_opted_out`, seul `merchants.no_contact = true` (full opt-out admin) bloque. Logue dans `merchant_marketing_sms_logs` (canal Qarte→merchant), n'impacte PAS le quota merchant (cout absorbe par Qarte). Voir [docs/sms-system.md](sms-system.md) section "Dunning past_due".
+
+### Bandeau permanent past_due dans header dashboard (mai 2026)
+Quand `merchant.subscription_status === 'past_due'`, **bandeau rouge fixed top-0 z-[60] sur toute la largeur** (mobile + desktop) en haut du dashboard avec icone `AlertTriangle` + texte unifie *"Régularise pour ne pas perdre toutes tes données"* (i18n key `pastDueDataWarning`, meme texte tous tiers Fidelite/Tout-en-un/legacy), cliquable → `/dashboard/subscription`. Padding-top des autres surfaces (topbar mobile, aside desktop, main) ajuste conditionnellement via `pt-[calc(env(safe-area-inset-top)+40px)]` quand `isPastDue`. Safe-area iOS PWA respectee. Avant : l'avertissement n'etait visible que dans le sidebar (ferme par defaut sur mobile, 80% du trafic) → impaye silencieux pendant des jours. Suppression au passage du `<StatusBanner>` past_due duplique dans la sidebar.
 
 ### Page Abonnement (`/dashboard/subscription`)
 - Toggle mensuel/annuel avec badge "Recommande" sur annuel
