@@ -904,6 +904,7 @@
     "cancelCancellation": "Annuler la résiliation",
     "paymentFailed": "Paiement échoué",
     "updatePayment": "Mettre à jour le paiement",
+    "pastDueDataWarning": "Régularise pour ne pas perdre toutes tes données",
     "installTitle": "Installez Qarte Pro",
     "installSubtitle": "Accédez au tableau de bord en 1 tap",
     "installBtn": "Installer",

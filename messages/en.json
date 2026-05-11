@@ -918,6 +918,7 @@
     "cancelCancellation": "Cancel cancellation",
     "paymentFailed": "Payment failed",
     "updatePayment": "Update payment method",
+    "pastDueDataWarning": "Update to avoid losing all your data",
     "installTitle": "Install Qarte Pro",
     "installSubtitle": "Access your dashboard in 1 tap",
     "installBtn": "Install",

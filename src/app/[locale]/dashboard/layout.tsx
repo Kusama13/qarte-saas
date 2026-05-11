@@ -22,6 +22,7 @@ import {
   ArrowRight,
   Lock,
   BarChart3,
+  AlertTriangle,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { getTrialStatus } from '@/lib/utils';
@@ -166,11 +167,34 @@ function DashboardLayoutContent({
     pathname === '/dashboard/subscription' &&
     (trialStatus.isInGracePeriod || trialStatus.isFullyExpired);
 
+  const isPastDue = merchant?.subscription_status === 'past_due';
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Bandeau permanent paiement échoué — au-dessus de tout, mobile + desktop.
+          Rendu en premier pour priorité visuelle ; les éléments ci-dessous compensent
+          via pt conditionnel pour ne pas chevaucher. */}
+      {isPastDue && (
+        <Link
+          href="/dashboard/subscription"
+          onClick={() => setSidebarOpen(false)}
+          className="fixed top-0 inset-x-0 z-[60] bg-red-600 text-white shadow-md hover:bg-red-700 active:bg-red-800 transition-colors"
+        >
+          <div className="pt-[env(safe-area-inset-top)]">
+            <div className="flex items-center justify-center gap-2 px-3 h-10 text-xs sm:text-sm font-semibold">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span className="truncate underline">{t('pastDueDataWarning')}</span>
+            </div>
+          </div>
+        </Link>
+      )}
+
       {/* Top bar mobile sticky — Qarte brand + NotificationBell, backdrop-blur pour rester lisible au-dessus du contenu qui scrolle */}
       {!hideDistractions && (
-        <div className="fixed top-0 left-0 right-0 z-40 lg:hidden bg-white/80 backdrop-blur-lg border-b border-slate-100 pt-[env(safe-area-inset-top)]">
+        <div className={cn(
+          'fixed top-0 left-0 right-0 z-40 lg:hidden bg-white/80 backdrop-blur-lg border-b border-slate-100',
+          isPastDue ? 'pt-[calc(env(safe-area-inset-top)+40px)]' : 'pt-[env(safe-area-inset-top)]'
+        )}>
           <div className="flex items-center justify-between px-3 h-12">
             <Link
               href="/dashboard"
@@ -202,7 +226,7 @@ function DashboardLayoutContent({
         inert={isMobile && !sidebarOpen ? true : undefined}
         className={cn(
           'fixed top-0 left-0 z-50 w-[270px] lg:w-72 h-full bg-white/95 backdrop-blur-xl border-r border-gray-100/50 transition-transform duration-300 lg:translate-x-0 shadow-xl shadow-gray-200/20',
-          'pt-[env(safe-area-inset-top)]',
+          isPastDue ? 'pt-[calc(env(safe-area-inset-top)+40px)]' : 'pt-[env(safe-area-inset-top)]',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
           sidebarOpen ? 'pointer-events-auto' : 'pointer-events-none lg:pointer-events-auto'
         )}
@@ -270,16 +294,7 @@ function DashboardLayoutContent({
             />
           )}
 
-          {/* Banner paiement échoué */}
-          {merchant?.subscription_status === 'past_due' && (
-            <StatusBanner
-              variant="past_due"
-              message={t('paymentFailed')}
-              linkText={t('updatePayment')}
-              linkHref="/dashboard/subscription"
-              onLinkClick={() => setSidebarOpen(false)}
-            />
-          )}
+          {/* Banner paiement échoué — déplacé en entête fixe full-width (cf. début du layout) */}
 
           {/* Annonces admin — sidebar desktop uniquement */}
           <div className="hidden lg:block">
@@ -369,7 +384,12 @@ function DashboardLayoutContent({
       </aside>
 
       <main className="lg:ml-72 min-h-screen">
-        <div className="px-4 lg:pt-8 lg:px-8 lg:pb-8 pt-[calc(48px+env(safe-area-inset-top)+8px)] pb-[calc(60px+env(safe-area-inset-bottom)+16px)]">
+        <div className={cn(
+          'px-4 lg:px-8 lg:pb-8 pb-[calc(60px+env(safe-area-inset-bottom)+16px)]',
+          isPastDue
+            ? 'lg:pt-[calc(2rem+40px)] pt-[calc(48px+env(safe-area-inset-top)+8px+40px)]'
+            : 'lg:pt-8 pt-[calc(48px+env(safe-area-inset-top)+8px)]'
+        )}>
           {/* Annonces admin — banner mobile uniquement */}
           <div className="lg:hidden">
             <AdminAnnouncementBanner variant="banner" />
