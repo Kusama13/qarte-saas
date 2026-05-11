@@ -650,13 +650,10 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               </div>
             )}
 
-            {/* Conditions de réservation */}
-            {hasBookingMessage && (
-              <div className="rounded-lg px-3 py-2 mb-3 bg-gray-50 border border-gray-100">
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.14em] mb-1">{t('conditions')}</p>
-                <p className="text-[12px] text-gray-600 whitespace-pre-line">{merchant.booking_message}</p>
-              </div>
-            )}
+            {/* Conditions de reservation : retirees ici (mai 2026) — affichees uniquement
+                dans le BookingModal step "info" pour eviter la double surface. Spot 1
+                (section "MESSAGE PUBLIC" sans planning) garde les conditions, sinon le
+                merchant sans planning Qarte n'aurait aucun endroit pour les afficher. */}
 
             {merchant.auto_booking_enabled && !isFreeMod && (
               <p className="text-[11px] text-emerald-500 font-medium mb-3">{t('planningAutoHint')}</p>

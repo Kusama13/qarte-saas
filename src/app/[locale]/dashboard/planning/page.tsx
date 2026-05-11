@@ -1263,6 +1263,7 @@ export default function PlanningDashboard() {
           serviceColorMap={serviceColorMap}
           locale={locale}
           merchantCountry={merchant?.country || 'FR'}
+          merchantSlug={merchant?.slug || null}
           onEditSlot={openEditSlot}
           deepLinkSlotId={deepLinkSlotId}
           onDeepLinkHandled={() => setDeepLinkSlotId(null)}

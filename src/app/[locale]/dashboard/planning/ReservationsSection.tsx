@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, Clock, ChevronRight, Wallet, AlertTriangle, Trash2, Undo2, Search, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CalendarDays, Clock, ChevronRight, Wallet, AlertTriangle, Trash2, Undo2, Search, X, Clipboard, Check, ArrowUpRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot, BookingDepositFailure } from '@/types';
-import { formatTime, toBCP47, formatCurrency, formatPhoneLabel } from '@/lib/utils';
+import { formatTime, toBCP47, formatCurrency, formatPhoneLabel, getVitrineUrl } from '@/lib/utils';
+import { useCopyToClipboard } from '@/hooks/useCopyToClipboard';
 import { getSlotServiceIds, formatDate, colorBorderStyle, endTimeFromStart, formatDateLong, customServiceDisplayName } from './utils';
 import type { ServiceWithDuration } from './usePlanningState';
 
@@ -14,6 +15,7 @@ interface ReservationsSectionProps {
   serviceColorMap: Map<string, string>;
   locale: string;
   merchantCountry: string;
+  merchantSlug: string | null;
   onEditSlot: (slot: PlanningSlot) => void;
   deepLinkSlotId?: string | null;
   onDeepLinkHandled?: () => void;
@@ -30,13 +32,23 @@ interface DayGroup {
   slots: PlanningSlot[];
 }
 
-export default function ReservationsSection({ slots, services, serviceColorMap, locale, merchantCountry, onEditSlot, deepLinkSlotId, onDeepLinkHandled, depositFailures, onBringBackFailure, onDeleteFailure }: ReservationsSectionProps) {
+export default function ReservationsSection({ slots, services, serviceColorMap, locale, merchantCountry, merchantSlug, onEditSlot, deepLinkSlotId, onDeepLinkHandled, depositFailures, onBringBackFailure, onDeleteFailure }: ReservationsSectionProps) {
   const t = useTranslations('planning');
   const [showPast, setShowPast] = useState(false);
   const [showFailures, setShowFailures] = useState(true);
   const [confirmDeleteFailureId, setConfirmDeleteFailureId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const failuresRef = useRef<HTMLDivElement | null>(null);
+  const { copied: linkCopied, copy: copyLink } = useCopyToClipboard();
+
+  const vitrineUrl = useMemo(() => (merchantSlug ? getVitrineUrl(merchantSlug) : null), [merchantSlug]);
+  const vitrineUrlDisplay = useMemo(
+    () => (vitrineUrl ? vitrineUrl.replace(/^https?:\/\//, '') : null),
+    [vitrineUrl],
+  );
+  const handleCopyLink = useCallback(() => {
+    if (vitrineUrl) void copyLink(vitrineUrl);
+  }, [vitrineUrl, copyLink]);
 
   const scrollToFailures = () => {
     setShowFailures(true);
@@ -188,7 +200,37 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
         <CalendarDays className="w-6 h-6 text-indigo-600" />
       </div>
       <p className="text-base font-bold text-gray-900 mb-1">{t('noReservations')}</p>
-      <p className="text-xs text-gray-500 max-w-xs mx-auto">{t('noReservationsHint')}</p>
+      {vitrineUrl && vitrineUrlDisplay ? (
+        <>
+          <p className="text-xs text-gray-500 max-w-xs mx-auto">{t('reservationsBookHere')}</p>
+          <div className="mt-3 flex items-center gap-2 max-w-md mx-auto rounded-lg border border-gray-200 bg-gray-50 pl-3 pr-1 py-1">
+            <span className="flex-1 text-left text-[12px] font-mono text-gray-700 truncate" title={vitrineUrlDisplay}>
+              {vitrineUrlDisplay}
+            </span>
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-bold transition-colors ${linkCopied ? 'bg-emerald-100 text-emerald-700' : 'bg-white border border-gray-200 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200'}`}
+              aria-label={linkCopied ? t('linkCopied') : t('copyLink')}
+            >
+              {linkCopied ? <Check className="w-3.5 h-3.5" /> : <Clipboard className="w-3.5 h-3.5" />}
+              <span>{linkCopied ? t('linkCopied') : t('copyLink')}</span>
+            </button>
+            <a
+              href={vitrineUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-md bg-white border border-gray-200 text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-colors"
+              aria-label={t('previewVitrine')}
+            >
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </a>
+          </div>
+          <p className="text-[11px] text-gray-500 mt-3 max-w-xs mx-auto">{t('shareInBio')}</p>
+        </>
+      ) : (
+        <p className="text-xs text-gray-500 max-w-xs mx-auto">{t('noReservationsHint')}</p>
+      )}
     </div>
   );
 

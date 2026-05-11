@@ -785,6 +785,10 @@ export function getScanUrl(scanCode: string): string {
   return `${getAppUrl()}/scan/${scanCode}`;
 }
 
+export function getVitrineUrl(slug: string): string {
+  return `${getAppUrl()}/p/${slug}`;
+}
+
 /** Unwrap Supabase join result that may be T or T[] depending on query shape */
 export function unwrapJoin<T>(value: T | T[] | null | undefined): T | null {
   if (value == null) return null;

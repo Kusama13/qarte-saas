@@ -1,8 +1,10 @@
+import type { ShopType } from '@/types';
+
 export interface DemoMerchant {
   id: string;
   slug: string;
   shop_name: string;
-  shop_type: string;
+  shop_type: ShopType;
   shop_address: string | null;
   logo_url: string | null;
   primary_color: string;
@@ -58,15 +60,33 @@ export interface DemoMerchant {
   allow_customer_reschedule: boolean;
   cancel_deadline_days: number;
   reschedule_deadline_days: number;
+  welcome_offer_discount_percent: number | null;
+  gift_card_enabled: boolean;
+  gift_card_amounts: number[] | null;
+  gift_card_message: string | null;
+  gift_card_expiry_months: number;
+  gift_card_services_enabled: boolean;
+  home_service_enabled: boolean;
+  home_service_buffer_minutes: number | null;
+  hide_address_on_public_page: boolean;
+  shop_lat: number | null;
+  shop_lng: number | null;
+  display_phone: string | null;
 }
 
 export type DemoPhoto = { id: string; url: string; position: number };
 export type DemoService = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
 export type DemoServiceCategory = { id: string; name: string; position: number };
-export type DemoOffer = { id: string; title: string; description: string; expires_at: string | null };
+export type DemoOffer = { id: string; title: string; description: string; expires_at: string | null; discount_percent: number | null; target_service_ids: string[] | null };
 
 // Fields added by withDefaultsAndVariants — not required in raw data
-type AutoFields = 'subscription_status' | 'whatsapp_url' | 'buffer_minutes' | 'allow_customer_cancel' | 'allow_customer_reschedule' | 'cancel_deadline_days' | 'reschedule_deadline_days';
+type AutoFields =
+  | 'subscription_status' | 'whatsapp_url' | 'buffer_minutes'
+  | 'allow_customer_cancel' | 'allow_customer_reschedule' | 'cancel_deadline_days' | 'reschedule_deadline_days'
+  | 'welcome_offer_discount_percent'
+  | 'gift_card_enabled' | 'gift_card_amounts' | 'gift_card_message' | 'gift_card_expiry_months' | 'gift_card_services_enabled'
+  | 'home_service_enabled' | 'home_service_buffer_minutes' | 'hide_address_on_public_page' | 'shop_lat' | 'shop_lng'
+  | 'display_phone';
 type DemoMerchantRaw = Omit<DemoMerchant, AutoFields>;
 
 export interface DemoMerchantFull {
@@ -92,15 +112,29 @@ const SOCIAL_LINKS = {
   snapchat_url: null,
 };
 
-// Common fields shared by all demo merchants
-const COMMON_DEFAULTS = {
-  subscription_status: 'active' as string | null,
+// Common fields shared by all demo merchants. home_service_enabled est OFF par
+// defaut puis override en libre sur estheticienne (la seule demo "mobile beauty").
+type CommonDefaults = Pick<DemoMerchant,
+  | 'subscription_status' | 'whatsapp_url' | 'buffer_minutes'
+  | 'allow_customer_cancel' | 'allow_customer_reschedule' | 'cancel_deadline_days' | 'reschedule_deadline_days'
+  | 'home_service_enabled' | 'home_service_buffer_minutes' | 'hide_address_on_public_page' | 'shop_lat' | 'shop_lng'
+  | 'gift_card_services_enabled' | 'gift_card_expiry_months'
+>;
+const COMMON_DEFAULTS: CommonDefaults = {
+  subscription_status: 'active',
   whatsapp_url: null,
   buffer_minutes: 15,
   allow_customer_cancel: true,
   allow_customer_reschedule: true,
   cancel_deadline_days: 1,
   reschedule_deadline_days: 1,
+  home_service_enabled: false,
+  home_service_buffer_minutes: 15,
+  hide_address_on_public_page: false,
+  shop_lat: null,
+  shop_lng: null,
+  gift_card_services_enabled: true,
+  gift_card_expiry_months: 12,
 };
 
 // Ensure all features are enabled for demo showcasing
@@ -135,7 +169,7 @@ function withDefaultsAndVariants(merchants: Record<string, DemoMerchantFullRaw>,
     const m = entry.merchant;
     const feat = featureMap[m.shop_type] || {};
     // Force-enable all avantages with fallback descriptions
-    const allFeatures: Partial<DemoMerchant> = {
+    const allFeatures = {
       birthday_gift_enabled: true,
       birthday_gift_description: m.birthday_gift_description || (isEN ? 'A surprise gift' : 'Un cadeau surprise'),
       referral_program_enabled: true,
@@ -143,21 +177,31 @@ function withDefaultsAndVariants(merchants: Record<string, DemoMerchantFullRaw>,
       referral_reward_referred: m.referral_reward_referred || (isEN ? '15% off your first visit' : '-15% sur votre 1re visite'),
       welcome_offer_enabled: true,
       welcome_offer_description: m.welcome_offer_description || (isEN ? '15% off your first visit' : '-15% sur votre 1re visite'),
+      welcome_offer_discount_percent: 15,
       duo_offer_enabled: true,
-      duo_offer_description: m.duo_offer_description || feat.duo_offer_description,
+      duo_offer_description: m.duo_offer_description || feat.duo_offer_description || null,
       student_offer_enabled: true,
-      student_offer_description: m.student_offer_description || feat.student_offer_description,
+      student_offer_description: m.student_offer_description || feat.student_offer_description || null,
       contest_enabled: true,
-      contest_prize: m.contest_prize || feat.contest_prize,
+      contest_prize: m.contest_prize || feat.contest_prize || null,
       double_days_enabled: true,
-      double_days_of_week: m.double_days_of_week || feat.double_days_of_week,
-    };
-    // Créneaux version
-    const slotsM = { ...m, ...COMMON_DEFAULTS, ...allFeatures, planning_enabled: true, auto_booking_enabled: true, booking_mode: 'slots' as const };
+      double_days_of_week: m.double_days_of_week || feat.double_days_of_week || null,
+      gift_card_enabled: true,
+      gift_card_amounts: [30, 50, 80, 100],
+      gift_card_message: isEN
+        ? 'Treat someone special with a beauty gift card.'
+        : 'Offrez un instant beaute a quelqu un que vous aimez.',
+    } satisfies Partial<DemoMerchant>;
+    // E.164 sans + (cf CLAUDE.md). Cassait `tel:+0612345678` + detectPhoneCountry().
+    const displayPhone = isEN ? '14155550188' : '33612345678';
+    const slotsM: DemoMerchant = { ...m, ...COMMON_DEFAULTS, ...allFeatures, display_phone: displayPhone, planning_enabled: true, auto_booking_enabled: true, booking_mode: 'slots' };
     result[slug] = { ...entry, merchant: slotsM };
-    // Mode libre version
     const libreSlug = `${slug}-libre`;
-    const libreM = { ...slotsM, id: libreSlug, slug: libreSlug, scan_code: libreSlug, booking_mode: 'free' as const };
+    // home_service uniquement sur estheticienne-libre : seul cas metier "mobile beauty".
+    const libreOverrides: Partial<DemoMerchant> = m.shop_type === 'estheticienne'
+      ? { home_service_enabled: true, hide_address_on_public_page: true, shop_lat: 48.8566, shop_lng: 2.3522 }
+      : {};
+    const libreM: DemoMerchant = { ...slotsM, id: libreSlug, slug: libreSlug, scan_code: libreSlug, booking_mode: 'free', ...libreOverrides };
     result[libreSlug] = { ...entry, merchant: libreM };
   }
   return result;
@@ -220,7 +264,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFullRaw> = {
       opening_hours: { '1': { open: '10:00', close: '19:00' }, '2': { open: '10:00', close: '19:00' }, '3': { open: '10:00', close: '19:00' }, '4': { open: '10:00', close: '20:00' }, '5': { open: '10:00', close: '20:00' }, '6': { open: '09:00', close: '17:00' }, '7': null },
       phone: null, planning_enabled: true, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null,      country: 'FR',
     },
-    offer: { id: 'offer-onglerie', title: 'Offre de printemps', description: '-15% sur toutes les poses gel', expires_at: null },
+    offer: { id: 'offer-onglerie', title: 'Offre de printemps', description: '-15% sur toutes les poses gel', expires_at: null, discount_percent: 15, target_service_ids: null },
     photos: PHOTOS_ONGLERIE,
     serviceCategories: [
       { id: 'cat-1', name: 'Pose gel', position: 1 },
@@ -266,7 +310,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFullRaw> = {
       opening_hours: { '1': { open: '09:00', close: '19:00' }, '2': { open: '09:00', close: '19:00' }, '3': { open: '09:00', close: '19:00' }, '4': { open: '09:00', close: '20:00' }, '5': { open: '09:00', close: '20:00' }, '6': { open: '09:00', close: '18:00' }, '7': null },
       phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null,      country: 'FR',
     },
-    offer: { id: 'offer-coiffure', title: 'Offre spéciale', description: '-20% sur votre premier balayage', expires_at: null },
+    offer: { id: 'offer-coiffure', title: 'Offre spéciale', description: '-20% sur votre premier balayage', expires_at: null, discount_percent: 20, target_service_ids: ['s7'] },
     photos: PHOTOS_COIFFURE,
     serviceCategories: [
       { id: 'cat-1', name: 'Coupes', position: 1 },
@@ -313,9 +357,9 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFullRaw> = {
       scan_code: 'demo-tatouage',
       bio: 'Artiste tatoueur spécialisé en réalisme et blackwork. Chaque pièce est unique.',
       opening_hours: { '1': null, '2': { open: '11:00', close: '19:00' }, '3': { open: '11:00', close: '19:00' }, '4': { open: '11:00', close: '19:00' }, '5': { open: '11:00', close: '20:00' }, '6': { open: '11:00', close: '20:00' }, '7': null },
-      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null,      country: 'FR',
+      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: 'Acompte non remboursable. Prévoyez 30 min de marge à votre arrivée pour la préparation.', auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null,      country: 'FR',
     },
-    offer: { id: 'offer-tatouage', title: 'Flash Friday', description: '-30% sur les tatouages flash chaque vendredi', expires_at: null },
+    offer: { id: 'offer-tatouage', title: 'Flash Friday', description: '-30% sur les tatouages flash chaque vendredi', expires_at: null, discount_percent: 30, target_service_ids: null },
     photos: PHOTOS_TATOUAGE,
     serviceCategories: [
       { id: 'cat-1', name: 'Tatouage', position: 1 },
@@ -398,7 +442,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFullRaw> = {
       opening_hours: { '1': { open: '09:30', close: '19:00' }, '2': { open: '09:30', close: '19:00' }, '3': { open: '09:30', close: '19:00' }, '4': { open: '09:30', close: '20:00' }, '5': { open: '09:30', close: '20:00' }, '6': { open: '09:00', close: '17:00' }, '7': null },
       phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'FR',
     },
-    offer: { id: 'offer-institut', title: 'Offre decouverte', description: '-25% sur votre premier soin visage', expires_at: null },
+    offer: { id: 'offer-institut', title: 'Offre decouverte', description: '-25% sur votre premier soin visage', expires_at: null, discount_percent: 25, target_service_ids: null },
     photos: [], serviceCategories: [
       { id: 'cat-1', name: 'Soins visage', position: 1 },
       { id: 'cat-2', name: 'Epilation', position: 2 },
@@ -436,7 +480,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFullRaw> = {
       booking_mode: null, scan_code: 'demo-spa',
       bio: 'Espace de bien-etre avec hammam, sauna et soins du corps. Deconnexion garantie.',
       opening_hours: { '1': { open: '10:00', close: '20:00' }, '2': { open: '10:00', close: '20:00' }, '3': { open: '10:00', close: '20:00' }, '4': { open: '10:00', close: '21:00' }, '5': { open: '10:00', close: '21:00' }, '6': { open: '09:00', close: '19:00' }, '7': null },
-      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'FR',
+      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: 'Présentez-vous 15 min avant votre soin pour profiter pleinement du hammam et du sauna.', auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'FR',
     },
     offer: null, photos: [], serviceCategories: [
       { id: 'cat-1', name: 'Massages', position: 1 },
@@ -476,7 +520,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFullRaw> = {
       opening_hours: { '1': { open: '09:00', close: '18:30' }, '2': { open: '09:00', close: '18:30' }, '3': null, '4': { open: '09:00', close: '18:30' }, '5': { open: '09:00', close: '19:00' }, '6': { open: '09:00', close: '17:00' }, '7': null },
       phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'FR',
     },
-    offer: { id: 'offer-estheticienne', title: 'Offre decouverte', description: '-20% sur le rehaussement de cils', expires_at: null },
+    offer: { id: 'offer-estheticienne', title: 'Offre decouverte', description: '-20% sur le rehaussement de cils', expires_at: null, discount_percent: 20, target_service_ids: null },
     photos: [], serviceCategories: [
       { id: 'cat-1', name: 'Regard', position: 1 },
       { id: 'cat-2', name: 'Epilation', position: 2 },
@@ -558,7 +602,7 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFullRaw> = {
       opening_hours: { '1': { open: '10:00', close: '19:00' }, '2': { open: '10:00', close: '19:00' }, '3': { open: '10:00', close: '19:00' }, '4': { open: '10:00', close: '20:00' }, '5': { open: '10:00', close: '20:00' }, '6': { open: '09:00', close: '17:00' }, '7': null },
       phone: null, planning_enabled: true, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null,      country: 'US',
     },
-    offer: { id: 'offer-onglerie', title: 'Spring special', description: '15% off all gel sets', expires_at: null },
+    offer: { id: 'offer-onglerie', title: 'Spring special', description: '15% off all gel sets', expires_at: null, discount_percent: 15, target_service_ids: null },
     photos: PHOTOS_ONGLERIE,
     serviceCategories: [
       { id: 'cat-1', name: 'Gel nails', position: 1 },
@@ -604,7 +648,7 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFullRaw> = {
       opening_hours: { '1': { open: '09:00', close: '19:00' }, '2': { open: '09:00', close: '19:00' }, '3': { open: '09:00', close: '19:00' }, '4': { open: '09:00', close: '20:00' }, '5': { open: '09:00', close: '20:00' }, '6': { open: '09:00', close: '18:00' }, '7': null },
       phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null,      country: 'US',
     },
-    offer: { id: 'offer-coiffure', title: 'Special offer', description: '20% off your first balayage', expires_at: null },
+    offer: { id: 'offer-coiffure', title: 'Special offer', description: '20% off your first balayage', expires_at: null, discount_percent: 20, target_service_ids: ['s7'] },
     photos: PHOTOS_COIFFURE,
     serviceCategories: [
       { id: 'cat-1', name: 'Haircuts', position: 1 },
@@ -651,9 +695,9 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFullRaw> = {
       scan_code: 'demo-tatouage',
       bio: 'Tattoo artist specializing in realism and blackwork. Every piece is one of a kind.',
       opening_hours: { '1': null, '2': { open: '11:00', close: '19:00' }, '3': { open: '11:00', close: '19:00' }, '4': { open: '11:00', close: '19:00' }, '5': { open: '11:00', close: '20:00' }, '6': { open: '11:00', close: '20:00' }, '7': null },
-      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null,      country: 'US',
+      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: 'Deposit non-refundable. Please arrive 30 min early for preparation.', auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null,      country: 'US',
     },
-    offer: { id: 'offer-tatouage', title: 'Flash Friday', description: '30% off flash tattoos every Friday', expires_at: null },
+    offer: { id: 'offer-tatouage', title: 'Flash Friday', description: '30% off flash tattoos every Friday', expires_at: null, discount_percent: 30, target_service_ids: null },
     photos: PHOTOS_TATOUAGE,
     serviceCategories: [
       { id: 'cat-1', name: 'Tattoo', position: 1 },
@@ -736,7 +780,7 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFullRaw> = {
       opening_hours: { '1': { open: '09:30', close: '19:00' }, '2': { open: '09:30', close: '19:00' }, '3': { open: '09:30', close: '19:00' }, '4': { open: '09:30', close: '20:00' }, '5': { open: '09:30', close: '20:00' }, '6': { open: '09:00', close: '17:00' }, '7': null },
       phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'US',
     },
-    offer: { id: 'offer-institut', title: 'Discovery offer', description: '25% off your first facial', expires_at: null },
+    offer: { id: 'offer-institut', title: 'Discovery offer', description: '25% off your first facial', expires_at: null, discount_percent: 25, target_service_ids: null },
     photos: [], serviceCategories: [
       { id: 'cat-1', name: 'Facials', position: 1 },
       { id: 'cat-2', name: 'Waxing', position: 2 },
@@ -774,7 +818,7 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFullRaw> = {
       booking_mode: null, scan_code: 'demo-spa',
       bio: 'Wellness retreat with steam room, sauna, and body treatments. Total disconnection guaranteed.',
       opening_hours: { '1': { open: '10:00', close: '20:00' }, '2': { open: '10:00', close: '20:00' }, '3': { open: '10:00', close: '20:00' }, '4': { open: '10:00', close: '21:00' }, '5': { open: '10:00', close: '21:00' }, '6': { open: '09:00', close: '19:00' }, '7': null },
-      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'US',
+      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: 'Please arrive 15 min before your treatment to fully enjoy the steam room and sauna.', auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'US',
     },
     offer: null, photos: [], serviceCategories: [
       { id: 'cat-1', name: 'Massages', position: 1 },
@@ -814,7 +858,7 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFullRaw> = {
       opening_hours: { '1': { open: '09:00', close: '18:30' }, '2': { open: '09:00', close: '18:30' }, '3': null, '4': { open: '09:00', close: '18:30' }, '5': { open: '09:00', close: '19:00' }, '6': { open: '09:00', close: '17:00' }, '7': null },
       phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'US',
     },
-    offer: { id: 'offer-estheticienne', title: 'Discovery offer', description: '20% off lash lift', expires_at: null },
+    offer: { id: 'offer-estheticienne', title: 'Discovery offer', description: '20% off lash lift', expires_at: null, discount_percent: 20, target_service_ids: null },
     photos: [], serviceCategories: [
       { id: 'cat-1', name: 'Lashes & brows', position: 1 },
       { id: 'cat-2', name: 'Waxing', position: 2 },
