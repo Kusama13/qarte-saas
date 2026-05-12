@@ -24,10 +24,11 @@
 - `IncompleteSignupReminder2Email` — vouvoiement → tutoiement
 - `FirstScanEmail` / `FirstBookingEmail` / `FirstRewardEmail` — retirées exclamations
 
-**Nouveau canal SMS — 3 SMS marketing trial** via [/api/cron/sms-trial-marketing](../src/app/api/cron/sms-trial-marketing/route.ts) (1×/jour 11h UTC) :
-1. `celebration_{fidelity|planning|vitrine}` — 1er aha event, dedup global via `merchants.celebration_sms_sent_at`
-2. `trial_pre_loss` — J-1 trial, ≥S1, copy tier-aware via `recommendTierForMerchant()`
-3. `churn_survey` — J+5 fully expired, copy variant A pratfall + reciprocity
+**Canal SMS — 2 SMS marketing trial** via [/api/cron/sms-trial-marketing](../src/app/api/cron/sms-trial-marketing/route.ts) (cron horaire) :
+1. `example_vitrine` — T+15min après signup, exemple de vitrine + WhatsApp, dedup `example_vitrine_sms_sent_at`
+2. `checkin_*` (5 variantes mutuellement exclusives, 1 max sur la vie) — J+1 (24h), check-in selon activation (`checkin_nudge` / `celebration_fidelity` / `celebration_vitrine` / `celebration_planning` / `checkin_combo`), dedup global `celebration_sms_sent_at`
+
+**Supprimés en mai 2026** : `trial_pre_loss` (J-1) et `churn_survey` (J+8 fully expired). Décision : fenêtre 2-3j max après expiration → le merchant est déjà parti, ces SMS arrivaient trop tard. Check-in décalé J+2 → J+1 pour intervenir tant que le merchant est encore actif. Tables et colonnes DB (`pre_loss_sms_sent_at`, `churn_sms_sent_at`) conservées pour historique.
 
 **Infrastructure** :
 - Mig 115 : `merchants.celebration_sms_sent_at` + `merchants.marketing_sms_opted_out`
@@ -49,7 +50,7 @@
 ### Bilan chiffré final
 
 - **Avant** : 48 emails, 0 SMS marketing trial
-- **Après** : 50 emails (+2 nouveaux : ActivationStalled, UpgradeAllIn) + 3 SMS marketing
+- **Après** : 50 emails (+2 nouveaux : ActivationStalled, UpgradeAllIn) + 2 SMS marketing trial (example_vitrine T+15min, check-in J+1)
 - **9 emails refactorés** avec variantes state-aware ou tier-aware
 
 **Emails redondants NON supprimés** (ProgramReminderDay2/3, SocialProof, VitrineReminder, PlanningReminder, Day5Checkin) — ActivationStalled les remplace fonctionnellement pour S0 J+3, mais les triggers redondants tournent encore. À cleanup en Phase finale v3.

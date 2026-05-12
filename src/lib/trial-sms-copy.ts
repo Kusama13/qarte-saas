@@ -1,8 +1,8 @@
 import type { ActivationDetails } from './activation-score';
-import type { TierRecommended, TrialSmsType } from './sms-trial-marketing';
+import type { TrialSmsType } from './sms-trial-marketing';
 
 /**
- * Copy SMS marketing trial v3 (check-in 48h).
+ * Copy SMS marketing trial (check-in J+1).
  * Pas d'emoji, pas de firstName (merchant a uniquement shop_name).
  * Sender alpha "Qarte". 2 liens courts SMS Partner :
  * - SIGNIN_URL → page sign-in merchant (default, dashboard si déjà loggué)
@@ -22,7 +22,7 @@ export function exampleVitrineSmsBody(shopName: string): string {
 }
 
 /**
- * Choisit la variante + le corps du SMS check-in 48h selon l'état du merchant.
+ * Choisit la variante + le corps du SMS check-in J+1 selon l'état du merchant.
  * 5 variantes :
  * - A (checkin_nudge)      : aucun pilier atteint, nudge configuration
  * - B (celebration_fidelity): seulement fidélité → célébration + next step vitrine
@@ -65,36 +65,9 @@ export function checkInSmsSelection(
     };
   }
 
-  // S0 — rien configuré à 48h
+  // S0 — rien configuré à J+1
   return {
     smsType: 'checkin_nudge',
-    body: `${shopName}, J+2 sur Qarte. Scanne ta 1re cliente ou prepare ta page vitrine, 5 min : ${SIGNIN_URL}`,
+    body: `${shopName}, J+1 sur Qarte. Scanne ta 1re cliente ou prepare ta page vitrine, 5 min : ${SIGNIN_URL}`,
   };
-}
-
-interface PreLossStats {
-  customerCount?: number;
-  bookingCount?: number;
-}
-
-export function preLossSmsBody(
-  shopName: string,
-  tierRecommended: TierRecommended,
-  stats: PreLossStats,
-): string {
-  const customers = stats.customerCount ?? 0;
-  const bookings = stats.bookingCount ?? 0;
-
-  if (tierRecommended === 'all_in') {
-    return `${shopName}, J-1. ${customers} clientes et ${bookings} resas a garder. Resa + fidelite pour 24EUR/mois : ${SIGNIN_URL}`;
-  }
-  if (tierRecommended === 'fidelity') {
-    return `${shopName}, J-1. ${customers} clientes qui reviennent. Garde ta carte fidelite pour 19EUR/mois : ${SIGNIN_URL}`;
-  }
-  // Aucune reco (signal mixte / faible)
-  return `${shopName}, J-1. Garde ton compte pour 19EUR/mois et continue avec Qarte : ${SIGNIN_URL}`;
-}
-
-export function churnSurveySmsBody(shopName: string): string {
-  return `${shopName}, dis-nous ce qui a coince en 2 min. On te rouvre 7j, -25% x3 mois si besoin : ${SIGNIN_URL}`;
 }

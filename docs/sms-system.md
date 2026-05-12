@@ -126,8 +126,19 @@ Catégorie distincte des SMS client-facing ci-dessus, **non concernée par le ro
 - **Pipeline** : [`src/lib/sms-trial-marketing.ts`](../src/lib/sms-trial-marketing.ts) → import direct de `sendSms` depuis `./ovh-sms` → **toujours OVH**, tous pays
 - **Table de log** : `merchant_marketing_sms_logs` (séparée de `sms_logs`, pas de colonne `provider`)
 - **Quota** : **n'impacte pas le quota merchant** — coût absorbé par Qarte (logué dans `cost_euro` pour billing interne uniquement)
-- **Cron** : [`/api/cron/sms-trial-marketing/route.ts`](../src/app/api/cron/sms-trial-marketing/route.ts)
+- **Cron** : [`/api/cron/sms-trial-marketing/route.ts`](../src/app/api/cron/sms-trial-marketing/route.ts) — cron horaire, 2 sections
 - **Pourquoi OVH et pas SMS Partner** : c'est du marketing par nature (Qarte → prospects), donc cohérent avec la règle générale "tout marketing → OVH". Pas de raison d'étendre le scope SMS Partner ici.
+
+**2 SMS max par merchant pendant l'essai** :
+
+| # | Quand | Type | Dedup flag | Copy (résumé) |
+|---|---|---|---|---|
+| 1 | T+15min après signup | `example_vitrine` | `example_vitrine_sms_sent_at` | Lien exemple de vitrine + WhatsApp support |
+| 2 | J+1 (24h) | `checkin_*` (5 variantes, 1 max) | `celebration_sms_sent_at` | Variante selon activation : nudge S0 / célébration fidélité / vitrine / planning / combo |
+
+Variantes du check-in J+1 mutuellement exclusives, choisies par `checkInSmsSelection()` dans [`trial-sms-copy.ts`](../src/lib/trial-sms-copy.ts) : `checkin_nudge` (S0, rien fait) | `celebration_fidelity` (1 cliente) | `celebration_vitrine` (vitrine OK) | `celebration_planning` (planning OK, fallback rare) | `checkin_combo` (2+ piliers).
+
+**Historique (supprimés mai 2026)** : `trial_pre_loss` (J-1 trial) et `churn_survey` (J+8 fully expired) — fenêtre de récupération max 2-3j post-expiration, ces SMS arrivaient trop tard pour servir. Check-in initialement à J+2, décalé à J+1 pour intervenir tant que le merchant teste encore activement. Colonnes DB `pre_loss_sms_sent_at` et `churn_sms_sent_at` conservées (pas de migration drop) pour préserver l'historique des logs envoyés avant le retrait.
 
 #### Mécanique d'implémentation
 

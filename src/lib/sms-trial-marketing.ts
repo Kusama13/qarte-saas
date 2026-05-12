@@ -15,21 +15,19 @@ import logger from './logger';
 
 export type TrialSmsType =
   | 'example_vitrine'         // T+15min après signup — exemple de vitrine + WhatsApp
-  | 'celebration_fidelity'   // check-in 48h variante B (fidélité seule)
+  | 'celebration_fidelity'   // check-in J+1 variante B (fidélité seule)
   | 'celebration_planning'   // fallback rare (planning seul)
-  | 'celebration_vitrine'    // check-in 48h variante C (vitrine seule)
-  | 'checkin_nudge'          // check-in 48h variante A (rien configuré)
-  | 'checkin_combo'          // check-in 48h variante D (2+ piliers)
-  | 'trial_pre_loss'
-  | 'churn_survey';
+  | 'celebration_vitrine'    // check-in J+1 variante C (vitrine seule)
+  | 'checkin_nudge'          // check-in J+1 variante A (rien configuré)
+  | 'checkin_combo';         // check-in J+1 variante D (2+ piliers)
 
 export type TierRecommended = 'fidelity' | 'all_in' | null;
 
-type DedupFlagColumn = 'example_vitrine_sms_sent_at' | 'celebration_sms_sent_at' | 'pre_loss_sms_sent_at' | 'churn_sms_sent_at';
+type DedupFlagColumn = 'example_vitrine_sms_sent_at' | 'celebration_sms_sent_at';
 
 /** Mapping total vers la colonne de dédup. TS garantit l'exhaustivité si un
  *  nouveau TrialSmsType est ajouté → compile-time safety. Les 5 variantes du
- *  check-in 48h partagent celebration_sms_sent_at (1 SMS max sur la vie). */
+ *  check-in J+1 partagent celebration_sms_sent_at (1 SMS max sur la vie). */
 const DEDUP_FLAG: Record<TrialSmsType, DedupFlagColumn> = {
   example_vitrine: 'example_vitrine_sms_sent_at',
   celebration_fidelity: 'celebration_sms_sent_at',
@@ -37,8 +35,6 @@ const DEDUP_FLAG: Record<TrialSmsType, DedupFlagColumn> = {
   celebration_vitrine: 'celebration_sms_sent_at',
   checkin_nudge: 'celebration_sms_sent_at',
   checkin_combo: 'celebration_sms_sent_at',
-  trial_pre_loss: 'pre_loss_sms_sent_at',
-  churn_survey: 'churn_sms_sent_at',
 };
 
 interface MerchantGatingInfo {
@@ -51,8 +47,6 @@ interface MerchantGatingInfo {
   marketing_sms_opted_out: boolean;
   example_vitrine_sms_sent_at: string | null;
   celebration_sms_sent_at: string | null;
-  pre_loss_sms_sent_at: string | null;
-  churn_sms_sent_at: string | null;
 }
 
 interface SendResult {
