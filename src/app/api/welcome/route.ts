@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { formatPhoneNumber, validatePhone, generateReferralCode, getTrialStatus, getAllPhoneFormats } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, generateReferralCode, getAllPhoneFormats } from '@/lib/utils';
+import { isMerchantBlocked } from '@/lib/merchant-access';
 import { z } from 'zod';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import type { MerchantCountry } from '@/types';
@@ -88,9 +89,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Code offre nouveaux clients invalide' }, { status: 400 });
     }
 
-    // Check subscription status
-    const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
-    if (trialStatus.isTrialExpired) {
+    // Bloque si trial expired (>3j grace) OU past_due >72h (mig 164).
+    if (isMerchantBlocked({
+      trial_ends_at: merchant.trial_ends_at,
+      subscription_status: merchant.subscription_status,
+      past_due_since: merchant.past_due_since,
+    })) {
       return NextResponse.json({ error: 'Ce commerce n\'accepte plus les inscriptions pour le moment.' }, { status: 403 });
     }
 

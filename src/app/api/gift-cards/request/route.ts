@@ -17,9 +17,9 @@ import {
   formatPhoneNumber,
   validatePhone,
   getAllPhoneFormats,
-  getTrialStatus,
   formatCurrency,
 } from '@/lib/utils';
+import { isMerchantBlocked } from '@/lib/merchant-access';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import {
   generateGiftCardCode,
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
       .select(
-        'id, slug, shop_name, country, locale, primary_color, secondary_color, gift_card_enabled, gift_card_services_enabled, gift_card_payment_link, gift_card_payment_link_label, gift_card_payment_link_2, gift_card_payment_link_2_label, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, trial_ends_at, subscription_status, plan_tier, deleted_at, user_id',
+        'id, slug, shop_name, country, locale, primary_color, secondary_color, gift_card_enabled, gift_card_services_enabled, gift_card_payment_link, gift_card_payment_link_label, gift_card_payment_link_2, gift_card_payment_link_2_label, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, trial_ends_at, subscription_status, past_due_since, plan_tier, deleted_at, user_id',
       )
       .eq('id', data.merchant_id)
       .is('deleted_at', null)
@@ -124,8 +124,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
-    if (trialStatus.isTrialExpired) {
+    // Bloque si trial expired (>3j grace) OU past_due >72h (mig 164).
+    if (isMerchantBlocked({
+      trial_ends_at: merchant.trial_ends_at,
+      subscription_status: merchant.subscription_status,
+      past_due_since: merchant.past_due_since,
+    })) {
       return NextResponse.json(
         { error: 'Cette page est temporairement indisponible' },
         { status: 403 },

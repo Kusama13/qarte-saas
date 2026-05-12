@@ -22,6 +22,7 @@ import PaidStatusCard from './_components/PaidStatusCard';
 import { Button, Modal } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { getTrialStatus, formatDate } from '@/lib/utils';
+import { isPastDueBlocked } from '@/lib/merchant-access';
 import { isLegacyMerchant } from '@/lib/plan-tiers';
 import type { Merchant } from '@/types';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -518,12 +519,31 @@ export default function SubscriptionPage() {
           <span>{t('alertCanceling')}</span>
         </div>
       )}
-      {!polling && isPastDue && (
-        <div className="flex items-center gap-2 px-4 py-2.5 mb-6 rounded-xl bg-red-500 text-white text-sm font-semibold">
-          <AlertTriangle className="w-4 h-4 shrink-0" />
-          <span>{t('alertPastDue')}</span>
-        </div>
-      )}
+      {!polling && isPastDue && (() => {
+        const blocked = merchant ? isPastDueBlocked({
+          subscription_status: merchant.subscription_status,
+          past_due_since: merchant.past_due_since,
+        }) : false;
+        if (blocked) {
+          return (
+            <div className="flex flex-col gap-1.5 px-4 py-3 mb-6 rounded-xl bg-red-500 text-white text-sm font-semibold">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{t('alertPastDueBlocked')}</span>
+              </div>
+              <p className="text-xs font-normal text-white/80 ml-6">
+                {t('alertPastDueBlockedDesc')}
+              </p>
+            </div>
+          );
+        }
+        return (
+          <div className="flex items-center gap-2 px-4 py-2.5 mb-6 rounded-xl bg-red-500 text-white text-sm font-semibold">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>{t('alertPastDue')}</span>
+          </div>
+        );
+      })()}
 
       <div className={merchant?.stripe_subscription_id ? 'grid gap-6 lg:grid-cols-5' : 'space-y-6'}>
         {/* ===== LEFT COLUMN — Pricing or Status ===== */}

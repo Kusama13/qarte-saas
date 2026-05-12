@@ -1776,6 +1776,8 @@
     "alertExpiredDesc": "Your clients can no longer book or validate visits. Subscribe to reactivate everything.",
     "alertCanceling": "Cancellation at end of period",
     "alertPastDue": "Payment failed",
+    "alertPastDueBlocked": "Payment required — account suspended",
+    "alertPastDueBlockedDesc": "Your clients can no longer book or scan. Update your card to reactivate everything immediately.",
     "planProAnnual": "Pro Plan Annual",
     "planProMonthly": "Pro Plan Monthly",
     "allIncluded": "All included",

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
-import { formatPhoneNumber, validatePhone, getAllPhoneFormats, getTodayForCountry, getTodayStartForCountry, getTimezoneForCountry, getTrialStatus } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getAllPhoneFormats, getTodayForCountry, getTodayStartForCountry, getTimezoneForCountry } from '@/lib/utils';
+import { isMerchantBlocked } from '@/lib/merchant-access';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import type { VisitStatus, MerchantCountry } from '@/types';
@@ -121,9 +122,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
-
-    if (trialStatus.isTrialExpired) {
+    // Bloque si trial expired (>3j grace) OU past_due >72h (mig 164).
+    if (isMerchantBlocked({
+      trial_ends_at: merchant.trial_ends_at,
+      subscription_status: merchant.subscription_status,
+      past_due_since: merchant.past_due_since,
+    })) {
       return NextResponse.json(
         {
           error: 'Ce commerce n\'accepte plus les passages pour le moment.',

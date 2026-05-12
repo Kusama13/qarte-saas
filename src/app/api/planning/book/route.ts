@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
-import { formatPhoneNumber, validatePhone, getTrialStatus, getTimezoneForCountry, getAllPhoneFormats, getAppUrl, getCurrencyForCountry } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getTimezoneForCountry, getAllPhoneFormats, getAppUrl, getCurrencyForCountry } from '@/lib/utils';
+import { isMerchantBlocked } from '@/lib/merchant-access';
 import type { EmailLocale } from '@/emails/translations';
 import { computeDepositDeadline } from '@/lib/deposit';
 import { fromZonedTime } from 'date-fns-tz';
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, welcome_offer_enabled, welcome_offer_description, welcome_offer_discount_percent, booking_mode, buffer_minutes, home_service_enabled, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days')
+      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, past_due_since, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, welcome_offer_enabled, welcome_offer_description, welcome_offer_discount_percent, booking_mode, buffer_minutes, home_service_enabled, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days')
       .eq('id', merchant_id)
       .single();
 
@@ -78,8 +79,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Réservation en ligne indisponible' }, { status: 403 });
     }
 
-    const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
-    if (trialStatus.isTrialExpired) {
+    // Bloque si trial expired (>3j grace) OU past_due >72h (mig 164).
+    if (isMerchantBlocked({
+      trial_ends_at: merchant.trial_ends_at,
+      subscription_status: merchant.subscription_status,
+      past_due_since: merchant.past_due_since,
+    })) {
       return NextResponse.json({ error: 'Ce commerce n\'accepte plus les réservations' }, { status: 403 });
     }
 

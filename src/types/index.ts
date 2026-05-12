@@ -101,6 +101,7 @@ export interface Merchant {
   billing_interval: 'monthly' | 'annual';
   billing_period_start: string | null;
   subscription_status: SubscriptionStatus;
+  past_due_since: string | null;
   plan_tier: PlanTier;
   onboarding_completed: boolean;
   shield_enabled: boolean;

@@ -277,6 +277,16 @@ export async function POST(request: Request) {
 
       logger.debug('Payment failed for customer:', invoice.customer);
 
+      // Atomic claim past_due_since : seule la 1ere transition active→past_due
+      // pose le timestamp. Si Stripe re-fire (ex: 2eme invoice failed dans le
+      // meme cycle), on ne reset pas le compteur — sinon le merchant gagnerait
+      // un nouveau grace 72h a chaque retry Stripe.
+      await supabase
+        .from('merchants')
+        .update({ past_due_since: new Date().toISOString() })
+        .eq('stripe_customer_id', invoice.customer as string)
+        .is('past_due_since', null);
+
       const { data: merchant } = await supabase
         .from('merchants')
         .update({
@@ -361,6 +371,9 @@ export async function POST(request: Request) {
         .update({
           subscription_status: 'active',
           updated_at: new Date().toISOString(),
+          // Reset past_due_since : leve le blocage 72h immediatement.
+          // Reset SMS flags : prochain cycle past_due repart proprement.
+          past_due_since: null,
         })
         .eq('stripe_customer_id', invoice.customer as string)
         .eq('subscription_status', 'past_due')

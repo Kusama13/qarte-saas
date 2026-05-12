@@ -1765,6 +1765,8 @@
     "alertExpiredDesc": "Tes clientes ne peuvent plus r\u00e9server ni valider leurs passages. Abonne-toi pour tout r\u00e9activer.",
     "alertCanceling": "Annulation en fin de période",
     "alertPastDue": "Paiement échoué",
+    "alertPastDueBlocked": "Paiement à régulariser — compte suspendu",
+    "alertPastDueBlockedDesc": "Tes clientes ne peuvent plus réserver ni scanner. Mets à jour ta carte pour tout réactiver immédiatement.",
     "planProAnnual": "Plan Pro Annuel",
     "planProMonthly": "Plan Pro Mensuel",
     "allIncluded": "Tout inclus",

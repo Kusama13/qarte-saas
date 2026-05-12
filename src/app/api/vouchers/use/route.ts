@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import { getAuthenticatedPhone } from '@/lib/customer-auth';
-import { getTodayForCountry, getTrialStatus } from '@/lib/utils';
+import { getTodayForCountry } from '@/lib/utils';
+import { isMerchantBlocked } from '@/lib/merchant-access';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { sendBookingSms } from '@/lib/sms';
 import { formatCurrencyForSms } from '@/lib/utils';
@@ -101,16 +102,17 @@ export async function POST(request: NextRequest) {
     // Fetch merchant for timezone + trial check
     const { data: voucherMerchant } = await supabaseAdmin
       .from('merchants')
-      .select('country, trial_ends_at, subscription_status')
+      .select('country, trial_ends_at, subscription_status, past_due_since')
       .eq('id', voucher.merchant_id)
       .single();
 
-    // Check merchant subscription is still active
-    if (voucherMerchant) {
-      const trialStatus = getTrialStatus(voucherMerchant.trial_ends_at, voucherMerchant.subscription_status);
-      if (trialStatus.isTrialExpired) {
-        return NextResponse.json({ error: 'Ce commerce n\'accepte plus les récompenses pour le moment.' }, { status: 403 });
-      }
+    // Bloque si trial expired (>3j grace) OU past_due >72h (mig 164).
+    if (voucherMerchant && isMerchantBlocked({
+      trial_ends_at: voucherMerchant.trial_ends_at,
+      subscription_status: voucherMerchant.subscription_status,
+      past_due_since: voucherMerchant.past_due_since,
+    })) {
+      return NextResponse.json({ error: 'Ce commerce n\'accepte plus les récompenses pour le moment.' }, { status: 403 });
     }
 
     // 3. Bonus +1 stamp (skip for birthday vouchers + skip if already visited today,

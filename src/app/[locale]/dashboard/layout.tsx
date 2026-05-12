@@ -27,6 +27,7 @@ import {
 import { getSupabase } from '@/lib/supabase';
 import { getTrialStatus } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { isPastDueBlocked } from '@/lib/merchant-access';
 import { getPlanFeatures, getPlanTier } from '@/lib/plan-tiers';
 import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -129,13 +130,20 @@ function DashboardLayoutContent({
     && pathname !== '/dashboard/survey'
     && pathname !== '/dashboard/subscription';
 
+  // Past_due bloque (>72h) : redirect dur vers /dashboard/subscription. Mig 164.
+  // Le merchant ne peut plus rien faire d'autre tant qu'il n'a pas regularise.
+  const isPastDueLocked = !!merchant && isPastDueBlocked({
+    subscription_status: merchant.subscription_status,
+    past_due_since: merchant.past_due_since,
+  });
+
   const shouldRedirectSubscription = !loading
     && !!merchant
-    && (trialStatus.isInGracePeriod || (trialStatus.isFullyExpired && !!merchant.churn_survey_seen_at))
+    && (trialStatus.isInGracePeriod || (trialStatus.isFullyExpired && !!merchant.churn_survey_seen_at) || isPastDueLocked)
     && pathname !== '/dashboard/subscription'
     && pathname !== '/dashboard/survey';
 
-  // Redirection forcée dès la fin de l'essai (grâce ou expiration complète)
+  // Redirection forcée dès la fin de l'essai (grâce ou expiration complète) OU past_due bloque
   useEffect(() => {
     if (shouldRedirectSurvey) {
       router.push('/dashboard/survey');

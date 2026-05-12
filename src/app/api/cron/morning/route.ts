@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
   // ==================== PREFETCH ====================
   const { data: allMerchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, user_id, locale, trial_ends_at, subscription_status, churn_survey_seen_at, created_at, updated_at, reward_description, no_contact, email_bounced_at, email_unsubscribed_at, bio, shop_address');
+    .select('id, shop_name, user_id, locale, trial_ends_at, subscription_status, churn_survey_seen_at, created_at, updated_at, past_due_since, reward_description, no_contact, email_bounced_at, email_unsubscribed_at, bio, shop_address');
 
   const allMerchantsList = allMerchants || [];
   const allUserIds = [...new Set(allMerchantsList.map(m => m.user_id))];
@@ -319,8 +319,11 @@ export async function GET(request: NextRequest) {
       ];
 
       for (const merchant of pastDueMerchants) {
-        const updatedAt = new Date(merchant.updated_at);
-        const daysSince = Math.floor((now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60 * 24));
+        // Source de verite : past_due_since (mig 164). Ancien fallback updated_at
+        // etait reset par toute modif merchant (toggle settings) → bypass trivial.
+        if (!merchant.past_due_since) continue;
+        const since = new Date(merchant.past_due_since);
+        const daysSince = Math.floor((now.getTime() - since.getTime()) / (1000 * 60 * 60 * 24));
 
         const matchingStep = DUNNING_STEPS.find(s => s.days === daysSince);
         if (!matchingStep) continue;
@@ -364,15 +367,17 @@ export async function GET(request: NextRequest) {
     if (pastDueIds.length > 0) {
       const { data: pastDueDetails } = await supabase
         .from('merchants')
-        .select('id, shop_name, phone, country, no_contact, deleted_at, subscription_status, updated_at, past_due_sms1_sent_at, past_due_sms2_sent_at')
+        .select('id, shop_name, phone, country, no_contact, deleted_at, subscription_status, past_due_since, past_due_sms1_sent_at, past_due_sms2_sent_at')
         .in('id', pastDueIds);
 
       for (const merchant of pastDueDetails || []) {
         results.dunningSms.processed++;
 
         // Filtre temporel : SMS 2 part a >= 2 jours apres la bascule en past_due.
-        const updatedAt = new Date(merchant.updated_at);
-        const daysSince = Math.floor((now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60 * 24));
+        // Source de verite past_due_since (mig 164) — voir dunning emails plus haut.
+        if (!merchant.past_due_since) { results.dunningSms.skipped++; continue; }
+        const since = new Date(merchant.past_due_since);
+        const daysSince = Math.floor((now.getTime() - since.getTime()) / (1000 * 60 * 60 * 24));
         if (daysSince < 2) { results.dunningSms.skipped++; continue; }
 
         // Skip si SMS 2 deja envoye (dedup colonne, mais double-check ici evite query inutile).

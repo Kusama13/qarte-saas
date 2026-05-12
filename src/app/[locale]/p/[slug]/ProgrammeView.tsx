@@ -6,12 +6,13 @@ import { Gift, Users, Flame, Trophy, CalendarDays, CalendarCheck, MapPin, Naviga
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import { SuspendedBanner } from '@/components/shared/SuspendedBanner';
+import { isMerchantBlocked } from '@/lib/merchant-access';
 import SimulatedCard from './SimulatedCard';
 import BookingModal from './BookingModal';
 import GiftCardModal from './GiftCardModal';
 import { useInView } from '@/hooks/useInView';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
-import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency, detectBookingPlatform, displayPhoneWithFlag, getTrialStatus, getCurrencyForCountry, extractCityFromAddress } from '@/lib/utils';
+import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency, detectBookingPlatform, displayPhoneWithFlag, getCurrencyForCountry, extractCityFromAddress } from '@/lib/utils';
 import { trackCtaClick } from '@/lib/analytics';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
@@ -105,6 +106,7 @@ type MerchantPublic = Pick<
   | 'display_phone'
   | 'country'
   | 'subscription_status'
+  | 'past_due_since'
   | 'plan_tier'
   | 'trial_ends_at'
   | 'booking_mode'
@@ -140,7 +142,14 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const p = merchant.primary_color;
   const s = merchant.secondary_color || merchant.primary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
-  const isSuspended = !isDemo && getTrialStatus(merchant.trial_ends_at, merchant.subscription_status).isTrialExpired;
+  // Bloque si trial expired (grace 3j passe) OU past_due >72h (mig 164).
+  // Meme bandeau "Page suspendue" pour les 2 cas (cote cliente, on ne mentionne
+  // pas l'impaye explicitement — message neutre).
+  const isSuspended = !isDemo && isMerchantBlocked({
+    trial_ends_at: merchant.trial_ends_at,
+    subscription_status: merchant.subscription_status,
+    past_due_since: merchant.past_due_since,
+  });
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [servicesExpanded, setServicesExpanded] = useState(false);
   const [planningExpanded, setPlanningExpanded] = useState(false);
