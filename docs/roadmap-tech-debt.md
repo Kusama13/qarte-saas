@@ -38,6 +38,12 @@ Le check `Date.now() - startedAt > 280_000` casse la boucle, puis le code marque
 Toujours `return NextResponse.json({ ok: true, ...results })` même si `errors > 0` ou `sent === 0`. Aucune alerte possible.
 **Fix** : HTTP 206 si `errors > seuil`, ou POST vers webhook Slack/monitoring si `sent < 10% expected`.
 
+### #25. Stripe force-cancel après échecs de paiement : aucun email envoyé `[stab]`
+`src/app/api/stripe/webhook/route.ts:245-272`
+Quand Stripe annule définitivement un abonnement après ~21 jours d'échecs de paiement (Smart Retries épuisés), le webhook `customer.subscription.deleted` set `subscription_status='canceled'` mais n'envoie aucun email. Le commentaire `// Email déjà envoyé au moment du passage en 'canceling' (subscription.updated)` est trompeur : vrai pour annulations volontaires (user clique → 'canceling' → email → période finit → 'canceled'), faux pour force-cancel où on saute directement past_due → canceled sans passer par 'canceling'.
+**Impact** : merchant force-cancellé apprend l'annulation au prochain login OU au 1er email de réactivation J+7 post-cancel (template générique "tu nous manques"), pas de notification claire "ton compte vient d'être annulé pour défaut de paiement".
+**Fix** : nouveau template `SubscriptionForceCanceledEmail` envoyé dans `subscription.deleted` quand le statut pré-UPDATE est `past_due` (détection via SELECT avant l'UPDATE). Possiblement aussi ajouter `past_due_since` au reset (stale data sinon).
+
 ### #12. `/p/[slug]` revalidate = 3600s `[scal]`
 `src/app/[locale]/p/[slug]/page.tsx:1`
 ISR 1h — un merchant qui modifie son offre voit le vieux contenu jusqu'à 60 min côté clients.

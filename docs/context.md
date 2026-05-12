@@ -715,9 +715,9 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 | checkout.session.completed | `active` | SubscriptionConfirmedEmail (annuel: NFC offerte, mensuel: NFC en option 20€) |
 | subscription.updated (cancel_at_period_end) | `canceling` | SubscriptionCanceledEmail |
 | subscription.updated (canceling→active) | `active` | SubscriptionReactivatedEmail |
-| subscription.deleted | `canceled` | — |
-| invoice.payment_failed | `past_due` | PaymentFailedEmail + **SMS past_due_initial** (mig 163) |
-| invoice.payment_succeeded (recovery) | `active` | SubscriptionConfirmedEmail + **resetPastDueSmsFlags** (mig 163) |
+| subscription.deleted | `canceled` | — (gap : aucun email envoye quand Stripe force-cancel apres echecs paiement, voir section ci-dessous) |
+| invoice.payment_failed | `past_due` | PaymentFailedEmail + **SMS past_due_initial** (mig 163) + **atomic claim `past_due_since`** (mig 164) |
+| invoice.payment_succeeded (recovery) | `active` | SubscriptionConfirmedEmail + **resetPastDueSmsFlags** (mig 163) + **reset `past_due_since`** (mig 164) |
 
 **Grace period** : 3 jours apres expiration (lecture seule), suppression apres 3 jours.
 
@@ -733,6 +733,32 @@ Helper unique [`src/lib/sms-past-due.ts`](../src/lib/sms-past-due.ts) `sendPastD
 
 ### Bandeau permanent past_due dans header dashboard (mai 2026)
 Quand `merchant.subscription_status === 'past_due'`, **bandeau rouge fixed top-0 z-[60] sur toute la largeur** (mobile + desktop) en haut du dashboard avec icone `AlertTriangle` + texte unifie *"Régularise pour ne pas perdre toutes tes données"* (i18n key `pastDueDataWarning`, meme texte tous tiers Fidelite/Tout-en-un/legacy), cliquable → `/dashboard/subscription`. Padding-top des autres surfaces (topbar mobile, aside desktop, main) ajuste conditionnellement via `pt-[calc(env(safe-area-inset-top)+40px)]` quand `isPastDue`. Safe-area iOS PWA respectee. Avant : l'avertissement n'etait visible que dans le sidebar (ferme par defaut sur mobile, 80% du trafic) → impaye silencieux pendant des jours. Suppression au passage du `<StatusBanner>` past_due duplique dans la sidebar.
+
+### Blocage past_due > 72h (mig 164, mai 2026)
+Apres 72h en `past_due`, le merchant est **bloque** : redirect dashboard vers `/dashboard/subscription` (seule page accessible) + 403 sur 8 routes API client-facing (checkin, cagnotte/checkin, welcome, referrals, planning/book, vouchers/use, merchant-offers/claim, gift-cards/request) + `<SuspendedBanner />` etendu sur `/p/[slug]` + `/scan/[code]` (texte neutre "Page suspendue", on ne mentionne PAS l'impaye cote cliente, choix UX assume).
+
+**Source de verite temporelle** : nouvelle colonne `merchants.past_due_since TIMESTAMPTZ` (mig 164) set par Stripe webhook `invoice.payment_failed` via atomic claim `WHERE past_due_since IS NULL` (Stripe peut re-fire payment_failed sur le meme cycle → on ne reset pas le compteur a chaque retry), reset NULL sur `invoice.payment_succeeded`. **Independant de `updated_at`** qui se reset a toute modif merchant (toggle settings, edit profil, etc.) — sans cette separation, un past_due qui modifie sa fiche bypasserait le blocage trivialement.
+
+**Helper unifie** [`src/lib/merchant-access.ts`](../src/lib/merchant-access.ts) : `isMerchantBlocked({trial_ends_at, subscription_status, past_due_since})` combine les 2 cas de blocage (`isPastDueBlocked` 72h + `getTrialStatus().isTrialExpired` post-grace). `getMerchantAccessStatus()` retourne aussi `reason: 'trial_expired' | 'past_due_unpaid' | null` pour wording UI specifique.
+
+**Bandeau dashboard `/dashboard/subscription` specifique past_due_unpaid** : `alertPastDueBlocked` "Paiement a regulariser — compte suspendu" + `alertPastDueBlockedDesc` "Tes clientes ne peuvent plus reserver ni scanner. Mets a jour ta carte pour tout reactiver immediatement." (rouge, separe du `alertPastDue` initial qui reste pour J0-J+2 non encore bloques).
+
+**Bonus correctif** : les emails dunning J+3/J+7/J+10 du cron `morning` migrent de `updated_at` vers `past_due_since` (meme bypass via toggle settings). Idem cron dunning SMS J+2 (`past_due_reminder`).
+
+**Backfill mig 164** (decision produit, "trop d'impayes") : pour les past_due deja en base, `past_due_since = COALESCE(past_due_sms1_sent_at, updated_at)` UNIQUEMENT si > 72h → bloque immediatement les past_due > 72h, laisse les recents passer par le flow webhook normal.
+
+**Override admin** : pas implemente en V1 (a voir plus tard si besoin de debloquer manuellement un faux positif Stripe).
+
+### Cas Stripe force-cancel apres echecs (gap email connu)
+Apres 4 retries Stripe (configurable, ~21 jours par defaut via Stripe Smart Retries), si tous les paiements echouent, Stripe envoie `customer.subscription.deleted`. Notre webhook (ligne 245-273) :
+- Set `subscription_status = 'canceled'` + `stripe_subscription_id = NULL`
+- **Aucun email envoye** (le commentaire "Email deja envoye au moment du passage en 'canceling'" est trompeur : vrai pour annulations volontaires, faux pour force-cancel Stripe ou on saute directement past_due → canceled sans passer par 'canceling')
+- `past_due_since` reste defini (jamais reset a la transition canceled — innocent car `isPastDueBlocked` filtre sur status, mais stale data)
+- Cron `morning` REACTIVATION prend le relais : envoie `sendReactivationEmail` a J+7/J+14/J+30 post-cancellation (templates generiques "tu nous manques", code -301/-302/-303)
+
+**Blocage maintenu** : `isMerchantBlocked()` continue a retourner true via la branche `trial_expired` (canceled n'est pas dans active/canceling/past_due dans `getTrialStatus`). Dashboard redirect + 8 routes API 403 + SuspendedBanner restent actifs.
+
+**Gap UX** : le merchant ne sait pas qu'il vient d'etre annule definitivement par Stripe — il l'apprend au prochain login ou au 1er email de reactivation a J+7. **Fix possible** : nouveau template `SubscriptionForceCanceledEmail` envoye dans `subscription.deleted` quand le statut courant est `past_due` (detection via SELECT pre-UPDATE). Pas implemente.
 
 ### Page Abonnement (`/dashboard/subscription`)
 - Toggle mensuel/annuel avec badge "Recommande" sur annuel

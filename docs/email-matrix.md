@@ -472,6 +472,10 @@ activite    │  INACTIVE DAY 30                    │
 
 > **Note SMS dunning** : les 2 SMS sont **transactionnels critiques** (info compte). Ils ne respectent PAS `marketing_sms_opted_out` — seul `merchants.no_contact = true` (full opt-out admin) les bloque. Logués dans `merchant_marketing_sms_logs` (canal Qarte→merchant), pas `sms_logs`. Cf. [`docs/sms-system.md`](sms-system.md) section "Dunning past_due" et [`src/lib/sms-past-due.ts`](../src/lib/sms-past-due.ts).
 
+> **Blocage 72h (mig 164, mai 2026)** : à partir de J+3 en past_due, le merchant est bloqué (dashboard + scans + 8 routes API). Bandeau dashboard `alertPastDueBlocked` "Paiement à régulariser — compte suspendu" affiché sur `/dashboard/subscription`. Aucun email supplémentaire — les 4 emails + 2 SMS dunning existants suffisent à la communication. Cf. [docs/context.md](context.md) section "Blocage past_due > 72h".
+
+> **Gap connu : Stripe force-cancel après échecs** : si tous les retries Stripe échouent (~J+21, configurable Smart Retries), Stripe envoie `customer.subscription.deleted` → `subscription_status='canceled'`. Le webhook **n'envoie aucun email** (le commentaire "déjà envoyé en canceling" est trompeur — vrai pour annulations volontaires, faux pour force-cancel où on saute directement past_due → canceled). Le merchant tombe ensuite dans le flux REACTIVATION (J+7/J+14/J+30 post-cancel). Fix possible : `SubscriptionForceCanceledEmail` à ajouter dans le webhook quand le statut pré-UPDATE est `past_due`. Non implémenté.
+
 ---
 
 ## 8. Subscription lifecycle (Stripe webhooks, immediats)
