@@ -14,6 +14,7 @@ import {
   sendPostSurveyLastChanceEmail,
 } from '@/lib/email';
 import { sendPastDueSms } from '@/lib/sms-past-due';
+import { PAST_DUE_GRACE_HOURS } from '@/lib/merchant-access';
 import type { EmailLocale } from '@/emails/translations';
 import { getTrialStatus } from '@/lib/utils';
 import {
@@ -312,10 +313,13 @@ export async function GET(request: NextRequest) {
     const pastDueMerchants = allMerchantsList.filter(m => m.subscription_status === 'past_due' && canEmail(m));
 
     if (pastDueMerchants.length > 0) {
+      // Step 2 declenche pile au moment du blocage 72h (PAST_DUE_GRACE_HOURS / 24).
+      // Steps 3+4 = relances escaladees (4j et 7j apres le blocage).
+      const blockingDays = PAST_DUE_GRACE_HOURS / 24;
       const DUNNING_STEPS: Array<{ days: number; step: 2 | 3 | 4; trackingCode: number }> = [
-        { days: 3, step: 2, trackingCode: -401 },
-        { days: 7, step: 3, trackingCode: -402 },
-        { days: 10, step: 4, trackingCode: -403 },
+        { days: blockingDays, step: 2, trackingCode: -401 },
+        { days: blockingDays + 4, step: 3, trackingCode: -402 },
+        { days: blockingDays + 7, step: 4, trackingCode: -403 },
       ];
 
       for (const merchant of pastDueMerchants) {
@@ -373,13 +377,11 @@ export async function GET(request: NextRequest) {
       for (const merchant of pastDueDetails || []) {
         results.dunningSms.processed++;
 
-        // Filtre temporel : SMS 2 part a >= 3 jours apres la bascule en past_due
-        // (= 72h, aligne sur le blocage mig 164 et l'email step 2 J+3).
-        // Source de verite past_due_since (mig 164) — voir dunning emails plus haut.
+        // SMS step 2 declenche pile au moment du blocage 72h, sync avec email step 2.
         if (!merchant.past_due_since) { results.dunningSms.skipped++; continue; }
         const since = new Date(merchant.past_due_since);
-        const daysSince = Math.floor((now.getTime() - since.getTime()) / (1000 * 60 * 60 * 24));
-        if (daysSince < 3) { results.dunningSms.skipped++; continue; }
+        const hoursSince = (now.getTime() - since.getTime()) / (1000 * 60 * 60);
+        if (hoursSince < PAST_DUE_GRACE_HOURS) { results.dunningSms.skipped++; continue; }
 
         // Skip si SMS 2 deja envoye (dedup colonne, mais double-check ici evite query inutile).
         if (merchant.past_due_sms2_sent_at) { results.dunningSms.skipped++; continue; }

@@ -23,7 +23,10 @@ interface MerchantAccessInput {
   past_due_since: string | null;
 }
 
-const PAST_DUE_GRACE_HOURS = 72;
+/** Mig 164 : grace period en heures avant blocage d'un merchant past_due.
+ *  Source de verite — utilise par isPastDueBlocked + cron morning (dunning emails
+ *  step 2/3/4 + SMS step 2 declenches a past_due_since + N×24h). */
+export const PAST_DUE_GRACE_HOURS = 72;
 
 export function isPastDueBlocked(merchant: Pick<MerchantAccessInput, 'subscription_status' | 'past_due_since'>): boolean {
   if (merchant.subscription_status !== 'past_due') return false;
