@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { verifyCronAuth } from '@/lib/cron-helpers';
 import { sendMarketingSms, PAID_STATUSES, SMS_UNIT_COST_CENTS, getSmsUsageThisMonth, getEffectiveQuota } from '@/lib/sms';
+import { isPastDueBlocked } from '@/lib/merchant-access';
 import { sendSmsCampaignSentEmail } from '@/lib/email';
 import { isLegalSendTime, nextLegalSlot } from '@/lib/sms-compliance';
 import { resolveAudienceUnion } from '@/lib/sms-audience';
@@ -36,6 +37,7 @@ interface MerchantRow {
   sms_quota_override_cycle_anchor: string | null;
   billing_interval: string | null;
   created_at: string | null;
+  past_due_since: string | null;
 }
 
 // Per-campaign send cap — protects batch time + avoids cross-campaign starvation.
@@ -72,7 +74,7 @@ export async function GET(request: NextRequest) {
 
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, shop_name, country, slug, billing_period_start, subscription_status, user_id, locale, sms_pack_balance, plan_tier, sms_quota_override, sms_quota_override_cycle_anchor, billing_interval, created_at')
+      .select('id, shop_name, country, slug, billing_period_start, subscription_status, past_due_since, user_id, locale, sms_pack_balance, plan_tier, sms_quota_override, sms_quota_override_cycle_anchor, billing_interval, created_at')
       .eq('id', campaign.merchant_id)
       .single<MerchantRow & { subscription_status: string }>();
     if (!merchant) {
@@ -87,6 +89,17 @@ export async function GET(request: NextRequest) {
       await supabaseAdmin
         .from('sms_campaigns')
         .update({ status: 'failed', review_note: 'Abonnement inactif au moment du dispatch.' })
+        .eq('id', campaign.id);
+      results.failed++;
+      continue;
+    }
+    // Mig 164 : merchant past_due > 72h = suspendu. On annule la campagne au
+    // niveau dispatch plutot que d'avoir N envois marketing qui echouent
+    // chacun (sendMarketingSms gate aussi mais c'est plus efficace ici).
+    if (isPastDueBlocked({ subscription_status: merchant.subscription_status, past_due_since: merchant.past_due_since })) {
+      await supabaseAdmin
+        .from('sms_campaigns')
+        .update({ status: 'failed', review_note: 'Compte suspendu pour defaut de paiement au moment du dispatch.' })
         .eq('id', campaign.id);
       results.failed++;
       continue;

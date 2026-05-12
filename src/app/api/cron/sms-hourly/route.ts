@@ -25,6 +25,7 @@ interface MerchantRow {
   country: string | null;
   locale: string | null;
   subscription_status: string;
+  past_due_since: string | null;
   billing_period_start: string | null;
   reminder_j0_enabled: boolean | null;
   post_visit_review_enabled: boolean | null;
@@ -124,7 +125,7 @@ export async function GET(request: NextRequest) {
 
   const { data: merchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, country, locale, subscription_status, billing_period_start, reminder_j0_enabled, post_visit_review_enabled, voucher_expiry_sms_enabled, referral_invite_sms_enabled, inactive_sms_enabled, near_reward_sms_enabled, referral_program_enabled, planning_enabled, review_link, stamps_required, reward_description, tier2_enabled, tier2_stamps_required, tier2_reward_description, birthday_gift_enabled, birthday_gift_description')
+    .select('id, shop_name, country, locale, subscription_status, past_due_since, billing_period_start, reminder_j0_enabled, post_visit_review_enabled, voucher_expiry_sms_enabled, referral_invite_sms_enabled, inactive_sms_enabled, near_reward_sms_enabled, referral_program_enabled, planning_enabled, review_link, stamps_required, reward_description, tier2_enabled, tier2_stamps_required, tier2_reward_description, birthday_gift_enabled, birthday_gift_description')
     .in('subscription_status', PAID_STATUSES);
 
   const activeMerchants = (merchants || []) as MerchantRow[];
@@ -180,6 +181,7 @@ export async function GET(request: NextRequest) {
           smsType: 'reminder_j0',
           locale: m.locale || 'fr',
           subscriptionStatus: m.subscription_status,
+          pastDueSince: m.past_due_since,
           globalConfig: globalSmsConfig,
         });
         if (sent) {
@@ -585,6 +587,7 @@ export async function GET(request: NextRequest) {
         smsType: 'birthday',
         locale: m.locale || 'fr',
         subscriptionStatus: m.subscription_status,
+        pastDueSince: m.past_due_since,
         gift: m.birthday_gift_description || (m.locale === 'en' ? 'a gift' : 'un cadeau'),
         clientName: customer.first_name || '',
       });

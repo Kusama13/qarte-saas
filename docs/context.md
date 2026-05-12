@@ -743,7 +743,9 @@ Apres 72h en `past_due`, le merchant est **bloque** : redirect dashboard vers `/
 
 **Bandeau dashboard `/dashboard/subscription` specifique past_due_unpaid** : `alertPastDueBlocked` "Paiement a regulariser — compte suspendu" + `alertPastDueBlockedDesc` "Tes clientes ne peuvent plus reserver ni scanner. Mets a jour ta carte pour tout reactiver immediatement." (rouge, separe du `alertPastDue` initial qui reste pour J0-J+2 non encore bloques).
 
-**Bonus correctif** : les emails dunning J+3/J+7/J+10 du cron `morning` migrent de `updated_at` vers `past_due_since` (meme bypass via toggle settings). Idem cron dunning SMS J+2 (`past_due_reminder`).
+**Bonus correctif** : les emails dunning J+3/J+7/J+10 du cron `morning` migrent de `updated_at` vers `past_due_since` (meme bypass via toggle settings). Idem cron dunning SMS J+3 (`past_due_reminder`, decale de J+2 a J+3 pour synchro avec le blocage).
+
+**Coupure SMS sortants quand bloque** : `sendBookingSms` et `sendMarketingSms` integrent `isPastDueBlocked()` — un merchant suspendu ne peut plus envoyer rappels RDV, marketing, welcome, review, etc. (incoherent que la cliente recoive "rappel demain" alors que le merchant ne pourra pas la check-in). 7 crons passent `pastDueSince` (sms-hourly, evening, sms-batch-audit, morning-jobs, gift-cards-deliver/expire, sms-campaigns-dispatch). Les 2 SMS dunning eux-memes (`past_due_initial`/`past_due_reminder`) ne sont PAS gates — c'est la communication Qarte→merchant qui doit continuer.
 
 **Backfill mig 164** (decision produit, "trop d'impayes") : pour les past_due deja en base, `past_due_since = COALESCE(past_due_sms1_sent_at, updated_at)` UNIQUEMENT si > 72h → bloque immediatement les past_due > 72h, laisse les recents passer par le flow webhook normal.
 

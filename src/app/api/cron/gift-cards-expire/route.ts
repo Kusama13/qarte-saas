@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
         id, amount, kind, service_ids, service_snapshot,
         recipient_first_name, recipient_phone, expires_at, merchant_id,
         merchants!inner (
-          shop_name, country, locale, subscription_status
+          shop_name, country, locale, subscription_status, past_due_since
         )
       `)
       .eq('status', 'active')
@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
       merchants: {
         shop_name: string; country: string; locale: string;
         subscription_status: string | null;
+        past_due_since: string | null;
       };
     };
 
@@ -90,6 +91,7 @@ export async function GET(request: NextRequest) {
             smsType: 'gift_card_expiry_reminder',
             locale: lang,
             subscriptionStatus: gc.merchants.subscription_status || 'active',
+            pastDueSince: gc.merchants.past_due_since,
             date: formatLongDate(new Date(gc.expires_at), lang),
             giftRecipientName: gc.recipient_first_name,
             giftAmount: formatCurrencyForSms(Number(gc.amount), gc.merchants.country),

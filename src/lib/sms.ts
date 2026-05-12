@@ -7,6 +7,7 @@ import { getPlanFeatures } from './plan-tiers';
 import { classifyOvhError, classifySmsPartnerError, type SmsErrorClass } from './sms-error-classifier';
 import { isPhoneBlacklisted, recordInvalidPhone } from './sms-blacklist';
 import { notifySmsAdmin } from './sms-admin-alerts';
+import { isPastDueBlocked } from './merchant-access';
 import logger from './logger';
 import type { PlanTier, SubscriptionStatus } from '@/types';
 
@@ -323,6 +324,11 @@ interface SendSmsParams {
   smsType: SmsType;
   locale: string;
   subscriptionStatus: string;
+  /** Mig 164 : si past_due > 72h, on coupe l'envoi SMS (incoherent d'envoyer
+   *  un rappel RDV a une cliente alors que le merchant est suspendu et ne
+   *  pourra pas la check-in). Optional pour retrocompat — les callers
+   *  cron-driven doivent le passer ; les callers API sont deja gates par 403. */
+  pastDueSince?: string | null;
   // For booking types
   date?: string;
   time?: string;
@@ -347,12 +353,18 @@ interface SendSmsParams {
  * Checks global toggle, subscription status, and dedup before sending.
  */
 export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsParams): Promise<boolean> {
-  const { merchantId, slotId, phone, shopName, smsType, locale, subscriptionStatus, date, time, gift, clientName, reward, giftSenderName, giftRecipientName, giftAmount, giftServicesLabel, depositLink, globalConfig: preloadedConfig } = params;
+  const { merchantId, slotId, phone, shopName, smsType, locale, subscriptionStatus, pastDueSince, date, time, gift, clientName, reward, giftSenderName, giftRecipientName, giftAmount, giftServicesLabel, depositLink, globalConfig: preloadedConfig } = params;
 
   if (!phone) return false;
 
   try {
     if (!(PAID_STATUSES as readonly string[]).includes(subscriptionStatus)) {
+      return false;
+    }
+    // Mig 164 : merchant past_due > 72h = suspendu. On coupe l'envoi SMS pour
+    // ne pas avoir de cliente qui recoit "rappel RDV demain" alors que le
+    // merchant est bloque et ne pourra pas la check-in.
+    if (isPastDueBlocked({ subscription_status: subscriptionStatus, past_due_since: pastDueSince ?? null })) {
       return false;
     }
 
@@ -688,12 +700,16 @@ export async function sendMarketingSms(
     // 1. Gate: paid subscription + quota selon tier + pack
     const { data: merchant } = await supabase
       .from('merchants')
-      .select('billing_period_start, sms_pack_balance, subscription_status, plan_tier, sms_quota_override, sms_quota_override_cycle_anchor, billing_interval, created_at')
+      .select('billing_period_start, sms_pack_balance, subscription_status, past_due_since, plan_tier, sms_quota_override, sms_quota_override_cycle_anchor, billing_interval, created_at')
       .eq('id', merchantId)
       .maybeSingle();
-    const merchantRow = merchant as { billing_period_start?: string | null; sms_pack_balance?: number; subscription_status?: string; plan_tier?: string; sms_quota_override?: number | null; sms_quota_override_cycle_anchor?: string | null; billing_interval?: string | null; created_at?: string | null } | null;
+    const merchantRow = merchant as { billing_period_start?: string | null; sms_pack_balance?: number; subscription_status?: string; past_due_since?: string | null; plan_tier?: string; sms_quota_override?: number | null; sms_quota_override_cycle_anchor?: string | null; billing_interval?: string | null; created_at?: string | null } | null;
     if (!merchantRow || !(PAID_STATUSES as readonly string[]).includes(merchantRow.subscription_status || '')) {
       return { success: false, error: 'subscription_inactive' };
+    }
+    // Mig 164 : past_due > 72h = suspendu, on coupe les envois marketing aussi.
+    if (isPastDueBlocked({ subscription_status: merchantRow.subscription_status || '', past_due_since: merchantRow.past_due_since ?? null })) {
+      return { success: false, error: 'merchant_blocked' };
     }
     const bps = billingPeriodStart !== undefined ? billingPeriodStart : (merchantRow.billing_period_start || null);
     const packBalance = Number(merchantRow.sms_pack_balance || 0);

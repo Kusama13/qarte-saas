@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
   // ==================== PREFETCH ====================
   const { data: allMerchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, user_id, locale, country, subscription_status, no_contact, birthday_gift_enabled, birthday_gift_description, pwa_installed_at, email_bounced_at, email_unsubscribed_at');
+    .select('id, shop_name, user_id, locale, country, subscription_status, past_due_since, no_contact, birthday_gift_enabled, birthday_gift_description, pwa_installed_at, email_bounced_at, email_unsubscribed_at');
 
   const allMerchantsList = allMerchants || [];
   const allMerchantsMap = new Map(allMerchantsList.map(m => [m.id, m]));
@@ -239,6 +239,7 @@ export async function GET(request: NextRequest) {
                 smsType: 'birthday',
                 locale: bMerchant.locale || 'fr',
                 subscriptionStatus: bMerchant.subscription_status,
+                pastDueSince: bMerchant.past_due_since,
                 gift: bMerchant.birthday_gift_description || (bMerchant.locale === 'en' ? 'a gift' : 'un cadeau'),
                 clientName: customer.first_name || '',
               }).catch(() => {});

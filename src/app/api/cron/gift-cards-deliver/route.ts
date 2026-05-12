@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
         merchants!inner (
           shop_name, shop_address, display_phone, slug, country, locale,
           primary_color, secondary_color, auto_booking_enabled,
-          subscription_status, hide_address_on_public_page
+          subscription_status, past_due_since, hide_address_on_public_page
         )
       `)
       .eq('status', 'active')
@@ -83,6 +83,7 @@ export async function GET(request: NextRequest) {
         primary_color: string | null; secondary_color: string | null;
         auto_booking_enabled: boolean;
         subscription_status: string | null;
+        past_due_since: string | null;
         hide_address_on_public_page: boolean;
       };
     };
@@ -128,6 +129,7 @@ export async function GET(request: NextRequest) {
             smsType: 'gift_card_received',
             locale,
             subscriptionStatus: merchant.subscription_status || 'active',
+            pastDueSince: merchant.past_due_since,
             giftSenderName: giftCard.sender_first_name,
             giftRecipientName: giftCard.recipient_first_name,
             giftAmount: amountForSms,

@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     // 1. Merchants eligibles aux rappels J-1
     const { data: merchants } = await supabase
       .from('merchants')
-      .select('id, shop_name, country, locale, subscription_status')
+      .select('id, shop_name, country, locale, subscription_status, past_due_since')
       .in('subscription_status', ['active', 'canceling', 'past_due'])
       .eq('reminder_j1_enabled', true)
       .eq('planning_enabled', true);
@@ -134,6 +134,7 @@ export async function GET(request: NextRequest) {
             smsType: 'reminder_j1',
             locale: m.locale || 'fr',
             subscriptionStatus: m.subscription_status,
+            pastDueSince: m.past_due_since,
             globalConfig: globalSmsConfig,
           });
           if (sent) results.missing_resent_ok++;
