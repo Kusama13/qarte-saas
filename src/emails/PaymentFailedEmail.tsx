@@ -19,9 +19,14 @@ export function PaymentFailedEmail({ shopName, step = 1, locale = 'fr' }: Paymen
   const t = getEmailT(locale);
   const stepKey = `paymentFailed.step${step}` as const;
 
+  // Step 1 = soft (amber), step 2-4 = urgent (red).
+  // Mig 164 : la suspension est active des le step 2 (J+3 = 72h) → traitement
+  // visuel rouge alignne sur le wording "ton acces est suspendu".
+  const isUrgent = step >= 2;
+
   return (
     <BaseLayout preview={t(`${stepKey}.preview` as any, { shopName })} locale={locale}>
-      <Heading style={step >= 3 ? headingUrgent : heading}>
+      <Heading style={isUrgent ? headingUrgent : heading}>
         {t(`${stepKey}.heading` as any)}
       </Heading>
 
@@ -45,7 +50,7 @@ export function PaymentFailedEmail({ shopName, step = 1, locale = 'fr' }: Paymen
       )}
 
       <Section style={buttonContainer}>
-        <Button style={step >= 3 ? buttonUrgent : button} href="https://getqarte.com/dashboard/subscription">
+        <Button style={isUrgent ? buttonUrgent : button} href="https://getqarte.com/dashboard/subscription">
           {t(`${stepKey}.cta` as any)}
         </Button>
       </Section>

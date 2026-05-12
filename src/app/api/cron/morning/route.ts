@@ -373,12 +373,13 @@ export async function GET(request: NextRequest) {
       for (const merchant of pastDueDetails || []) {
         results.dunningSms.processed++;
 
-        // Filtre temporel : SMS 2 part a >= 2 jours apres la bascule en past_due.
+        // Filtre temporel : SMS 2 part a >= 3 jours apres la bascule en past_due
+        // (= 72h, aligne sur le blocage mig 164 et l'email step 2 J+3).
         // Source de verite past_due_since (mig 164) — voir dunning emails plus haut.
         if (!merchant.past_due_since) { results.dunningSms.skipped++; continue; }
         const since = new Date(merchant.past_due_since);
         const daysSince = Math.floor((now.getTime() - since.getTime()) / (1000 * 60 * 60 * 24));
-        if (daysSince < 2) { results.dunningSms.skipped++; continue; }
+        if (daysSince < 3) { results.dunningSms.skipped++; continue; }
 
         // Skip si SMS 2 deja envoye (dedup colonne, mais double-check ici evite query inutile).
         if (merchant.past_due_sms2_sent_at) { results.dunningSms.skipped++; continue; }

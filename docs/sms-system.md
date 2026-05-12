@@ -249,8 +249,8 @@ Refonte profonde post-incident "this operation was aborted" + audit ([`src/lib/s
 **Pas d'opt-out marketing requis** : caractère transactionnel critique (info compte). Ne respecte PAS `marketing_sms_opted_out` ni `sms_opt_outs`. **Seul `merchants.no_contact = true` bloque** (full opt-out admin).
 
 **Templates** ([`sms-past-due.ts`](../src/lib/sms-past-due.ts) `buildBody`) — < 160 chars GSM-7, tutoiement, pas de mention STOP :
-- Step 1 : `Qarte: ton paiement vient d'echouer. Mets a jour ta carte pour ne pas perdre tes donnees: https://getqarte.com/dashboard/subscription`
-- Step 2 : `Qarte: paiement toujours en attente. Regularise pour ne pas perdre tes donnees: https://getqarte.com/dashboard/subscription`
+- Step 1 (J0) : `Qarte: ton paiement vient d'echouer. Mets a jour ta carte pour ne pas perdre tes donnees: https://getqarte.com/dashboard/subscription`
+- Step 2 (J+3 = 72h, mig 164) : `Qarte: ton acces est suspendu pour defaut de paiement. Mets a jour ta carte pour reactiver: https://getqarte.com/dashboard/subscription`
 
 **Lien avec le blocage 72h (mig 164, mai 2026)** : a partir de J+3 en past_due, le merchant est bloque (dashboard redirect + 8 routes API client-facing en 403 + `<SuspendedBanner />` sur vitrine + scan). Le SMS J+2 (`past_due_reminder`) est donc le dernier signal soft envoye avant le blocage dur. Source de verite temporelle : `merchants.past_due_since` (mig 164), pose par le webhook avec atomic claim (independant de `updated_at` qui peut etre reset par toggle settings). Le cron utilise desormais `past_due_since` au lieu de `updated_at` pour le calcul `daysSince`. Voir [docs/context.md](context.md) section "Blocage past_due > 72h".
 

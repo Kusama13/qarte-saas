@@ -50,13 +50,17 @@ function selectProvider(phone: string): 'ovh' | 'sms_partner' {
  * Compose le corps du SMS selon le step. < 160 chars GSM-7.
  * Vouvoyer non — on tutoie le merchant (cohérent dashboard).
  * Pas de mention STOP : transactionnel (info compte critique).
+ *
+ * Step 1 (J0) : echec paiement, warning soft.
+ * Step 2 (J+3 = 72h, mig 164) : annonce de suspension active. Coincide avec
+ * le blocage effectif (dashboard + scans bloques) et l'email step 2 J+3.
  */
 function buildBody(step: PastDueSmsStep): string {
   const link = 'https://getqarte.com/dashboard/subscription';
   if (step === 1) {
     return `Qarte: ton paiement vient d'echouer. Mets a jour ta carte pour ne pas perdre tes donnees: ${link}`;
   }
-  return `Qarte: paiement toujours en attente. Regularise pour ne pas perdre tes donnees: ${link}`;
+  return `Qarte: ton acces est suspendu pour defaut de paiement. Mets a jour ta carte pour reactiver: ${link}`;
 }
 
 /**

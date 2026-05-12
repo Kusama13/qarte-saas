@@ -411,56 +411,56 @@ activite    │  INACTIVE DAY 30                    │
     ┌─────────────────────────────────────┐
     │  PAYMENT FAILED STEP 1 (email)      │
     │  Objet: "Un souci avec ta carte"    │
-    │  Pas de tracking code (webhook)     │
+    │  Soft warning amber (re-essai auto) │
     │  Declencheur: invoice.payment_failed│
     └─────────────────────────────────────┘
             +
     ┌─────────────────────────────────────┐
     │  SMS past_due_initial (mig 163)     │
-    │  "Qarte: ton paiement vient         │
-    │   d'echouer. Mets a jour ta carte…" │
+    │  "ton paiement vient d'echouer..."  │
     │  Trigger: webhook invoice.failed    │
     │  Provider: SMS Partner FR/BE / OVH  │
-    │  Dedup: past_due_sms1_sent_at       │
     │  Cout absorbe par Qarte             │
     └─────────────────────────────────────┘
             │
-    J+2     ▼
-    ┌─────────────────────────────────────┐
-    │  SMS past_due_reminder (mig 163)    │
-    │  "Qarte: paiement toujours en       │
-    │   attente. Regularise…"             │
-    │  Trigger: cron morning              │
-    │   (daysSince(updated_at) >= 2)      │
-    │  Dedup: past_due_sms2_sent_at       │
-    │  Garde-fou : skip si sms1 absent    │
-    └─────────────────────────────────────┘
+    J+3 ─── BLOCAGE (mig 164, 72h depuis past_due_since) ───
             │
-    J+3     ▼
+            ▼
     ┌─────────────────────────────────────┐
-    │  PAYMENT FAILED STEP 2              │
-    │  Objet: "{shopName}, paiement       │
-    │         toujours en attente"         │
+    │  PAYMENT FAILED STEP 2 (rouge)      │
+    │  Objet: "ton accès est suspendu"    │
+    │  Annonce la suspension active       │
     │  Code: -401                         │
-    │  Condition: past_due + 3 jours      │
+    │  Condition: past_due_since + 3j     │
+    └─────────────────────────────────────┘
+            +
+    ┌─────────────────────────────────────┐
+    │  SMS past_due_reminder (mig 163+164)│
+    │  "ton acces est suspendu pour       │
+    │   defaut de paiement..."            │
+    │  Trigger: cron morning              │
+    │   (daysSince(past_due_since) >= 3)  │
+    │  Dedup: past_due_sms2_sent_at       │
+    │  Aligne sur blocage 72h + email J+3 │
     └─────────────────────────────────────┘
             │
     J+7     ▼
     ┌─────────────────────────────────────┐
-    │  PAYMENT FAILED STEP 3              │
-    │  Objet: "{shopName}, ton compte sera│
-    │         suspendu dans 3 jours"       │
+    │  PAYMENT FAILED STEP 3 (rouge)      │
+    │  Objet: "compte suspendu depuis 4j" │
+    │  Pression : durée d'inactivité      │
     │  Code: -402                         │
-    │  Condition: past_due + 7 jours      │
+    │  Condition: past_due_since + 7j     │
     └─────────────────────────────────────┘
             │
     J+10    ▼
     ┌─────────────────────────────────────┐
-    │  PAYMENT FAILED STEP 4              │
-    │  Objet: "{shopName}, dernier jour   │
-    │         avant suspension"            │
+    │  PAYMENT FAILED STEP 4 (rouge)      │
+    │  Objet: "dernière relance —         │
+    │         suspendu depuis 7 jours"     │
+    │  Pression : risque suppression def. │
     │  Code: -403                         │
-    │  Condition: past_due + 10 jours     │
+    │  Condition: past_due_since + 10j    │
     └─────────────────────────────────────┘
             │
     Si paiement OK → SUBSCRIPTION CONFIRMED
