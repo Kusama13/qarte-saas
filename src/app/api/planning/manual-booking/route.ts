@@ -118,6 +118,19 @@ export async function POST(request: NextRequest) {
     const hasAddressText = homeService && !!customer_address?.trim();
     const hasCoords = hasAddressText && customer_lat != null && customer_lng != null;
 
+    // Cleanup orphan : si un slot vide existe deja a ce start_time (residu d'un
+    // mode creneaux precedent), la contrainte UNIQUE(merchant_id, slot_date,
+    // start_time) ferait echouer l'INSERT. Le switch slots->libre ne nettoie que
+    // la semaine affichee, les autres semaines gardent leurs slots fantomes.
+    await supabaseAdmin
+      .from('merchant_planning_slots')
+      .delete()
+      .eq('merchant_id', merchantId)
+      .eq('slot_date', date)
+      .eq('start_time', start_time)
+      .is('client_name', null)
+      .is('primary_slot_id', null);
+
     const { data: slot, error: insertError } = await supabaseAdmin
       .from('merchant_planning_slots')
       .insert({

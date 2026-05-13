@@ -406,12 +406,6 @@ export default function PlanningDashboard() {
   // Mode switch confirmation
   const [modeSwitchTarget, setModeSwitchTarget] = useState<BookingMode | null>(null);
   const [modeSwitchCleanup, setModeSwitchCleanup] = useState(false);
-  // Slots → free : les créneaux vides bloqueraient la création libre
-  // (contrainte unique slot_date+start_time).
-  const emptySlotIds = useMemo(
-    () => slots.filter(s => !s.client_name && !s.primary_slot_id).map(s => s.id),
-    [slots],
-  );
   const handleBookingModeChange = (mode: BookingMode) => {
     if (mode === bookingMode) return;
     setModeSwitchTarget(mode);
@@ -425,16 +419,14 @@ export default function PlanningDashboard() {
     }
     setModeSwitchCleanup(true);
     try {
-      if (modeSwitchTarget === 'free' && bookingMode === 'slots' && emptySlotIds.length > 0) {
-        const chunks: Promise<Response>[] = [];
-        for (let i = 0; i < emptySlotIds.length; i += 200) {
-          chunks.push(fetch('/api/planning', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ merchantId: merchant.id, slotIds: emptySlotIds.slice(i, i + 200) }),
-          }));
-        }
-        await Promise.all(chunks);
+      if (modeSwitchTarget === 'free' && bookingMode === 'slots') {
+        // Cleanup global (toutes semaines) — la contrainte UNIQUE(merchant_id,
+        // slot_date, start_time) ferait echouer les inserts mode libre sinon.
+        await fetch('/api/planning/cleanup-empty-slots', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ merchantId: merchant.id }),
+        });
         await fetchSlots();
       }
       setBookingMode(modeSwitchTarget);
@@ -2495,11 +2487,11 @@ export default function PlanningDashboard() {
               <p className="text-sm text-gray-700 leading-relaxed">
                 {modeSwitchTarget === 'free' ? t('modeSwitchToFreeWarning') : t('modeSwitchToSlotsWarning')}
               </p>
-              {modeSwitchTarget === 'free' && emptySlotIds.length > 0 && (
+              {modeSwitchTarget === 'free' && (
                 <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-100">
                   <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                   <p className="text-xs text-amber-800 leading-relaxed">
-                    {t(emptySlotIds.length > 1 ? 'modeSwitchEmptySlotsWarningPlural' : 'modeSwitchEmptySlotsWarning', { count: emptySlotIds.length })}
+                    {t('modeSwitchEmptySlotsWarning')}
                   </p>
                 </div>
               )}
