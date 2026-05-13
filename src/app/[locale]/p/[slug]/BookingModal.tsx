@@ -117,6 +117,10 @@ export default function BookingModal({
   const [loadingFreeSlots, setLoadingFreeSlots] = useState(false);
   const [freeSlotsError, setFreeSlotsError] = useState(false);
   const [calMonth, setCalMonth] = useState<Date>(() => { const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d; });
+  // Map dateStr -> bool : true = au moins 1 creneau libre, false = aucun. Mode libre uniquement.
+  // Permet d'afficher un dot vert/rouge sur chaque jour du calendrier pour eviter
+  // que la cliente clique a l'aveugle sur des jours blindes.
+  const [availabilityByDate, setAvailabilityByDate] = useState<Record<string, boolean>>({});
   const [phone, setPhone] = useState('');
   const [phoneCountry, setPhoneCountry] = useState<MerchantCountry>(country);
   const [firstName, setFirstName] = useState('');
@@ -364,6 +368,31 @@ export default function BookingModal({
       .catch(() => setFreeSlotsError(true))
       .finally(() => setLoadingFreeSlots(false));
   }, [isFreeMod, isHomeService, customerCoords, selectedDate, totalDuration, merchant.id]);
+
+  // Pre-fetch les dispos du mois affiche pour montrer dots vert/rouge sur chaque jour.
+  // Skip si home_service (pas calculable sans coords cliente) ou pas de service selectionne.
+  useEffect(() => {
+    if (!isFreeMod || isHomeService || totalDuration === 0) return;
+    const year = calMonth.getFullYear();
+    const month = calMonth.getMonth();
+    const from = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const to = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    const controller = new AbortController();
+    const params = new URLSearchParams({
+      merchantId: merchant.id,
+      from,
+      to,
+      duration: String(totalDuration),
+    });
+    fetch(`/api/planning/free-availability?${params.toString()}`, { signal: controller.signal })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then((data: { availability?: Record<string, boolean> }) => {
+        if (data.availability) setAvailabilityByDate(prev => ({ ...prev, ...data.availability! }));
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [isFreeMod, isHomeService, calMonth, totalDuration, merchant.id]);
 
   const toggleService = (id: string) => {
     setSelectedServiceIds(prev => {
@@ -914,19 +943,36 @@ export default function BookingModal({
                           const isFuture = dateStr > maxDateStr;
                           const isSelected = dateStr === selectedDate;
                           const isToday = dateStr === todayStr;
+                          // Dot dispo : uniquement mode libre, sans home_service, range valide.
+                          // undefined = pas encore fetch ou pas applicable -> on n'affiche rien.
+                          const dispo = !isPast && !isFuture && isFreeMod && !isHomeService
+                            ? availabilityByDate[dateStr]
+                            : undefined;
                           return (
                             <button
                               key={dateStr}
                               type="button"
                               disabled={isPast || isFuture}
                               onClick={() => { setSelectedDate(dateStr); if (selectedTime) setSelectedTime(''); }}
-                              className={`mx-auto w-10 h-10 flex items-center justify-center rounded-full text-sm transition-all
+                              className={`relative mx-auto w-10 h-10 flex items-center justify-center rounded-full text-sm transition-all
                                 ${isSelected ? 'font-bold text-white' : ''}
                                 ${!isSelected && isToday ? 'font-bold' : ''}
                                 ${isPast || isFuture ? 'text-gray-300 cursor-not-allowed' : !isSelected ? 'text-gray-700 hover:bg-gray-100' : ''}`}
                               style={isSelected ? { backgroundColor: p } : isToday && !isSelected ? { color: p } : undefined}
                             >
                               {day}
+                              {dispo !== undefined && (
+                                <span
+                                  aria-hidden
+                                  className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${
+                                    isSelected
+                                      ? 'bg-white'
+                                      : dispo
+                                        ? 'bg-emerald-500'
+                                        : 'bg-red-400'
+                                  }`}
+                                />
+                              )}
                             </button>
                           );
                         })}
