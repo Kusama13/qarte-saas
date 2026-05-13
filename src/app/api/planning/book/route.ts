@@ -395,6 +395,19 @@ export async function POST(request: NextRequest) {
     }
 
     if (isFreeMod) {
+      // Cleanup orphan : un slot vide residuel d'un mode creneaux precedent au
+      // meme start_time ferait echouer l'INSERT (contrainte UNIQUE merchant_id,
+      // slot_date, start_time). Le switch slots->libre ne nettoie que la semaine
+      // affichee ; ce filet de securite couvre les autres semaines.
+      await supabaseAdmin
+        .from('merchant_planning_slots')
+        .delete()
+        .eq('merchant_id', merchant_id)
+        .eq('slot_date', slot_date)
+        .eq('start_time', slot_time)
+        .is('client_name', null)
+        .is('primary_slot_id', null);
+
       // Mode libre: INSERT one slot (no filler slots)
       const insertData: Record<string, unknown> = {
         merchant_id,
