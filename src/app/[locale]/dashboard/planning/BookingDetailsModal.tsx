@@ -322,6 +322,10 @@ export default function BookingDetailsModal({
   // null = on s'appuie sur slotsByDate (jour visible). Sinon on prend ce fetch.
   const [moveTargetDaySlots, setMoveTargetDaySlots] = useState<PlanningSlot[] | null>(null);
   const [moveTargetLoading, setMoveTargetLoading] = useState(false);
+  // Mode libre : map dateStr -> bool (au moins 1 creneau libre ce jour). Sert a suggerer
+  // le prochain jour libre quand la date courante n'a rien. Skip mode slots (le user voit
+  // deja les slots vides via la liste). Skip home_service (calcul impossible cote serveur).
+  const [moveAvailability, setMoveAvailability] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (activeTab === 'history' && draft.customerId && historyFetchedFor.current !== draft.customerId) {
@@ -558,6 +562,38 @@ export default function BookingDetailsModal({
       });
     return () => controller.abort();
   }, [moveMode, bookingMode, moveDate, merchantId, bookingDuration, slot.id]);
+
+  // Pre-fetch les jours dispos sur 30j a l'ouverture du moveMode (mode libre uniquement).
+  // L'endpoint return {} si home_service -> on n'affiche pas la suggestion dans ce cas.
+  useEffect(() => {
+    if (!moveMode || bookingMode !== 'free' || bookingDuration === 0) return;
+    const today = new Date();
+    const from = today.toISOString().slice(0, 10);
+    const end = new Date();
+    end.setDate(end.getDate() + 30);
+    const to = end.toISOString().slice(0, 10);
+    const controller = new AbortController();
+    fetch(`/api/planning/free-availability?merchantId=${merchantId}&from=${from}&to=${to}&duration=${bookingDuration}`, { signal: controller.signal })
+      .then(r => r.ok ? r.json() : { availability: {} })
+      .then((data: { availability?: Record<string, boolean> }) => {
+        if (controller.signal.aborted) return;
+        setMoveAvailability(data.availability || {});
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [moveMode, bookingMode, bookingDuration, merchantId]);
+
+  // Cherche le prochain jour libre apres moveDate dans la map. Undefined si pas trouve
+  // ou map vide (home_service / mode slots / pas encore fetch).
+  const nextAvailableDate = useMemo(() => {
+    const entries = Object.entries(moveAvailability);
+    if (entries.length === 0) return undefined;
+    const sorted = entries
+      .filter(([d, ok]) => ok && d > moveDate)
+      .map(([d]) => d)
+      .sort();
+    return sorted[0];
+  }, [moveAvailability, moveDate]);
 
   const handleMoveConfirm = async () => {
     if (!moveTime) {
@@ -1429,6 +1465,16 @@ export default function BookingDetailsModal({
                   min={new Date().toISOString().split('T')[0]}
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400"
                 />
+                {nextAvailableDate && nextAvailableDate !== moveDate && (
+                  <button
+                    type="button"
+                    onClick={() => { setMoveDate(nextAvailableDate); setMoveTime(''); setMoveError(null); }}
+                    className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 hover:text-emerald-800 transition-colors"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    {t('moveBookingNextAvailable', { date: new Date(nextAvailableDate + 'T12:00:00').toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' }) })}
+                  </button>
+                )}
               </div>
 
               {(() => {
