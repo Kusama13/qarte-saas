@@ -535,9 +535,9 @@ export default function SubscriptionPage() {
                 />
               </div>
 
-              {/* Dual cards grid — mobile: stack with all_in first for CRO */}
+              {/* Dual cards grid — Tout-en-un en premier (mobile top + desktop left) */}
               <div className="grid gap-5 md:grid-cols-2 items-stretch">
-                <div className="order-2 md:order-1">
+                <div className="order-1 md:order-2">
                   <PlanCard
                     tier="fidelity"
                     interval={billingPlan}
@@ -555,7 +555,7 @@ export default function SubscriptionPage() {
                     disabled={subscribing}
                   />
                 </div>
-                <div className="order-1 md:order-2">
+                <div className="order-2 md:order-1">
                   <PlanCard
                     tier="all_in"
                     interval={billingPlan}
