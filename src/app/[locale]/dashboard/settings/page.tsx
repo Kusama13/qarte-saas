@@ -26,7 +26,7 @@ import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber, validatePhone, formatDate, PHONE_CONFIG, toBCP47, getAppUrl } from '@/lib/utils';
 import { isPlanningHidden } from '@/lib/plan-tiers';
 import { SHOP_TYPES, type ShopType, COUNTRIES } from '@/types';
-import type { Merchant } from '@/types';
+import { useMerchant } from '@/contexts/MerchantContext';
 
 const shopTypeOptions = Object.entries(SHOP_TYPES).map(([value, label]) => ({
   value,
@@ -37,8 +37,7 @@ export default function SettingsPage() {
   const t = useTranslations('settings');
   const router = useRouter();
   const currentLocale = useLocale();
-  const [merchant, setMerchant] = useState<Merchant | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { merchant, loading, updateMerchant } = useMerchant();
   const { saving, saved, save } = useDashboardSave();
   const [error, setError] = useState('');
   const [referralCopied, setReferralCopied] = useState(false);
@@ -55,36 +54,26 @@ export default function SettingsPage() {
   const [smsOptOutSaving, setSmsOptOutSaving] = useState(false);
   const [planningReEnabling, setPlanningReEnabling] = useState(false);
 
+  // userEmail vient de supabase.auth (pas dans le merchant context)
   useEffect(() => {
-    const fetchMerchant = async () => {
+    let cancelled = false;
+    (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/auth/merchant');
-        return;
-      }
+      if (!cancelled && user?.email) setUserEmail(user.email);
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
-      setUserEmail(user.email || '');
-
-      const { data } = await supabase
-        .from('merchants')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (data) {
-        setMerchant(data);
-        setFormData({
-          shopType: data.shop_type || '',
-          phone: data.phone || '',
-        });
-        setShieldEnabled(data.shield_enabled !== false);
-        setSmsOptedOut(data.marketing_sms_opted_out === true);
-      }
-      setLoading(false);
-    };
-
-    fetchMerchant();
-  }, [router]);
+  // Hydrate les form fields des qu'on a le merchant via le contexte
+  useEffect(() => {
+    if (!merchant) return;
+    setFormData({
+      shopType: merchant.shop_type || '',
+      phone: merchant.phone || '',
+    });
+    setShieldEnabled(merchant.shield_enabled !== false);
+    setSmsOptedOut(merchant.marketing_sms_opted_out === true);
+  }, [merchant?.id, merchant?.shop_type, merchant?.phone, merchant?.shield_enabled, merchant?.marketing_sms_opted_out]);
 
   const handleSave = async () => {
     setError('');
@@ -135,7 +124,7 @@ export default function SettingsPage() {
       .update({ planning_intent: 'unsure' })
       .eq('id', merchant.id);
     if (!planningError) {
-      setMerchant({ ...merchant, planning_intent: 'unsure' });
+      updateMerchant({ planning_intent: 'unsure' });
     }
     setPlanningReEnabling(false);
   };

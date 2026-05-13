@@ -16,7 +16,7 @@ import {
 import { Button, Input, Textarea } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
 import { compressLogo } from '@/lib/image-compression';
-import type { Merchant } from '@/types';
+import { useMerchant } from '@/contexts/MerchantContext';
 
 // Images beauté / bien-être
 const UNSPLASH_IMAGES = [
@@ -32,11 +32,11 @@ export default function OnboardingPage() {
   const router = useRouter();
   const supabase = getSupabase();
   const t = useTranslations('setup');
+  const { merchant } = useMerchant();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const [merchant, setMerchant] = useState<Merchant | null>(null);
 
   const [formData, setFormData] = useState({
     logoUrl: '',
@@ -48,36 +48,19 @@ export default function OnboardingPage() {
     rewardDescription: '',
   });
 
+  // Hydrate les form fields des qu'on a le merchant via le contexte
   useEffect(() => {
-    const fetchMerchant = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/auth/merchant');
-        return;
-      }
-
-      const { data } = await supabase
-        .from('merchants')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (data) {
-        setMerchant(data);
-        setFormData({
-          logoUrl: data.logo_url || '',
-          primaryColor: data.primary_color || '#654EDA',
-          secondaryColor: data.secondary_color || '#9D8FE8',
-          programName: data.program_name || t('defaultLoyaltyCard', { name: data.shop_name }),
-          welcomeMessage: data.welcome_message || t('welcomeMessagePlaceholder'),
-          stampsRequired: data.stamps_required || 10,
-          rewardDescription: data.reward_description || '',
-        });
-      }
-    };
-
-    fetchMerchant();
-  }, [router]);
+    if (!merchant) return;
+    setFormData({
+      logoUrl: merchant.logo_url || '',
+      primaryColor: merchant.primary_color || '#654EDA',
+      secondaryColor: merchant.secondary_color || '#9D8FE8',
+      programName: merchant.program_name || t('defaultLoyaltyCard', { name: merchant.shop_name }),
+      welcomeMessage: merchant.welcome_message || t('welcomeMessagePlaceholder'),
+      stampsRequired: merchant.stamps_required || 10,
+      rewardDescription: merchant.reward_description || '',
+    });
+  }, [merchant?.id, t]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

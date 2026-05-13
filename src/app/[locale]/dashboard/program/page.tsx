@@ -15,7 +15,6 @@ import { normalizeUrl } from '@/lib/utils';
 import { type LoyaltySettings } from '@/components/loyalty';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { useTranslations } from 'next-intl';
-import type { Merchant } from '@/types';
 import type { ProgramFormData } from './types';
 import { CardPreview } from './CardPreview';
 import { LoyaltyModeSection } from './LoyaltyModeSection';
@@ -26,9 +25,7 @@ import { getTier2MaxStamps } from '@/lib/tier2-max';
 export default function ProgramPage() {
   const t = useTranslations('program');
   const router = useRouter();
-  const { refetch: refetchMerchantContext } = useMerchant();
-  const [merchant, setMerchant] = useState<Merchant | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { merchant, loading, refetch: refetchMerchantContext } = useMerchant();
   const { saving, saved, save } = useDashboardSave();
   const [isFirstSetup, setIsFirstSetup] = useState(false);
 
@@ -70,61 +67,38 @@ export default function ProgramPage() {
   const [tier2Error, setTier2Error] = useState('');
   const [rewardError, setRewardError] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
+  // Hydrate form fields des qu'on a le merchant via le contexte. Source unique.
   useEffect(() => {
-    const fetchMerchant = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          router.push('/auth/merchant');
-          return;
-        }
-
-        const { data } = await supabase
-          .from('merchants')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (data) {
-          setMerchant(data);
-          setFormData({
-            logoUrl: data.logo_url || '',
-            primaryColor: data.primary_color || '#654EDA',
-            secondaryColor: data.secondary_color || '#9D8FE8',
-            reviewLink: data.review_link || '',
-            loyaltyMode: data.loyalty_mode || 'visit',
-            stampsRequired: data.stamps_required || 5,
-            rewardDescription: data.reward_description || '',
-            cagnottePercent: data.cagnotte_percent || 10,
-            cagnotteTier2Percent: data.cagnotte_tier2_percent || 15,
-            tier2Enabled: data.tier2_enabled || false,
-            tier2StampsRequired: data.tier2_stamps_required || 0,
-            tier2RewardDescription: data.tier2_reward_description || '',
-            duoOfferEnabled: data.duo_offer_enabled || false,
-            duoOfferDescription: data.duo_offer_description || '',
-            doubleDaysEnabled: data.double_days_enabled || false,
-            doubleDaysOfWeek: (() => { try { return JSON.parse(data.double_days_of_week || '[]'); } catch { return []; } })(),
-            birthdayGiftEnabled: data.birthday_gift_enabled || false,
-            birthdayGiftDescription: data.birthday_gift_description || '',
-            referralEnabled: data.referral_program_enabled || false,
-            referralRewardReferred: data.referral_reward_referred || '',
-            referralRewardReferrer: data.referral_reward_referrer || '',
-          });
-          setOriginalLoyaltyMode(data.loyalty_mode || 'visit');
-          setOriginalStampsRequired(data.stamps_required || 5);
-          if (!data.reward_description && !data.cagnotte_percent) {
-            setIsFirstSetup(true);
-          }
-        }
-      } catch (e) {
-        console.error('[program] fetchMerchant failed:', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMerchant();
-  }, [router]);
+    if (!merchant) return;
+    setFormData({
+      logoUrl: merchant.logo_url || '',
+      primaryColor: merchant.primary_color || '#654EDA',
+      secondaryColor: merchant.secondary_color || '#9D8FE8',
+      reviewLink: merchant.review_link || '',
+      loyaltyMode: merchant.loyalty_mode || 'visit',
+      stampsRequired: merchant.stamps_required || 5,
+      rewardDescription: merchant.reward_description || '',
+      cagnottePercent: merchant.cagnotte_percent || 10,
+      cagnotteTier2Percent: merchant.cagnotte_tier2_percent || 15,
+      tier2Enabled: merchant.tier2_enabled || false,
+      tier2StampsRequired: merchant.tier2_stamps_required || 0,
+      tier2RewardDescription: merchant.tier2_reward_description || '',
+      duoOfferEnabled: merchant.duo_offer_enabled || false,
+      duoOfferDescription: merchant.duo_offer_description || '',
+      doubleDaysEnabled: merchant.double_days_enabled || false,
+      doubleDaysOfWeek: (() => { try { return JSON.parse(merchant.double_days_of_week || '[]'); } catch { return []; } })(),
+      birthdayGiftEnabled: merchant.birthday_gift_enabled || false,
+      birthdayGiftDescription: merchant.birthday_gift_description || '',
+      referralEnabled: merchant.referral_program_enabled || false,
+      referralRewardReferred: merchant.referral_reward_referred || '',
+      referralRewardReferrer: merchant.referral_reward_referrer || '',
+    });
+    setOriginalLoyaltyMode(merchant.loyalty_mode || 'visit');
+    setOriginalStampsRequired(merchant.stamps_required || 5);
+    if (!merchant.reward_description && !merchant.cagnotte_percent) {
+      setIsFirstSetup(true);
+    }
+  }, [merchant?.id]);
 
   const tier2MaxStamps = getTier2MaxStamps(merchant?.created_at);
 

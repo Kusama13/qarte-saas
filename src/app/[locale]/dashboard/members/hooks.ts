@@ -1,16 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from '@/i18n/navigation';
 import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber, formatCurrency } from '@/lib/utils';
+import { useMerchant } from '@/contexts/MerchantContext';
 import type { Merchant, MemberCard, Customer, MerchantCountry } from '@/types';
 import type { ProgramWithCount, CustomerWithCard, DurationUnit } from './types';
 import { calculateDurationMonths } from './types';
 
 export function useMembersData() {
-  const router = useRouter();
-  const [merchant, setMerchant] = useState<Merchant | null>(null);
+  const { merchant, loading: merchantLoading } = useMerchant();
   const [programs, setPrograms] = useState<ProgramWithCount[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingPrograms, setLoadingPrograms] = useState(true);
+  const loading = merchantLoading || loadingPrograms;
 
   // Selected program view
   const [selectedProgram, setSelectedProgram] = useState<ProgramWithCount | null>(null);
@@ -26,28 +26,13 @@ export function useMembersData() {
     if (response.ok && data.programs) {
       setPrograms(data.programs);
     }
-    setLoading(false);
+    setLoadingPrograms(false);
   };
 
-  const fetchData = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      router.push('/auth/merchant');
-      return;
-    }
-
-    const { data: merchantData } = await supabase
-      .from('merchants')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!merchantData) return;
-    setMerchant(merchantData);
-
+  // Charge programs + customers des qu'on a un merchant via le contexte
+  const fetchData = async (merchantId: string) => {
     await fetchPrograms();
 
-    // Fetch customers for assign modal
     const { data: cardsData } = await supabase
       .from('loyalty_cards')
       .select(`
@@ -56,7 +41,7 @@ export function useMembersData() {
         current_stamps,
         customer:customers (*)
       `)
-      .eq('merchant_id', merchantData.id)
+      .eq('merchant_id', merchantId)
       .order('created_at', { ascending: false });
 
     if (cardsData) {
@@ -83,9 +68,10 @@ export function useMembersData() {
   };
 
   useEffect(() => {
-    fetchData();
+    if (!merchant?.id) return;
+    fetchData(merchant.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [merchant?.id]);
 
   useEffect(() => {
     if (selectedProgram) {

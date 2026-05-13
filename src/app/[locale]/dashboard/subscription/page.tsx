@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter, Link } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import {
@@ -24,7 +24,6 @@ import { supabase } from '@/lib/supabase';
 import { getTrialStatus, formatDate } from '@/lib/utils';
 import { isPastDueBlocked } from '@/lib/merchant-access';
 import { isLegacyMerchant } from '@/lib/plan-tiers';
-import type { Merchant } from '@/types';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
@@ -107,9 +106,7 @@ export default function SubscriptionPage() {
   const searchParams = useSearchParams();
   const t = useTranslations('subscription');
   const locale = useLocale();
-  const { refetch: refetchContext } = useMerchant();
-  const [merchant, setMerchant] = useState<Merchant | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { merchant, loading, refetch: refetchContext } = useMerchant();
   const [subscribing, setSubscribing] = useState(false);
   const [billingPlan, setBillingPlan] = useState<'monthly' | 'annual'>('annual');
   const [planTier, setPlanTier] = useState<'fidelity' | 'all_in'>('all_in');
@@ -207,101 +204,60 @@ export default function SubscriptionPage() {
     return () => clearInterval(interval);
   }, [updateCountdown]);
 
+  // Lookup super_admin status (one-shot, indépendant du merchant context)
   useEffect(() => {
-    const fetchMerchant = async () => {
+    let cancelled = false;
+    (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/auth/merchant');
-        return;
-      }
+      if (cancelled || !user) return;
+      const { data } = await supabase.from('super_admins').select('user_id').eq('user_id', user.id).maybeSingle();
+      if (!cancelled) setIsSuperAdmin(!!data);
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
-      const [merchantRes, adminRes] = await Promise.all([
-        supabase.from('merchants').select('*').eq('user_id', user.id).single(),
-        supabase.from('super_admins').select('user_id').eq('user_id', user.id).maybeSingle(),
-      ]);
-
-      setIsSuperAdmin(!!adminRes.data);
-
-      if (merchantRes.data) {
-        setMerchant(merchantRes.data);
-        if (merchantRes.data.billing_interval === 'annual') {
-          setBillingPlan('annual');
-        }
-        if (merchantRes.data.stripe_subscription_id) {
-          fetchPaymentMethod();
-        }
-      }
-      setLoading(false);
-    };
-
-    fetchMerchant();
-  }, [router]);
-
+  // Sync UI billingPlan toggle avec l'intervalle réel du merchant (post-souscription)
   useEffect(() => {
-    if (!polling || !merchant) return;
+    if (merchant?.billing_interval === 'annual') setBillingPlan('annual');
+  }, [merchant?.billing_interval]);
 
-    if (merchant.subscription_status === 'active' || merchant.subscription_status === 'canceling') {
-      refetchContext();
-      if (merchant.stripe_subscription_id) fetchPaymentMethod();
+  // Fetch payment method dès qu'on sait qu'il y a un abonnement Stripe
+  useEffect(() => {
+    if (merchant?.stripe_subscription_id) fetchPaymentMethod();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [merchant?.stripe_subscription_id]);
+
+  // Polling après retour Stripe checkout/portal : on demande au contexte de refetch
+  // jusqu'à ce que le statut bouge (webhook Stripe a propagé) ou qu'on atteigne le cap.
+  // Le contexte est la source de verite — on ne mute plus de state local merchant ici.
+  useEffect(() => {
+    if (!polling) return;
+
+    // Statut deja synchronise → stop immediat
+    if (merchant && (merchant.subscription_status === 'active' || merchant.subscription_status === 'canceling')) {
       setPolling(false);
       return;
     }
 
-    const initialStatus = merchant.subscription_status;
-    const initialStripeId = merchant.stripe_subscription_id;
     let attempts = 0;
     let cancelled = false;
     let timeoutId: ReturnType<typeof setTimeout>;
 
-    const poll = async () => {
+    const tick = async () => {
       if (cancelled) return;
       attempts++;
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || cancelled) { setPolling(false); return; }
-
-      const { data } = await supabase
-        .from('merchants')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
+      await refetchContext();
       if (cancelled) return;
-
-      if (data && (
-        data.subscription_status !== initialStatus ||
-        data.stripe_subscription_id !== initialStripeId ||
-        data.subscription_status === 'active' ||
-        data.subscription_status === 'canceling'
-      )) {
-        setMerchant(data);
-        if (data.billing_interval === 'annual') setBillingPlan('annual');
-        refetchContext();
-        if (data.stripe_subscription_id) fetchPaymentMethod();
-        setPolling(false);
-        return;
-      }
-
-      if (attempts >= 30) {
-        if (data) {
-          setMerchant(data);
-          if (data.billing_interval === 'annual') setBillingPlan('annual');
-          refetchContext();
-          if (data.stripe_subscription_id) fetchPaymentMethod();
-        }
-        setPolling(false);
-        return;
-      }
-
-      timeoutId = setTimeout(poll, 1000);
+      if (attempts >= 30) { setPolling(false); return; }
+      timeoutId = setTimeout(tick, 1000);
     };
 
-    timeoutId = setTimeout(poll, 0);
+    timeoutId = setTimeout(tick, 0);
     return () => {
       cancelled = true;
       clearTimeout(timeoutId);
     };
-  }, [polling, merchant?.id]);
+  }, [polling, merchant?.subscription_status, refetchContext]);
 
   const fetchPaymentMethod = useCallback(async () => {
     setLoadingPayment(true);
@@ -385,9 +341,7 @@ export default function SubscriptionPage() {
       }
       setToast({ type: 'success', message: newTier === 'all_in' ? t('upgradeSuccess') : t('downgradeSuccess') });
       setShowChangeTierModal(false);
-      const { data: refreshed } = await supabase.from('merchants').select('*').eq('id', merchant.id).single();
-      if (refreshed) setMerchant(refreshed);
-      refetchContext();
+      await refetchContext();
     } catch (error) {
       console.error('Change tier error:', error);
       setToast({ type: 'error', message: t('paymentError') });
