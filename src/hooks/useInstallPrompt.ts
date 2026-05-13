@@ -48,18 +48,33 @@ export function useInstallPrompt(manifestHref: string | undefined): UseInstallPr
     }
   }, [enabled]);
 
-  // Override manifest link to use the Pro manifest on dashboard pages
+  // Override manifest link to use the Pro manifest on dashboard pages.
+  // ATTENTION : ne JAMAIS remove/appendChild un node dans <head> que Next.js gere —
+  // son reconciler croit toujours le proprietaire, et le commit React suivant fait
+  // `parent.removeChild(child)` sur un node deja parti -> React #11538 (removeChild
+  // on null en boucle). On modifie uniquement l'attribut href du link existant et on
+  // restaure au cleanup. Si aucun link n'existe, on en cree un une seule fois sans
+  // le supprimer ensuite (un duplicate <link> est tolere par les browsers).
   useEffect(() => {
     if (!enabled || !manifestHref) return;
-    // Remove existing manifest link (Next.js default)
-    const existing = document.querySelector('link[rel="manifest"]');
-    if (existing) existing.remove();
-    // Inject the Pro manifest
-    const link = document.createElement('link');
-    link.rel = 'manifest';
-    link.href = manifestHref;
-    document.head.appendChild(link);
-    return () => { link.remove(); };
+    let link = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
+    let createdByUs = false;
+    let originalHref: string | null = null;
+    if (link) {
+      originalHref = link.getAttribute('href');
+      link.setAttribute('href', manifestHref);
+    } else {
+      link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = manifestHref;
+      document.head.appendChild(link);
+      createdByUs = true;
+    }
+    return () => {
+      if (!createdByUs && link && originalHref !== null && document.contains(link)) {
+        link.setAttribute('href', originalHref);
+      }
+    };
   }, [enabled, manifestHref]);
 
   // Detect platform and standalone mode
