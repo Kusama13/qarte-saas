@@ -50,20 +50,10 @@ export function isFidelityFreeSms(merchant: { plan_tier?: string | null } | null
   return merchant?.plan_tier === 'fidelity' && FIDELITY_FREE_SMS_TYPES.includes(smsType);
 }
 
-export const PAID_STATUSES = ['active', 'canceling', 'past_due'] as const;
-
-/**
- * True si le statut est dans la liste des statuts payants (active, canceling, past_due).
- * Helpers utilisés pour gater les features payantes (envoi SMS, soumission de campagne)
- * — les non-abonnés (trial, canceled) sont bloqués UI + API.
- */
-export function isPaidStatus(status: string | null | undefined): boolean {
-  return (PAID_STATUSES as readonly string[]).includes(status || '');
-}
-
-export function isPaidMerchant(m: { subscription_status?: string | null } | null | undefined): boolean {
-  return !!m && isPaidStatus(m.subscription_status);
-}
+// Re-export depuis le module leaf `subscription-status.ts` (sans deps Node)
+// pour que les call-sites client (SmsTab) ne tirent pas web-push dans le bundle.
+export { PAID_STATUSES, isPaidStatus, isPaidMerchant } from './subscription-status';
+import { isPaidStatus, isPaidMerchant } from './subscription-status';
 
 // ── Templates SMS (< 160 chars, vouvoiement client-facing) ──
 

@@ -36,7 +36,7 @@ import {
 } from '@/lib/sms-validator';
 import type { AudienceFilter } from '@/lib/sms-audience';
 import { getPlanFeatures } from '@/lib/plan-tiers';
-import { isPaidMerchant } from '@/lib/sms';
+import { isPaidMerchant } from '@/lib/subscription-status';
 import PlanUpgradeCTA from '@/components/dashboard/PlanUpgradeCTA';
 
 type CampaignRow = {
