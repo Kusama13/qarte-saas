@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
-import { CalendarDays, CalendarCheck, CalendarX2, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical, Settings, Save, MapPin } from 'lucide-react';
+import { CalendarDays, CalendarCheck, CalendarX2, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical, Settings, Save, MapPin, Home } from 'lucide-react';
 import type { BookingMode, MerchantCountry, BookingDepositFailure } from '@/types';
 import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -145,12 +145,14 @@ export default function PlanningDashboard() {
 
   // Deposit toggle + validation error
   const [depositEnabled, setDepositEnabled] = useState(false);
+  const [depositOnlyForNew, setDepositOnlyForNew] = useState(false);
   const [depositError, setDepositError] = useState<string | null>(null);
 
   // Sync deposit toggle when merchant loads
   useEffect(() => {
     if (merchant) {
       setDepositEnabled(!!(merchant.deposit_link || merchant.deposit_percent || merchant.deposit_amount));
+      setDepositOnlyForNew(!!merchant.deposit_only_for_new_customers);
     }
   }, [merchant?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -158,7 +160,6 @@ export default function PlanningDashboard() {
   const [showModeChoice, setShowModeChoice] = useState(false);
   const [missingHoursBlock, setMissingHoursBlock] = useState(false);
   const [pendingMode, setPendingMode] = useState<BookingMode | null>(null);
-  const [pendingOnlineBooking, setPendingOnlineBooking] = useState(true);
   const [homeServiceHelpOpen, setHomeServiceHelpOpen] = useState(false);
 
   // Save button visibility on scroll (mobile UX): hidden at top, slides in once user scrolls.
@@ -562,6 +563,7 @@ export default function PlanningDashboard() {
         deposit_percent: autoBookingEnabled && depositEnabled && depositPercent ? parseInt(depositPercent) : null,
         deposit_amount: autoBookingEnabled && depositEnabled && depositAmount ? parseFloat(depositAmount) : null,
         deposit_deadline_hours: autoBookingEnabled && depositEnabled && depositDeadlineHours ? parseInt(depositDeadlineHours) : null,
+        deposit_only_for_new_customers: autoBookingEnabled && depositEnabled ? depositOnlyForNew : false,
         allow_customer_cancel: allowCustomerCancel,
         allow_customer_reschedule: allowCustomerReschedule,
         cancel_deadline_days: parseInt(cancelDeadlineDays) || 1,
@@ -664,17 +666,19 @@ export default function PlanningDashboard() {
     }
   };
 
-  const handleModeChoice = async (mode: BookingMode, onlineBooking: boolean) => {
+  const handleModeChoice = async (mode: BookingMode) => {
     if (!merchant) return;
     if (mode === 'free' && !hasValidOpeningHours(merchant.opening_hours)) {
       setMissingHoursBlock(true);
       return;
     }
+    // Resa en ligne forcement activee a l'activation du planning. Le merchant peut
+    // toujours la desactiver plus tard dans Parametres > Resa en ligne.
     setBookingMode(mode);
-    setAutoBookingEnabled(onlineBooking);
+    setAutoBookingEnabled(true);
     await supabase
       .from('merchants')
-      .update({ booking_mode: mode, auto_booking_enabled: onlineBooking })
+      .update({ booking_mode: mode, auto_booking_enabled: true })
       .eq('id', merchant.id);
     await refetch();
     setShowModeChoice(false);
@@ -875,30 +879,6 @@ export default function PlanningDashboard() {
                 })}
               </div>
 
-              {/* Online booking toggle */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4">
-                <label className="flex items-center justify-between gap-3 cursor-pointer">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-                      <Globe className="w-4 h-4 text-emerald-600" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-gray-800">{t('modeChoiceOnlineBookingTitle')}</p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">{t('modeChoiceOnlineBookingHint')}</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={pendingOnlineBooking}
-                    onClick={() => setPendingOnlineBooking(v => !v)}
-                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${pendingOnlineBooking ? 'bg-emerald-500' : 'bg-gray-200'}`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${pendingOnlineBooking ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </button>
-                </label>
-              </div>
-
               {missingHoursBlock && pendingMode === 'free' && (
                 <div className="mb-4 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
                   {t('modeFreeMissingHours')}{' '}
@@ -909,7 +889,7 @@ export default function PlanningDashboard() {
               <button
                 type="button"
                 disabled={!pendingMode}
-                onClick={() => pendingMode && handleModeChoice(pendingMode, pendingOnlineBooking)}
+                onClick={() => pendingMode && handleModeChoice(pendingMode)}
                 className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {t('modeChoiceConfirm')}
@@ -1383,80 +1363,6 @@ export default function PlanningDashboard() {
                 </div>
               )}
 
-              {/* Card: Service à domicile (mode libre uniquement) */}
-              {bookingMode === 'free' && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
-                        <svg className="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                        </svg>
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <h2 className="text-sm font-bold text-gray-800">{t('homeServiceTitle')}</h2>
-                          <button
-                            type="button"
-                            onClick={() => setHomeServiceHelpOpen(v => !v)}
-                            aria-label={t('homeServiceHelpAria')}
-                            className="text-gray-300 hover:text-amber-500 transition-colors"
-                          >
-                            <Info className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                        <p className="text-[11px] text-gray-400 mt-0.5">{t('homeServiceHint')}</p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleToggleHomeService}
-                      className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${homeServiceEnabled ? 'bg-amber-500' : 'bg-gray-200'}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${homeServiceEnabled ? 'translate-x-5' : ''}`} />
-                    </button>
-                  </div>
-
-                  {homeServiceHelpOpen && (
-                    <div className="mt-3 ml-9 p-3 bg-amber-50/60 border border-amber-100 rounded-lg">
-                      <p className="text-[11px] text-amber-900 leading-relaxed whitespace-pre-line">{t('homeServiceHelpBody')}</p>
-                    </div>
-                  )}
-
-                  {/* Sub-toggle: hide address on public page (default ON when home service activated) */}
-                  {homeServiceEnabled && (
-                    <div className="mt-3 ml-9 p-3 bg-gray-50 border border-gray-100 rounded-lg">
-                      <label className="flex items-start gap-3 cursor-pointer">
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={hideAddressOnPublicPage}
-                          onClick={() => setHideAddressOnPublicPage(!hideAddressOnPublicPage)}
-                          className={`relative w-9 h-5 rounded-full transition-colors shrink-0 mt-0.5 ${hideAddressOnPublicPage ? 'bg-amber-500' : 'bg-gray-300'}`}
-                        >
-                          <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${hideAddressOnPublicPage ? 'translate-x-[16px]' : ''}`} />
-                        </button>
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-gray-700">{t('homeServiceHideAddressLabel')}</p>
-                          <p className="text-[11px] text-gray-500 mt-0.5">{t('homeServiceHideAddressHint')}</p>
-                        </div>
-                      </label>
-                    </div>
-                  )}
-
-                  {/* Aléa = tampon entre RDV. Rappel + nudge si non défini. */}
-                  {homeServiceEnabled && (
-                    <div className="mt-3 ml-9 flex items-start gap-2">
-                      <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
-                      <p className="text-[11px] text-gray-500 leading-relaxed">
-                        {bufferMinutes > 0
-                          ? t('homeServiceAleaSet', { minutes: bufferMinutes })
-                          : t('homeServiceAleaUnset')}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </section>
 
@@ -1528,8 +1434,8 @@ export default function PlanningDashboard() {
                             placeholder={t('depositLink2Placeholder')}
                           />
                         </div>
-                        <p className="text-[11px] text-gray-400 mt-1.5">{t('depositLink2Hint')}</p>
-                        <p className="text-[11px] text-gray-400 mt-2">
+                        <p className="text-[11px] text-gray-500 mt-1.5">{t('depositLink2Hint')}</p>
+                        <p className="text-[11px] text-gray-500 mt-2">
                           {t('depositLinkAffiliate')}{' '}
                           <a href="https://revolut.com/referral/?referral-code=judicasay3!APR1-26-VR-FR&geo-redirect" target="_blank" rel="noopener noreferrer" className="text-indigo-500 font-semibold hover:underline">{t('depositLinkAffiliateJoin')}</a>
                         </p>
@@ -1563,6 +1469,17 @@ export default function PlanningDashboard() {
                         {amountMissing && <p className="text-[10px] text-red-400 mt-1.5">{t('depositAmountRequired')}</p>}
                       </div>
                       <div className="border-t border-gray-100" />
+                      <button type="button" onClick={() => setDepositOnlyForNew(!depositOnlyForNew)} className="w-full flex items-start gap-3 text-left">
+                        <span role="switch" aria-checked={depositOnlyForNew}
+                          className={`mt-0.5 relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${depositOnlyForNew ? 'bg-amber-500' : 'bg-gray-200'}`}>
+                          <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${depositOnlyForNew ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-xs font-semibold text-gray-700">{t('depositNewCustomersOnlyLabel')}</span>
+                          <span className="block text-[11px] text-gray-500 mt-0.5 leading-snug">{t('depositNewCustomersOnlyHint')}</span>
+                        </span>
+                      </button>
+                      <div className="border-t border-gray-100" />
                       <div>
                         <label className="text-xs font-semibold text-gray-600 mb-2 block">{t('depositDeadlineLabel')}</label>
                         <div className="flex flex-wrap gap-1.5">
@@ -1573,7 +1490,7 @@ export default function PlanningDashboard() {
                           <input type="number" value={!['', '1', '2', '3', '4'].includes(depositDeadlineHours) ? depositDeadlineHours : ''} onChange={(e) => setDepositDeadlineHours(e.target.value)} placeholder={t('customHours')} min={1}
                             className="w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 border-gray-200" />
                         </div>
-                        <p className="text-[11px] text-gray-400 mt-1.5">{depositDeadlineHours ? t('depositDeadlineHint') : t('depositDeadlineFreeHint')}</p>
+                        <p className="text-[11px] text-gray-500 mt-1.5">{depositDeadlineHours ? t('depositDeadlineHint') : t('depositDeadlineFreeHint')}</p>
                         {depositDeadlineHours && (
                           <div className="mt-2 flex items-start gap-2 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100">
                             <Moon className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
@@ -1594,6 +1511,12 @@ export default function PlanningDashboard() {
                           </div>
                         </div>
                       </div>
+                      <p className="text-[11px] text-gray-500 leading-relaxed">
+                        {t('depositMembersHintBody')}{' '}
+                        <Link href="/dashboard/members" className="font-semibold text-gray-700 underline underline-offset-2 hover:text-gray-900">
+                          {t('depositMembersHintCta')}
+                        </Link>
+                      </p>
                     </div>}
                   </div>
                 );
@@ -1655,6 +1578,77 @@ export default function PlanningDashboard() {
                   </div>
                 </div>
               </div>
+
+              {/* Card: Service à domicile (mode libre uniquement) */}
+              {bookingMode === 'free' && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:col-span-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+                        <Home className="w-3.5 h-3.5 text-amber-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <h2 className="text-sm font-bold text-gray-800">{t('homeServiceTitle')}</h2>
+                          <button
+                            type="button"
+                            onClick={() => setHomeServiceHelpOpen(v => !v)}
+                            aria-label={t('homeServiceHelpAria')}
+                            className="text-gray-300 hover:text-amber-500 transition-colors"
+                          >
+                            <Info className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-gray-500 mt-0.5">{t('homeServiceHint')}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleToggleHomeService}
+                      className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${homeServiceEnabled ? 'bg-amber-500' : 'bg-gray-200'}`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${homeServiceEnabled ? 'translate-x-5' : ''}`} />
+                    </button>
+                  </div>
+
+                  {homeServiceHelpOpen && (
+                    <div className="mt-3 ml-9 p-3 bg-amber-50/60 border border-amber-100 rounded-lg">
+                      <p className="text-[11px] text-amber-900 leading-relaxed whitespace-pre-line">{t('homeServiceHelpBody')}</p>
+                    </div>
+                  )}
+
+                  {homeServiceEnabled && (
+                    <div className="mt-3 ml-9 p-3 bg-gray-50 border border-gray-100 rounded-lg">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={hideAddressOnPublicPage}
+                          onClick={() => setHideAddressOnPublicPage(!hideAddressOnPublicPage)}
+                          className={`relative w-9 h-5 rounded-full transition-colors shrink-0 mt-0.5 ${hideAddressOnPublicPage ? 'bg-amber-500' : 'bg-gray-300'}`}
+                        >
+                          <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${hideAddressOnPublicPage ? 'translate-x-[16px]' : ''}`} />
+                        </button>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-gray-700">{t('homeServiceHideAddressLabel')}</p>
+                          <p className="text-[11px] text-gray-500 mt-0.5">{t('homeServiceHideAddressHint')}</p>
+                        </div>
+                      </label>
+                    </div>
+                  )}
+
+                  {homeServiceEnabled && (
+                    <div className="mt-3 ml-9 flex items-start gap-2">
+                      <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
+                      <p className="text-[11px] text-gray-500 leading-relaxed">
+                        {bufferMinutes > 0
+                          ? t('homeServiceAleaSet', { minutes: bufferMinutes })
+                          : t('homeServiceAleaUnset')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
             </div>

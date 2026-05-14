@@ -181,7 +181,6 @@ export default function OnboardingChecklist() {
           hideable: true,
           steps: [
             { id: 'planning', label: t('stepPlanning'), done: merchant.planning_enabled === true, href: '/dashboard/planning', icon: CalendarDays },
-            { id: 'booking', label: t('stepBooking'), done: merchant.auto_booking_enabled === true, href: '/dashboard/planning', icon: Calendar },
             { id: 'slots', label: t('stepSlots'), done: slotsCount >= 1, href: '/dashboard/planning', icon: Calendar },
             { id: 'first_booking', label: t('stepFirstBooking'), done: bookedCount >= 1, href: '/dashboard/planning', icon: Users },
             { id: 'sms', label: t('stepSms'), done: smsCampaignsCount >= 1, href: '/dashboard/marketing', icon: MessageSquare },

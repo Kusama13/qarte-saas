@@ -22,7 +22,7 @@ type PromoOffer = { id: string; title: string; description: string; expires_at: 
 type MerchantBooking = Pick<
   Merchant,
   'id' | 'shop_name' | 'primary_color' | 'secondary_color' | 'country' | 'booking_message' |
-  'auto_booking_enabled' | 'deposit_link' | 'deposit_percent' | 'deposit_amount' |
+  'auto_booking_enabled' | 'deposit_link' | 'deposit_percent' | 'deposit_amount' | 'deposit_only_for_new_customers' |
   'welcome_offer_enabled' | 'welcome_offer_description' | 'welcome_offer_discount_percent' | 'subscription_status' | 'booking_mode' |
   'allow_customer_cancel' | 'cancel_deadline_days' | 'allow_customer_reschedule' | 'reschedule_deadline_days' |
   'home_service_enabled'
@@ -260,7 +260,9 @@ export default function BookingModal({
     setRecognition({ kind: 'idle' });
   };
 
-  const skipDeposit = Boolean(memberBenefit?.skip_deposit) || Boolean(giftCardBenefit && giftCardBenefit.count > 0);
+  // Mig 165 : skip si toggle merchant ON et cliente reconnue (recognition='known' = profil customer existe deja).
+  const skipDepositReturning = merchant.deposit_only_for_new_customers && recognition.kind === 'known';
+  const skipDeposit = Boolean(memberBenefit?.skip_deposit) || Boolean(giftCardBenefit && giftCardBenefit.count > 0) || skipDepositReturning;
 
   // Compute totals
   const selectedServices = useMemo(

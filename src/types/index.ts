@@ -151,6 +151,7 @@ export interface Merchant {
   deposit_percent: number | null;
   deposit_amount: number | null;
   deposit_deadline_hours: number | null;
+  deposit_only_for_new_customers: boolean;
   // Customer self-service booking edit
   allow_customer_cancel: boolean;
   allow_customer_reschedule: boolean;
