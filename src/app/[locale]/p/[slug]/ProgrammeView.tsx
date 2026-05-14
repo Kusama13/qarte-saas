@@ -459,10 +459,10 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             className="rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-3.5 flex items-center gap-3"
           >
             <div className="min-w-0 flex-1">
-              <p className="text-[14px] font-bold text-gray-900 leading-tight truncate">
+              <p className="text-[15px] font-bold text-gray-900 leading-snug tracking-tight line-clamp-2">
                 {promoOffer.title}
               </p>
-              <p className="text-[12px] text-gray-600 mt-1 leading-snug">
+              <p className="text-[12px] text-gray-700 mt-1 leading-snug line-clamp-3">
                 {targetedNames && targetedNames.length > 0 && promoOffer.discount_percent ? (
                   <>
                     {t('promoTargetedLead', { percent: promoOffer.discount_percent })}{' '}

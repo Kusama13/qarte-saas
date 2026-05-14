@@ -117,6 +117,7 @@ export default function BookingModal({
   const [loadingFreeSlots, setLoadingFreeSlots] = useState(false);
   const [freeSlotsError, setFreeSlotsError] = useState(false);
   const [calMonth, setCalMonth] = useState<Date>(() => { const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d; });
+  const [firstAvailableDate, setFirstAvailableDate] = useState<string | null>(null);
   // Map dateStr -> bool : true = au moins 1 creneau libre, false = aucun. Mode libre uniquement.
   // Permet d'afficher un dot vert/rouge sur chaque jour du calendrier pour eviter
   // que la cliente clique a l'aveugle sur des jours blindes.
@@ -393,6 +394,34 @@ export default function BookingModal({
       .catch(() => {});
     return () => controller.abort();
   }, [isFreeMod, isHomeService, calMonth, totalDuration, merchant.id]);
+
+  // Independant du mois affiche : la cliente voit la 1ere dispo sans naviguer.
+  useEffect(() => {
+    if (!isFreeMod || isHomeService || totalDuration === 0) {
+      setFirstAvailableDate(null);
+      return;
+    }
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
+    const horizon = new Date(today); horizon.setDate(today.getDate() + 30);
+    const horizonStr = horizon.toISOString().split('T')[0];
+    const controller = new AbortController();
+    const params = new URLSearchParams({
+      merchantId: merchant.id,
+      from: todayStr,
+      to: horizonStr,
+      duration: String(totalDuration),
+    });
+    fetch(`/api/planning/free-availability?${params.toString()}`, { signal: controller.signal })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then((data: { availability?: Record<string, boolean> }) => {
+        if (!data.availability) { setFirstAvailableDate(null); return; }
+        const first = Object.keys(data.availability).sort().find(d => data.availability![d]);
+        setFirstAvailableDate(first || null);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [isFreeMod, isHomeService, totalDuration, merchant.id]);
 
   const toggleService = (id: string) => {
     setSelectedServiceIds(prev => {
@@ -703,10 +732,10 @@ export default function BookingModal({
                   return (
                     <div className="rounded-xl border border-amber-200/80 bg-amber-50 px-3 py-2.5 flex items-center gap-3 mb-3">
                       <div className="min-w-0 flex-1">
-                        <p className="text-[13px] font-bold text-gray-900 leading-tight truncate">
+                        <p className="text-[14px] font-bold text-gray-900 leading-snug tracking-tight line-clamp-2">
                           {promoOffer.title}
                         </p>
-                        <p className="text-[11px] text-gray-600 leading-snug">
+                        <p className="text-[11px] text-gray-700 leading-snug line-clamp-2 mt-0.5">
                           {isTargeted ? (
                             <>
                               {t('promoTargetedLead', { percent: promoOffer.discount_percent! })}{' '}
@@ -737,10 +766,10 @@ export default function BookingModal({
                   <>
                   <div className="rounded-xl border border-rose-200/80 bg-rose-50 px-3 py-2.5 flex items-center gap-3 mb-3">
                     <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-bold text-gray-900 leading-tight">
+                      <p className="text-[14px] font-bold text-gray-900 leading-snug tracking-tight">
                         {t('welcomeTeaserTitle')}
                       </p>
-                      <p className="text-[11px] text-gray-600 leading-snug mt-0.5">
+                      <p className="text-[11px] text-gray-700 leading-snug mt-0.5">
                         {t('welcomeTeaserSubtitle')}
                       </p>
                     </div>
@@ -872,7 +901,26 @@ export default function BookingModal({
             {/* ── STEP 1b: Date/Time (mode libre) ── */}
             {step === 'datetime' && (
               <motion.div key="datetime" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <p className="text-sm font-semibold text-gray-700 mb-3">{t('chooseDate')}</p>
+                <p className="text-sm font-semibold text-gray-700 mb-1">{t('chooseDate')}</p>
+                <div className="mb-3 min-h-[18px]">
+                  {firstAvailableDate && firstAvailableDate !== selectedDate && (() => {
+                    const target = new Date(firstAvailableDate + 'T12:00:00');
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCalMonth(new Date(target.getFullYear(), target.getMonth(), 1));
+                          setSelectedDate(firstAvailableDate);
+                          setSelectedTime('');
+                        }}
+                        className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 hover:text-emerald-800 transition-colors"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        {t('firstAvailability', { date: target.toLocaleDateString(toBCP47(locale), { weekday: 'long', day: 'numeric', month: 'long' }) })}
+                      </button>
+                    );
+                  })()}
+                </div>
 
                 {/* Month calendar */}
                 {(() => {

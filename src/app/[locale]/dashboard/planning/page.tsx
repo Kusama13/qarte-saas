@@ -419,18 +419,20 @@ export default function PlanningDashboard() {
     }
     setModeSwitchCleanup(true);
     try {
-      if (modeSwitchTarget === 'free' && bookingMode === 'slots') {
-        // Cleanup global (toutes semaines) — la contrainte UNIQUE(merchant_id,
-        // slot_date, start_time) ferait echouer les inserts mode libre sinon.
-        await fetch('/api/planning/cleanup-empty-slots', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ merchantId: merchant.id }),
-        });
-        await fetchSlots();
+      const res = await fetch('/api/planning/switch-mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchantId: merchant.id, targetMode: modeSwitchTarget }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        if (err?.error) console.error('[switch-mode]', err.error);
+        addToast(t('errorGeneric'), 'error');
+        return;
       }
       setBookingMode(modeSwitchTarget);
       if (modeSwitchTarget === 'free') setAutoBookingEnabled(true);
+      await Promise.all([fetchSlots(), refetch().catch(() => {})]);
     } finally {
       setModeSwitchCleanup(false);
       setModeSwitchTarget(null);
@@ -2487,14 +2489,6 @@ export default function PlanningDashboard() {
               <p className="text-sm text-gray-700 leading-relaxed">
                 {modeSwitchTarget === 'free' ? t('modeSwitchToFreeWarning') : t('modeSwitchToSlotsWarning')}
               </p>
-              {modeSwitchTarget === 'free' && (
-                <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-100">
-                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-800 leading-relaxed">
-                    {t('modeSwitchEmptySlotsWarning')}
-                  </p>
-                </div>
-              )}
             </div>
             <ModalFooter>
               <button
