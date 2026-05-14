@@ -5,13 +5,16 @@ import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
-import { CalendarDays, CalendarCheck, CalendarX2, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical, Settings, Save, MapPin, Home } from 'lucide-react';
+import { CalendarDays, CalendarCheck, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, AlertTriangle, X, Trash2, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical, Settings, Save, MapPin } from 'lucide-react';
+import { DepositCard } from './settings/DepositCard';
+import { CustomerEditCard } from './settings/CustomerEditCard';
+import { HomeServiceCard } from './settings/HomeServiceCard';
 import type { BookingMode, MerchantCountry, BookingDepositFailure } from '@/types';
 import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
-import { PHONE_CONFIG, toBCP47, getCurrencySymbol, formatCurrency, formatPhoneLabel } from '@/lib/utils';
-import { detectPaymentProvider, isValidPaymentLink, normalizePaymentLink } from '@/lib/payment-providers';
+import { PHONE_CONFIG, toBCP47, formatCurrency, formatPhoneLabel } from '@/lib/utils';
+import { detectPaymentProvider, normalizePaymentLink } from '@/lib/payment-providers';
 import { formatDate, getServiceColorMap, colorBorderStyle, getWeekStart, timeToMinutes, minutesToTime, formatDuration, getISOWeekNumber } from './utils';
 import type { CustomServiceDraft } from './usePlanningState';
 import CustomServicePicker from './CustomServicePicker';
@@ -156,29 +159,11 @@ export default function PlanningDashboard() {
     }
   }, [merchant?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Mode choice (shown when planning is freshly enabled with no slots)
   const [showModeChoice, setShowModeChoice] = useState(false);
   const [missingHoursBlock, setMissingHoursBlock] = useState(false);
   const [pendingMode, setPendingMode] = useState<BookingMode | null>(null);
   const [homeServiceHelpOpen, setHomeServiceHelpOpen] = useState(false);
 
-  // Save button visibility on scroll (mobile UX): hidden at top, slides in once user scrolls.
-  // Reads from window.scrollY OR documentElement.scrollTop OR body.scrollTop —
-  // depending on the browser / iOS PWA context, scroll happens on different elements.
-  const [hasScrolled, setHasScrolled] = useState(false);
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
-      setHasScrolled(y > 24);
-    };
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    document.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      document.removeEventListener('scroll', onScroll);
-    };
-  }, []);
   // Auto-dismiss mode choice if real slots already exist
   useEffect(() => {
     if (showModeChoice && !loadingSlots && slots.some(s => !s.client_name)) {
@@ -1051,34 +1036,36 @@ export default function PlanningDashboard() {
                   })}
                 </div>
 
-                {/* Actions row — day-scoped + kebab menu for week-scoped */}
+                {/* Actions row — 2/3 ajouter resa + 1/3 bloquer + kebab. */}
                 {!selectedDayIsPast && (
                   <div className="flex gap-2 items-center">
-                    {isFreeMod ? (
+                    <div className="flex-1 grid grid-cols-3 gap-2">
+                      {isFreeMod ? (
+                        <button
+                          onClick={() => openManualBookingModal(selectedDayStr)}
+                          className="col-span-2 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 transition-all"
+                        >
+                          <Plus className="w-3.5 h-3.5 shrink-0" />
+                          {t('addManualBooking')}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => openAddSlotsModal(selectedDayStr)}
+                          className="col-span-2 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 transition-all"
+                        >
+                          <Plus className="w-3.5 h-3.5 shrink-0" />
+                          {t('addSlotsTitle')}
+                        </button>
+                      )}
                       <button
-                        onClick={() => openManualBookingModal(selectedDayStr)}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 transition-all"
+                        onClick={() => openBlockModal(selectedDayStr)}
+                        className="col-span-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
+                        title={t('blockSlot')}
                       >
-                        <Plus className="w-3.5 h-3.5 shrink-0" />
-                        {t('addManualBooking')}
+                        <Lock className="w-3.5 h-3.5 shrink-0" />
+                        <span>{t('blockSlotShort')}</span>
                       </button>
-                    ) : (
-                      <button
-                        onClick={() => openAddSlotsModal(selectedDayStr)}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 transition-all"
-                      >
-                        <Plus className="w-3.5 h-3.5 shrink-0" />
-                        {t('addSlotsTitle')}
-                      </button>
-                    )}
-                    <button
-                      onClick={() => openBlockModal(selectedDayStr)}
-                      className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-all"
-                      title={t('blockSlot')}
-                    >
-                      <Lock className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">{t('blockSlot')}</span>
-                    </button>
+                    </div>
 
                     {/* Kebab menu — week-scoped actions (hidden in mode libre if rien à supprimer) */}
                     {(!isFreeMod || selectedDayFreeCount > 0 || freeSlots > 0) && (
@@ -1304,7 +1291,7 @@ export default function PlanningDashboard() {
                     </div>
                     <div className="min-w-0">
                       <h2 className="text-sm font-bold text-gray-800">{t('autoBookingTitle')}</h2>
-                      <p className="text-[11px] text-gray-400 mt-0.5">{autoBookingEnabled ? t('autoBookingHint', { days: BOOKING_HORIZON_DAYS }) : t('autoBookingOffHint')}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{autoBookingEnabled ? t('autoBookingHint', { days: BOOKING_HORIZON_DAYS }) : t('autoBookingOffHint')}</p>
                     </div>
                   </div>
                   <button
@@ -1335,7 +1322,7 @@ export default function PlanningDashboard() {
                     </div>
                     <h2 className="text-sm font-bold text-gray-800">{t('bufferTitle')}</h2>
                   </div>
-                  <p className="text-[11px] text-gray-400 mb-3 ml-9">{t('bufferHint')}</p>
+                  <p className="text-[11px] text-gray-500 mb-3 ml-9">{t('bufferHint')}</p>
                   <div className="flex gap-2 ml-9 flex-wrap">
                     {([0, 10, 15, 30] as const).map(val => (
                       <button
@@ -1382,7 +1369,7 @@ export default function PlanningDashboard() {
                     </div>
                     <h2 className="text-sm font-bold text-gray-800">{t('bookingTitle')}</h2>
                   </div>
-                  <p className="text-[11px] text-gray-400 mb-3 ml-9">{t('bookingHint')}</p>
+                  <p className="text-[11px] text-gray-500 mb-3 ml-9">{t('bookingHint')}</p>
 
                   <div className="ml-9">
                     <textarea
@@ -1393,261 +1380,50 @@ export default function PlanningDashboard() {
                       rows={4}
                       className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none"
                     />
-                    <p className="text-[10px] text-gray-300 text-right mt-1">{bookingMessage.length}/500</p>
+                    <p className="text-[10px] text-gray-400 text-right mt-1">{bookingMessage.length}/500</p>
                   </div>
                 </div>
               )}
 
-          {/* ── Online booking advanced settings (visible when auto-booking enabled) ── */}
           {autoBookingEnabled && (
             <>
-              {/* Acompte config */}
-              {(() => {
-                const hasAmount = !!(depositPercent || depositAmount);
-                const hasLink = !!depositLink.trim();
-                const linkMissing = depositEnabled && hasAmount && !hasLink;
-                const amountMissing = depositEnabled && hasLink && !hasAmount;
-                return (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden sm:col-span-2">
-                    <div className="px-4 sm:px-5 py-3 bg-amber-50/50 border-b border-amber-100/50 flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 text-amber-500 shrink-0" />
-                      <h2 className="text-sm font-bold text-gray-800">{t('depositTitle')}</h2>
-                      <button type="button" role="switch" aria-checked={depositEnabled} onClick={() => setDepositEnabled(!depositEnabled)}
-                        className={`ml-auto relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${depositEnabled ? 'bg-indigo-600' : 'bg-gray-200'}`}>
-                        <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${depositEnabled ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
-                      </button>
-                    </div>
-                    {depositEnabled && <div className="p-4 sm:p-5 space-y-4">
-                      <div>
-                        <label className="text-xs font-semibold text-gray-600 mb-1.5 block">{t('depositLinkLabel')}</label>
-                        <DepositLinkInput
-                          value={depositLink}
-                          onChange={setDepositLink}
-                          placeholder={t('depositLinkPlaceholder')}
-                          error={linkMissing}
-                        />
-                        {linkMissing && <p className="text-[10px] text-red-400 mt-1.5">{t('depositLinkRequired')}</p>}
-                        <div className="mt-2">
-                          <DepositLinkInput
-                            value={depositLink2}
-                            onChange={setDepositLink2}
-                            placeholder={t('depositLink2Placeholder')}
-                          />
-                        </div>
-                        <p className="text-[11px] text-gray-500 mt-1.5">{t('depositLink2Hint')}</p>
-                        <p className="text-[11px] text-gray-500 mt-2">
-                          {t('depositLinkAffiliate')}{' '}
-                          <a href="https://revolut.com/referral/?referral-code=judicasay3!APR1-26-VR-FR&geo-redirect" target="_blank" rel="noopener noreferrer" className="text-indigo-500 font-semibold hover:underline">{t('depositLinkAffiliateJoin')}</a>
-                        </p>
-                      </div>
-                      <div className="border-t border-gray-100" />
-                      <div>
-                        <label className="text-xs font-semibold text-gray-600 mb-2 block">{t('depositAmountLabel')}</label>
-                        <div className={`transition-opacity ${depositAmount ? 'opacity-40' : ''}`}>
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('percentageLabel')}</p>
-                          <div className="flex flex-wrap gap-1.5 mb-3">
-                            {['10', '15', '20', '25', '30'].map(v => (
-                              <button key={`p${v}`} type="button" onClick={() => { setDepositPercent(v); setDepositAmount(''); }}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositPercent === v ? 'bg-slate-900 text-white border border-slate-900' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{v}%</button>
-                            ))}
-                            <input type="number" value={!['10', '15', '20', '25', '30'].includes(depositPercent) ? depositPercent : ''} onChange={(e) => { setDepositPercent(e.target.value); if (e.target.value) setDepositAmount(''); }} placeholder={t('customPercent')} min={1} max={100}
-                              className={`w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`} />
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 mb-3"><div className="flex-1 border-t border-gray-100" /><span className="text-[10px] font-semibold text-gray-300 uppercase">{t('or')}</span><div className="flex-1 border-t border-gray-100" /></div>
-                        <div className={`transition-opacity ${depositPercent ? 'opacity-40' : ''}`}>
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('fixedAmountLabel')}</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {['10', '15', '20', '25', '30'].map(v => (
-                              <button key={`a${v}`} type="button" onClick={() => { setDepositAmount(v); setDepositPercent(''); }}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositAmount === v ? 'bg-slate-900 text-white border border-slate-900' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{v}{getCurrencySymbol(merchant?.country)}</button>
-                            ))}
-                            <input type="number" value={!['10', '15', '20', '25', '30'].includes(depositAmount) ? depositAmount : ''} onChange={(e) => { setDepositAmount(e.target.value); if (e.target.value) setDepositPercent(''); }} placeholder={t('customAmount')} min={1}
-                              className={`w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`} />
-                          </div>
-                        </div>
-                        {amountMissing && <p className="text-[10px] text-red-400 mt-1.5">{t('depositAmountRequired')}</p>}
-                      </div>
-                      <div className="border-t border-gray-100" />
-                      <button type="button" onClick={() => setDepositOnlyForNew(!depositOnlyForNew)} className="w-full flex items-start gap-3 text-left">
-                        <span role="switch" aria-checked={depositOnlyForNew}
-                          className={`mt-0.5 relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${depositOnlyForNew ? 'bg-amber-500' : 'bg-gray-200'}`}>
-                          <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${depositOnlyForNew ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
-                        </span>
-                        <span className="flex-1 min-w-0">
-                          <span className="block text-xs font-semibold text-gray-700">{t('depositNewCustomersOnlyLabel')}</span>
-                          <span className="block text-[11px] text-gray-500 mt-0.5 leading-snug">{t('depositNewCustomersOnlyHint')}</span>
-                        </span>
-                      </button>
-                      <div className="border-t border-gray-100" />
-                      <div>
-                        <label className="text-xs font-semibold text-gray-600 mb-2 block">{t('depositDeadlineLabel')}</label>
-                        <div className="flex flex-wrap gap-1.5">
-                          <button type="button" onClick={() => setDepositDeadlineHours('')} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${!depositDeadlineHours ? 'bg-gray-900 text-white border border-gray-900 shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{t('depositDeadlineFree')}</button>
-                          {['1', '2', '3', '4'].map(v => (
-                            <button key={`d${v}`} type="button" onClick={() => setDepositDeadlineHours(v)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositDeadlineHours === v ? 'bg-slate-900 text-white border border-slate-900' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{v}h</button>
-                          ))}
-                          <input type="number" value={!['', '1', '2', '3', '4'].includes(depositDeadlineHours) ? depositDeadlineHours : ''} onChange={(e) => setDepositDeadlineHours(e.target.value)} placeholder={t('customHours')} min={1}
-                            className="w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 border-gray-200" />
-                        </div>
-                        <p className="text-[11px] text-gray-500 mt-1.5">{depositDeadlineHours ? t('depositDeadlineHint') : t('depositDeadlineFreeHint')}</p>
-                        {depositDeadlineHours && (
-                          <div className="mt-2 flex items-start gap-2 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100">
-                            <Moon className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
-                            <p className="text-[11px] text-gray-500">{t('depositNightGraceHint')}</p>
-                          </div>
-                        )}
-                        <div className="mt-2 rounded-xl bg-indigo-50/60 border border-indigo-100 p-3">
-                          <div className="flex items-start gap-2">
-                            <div className="w-6 h-6 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0"><Bell className="w-3.5 h-3.5 text-indigo-600" /></div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[11px] font-bold text-indigo-900 mb-0.5">{t('depositValidationTitle')}</p>
-                              <p className="text-[11px] text-indigo-800/80 leading-relaxed">{t('depositValidationBody')}</p>
-                            </div>
-                          </div>
-                          <div className="mt-2 pt-2 border-t border-indigo-100/80 flex items-start gap-2">
-                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-                            <p className="text-[11px] text-gray-600 leading-relaxed">{t('depositEmailSpamWarning')}</p>
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-gray-500 leading-relaxed">
-                        {t('depositMembersHintBody')}{' '}
-                        <Link href="/dashboard/members" className="font-semibold text-gray-700 underline underline-offset-2 hover:text-gray-900">
-                          {t('depositMembersHintCta')}
-                        </Link>
-                      </p>
-                    </div>}
-                  </div>
-                );
-              })()}
-
-              {/* Customer self-service cancel/reschedule */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-visible sm:col-span-2">
-                <div className="px-4 sm:px-5 py-3 bg-gray-50/80 border-b border-gray-100 flex items-center gap-2">
-                  <CalendarX2 className="w-4 h-4 text-gray-500 shrink-0" />
-                  <h2 className="text-sm font-bold text-gray-800">{t('customerEditTitle')}</h2>
-                </div>
-                <div className="p-4 sm:p-5 space-y-3">
-                  <div className="space-y-2.5">
-                    <label className="flex items-center justify-between gap-3 cursor-pointer">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-800">{t('allowCustomerCancel')}</p>
-                        <p className="text-[11px] text-gray-500 mt-0.5">{t('allowCustomerCancelDesc')}</p>
-                      </div>
-                      <button type="button" role="switch" aria-checked={allowCustomerCancel} onClick={() => setAllowCustomerCancel(!allowCustomerCancel)}
-                        className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors ${allowCustomerCancel ? 'bg-indigo-600' : 'bg-gray-200'}`}>
-                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform mt-0.5 ${allowCustomerCancel ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
-                      </button>
-                    </label>
-                    {allowCustomerCancel && (
-                      <div className="pl-1">
-                        <label className="text-xs font-semibold text-gray-600 mb-2 block">{t('editDeadlineDays')}</label>
-                        <div className="flex flex-wrap gap-1.5">
-                          {[{ value: '1', label: t('deadlineDay1') }, { value: '2', label: t('deadlineDay2') }, { value: '3', label: t('deadlineDay3') }, { value: '7', label: t('deadlineDay7') }].map(opt => (
-                            <button key={opt.value} type="button" onClick={() => setCancelDeadlineDays(opt.value)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${cancelDeadlineDays === opt.value ? 'bg-slate-900 text-white border border-slate-900' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{opt.label}</button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="border-t border-gray-100" />
-                  <div className="space-y-2.5">
-                    <label className="flex items-center justify-between gap-3 cursor-pointer">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-800">{t('allowCustomerReschedule')}</p>
-                        <p className="text-[11px] text-gray-500 mt-0.5">{t('allowCustomerRescheduleDesc')}</p>
-                      </div>
-                      <button type="button" role="switch" aria-checked={allowCustomerReschedule} onClick={() => setAllowCustomerReschedule(!allowCustomerReschedule)}
-                        className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors ${allowCustomerReschedule ? 'bg-indigo-600' : 'bg-gray-200'}`}>
-                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform mt-0.5 ${allowCustomerReschedule ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
-                      </button>
-                    </label>
-                    {allowCustomerReschedule && (
-                      <div className="pl-1">
-                        <label className="text-xs font-semibold text-gray-600 mb-2 block">{t('editDeadlineDays')}</label>
-                        <div className="flex flex-wrap gap-1.5">
-                          {[{ value: '1', label: t('deadlineDay1') }, { value: '2', label: t('deadlineDay2') }, { value: '3', label: t('deadlineDay3') }, { value: '7', label: t('deadlineDay7') }].map(opt => (
-                            <button key={opt.value} type="button" onClick={() => setRescheduleDeadlineDays(opt.value)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${rescheduleDeadlineDays === opt.value ? 'bg-slate-900 text-white border border-slate-900' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}>{opt.label}</button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Card: Service à domicile (mode libre uniquement) */}
+              <DepositCard
+                enabled={depositEnabled}
+                onEnabledChange={setDepositEnabled}
+                link={depositLink}
+                onLinkChange={setDepositLink}
+                link2={depositLink2}
+                onLink2Change={setDepositLink2}
+                percent={depositPercent}
+                onPercentChange={setDepositPercent}
+                amount={depositAmount}
+                onAmountChange={setDepositAmount}
+                onlyForNew={depositOnlyForNew}
+                onOnlyForNewChange={setDepositOnlyForNew}
+                deadlineHours={depositDeadlineHours}
+                onDeadlineHoursChange={setDepositDeadlineHours}
+                country={merchant?.country}
+              />
+              <CustomerEditCard
+                cancelEnabled={allowCustomerCancel}
+                onCancelEnabledChange={setAllowCustomerCancel}
+                cancelDeadlineDays={cancelDeadlineDays}
+                onCancelDeadlineDaysChange={setCancelDeadlineDays}
+                rescheduleEnabled={allowCustomerReschedule}
+                onRescheduleEnabledChange={setAllowCustomerReschedule}
+                rescheduleDeadlineDays={rescheduleDeadlineDays}
+                onRescheduleDeadlineDaysChange={setRescheduleDeadlineDays}
+              />
               {bookingMode === 'free' && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:col-span-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
-                        <Home className="w-3.5 h-3.5 text-amber-600" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <h2 className="text-sm font-bold text-gray-800">{t('homeServiceTitle')}</h2>
-                          <button
-                            type="button"
-                            onClick={() => setHomeServiceHelpOpen(v => !v)}
-                            aria-label={t('homeServiceHelpAria')}
-                            className="text-gray-300 hover:text-amber-500 transition-colors"
-                          >
-                            <Info className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                        <p className="text-[11px] text-gray-500 mt-0.5">{t('homeServiceHint')}</p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleToggleHomeService}
-                      className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${homeServiceEnabled ? 'bg-amber-500' : 'bg-gray-200'}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${homeServiceEnabled ? 'translate-x-5' : ''}`} />
-                    </button>
-                  </div>
-
-                  {homeServiceHelpOpen && (
-                    <div className="mt-3 ml-9 p-3 bg-amber-50/60 border border-amber-100 rounded-lg">
-                      <p className="text-[11px] text-amber-900 leading-relaxed whitespace-pre-line">{t('homeServiceHelpBody')}</p>
-                    </div>
-                  )}
-
-                  {homeServiceEnabled && (
-                    <div className="mt-3 ml-9 p-3 bg-gray-50 border border-gray-100 rounded-lg">
-                      <label className="flex items-start gap-3 cursor-pointer">
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={hideAddressOnPublicPage}
-                          onClick={() => setHideAddressOnPublicPage(!hideAddressOnPublicPage)}
-                          className={`relative w-9 h-5 rounded-full transition-colors shrink-0 mt-0.5 ${hideAddressOnPublicPage ? 'bg-amber-500' : 'bg-gray-300'}`}
-                        >
-                          <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${hideAddressOnPublicPage ? 'translate-x-[16px]' : ''}`} />
-                        </button>
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-gray-700">{t('homeServiceHideAddressLabel')}</p>
-                          <p className="text-[11px] text-gray-500 mt-0.5">{t('homeServiceHideAddressHint')}</p>
-                        </div>
-                      </label>
-                    </div>
-                  )}
-
-                  {homeServiceEnabled && (
-                    <div className="mt-3 ml-9 flex items-start gap-2">
-                      <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
-                      <p className="text-[11px] text-gray-500 leading-relaxed">
-                        {bufferMinutes > 0
-                          ? t('homeServiceAleaSet', { minutes: bufferMinutes })
-                          : t('homeServiceAleaUnset')}
-                      </p>
-                    </div>
-                  )}
-                </div>
+                <HomeServiceCard
+                  enabled={homeServiceEnabled}
+                  onToggle={handleToggleHomeService}
+                  helpOpen={homeServiceHelpOpen}
+                  onHelpToggle={() => setHomeServiceHelpOpen(v => !v)}
+                  hideAddress={hideAddressOnPublicPage}
+                  onHideAddressChange={setHideAddressOnPublicPage}
+                  bufferMinutes={bufferMinutes}
+                />
               )}
             </>
           )}
@@ -1787,11 +1563,11 @@ export default function PlanningDashboard() {
             </div>
           </section>
 
-          {/* Save button — md+ sticky centered pill ; < md floating disc above BottomNav. */}
+          <div className="h-20 md:h-24" />
           <button
             onClick={handleSaveSettings}
             disabled={savingSettings}
-            className={`hidden md:inline-flex fixed bottom-6 left-1/2 -translate-x-1/2 z-30 items-center gap-2.5 px-8 py-4 rounded-full text-base font-bold shadow-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
+            className={`fixed left-1/2 -translate-x-1/2 z-30 inline-flex items-center justify-center gap-2.5 px-7 py-3.5 md:px-8 md:py-4 rounded-full text-sm md:text-base font-bold shadow-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed bottom-[calc(60px+env(safe-area-inset-bottom)+12px)] md:bottom-6 ${
               savedSettings
                 ? 'bg-emerald-500 text-white shadow-emerald-300/50'
                 : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-400/40'
@@ -1803,24 +1579,6 @@ export default function PlanningDashboard() {
               <><Check className="w-5 h-5" /> {t('saved')}</>
             ) : (
               <><Save className="w-5 h-5" /> {t('save')}</>
-            )}
-          </button>
-
-          <button
-            onClick={handleSaveSettings}
-            disabled={savingSettings || !hasScrolled}
-            aria-label={t('save')}
-            title={t('save')}
-            className={`md:hidden fixed right-4 bottom-[calc(60px+env(safe-area-inset-bottom)+12px)] z-30 w-12 h-12 rounded-full flex items-center justify-center shadow-xl transition-all duration-300 disabled:cursor-not-allowed ${
-              hasScrolled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none'
-            } ${savedSettings ? 'bg-emerald-500 text-white shadow-emerald-300/60' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-300/60'}`}
-          >
-            {savingSettings ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : savedSettings ? (
-              <Check className="w-5 h-5" />
-            ) : (
-              <Save className="w-5 h-5" />
             )}
           </button>
         </div>
@@ -2586,46 +2344,3 @@ export default function PlanningDashboard() {
   );
 }
 
-// Input URL paiement avec auto-detect du provider (badge à droite quand reconnu).
-// Le label DB est résolu côté serveur via detectPaymentProvider() depuis l'URL.
-function DepositLinkInput({
-  value, onChange, placeholder, error = false,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  error?: boolean;
-}) {
-  const normalized = normalizePaymentLink(value);
-  const detected = normalized ? detectPaymentProvider(normalized) : null;
-  const looksInvalid = !!normalized && !isValidPaymentLink(value);
-  return (
-    <div>
-      <div className="relative">
-        <input
-          type="url"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className={`w-full ${detected ? 'pr-28' : ''} px-3 py-2 sm:px-3.5 sm:py-2.5 text-base sm:text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors ${
-            error ? 'border-red-300 bg-red-50/30'
-            : looksInvalid ? 'border-amber-300 bg-amber-50/30'
-            : 'border-gray-200'
-          }`}
-        />
-        {detected && (
-          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
-            <Check className="w-2.5 h-2.5" />
-            {detected}
-          </span>
-        )}
-      </div>
-      {looksInvalid && (
-        <p className="mt-1.5 flex items-start gap-1.5 text-[11px] text-amber-700 leading-snug">
-          <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
-          <span>Ça ne ressemble pas à un lien. Colle l&apos;URL complète depuis ton compte (ex&nbsp;: revolut.me/tonpseudo).</span>
-        </p>
-      )}
-    </div>
-  );
-}

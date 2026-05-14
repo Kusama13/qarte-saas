@@ -5,3 +5,7 @@ export { Select } from './Select';
 export { Textarea } from './Textarea';
 export { Modal } from './Modal';
 export { ToastProvider, useToast } from './Toast';
+export { Switch } from './Switch';
+export { Callout } from './Callout';
+export { ChipGroup } from './ChipGroup';
+export { ToggleRow } from './ToggleRow';
