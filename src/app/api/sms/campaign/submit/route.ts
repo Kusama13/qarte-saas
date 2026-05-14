@@ -4,7 +4,7 @@ import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supaba
 import { resolveAudienceUnion, resolveAudienceWithNames } from '@/lib/sms-audience';
 import type { AudienceFilter } from '@/lib/sms-audience';
 import { countSms, validateMarketingSms, normalizeToGsm7, withOvhStopClause, bodyHasPersonalization, computeCampaignSmsBreakdown } from '@/lib/sms-validator';
-import { SMS_UNIT_COST_CENTS, getSmsUsageThisMonth, getEffectiveQuota } from '@/lib/sms';
+import { SMS_UNIT_COST_CENTS, getSmsUsageThisMonth, getEffectiveQuota, isPaidMerchant } from '@/lib/sms';
 import { isLegalSendTime, nextLegalSlot } from '@/lib/sms-compliance';
 import { sendNewSmsCampaignNotification } from '@/lib/email';
 import logger from '@/lib/logger';
@@ -46,6 +46,12 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
       .single();
     if (!merchant) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+
+    // Bloque les non-abonnés (trial / canceled). Le bouton submit est déjà désactivé
+    // côté UI ; ce check sécurise contre les requêtes craftées (curl).
+    if (!isPaidMerchant(merchant)) {
+      return NextResponse.json({ error: 'Souscris pour envoyer une campagne SMS.' }, { status: 403 });
+    }
 
     // Note : depuis que Fidélité a marketingSms=true (envoi possible via pack),
     // le vrai blocage est `quotaLeft + packBalance >= recipients` plus bas (402).

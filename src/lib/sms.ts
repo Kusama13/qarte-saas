@@ -52,6 +52,19 @@ export function isFidelityFreeSms(merchant: { plan_tier?: string | null } | null
 
 export const PAID_STATUSES = ['active', 'canceling', 'past_due'] as const;
 
+/**
+ * True si le statut est dans la liste des statuts payants (active, canceling, past_due).
+ * Helpers utilisés pour gater les features payantes (envoi SMS, soumission de campagne)
+ * — les non-abonnés (trial, canceled) sont bloqués UI + API.
+ */
+export function isPaidStatus(status: string | null | undefined): boolean {
+  return (PAID_STATUSES as readonly string[]).includes(status || '');
+}
+
+export function isPaidMerchant(m: { subscription_status?: string | null } | null | undefined): boolean {
+  return !!m && isPaidStatus(m.subscription_status);
+}
+
 // ── Templates SMS (< 160 chars, vouvoiement client-facing) ──
 
 export type SmsType = 'reminder_j1' | 'reminder_j0' | 'confirmation_no_deposit' | 'confirmation_deposit' | 'deposit_request' | 'birthday' | 'referral_reward' | 'booking_moved' | 'booking_cancelled' | 'gift_card_received' | 'gift_card_used' | 'gift_card_expiry_reminder';
@@ -358,7 +371,7 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
   if (!phone) return false;
 
   try {
-    if (!(PAID_STATUSES as readonly string[]).includes(subscriptionStatus)) {
+    if (!isPaidStatus(subscriptionStatus)) {
       return false;
     }
     // Mig 164 : merchant past_due > 72h = suspendu. On coupe l'envoi SMS pour
@@ -704,7 +717,7 @@ export async function sendMarketingSms(
       .eq('id', merchantId)
       .maybeSingle();
     const merchantRow = merchant as { billing_period_start?: string | null; sms_pack_balance?: number; subscription_status?: string; past_due_since?: string | null; plan_tier?: string; sms_quota_override?: number | null; sms_quota_override_cycle_anchor?: string | null; billing_interval?: string | null; created_at?: string | null } | null;
-    if (!merchantRow || !(PAID_STATUSES as readonly string[]).includes(merchantRow.subscription_status || '')) {
+    if (!merchantRow || !isPaidMerchant(merchantRow)) {
       return { success: false, error: 'subscription_inactive' };
     }
     // Mig 164 : past_due > 72h = suspendu, on coupe les envois marketing aussi.

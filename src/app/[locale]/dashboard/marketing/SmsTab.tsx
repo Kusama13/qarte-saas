@@ -36,6 +36,7 @@ import {
 } from '@/lib/sms-validator';
 import type { AudienceFilter } from '@/lib/sms-audience';
 import { getPlanFeatures } from '@/lib/plan-tiers';
+import { isPaidMerchant } from '@/lib/sms';
 import PlanUpgradeCTA from '@/components/dashboard/PlanUpgradeCTA';
 
 type CampaignRow = {
@@ -348,23 +349,25 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
     );
   }
 
+  const isPaid = isPaidMerchant(merchant);
+
   return (
     <div className="space-y-4">
-      {merchant?.subscription_status === 'trial' && (
+      {!isPaid && (
         <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-4 flex items-start gap-3">
           <div className="w-9 h-9 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0">
             <Gem className="w-4 h-4 text-indigo-500" strokeWidth={2.5} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-slate-900">Tu es en période d&apos;essai</p>
+            <p className="text-sm font-bold text-slate-900">Souscris pour envoyer tes campagnes</p>
             <p className="text-xs text-slate-600 mt-0.5 leading-snug">
-              Prépare tes campagnes dès maintenant — elles seront envoyées à tes clientes dès que tu passes sur un plan payant.
+              Tu peux préparer le contenu de tes SMS et choisir ton audience, mais l&apos;envoi est réservé aux abonnés.
             </p>
             <Link
               href="/dashboard/subscription"
               className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-indigo-600 hover:text-indigo-700"
             >
-              Passer à l&apos;abonnement
+              Voir mon abonnement
               <span aria-hidden>→</span>
             </Link>
           </div>
@@ -665,13 +668,15 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
 
           <button
             onClick={handleSubmit}
-            disabled={submitting || !validation.ok || !body.trim() || audienceCount === 0 || (scheduleMode === 'later' && !scheduleDate) || insufficientQuota}
+            disabled={!isPaid || submitting || !validation.ok || !body.trim() || audienceCount === 0 || (scheduleMode === 'later' && !scheduleDate) || insufficientQuota}
             className="w-full py-3 bg-[#4b0082] hover:bg-[#4b0082]/90 text-white font-bold text-sm rounded-xl active:scale-[0.98] touch-manipulation transition-all disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             {t('submit')}
           </button>
-          <p className="mt-2 text-[11px] text-center text-gray-500">{t('adminReviewNotice')}</p>
+          <p className="mt-2 text-[11px] text-center text-gray-500">
+            {isPaid ? t('adminReviewNotice') : 'Souscris pour envoyer cette campagne.'}
+          </p>
 
           {submitResult && (
             <div

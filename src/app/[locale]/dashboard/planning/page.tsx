@@ -161,6 +161,7 @@ export default function PlanningDashboard() {
 
   const [showModeChoice, setShowModeChoice] = useState(false);
   const [missingHoursBlock, setMissingHoursBlock] = useState(false);
+  const [missingLoyaltyBlock, setMissingLoyaltyBlock] = useState(false);
   // Pré-sélection 'free' : recommandé par défaut. Si horaires manquent, guard plus bas bloque la confirmation.
   const [pendingMode, setPendingMode] = useState<BookingMode | null>('free');
   const [homeServiceHelpOpen, setHomeServiceHelpOpen] = useState(false);
@@ -631,6 +632,12 @@ export default function PlanningDashboard() {
   const pendingFreeBlocked = pendingMode === 'free' && !hasValidOpeningHours(merchant?.opening_hours);
 
   const handleTogglePlanningWrapper = async (enabled: boolean) => {
+    // Bloque l'activation si le programme de fidélité n'est pas configuré : sinon
+    // les clientes qui réservent reçoivent une carte vide (récompense indéfinie).
+    if (enabled && !merchant?.reward_description) {
+      setMissingLoyaltyBlock(true);
+      return;
+    }
     // booking_mode a un DEFAULT 'slots' côté DB, donc on ne peut pas l'utiliser pour
     // détecter une première activation : on se base sur planningEnabled à la place.
     if (enabled && !planningEnabled && !slots.length) setShowModeChoice(true);
@@ -2181,6 +2188,46 @@ export default function PlanningDashboard() {
               >
                 {t('delete')}
               </button>
+            </ModalFooter>
+          </PlanningModal>
+        )}
+      </AnimatePresence>
+
+      {/* ── BLOCK: Programme de fidélité non configuré ── */}
+      <AnimatePresence mode="wait">
+        {missingLoyaltyBlock && (
+          <PlanningModal onClose={() => setMissingLoyaltyBlock(false)} size="sm">
+            <ModalHeader
+              title={t('missingLoyaltyTitle')}
+              icon={<Gift className="w-4 h-4" />}
+              iconTint="amber"
+              onClose={() => setMissingLoyaltyBlock(false)}
+            />
+            <div className="p-4 space-y-3">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                {t('missingLoyaltyBody')}
+              </p>
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-100">
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  {t('missingLoyaltyWarning')}
+                </p>
+              </div>
+            </div>
+            <ModalFooter>
+              <button
+                onClick={() => setMissingLoyaltyBlock(false)}
+                className="w-full sm:flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 text-sm font-bold hover:bg-gray-200 transition-colors"
+              >
+                {t('missingLoyaltyLater')}
+              </button>
+              <Link
+                href="/dashboard/program"
+                onClick={() => setMissingLoyaltyBlock(false)}
+                className="w-full sm:flex-[2] py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center gap-2"
+              >
+                {t('missingLoyaltyCta')}
+              </Link>
             </ModalFooter>
           </PlanningModal>
         )}
