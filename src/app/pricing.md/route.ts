@@ -6,10 +6,17 @@ export function GET() {
 
 > Logiciel tout-en-un pour salons de beauté : réservation en ligne, fidélité digitale et vitrine SEO.
 
-## Plan unique — Pro
+## Plans
 
-- **Prix mensuel** : 24 EUR/mois (sans engagement)
-- **Prix annuel** : 240 EUR/an (équivalent 20 EUR/mois, soit 2 mois offerts)
+### Tout-en-un (réservation + fidélité + vitrine + SMS)
+- **Mensuel** : 24 EUR/mois (sans engagement)
+- **6 mois** : 120 EUR pour 6 mois (équivalent 20 EUR/mois — un mois offert, engagement ferme 6 mois)
+
+### Fidélité (fidélité + vitrine + avis Google + parrainage, sans planning ni résa en ligne)
+- **Mensuel** : 19 EUR/mois (sans engagement)
+- **6 mois** : 95 EUR pour 6 mois (équivalent ~16 EUR/mois — un mois offert, engagement ferme 6 mois)
+
+### Conditions communes
 - **Essai gratuit** : 7 jours, sans carte bancaire
 - **Commission sur réservations** : 0 %
 - **Frais par transaction** : 0 %
@@ -20,7 +27,7 @@ export function GET() {
 - Réservation en ligne 24h/24 avec acompte sécurisé (Stripe)
 - Programme de fidélité digital (tampons + cagnotte cashback)
 - Page salon SEO personnalisable (nom de domaine getqarte.com/p/ton-slug)
-- 100 SMS transactionnels inclus/mois (0,075 EUR/SMS au-delà)
+- 100 SMS transactionnels inclus/mois (110/mois sur 6 mois, 0,075 EUR/SMS au-delà)
 - Emails transactionnels illimités
 - Notifications push (PWA) illimitées
 - Collecte automatique avis Google
@@ -38,20 +45,20 @@ export function GET() {
 
 ## Conditions
 
-- Sans engagement
-- Résiliation à tout moment depuis le dashboard
+- Plan mensuel sans engagement, résiliation à tout moment depuis le dashboard
+- Plan 6 mois : engagement ferme 6 mois, renouvelable par tacite reconduction
 - Paiement par CB via Stripe
-- Facturation automatique mensuelle ou annuelle selon plan choisi
+- Facturation automatique mensuelle ou semestrielle selon plan choisi
 - TVA en sus selon pays
 
 ## Comparatif rapide avec la concurrence
 
 | Critère | Qarte | Planity | Treatwell | Booksy |
 |---------|-------|---------|-----------|--------|
-| Abonnement | 24 EUR/mois | 29,90 EUR/mois | dès 35 EUR/mois | 29-79 EUR/mois |
+| Abonnement | 24 EUR/mois ou 20 EUR/mois (6 mois) | 29,90 EUR/mois | dès 35 EUR/mois | 29-79 EUR/mois |
 | Commission | 0 % | ~30 % nouveaux clients | 2,5 % tous RDV | 3 % nouveaux |
 | Fidélité intégrée | Oui | Basique | Limitée | Oui |
-| Engagement | Aucun | 12 mois | 12 mois | Mensuel |
+| Engagement | Aucun (mensuel) ou 6 mois | 12 mois | 12 mois | Mensuel |
 | Fichier client exportable | Complet | Partiel | Partiel | Oui |
 
 ## Liens

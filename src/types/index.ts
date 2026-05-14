@@ -43,6 +43,7 @@ export const COUNTRIES_BY_LOCALE: Record<string, MerchantCountry[]> = {
 export type SubscriptionStatus = 'trial' | 'active' | 'canceled' | 'canceling' | 'past_due';
 
 export type PlanTier = 'fidelity' | 'all_in';
+export type BillingInterval = 'monthly' | 'semestrial' | 'annual';
 export type PlanningIntent = 'unsure' | 'yes' | 'no';
 
 export type LoyaltyMode = 'visit' | 'cagnotte';
@@ -98,7 +99,7 @@ export interface Merchant {
   team_demo_requested_at: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
-  billing_interval: 'monthly' | 'annual';
+  billing_interval: BillingInterval;
   billing_period_start: string | null;
   subscription_status: SubscriptionStatus;
   past_due_since: string | null;

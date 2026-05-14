@@ -3,15 +3,15 @@
 import { useTranslations } from 'next-intl';
 import { Gift } from 'lucide-react';
 
-type BillingInterval = 'monthly' | 'annual';
+type BillingInterval = 'monthly' | 'semestrial';
 
 interface BillingToggleProps {
   value: BillingInterval;
   onChange: (v: BillingInterval) => void;
-  annualSavingsPct: string;
+  semestrialSavingsPct: string;
 }
 
-export default function BillingToggle({ value, onChange, annualSavingsPct }: BillingToggleProps) {
+export default function BillingToggle({ value, onChange, semestrialSavingsPct }: BillingToggleProps) {
   const t = useTranslations('subscription');
   return (
     <div className="flex justify-center">
@@ -29,21 +29,21 @@ export default function BillingToggle({ value, onChange, annualSavingsPct }: Bil
         </button>
         <button
           type="button"
-          onClick={() => onChange('annual')}
+          onClick={() => onChange('semestrial')}
           className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-            value === 'annual'
+            value === 'semestrial'
               ? 'bg-gray-900 text-white shadow-sm'
               : 'text-gray-500 hover:text-gray-900'
           }`}
         >
-          {t('annual')}
+          {t('semestrial')}
           <span className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${
-            value === 'annual'
+            value === 'semestrial'
               ? 'bg-emerald-400/20 text-emerald-200'
               : 'bg-emerald-50 text-emerald-700'
           }`}>
             <Gift className="w-2.5 h-2.5" />
-            {annualSavingsPct}
+            {semestrialSavingsPct}
           </span>
         </button>
       </div>

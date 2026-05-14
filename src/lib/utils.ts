@@ -298,11 +298,11 @@ export interface TrialStatus {
 const PRICE_CHANGE_DATE = '2026-04-05';
 
 /**
- * Monthly equivalent price for a merchant. Handles both the April 2026 pricing split
- * AND the 2 tiers (Fidélité 19€ / Tout-en-un 24€).
+ * Monthly equivalent price for a merchant. Handles le pricing split d'avril 2026,
+ * les 2 tiers (Fidélité 19€ / Tout-en-un 24€), et les 3 cycles (mensuel, 6 mois, annuel).
  * - Legacy merchants (billing_period_start before split) → 19€/190€ (tarif historique)
- * - Post-split Fidélité → 19€/190€
- * - Post-split Tout-en-un (default) → 24€/240€
+ * - Post-split Fidélité → 19€/95€/190€
+ * - Post-split Tout-en-un (default) → 24€/120€/240€
  */
 export function getMerchantMonthlyPrice(merchant: {
   billing_interval: string | null;
@@ -312,10 +312,10 @@ export function getMerchantMonthlyPrice(merchant: {
   const isLegacy = merchant.billing_period_start && merchant.billing_period_start < PRICE_CHANGE_DATE;
   const isFidelity = !isLegacy && merchant.plan_tier === 'fidelity';
   const annualTotal = isLegacy || isFidelity ? 190 : 240;
+  const semestrialTotal = isFidelity ? 95 : 120;
   const monthly = isLegacy || isFidelity ? 19 : 24;
-  if (merchant.billing_interval === 'annual') {
-    return Math.round(annualTotal / 12 * 100) / 100;
-  }
+  if (merchant.billing_interval === 'annual') return Math.round(annualTotal / 12 * 100) / 100;
+  if (merchant.billing_interval === 'semestrial') return Math.round(semestrialTotal / 6 * 100) / 100;
   return monthly;
 }
 

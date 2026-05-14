@@ -11,7 +11,7 @@ import { Link } from '@/i18n/navigation';
 import { Check, Flower2, Star } from 'lucide-react';
 import { PLAN_PRICES } from '@/lib/landing-pricing';
 
-type Billing = 'monthly' | 'annual';
+type Billing = 'monthly' | 'semestrial';
 
 interface Feature {
   key: string;
@@ -48,17 +48,18 @@ const PLANS = {
 export function PricingSection() {
   const { ref, isInView } = useInView();
   const t = useTranslations('pricing');
-  const [billing, setBilling] = useState<Billing>('monthly');
+  const [billing, setBilling] = useState<Billing>('semestrial');
 
-  const fidelityPrice = billing === 'monthly' ? PLANS.fidelity.monthly : PLANS.fidelity.monthlyEquiv;
-  const allInPrice = billing === 'monthly' ? PLANS.all_in.monthly : PLANS.all_in.monthlyEquiv;
+  // 6 mois : monthlyEquiv = total / 6 (95/6 ≈ 16€ Fidélité, 120/6 = 20€ Tout-en-un).
+  const fidelityPrice = billing === 'monthly' ? PLANS.fidelity.monthly : Math.round(PLANS.fidelity.semestrial / 6);
+  const allInPrice = billing === 'monthly' ? PLANS.all_in.monthly : Math.round(PLANS.all_in.semestrial / 6);
 
-  // Ligne SMS dynamique : 100 ou 120 mis en valeur selon billing — effet upsell visible.
+  // Ligne SMS dynamique : 100 mensuel / 110 6 mois — effet upsell visible.
   const smsAccent = (chunks: ReactNode) => (
     <span className="font-bold text-indigo-600">{chunks}</span>
   );
-  const smsFeatureNode = billing === 'annual'
-    ? t.rich('allInFeature3Annual', { accent: smsAccent })
+  const smsFeatureNode = billing === 'semestrial'
+    ? t.rich('allInFeature3Semestrial', { accent: smsAccent })
     : t.rich('allInFeature3Monthly', { accent: smsAccent });
   const allInFeatures: Feature[] = PLANS.all_in.features.map((f) =>
     f.key === 'allInFeature3' ? { ...f, node: smsFeatureNode } : f
@@ -115,10 +116,10 @@ export function PricingSection() {
             </button>
             <button
               type="button"
-              onClick={() => setBilling('annual')}
-              className={`relative z-10 px-5 py-2 text-sm font-semibold rounded-full transition-colors ${billing === 'annual' ? 'text-white' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setBilling('semestrial')}
+              className={`relative z-10 px-5 py-2 text-sm font-semibold rounded-full transition-colors ${billing === 'semestrial' ? 'text-white' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              {t('billingAnnual')}
+              {t('billingSemestrial')}
             </button>
             <span
               className={`absolute top-1 bottom-1 w-[calc(50%-0.25rem)] rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 transition-transform duration-300 ${billing === 'monthly' ? 'translate-x-0' : 'translate-x-full'}`}
@@ -147,11 +148,11 @@ export function PricingSection() {
                 <span className="text-base font-semibold text-gray-400">{t('perMonth')}</span>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                {billing === 'annual' ? t('monthlyEquivAnnual', { amount: PLANS.fidelity.monthlyEquiv }) : t('perDayFidelity')}
+                {billing === 'semestrial' ? t('monthlyEquivSemestrial', { amount: PLANS.fidelity.semestrial }) : t('perDayFidelity')}
               </p>
-              {billing === 'annual' && (
+              {billing === 'semestrial' && (
                 <span className="inline-block mt-2 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">
-                  {t('annualSavingFidelity')}
+                  {t('semestrialSavingFidelity')}
                 </span>
               )}
             </div>
@@ -196,12 +197,12 @@ export function PricingSection() {
                 <span className="text-base font-semibold text-gray-400">{t('perMonth')}</span>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                {billing === 'annual' ? t('monthlyEquivAnnual', { amount: PLANS.all_in.monthlyEquiv }) : t('perDayAllIn')}
+                {billing === 'semestrial' ? t('monthlyEquivSemestrial', { amount: PLANS.all_in.semestrial }) : t('perDayAllIn')}
               </p>
               <p className="text-[11px] text-gray-400 mt-0.5">{t('vsBooksy')}</p>
-              {billing === 'annual' && (
+              {billing === 'semestrial' && (
                 <span className="inline-block mt-2 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">
-                  {t('annualSavingAllIn')}
+                  {t('semestrialSavingAllIn')}
                 </span>
               )}
             </div>

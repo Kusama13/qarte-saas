@@ -2,13 +2,16 @@
  * Source unique des tarifs publics affiches sur les pages marketing
  * (PricingSection, page Ambassadeur, comparatifs, etc).
  *
- * Le prix mensuel "annuel" (`monthlyEquiv`) est l'equivalent par mois quand
- * le client paye en annuel — utilise pour l'argument "Y €/mois si tu prends a l'annee".
+ * Le prix mensuel "semestrial" (`monthlyEquiv`) est l'equivalent par mois quand
+ * le client paye en 6 mois — utilise pour l'argument "Y €/mois si tu prends 6 mois".
+ *
+ * `annual` reste exposé pour les comparatifs historiques (CGV section abonnés
+ * legacy) mais n'est plus proposé aux nouveaux merchants depuis mai 2026.
  */
 
 export const PLAN_PRICES = {
-  fidelity: { monthly: 19, annual: 190, monthlyEquiv: 16 },
-  all_in: { monthly: 24, annual: 240, monthlyEquiv: 20 },
+  fidelity: { monthly: 19, semestrial: 95, monthlyEquiv: 16, annual: 190 },
+  all_in: { monthly: 24, semestrial: 120, monthlyEquiv: 20, annual: 240 },
 } as const;
 
 /** Commission ambassadeur appliquee sur le prix mensuel paye par le marchand. */

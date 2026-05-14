@@ -1,11 +1,11 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Check, Gem, CreditCard } from 'lucide-react';
+import { Check, Gem } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 type PlanTier = 'fidelity' | 'all_in';
-type BillingInterval = 'monthly' | 'annual';
+type BillingInterval = 'monthly' | 'semestrial';
 
 interface PlanCardProps {
   tier: PlanTier;
@@ -13,13 +13,12 @@ interface PlanCardProps {
   priceDisplay: string;
   priceSep: string;
   totalLabel: string;
-  annualOriginal?: string;
+  /** Référence "non-engagée" sur la même période (mensuel × 6 pour le 6 mois) — affichée barrée. */
+  originalRef?: string;
   persona: string;
   features: ReactNode[];
   inheritsFromFidelity?: boolean;
   recommended?: boolean;
-  nfcIncluded?: boolean;
-  onClickNfc?: () => void;
   ctaLabel: string;
   onSelect: () => void;
   loading?: boolean;
@@ -32,13 +31,11 @@ export default function PlanCard({
   priceDisplay,
   priceSep,
   totalLabel,
-  annualOriginal,
+  originalRef,
   persona,
   features,
   inheritsFromFidelity,
   recommended,
-  nfcIncluded,
-  onClickNfc,
   ctaLabel,
   onSelect,
   loading,
@@ -76,9 +73,9 @@ export default function PlanCard({
           <span className="text-xl font-bold text-slate-900 tabular-nums">{priceSep}{decPart}</span>
           <span className="text-sm text-slate-400 ml-1">{t('perMonth')}</span>
         </div>
-        {interval === 'annual' && annualOriginal && (
+        {interval === 'semestrial' && originalRef && (
           <div className="mt-1.5 flex items-center gap-2 flex-wrap text-xs text-slate-400">
-            <span className="line-through tabular-nums">{annualOriginal}</span>
+            <span className="line-through tabular-nums">{originalRef}</span>
             <span className="font-bold text-slate-700 tabular-nums">→ {totalLabel}</span>
           </div>
         )}
@@ -105,19 +102,6 @@ export default function PlanCard({
             <span className="text-[13px] text-slate-700 leading-snug">{feature}</span>
           </li>
         ))}
-        {nfcIncluded && interval === 'annual' && (
-          <li>
-            <button
-              type="button"
-              onClick={onClickNfc}
-              className="w-full flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 active:scale-[0.99] touch-manipulation transition-all text-left"
-            >
-              <CreditCard className="w-4 h-4 text-indigo-600 shrink-0" strokeWidth={2.25} />
-              <span className="text-[12px] font-bold text-indigo-700 flex-1">{t('nfcIncluded')}</span>
-              <span className="text-[10px] text-indigo-400">i</span>
-            </button>
-          </li>
-        )}
       </ul>
 
       <button

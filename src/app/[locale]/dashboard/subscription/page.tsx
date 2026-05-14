@@ -23,7 +23,9 @@ import { Button, Modal } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { getTrialStatus, formatDate } from '@/lib/utils';
 import { isPastDueBlocked } from '@/lib/merchant-access';
-import { isLegacyMerchant } from '@/lib/plan-tiers';
+import { isLegacyMerchant, normalizeBillingInterval } from '@/lib/plan-tiers';
+import { PLAN_PRICES } from '@/lib/landing-pricing';
+import type { BillingInterval } from '@/types';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
@@ -40,58 +42,85 @@ interface SubscriptionInfo {
   unit_amount: number; // cents
   currency: string;
   interval: 'month' | 'year';
+  interval_count: number;
 }
 
 type PlanTier = 'fidelity' | 'all_in';
-type BillingInterval = 'monthly' | 'annual';
+/** Picker UI : seuls Mensuel et 6 mois sont proposés aux nouveaux merchants depuis mai 2026.
+ *  Les annuels existants (BillingInterval='annual') ne pickent jamais — ils voient uniquement PaidStatusCard. */
+type PickerInterval = Exclude<BillingInterval, 'annual'>;
 
-// Prix par tier × billing.
-// priceMonthlyEquivalent = ce qu'on affiche en big number (équivalent mensuel pour l'annuel).
-// label = affiché en petit sous le prix annuel.
-const TIER_PRICES: Record<PlanTier, Record<BillingInterval, { monthlyEquivalent: number; total: number }>> = {
+const SMS_FEATURE_KEY: Record<BillingInterval, 'featureSmsMonthly' | 'featureSmsSemestrial' | 'featureSmsAnnual'> = {
+  monthly: 'featureSmsMonthly',
+  semestrial: 'featureSmsSemestrial',
+  annual: 'featureSmsAnnual',
+};
+
+const FALLBACK_PLAN_PRICE: Record<BillingInterval, number> = {
+  monthly: 24,
+  semestrial: 120,
+  annual: 240,
+};
+
+const TIER_PRICE_LABELS: Record<PlanTier, Record<BillingInterval, string>> = {
+  fidelity: { monthly: '19€/mois', semestrial: '95€/6 mois', annual: '190€/an' },
+  all_in: { monthly: '24€/mois', semestrial: '120€/6 mois', annual: '240€/an' },
+};
+
+const TIER_PRICES: Record<PlanTier, Record<PickerInterval, { monthlyEquivalent: number; total: number }>> = {
   fidelity: {
     monthly: { monthlyEquivalent: 19, total: 19 },
-    annual: { monthlyEquivalent: 190 / 12, total: 190 },
+    semestrial: { monthlyEquivalent: 95 / 6, total: 95 },
   },
   all_in: {
     monthly: { monthlyEquivalent: 24, total: 24 },
-    annual: { monthlyEquivalent: 240 / 12, total: 240 },
+    semestrial: { monthlyEquivalent: 120 / 6, total: 120 },
   },
 };
 
-// Retourne l'affichage formaté du prix (priceDisplay, sep, daily, label, annualOriginal)
-function buildPlan(tier: PlanTier, interval: BillingInterval, locale: string) {
+function intervalSuffixFor(interval: BillingInterval, locale: string): string {
+  if (interval === 'annual') return locale === 'en' ? '/yr' : '/an';
+  if (interval === 'semestrial') return locale === 'en' ? '/6mo' : '/6 mois';
+  return locale === 'en' ? '/mo' : '/mois';
+}
+
+// Retourne l'affichage formaté du prix (priceDisplay, sep, daily, label, originalRef, savingsPct).
+// `originalRef` = équivalent "non-engagé" sur la même période (mensuel × 6) pour mettre en valeur l'économie.
+function buildPlan(tier: PlanTier, interval: PickerInterval, locale: string) {
   const { monthlyEquivalent, total } = TIER_PRICES[tier][interval];
   const sep = locale === 'en' ? '.' : ',';
   const fmt = (n: number) => n.toFixed(2).replace('.', sep);
   const currency = '€';
-  const intervalSuffix = interval === 'annual' ? (locale === 'en' ? '/yr' : '/an') : (locale === 'en' ? '/mo' : '/mois');
-  // Prix "original" pour mettre en valeur l'économie annuelle (équivalent mensuel × 12)
+  const intervalSuffix = intervalSuffixFor(interval, locale);
   const monthlyRate = TIER_PRICES[tier].monthly.total;
-  const annualOriginal = `${monthlyRate * 12} ${currency}`;
-  const savingsPct = interval === 'annual'
-    ? `-${Math.round((1 - total / (monthlyRate * 12)) * 100)}%`
+  // Pour le 6 mois : référence = 6× le tarif mensuel (ce que paierait quelqu'un sans engagement).
+  const periodMonths = interval === 'semestrial' ? 6 : 1;
+  const originalRef = `${monthlyRate * periodMonths} ${currency}`;
+  const savingsPct = interval === 'semestrial'
+    ? `-${Math.round((1 - total / (monthlyRate * periodMonths)) * 100)}%`
     : '0%';
   return {
     priceDisplay: fmt(monthlyEquivalent),
     sep,
     daily: fmt(monthlyEquivalent / 30),
     label: `${total} ${currency}${intervalSuffix}`,
-    annualOriginal,
+    originalRef,
     savingsPct,
   };
 }
 
 // Build the displayed price values from the merchant's actual Stripe subscription
-// (handles grandfathered prices: 19€/mois, 180€/an, or any custom-negotiated rate).
+// (handles grandfathered prices, semestrial 6 mois, et tarifs custom-negotiated).
 function buildPlanFromSubscription(sub: SubscriptionInfo, locale: string) {
   const amount = sub.unit_amount / 100;
   const isAnnual = sub.interval === 'year';
+  const isSemestrial = sub.interval === 'month' && sub.interval_count === 6;
   const sep = locale === 'en' ? '.' : ',';
   const isUSD = sub.currency.toUpperCase() === 'USD';
   const fmt = (n: number) => n.toFixed(2).replace('.', sep);
-  const monthlyEquivalent = isAnnual ? amount / 12 : amount;
-  const intervalSuffix = isAnnual ? (locale === 'en' ? '/yr' : '/an') : (locale === 'en' ? '/mo' : '/mois');
+  const monthlyEquivalent = isAnnual ? amount / 12 : isSemestrial ? amount / 6 : amount;
+  const interval: BillingInterval = isAnnual ? 'annual' : isSemestrial ? 'semestrial' : 'monthly';
+  const intervalSuffix = intervalSuffixFor(interval, locale);
   const label = isUSD ? `$${fmt(amount)}${intervalSuffix}` : `${fmt(amount)} €${intervalSuffix}`;
   return {
     priceDisplay: fmt(monthlyEquivalent),
@@ -108,7 +137,7 @@ export default function SubscriptionPage() {
   const locale = useLocale();
   const { merchant, loading, refetch: refetchContext } = useMerchant();
   const [subscribing, setSubscribing] = useState(false);
-  const [billingPlan, setBillingPlan] = useState<'monthly' | 'annual'>('annual');
+  const [billingPlan, setBillingPlan] = useState<PickerInterval>('semestrial');
   const [planTier, setPlanTier] = useState<'fidelity' | 'all_in'>('all_in');
   const [showChangeTierModal, setShowChangeTierModal] = useState(false);
   const [changingTier, setChangingTier] = useState(false);
@@ -118,7 +147,6 @@ export default function SubscriptionPage() {
   const [loadingPortal, setLoadingPortal] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [showNfcModal, setShowNfcModal] = useState(false);
   const [showSaveOffer, setShowSaveOffer] = useState(false);
   const [cancelReason, setCancelReason] = useState<CancellationReason | null>(null);
   const [showPromoCode, setShowPromoCode] = useState(false);
@@ -147,14 +175,11 @@ export default function SubscriptionPage() {
   const smsAccent = (chunks: React.ReactNode) => (
     <span className="font-bold text-indigo-600">{chunks}</span>
   );
-  // SMS swap selon l'intervalle (100 mensuel / 120 annuel). On l'expose en fonction
-  // pour pouvoir le builder soit selon le toggle UI (cards pricing), soit selon
-  // l'abonnement réel du merchant (récap post-souscription, cf. paidInterval ↓).
+  // SMS swap selon l'engagement (100/110/120 SMS) — utilisé pour le toggle pricing
+  // ET le récap post-souscription (annuel legacy inclus).
   const buildAllInExtras = (interval: BillingInterval): React.ReactNode[] => [
     t('featurePlanning'),
-    interval === 'annual'
-      ? t.rich('featureSmsAnnual', { accent: smsAccent })
-      : t.rich('featureSmsMonthly', { accent: smsAccent }),
+    t.rich(SMS_FEATURE_KEY[interval], { accent: smsAccent }),
     t('featureSmsCampaigns'),
     t('featureMemberPrograms'),
     t('featureGiftCards'),
@@ -165,9 +190,8 @@ export default function SubscriptionPage() {
     if (searchParams.get('success') === 'true') {
       setToast({ type: 'success', message: t('successToast') });
       setPolling(true);
-      const plan = searchParams.get('plan');
-      const price = plan === 'annual' ? 240 : 24;
-      const planType: 'monthly' | 'annual' = plan === 'annual' ? 'annual' : 'monthly';
+      const planType = normalizeBillingInterval(searchParams.get('plan'));
+      const price = FALLBACK_PLAN_PRICE[planType];
       const currency = locale === 'en' ? 'USD' : 'EUR';
       fbEvents.subscribe(price, undefined, currency);
       ttEvents.subscribe(price, planType, currency);
@@ -216,9 +240,11 @@ export default function SubscriptionPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // Sync UI billingPlan toggle avec l'intervalle réel du merchant (post-souscription)
+  // Sync UI billingPlan toggle avec l'intervalle réel du merchant (post-souscription).
+  // Les abonnés annuels legacy ne peuvent pas re-piquer "annual" via le toggle (plus proposé) ;
+  // ils voient leur status payant via PaidStatusCard et n'ont pas de toggle.
   useEffect(() => {
-    if (merchant?.billing_interval === 'annual') setBillingPlan('annual');
+    if (merchant?.billing_interval === 'semestrial') setBillingPlan('semestrial');
   }, [merchant?.billing_interval]);
 
   // Fetch payment method dès qu'on sait qu'il y a un abonnement Stripe
@@ -384,7 +410,7 @@ export default function SubscriptionPage() {
       : buildPlan(planTier, billingPlan, locale),
     [isPayingMerchant, subscriptionInfo, planTier, billingPlan, locale]
   );
-  const annualPreview = useMemo(() => buildPlan(planTier, 'annual', locale), [planTier, locale]);
+  const semestrialPreview = useMemo(() => buildPlan(planTier, 'semestrial', locale), [planTier, locale]);
 
   if (loading) {
     return (
@@ -410,13 +436,15 @@ export default function SubscriptionPage() {
   const tierDisplayName = effectiveTier === 'fidelity' ? t('tierFidelityName') : t('tierAllInName');
   const fidelityPlan = buildPlan('fidelity', billingPlan, locale);
   const allInPlan = buildPlan('all_in', billingPlan, locale);
-  const fidelityAnnual = buildPlan('fidelity', 'annual', locale);
-  const allInAnnual = buildPlan('all_in', 'annual', locale);
-  // Next billing date computed from subscription period end (if provided via Stripe info).
-  // Pour les merchants payants : intervalle réel depuis Stripe (fallback sur billing_interval DB).
-  const paidInterval: 'monthly' | 'annual' = subscriptionInfo?.interval === 'year'
+  const fidelitySemestrial = buildPlan('fidelity', 'semestrial', locale);
+  const allInSemestrial = buildPlan('all_in', 'semestrial', locale);
+  // Intervalle réel depuis Stripe (source de vérité) ; fallback sur billing_interval DB.
+  // Inclut 'annual' pour les abonnés legacy.
+  const paidInterval: BillingInterval = subscriptionInfo?.interval === 'year'
     ? 'annual'
-    : merchant?.billing_interval === 'annual' ? 'annual' : 'monthly';
+    : subscriptionInfo?.interval === 'month' && subscriptionInfo?.interval_count === 6
+      ? 'semestrial'
+      : normalizeBillingInterval(merchant?.billing_interval);
   const statusTone: 'active' | 'canceling' | 'past_due' = isCanceling ? 'canceling' : isPastDue ? 'past_due' : 'active';
   const statusLabel = isCanceling ? t('statusCanceling') : isPastDue ? t('statusPastDue') : t('statusActive');
   // Récap features post-souscription : ligne SMS basée sur l'abonnement réel (paidInterval),
@@ -507,8 +535,12 @@ export default function SubscriptionPage() {
             /* ─── Paying merchant : status card only ─── */
             <PaidStatusCard
               tierDisplayName={tierDisplayName}
-              intervalDisplayName={paidInterval === 'annual' ? t('annual') : t('monthly')}
-              priceLabel={subscriptionInfo ? buildPlanFromSubscription(subscriptionInfo, locale).label : buildPlan(effectiveTier, paidInterval, locale).label}
+              intervalDisplayName={paidInterval === 'annual' ? t('annual') : paidInterval === 'semestrial' ? t('semestrial') : t('monthly')}
+              priceLabel={subscriptionInfo
+                ? displayPlan.label
+                : paidInterval === 'annual'
+                  ? `${PLAN_PRICES[effectiveTier].annual} €${locale === 'en' ? '/yr' : '/an'}`
+                  : buildPlan(effectiveTier, paidInterval, locale).label}
               statusLabel={statusLabel}
               statusTone={statusTone}
               nextBillingDate={null}
@@ -531,7 +563,7 @@ export default function SubscriptionPage() {
                 <BillingToggle
                   value={billingPlan}
                   onChange={setBillingPlan}
-                  annualSavingsPct={allInAnnual.savingsPct}
+                  semestrialSavingsPct={allInSemestrial.savingsPct}
                 />
               </div>
 
@@ -544,11 +576,9 @@ export default function SubscriptionPage() {
                     priceDisplay={fidelityPlan.priceDisplay}
                     priceSep={fidelityPlan.sep}
                     totalLabel={fidelityPlan.label}
-                    annualOriginal={billingPlan === 'annual' ? fidelityAnnual.annualOriginal : undefined}
+                    originalRef={billingPlan === 'semestrial' ? fidelitySemestrial.originalRef : undefined}
                     persona={t('tierFidelityPersona')}
                     features={fidelityFeatures}
-                    nfcIncluded
-                    onClickNfc={() => setShowNfcModal(true)}
                     ctaLabel={t('chooseFidelityCta')}
                     onSelect={() => handleSubscribe('fidelity')}
                     loading={subscribing && planTier === 'fidelity'}
@@ -562,13 +592,11 @@ export default function SubscriptionPage() {
                     priceDisplay={allInPlan.priceDisplay}
                     priceSep={allInPlan.sep}
                     totalLabel={allInPlan.label}
-                    annualOriginal={billingPlan === 'annual' ? allInAnnual.annualOriginal : undefined}
+                    originalRef={billingPlan === 'semestrial' ? allInSemestrial.originalRef : undefined}
                     persona={t('tierAllInPersona')}
                     features={allInExtrasFeatures}
                     inheritsFromFidelity
                     recommended
-                    nfcIncluded
-                    onClickNfc={() => setShowNfcModal(true)}
                     ctaLabel={t('startAllInCta')}
                     onSelect={() => handleSubscribe('all_in')}
                     loading={subscribing && planTier === 'all_in'}
@@ -690,14 +718,14 @@ export default function SubscriptionPage() {
                       {t('monthly')}
                     </button>
                     <button
-                      onClick={() => setBillingPlan('annual')}
+                      onClick={() => setBillingPlan('semestrial')}
                       className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
-                        billingPlan === 'annual'
+                        billingPlan === 'semestrial'
                           ? 'bg-white text-gray-900 shadow-sm'
                           : 'text-gray-500'
                       }`}
                     >
-                      {t('annual')} <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1 py-0.5 rounded-full">{t('recommended')}</span> <span className="text-emerald-600">{annualPreview.savingsPct}</span>
+                      {t('semestrial')} <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1 py-0.5 rounded-full">{t('recommended')}</span> <span className="text-emerald-600">{semestrialPreview.savingsPct}</span>
                     </button>
                   </div>
                   <Button
@@ -705,7 +733,7 @@ export default function SubscriptionPage() {
                     onClick={() => handleSubscribe()}
                     loading={subscribing}
                   >
-                    {t('subscribeCta', { plan: billingPlan === 'annual' ? t('annual').toLowerCase() : t('monthly').toLowerCase() })}
+                    {t('subscribeCta', { plan: billingPlan === 'semestrial' ? t('semestrial').toLowerCase() : t('monthly').toLowerCase() })}
                   </Button>
                 </div>
               ) : isCanceled ? (
@@ -755,10 +783,8 @@ export default function SubscriptionPage() {
           {(['fidelity', 'all_in'] as const).map(tier => {
             const isCurrent = merchant?.plan_tier === tier;
             const isDowngrade = merchant?.plan_tier === 'all_in' && tier === 'fidelity';
-            const interval = merchant?.billing_interval === 'annual' ? 'annual' : 'monthly';
-            const price = tier === 'fidelity'
-              ? (interval === 'annual' ? '190€/an' : '19€/mois')
-              : (interval === 'annual' ? '240€/an' : '24€/mois');
+            const interval = normalizeBillingInterval(merchant?.billing_interval);
+            const price = TIER_PRICE_LABELS[tier][interval];
             return (
               <button
                 key={tier}
@@ -791,20 +817,6 @@ export default function SubscriptionPage() {
           })}
 
           <p className="text-[11px] text-gray-400 text-center">{t('changeTierProrationNote')}</p>
-        </div>
-      </Modal>
-
-      {/* NFC explanation modal */}
-      <Modal isOpen={showNfcModal} onClose={() => setShowNfcModal(false)} size="sm">
-        <div className="text-center">
-          <img
-            src="/images/carte-nfc-qarte.png"
-            alt={t('nfcModalTitle')}
-            className="w-48 mx-auto rounded-2xl shadow-lg mb-4"
-          />
-          <h3 className="text-lg font-bold text-gray-900 mb-2">{t('nfcModalTitle')}</h3>
-          <p className="text-sm text-gray-500 leading-relaxed">{t('nfcModalDesc')}</p>
-          <p className="text-xs text-gray-400 mt-3">{t('nfcModalDelivery')}</p>
         </div>
       </Modal>
 

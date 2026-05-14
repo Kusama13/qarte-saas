@@ -79,13 +79,15 @@ function trackTTEvent(eventName: string, params?: Record<string, any>) {
 }
 
 // Qarte SaaS content descriptor
-function qarteContent(plan?: 'monthly' | 'annual') {
+const PLAN_CONTENT: Record<'monthly' | 'semestrial' | 'annual', { content_id: string; content_name: string }> = {
+  monthly: { content_id: 'qarte_pro', content_name: 'Qarte Pro' },
+  semestrial: { content_id: 'qarte_pro_semestrial', content_name: 'Qarte Pro 6 mois' },
+  annual: { content_id: 'qarte_pro_annual', content_name: 'Qarte Pro Annuel' },
+};
+
+function qarteContent(plan: 'monthly' | 'semestrial' | 'annual' = 'monthly') {
   return {
-    contents: [{
-      content_id: plan === 'annual' ? 'qarte_pro_annual' : 'qarte_pro',
-      content_type: 'product',
-      content_name: plan === 'annual' ? 'Qarte Pro Annuel' : 'Qarte Pro',
-    }],
+    contents: [{ ...PLAN_CONTENT[plan], content_type: 'product' }],
   };
 }
 
@@ -109,7 +111,7 @@ export const ttEvents = {
       value: 0,
       currency,
     }),
-  subscribe: (value: number, plan: 'monthly' | 'annual' = 'monthly', currency: string = 'EUR') =>
+  subscribe: (value: number, plan: 'monthly' | 'semestrial' | 'annual' = 'monthly', currency: string = 'EUR') =>
     trackTTEvent('Subscribe', {
       ...qarteContent(plan),
       value,

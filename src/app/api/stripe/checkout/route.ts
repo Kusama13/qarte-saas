@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
-import { stripe, PLAN, PLAN_ANNUAL, PLAN_EN, PLAN_ANNUAL_EN, PLAN_FIDELITY, PLAN_FIDELITY_ANNUAL } from '@/lib/stripe';
-import type { PlanTier } from '@/types';
+import { stripe, getPriceId } from '@/lib/stripe';
+import type { BillingInterval, PlanTier } from '@/types';
 import logger from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
@@ -18,11 +18,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse plan preference from body
-    let planChoice: 'monthly' | 'annual' = 'monthly';
+    let planChoice: BillingInterval = 'monthly';
     let tierChoice: PlanTier = 'all_in';
     try {
       const body = await request.json();
       if (body.plan === 'annual') planChoice = 'annual';
+      else if (body.plan === 'semestrial') planChoice = 'semestrial';
       if (body.tier === 'fidelity') tierChoice = 'fidelity';
     } catch {
       // No body or invalid JSON = default to monthly all_in
@@ -42,20 +43,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Resolve price ID based on tier + merchant locale (EUR for FR, USD for EN — Fidelity is FR/EUR only)
-    const isEN = merchant.locale === 'en';
-    let monthlyPlan, annualPlan;
-    if (tierChoice === 'fidelity') {
-      // Fidelity has no EN price set (FR/BE/CH only); fall back to all_in EN if EN merchant asks for it
-      monthlyPlan = isEN ? PLAN_EN : PLAN_FIDELITY;
-      annualPlan = isEN ? PLAN_ANNUAL_EN : PLAN_FIDELITY_ANNUAL;
-    } else {
-      monthlyPlan = isEN ? PLAN_EN : PLAN;
-      annualPlan = isEN ? PLAN_ANNUAL_EN : PLAN_ANNUAL;
-    }
-    const selectedPriceId = planChoice === 'annual' && annualPlan.priceId
-      ? annualPlan.priceId
-      : monthlyPlan.priceId;
+    const selectedPriceId = getPriceId(tierChoice, planChoice, merchant.locale === 'en' ? 'en' : 'fr');
 
     if (!selectedPriceId) {
       return NextResponse.json(

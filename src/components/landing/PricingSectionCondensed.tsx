@@ -49,8 +49,8 @@ export function PricingSectionCondensed() {
               <span className="text-sm font-semibold text-gray-400">{t('perMonth')}</span>
             </div>
             <div className="mb-5 flex items-center gap-2 flex-wrap">
-              <p className="text-sm text-gray-600">{t('condensedFidelityAnnual')}</p>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 uppercase tracking-wider">−2 mois offerts</span>
+              <p className="text-sm text-gray-600">{t('condensedFidelitySemestrial')}</p>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 uppercase tracking-wider">−1 mois offert</span>
             </div>
 
             <ul className="space-y-2.5 mb-6 flex-1">
@@ -97,8 +97,8 @@ export function PricingSectionCondensed() {
               <span className="text-sm font-semibold text-gray-400">{t('perMonth')}</span>
             </div>
             <div className="mb-5 flex items-center gap-2 flex-wrap">
-              <p className="text-sm text-gray-600">{t('condensedAllInAnnual')}</p>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 uppercase tracking-wider">−2 mois offerts</span>
+              <p className="text-sm text-gray-600">{t('condensedAllInSemestrial')}</p>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 uppercase tracking-wider">−1 mois offert</span>
             </div>
 
             <ul className="space-y-2.5 mb-6 flex-1">

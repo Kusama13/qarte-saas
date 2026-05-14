@@ -4,7 +4,7 @@ import { stripe } from '@/lib/stripe';
 import logger from '@/lib/logger';
 
 type CardInfo = { brand: string; last4: string; exp_month: number; exp_year: number };
-type SubscriptionInfo = { unit_amount: number; currency: string; interval: 'month' | 'year' };
+type SubscriptionInfo = { unit_amount: number; currency: string; interval: 'month' | 'year'; interval_count: number };
 
 function buildCard(card: { brand: string; last4: string; exp_month: number; exp_year: number }): CardInfo {
   return { brand: card.brand, last4: card.last4, exp_month: card.exp_month, exp_year: card.exp_year };
@@ -57,6 +57,7 @@ export async function GET() {
         unit_amount: subItem.price.unit_amount,
         currency: subItem.price.currency,
         interval,
+        interval_count: subItem.price.recurring?.interval_count ?? 1,
       };
     }
 

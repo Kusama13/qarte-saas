@@ -15,8 +15,10 @@ Salons de coiffure, barbiers, instituts de beauté, ongleries, spas, esthéticie
 - Interconnexion : le client qui réserve reçoit automatiquement sa carte de fidélité
 
 ## Tarif
-24 EUR/mois ou 240 EUR/an (2 mois offerts) — essai gratuit 7 jours, sans engagement, 0 % commission.
-100 SMS transactionnels inclus/mois (0,075 EUR/SMS au-delà). Carte NFC en option à 20 EUR.
+Tout-en-un : 24 EUR/mois (sans engagement) ou 120 EUR/6 mois (engagement 6 mois, un mois offert — soit 20 EUR/mois).
+Fidélité : 19 EUR/mois (sans engagement) ou 95 EUR/6 mois (engagement 6 mois, un mois offert — soit ~16 EUR/mois).
+Essai gratuit 7 jours, 0 % commission.
+100 SMS transactionnels inclus/mois (110 sur 6 mois, 0,075 EUR/SMS au-delà). Carte NFC en option à 20 EUR.
 
 ## Preuve sociale
 400+ professionnels de la beauté utilisent Qarte au quotidien. Note moyenne 5,0/5 sur Google.

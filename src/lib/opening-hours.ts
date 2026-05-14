@@ -20,3 +20,20 @@ export function hasValidOpeningHours(
     (h) => !!h && typeof h === 'object' && 'open' in h && 'close' in h && !!h.open && !!h.close,
   );
 }
+
+type OpeningSlot = { open: string; close: string; break_start?: string; break_end?: string };
+
+/**
+ * True si un slot ouvert respecte open < close, et si pause renseignée :
+ * open < break_start < break_end < close. Comparaison string HH:MM (lex == chrono).
+ */
+export function isValidOpeningSlot(slot: OpeningSlot | null | undefined): boolean {
+  if (!slot) return true;
+  if (slot.open >= slot.close) return false;
+  if (slot.break_start && slot.break_end) {
+    if (slot.break_start <= slot.open) return false;
+    if (slot.break_end >= slot.close) return false;
+    if (slot.break_start >= slot.break_end) return false;
+  }
+  return true;
+}

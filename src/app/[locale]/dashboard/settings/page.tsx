@@ -503,7 +503,7 @@ export default function SettingsPage() {
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-0.5">{t('subscriptionLabel')}</p>
                   <p className="text-sm font-bold text-gray-900">
-                    {merchant?.billing_interval === 'annual' ? t('proAnnual') : t('proMonthly')}
+                    {merchant?.billing_interval === 'annual' ? t('proAnnual') : merchant?.billing_interval === 'semestrial' ? t('proSemestrial') : t('proMonthly')}
                     {merchant?.subscription_status === 'canceling' && (
                       <span className="ml-2 text-[11px] font-semibold text-orange-500">· {t('canceling')}</span>
                     )}

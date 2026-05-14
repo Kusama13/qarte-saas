@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import type { BillingInterval, PlanTier } from '@/types';
 
 if (!process.env.STRIPE_SECRET_KEY) {
   console.warn('STRIPE_SECRET_KEY is not set — Stripe features will be unavailable');
@@ -18,6 +19,20 @@ export const PLAN = {
   interval: 'month' as const,
 };
 
+// Plan 6 mois Tout-en-un — engagement ferme 6 mois, 1 mois offert (5×24 = 120€).
+// Stripe : interval='month', interval_count=6 (configuré côté dashboard Stripe).
+export const PLAN_SEMESTRIAL = {
+  name: 'Tout-en-un 6 mois',
+  tier: 'all_in' as const,
+  price: 120,
+  monthlyEquivalent: 20,
+  priceId: (process.env.STRIPE_PRICE_ID_SEMESTRIAL || '').trim(),
+  interval: 'month' as const,
+  intervalCount: 6 as const,
+};
+
+// Plan annuel — legacy, plus proposé aux nouveaux merchants depuis mai 2026.
+// Conservé pour reconnaitre les abonnés existants côté webhook.
 export const PLAN_ANNUAL = {
   name: 'Tout-en-un Annuel',
   tier: 'all_in' as const,
@@ -36,6 +51,18 @@ export const PLAN_FIDELITY = {
   interval: 'month' as const,
 };
 
+// Plan 6 mois Fidélité — engagement ferme 6 mois, 1 mois offert (5×19 = 95€).
+export const PLAN_FIDELITY_SEMESTRIAL = {
+  name: 'Fidélité 6 mois',
+  tier: 'fidelity' as const,
+  price: 95,
+  monthlyEquivalent: 16,
+  priceId: (process.env.STRIPE_PRICE_FIDELITY_SEMESTRIAL || '').trim(),
+  interval: 'month' as const,
+  intervalCount: 6 as const,
+};
+
+// Fidélité annuel — legacy, plus proposé.
 export const PLAN_FIDELITY_ANNUAL = {
   name: 'Fidélité Annuel',
   tier: 'fidelity' as const,
@@ -68,3 +95,21 @@ export const PLAN_ANNUAL_EN = {
   interval: 'year' as const,
 };
 
+/**
+ * Resolve le price ID Stripe pour un (tier × interval × locale).
+ * EN merchants : pas de plan Fidélité ni de plan 6 mois → fallback sur l'annuel EN.
+ */
+export function getPriceId(tier: PlanTier, interval: BillingInterval, locale: 'fr' | 'en' = 'fr'): string {
+  const isEN = locale === 'en';
+  if (isEN) {
+    return interval === 'monthly' ? PLAN_EN.priceId : PLAN_ANNUAL_EN.priceId;
+  }
+  if (tier === 'fidelity') {
+    if (interval === 'annual') return PLAN_FIDELITY_ANNUAL.priceId;
+    if (interval === 'semestrial') return PLAN_FIDELITY_SEMESTRIAL.priceId;
+    return PLAN_FIDELITY.priceId;
+  }
+  if (interval === 'annual') return PLAN_ANNUAL.priceId;
+  if (interval === 'semestrial') return PLAN_SEMESTRIAL.priceId;
+  return PLAN.priceId;
+}

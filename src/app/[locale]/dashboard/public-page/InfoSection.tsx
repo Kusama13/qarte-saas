@@ -15,6 +15,7 @@ import { AddressAutocomplete, type AddressSuggestion } from '@/components/ui/Add
 import { getSupabase } from '@/lib/supabase';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { formatPhoneNumber, toLocalPhone, PHONE_COUNTRIES, isValidUrl, normalizeUrl } from '@/lib/utils';
+import { isValidOpeningSlot } from '@/lib/opening-hours';
 import type { Merchant, MerchantCountry } from '@/types';
 
 interface InfoSectionProps {
@@ -100,7 +101,10 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
 
   const addressInvalid = !!address.trim() && !addressCoords;
   const bookingUrlInvalid = !!bookingUrl.trim() && !isValidUrl(bookingUrl);
-  const canSave = !addressInvalid && !bookingUrlInvalid;
+  const invalidDayKeys = hoursEnabled
+    ? Object.entries(openingHours).filter(([, slot]) => slot && !isValidOpeningSlot(slot)).map(([key]) => key)
+    : [];
+  const canSave = !addressInvalid && !bookingUrlInvalid && invalidDayKeys.length === 0;
 
   const handleSave = () => {
     if (!canSave) return;
@@ -231,6 +235,8 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
               const slot = openingHours[key];
               const isOpen = slot !== null;
               const hasBreak = isOpen && !!slot.break_start && !!slot.break_end;
+              const isInvalid = invalidDayKeys.includes(key);
+              const invalidRing = isInvalid ? '!border-red-300 !ring-1 !ring-red-200' : '';
               return (
                 <div key={key} className="flex items-start gap-2">
                   <button
@@ -250,14 +256,14 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
                       <div className="flex items-center gap-1.5">
                         <input type="time" value={slot.open}
                           onChange={(e) => setOpeningHours(prev => ({ ...prev, [key]: { ...prev[key]!, open: e.target.value } }))}
-                          className="input h-8 text-xs w-[100px]" />
+                          className={`input h-8 text-xs w-[100px] ${invalidRing}`} />
                         <span className="text-gray-400 text-xs">&mdash;</span>
                         <input type="time" value={hasBreak ? slot.break_start! : slot.close}
                           onChange={(e) => setOpeningHours(prev => ({
                             ...prev,
                             [key]: { ...prev[key]!, ...(hasBreak ? { break_start: e.target.value } : { close: e.target.value }) },
                           }))}
-                          className="input h-8 text-xs w-[100px]" />
+                          className={`input h-8 text-xs w-[100px] ${invalidRing}`} />
                         {!hasBreak && (
                           <button type="button"
                             onClick={() => setOpeningHours(prev => ({ ...prev, [key]: { ...prev[key]!, break_start: '12:00', break_end: '14:00' } }))}
@@ -270,11 +276,11 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
                         <div className="flex items-center gap-1.5">
                           <input type="time" value={slot.break_end}
                             onChange={(e) => setOpeningHours(prev => ({ ...prev, [key]: { ...prev[key]!, break_end: e.target.value } }))}
-                            className="input h-8 text-xs w-[100px]" />
+                            className={`input h-8 text-xs w-[100px] ${invalidRing}`} />
                           <span className="text-gray-400 text-xs">&mdash;</span>
                           <input type="time" value={slot.close}
                             onChange={(e) => setOpeningHours(prev => ({ ...prev, [key]: { ...prev[key]!, close: e.target.value } }))}
-                            className="input h-8 text-xs w-[100px]" />
+                            className={`input h-8 text-xs w-[100px] ${invalidRing}`} />
                           <button type="button"
                             onClick={() => setOpeningHours(prev => {
                               const { break_start, break_end, ...rest } = prev[key]!;
@@ -292,6 +298,9 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
                 </div>
               );
             })}
+            {invalidDayKeys.length > 0 && (
+              <p className="text-xs text-red-500 mt-2">{t('infoHoursOrderError')}</p>
+            )}
             <p className="text-xs text-gray-400 mt-1">{t('infoDayToggleHint')}</p>
           </div>
         )}

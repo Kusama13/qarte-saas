@@ -1,21 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createRouteHandlerSupabaseClient, getSupabaseAdmin } from '@/lib/supabase';
-import { stripe, PLAN, PLAN_ANNUAL, PLAN_FIDELITY, PLAN_FIDELITY_ANNUAL } from '@/lib/stripe';
-import { isLegacyMerchant, getSmsQuotaFor } from '@/lib/plan-tiers';
-import type { PlanTier } from '@/types';
+import { stripe, getPriceId } from '@/lib/stripe';
+import { isLegacyMerchant, getSmsQuotaFor, normalizeBillingInterval } from '@/lib/plan-tiers';
 import logger from '@/lib/logger';
 
 const bodySchema = z.object({
   tier: z.enum(['fidelity', 'all_in']),
 });
-
-function priceIdFor(tier: PlanTier, interval: 'monthly' | 'annual'): string {
-  if (tier === 'fidelity') {
-    return interval === 'annual' ? PLAN_FIDELITY_ANNUAL.priceId : PLAN_FIDELITY.priceId;
-  }
-  return interval === 'annual' ? PLAN_ANNUAL.priceId : PLAN.priceId;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,8 +51,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const interval: 'monthly' | 'annual' = merchant.billing_interval === 'annual' ? 'annual' : 'monthly';
-    const newPriceId = priceIdFor(newTier, interval);
+    const interval = normalizeBillingInterval(merchant.billing_interval);
+    const newPriceId = getPriceId(newTier, interval);
     if (!newPriceId) {
       return NextResponse.json({ error: 'Configuration prix manquante' }, { status: 500 });
     }

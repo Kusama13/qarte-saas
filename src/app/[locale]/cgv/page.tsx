@@ -60,13 +60,14 @@ function CGVContentFR() {
         <p className="text-gray-600 mt-3"><strong>Formule Fidélité</strong> — programme de fidélité digital + page professionnelle + relances et avis Google :</p>
         <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-1">
           <li><strong>Mensuel :</strong> 19€ par mois, sans engagement, renouvelable par tacite reconduction chaque mois.</li>
-          <li><strong>Annuel :</strong> 190€ par an (soit ~16€/mois), facturé en une fois, engagement ferme de douze (12) mois.</li>
+          <li><strong>6 mois :</strong> 95€ pour 6 mois (soit ~16€/mois — un mois offert), facturé en une fois, engagement ferme de six (6) mois.</li>
         </ul>
         <p className="text-gray-600 mt-3"><strong>Formule Tout-en-un</strong> — Formule Fidélité + réservation en ligne, planning et gestion des acomptes :</p>
         <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-1">
           <li><strong>Mensuel :</strong> 24€ par mois, sans engagement, renouvelable par tacite reconduction chaque mois.</li>
-          <li><strong>Annuel :</strong> 240€ par an (soit 20€/mois), facturé en une fois, engagement ferme de douze (12) mois.</li>
+          <li><strong>6 mois :</strong> 120€ pour 6 mois (soit 20€/mois — un mois offert), facturé en une fois, engagement ferme de six (6) mois.</li>
         </ul>
+        <p className="text-gray-600 mt-2 text-sm italic">Les Clients ayant souscrit avant mai 2026 à un abonnement annuel (190€/an Fidélité ou 240€/an Tout-en-un) restent soumis aux conditions de cet abonnement annuel jusqu&apos;à son terme.</p>
         <p className="text-gray-600 mt-3"><strong>Essai gratuit :</strong> un essai gratuit de 7 jours est proposé sans carte bancaire. À l&apos;issue de l&apos;essai, le Client doit souscrire une formule pour continuer à utiliser le Service.</p>
         <p className="text-gray-600 mt-3">
           Les prix indiqués s&apos;entendent hors taxes (HT). La TVA applicable au jour de la facturation (20% pour la France, taux applicable dans le pays de résidence du Client pour la Belgique et la Suisse) est ajoutée au tarif HT. Le paiement est effectué par carte bancaire via la plateforme sécurisée Stripe. Le Client peut basculer d&apos;une formule à l&apos;autre à tout moment ; un prorata est appliqué en cas d&apos;upgrade en cours de période et le changement prend effet à la prochaine échéance en cas de downgrade.
@@ -96,9 +97,13 @@ function CGVContentFR() {
         <p className="text-gray-600 mt-1">
           Le contrat est conclu pour une durée indéterminée avec une période minimale d&apos;un (1) mois, renouvelable par tacite reconduction. Le Client peut résilier à tout moment depuis son tableau de bord. La résiliation prend effet à l&apos;expiration de la période mensuelle en cours. Le Service reste accessible jusqu&apos;à la fin de la période payée.
         </p>
-        <p className="text-gray-600 font-medium mt-3">Abonnement annuel :</p>
+        <p className="text-gray-600 font-medium mt-3">Abonnement 6 mois :</p>
         <p className="text-gray-600 mt-1">
-          Le contrat est conclu pour une durée de douze (12) mois, renouvelable par tacite reconduction. Le Client peut s&apos;opposer au renouvellement en résiliant depuis son tableau de bord. Conformément à l&apos;article L215-1 du Code de la consommation, le Client sera informé par email de la possibilité de ne pas reconduire le contrat au plus tard un (1) mois avant le terme de la période en cours.
+          Le contrat est conclu pour une durée de six (6) mois, renouvelable par tacite reconduction. Le Client peut s&apos;opposer au renouvellement en résiliant depuis son tableau de bord. Conformément à l&apos;article L215-1 du Code de la consommation, le Client sera informé par email de la possibilité de ne pas reconduire le contrat au plus tard un (1) mois avant le terme de la période en cours.
+        </p>
+        <p className="text-gray-600 font-medium mt-3">Abonnement annuel (legacy) :</p>
+        <p className="text-gray-600 mt-1">
+          Pour les Clients ayant souscrit un abonnement annuel avant mai 2026, le contrat reste régi par les conditions initiales : durée de douze (12) mois, renouvelable par tacite reconduction. Information préalable au renouvellement adressée au plus tard un (1) mois avant le terme.
         </p>
         <p className="text-gray-600 font-medium mt-3">Suspension pour non-paiement :</p>
         <p className="text-gray-600 mt-1">
@@ -114,12 +119,15 @@ function CGVContentFR() {
         <p className="text-gray-600 mt-1">
           En cas de résiliation en cours de mois, le Service reste accessible jusqu&apos;à la fin de la période facturée. Aucun remboursement au prorata ne sera effectué pour la période entamée.
         </p>
-        <p className="text-gray-600 font-medium mt-3">Abonnement annuel :</p>
+        <p className="text-gray-600 font-medium mt-3">Abonnement 6 mois :</p>
         <p className="text-gray-600 mt-1">
-          L&apos;abonnement annuel est facturé en une seule fois pour l&apos;intégralité de la période de 12 mois. Les sommes versées sont acquises au Prestataire et ne donnent lieu à aucun remboursement, même partiel, en cas de résiliation anticipée à l&apos;initiative du Client. Le Service reste accessible jusqu&apos;au terme de la période annuelle payée.
+          L&apos;abonnement 6 mois est facturé en une seule fois pour l&apos;intégralité de la période de six (6) mois. Les sommes versées sont acquises au Prestataire et ne donnent lieu à aucun remboursement, même partiel, en cas de résiliation anticipée à l&apos;initiative du Client. Le Service reste accessible jusqu&apos;au terme de la période semestrielle payée.
         </p>
         <p className="text-gray-600 mt-2">
-          Le Client reconnaît que le tarif annuel constitue un tarif préférentiel consenti en contrepartie de l&apos;engagement sur la durée de 12 mois, et que la résiliation anticipée ne saurait ouvrir droit à un remboursement au prorata temporis.
+          Le Client reconnaît que le tarif 6 mois constitue un tarif préférentiel (un mois offert) consenti en contrepartie de l&apos;engagement sur la durée de 6 mois, et que la résiliation anticipée ne saurait ouvrir droit à un remboursement au prorata temporis.
+        </p>
+        <p className="text-gray-600 mt-2 text-sm italic">
+          Pour les Clients titulaires d&apos;un abonnement annuel souscrit avant mai 2026, les mêmes dispositions s&apos;appliquent à la durée de douze (12) mois initialement souscrite.
         </p>
         <p className="text-gray-600 mt-2">
           En cas de résiliation du contrat à l&apos;initiative du Prestataire pour un motif autre que la faute du Client, le Client sera remboursé au prorata temporis des sommes versées pour la période restant à courir.
@@ -252,7 +260,7 @@ function CGVContentFR() {
           15. Programme de parrainage entre commerçants
         </h2>
         <p className="text-gray-600">
-          Qarte propose un programme de parrainage permettant à tout Client disposant d&apos;un abonnement actif (mensuel ou annuel) de recommander le Service à d&apos;autres commerçants.
+          Qarte propose un programme de parrainage permettant à tout Client disposant d&apos;un abonnement actif (mensuel, 6 mois ou annuel legacy) de recommander le Service à d&apos;autres commerçants.
         </p>
         <p className="text-gray-600 font-medium mt-3">Conditions :</p>
         <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-2">
@@ -260,9 +268,9 @@ function CGVContentFR() {
           <li>Ce crédit est limité à un (1) parrainage récompensé par mois calendaire.</li>
           <li>Le crédit n&apos;est pas convertible en numéraire et ne peut donner lieu à un remboursement.</li>
         </ul>
-        <p className="text-gray-600 font-medium mt-3">Abonnement annuel :</p>
+        <p className="text-gray-600 font-medium mt-3">Abonnements engagés (6 mois ou annuel legacy) :</p>
         <p className="text-gray-600 mt-1">
-          Pour les Clients titulaires d&apos;un abonnement annuel, les crédits de parrainage s&apos;accumulent sur le solde client et sont déduits automatiquement lors du renouvellement de l&apos;abonnement.
+          Pour les Clients titulaires d&apos;un abonnement avec engagement, les crédits de parrainage s&apos;accumulent sur le solde client et sont déduits automatiquement lors du renouvellement de l&apos;abonnement.
         </p>
         <p className="text-gray-600 mt-3">
           Le Prestataire se réserve le droit de modifier ou de suspendre le programme de parrainage à tout moment, sous réserve d&apos;en informer les Clients. Les crédits déjà acquis restent valables.

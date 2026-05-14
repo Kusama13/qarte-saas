@@ -9,22 +9,35 @@ import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
 import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
+import type { BillingInterval } from '@/types';
 
 interface SubscriptionConfirmedEmailProps {
   shopName: string;
   nextBillingDate?: string;
-  billingInterval?: 'monthly' | 'annual';
+  billingInterval?: BillingInterval;
   referralCode?: string;
   /** Plan tier — change le label + les features listées (plan v2). */
   planTier?: 'fidelity' | 'all_in';
-  /** Quota SMS effectif (100 mensuel / 120 annuel non legacy). Défaut 100. */
+  /** Quota SMS effectif (100 mensuel / 110 6 mois / 120 annuel non legacy). Défaut 100. */
   smsQuota?: number;
   locale?: EmailLocale;
 }
 
-export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingInterval, referralCode, planTier = 'all_in', smsQuota = 100, locale = 'fr' }: SubscriptionConfirmedEmailProps) {
+const PLAN_LABEL_KEY = {
+  annual: 'subscriptionConfirmed.planAnnual',
+  semestrial: 'subscriptionConfirmed.planSemestrial',
+  monthly: 'subscriptionConfirmed.planMonthly',
+} as const;
+
+const NEXT_BILLING_KEY = {
+  annual: 'subscriptionConfirmed.nextBillingAnnual',
+  semestrial: 'subscriptionConfirmed.nextBillingSemestrial',
+  monthly: 'subscriptionConfirmed.nextBillingMonthly',
+} as const;
+
+export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingInterval = 'monthly', referralCode, planTier = 'all_in', smsQuota = 100, locale = 'fr' }: SubscriptionConfirmedEmailProps) {
   const t = getEmailT(locale);
-  const planLabel = billingInterval === 'annual' ? t('subscriptionConfirmed.planAnnual') : t('subscriptionConfirmed.planMonthly');
+  const planLabel = t(PLAN_LABEL_KEY[billingInterval]);
   const tierName = planTier === 'fidelity' ? t('subscriptionConfirmed.tierFidelityName') : t('subscriptionConfirmed.tierAllInName');
 
   return (
@@ -43,9 +56,7 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingI
         <Text style={confirmNote}>
           {nextBillingDate
             ? t('subscriptionConfirmed.nextBillingDate', { date: nextBillingDate })
-            : billingInterval === 'annual'
-              ? t('subscriptionConfirmed.nextBillingAnnual')
-              : t('subscriptionConfirmed.nextBillingMonthly')}
+            : t(NEXT_BILLING_KEY[billingInterval])}
         </Text>
       </Section>
 
@@ -55,6 +66,7 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingI
         </Button>
       </Section>
 
+      {/* NFC offerte uniquement pour les annuels legacy ; mensuel et 6 mois : upsell payant. */}
       {billingInterval === 'annual' ? (
         <Section style={nfcBoxAnnual}>
           <Section style={nfcImgContainer}>

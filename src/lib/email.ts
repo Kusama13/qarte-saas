@@ -626,7 +626,7 @@ export interface SubscriptionConfirmedOptions {
   to: string;
   shopName: string;
   nextBillingDate?: string;
-  billingInterval?: 'monthly' | 'annual';
+  billingInterval?: import('@/types').BillingInterval;
   locale?: EmailLocale;
   planTier?: 'fidelity' | 'all_in';
   smsQuota?: number;

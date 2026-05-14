@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
         tierBreakdown[tier]++;
         const priceCents = Math.round(getMerchantMonthlyPrice(m) * 100);
         mrrCents += priceCents;
-        if (m.billing_interval === 'annual') { annualMrrCents += priceCents; annualCount++; }
+        if (m.billing_interval === 'annual' || m.billing_interval === 'semestrial') { annualMrrCents += priceCents; annualCount++; }
         else { monthlyMrrCents += priceCents; monthlyCount++; }
       } else if (s === 'canceled') canceled++;
       else if (s === 'trial') {

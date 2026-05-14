@@ -161,7 +161,8 @@ export default function PlanningDashboard() {
 
   const [showModeChoice, setShowModeChoice] = useState(false);
   const [missingHoursBlock, setMissingHoursBlock] = useState(false);
-  const [pendingMode, setPendingMode] = useState<BookingMode | null>(null);
+  // Pré-sélection 'free' : recommandé par défaut. Si horaires manquent, guard plus bas bloque la confirmation.
+  const [pendingMode, setPendingMode] = useState<BookingMode | null>('free');
   const [homeServiceHelpOpen, setHomeServiceHelpOpen] = useState(false);
 
   // Auto-dismiss mode choice if real slots already exist
@@ -627,10 +628,12 @@ export default function PlanningDashboard() {
   const planningEnabled = !!merchant?.planning_enabled;
   const isFreeMod = bookingMode === 'free';
   const phonePlaceholder = PHONE_CONFIG[merchant?.country || 'FR'].placeholder;
+  const pendingFreeBlocked = pendingMode === 'free' && !hasValidOpeningHours(merchant?.opening_hours);
 
   const handleTogglePlanningWrapper = async (enabled: boolean) => {
-    // Only show mode choice on first activation (no slots yet and no prior mode configured)
-    if (enabled && !slots.length && !merchant?.booking_mode) setShowModeChoice(true);
+    // booking_mode a un DEFAULT 'slots' côté DB, donc on ne peut pas l'utiliser pour
+    // détecter une première activation : on se base sur planningEnabled à la place.
+    if (enabled && !planningEnabled && !slots.length) setShowModeChoice(true);
     await handleTogglePlanning(enabled);
   };
 
@@ -653,10 +656,7 @@ export default function PlanningDashboard() {
 
   const handleModeChoice = async (mode: BookingMode) => {
     if (!merchant) return;
-    if (mode === 'free' && !hasValidOpeningHours(merchant.opening_hours)) {
-      setMissingHoursBlock(true);
-      return;
-    }
+    if (mode === 'free' && !hasValidOpeningHours(merchant.opening_hours)) return;
     // Resa en ligne forcement activee a l'activation du planning. Le merchant peut
     // toujours la desactiver plus tard dans Parametres > Resa en ligne.
     setBookingMode(mode);
@@ -864,16 +864,15 @@ export default function PlanningDashboard() {
                 })}
               </div>
 
-              {missingHoursBlock && pendingMode === 'free' && (
+              {pendingFreeBlocked && (
                 <div className="mb-4 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
                   {t('modeFreeMissingHours')}{' '}
                   <a href="/dashboard/public-page" className="font-semibold underline">{t('modeFreeMissingHoursLink')}</a>
                 </div>
               )}
-
               <button
                 type="button"
-                disabled={!pendingMode}
+                disabled={!pendingMode || pendingFreeBlocked}
                 onClick={() => pendingMode && handleModeChoice(pendingMode)}
                 className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >

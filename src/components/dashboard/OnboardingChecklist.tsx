@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import {
   Check, Flower2, X, CalendarDays,
   Gift, ImageIcon, Share2, MapPin, Camera, QrCode,
-  Users, UserPlus, Cake, Calendar, ChevronDown, ArrowRight,
+  Users, UserPlus, Cake, ChevronDown, ArrowRight,
   Scissors, FileText, CreditCard, MessageSquare,
   Heart, Store, EyeOff,
 } from 'lucide-react';
@@ -118,7 +118,6 @@ export default function OnboardingChecklist() {
           visitsResult,
           photosResult,
           servicesResult,
-          slotsResult,
           bookedResult,
           smsCampaignsResult,
         ] = await Promise.all([
@@ -126,7 +125,6 @@ export default function OnboardingChecklist() {
           supabase.from('visits').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id).eq('status', 'confirmed'),
           supabase.from('merchant_photos').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
           supabase.from('merchant_services').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
-          supabase.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
           supabase.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id).not('client_name', 'is', null),
           planningHidden
             ? Promise.resolve({ count: 0 })
@@ -137,7 +135,6 @@ export default function OnboardingChecklist() {
         const visitsCount = visitsResult.count || 0;
         const photosCount = photosResult.count || 0;
         const servicesCount = servicesResult.count || 0;
-        const slotsCount = slotsResult.count || 0;
         const bookedCount = bookedResult.count || 0;
         const smsCampaignsCount = smsCampaignsResult.count || 0;
 
@@ -181,7 +178,6 @@ export default function OnboardingChecklist() {
           hideable: true,
           steps: [
             { id: 'planning', label: t('stepPlanning'), done: merchant.planning_enabled === true, href: '/dashboard/planning', icon: CalendarDays },
-            { id: 'slots', label: t('stepSlots'), done: slotsCount >= 1, href: '/dashboard/planning', icon: Calendar },
             { id: 'first_booking', label: t('stepFirstBooking'), done: bookedCount >= 1, href: '/dashboard/planning', icon: Users },
             { id: 'sms', label: t('stepSms'), done: smsCampaignsCount >= 1, href: '/dashboard/marketing', icon: MessageSquare },
           ],

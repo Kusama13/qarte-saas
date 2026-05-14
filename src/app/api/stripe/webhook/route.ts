@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server';
-import { stripe, PLAN, PLAN_ANNUAL, PLAN_FIDELITY, PLAN_FIDELITY_ANNUAL, PLAN_LEGACY_PRICE_IDS } from '@/lib/stripe';
-import { getSmsQuotaFor, isLegacyMerchant } from '@/lib/plan-tiers';
+import { stripe, PLAN, PLAN_ANNUAL, PLAN_SEMESTRIAL, PLAN_FIDELITY, PLAN_FIDELITY_ANNUAL, PLAN_FIDELITY_SEMESTRIAL, PLAN_LEGACY_PRICE_IDS } from '@/lib/stripe';
+import { getSmsQuotaFor, isLegacyMerchant, normalizeBillingInterval } from '@/lib/plan-tiers';
+import type { BillingInterval } from '@/types';
+
+const PLAN_LABEL: Record<BillingInterval, string> = {
+  monthly: 'Qarte Pro',
+  semestrial: 'Qarte Pro 6 mois',
+  annual: 'Qarte Pro Annuel',
+};
+
+const FALLBACK_AMOUNT: Record<BillingInterval, number> = {
+  monthly: 24,
+  semestrial: 120,
+  annual: 240,
+};
 import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 import logger from '@/lib/logger';
@@ -17,11 +30,18 @@ import type { SubscriptionStatus, PlanTier } from '@/types';
  *  (e.g. very old grandfathered prices, EN-only prices, custom-negotiated rates). */
 function tierFromPriceId(priceId: string | null | undefined): PlanTier | null {
   if (!priceId) return null;
-  if (priceId === PLAN_FIDELITY.priceId || priceId === PLAN_FIDELITY_ANNUAL.priceId) return 'fidelity';
-  if (priceId === PLAN.priceId || priceId === PLAN_ANNUAL.priceId) return 'all_in';
+  if (priceId === PLAN_FIDELITY.priceId || priceId === PLAN_FIDELITY_ANNUAL.priceId || priceId === PLAN_FIDELITY_SEMESTRIAL.priceId) return 'fidelity';
+  if (priceId === PLAN.priceId || priceId === PLAN_ANNUAL.priceId || priceId === PLAN_SEMESTRIAL.priceId) return 'all_in';
   // Legacy Tout-en-un prices — existing subscribers stay on these
   if (priceId === PLAN_LEGACY_PRICE_IDS.monthly || priceId === PLAN_LEGACY_PRICE_IDS.annual) return 'all_in';
   return null;
+}
+
+/** Map metadata.plan ('monthly' | 'semestrial' | 'annual') to our DB billing_interval. */
+function billingIntervalFromMetadata(plan: string | undefined | null): BillingInterval {
+  if (plan === 'annual') return 'annual';
+  if (plan === 'semestrial') return 'semestrial';
+  return 'monthly';
 }
 
 const supabase = createClient(
@@ -181,12 +201,13 @@ export async function POST(request: Request) {
 
       // Idempotent: only update if not already active (H11)
       const tierFromSession = session.metadata?.tier === 'fidelity' ? 'fidelity' : 'all_in';
+      const billingIntervalFromSession = billingIntervalFromMetadata(session.metadata?.plan);
       const { data: merchant } = await supabase
         .from('merchants')
         .update({
           subscription_status: 'active',
           plan_tier: tierFromSession,
-          billing_interval: session.metadata?.plan === 'annual' ? 'annual' : 'monthly',
+          billing_interval: billingIntervalFromSession,
           stripe_customer_id: session.customer as string,
           stripe_subscription_id: session.subscription as string,
           billing_period_start: new Date().toISOString(),
@@ -207,9 +228,9 @@ export async function POST(request: Request) {
       const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
       if (userData?.user?.email) {
         const locale = mLocale(merchant);
-        // Debit immediat — prochain prelevement dans 30j (mensuel) ou 1 an (annuel)
-        const billingInterval = session.metadata?.plan === 'annual' ? 'annual' : 'monthly';
-        const nextBillingDate: string | undefined = undefined; // Email uses generic fallback ("dans 30 jours" / "dans 1 an")
+        // Debit immediat — prochain prelevement dans 30j (mensuel), 6 mois ou 1 an
+        const billingInterval = billingIntervalFromSession;
+        const nextBillingDate: string | undefined = undefined; // Email uses generic fallback ("dans 30 jours" / "dans 6 mois" / "dans 1 an")
         const tierForQuota: 'fidelity' | 'all_in' = (merchant.plan_tier as 'fidelity' | 'all_in') || 'all_in';
         await sendSubscriptionConfirmedEmail({
           to: userData.user.email,
@@ -224,15 +245,14 @@ export async function POST(request: Request) {
         });
 
         // Facebook CAPI — Purchase event (dedup with client-side Pixel via event_id)
-        const isAnnual = session.metadata?.plan === 'annual';
         const eventId = `sub_${merchantId}_${Date.now()}`;
         const currency = getCurrencyForCountry(merchant.country);
-        const paidAmount = session.amount_total ? session.amount_total / 100 : (isAnnual ? 240 : 24);
+        const paidAmount = session.amount_total ? session.amount_total / 100 : FALLBACK_AMOUNT[billingInterval];
         await sendCapiPurchaseEvent({
           email: userData.user.email,
           value: paidAmount,
           currency,
-          contentName: isAnnual ? 'Qarte Pro Annuel' : 'Qarte Pro',
+          contentName: PLAN_LABEL[billingInterval],
           eventId,
         }).catch((err) => {
           logger.error('Failed to send CAPI purchase event', err);
@@ -390,7 +410,7 @@ export async function POST(request: Request) {
         const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
         if (userData?.user?.email) {
           const recoveryTier: 'fidelity' | 'all_in' = (merchant.plan_tier as 'fidelity' | 'all_in') || 'all_in';
-          const recoveryInterval: 'monthly' | 'annual' = merchant.billing_interval === 'annual' ? 'annual' : 'monthly';
+          const recoveryInterval = normalizeBillingInterval(merchant.billing_interval);
           await sendSubscriptionConfirmedEmail({
             to: userData.user.email,
             shopName: merchant.shop_name,
@@ -469,14 +489,17 @@ export async function POST(request: Request) {
       // Unknown prices (grandfathered, custom) leave plan_tier untouched.
       const currentPriceId = subscription.items.data[0]?.price?.id;
       const detectedTier = tierFromPriceId(currentPriceId);
-      // Sync billing_interval too — the SMS quota bonus depends on it (annual = +20 SMS/mois).
+      // Sync billing_interval too — le bonus SMS dépend de l'engagement (annuel = +20, 6 mois = +10).
+      // Stripe : interval='month' + interval_count=6 pour le plan 6 mois ; interval='year' pour annuel.
       const recurringInterval = subscription.items.data[0]?.price?.recurring?.interval;
+      const recurringIntervalCount = subscription.items.data[0]?.price?.recurring?.interval_count ?? 1;
       const updatePayload: Record<string, unknown> = {
         subscription_status: newStatus,
         updated_at: new Date().toISOString(),
       };
       if (detectedTier) updatePayload.plan_tier = detectedTier;
       if (recurringInterval === 'year') updatePayload.billing_interval = 'annual';
+      else if (recurringInterval === 'month' && recurringIntervalCount === 6) updatePayload.billing_interval = 'semestrial';
       else if (recurringInterval === 'month') updatePayload.billing_interval = 'monthly';
 
       const { data: updatedMerchant } = await supabase
