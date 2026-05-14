@@ -1115,8 +1115,8 @@ Source : `src/emails/translations/fr.ts`. Les `<strong>...</strong>` ont été c
   - priceNote: `Sans engagement • Annulable à tout moment`
   - tierIntro: `Choisis ton plan en fonction de ton usage. Tu peux changer à tout moment.`
   - tierRecommendedBadge: `Recommandé pour toi`
-  - tierAllInName: `Tout-en-un` — `24€/mois ou 240€/an` — `Programme de fidélité + planning + résa en ligne + 100 SMS marketing/mois + campagnes SMS + programmes Membres VIP + jeu concours.`
-  - tierFidelityName: `Fidélité seule` — `19€/mois ou 190€/an` — `Programme tampons/cagnotte + SMS anniversaire et parrainage envoyés automatiquement (inclus, sans quota) + vitrine SEO. Sans planning ni résa en ligne.`
+  - tierAllInName: `Tout-en-un` — `24€/mois ou 120€/6 mois` — `Programme de fidélité + planning + résa en ligne + 100 SMS marketing/mois + campagnes SMS + programmes Membres VIP + jeu concours.`
+  - tierFidelityName: `Fidélité seule` — `19€/mois ou 95€/6 mois` — `Programme tampons/cagnotte + SMS anniversaire et parrainage envoyés automatiquement (inclus, sans quota) + vitrine SEO. Sans planning ni résa en ligne.`
   - statsLabel: `Tes résultats chez {shopName}`
   - statsCustomers: `cliente{plural}`
   - statsBookings: `résa{plural} en ligne`
