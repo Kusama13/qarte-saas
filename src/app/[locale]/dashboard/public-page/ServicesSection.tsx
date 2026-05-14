@@ -19,6 +19,7 @@ import {
 import type { Merchant } from '@/types';
 import type { ServiceCategory, Service } from './types';
 import { formatCurrency } from '@/lib/utils';
+import { MAX_SERVICES_PER_MERCHANT } from '@/lib/plan-tiers';
 import { useLocale, useTranslations } from 'next-intl';
 
 interface ServicesSectionProps {
@@ -641,7 +642,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
             )}
 
             {/* Add new service */}
-            {services.length < 50 && (
+            {services.length < MAX_SERVICES_PER_MERCHANT && (
               <div className={`mt-5 pt-5 border-t border-gray-100 ${services.length === 0 && categories.length === 0 ? 'mt-0 pt-0 border-0' : ''}`}>
                 <p className="text-xs font-semibold text-gray-500 mb-2.5">{t('svcAddTitle')}</p>
                 <div className="space-y-2">

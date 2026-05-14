@@ -67,6 +67,14 @@ export const ALL_IN_SEMESTRIAL_QUOTA = PLAN_TIERS.all_in.smsQuota + SEMESTRIAL_S
 export const ALL_IN_ANNUAL_QUOTA = PLAN_TIERS.all_in.smsQuota + ANNUAL_SMS_BONUS;
 
 /**
+ * Plafond du catalogue prestations par merchant. Hard limit côté API
+ * (`/api/services` POST) + soft limit UI (`ServicesSection` masque le formulaire
+ * d'ajout au-delà). Au-delà de ~30, l'UX vitrine se dégrade — on garde la marge
+ * pour les pros qui multiplient les déclinaisons (longueurs/types).
+ */
+export const MAX_SERVICES_PER_MERCHANT = 60;
+
+/**
  * Coerce une valeur DB potentiellement libre (TEXT en base) vers un BillingInterval safe.
  * Utilisé après lecture `merchants.billing_interval` pour éviter les coalesces ternaires partout.
  */

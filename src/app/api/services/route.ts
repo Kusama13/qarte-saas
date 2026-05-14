@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
 import logger from '@/lib/logger';
+import { MAX_SERVICES_PER_MERCHANT } from '@/lib/plan-tiers';
 
 // ── Helper: verify merchant ownership
 async function verifyOwnership(supabase: Awaited<ReturnType<typeof createRouteHandlerSupabaseClient>>, merchantId: string, userId: string) {
@@ -129,8 +130,8 @@ export async function POST(request: NextRequest) {
         .select('id', { count: 'exact', head: true })
         .eq('merchant_id', merchant_id);
 
-      if ((count || 0) >= 50) {
-        return NextResponse.json({ error: 'Maximum 50 prestations' }, { status: 400 });
+      if ((count || 0) >= MAX_SERVICES_PER_MERCHANT) {
+        return NextResponse.json({ error: `Maximum ${MAX_SERVICES_PER_MERCHANT} prestations` }, { status: 400 });
       }
 
       const { data: service, error } = await supabase

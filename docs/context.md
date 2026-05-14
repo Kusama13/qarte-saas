@@ -1124,6 +1124,7 @@ Le scan est reserve au merchant (affiche en boutique). Exposer le lien permettra
 | Checkins/jour | ~20,000 |
 | Push/envoi | ~5,000 |
 | Clients/marchand | ~2,000 |
+| Prestations/marchand | **60** (`MAX_SERVICES_PER_MERCHANT` dans `lib/plan-tiers.ts`) — hard limit serveur + soft limit UI (forme d'ajout cachée au-delà). Bumpé de 50→60 en mai 2026. Au-delà, l'UX vitrine se dégrade (modal résa devient un mur) — recommander aux pros de grouper en catégories. Catégories : 10 max ([api/services/route.ts:100](../src/app/api/services/route.ts#L100)) |
 
 *Details dans `docs/AUDIT-SCALABILITE.md`*
 
