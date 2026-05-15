@@ -733,6 +733,8 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 | invoice.payment_failed | `past_due` | PaymentFailedEmail + **SMS past_due_initial** (mig 163) + **atomic claim `past_due_since`** (mig 164) |
 | invoice.payment_succeeded (recovery) | `active` | SubscriptionConfirmedEmail + **resetPastDueSmsFlags** (mig 163) + **reset `past_due_since`** (mig 164) |
 
+**Evenements requis sur l'endpoint Stripe** (`/api/stripe/webhook`) : `checkout.session.completed`, `checkout.session.expired`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`, `invoice.payment_succeeded`. **Gotcha (incident mai 2026)** : l'endpoint n'etait abonne qu'aux 3 premiers — `invoice.payment_failed`/`succeeded` jamais recus → `past_due_since` jamais pose (blocage 72h mort, dunning email/SMS step 1 morts), recovery past_due→active mort, notif parrain affiliation morte. Les merchants passaient quand meme en `past_due` via `subscription.updated` (qui mappe le statut) mais sans aucune machinerie dunning. Si on recree l'endpoint Stripe, verifier les 6 evenements.
+
 **Grace period** : 3 jours apres expiration (lecture seule), suppression apres 3 jours.
 
 ### Dunning past_due (mig 163, mai 2026)
