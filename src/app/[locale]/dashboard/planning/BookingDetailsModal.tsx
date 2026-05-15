@@ -16,6 +16,7 @@ import { compressOfferImage } from '@/lib/image-compression';
 import { computeBookingPrice, CUSTOM_SERVICE_LINE_ID } from '@/lib/booking-pricing';
 import { timeToMinutes, minutesToTime, roundUp5, formatDuration, getSlotServiceIds, colorBorderStyle, computeDepositAmount, CUSTOM_SERVICE_DEFAULT_NAME, formatDateLong, endTimeFromStart } from './utils';
 import CustomServicePicker from './CustomServicePicker';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import type { BookingDraft, ServiceWithDuration } from './usePlanningState';
 
 function TabButton({ active, onClick, label, badge }: {
@@ -116,6 +117,7 @@ export default function BookingDetailsModal({
   onClose,
   onFetchClientHistory,
 }: BookingDetailsModalProps) {
+  useBodyScrollLock(true);
   const t = useTranslations('planning');
   const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState<'photos' | 'notes' | 'history' | null>(null);
@@ -706,7 +708,7 @@ export default function BookingDetailsModal({
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 50, opacity: 0 }}
-        className="relative bg-white rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-sm border border-slate-100"
+        className="relative bg-white rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto overscroll-contain shadow-sm border border-slate-100"
       >
         {/* Pas de fleche retour : ClientSelectModal n'est pertinente qu'en creation, et le lien "Changer le client" couvre ce cas */}
         <div className="flex items-start justify-between gap-3 p-4 border-b border-gray-100">
@@ -1460,7 +1462,7 @@ export default function BookingDetailsModal({
                 <X className="w-4 h-4 text-gray-400" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 space-y-4">
               <div className="text-[11px] text-gray-500">
                 {t('moveBookingCurrent', { date: slot.slot_date, time: formatTime(slot.start_time, locale) })}
               </div>
@@ -1583,7 +1585,7 @@ export default function BookingDetailsModal({
                 <X className="w-4 h-4 text-gray-400" />
               </button>
             </div>
-            <div className="flex-1 p-5 space-y-4">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 space-y-4">
               <div className="text-center py-4">
                 <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3">
                   <AlertTriangle className="w-6 h-6 text-red-500" />

@@ -2,7 +2,8 @@
 
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
-import { useId, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 
 type ModalSize = 'sm' | 'md' | 'lg';
 type IconTint = 'gray' | 'red' | 'amber' | 'indigo' | 'emerald' | 'violet';
@@ -33,6 +34,7 @@ export default function PlanningModal({
   ariaLabel?: string;
   children: ReactNode;
 }) {
+  useBodyScrollLock(true);
   return (
     <motion.div
       initial={{ opacity: 0, pointerEvents: 'none' }}
@@ -48,7 +50,7 @@ export default function PlanningModal({
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 50, opacity: 0 }}
-        className={`relative bg-white rounded-2xl w-full ${SIZE[size]} max-h-[85vh] overflow-y-auto shadow-sm border border-slate-100`}
+        className={`relative bg-white rounded-2xl w-full ${SIZE[size]} max-h-[85vh] overflow-y-auto overscroll-contain shadow-sm border border-slate-100`}
       >
         {children}
       </motion.div>

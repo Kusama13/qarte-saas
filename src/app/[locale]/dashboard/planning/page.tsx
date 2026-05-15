@@ -11,6 +11,7 @@ import { CustomerEditCard } from './settings/CustomerEditCard';
 import { HomeServiceCard } from './settings/HomeServiceCard';
 import type { BookingMode, MerchantCountry, BookingDepositFailure } from '@/types';
 import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
 import { PHONE_CONFIG, toBCP47, formatCurrency, formatPhoneLabel } from '@/lib/utils';
@@ -175,6 +176,7 @@ export default function PlanningDashboard() {
 
   // Manual booking modal (free mode)
   const [showManualBookingModal, setShowManualBookingModal] = useState(false);
+  useBodyScrollLock(showManualBookingModal);
   // Si non-null, on est en mode "rebook depuis archive d'acompte échoué" : à la création
   // réussie, on supprime l'archive correspondante (la résa originale ne reviendra pas).
   const [manualSourceFailureId, setManualSourceFailureId] = useState<string | null>(null);
@@ -1631,7 +1633,7 @@ export default function PlanningDashboard() {
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 50, opacity: 0 }}
-                className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-xl"
+                className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto overscroll-contain shadow-xl"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100">

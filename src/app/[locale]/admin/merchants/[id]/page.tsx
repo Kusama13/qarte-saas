@@ -50,9 +50,11 @@ import {
   Home,
   Crown,
   Sparkles,
+  EyeOff,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn, generateQRCode, getScanUrl, formatDoubleDays, formatPhoneForWhatsApp, COUNTRY_FLAGS, formatContestMonth, formatCurrency } from '@/lib/utils';
+import { isPastDueBlocked } from '@/lib/merchant-access';
 import { SHOP_TYPES } from '@/types';
 import type { Merchant as BaseMerchant, ShopType, MerchantCountry, GiftCardStatus } from '@/types';
 
@@ -567,6 +569,21 @@ export default function MerchantDetailPage() {
         );
       case 'canceled':
         return <span className="px-3 py-1.5 text-sm font-medium text-red-700 bg-red-100 rounded-full">Annulé</span>;
+      case 'canceling':
+        return <span className="px-3 py-1.5 text-sm font-medium text-orange-700 bg-orange-100 rounded-full">Annulation programmée</span>;
+      case 'past_due': {
+        const blocked = isPastDueBlocked(m);
+        return (
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1.5 text-sm font-medium text-red-700 bg-red-100 rounded-full">Impayé</span>
+            {m.past_due_since && (
+              <span className={cn("text-sm", blocked ? "text-red-600 font-medium" : "text-gray-500")}>
+                depuis le {formatDate(m.past_due_since)}{blocked ? ' · compte bloqué (>72h)' : ''}
+              </span>
+            )}
+          </div>
+        );
+      }
       default:
         return <span className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-full">{m.subscription_status}</span>;
     }
@@ -1176,6 +1193,12 @@ export default function MerchantDetailPage() {
           {merchant.deposit_deadline_hours != null && merchant.deposit_deadline_hours > 0 && (
             <FeatureBadge active icon={<Hourglass className="w-3 h-3" />} label={`Acompte sous ${merchant.deposit_deadline_hours}h`} />
           )}
+          {merchant.deposit_only_for_new_customers && (
+            <FeatureBadge active icon={<Hourglass className="w-3 h-3" />} label="Acompte nouvelles clientes" />
+          )}
+          {merchant.hide_address_on_public_page && (
+            <FeatureBadge active icon={<EyeOff className="w-3 h-3" />} label="Adresse masquée" />
+          )}
         </div>
 
         {merchant.welcome_offer_enabled && (
@@ -1183,8 +1206,14 @@ export default function MerchantDetailPage() {
             <div className="flex items-center gap-2 mb-0.5">
               <Gift className="w-3.5 h-3.5 text-indigo-600" />
               <span className="font-medium text-gray-900 text-xs">Offre nouveaux clients</span>
+              {merchant.welcome_offer_discount_percent != null && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">-{merchant.welcome_offer_discount_percent}%</span>
+              )}
             </div>
             <p className="text-sm text-gray-700">{merchant.welcome_offer_description || 'Non configuré'}</p>
+            {merchant.welcome_offer_discount_percent == null && (
+              <p className="text-[11px] text-gray-400 mt-0.5">Réduction non configurée — voucher post-résa (mode legacy)</p>
+            )}
             {merchant.welcome_referral_code && (
               <p className="text-[11px] text-gray-500 mt-0.5">Code : <span className="font-mono font-semibold text-indigo-700">{merchant.welcome_referral_code}</span></p>
             )}

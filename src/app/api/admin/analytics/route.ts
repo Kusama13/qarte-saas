@@ -104,8 +104,8 @@ export async function GET(request: NextRequest) {
     const merchantsWithPhotos = new Set((photosRes.data || []).map((p: { merchant_id: string }) => p.merchant_id));
 
     let trialActive = 0, paid = 0, canceled = 0, expired = 0;
-    let mrrCents = 0, monthlyMrrCents = 0, annualMrrCents = 0;
-    let monthlyCount = 0, annualCount = 0;
+    let mrrCents = 0, monthlyMrrCents = 0, semestrialMrrCents = 0, annualMrrCents = 0;
+    let monthlyCount = 0, semestrialCount = 0, annualCount = 0;
 
     for (const m of merchants) {
       bySource[m.signup_source || 'direct'] = (bySource[m.signup_source || 'direct'] || 0) + 1;
@@ -119,7 +119,8 @@ export async function GET(request: NextRequest) {
         tierBreakdown[tier]++;
         const priceCents = Math.round(getMerchantMonthlyPrice(m) * 100);
         mrrCents += priceCents;
-        if (m.billing_interval === 'annual' || m.billing_interval === 'semestrial') { annualMrrCents += priceCents; annualCount++; }
+        if (m.billing_interval === 'annual') { annualMrrCents += priceCents; annualCount++; }
+        else if (m.billing_interval === 'semestrial') { semestrialMrrCents += priceCents; semestrialCount++; }
         else { monthlyMrrCents += priceCents; monthlyCount++; }
       } else if (s === 'canceled') canceled++;
       else if (s === 'trial') {
@@ -374,8 +375,10 @@ export async function GET(request: NextRequest) {
       revenue: {
         mrr: Math.round(mrrCents / 100),
         monthlyMrr: Math.round(monthlyMrrCents / 100),
+        semestrialMrr: Math.round(semestrialMrrCents / 100),
         annualMrr: Math.round(annualMrrCents / 100),
         monthlyCount,
+        semestrialCount,
         annualCount,
         paid,
         churnRate,

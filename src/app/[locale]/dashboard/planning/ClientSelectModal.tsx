@@ -9,6 +9,7 @@ import type { PlanningSlot, CustomerSearchResult, MerchantOffer, MerchantCountry
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { formatTime, toBCP47, formatPhoneLabel } from '@/lib/utils';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import type { BookingDraft } from './usePlanningState';
 
 interface ClientSelectModalProps {
@@ -52,6 +53,7 @@ export default function ClientSelectModal({
   onDelete,
   onClose,
 }: ClientSelectModalProps) {
+  useBodyScrollLock(true);
   const t = useTranslations('planning');
   const { merchant } = useMerchant();
   const [phoneCountry, setPhoneCountry] = useState<MerchantCountry>(
@@ -156,7 +158,7 @@ export default function ClientSelectModal({
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 50, opacity: 0 }}
-        className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-sm border border-slate-100"
+        className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto overscroll-contain shadow-sm border border-slate-100"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100">

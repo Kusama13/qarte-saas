@@ -61,8 +61,10 @@ interface AnalyticsData {
   revenue: {
     mrr: number;
     monthlyMrr: number;
+    semestrialMrr: number;
     annualMrr: number;
     monthlyCount: number;
+    semestrialCount: number;
     annualCount: number;
     paid: number;
     churnRate: number;
@@ -279,7 +281,7 @@ function RevenueTab({ data }: { data: AnalyticsData['revenue'] }) {
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard label="MRR actuel" value={formatEur(data.mrr)} accent="text-[#4b0082]" sub={`${paid} abonnés payants`} />
-        <KpiCard label="Mensuel / Annuel" value={`${data.monthlyCount} / ${data.annualCount}`} sub={`${formatEur(data.monthlyMrr)} · ${formatEur(data.annualMrr)}`} />
+        <KpiCard label="Mensuel / 6 mois / Annuel" value={`${data.monthlyCount} / ${data.semestrialCount} / ${data.annualCount}`} sub={`${formatEur(data.monthlyMrr)} · ${formatEur(data.semestrialMrr)} · ${formatEur(data.annualMrr)}`} />
         <KpiCard label="ARPU" value={formatEur(data.arpu)} sub="Revenu moyen / merchant" />
         <KpiCard label="Churn rate" value={`${data.churnRate}%`} sub={`${data.churned} churned`} accent={data.churnRate > 5 ? 'text-red-600' : 'text-gray-900'} />
       </div>
@@ -300,7 +302,8 @@ function RevenueTab({ data }: { data: AnalyticsData['revenue'] }) {
         <ChartCard title="Répartition billing">
           <div className="space-y-4">
             <SplitBar label="Mensuel" count={data.monthlyCount} amount={formatEur(data.monthlyMrr)} pct={pct(data.monthlyCount)} color="bg-[#4b0082]" />
-            <SplitBar label="Annuel" count={data.annualCount} amount={formatEur(data.annualMrr)} pct={pct(data.annualCount)} color="bg-violet-400" />
+            <SplitBar label="6 mois" count={data.semestrialCount} amount={formatEur(data.semestrialMrr)} pct={pct(data.semestrialCount)} color="bg-violet-500" />
+            <SplitBar label="Annuel" count={data.annualCount} amount={formatEur(data.annualMrr)} pct={pct(data.annualCount)} color="bg-violet-300" />
           </div>
         </ChartCard>
 
