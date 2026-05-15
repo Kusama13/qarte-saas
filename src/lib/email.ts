@@ -1107,6 +1107,7 @@ interface BookingNotificationParams {
   locale: EmailLocale;
   customerAddress?: string | null;
   travelTimeMinutes?: number | null;
+  customerMessage?: string | null;
 }
 
 export async function sendBookingNotificationEmail(

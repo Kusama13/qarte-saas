@@ -751,7 +751,8 @@ Single-row table : id, content (TEXT, default ''), updated_at
 | client_name | TEXT | NULL | NULL = available, filled = taken |
 | client_phone | TEXT | NULL | |
 | service_id | UUID FK → merchant_services | NULL | ON DELETE SET NULL |
-| notes | TEXT | NULL | |
+| notes | TEXT | NULL | note du **merchant** (onglet Notes du BookingDetailsModal) |
+| customer_message | TEXT | NULL | mig 167, note libre laissée par la **cliente** à la résa en ligne (vitrine BookingModal). Distincte de `notes`. Affichage lecture seule dans le dashboard |
 | customer_id | UUID FK → customers | NULL | ON DELETE SET NULL, mig 065 |
 | deposit_confirmed | BOOLEAN | NULL | mig 083, NULL=pas d'acompte, false=en attente, true=confirme |
 | deposit_deadline_at | TIMESTAMPTZ | NULL | mig 086, deadline auto-liberation si acompte non confirme |

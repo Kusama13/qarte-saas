@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, Clock, ChevronRight, Wallet, AlertTriangle, Trash2, Undo2, Search, X, Clipboard, Check, ArrowUpRight } from 'lucide-react';
+import { CalendarDays, Clock, ChevronRight, Wallet, AlertTriangle, Trash2, Undo2, Search, X, Clipboard, Check, ArrowUpRight, MessageCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot, BookingDepositFailure } from '@/types';
 import { formatTime, toBCP47, formatCurrency, formatPhoneLabel, getVitrineUrl } from '@/lib/utils';
@@ -335,6 +335,14 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                     )}
                     {slot.deposit_confirmed === true && (
                       <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">{t('depositConfirmed')}</span>
+                    )}
+                    {slot.customer_message && (
+                      <span
+                        className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-violet-100 text-violet-600 shrink-0"
+                        title={t('customerMessageLabel')}
+                      >
+                        <MessageCircle className="w-3 h-3" />
+                      </span>
                     )}
                   </div>
                 </div>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
-import { formatPhoneNumber, validatePhone, getTimezoneForCountry, getAllPhoneFormats, getAppUrl, getCurrencyForCountry } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getTimezoneForCountry, getAllPhoneFormats, getAppUrl, getCurrencyForCountry, truncate } from '@/lib/utils';
 import { isMerchantBlocked } from '@/lib/merchant-access';
 import type { EmailLocale } from '@/emails/translations';
 import { computeDepositDeadline } from '@/lib/deposit';
@@ -34,6 +34,7 @@ const bookSchema = z.object({
   customer_lat: z.number().min(-90).max(90).optional(),
   customer_lng: z.number().min(-180).max(180).optional(),
   customer_email: z.string().email().max(254).optional(),
+  customer_message: z.string().max(500).optional(),
 });
 
 const MAX_TRAVEL_MINUTES = 60;
@@ -56,8 +57,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
     }
 
-    const { merchant_id, slot_date, slot_time, phone_number, first_name, last_name, service_ids, customer_address, customer_lat, customer_lng, customer_email } = parsed.data;
+    const { merchant_id, slot_date, slot_time, phone_number, first_name, last_name, service_ids, customer_address, customer_lat, customer_lng, customer_email, customer_message } = parsed.data;
     const trimmedEmail = customer_email?.trim().toLowerCase() || null;
+    const trimmedMessage = customer_message?.trim() || null;
 
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
@@ -422,6 +424,7 @@ export async function POST(request: NextRequest) {
         client_phone: formattedPhone,
         customer_id: customerId,
         customer_email: trimmedEmail,
+        customer_message: trimmedMessage,
         total_duration_minutes: totalDuration,
         booked_online: true,
         booked_at: bookedAt,
@@ -468,6 +471,7 @@ export async function POST(request: NextRequest) {
         client_phone: formattedPhone,
         customer_id: customerId,
         customer_email: trimmedEmail,
+        customer_message: trimmedMessage,
         booked_online: true,
         booked_at: bookedAt,
         ...appliedDiscountFields,
@@ -585,6 +589,7 @@ export async function POST(request: NextRequest) {
           locale: merchant.locale || 'fr',
           customerAddress: homeService ? customer_address ?? null : null,
           travelTimeMinutes: homeService ? travelTimeIn : null,
+          customerMessage: trimmedMessage,
         }
       ).catch(err => logger.error('Booking notification email failed:', err));
     }
@@ -628,6 +633,9 @@ export async function POST(request: NextRequest) {
         const departMM = String(departMins % 60).padStart(2, '0');
         pushBody += `\n🚗 ${travelTimeIn} min trajet · départ conseillé ${departHH}:${departMM}`;
       }
+    }
+    if (trimmedMessage) {
+      pushBody += `\n💬 ${truncate(trimmedMessage, 80)}`;
     }
 
     sendMerchantPush({

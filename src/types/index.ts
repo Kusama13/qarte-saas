@@ -228,6 +228,7 @@ export interface PlanningSlot {
   customer_id: string | null;
   service_id: string | null; // deprecated — use planning_slot_services
   notes: string | null;
+  customer_message?: string | null; // note libre saisie par la cliente à la résa — distincte de notes (côté merchant)
   deposit_confirmed: boolean | null;
   deposit_deadline_at: string | null;
   booked_online: boolean;

@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
     const supabaseAdmin = getSupabaseAdmin();
     let query = supabaseAdmin
       .from('merchant_planning_slots')
-      .select('id, slot_date, start_time, client_name, client_phone, customer_id, service_id, notes, deposit_confirmed, deposit_deadline_at, primary_slot_id, total_duration_minutes, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, customer_address, customer_lat, customer_lng, travel_time_minutes, travel_time_overridden, created_at, planning_slot_services(service_id, service:merchant_services!service_id(name)), planning_slot_photos(id, url, position), planning_slot_result_photos(id, url, position), customer:customers!customer_id(instagram_handle, tiktok_handle, facebook_url)')
+      .select('id, slot_date, start_time, client_name, client_phone, customer_id, service_id, notes, customer_message, deposit_confirmed, deposit_deadline_at, primary_slot_id, total_duration_minutes, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, customer_address, customer_lat, customer_lng, travel_time_minutes, travel_time_overridden, created_at, planning_slot_services(service_id, service:merchant_services!service_id(name)), planning_slot_photos(id, url, position), planning_slot_result_photos(id, url, position), customer:customers!customer_id(instagram_handle, tiktok_handle, facebook_url)')
       .eq('merchant_id', merchantId)
       .order('slot_date')
       .order('start_time');
@@ -308,6 +308,8 @@ export async function PATCH(request: NextRequest) {
       updateData.applied_offer_percent = null;
       updateData.applied_offer_amount = null;
       updateData.applied_welcome_percent = null;
+      // Reset message cliente — le créneau est libéré, pas de message fantôme
+      updateData.customer_message = null;
     } else {
       if (custom_service_duration !== undefined) updateData.custom_service_duration = custom_service_duration;
       if (custom_service_name !== undefined) updateData.custom_service_name = custom_service_name?.trim() || null;
@@ -415,7 +417,7 @@ export async function PATCH(request: NextRequest) {
         // 1. Clear all existing fillers for this slot
         await supabaseAdmin
           .from('merchant_planning_slots')
-          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null, booked_online: false, booked_at: null, customer_address: null, customer_lat: null, customer_lng: null, travel_time_minutes: null, travel_time_overridden: false })
+          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null, booked_online: false, booked_at: null, customer_address: null, customer_lat: null, customer_lng: null, travel_time_minutes: null, travel_time_overridden: false, customer_message: null })
           .eq('primary_slot_id', slotId)
           .eq('merchant_id', merchantId);
 
@@ -477,7 +479,7 @@ export async function PATCH(request: NextRequest) {
     const clearFillersPromise = (client_name === null || client_name === '')
       ? supabaseAdmin
           .from('merchant_planning_slots')
-          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null, booked_online: false, booked_at: null, customer_address: null, customer_lat: null, customer_lng: null, travel_time_minutes: null, travel_time_overridden: false })
+          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null, booked_online: false, booked_at: null, customer_address: null, customer_lat: null, customer_lng: null, travel_time_minutes: null, travel_time_overridden: false, customer_message: null })
           .eq('primary_slot_id', slotId)
           .eq('merchant_id', merchantId)
       : Promise.resolve({ error: null });

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, BookOpen, ChevronDown, CalendarClock, CalendarPlus, UserCheck, UserX, MapPin, Car, Navigation, Pencil } from 'lucide-react';
+import { X, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, BookOpen, ChevronDown, CalendarClock, CalendarPlus, UserCheck, UserX, MapPin, Car, Navigation, Pencil, MessageCircle } from 'lucide-react';
 import SmsToggle from './SmsToggle';
 import { getTypeStyle } from '@/lib/note-styles';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
@@ -827,6 +827,15 @@ export default function BookingDetailsModal({
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {slot.customer_message && (
+            <div className="bg-violet-50 border border-violet-200 rounded-xl p-3">
+              <p className="text-xs font-bold text-violet-700 flex items-center gap-1.5 mb-1">
+                <MessageCircle className="w-3.5 h-3.5 shrink-0" />{t('customerMessageLabel')}
+              </p>
+              <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap break-words">{slot.customer_message}</p>
             </div>
           )}
 

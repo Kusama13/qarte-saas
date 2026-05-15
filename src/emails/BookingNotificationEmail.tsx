@@ -30,6 +30,8 @@ interface BookingNotificationEmailProps {
   // Home service: address + computed departure time
   customerAddress?: string | null;
   travelTimeMinutes?: number | null;
+  // Free-text note left by the client at booking time
+  customerMessage?: string | null;
 }
 
 function formatDurationEmail(mins: number): string {
@@ -59,6 +61,7 @@ export function BookingNotificationEmail({
   locale = 'fr',
   customerAddress,
   travelTimeMinutes,
+  customerMessage,
 }: BookingNotificationEmailProps) {
   const isEn = locale === 'en';
   const isHomeService = !!customerAddress;
@@ -111,6 +114,15 @@ export function BookingNotificationEmail({
           <strong>{isEn ? 'Phone:' : 'Téléphone :'}</strong> {clientPhone}
         </Text>
       </Section>
+
+      {customerMessage && (
+        <Section style={messageBox}>
+          <Text style={messageTitle}>
+            {isEn ? '💬 Client message' : '💬 Message de la cliente'}
+          </Text>
+          <Text style={messageText}>{customerMessage}</Text>
+        </Section>
+      )}
 
       {isHomeService && (
         <Section style={homeServiceBox}>
@@ -197,6 +209,31 @@ const bookingDetail = {
   fontSize: '15px',
   lineHeight: '1.5',
   margin: '0 0 6px 0',
+};
+
+const messageBox = {
+  backgroundColor: '#F5F3FF',
+  borderRadius: '12px',
+  padding: '16px 20px',
+  margin: '16px 0',
+  border: '1px solid #DDD6FE',
+};
+
+const messageTitle = {
+  color: '#5B21B6',
+  fontSize: '14px',
+  fontWeight: '700',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.5px',
+  margin: '0 0 8px 0',
+};
+
+const messageText = {
+  color: '#4C1D95',
+  fontSize: '15px',
+  lineHeight: '1.6',
+  margin: '0',
+  whiteSpace: 'pre-wrap' as const,
 };
 
 const homeServiceBox = {

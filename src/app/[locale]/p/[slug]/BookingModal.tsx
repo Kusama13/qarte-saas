@@ -127,6 +127,7 @@ export default function BookingModal({
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [customerMessage, setCustomerMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bookingResult, setBookingResult] = useState<{
@@ -459,6 +460,7 @@ export default function BookingModal({
           first_name: firstName.trim(),
           last_name: lastName.trim() || undefined,
           ...(trimmedEmail && { customer_email: trimmedEmail }),
+          ...(customerMessage.trim() && { customer_message: customerMessage.trim() }),
           service_ids: Array.from(selectedServiceIds),
           ...(isFreeMod && { booking_mode: 'free' }),
           ...(isHomeService && customerCoords && {
@@ -1200,6 +1202,23 @@ export default function BookingModal({
                           ? t('emailHintWithDeposit')
                           : t('emailHint')}
                     </p>
+                  </div>
+
+                  {/* Message libre pour le salon */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">
+                      {t('messageLabel')}
+                    </label>
+                    <textarea
+                      value={customerMessage}
+                      onChange={e => setCustomerMessage(e.target.value)}
+                      placeholder={t('messagePlaceholder')}
+                      rows={3}
+                      maxLength={500}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-sm leading-relaxed resize-none transition-colors focus:outline-none focus:ring-2 focus:bg-white"
+                      style={{ '--tw-ring-color': `${p}40` } as React.CSSProperties}
+                    />
+                    <p className="text-[11px] text-gray-400 mt-1 leading-snug">{t('messageHint')}</p>
                   </div>
                 </div>
 

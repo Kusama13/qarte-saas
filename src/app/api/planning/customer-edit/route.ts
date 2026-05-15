@@ -95,7 +95,7 @@ async function commonChecks(
   const [slotResult, customerResult] = await Promise.all([
     supabaseAdmin
       .from('merchant_planning_slots')
-      .select('id, slot_date, start_time, client_name, client_phone, customer_id, booked_online, primary_slot_id, total_duration_minutes, custom_service_name, custom_service_duration, custom_service_price, custom_service_color')
+      .select('id, slot_date, start_time, client_name, client_phone, customer_id, booked_online, primary_slot_id, total_duration_minutes, customer_message, custom_service_name, custom_service_duration, custom_service_price, custom_service_color')
       .eq('id', slotId)
       .eq('merchant_id', merchantId)
       .single(),
@@ -281,6 +281,7 @@ export async function PATCH(request: NextRequest) {
           client_name: slot.client_name,
           client_phone: slot.client_phone,
           customer_id: slot.customer_id,
+          customer_message: slot.customer_message,
           total_duration_minutes: duration,
           booked_online: true,
           booked_at: new Date().toISOString(),
@@ -343,6 +344,7 @@ export async function PATCH(request: NextRequest) {
             deposit_deadline_at: null,
             booked_online: false,
             booked_at: null,
+            customer_message: null,
             ...NULL_CUSTOM_SERVICE,
           })
           .eq('id', slot_id);
@@ -358,6 +360,7 @@ export async function PATCH(request: NextRequest) {
             client_name: slot.client_name,
             client_phone: slot.client_phone,
             customer_id: slot.customer_id,
+            customer_message: slot.customer_message,
             deposit_confirmed: null,
             deposit_deadline_at: null,
             booked_online: true,
