@@ -50,10 +50,11 @@ export async function POST(request: NextRequest) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    // Fetch merchant + verify ownership + check trial status + idempotence
+    // Fetch merchant + verify ownership + check trial status + idempotence.
+    // L'email n'est PAS sur `merchants` (il vit dans auth.users) — on prend `user.email`.
     const { data: merchant, error: merchantError } = await supabaseAdmin
       .from('merchants')
-      .select('id, trial_ends_at, subscription_status, churn_survey_seen_at, shop_name, email, phone, plan_tier')
+      .select('id, trial_ends_at, subscription_status, churn_survey_seen_at, shop_name, phone, plan_tier')
       .eq('user_id', user.id)
       .is('deleted_at', null)
       .single();
@@ -122,12 +123,14 @@ export async function POST(request: NextRequest) {
     const demoRequested = parsed.data.would_convince === 'team_demo';
 
     // Send immediate follow-up email to merchant (fire-and-forget)
-    sendPostSurveyFollowUpEmail(
-      merchant.email,
-      merchant.shop_name,
-      parsed.data.would_convince,
-      bonusDays,
-    ).catch(() => {});
+    if (user.email) {
+      sendPostSurveyFollowUpEmail(
+        user.email,
+        merchant.shop_name,
+        parsed.data.would_convince,
+        bonusDays,
+      ).catch(() => {});
+    }
 
     // Send admin alert for demo requests (fire-and-forget)
     if (demoRequested) {
@@ -136,7 +139,7 @@ export async function POST(request: NextRequest) {
         headers: EMAIL_HEADERS,
         to: 'contact@getqarte.com',
         subject: `[Demo demandee] ${merchant.shop_name}`,
-        text: `Le merchant ${merchant.shop_name} (${merchant.email}) a demande une demo.\n\nTelephone : ${merchant.phone || 'non renseigne'}\nBlocker : ${parsed.data.blocker}\nCommentaire : ${parsed.data.free_comment || 'aucun'}\n\nContacte-le sous 24h.`,
+        text: `Le merchant ${merchant.shop_name} (${user.email || 'email inconnu'}) a demande une demo.\n\nTelephone : ${merchant.phone || 'non renseigne'}\nBlocker : ${parsed.data.blocker}\nCommentaire : ${parsed.data.free_comment || 'aucun'}\n\nContacte-le sous 24h.`,
       }).catch(() => {});
     }
 

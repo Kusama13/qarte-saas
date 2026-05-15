@@ -1,8 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { authorizeAdmin } from '@/lib/api-helpers';
 import { sendWinBackEmail } from '@/lib/email';
 import type { EmailLocale } from '@/emails/translations';
 import logger from '@/lib/logger';
+
+/**
+ * Construit une map user_id → email depuis auth.users (paginé).
+ * L'email n'est PAS sur la table `merchants` — il vit dans auth.users.
+ */
+async function buildEmailMap(supabaseAdmin: SupabaseClient): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  let page = 1;
+  let hasMore = true;
+  while (hasMore) {
+    const { data: { users: batch } } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 500 });
+    for (const u of batch || []) {
+      if (u.email) map.set(u.id, u.email);
+    }
+    hasMore = (batch?.length || 0) === 500;
+    page++;
+  }
+  return map;
+}
 
 /**
  * POST /api/admin/win-back
@@ -15,10 +35,6 @@ export async function POST(request: NextRequest) {
   const { supabaseAdmin } = auth;
 
   try {
-    // Fetch all canceled merchants (trial_ends_at expired 3+ days ago OR subscription_status = 'canceled')
-    const threeDaysAgo = new Date();
-    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-
     // Get admin IDs to exclude
     const { data: admins } = await supabaseAdmin
       .from('super_admins')
@@ -28,9 +44,8 @@ export async function POST(request: NextRequest) {
     // Fetch canceled merchants
     let query = supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, email, locale')
+      .select('id, user_id, shop_name, locale')
       .eq('subscription_status', 'canceled')
-      .not('email', 'is', null)
       .not('shop_name', 'is', null);
 
     if (adminIds.length > 0) {
@@ -48,14 +63,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ sent: 0, message: 'No eligible merchants found' });
     }
 
+    const emailMap = await buildEmailMap(supabaseAdmin);
+
     let sent = 0;
     let failed = 0;
+    let skipped = 0;
     const errors: string[] = [];
 
     for (const merchant of merchants) {
+      const email = emailMap.get(merchant.user_id);
+      if (!email) { skipped++; continue; }
       try {
         const result = await sendWinBackEmail(
-          merchant.email,
+          email,
           merchant.shop_name,
           (merchant.locale as EmailLocale) || 'fr'
         );
@@ -75,12 +95,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    logger.info(`[WIN-BACK] Sent ${sent}/${merchants.length} emails (${failed} failed)`);
+    logger.info(`[WIN-BACK] Sent ${sent}/${merchants.length} emails (${failed} failed, ${skipped} skipped — no email)`);
 
     return NextResponse.json({
       total: merchants.length,
       sent,
       failed,
+      skipped,
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (err) {
@@ -106,9 +127,8 @@ export async function GET(request: NextRequest) {
 
     let query = supabaseAdmin
       .from('merchants')
-      .select('id, shop_name, email, subscription_status, updated_at, locale')
+      .select('id, user_id, shop_name, subscription_status, updated_at, locale')
       .eq('subscription_status', 'canceled')
-      .not('email', 'is', null)
       .not('shop_name', 'is', null);
 
     if (adminIds.length > 0) {
@@ -122,11 +142,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
+    const emailMap = await buildEmailMap(supabaseAdmin);
+    // Seuls les merchants avec un email résolu sont éligibles à l'envoi.
+    const eligible = (merchants || []).filter(m => emailMap.get(m.user_id));
+
     return NextResponse.json({
-      total: merchants?.length || 0,
-      merchants: (merchants || []).map(m => ({
+      total: eligible.length,
+      merchants: eligible.map(m => ({
         shop_name: m.shop_name,
-        email: m.email,
+        email: emailMap.get(m.user_id),
         subscription_status: m.subscription_status,
         canceled_at: m.updated_at,
         locale: m.locale,

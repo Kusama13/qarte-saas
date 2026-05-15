@@ -470,6 +470,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Source unique** : `src/lib/churn-survey-config.ts` — enums partages entre Zod API, client page, admin page
 - **Table** : `merchant_churn_surveys` (UNIQUE merchant_id) + colonne `merchants.churn_survey_seen_at TIMESTAMPTZ`
 - **Routes** : `POST /api/churn-survey` (merchant auth), `GET /api/admin/churn-surveys` (admin auth)
+- **Email merchant — gotcha (fixé mai 2026)** : l'email du merchant n'est **pas** sur la table `merchants` (pas de colonne `email`, il vit dans `auth.users`). Toujours le récupérer via `user.email` (route avec auth merchant) ou via une map `user_id → email` construite depuis `auth.admin.listUsers()` (routes admin / crons). Bug historique : `/api/churn-survey` et `/api/admin/win-back` faisaient `select('email')` sur `merchants` → erreur PostgREST → 404/500 systématique → survey jamais enregistré, email jamais envoyé. Helper `buildEmailMap()` dans la route win-back.
 - **Flow email post-survey** : apres completion du survey + bonus, les merchants ne recoivent plus les emails trial generiques (TrialEnding/TrialExpired). A la place, emails cibles selon `would_convince` :
   - `PostSurveyFollowUpEmail` (tracking -221 mid-bonus, -222 dernier jour) : contenu adapte par variant (lower_price = rappel promo, longer_trial = features pas testees, team_demo = suivi demo, more_features = nouveautes, nothing = social proof)
   - `PostSurveyLastChanceEmail` (tracking -223, J+1 apres expiration bonus) : urgence finale, CTA subscription
