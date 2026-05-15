@@ -317,10 +317,10 @@ Quand le merchant complete le churn survey, il recoit des **jours bonus** selon 
     │  Objet selon variant :              │
     │  ┌─────────────────────────────────┐│
     │  │ lower_price:                    ││
-    │  │ "{shopName}, ton code -25%      ││
-    │  │  t'attend"                      ││
+    │  │ "{shopName}, ton code 15€       ││
+    │  │  de remise t'attend"            ││
     │  │ Contenu: code promo             ││
-    │  │ 3MOISQARTEPRO25 (-25% 3 mois)  ││
+    │  │ MRSSURVEY15 (15€ de remise)     ││
     │  │ CTA → /dashboard/subscription  ││
     │  ├─────────────────────────────────┤│
     │  │ longer_trial:                   ││
@@ -1200,10 +1200,10 @@ Source : `src/emails/translations/fr.ts`. Les `<strong>...</strong>` ont été c
 - **Signature** : `L'équipe Qarte`
 
 ##### postSurveyFollowUp.lowerPrice
-- Preview: `{shopName}, ton code promo -25% t'attend`
-- Heading: `Ton code promo t'attend`
-- Intro: `Tu nous as dit que le prix était un frein. On t'offre -25% sur tes 3 premiers mois.`
-- promoLabel: `-25% pendant 3 mois` — promoCode: `3MOISQARTEPRO25`
+- Preview: `{shopName}, ton code 15€ de remise t'attend`
+- Heading: `On rouvre ton compte`
+- Intro: `Le prix était le seul frein. On l'enlève : 15€ de remise sur ton abonnement, en mensuel comme en 6 mois.`
+- promoLabel: `Ton code 15€ de remise` — promoCode: `MRSSURVEY15`
 - body: `Plus de 400 pros utilisent Qarte au quotidien pour 24€/mois — soit moins qu'une décoloration.`
 - socialProof: `« J'hésitais aussi sur le prix, maintenant mes clientes réservent toutes seules et reviennent sans que je les relance. » — Salon Lucie, Paris`
 - CTA: `Activer mon code promo`
@@ -1248,10 +1248,10 @@ Source : `src/emails/translations/fr.ts`. Les `<strong>...</strong>` ont été c
 - **Signature** : `L'équipe Qarte`
 
 ##### postSurveyLastChance.lowerPrice
-- Preview: `{shopName}, ton code -25% expire demain`
-- Heading: `Dernier jour pour ton code -25%`
-- Intro: `Ton essai bonus se termine aujourd'hui. Ton code promo **3MOISQARTEPRO25** ne sera plus valable demain.`
-- promoLabel: `Dernière chance` — promoCode: `3MOISQARTEPRO25`
+- Preview: `{shopName}, ton code 15€ expire demain`
+- Heading: `Dernière chance — code valable jusqu'à ce soir`
+- Intro: `Ton essai bonus se termine aujourd'hui. Après minuit, le code **MRSSURVEY15** ne fonctionnera plus et tes données seront supprimées.`
+- promoLabel: `Code actif jusqu'à minuit` — promoCode: `MRSSURVEY15`
 - CTA: `Activer mon code promo`
 
 ##### postSurveyLastChance.longerTrial

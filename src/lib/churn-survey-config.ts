@@ -97,8 +97,9 @@ export const BLOCKER_BADGE_CLASSES: Record<ChurnBlocker, string> = {
 };
 
 // Reciprocity : merchant who selects "lower_price" unlocks a Stripe promo code.
-// Must match a coupon created manually in the Stripe dashboard.
-export const CHURN_PROMO_CODE = '3MOISQARTEPRO25';
+// Coupon Stripe `IgNRHb6z` : amount_off 15 EUR, duration=once — remise fixe
+// identique sur mensuel ET 6 mois (un percent_off repeating sur-deduisait le 6 mois).
+export const CHURN_PROMO_CODE = 'MRSSURVEY15';
 export const CHURN_BONUS_DAYS_DEFAULT = 2;
 
 // Bonus days vary by Q4 answer
