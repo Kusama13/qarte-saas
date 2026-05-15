@@ -243,7 +243,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `formatPhoneLabel(phone)` : raccourci JSX → `"🇫🇷 06 12 34 56 78"` (utilise partout pour l'affichage)
 - `toLocalPhone(phone)` : convertit E.164 en format local → `{ local: '0612345678', country: 'FR' }` (pour pre-remplir PhoneInput)
 - `getAllPhoneFormats(phone)` : genere toutes les variantes E.164 FR/BE/CH pour lookup anti-doublon (ex: `33612345678` → `['33612345678', '32612345678', '41612345678']`)
-- **PhoneInput** (`src/components/ui/PhoneInput.tsx`) : selecteur pays drapeau+indicatif+nom pays, dropdown avec pays prefere en premier, placeholder dynamique, `useMemo` pour tri
+- **PhoneInput** (`src/components/ui/PhoneInput.tsx`) : selecteur pays drapeau+indicatif+nom pays, dropdown avec pays prefere en premier, placeholder dynamique, `useMemo` pour tri. Prop optionnelle `hidePrefix` : masque l'indicatif `+33` après le drapeau et agrandit le drapeau (`text-xl`) — utilisée dans `BookingModal` vitrine (étape coordonnées) pour un input plus épuré
 - **Client choisit son pays** : le PhoneInput est pre-rempli avec le pays du merchant mais le client peut changer (ex: client belge chez merchant francais)
 - **`phone_country`** : parametre optionnel dans tous les schemas Zod des APIs client-facing (9 routes). Fallback `merchant.country` si absent (backward compat)
 - **Lookup multi-format** : `.in('phone_number', getAllPhoneFormats(...))` au lieu de `.eq()` — evite les doublons cross-border
@@ -1002,6 +1002,9 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 - JSON-LD `LocalBusiness` (name, address, image, url, makesOffer)
 - SEO: `generateMetadata()` avec og:image (1ere photo ou logo), description dynamique
 - **QR desktop flottant** : bloc fixe bottom-right (visible `lg:` uniquement) avec `BrandedQRCode` aux couleurs merchant — permet de scanner pour ouvrir sur mobile
+
+### Page Boutique — Carte NFC (`/boutique`)
+Page produit immersive pour commander la carte NFC (20€, paiement Stripe one-shot via `STRIPE_NFC_URL`, livraison 7j). Refonte mai 2026 : vitrine produit alignée sur l'identité landing (gradient `#4b0082`→violet, Bodoni italic sur les mots-clés, accent fuchsia). Sections : hero drenched violet avec carte mise en scène (flottement + tilt, `useReducedMotion` respecté) → comparaison QR vs NFC → 3 étapes → grille réassurance 4 (compatible tous tels, sans app, sans abonnement, rien à recharger) → FAQ accordéon 5 questions → CTA final. Tutoiement merchant (cohérent landing). `LandingNav minimal` + `FooterDark`. i18n `boutique.*` FR + EN.
 
 ---
 

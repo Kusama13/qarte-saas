@@ -1096,6 +1096,7 @@ export default function BookingModal({
                       onCountryChange={setPhoneCountry}
                       countries={['FR', 'BE', 'CH']}
                       autoFocus
+                      hidePrefix
                       className="px-4 py-2.5 text-sm border-transparent bg-gray-50 rounded-r-xl"
                     />
                   </div>

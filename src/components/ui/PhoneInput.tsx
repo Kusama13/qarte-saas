@@ -24,6 +24,7 @@ interface PhoneInputProps {
   autoFocus?: boolean;
   className?: string;
   wrapperClassName?: string;
+  hidePrefix?: boolean;
 }
 
 export function PhoneInput({
@@ -38,6 +39,7 @@ export function PhoneInput({
   autoFocus,
   className,
   wrapperClassName,
+  hidePrefix,
 }: PhoneInputProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
@@ -105,8 +107,8 @@ export function PhoneInput({
               error ? 'border-red-300' : 'border-gray-300',
             )}
           >
-            <span className="text-base leading-none">{COUNTRY_FLAGS[country]}</span>
-            <span className="text-xs text-gray-500">+{config.prefix}</span>
+            <span className={cn('leading-none', hidePrefix ? 'text-xl' : 'text-base')}>{COUNTRY_FLAGS[country]}</span>
+            {!hidePrefix && <span className="text-xs text-gray-500">+{config.prefix}</span>}
             <ChevronDown className="w-3 h-3 text-gray-400" />
           </button>
         </div>
