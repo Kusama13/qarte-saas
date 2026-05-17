@@ -19,8 +19,8 @@ export function PricingTransitionSection() {
     <section className="relative py-16 md:py-20 bg-white overflow-hidden">
       <div className="relative max-w-5xl mx-auto px-6">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, transform: 'translateY(20px)' }}
+          whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, ease: EASE }}
         >

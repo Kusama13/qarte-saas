@@ -42,10 +42,10 @@ export function ComparisonSection() {
       <div className="relative mx-auto max-w-6xl px-5">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, transform: 'translateY(20px)' }}
+          whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
           viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.7, ease: EASE }}
+          transition={{ duration: 0.6, ease: EASE }}
           className="text-center mb-12 md:mb-16"
         >
           <h2 className="text-3xl md:text-5xl font-bold text-gray-900 leading-tight mb-4">
@@ -61,10 +61,10 @@ export function ComparisonSection() {
 
           {/* Column A: Already on a platform */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, transform: 'translateY(28px)' }}
+            whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
             viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.7, delay: 0.1, ease: EASE }}
+            transition={{ duration: 0.6, delay: 0.06, ease: EASE }}
             className="relative bg-white/70 backdrop-blur-sm rounded-3xl border border-white/60 shadow-xl shadow-indigo-100/30 overflow-hidden"
           >
             {/* Gradient header */}
@@ -77,10 +77,10 @@ export function ComparisonSection() {
               {COL_A_ITEMS.map(({ key, icon: Icon, color, bg }, i) => (
                 <motion.div
                   key={key}
-                  initial={{ opacity: 0, x: -10 }}
-                  whileInView={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, transform: 'translateX(-10px)' }}
+                  whileInView={{ opacity: 1, transform: 'translateX(0px)' }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.2 + i * 0.08, ease: EASE }}
+                  transition={{ duration: 0.4, delay: 0.15 + i * 0.06, ease: EASE }}
                   className="flex items-start gap-3 p-3 rounded-2xl bg-gray-50/80 border border-gray-100/50"
                 >
                   <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center shrink-0`}>
@@ -94,10 +94,10 @@ export function ComparisonSection() {
 
           {/* Column B: Solo */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, transform: 'translateY(28px)' }}
+            whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
             viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.7, delay: 0.2, ease: EASE }}
+            transition={{ duration: 0.6, delay: 0.12, ease: EASE }}
             className="relative bg-white/70 backdrop-blur-sm rounded-3xl border border-white/60 shadow-xl shadow-violet-100/30 overflow-hidden"
           >
             {/* Gradient header */}
@@ -110,10 +110,10 @@ export function ComparisonSection() {
               {COL_B_ITEMS.map(({ key, icon: Icon, color, bg }, i) => (
                 <motion.div
                   key={key}
-                  initial={{ opacity: 0, x: 10 }}
-                  whileInView={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, transform: 'translateX(10px)' }}
+                  whileInView={{ opacity: 1, transform: 'translateX(0px)' }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.2 + i * 0.08, ease: EASE }}
+                  transition={{ duration: 0.4, delay: 0.15 + i * 0.06, ease: EASE }}
                   className="flex items-start gap-3 p-3 rounded-2xl bg-gray-50/80 border border-gray-100/50"
                 >
                   <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center shrink-0`}>
@@ -128,10 +128,10 @@ export function ComparisonSection() {
 
         {/* Philosophy callout */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, transform: 'translateY(20px)' }}
+          whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
           viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.7, delay: 0.3, ease: EASE }}
+          transition={{ duration: 0.6, delay: 0.18, ease: EASE }}
           className="relative bg-gradient-to-br from-indigo-50/80 to-violet-50/80 backdrop-blur-sm rounded-3xl border border-indigo-100/50 p-6 md:p-8 mb-10 md:mb-12 overflow-hidden"
         >
           <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-indigo-100/30 rounded-full blur-2xl" />
@@ -151,7 +151,7 @@ export function ComparisonSection() {
           <Link
             href="/auth/merchant/signup"
             onClick={handleCta}
-            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200/50 hover:shadow-xl hover:shadow-indigo-300/50 transition-all duration-300 hover:-translate-y-0.5 text-sm md:text-base"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200/50 hover:shadow-xl hover:shadow-indigo-300/50 transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 active:scale-[0.98] text-sm md:text-base"
           >
             {t('cta')}
             <ArrowRight className="w-4 h-4" />

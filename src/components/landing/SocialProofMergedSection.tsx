@@ -54,7 +54,7 @@ function buildReviews(t: (key: string) => string): Review[] {
 function ReviewCard({ review, delay, visible }: { review: Review; delay: number; visible: boolean }) {
   return (
     <div
-      className={`flex flex-col justify-between bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-500 h-full ${
+      className={`flex flex-col justify-between bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-[opacity,transform,box-shadow] duration-300 h-full ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
       }`}
       style={{ transitionDelay: visible ? `${delay}ms` : '0ms' }}
@@ -166,7 +166,7 @@ export function SocialProofMergedSection() {
                 <button
                   key={i}
                   onClick={() => scrollTo(i)}
-                  className={`h-1.5 rounded-full transition-all ${i === activeIndex ? 'w-5 bg-violet-500' : 'w-1.5 bg-gray-300'}`}
+                  className={`h-1.5 rounded-full transition-[width,background-color] duration-200 ${i === activeIndex ? 'w-5 bg-violet-500' : 'w-1.5 bg-gray-300'}`}
                   aria-label={`Testimonial ${i + 1}`}
                 />
               ))}

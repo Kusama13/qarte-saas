@@ -24,7 +24,7 @@ export function FooterCta() {
         <Link
           href="/auth/merchant/signup"
           onClick={() => { trackCtaClick('footer_cta', 'footer_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-          className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
+          className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-[transform,box-shadow] shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
         >
           {t('ctaButton')}
         </Link>
@@ -57,7 +57,7 @@ export function FooterDark() {
               href="https://share.google/wD2tUZFy21CJ1IoBa"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-3 py-1.5 mt-3 rounded-full bg-white/10 border border-white/10 hover:bg-white/15 transition-all"
+              className="inline-flex items-center gap-2 px-3 py-1.5 mt-3 rounded-full bg-white/10 border border-white/10 hover:bg-white/15 transition-colors"
             >
               <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>

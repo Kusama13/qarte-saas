@@ -220,7 +220,7 @@ export function PricingSection() {
             <Link
               href="/auth/merchant/signup"
               onClick={() => { trackCtaClick('pricing_all_in', 'pricing_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-              className="block w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-2xl hover:shadow-lg hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all duration-300 text-center text-sm uppercase tracking-wider shadow-md shadow-indigo-500/20"
+              className="block w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-2xl hover:shadow-lg hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 text-center text-sm uppercase tracking-wider shadow-md shadow-indigo-500/20"
             >
               {t('ctaTrialAllIn')}
             </Link>

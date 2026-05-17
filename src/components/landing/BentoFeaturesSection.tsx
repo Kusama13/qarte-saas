@@ -42,10 +42,10 @@ function FeatureBlock({
   return (
     <div className={`flex flex-col ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-6 md:gap-10 lg:gap-24`}>
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, transform: 'translateY(24px)' }}
+        whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
         viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.7, delay, ease: EASE }}
+        transition={{ duration: 0.6, delay, ease: EASE }}
         className="flex-1 text-center lg:text-left"
       >
         <h3 className="text-2xl md:text-5xl font-bold text-gray-900 leading-tight mb-3 md:mb-5">
@@ -60,10 +60,10 @@ function FeatureBlock({
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, transform: 'translateY(24px)' }}
+        whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
         viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.7, delay: delay + 0.12, ease: EASE }}
+        transition={{ duration: 0.6, delay: delay + 0.1, ease: EASE }}
         className="flex-1 flex justify-center"
       >
         {visual}
@@ -120,7 +120,7 @@ function ScanMethodsVisual({ t }: { t: (key: string) => string }) {
         </div>
       </div>
 
-      <div className="absolute -top-3 -right-3 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-emerald-100 animate-float-subtle">
+      <div className="absolute -top-3 -right-3 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-emerald-100 motion-safe:animate-float-subtle">
         <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
           <Check className="w-3 h-3 text-white" />
         </div>
@@ -150,10 +150,10 @@ function ProgramBrandVisual({ t }: { t: (key: string) => string }) {
           {colors.map((color, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, scale: 0.5 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, transform: 'scale(0.9)' }}
+              whileInView={{ opacity: 1, transform: 'scale(1)' }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.1 + i * 0.06, ease: EASE }}
+              transition={{ duration: 0.4, delay: 0.1 + i * 0.05, ease: EASE }}
               className="relative"
             >
               <div className={`w-8 h-8 md:w-9 md:h-9 rounded-full ${color.bg} ${color.active ? 'ring-2 ring-gray-600 ring-offset-2' : ''} shadow-sm`} />
@@ -200,7 +200,7 @@ function ProgramBrandVisual({ t }: { t: (key: string) => string }) {
         </div>
       </div>
 
-      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-violet-100 animate-float-subtle">
+      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-violet-100 motion-safe:animate-float-subtle">
         <Heart className="w-3.5 h-3.5 text-violet-500 fill-violet-500" />
         <span className="text-xs font-bold text-gray-800">{t('programBadge')}</span>
       </div>
@@ -233,11 +233,11 @@ function InactivityVisual({ t }: { t: (key: string) => string }) {
         {reminders.map((notif, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, transform: i % 2 === 0 ? 'translateX(-20px)' : 'translateX(20px)' }}
+            whileInView={{ opacity: 1, transform: 'translateX(0px)' }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.15 + i * 0.1, ease: EASE }}
-            className="flex items-start gap-3 bg-white rounded-2xl p-4 shadow-lg shadow-gray-200/40 border border-gray-100 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
+            transition={{ duration: 0.5, delay: 0.12 + i * 0.07, ease: EASE }}
+            className="flex items-start gap-3 bg-white rounded-2xl p-4 shadow-lg shadow-gray-200/40 border border-gray-100 hover:shadow-xl hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300"
           >
             <div className={`w-10 h-10 ${notif.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
               {notif.icon}
@@ -253,7 +253,7 @@ function InactivityVisual({ t }: { t: (key: string) => string }) {
         ))}
       </div>
 
-      <div className="absolute -bottom-3 right-0 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-emerald-100 animate-float-subtle">
+      <div className="absolute -bottom-3 right-0 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-emerald-100 motion-safe:animate-float-subtle">
         <Bell className="w-4 h-4 text-emerald-500" />
         <span className="text-xs font-bold text-gray-800">{t('inactivityBadge')}</span>
       </div>
@@ -275,11 +275,11 @@ function AutoOffersVisual({ t }: { t: (key: string) => string }) {
         {offers.map((offer, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, transform: 'translateY(16px)' }}
+            whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.15 + i * 0.1, ease: EASE }}
-            className="flex items-center gap-3 bg-white rounded-2xl p-4 shadow-lg shadow-gray-200/40 border border-gray-100 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
+            transition={{ duration: 0.5, delay: 0.12 + i * 0.07, ease: EASE }}
+            className="flex items-center gap-3 bg-white rounded-2xl p-4 shadow-lg shadow-gray-200/40 border border-gray-100 hover:shadow-xl hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300"
           >
             <div className={`w-10 h-10 ${offer.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
               {offer.icon}
@@ -296,7 +296,7 @@ function AutoOffersVisual({ t }: { t: (key: string) => string }) {
         ))}
       </div>
 
-      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-emerald-100 animate-float-subtle">
+      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-emerald-100 motion-safe:animate-float-subtle">
         <CalendarHeart className="w-4 h-4 text-emerald-500" />
         <span className="text-xs font-bold text-gray-800">{t('autoBadge')}</span>
       </div>
@@ -324,10 +324,10 @@ export function BentoFeaturesSection() {
 
       <div className="relative max-w-7xl mx-auto px-6">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, transform: 'translateY(20px)' }}
+          whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: EASE }}
+          transition={{ duration: 0.5, ease: EASE }}
           className="text-center mb-14 md:mb-16"
         >
           <p className="text-sm font-bold text-indigo-500 uppercase tracking-wider mb-4">
@@ -387,8 +387,8 @@ export function BentoFeaturesSection() {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, transform: 'translateY(20px)' }}
+          whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, ease: EASE }}
           className="mt-20 text-center"
@@ -396,7 +396,7 @@ export function BentoFeaturesSection() {
           <Link
             href="/auth/merchant/signup"
             onClick={() => { trackCtaClick('bento_cta', 'bento_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-[transform,box-shadow] duration-300"
           >
             {t('cta')}
             <ArrowRight className="w-5 h-5" />

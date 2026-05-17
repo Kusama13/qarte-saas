@@ -113,6 +113,9 @@ export default function BookingModal({
   // Mode libre: date/time selection
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
+  // Mode créneaux: heure retenue. Part du créneau cliqué sur la vitrine (prop slotTime)
+  // mais devient modifiable si la prestation choisie ne tient pas dans ce créneau.
+  const [pickedTime, setPickedTime] = useState<string | null>(slotTime);
   const [freeSlots, setFreeSlots] = useState<PlanningSlotPublic[]>([]);
   const [loadingFreeSlots, setLoadingFreeSlots] = useState(false);
   const [freeSlotsError, setFreeSlotsError] = useState(false);
@@ -323,23 +326,44 @@ export default function BookingModal({
     [selectedServices]
   );
 
-  // Check if consecutive slots are available (mode créneaux only)
-  const durationAvailable = useMemo(() => {
-    if (selectedServiceIds.size === 0) return true;
-    if (isFreeMod) return true; // mode libre: server validates
-    if (!slotTime || !slotDate || totalDuration === 0) return true;
-    const startMins = timeToMinutes(slotTime);
+  // Un créneau de départ tient la durée si aucun RDV booké ne tombe dans son intervalle.
+  const slotFitsDuration = (startTime: string): boolean => {
+    const startMins = timeToMinutes(startTime);
     const endMins = startMins + totalDuration;
-    // A booked slot strictly inside (startMins, endMins) blocks the booking
     return !bookedSlots.some(s => {
       if (s.slot_date !== slotDate) return false;
       const m = timeToMinutes(s.start_time);
       return m > startMins && m < endMins;
     });
-  }, [selectedServiceIds, slotDate, slotTime, bookedSlots, totalDuration, isFreeMod]);
+  };
+
+  // Check if consecutive slots are available (mode créneaux only)
+  const durationAvailable = useMemo(() => {
+    if (selectedServiceIds.size === 0) return true;
+    if (isFreeMod) return true; // mode libre: server validates
+    if (!pickedTime || !slotDate || totalDuration === 0) return true;
+    return slotFitsDuration(pickedTime);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedServiceIds, slotDate, pickedTime, bookedSlots, totalDuration, isFreeMod]);
+
+  // Mode créneaux : si le créneau cliqué est trop court, on propose les autres
+  // horaires libres du même jour qui, eux, tiennent la durée de la prestation.
+  const validDaySlots = useMemo(() => {
+    if (isFreeMod || !slotDate || totalDuration === 0) return [];
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+    return planningSlots
+      .filter(s => s.slot_date === slotDate)
+      .filter(s => slotDate !== todayStr || timeToMinutes(s.start_time) >= nowMins)
+      .filter(s => slotFitsDuration(s.start_time))
+      .map(s => s.start_time)
+      .sort((a, b) => timeToMinutes(a) - timeToMinutes(b));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFreeMod, slotDate, totalDuration, planningSlots, bookedSlots]);
 
   const effectiveDate = isFreeMod ? selectedDate : (slotDate || '');
-  const effectiveTime = isFreeMod ? selectedTime : (slotTime || '');
+  const effectiveTime = isFreeMod ? selectedTime : (pickedTime || '');
 
   const formattedDate = useMemo(() => {
     if (!effectiveDate) return '';
@@ -871,7 +895,29 @@ export default function BookingModal({
                 {selectedServiceIds.size > 0 && <PolicyNotice merchant={merchant} t={t} />}
 
                 {!durationAvailable && selectedServiceIds.size > 0 && (
-                  <p className="text-xs text-red-500 font-medium mb-3">{t('durationTooLong')}</p>
+                  <div className="mb-3 rounded-xl border border-red-200 bg-red-50/70 p-3">
+                    <p className="text-xs text-red-600 font-semibold">{t('durationTooLong')}</p>
+                    {validDaySlots.length > 0 ? (
+                      <>
+                        <p className="text-[11px] text-gray-600 mt-1.5 mb-2">{t('durationPickAnother')}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {validDaySlots.map(time => (
+                            <button
+                              key={time}
+                              type="button"
+                              onClick={() => setPickedTime(time)}
+                              className="px-3 py-2 rounded-lg text-[12px] font-semibold transition-transform active:scale-95"
+                              style={{ backgroundColor: `${p}12`, color: p }}
+                            >
+                              {formatTime(time, locale)}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-[11px] text-gray-600 mt-1.5">{t('durationNoneThatDay')}</p>
+                    )}
+                  </div>
                 )}
               </motion.div>
             )}

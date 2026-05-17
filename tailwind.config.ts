@@ -6,6 +6,12 @@ const config: Config = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  future: {
+    // Emil Kowalski : les utilitaires `hover:` ne s'appliquent que sur les
+    // appareils qui supportent vraiment le survol (souris). Evite que le tap
+    // mobile declenche un faux `:hover` (carte qui "saute" au toucher).
+    hoverOnlyWhenSupported: true,
+  },
   theme: {
     extend: {
       colors: {

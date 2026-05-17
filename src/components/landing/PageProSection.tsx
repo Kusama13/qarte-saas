@@ -31,10 +31,10 @@ function FeatureBlock({
   return (
     <div className={`flex flex-col ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-6 md:gap-10 lg:gap-16`}>
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, transform: 'translateY(24px)' }}
+        whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
         viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.7, delay, ease: EASE }}
+        transition={{ duration: 0.6, delay, ease: EASE }}
         className="flex-1 text-center lg:text-left"
       >
         <h3 className="text-2xl md:text-5xl font-bold text-gray-900 leading-tight mb-3 md:mb-5">
@@ -49,10 +49,10 @@ function FeatureBlock({
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, transform: 'translateY(24px)' }}
+        whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
         viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.7, delay: delay + 0.12, ease: EASE }}
+        transition={{ duration: 0.6, delay: delay + 0.1, ease: EASE }}
         className="flex-1 flex justify-center"
       >
         {visual}
@@ -85,8 +85,8 @@ function PlanningVisual({ t, locale }: { t: (key: string) => string; locale: str
           ].map((d) => (
             <motion.div
               key={d.day}
-              initial={{ opacity: 0, x: -12 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, transform: 'translateX(-12px)' }}
+              whileInView={{ opacity: 1, transform: 'translateX(0px)' }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, ease: EASE }}
               className="flex items-center gap-3"
@@ -127,10 +127,10 @@ function PrestationsVisual({ t, locale }: { t: (key: string) => string; locale: 
         ].map((s, i) => (
           <motion.div
             key={s.name}
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, transform: 'translateY(12px)' }}
+            whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
             viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.1 + i * 0.08, ease: EASE }}
+            transition={{ duration: 0.4, delay: 0.1 + i * 0.06, ease: EASE }}
             className="flex items-center justify-between py-2.5 px-3.5 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
           >
             <div>
@@ -165,10 +165,10 @@ function AcompteVisual({ t }: { t: (key: string) => string }) {
           <span className="text-sm font-bold text-white">{t('acompteCta')}</span>
         </div>
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, transform: 'scale(0.95)' }}
+          whileInView={{ opacity: 1, transform: 'scale(1)' }}
           viewport={{ once: true }}
-          transition={{ duration: 0.4, delay: 0.3, ease: EASE }}
+          transition={{ duration: 0.4, delay: 0.25, ease: EASE }}
           className="flex items-center gap-2 mt-4 bg-emerald-50 rounded-xl px-3 py-2.5"
         >
           <span className="text-base">{'\u2705'}</span>
@@ -198,10 +198,10 @@ export function PageProSection() {
 
       <div className="relative max-w-7xl mx-auto px-6">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, transform: 'translateY(20px)' }}
+          whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: EASE }}
+          transition={{ duration: 0.5, ease: EASE }}
           className="text-center mb-10 md:mb-16"
         >
           {t('badge') && <p className="text-xs md:text-sm font-bold text-indigo-600 uppercase tracking-wider mb-2 md:mb-4">
@@ -257,8 +257,8 @@ export function PageProSection() {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, transform: 'translateY(20px)' }}
+          whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, ease: EASE }}
           className="mt-14 md:mt-20 text-center"
@@ -266,7 +266,7 @@ export function PageProSection() {
           <Link
             href="/auth/merchant/signup"
             onClick={() => { trackCtaClick('page_pro_cta', 'page_pro_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-            className="group inline-flex items-center gap-2 px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-sm md:text-base"
+            className="group inline-flex items-center gap-2 px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-[transform,box-shadow] duration-300 text-sm md:text-base"
           >
             {t('cta')}
             <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-0.5 transition-transform" />

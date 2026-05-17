@@ -3680,6 +3680,8 @@
     "close": "Close",
     "slotUnavailable": "This slot is no longer available",
     "durationTooLong": "This slot cannot accommodate this service duration",
+    "durationPickAnother": "Here are the slots long enough that day:",
+    "durationNoneThatDay": "No slot is long enough that day. Close and pick another date.",
     "cancelPolicy": "Cancellation allowed up to {days, plural, one {# day} other {# days}} before the appointment",
     "reschedulePolicy": "Rescheduling allowed up to {days, plural, one {# day} other {# days}} before the appointment",
     "bookingError": "Booking error, please try again",

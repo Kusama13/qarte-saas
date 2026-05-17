@@ -56,7 +56,7 @@ export default function LandingNav({ minimal = false }: LandingNavProps) {
             <Link
               href="/auth/merchant/signup"
               onClick={() => { trackCtaClick('header_desktop_cta', 'navbar'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-              className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold rounded-lg transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg"
+              className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold rounded-lg transition-[transform,box-shadow] shadow-sm hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg"
             >
               {t('freeTrial')}
             </Link>
@@ -132,7 +132,7 @@ export default function LandingNav({ minimal = false }: LandingNavProps) {
                   <Link
                     href="/auth/merchant"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block w-full py-3 mt-2 text-center bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold rounded-lg transition-all shadow-sm"
+                    className="block w-full py-3 mt-2 text-center bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold rounded-lg transition-colors shadow-sm"
                   >
                     {t('proSpace')}
                   </Link>

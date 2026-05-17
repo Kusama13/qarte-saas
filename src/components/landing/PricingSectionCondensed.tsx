@@ -121,7 +121,7 @@ export function PricingSectionCondensed() {
             <Link
               href="/auth/merchant/signup"
               onClick={() => { trackCtaClick('pricing_all_in_condensed', 'pricing_section_condensed'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-              className="block w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-bold rounded-2xl hover:shadow-lg hover:shadow-indigo-500/40 transition-all text-center whitespace-nowrap shadow-md shadow-indigo-500/20"
+              className="block w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-bold rounded-2xl hover:shadow-lg hover:shadow-indigo-500/40 transition-shadow text-center whitespace-nowrap shadow-md shadow-indigo-500/20"
             >
               {t('ctaTrialAllIn')}
             </Link>

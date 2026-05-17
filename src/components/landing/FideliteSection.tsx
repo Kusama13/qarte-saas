@@ -35,10 +35,10 @@ function FeatureBlock({
   return (
     <div className={`flex flex-col ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-6 md:gap-10 lg:gap-24`}>
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, transform: 'translateY(24px)' }}
+        whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
         viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.7, delay, ease: EASE }}
+        transition={{ duration: 0.6, delay, ease: EASE }}
         className="flex-1 text-center lg:text-left"
       >
         <h3 className="text-2xl md:text-5xl font-bold text-gray-900 leading-tight mb-3 md:mb-5">
@@ -53,10 +53,10 @@ function FeatureBlock({
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, transform: 'translateY(24px)' }}
+        whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
         viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.7, delay: delay + 0.12, ease: EASE }}
+        transition={{ duration: 0.6, delay: delay + 0.1, ease: EASE }}
         className="flex-1 flex justify-center"
       >
         {visual}
@@ -142,10 +142,10 @@ function ProgramBrandVisual({ t }: { t: (key: string) => string }) {
           {colors.map((color, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, scale: 0.5 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, transform: 'scale(0.9)' }}
+              whileInView={{ opacity: 1, transform: 'scale(1)' }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.1 + i * 0.06, ease: EASE }}
+              transition={{ duration: 0.4, delay: 0.1 + i * 0.05, ease: EASE }}
               className="relative"
             >
               <div className={`w-8 h-8 md:w-9 md:h-9 rounded-full ${color.bg} ${color.active ? 'ring-2 ring-indigo-400/60 ring-offset-2 ring-offset-white' : ''} shadow-sm`} />
@@ -223,11 +223,11 @@ function InactivityVisual({ t }: { t: (key: string) => string }) {
         {reminders.map((notif, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, transform: i % 2 === 0 ? 'translateX(-20px)' : 'translateX(20px)' }}
+            whileInView={{ opacity: 1, transform: 'translateX(0px)' }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.15 + i * 0.1, ease: EASE }}
-            className="flex items-start gap-3 bg-white backdrop-blur-sm rounded-2xl p-4 shadow-lg shadow-gray-200/40 border border-gray-100 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
+            transition={{ duration: 0.5, delay: 0.12 + i * 0.07, ease: EASE }}
+            className="flex items-start gap-3 bg-white backdrop-blur-sm rounded-2xl p-4 shadow-lg shadow-gray-200/40 border border-gray-100 hover:shadow-xl hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300"
           >
             <div className={`w-10 h-10 ${notif.color} rounded-xl flex items-center justify-center flex-shrink-0 text-lg`}>
               {notif.emoji}
@@ -264,11 +264,11 @@ function AutoOffersVisual({ t }: { t: (key: string) => string }) {
         {offers.map((offer, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, transform: 'translateY(16px)' }}
+            whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.15 + i * 0.1, ease: EASE }}
-            className="flex items-center gap-3 bg-white backdrop-blur-sm rounded-2xl p-4 shadow-lg shadow-gray-200/40 border border-gray-100 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
+            transition={{ duration: 0.5, delay: 0.12 + i * 0.07, ease: EASE }}
+            className="flex items-center gap-3 bg-white backdrop-blur-sm rounded-2xl p-4 shadow-lg shadow-gray-200/40 border border-gray-100 hover:shadow-xl hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300"
           >
             <div className={`w-10 h-10 ${offer.color} rounded-xl flex items-center justify-center flex-shrink-0 text-lg`}>
               {offer.emoji}
@@ -316,10 +316,10 @@ function ReviewsVisual({ t }: { t: (key: string) => string }) {
           {reviews.map((r, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, transform: 'translateY(12px)' }}
+              whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.15 + i * 0.1, ease: EASE }}
+              transition={{ duration: 0.4, delay: 0.12 + i * 0.07, ease: EASE }}
               className="bg-gray-50 rounded-xl p-3"
             >
               <div className="flex items-center gap-2 mb-1">
@@ -336,10 +336,10 @@ function ReviewsVisual({ t }: { t: (key: string) => string }) {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, transform: 'scale(0.95)' }}
+          whileInView={{ opacity: 1, transform: 'scale(1)' }}
           viewport={{ once: true }}
-          transition={{ duration: 0.4, delay: 0.4, ease: EASE }}
+          transition={{ duration: 0.4, delay: 0.35, ease: EASE }}
           className="mt-3 flex items-center gap-2 bg-emerald-50 rounded-xl px-3 py-2"
         >
           <span className="text-sm">{'\u2705'}</span>
@@ -381,10 +381,10 @@ function JournalVisual({ t }: { t: (key: string) => string }) {
           {types.map((type, i) => (
             <motion.span
               key={i}
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, transform: 'scale(0.9)' }}
+              whileInView={{ opacity: 1, transform: 'scale(1)' }}
               viewport={{ once: true }}
-              transition={{ duration: 0.3, delay: 0.1 + i * 0.06, ease: EASE }}
+              transition={{ duration: 0.3, delay: 0.1 + i * 0.05, ease: EASE }}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${type.bg} ${type.text} text-[10px] font-bold`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${type.dot}`} />
@@ -395,8 +395,8 @@ function JournalVisual({ t }: { t: (key: string) => string }) {
 
         {/* Pinned note */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, transform: 'translateY(10px)' }}
+          whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
           viewport={{ once: true }}
           transition={{ duration: 0.4, delay: 0.2, ease: EASE }}
           className="bg-red-50/60 rounded-xl p-3 mb-2.5 border border-red-100/60"
@@ -410,8 +410,8 @@ function JournalVisual({ t }: { t: (key: string) => string }) {
 
         {/* Regular note */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, transform: 'translateY(10px)' }}
+          whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
           viewport={{ once: true }}
           transition={{ duration: 0.4, delay: 0.3, ease: EASE }}
           className="bg-violet-50/50 rounded-xl p-3 border border-violet-100/50"
@@ -450,8 +450,8 @@ function ContestVisual({ t }: { t: (key: string) => string }) {
 
         {/* Prize card */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, transform: 'translateY(10px)' }}
+          whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
           viewport={{ once: true }}
           transition={{ duration: 0.4, delay: 0.1, ease: EASE }}
           className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-3.5 mb-3 border border-amber-100/60"
@@ -466,10 +466,10 @@ function ContestVisual({ t }: { t: (key: string) => string }) {
           {participants.map((name, i) => (
             <motion.span
               key={i}
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, transform: 'scale(0.9)' }}
+              whileInView={{ opacity: 1, transform: 'scale(1)' }}
               viewport={{ once: true }}
-              transition={{ duration: 0.3, delay: 0.15 + i * 0.06, ease: EASE }}
+              transition={{ duration: 0.3, delay: 0.15 + i * 0.05, ease: EASE }}
               className="px-2.5 py-1 text-[10px] font-medium text-gray-600 bg-gray-100 rounded-full"
             >
               {name}
@@ -479,10 +479,10 @@ function ContestVisual({ t }: { t: (key: string) => string }) {
 
         {/* Auto draw */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, transform: 'scale(0.95)' }}
+          whileInView={{ opacity: 1, transform: 'scale(1)' }}
           viewport={{ once: true }}
-          transition={{ duration: 0.4, delay: 0.4, ease: EASE }}
+          transition={{ duration: 0.4, delay: 0.35, ease: EASE }}
           className="flex items-center gap-2 bg-emerald-50 rounded-xl px-3 py-2"
         >
           <span className="text-sm">{'\u2705'}</span>
@@ -512,10 +512,10 @@ export function FideliteSection() {
 
       <div className="relative max-w-7xl mx-auto px-6">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, transform: 'translateY(20px)' }}
+          whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: EASE }}
+          transition={{ duration: 0.5, ease: EASE }}
           className="text-center mb-10 md:mb-16"
         >
           {t('badge') && <p className="text-xs md:text-sm font-bold text-indigo-500 uppercase tracking-wider mb-2 md:mb-4">
@@ -554,8 +554,8 @@ export function FideliteSection() {
 
           {/* Mini-testimonial */}
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, transform: 'translateY(16px)' }}
+            whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, ease: EASE }}
             className="mx-auto max-w-3xl bg-rose-50/60 border border-rose-100 rounded-2xl p-5 md:p-6 flex items-start gap-4"
@@ -586,8 +586,8 @@ export function FideliteSection() {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, transform: 'translateY(20px)' }}
+          whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, ease: EASE }}
           className="mt-12 text-center"
@@ -595,7 +595,7 @@ export function FideliteSection() {
           <Link
             href="/auth/merchant/signup"
             onClick={() => { trackCtaClick('fidelite_cta', 'fidelite_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-            className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 hover:from-indigo-700 hover:to-violet-700 hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+            className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 hover:from-indigo-700 hover:to-violet-700 hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-[transform,box-shadow] duration-300"
           >
             {t('cta')}
             <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />

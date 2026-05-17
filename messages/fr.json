@@ -3683,6 +3683,8 @@
     "close": "Fermer",
     "slotUnavailable": "Ce créneau n'est plus disponible",
     "durationTooLong": "Ce créneau ne permet pas cette durée de prestation",
+    "durationPickAnother": "Voici les horaires assez longs ce jour-là :",
+    "durationNoneThatDay": "Aucun horaire assez long ce jour-là. Fermez et choisissez une autre date.",
     "cancelPolicy": "Annulation possible jusqu''à {days, plural, one {# jour} other {# jours}} avant le RDV",
     "reschedulePolicy": "Modification possible jusqu''à {days, plural, one {# jour} other {# jours}} avant le RDV",
     "bookingError": "Erreur lors de la réservation, veuillez réessayer",

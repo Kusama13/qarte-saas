@@ -24,10 +24,10 @@ export function FeaturesGridSection() {
 
       <div className="relative max-w-7xl mx-auto px-6">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, transform: 'translateY(20px)' }}
+          whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: EASE }}
+          transition={{ duration: 0.5, ease: EASE }}
           className="text-center mb-10 md:mb-16"
         >
           <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-3 md:mb-4">
@@ -43,11 +43,11 @@ export function FeaturesGridSection() {
           {features.map(({ number, titleKey, descKey, competitorKey, bg, border, text }, i) => (
             <motion.div
               key={titleKey}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, transform: 'translateY(20px)' }}
+              whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
               viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.5, delay: 0.05 + i * 0.04, ease: EASE }}
-              className="bg-white backdrop-blur-sm rounded-2xl p-4 md:p-7 shadow-md md:shadow-lg shadow-gray-200/40 border border-gray-100 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex flex-col gap-2.5 md:gap-3"
+              transition={{ duration: 0.5, delay: 0.05 + i * 0.05, ease: EASE }}
+              className="bg-white backdrop-blur-sm rounded-2xl p-4 md:p-7 shadow-md md:shadow-lg shadow-gray-200/40 border border-gray-100 hover:shadow-xl hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 flex flex-col gap-2.5 md:gap-3"
             >
               <div className="flex items-center gap-3 md:gap-4">
                 <div className={`min-w-[3.5rem] md:min-w-[4.5rem] px-3 py-2 rounded-xl ${bg} border ${border} flex items-center justify-center shrink-0`}>

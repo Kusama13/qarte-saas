@@ -35,13 +35,13 @@ function AccordionItem({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, transform: 'translateY(20px)' }}
+      whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
       viewport={{ once: true, margin: '-40px' }}
-      transition={{ duration: 0.5, delay: index * 0.07 }}
+      transition={{ duration: 0.5, delay: index * 0.05, ease: [0.23, 1, 0.32, 1] }}
     >
       <div
-        className={`relative rounded-2xl border bg-white transition-all duration-500 ${
+        className={`relative rounded-2xl border bg-white transition-[box-shadow,border-color] duration-200 ${
           isOpen
             ? 'shadow-xl shadow-indigo-500/8 border-indigo-100'
             : 'shadow-md shadow-gray-200/60 border-gray-100 hover:shadow-lg hover:border-gray-200'
@@ -61,8 +61,8 @@ function AccordionItem({
           </h3>
 
           <motion.div
-            animate={{ rotate: isOpen ? 180 : 0 }}
-            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            animate={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
             className="flex-shrink-0 text-gray-400 group-hover:text-gray-600 transition-colors duration-300"
           >
             <ChevronDown className="w-5 h-5" />
@@ -177,16 +177,16 @@ export function FAQSection() {
 
         {/* Mid-FAQ CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5, delay: 0.25 }}
+          initial={{ opacity: 0, transform: 'translateY(16px)' }}
+          animate={isInView ? { opacity: 1, transform: 'translateY(0px)' } : {}}
+          transition={{ duration: 0.5, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
           className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 text-center"
         >
           <p className="text-sm text-gray-700 font-medium">{t('midCtaPrefix')}</p>
           <Link
             href="/auth/merchant/signup"
             onClick={() => { trackCtaClick('faq_mid_cta', 'faq_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-            className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-bold rounded-full hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-bold rounded-full hover:shadow-lg hover:shadow-indigo-500/30 active:scale-[0.98] transition-[transform,box-shadow]"
           >
             {t('midCtaButton')}
             <ArrowRight className="w-4 h-4" />
@@ -195,9 +195,9 @@ export function FAQSection() {
 
         {/* WhatsApp compact */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5, delay: 0.3 }}
+          initial={{ opacity: 0, transform: 'translateY(16px)' }}
+          animate={isInView ? { opacity: 1, transform: 'translateY(0px)' } : {}}
+          transition={{ duration: 0.5, delay: 0.28, ease: [0.23, 1, 0.32, 1] }}
           className="mt-8 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50/80 to-white p-4 md:p-5 flex flex-col sm:flex-row items-center gap-3 sm:gap-5"
         >
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -220,7 +220,7 @@ export function FAQSection() {
             href="https://wa.me/33607447420"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-shrink-0 flex items-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-emerald-500/20"
+            className="flex-shrink-0 flex items-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold text-sm rounded-xl transition-colors shadow-lg shadow-emerald-500/20"
           >
             <MessageCircle className="w-4 h-4" />
             {t('whatsappCta')}

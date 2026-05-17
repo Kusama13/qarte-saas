@@ -161,7 +161,7 @@ export function HeroSection({ topLogos = [] }: { topLogos?: HeroLogo[] } = {}) {
             <Link
               href="/auth/merchant/signup"
               onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-              className="flex w-full sm:w-auto sm:min-w-[400px] items-center justify-center px-10 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-base sm:text-lg rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+              className="flex w-full sm:w-auto sm:min-w-[400px] items-center justify-center px-10 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-base sm:text-lg rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-[transform,box-shadow] duration-200"
             >
               <span>{t('ctaPrimary')}</span>
             </Link>
