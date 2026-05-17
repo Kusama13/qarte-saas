@@ -9,3 +9,4 @@ export { Switch } from './Switch';
 export { Callout } from './Callout';
 export { ChipGroup } from './ChipGroup';
 export { ToggleRow } from './ToggleRow';
+export { SettingCard } from './SettingCard';

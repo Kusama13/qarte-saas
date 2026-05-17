@@ -12,7 +12,7 @@ import { AddressAutocomplete, type AddressSuggestion } from '@/components/ui/Add
 import { detectPaymentProvider } from '@/lib/payment-providers';
 import { computeBookingPrice } from '@/lib/booking-pricing';
 import { computeDepositInfo } from '@/lib/deposit';
-import { BOOKING_HORIZON_DAYS } from '@/lib/booking-window';
+import { normalizeBookingHorizon } from '@/lib/booking-window';
 
 type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
 type ServiceCategory = { id: string; name: string; position: number };
@@ -25,7 +25,7 @@ type MerchantBooking = Pick<
   'auto_booking_enabled' | 'deposit_link' | 'deposit_percent' | 'deposit_amount' | 'deposit_only_for_new_customers' |
   'welcome_offer_enabled' | 'welcome_offer_description' | 'welcome_offer_discount_percent' | 'subscription_status' | 'booking_mode' |
   'allow_customer_cancel' | 'cancel_deadline_days' | 'allow_customer_reschedule' | 'reschedule_deadline_days' |
-  'home_service_enabled'
+  'home_service_enabled' | 'booking_horizon_days'
 >;
 
 interface BookingModalProps {
@@ -931,7 +931,7 @@ export default function BookingModal({
                   const bcp47 = toBCP47(locale);
                   const today = new Date(); today.setHours(0, 0, 0, 0);
                   const todayStr = today.toISOString().split('T')[0];
-                  const maxDate = new Date(today); maxDate.setDate(today.getDate() + BOOKING_HORIZON_DAYS);
+                  const maxDate = new Date(today); maxDate.setDate(today.getDate() + normalizeBookingHorizon(merchant.booking_horizon_days));
                   const maxDateStr = maxDate.toISOString().split('T')[0];
 
                   const year = calMonth.getFullYear();

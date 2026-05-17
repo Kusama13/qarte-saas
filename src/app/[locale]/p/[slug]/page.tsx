@@ -7,7 +7,7 @@ import { SHOP_TYPES } from '@/types';
 import type { Metadata } from 'next';
 import { isDemoSlug, getDemoMerchantData } from '@/lib/demo-merchants';
 import { getTodayForCountry, extractCityFromAddress } from '@/lib/utils';
-import { BOOKING_HORIZON_DAYS } from '@/lib/booking-window';
+import { normalizeBookingHorizon } from '@/lib/booking-window';
 import DemoNav from './DemoNav';
 
 // SEO-optimised, terser shop labels for the title tag (no slashes, no compound forms).
@@ -62,7 +62,7 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
       'planning_enabled, planning_message, planning_message_expires, booking_message, ' +
       'auto_booking_enabled, deposit_link, deposit_percent, deposit_amount, phone, display_phone, country, ' +
       'student_offer_enabled, student_offer_description, subscription_status, past_due_since, plan_tier, trial_ends_at, ' +
-      'booking_mode, buffer_minutes, home_service_enabled, hide_address_on_public_page, ' +
+      'booking_mode, buffer_minutes, booking_horizon_days, home_service_enabled, hide_address_on_public_page, ' +
       'allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days, ' +
       'contest_enabled, contest_prize, ' +
       'gift_card_enabled, gift_card_amounts, gift_card_message, gift_card_services_enabled, gift_card_expiry_months'
@@ -74,7 +74,7 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
 
   const today = getTodayForCountry((merchant as any).country);
   const todayDate = new Date(today);
-  todayDate.setDate(todayDate.getDate() + BOOKING_HORIZON_DAYS);
+  todayDate.setDate(todayDate.getDate() + normalizeBookingHorizon((merchant as any).booking_horizon_days));
   const endDate = todayDate.toISOString().split('T')[0];
 
   const isFreeMod = (merchant as any).booking_mode === 'free';

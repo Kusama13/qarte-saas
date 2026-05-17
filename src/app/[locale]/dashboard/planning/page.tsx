@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
-import { CalendarDays, CalendarCheck, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, AlertTriangle, X, Trash2, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical, Settings, Save, MapPin } from 'lucide-react';
+import { CalendarDays, CalendarCheck, CalendarRange, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, AlertTriangle, X, Trash2, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical, Settings, Save, MapPin } from 'lucide-react';
 import { DepositCard } from './settings/DepositCard';
 import { CustomerEditCard } from './settings/CustomerEditCard';
 import { HomeServiceCard } from './settings/HomeServiceCard';
@@ -21,6 +21,7 @@ import type { CustomServiceDraft } from './usePlanningState';
 import CustomServicePicker from './CustomServicePicker';
 import { handleDownloadStory } from './StoryExport';
 import { PhoneInput } from '@/components/ui/PhoneInput';
+import { SettingCard, Switch, Callout, ChipGroup } from '@/components/ui';
 import { AddressAutocomplete, type AddressSuggestion } from '@/components/ui/AddressAutocomplete';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
 import { usePlanningState } from './usePlanningState';
@@ -41,7 +42,7 @@ import { useToast } from '@/components/ui/Toast';
 import { Link } from '@/i18n/navigation';
 import { usePullToRefreshRegister } from '@/components/shared/PullToRefresh';
 import { hasValidOpeningHours } from '@/lib/opening-hours';
-import { BOOKING_HORIZON_DAYS } from '@/lib/booking-window';
+import { BOOKING_HORIZON_OPTIONS, type BookingHorizonDays } from '@/lib/booking-window';
 
 const VIEW_MODE_KEY = 'qarte_planning_view';
 const VIEW_MODES = ['day', '2day', 'week'] as const;
@@ -69,6 +70,7 @@ export default function PlanningDashboard() {
     cancelDeadlineDays, setCancelDeadlineDays, rescheduleDeadlineDays, setRescheduleDeadlineDays,
     depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     bookingMode, setBookingMode, bufferMinutes, setBufferMinutes,
+    bookingHorizonDays, setBookingHorizonDays,
     homeServiceEnabled, setHomeServiceEnabled,
     hideAddressOnPublicPage, setHideAddressOnPublicPage,
     services,
@@ -559,6 +561,7 @@ export default function PlanningDashboard() {
         reschedule_deadline_days: parseInt(rescheduleDeadlineDays) || 1,
         booking_mode: bookingMode,
         buffer_minutes: bufferMinutes,
+        booking_horizon_days: bookingHorizonDays,
         home_service_enabled: homeServiceEnabled,
         shop_lat: shopLat,
         shop_lng: shopLng,
@@ -1254,14 +1257,8 @@ export default function PlanningDashboard() {
             <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0">
 
               {/* Card: Mode de planning */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:col-span-2">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
-                    <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-                  </div>
-                  <h2 className="text-sm font-bold text-gray-800">{t('bookingModeTitle')}</h2>
-                </div>
-                <div className="ml-9 grid grid-cols-2 gap-2 mt-2">
+              <SettingCard icon={Calendar} title={t('bookingModeTitle')} className="sm:col-span-2">
+                <div className="grid grid-cols-2 gap-2">
                   {(['slots', 'free'] as const).map(mode => {
                     const isActive = bookingMode === mode;
                     return (
@@ -1269,7 +1266,7 @@ export default function PlanningDashboard() {
                         key={mode}
                         type="button"
                         onClick={() => handleBookingModeChange(mode)}
-                        className={`text-left rounded-xl border p-3 transition-all ${isActive ? 'bg-slate-900 border-slate-900' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'}`}
+                        className={`text-left rounded-xl border p-3 transition-all ${isActive ? 'bg-slate-800 border-slate-800' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'}`}
                       >
                         <div className="flex items-center justify-between gap-1 mb-1">
                           <p className={`text-xs font-bold ${isActive ? 'text-white' : 'text-gray-700'}`}>
@@ -1281,120 +1278,91 @@ export default function PlanningDashboard() {
                             </span>
                           )}
                         </div>
-                        <p className={`text-[10px] leading-relaxed ${isActive ? 'text-white/80' : 'text-gray-400'}`}>
+                        <p className={`text-[11px] leading-relaxed ${isActive ? 'text-white/80' : 'text-gray-500'}`}>
                           {mode === 'slots' ? t('bookingModeSlotHint') : t('bookingModeFreeHint')}
                         </p>
                       </button>
                     );
                   })}
                 </div>
-              </div>
-
-              {/* Card: Résa en ligne (toggle) — placé juste sous le mode pour visibilité */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-                      <Globe className="w-3.5 h-3.5 text-emerald-600" />
-                    </div>
-                    <div className="min-w-0">
-                      <h2 className="text-sm font-bold text-gray-800">{t('autoBookingTitle')}</h2>
-                      <p className="text-[11px] text-gray-500 mt-0.5">{autoBookingEnabled ? t('autoBookingHint', { days: BOOKING_HORIZON_DAYS }) : t('autoBookingOffHint')}</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={autoBookingEnabled}
-                    onClick={() => setAutoBookingEnabled(!autoBookingEnabled)}
-                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 ${autoBookingEnabled ? 'bg-emerald-500' : 'bg-gray-200'}`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${autoBookingEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </button>
-                </div>
-                {/* Warning : la résa Qarte remplace tout lien externe configuré */}
-                {autoBookingEnabled && merchant?.booking_url && (
-                  <div className="mt-3 flex gap-2.5 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5">
-                    <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-700">{t('externalBookingWarning')}</p>
-                  </div>
-                )}
-              </div>
+              </SettingCard>
 
               {/* Card: Tampon entre les RDV (mode libre uniquement) */}
               {bookingMode === 'free' && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
-                      <Clock className="w-3.5 h-3.5 text-violet-600" />
-                    </div>
-                    <h2 className="text-sm font-bold text-gray-800">{t('bufferTitle')}</h2>
-                  </div>
-                  <p className="text-[11px] text-gray-500 mb-3 ml-9">{t('bufferHint')}</p>
-                  <div className="flex gap-2 ml-9 flex-wrap">
-                    {([0, 10, 15, 30] as const).map(val => (
-                      <button
-                        key={val}
-                        type="button"
-                        onClick={() => setBufferMinutes(val)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${bufferMinutes === val ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
-                      >
-                        {val === 0 ? t('bufferNone') : `${val} min`}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <SettingCard icon={Clock} title={t('bufferTitle')}>
+                  <p className="text-[11px] text-gray-500 mb-3">{t('bufferHint')}</p>
+                  <ChipGroup
+                    fill
+                    options={[0, 10, 15, 30].map(v => ({ value: String(v), label: v === 0 ? t('bufferNone') : `${v} min` }))}
+                    value={String(bufferMinutes)}
+                    onChange={(v) => setBufferMinutes(Number(v) as 0 | 10 | 15 | 30)}
+                  />
+                </SettingCard>
               )}
 
               {/* Hint: horaires depuis la vitrine (mode libre uniquement) */}
               {bookingMode === 'free' && (
-                <div className="bg-indigo-50 rounded-2xl border border-indigo-100 p-4">
-                  <p className="text-[11px] text-indigo-700 leading-relaxed">
-                    {t('bookingModeFreeHoursHint')}{' '}
-                    <a href="/dashboard/public-page" className="font-semibold underline underline-offset-2 hover:text-indigo-900">
-                      {t('bookingModeFreeHoursLink')}
-                    </a>
-                  </p>
-                </div>
+                <Callout variant="indigo">
+                  {t('bookingModeFreeHoursHint')}{' '}
+                  <a href="/dashboard/public-page" className="font-semibold underline underline-offset-2 hover:text-indigo-900">
+                    {t('bookingModeFreeHoursLink')}
+                  </a>
+                </Callout>
               )}
 
             </div>
           </section>
 
-          {/* ═══════ SECTION 2: RÉSA EN LIGNE — paramètres avancés ═══════ */}
-          {/* Header masqué quand résa en ligne off : il ne resterait rien dedans */}
-          {autoBookingEnabled && (
+          {/* ═══════ SECTION 2: RÉSERVATION EN LIGNE ═══════ */}
           <section>
             <h3 className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 mb-2 px-1">{t('sectionOnlineBooking')}</h3>
             <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0">
 
-              {/* Card: Conditions de reservation (only when online booking enabled) */}
-              {autoBookingEnabled && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:col-span-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center">
-                      <Phone className="w-3.5 h-3.5 text-violet-600" />
-                    </div>
-                    <h2 className="text-sm font-bold text-gray-800">{t('bookingTitle')}</h2>
-                  </div>
-                  <p className="text-[11px] text-gray-500 mb-3 ml-9">{t('bookingHint')}</p>
-
-                  <div className="ml-9">
-                    <textarea
-                      value={bookingMessage}
-                      onChange={(e) => setBookingMessage(e.target.value)}
-                      placeholder={t('bookingPlaceholder')}
-                      maxLength={500}
-                      rows={4}
-                      className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none"
-                    />
-                    <p className="text-[10px] text-gray-400 text-right mt-1">{bookingMessage.length}/500</p>
-                  </div>
-                </div>
-              )}
+              {/* Card: Résa en ligne (toggle) — tête de section, toujours visible */}
+              <SettingCard
+                icon={Globe}
+                title={t('autoBookingTitle')}
+                tone="emerald"
+                className="sm:col-span-2"
+                headerRight={<Switch checked={autoBookingEnabled} onChange={setAutoBookingEnabled} tone="emerald" size="md" ariaLabel={t('autoBookingTitle')} />}
+              >
+                <p className="text-[11px] text-gray-500 leading-relaxed">
+                  {autoBookingEnabled ? t('autoBookingHint', { days: bookingHorizonDays }) : t('autoBookingOffHint')}
+                </p>
+                {autoBookingEnabled && merchant?.booking_url && (
+                  <Callout variant="warning" icon={AlertTriangle} className="mt-3">
+                    {t('externalBookingWarning')}
+                  </Callout>
+                )}
+              </SettingCard>
 
           {autoBookingEnabled && (
             <>
+              {/* Card: Horizon de réservation (les 2 modes) */}
+              <SettingCard icon={CalendarRange} title={t('horizonTitle')} tone="emerald" className="sm:col-span-2">
+                <p className="text-[11px] text-gray-500 mb-3">{t('horizonHint')}</p>
+                <ChipGroup
+                  fill
+                  options={BOOKING_HORIZON_OPTIONS.map(v => ({ value: String(v), label: t('horizonMonths', { n: v / 30 }) }))}
+                  value={String(bookingHorizonDays)}
+                  onChange={(v) => setBookingHorizonDays(Number(v) as BookingHorizonDays)}
+                />
+              </SettingCard>
+
+              {/* Card: Conditions de reservation */}
+              <SettingCard icon={Phone} title={t('bookingTitle')} tone="emerald" className="sm:col-span-2">
+                <p className="text-[11px] text-gray-500 mb-3">{t('bookingHint')}</p>
+                <textarea
+                  value={bookingMessage}
+                  onChange={(e) => setBookingMessage(e.target.value)}
+                  placeholder={t('bookingPlaceholder')}
+                  maxLength={500}
+                  rows={4}
+                  className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none"
+                />
+                <p className="text-[10px] text-gray-400 text-right mt-1">{bookingMessage.length}/500</p>
+              </SettingCard>
+
               <DepositCard
                 enabled={depositEnabled}
                 onEnabledChange={setDepositEnabled}
@@ -1437,7 +1405,6 @@ export default function PlanningDashboard() {
           )}
             </div>
           </section>
-          )}
 
           {/* ═══════ SECTION 3: COMMUNICATION ═══════ */}
           <section>
@@ -1445,16 +1412,14 @@ export default function PlanningDashboard() {
             <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0">
 
               {/* Card: Notifications push */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:col-span-2">
-                <div className="flex items-center justify-between gap-3 mb-1">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
-                      <Bell className="w-3.5 h-3.5 text-indigo-600" />
-                    </div>
-                    <h2 className="text-sm font-bold text-gray-800 truncate">{t('pushNotifTitle')}</h2>
-                  </div>
-                  {pushSubscribed ? (
-                    <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
+              <SettingCard
+                icon={Bell}
+                title={t('pushNotifTitle')}
+                tone="violet"
+                className="sm:col-span-2"
+                headerRight={
+                  pushSubscribed ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
                       <Check className="w-3 h-3" />
                       {t('pushNotifActive')}
                     </span>
@@ -1463,13 +1428,14 @@ export default function PlanningDashboard() {
                       type="button"
                       onClick={subscribePush}
                       disabled={pushSubscribing || pushPermission === 'denied'}
-                      className="shrink-0 px-3 py-1.5 rounded-lg bg-[#4b0082] hover:bg-[#4b0082]/90 text-white text-xs font-bold active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50"
                     >
                       {pushSubscribing ? '...' : t('pushNotifEnable')}
                     </button>
-                  ) : null}
-                </div>
-                <p className="text-[11px] text-gray-500 ml-9 leading-relaxed">
+                  ) : null
+                }
+              >
+                <p className="text-[11px] text-gray-500 leading-relaxed">
                   {pushSubscribed
                     ? t('pushNotifActiveHint')
                     : !pushSupported
@@ -1479,33 +1445,20 @@ export default function PlanningDashboard() {
                         : t('pushNotifHint')}
                 </p>
                 {pushError && (
-                  <p className="text-[11px] text-red-500 font-medium ml-9 mt-1.5">{pushError}</p>
+                  <p className="text-[11px] text-red-500 font-medium mt-1.5">{pushError}</p>
                 )}
-              </div>
+              </SettingCard>
 
               {/* Card: Message public */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
-                      <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />
-                    </div>
-                    <h2 className="text-sm font-bold text-gray-800">{t('publicMessageTitle')}</h2>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={messageEnabled}
-                    onClick={() => setMessageEnabled(!messageEnabled)}
-                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 ${messageEnabled ? 'bg-indigo-600' : 'bg-gray-200'}`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${messageEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </button>
-                </div>
-                <p className="text-[11px] text-gray-400 mb-3 ml-9">{t('publicMessageHint')}</p>
-
+              <SettingCard
+                icon={MessageSquare}
+                title={t('publicMessageTitle')}
+                tone="violet"
+                headerRight={<Switch checked={messageEnabled} onChange={setMessageEnabled} tone="violet" size="md" ariaLabel={t('publicMessageTitle')} />}
+              >
+                <p className="text-[11px] text-gray-500 mb-3">{t('publicMessageHint')}</p>
                 {messageEnabled && (
-                  <div className="space-y-2.5 ml-9">
+                  <div className="space-y-2.5">
                     <input
                       type="text"
                       value={message}
@@ -1515,7 +1468,7 @@ export default function PlanningDashboard() {
                       className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                     />
                     <div className="flex items-center gap-2 flex-wrap">
-                      <label className="text-[11px] text-gray-400 shrink-0">{t('expiresOn')}</label>
+                      <label className="text-[11px] text-gray-500 shrink-0">{t('expiresOn')}</label>
                       <input
                         type="date"
                         value={messageExpires}
@@ -1524,27 +1477,21 @@ export default function PlanningDashboard() {
                         className="px-2 py-1 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                       />
                       {messageExpires ? (
-                        <button onClick={() => setMessageExpires('')} className="text-[11px] text-red-400 hover:text-red-500 transition-colors">
+                        <button onClick={() => setMessageExpires('')} className="text-[11px] text-red-500 hover:text-red-600 transition-colors">
                           {t('remove')}
                         </button>
                       ) : (
-                        <span className="text-[11px] text-gray-300">{t('permanent')}</span>
+                        <span className="text-[11px] text-gray-400">{t('permanent')}</span>
                       )}
                     </div>
                   </div>
                 )}
-              </div>
+              </SettingCard>
 
               {/* Card: SMS Notifications */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
-                    <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
-                  </div>
-                  <h2 className="text-sm font-bold text-gray-800">{t('smsTitle')}</h2>
-                </div>
+              <SettingCard icon={MessageSquare} title={t('smsTitle')} tone="violet">
                 {merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling' || merchant?.subscription_status === 'past_due' ? (
-                  <div className="ml-9">
+                  <div>
                     <p className="text-[11px] text-gray-500 leading-relaxed">{t('smsActiveInfo')}</p>
                     {smsUsage && (
                       <div className="mt-2">
@@ -1553,21 +1500,21 @@ export default function PlanningDashboard() {
                     )}
                     <Link
                       href="/dashboard/marketing?tab=automations"
-                      className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-100 hover:bg-emerald-100 transition-colors"
+                      className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-[11px] font-bold border border-violet-100 hover:bg-violet-100 transition-colors"
                     >
                       <Settings className="w-3 h-3" />
                       {t('smsConfigureNotifications')}
                     </Link>
                   </div>
                 ) : (
-                  <div className="ml-9 flex items-center justify-between gap-3">
+                  <div className="flex items-center justify-between gap-3">
                     <p className="text-[11px] text-gray-500">{t('smsTrialMessage')}</p>
-                    <a href="/dashboard/subscription" className="shrink-0 px-3 py-1.5 rounded-lg bg-[#4b0082] hover:bg-[#4b0082]/90 text-white text-[11px] font-bold active:scale-[0.98] touch-manipulation transition-all">
+                    <a href="/dashboard/subscription" className="shrink-0 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[11px] font-bold active:scale-[0.98] touch-manipulation transition-all">
                       {t('smsTrialCta')}
                     </a>
                   </div>
                 )}
-              </div>
+              </SettingCard>
             </div>
           </section>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { X, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, BookOpen, ChevronDown, CalendarClock, CalendarPlus, UserCheck, UserX, MapPin, Car, Navigation, Pencil, MessageCircle } from 'lucide-react';
 import SmsToggle from './SmsToggle';
@@ -1442,8 +1443,8 @@ export default function BookingDetailsModal({
                   disabled={saving}
                   className="w-full sm:flex-1 flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 active:scale-[0.98] touch-manipulation transition-all disabled:opacity-50"
                 >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  {t('save')}
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CalendarPlus className="w-4 h-4" />}
+                  {t('createBooking')}
                 </button>
               </div>
             )
@@ -1451,8 +1452,12 @@ export default function BookingDetailsModal({
         </div>
 
         {/* Move booking overlay */}
-        {moveMode && (
-          <div className="absolute inset-0 z-20 bg-white rounded-2xl flex flex-col">
+        {moveMode && createPortal(
+          <div
+            className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setMoveMode(false); }}
+          >
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-xl overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CalendarClock className="w-4 h-4 text-violet-600" />
@@ -1571,11 +1576,17 @@ export default function BookingDetailsModal({
               </div>
             </div>
           </div>
+          </div>,
+          document.body,
         )}
 
         {/* Cancel booking overlay */}
-        {cancelMode && (
-          <div className="absolute inset-0 z-20 bg-white rounded-2xl flex flex-col">
+        {cancelMode && createPortal(
+          <div
+            className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) { setCancelMode(false); setCancelSendSms(false); } }}
+          >
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-xl overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Trash2 className="w-4 h-4 text-red-500" />
@@ -1626,6 +1637,8 @@ export default function BookingDetailsModal({
               </div>
             </div>
           </div>
+          </div>,
+          document.body,
         )}
       </motion.div>
     </motion.div>

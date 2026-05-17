@@ -2,7 +2,7 @@
 
 import { CalendarX2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { ToggleRow, ChipGroup } from '@/components/ui';
+import { ToggleRow, ChipGroup, SettingCard } from '@/components/ui';
 
 interface CustomerEditCardProps {
   cancelEnabled: boolean;
@@ -34,20 +34,17 @@ export function CustomerEditCard({
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-visible sm:col-span-2">
-      <div className="px-4 sm:px-5 py-3 bg-gray-50/80 border-b border-gray-100 flex items-center gap-2">
-        <CalendarX2 className="w-4 h-4 text-gray-500 shrink-0" />
-        <h2 className="text-sm font-bold text-gray-800">{t('customerEditTitle')}</h2>
-      </div>
-      <div className="p-4 sm:p-5 space-y-3">
+    <SettingCard icon={CalendarX2} title={t('customerEditTitle')} tone="emerald" className="sm:col-span-2">
+      <div className="space-y-3">
         <ToggleRow
           title={t('allowCustomerCancel')}
           hint={t('allowCustomerCancelDesc')}
           checked={cancelEnabled}
           onChange={onCancelEnabledChange}
+          tone="emerald"
         >
           <label className="text-xs font-semibold text-gray-600 mb-2 block">{t('editDeadlineDays')}</label>
-          <ChipGroup options={deadlineOptions} value={cancelDeadlineDays} onChange={onCancelDeadlineDaysChange} />
+          <ChipGroup options={deadlineOptions} value={cancelDeadlineDays} onChange={onCancelDeadlineDaysChange} fill />
         </ToggleRow>
         <div className="border-t border-gray-100" />
         <ToggleRow
@@ -55,11 +52,12 @@ export function CustomerEditCard({
           hint={t('allowCustomerRescheduleDesc')}
           checked={rescheduleEnabled}
           onChange={onRescheduleEnabledChange}
+          tone="emerald"
         >
           <label className="text-xs font-semibold text-gray-600 mb-2 block">{t('editDeadlineDays')}</label>
-          <ChipGroup options={deadlineOptions} value={rescheduleDeadlineDays} onChange={onRescheduleDeadlineDaysChange} />
+          <ChipGroup options={deadlineOptions} value={rescheduleDeadlineDays} onChange={onRescheduleDeadlineDaysChange} fill />
         </ToggleRow>
       </div>
-    </div>
+    </SettingCard>
   );
 }

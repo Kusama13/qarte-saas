@@ -166,6 +166,8 @@ export interface Merchant {
   // Booking mode (free = merchant sets opening hours, system computes availability)
   booking_mode: 'slots' | 'free';
   buffer_minutes: 0 | 10 | 15 | 30;
+  // Horizon de réservation : jusqu'à combien de jours à l'avance la cliente peut réserver (mig 168)
+  booking_horizon_days: 30 | 60 | 90;
   // Service à domicile — calcul durée de trajet entre RDV
   home_service_enabled: boolean;
   shop_lat: number | null;

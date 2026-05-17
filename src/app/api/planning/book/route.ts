@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
-import { formatPhoneNumber, validatePhone, getTimezoneForCountry, getAllPhoneFormats, getAppUrl, getCurrencyForCountry, truncate } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getTimezoneForCountry, getTodayForCountry, getAllPhoneFormats, getAppUrl, getCurrencyForCountry, truncate } from '@/lib/utils';
+import { normalizeBookingHorizon } from '@/lib/booking-window';
 import { isMerchantBlocked } from '@/lib/merchant-access';
 import type { EmailLocale } from '@/emails/translations';
 import { computeDepositDeadline } from '@/lib/deposit';
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, past_due_since, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, deposit_only_for_new_customers, welcome_offer_enabled, welcome_offer_description, welcome_offer_discount_percent, booking_mode, buffer_minutes, home_service_enabled, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days')
+      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, past_due_since, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, deposit_only_for_new_customers, welcome_offer_enabled, welcome_offer_description, welcome_offer_discount_percent, booking_mode, buffer_minutes, booking_horizon_days, home_service_enabled, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days')
       .eq('id', merchant_id)
       .single();
 
@@ -88,6 +89,18 @@ export async function POST(request: NextRequest) {
       past_due_since: merchant.past_due_since,
     })) {
       return NextResponse.json({ error: 'Ce commerce n\'accepte plus les réservations' }, { status: 403 });
+    }
+
+    // Garde horizon : refuse une résa au-delà de la fenêtre réglée par le merchant
+    // (mig 168). Le maxDate du calendrier client borne déjà l'UI, ce check est
+    // la défense serveur anti-spoof.
+    {
+      const horizonStart = getTodayForCountry(merchant.country);
+      const horizonEnd = new Date(horizonStart);
+      horizonEnd.setDate(horizonEnd.getDate() + normalizeBookingHorizon(merchant.booking_horizon_days));
+      if (slot_date < horizonStart || slot_date > horizonEnd.toISOString().split('T')[0]) {
+        return NextResponse.json({ error: 'Ce créneau n\'est plus réservable' }, { status: 400 });
+      }
     }
 
     // 2. Format & validate phone

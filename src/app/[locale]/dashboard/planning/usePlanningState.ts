@@ -8,6 +8,7 @@ import { getSupabase } from '@/lib/supabase';
 import type { PlanningSlot, CustomerSearchResult, MerchantCountry, BookingMode, BookingDepositFailure } from '@/types';
 import { getWeekStart, formatDate, getSlotServiceIds, SERVICE_COLORS } from './utils';
 import { toLocalPhone } from '@/lib/utils';
+import { BOOKING_HORIZON_DAYS, normalizeBookingHorizon, type BookingHorizonDays } from '@/lib/booking-window';
 
 export interface ServiceWithDuration {
   id: string;
@@ -97,6 +98,7 @@ export function usePlanningState() {
   // Booking mode + buffer
   const [bookingMode, setBookingMode] = useState<BookingMode>('slots');
   const [bufferMinutes, setBufferMinutes] = useState<0 | 10 | 15 | 30>(0);
+  const [bookingHorizonDays, setBookingHorizonDays] = useState<BookingHorizonDays>(BOOKING_HORIZON_DAYS);
   // Service à domicile
   const [homeServiceEnabled, setHomeServiceEnabled] = useState(false);
   const [hideAddressOnPublicPage, setHideAddressOnPublicPage] = useState(false);
@@ -177,6 +179,7 @@ export function usePlanningState() {
       setRescheduleDeadlineDays(String(merchant.reschedule_deadline_days ?? 1));
       setBookingMode((merchant.booking_mode as BookingMode) || 'slots');
       setBufferMinutes((merchant.buffer_minutes as 0 | 10 | 15 | 30) || 0);
+      setBookingHorizonDays(normalizeBookingHorizon(merchant.booking_horizon_days));
       setHomeServiceEnabled(!!merchant.home_service_enabled);
       setHideAddressOnPublicPage(!!merchant.hide_address_on_public_page);
     }
@@ -739,6 +742,7 @@ export function usePlanningState() {
     cancelDeadlineDays, setCancelDeadlineDays, rescheduleDeadlineDays, setRescheduleDeadlineDays,
     depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     bookingMode, setBookingMode, bufferMinutes, setBufferMinutes,
+    bookingHorizonDays, setBookingHorizonDays,
     homeServiceEnabled, setHomeServiceEnabled,
     hideAddressOnPublicPage, setHideAddressOnPublicPage,
     // Services

@@ -8,7 +8,7 @@ import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 import { requirePlanFeature } from '@/lib/api-helpers';
 import { recomputeDayTravel } from '@/lib/travel-recompute';
-import { BOOKING_HORIZON_DAYS } from '@/lib/booking-window';
+import { normalizeBookingHorizon } from '@/lib/booking-window';
 import { validateAppliedDiscounts } from '@/lib/applied-discounts';
 import { buildServiceLines } from '@/lib/booking-pricing';
 
@@ -41,12 +41,12 @@ export async function GET(request: NextRequest) {
       // Fetch merchant country for timezone-aware date
       const { data: merchantRow } = await supabaseAdmin
         .from('merchants')
-        .select('country')
+        .select('country, booking_horizon_days')
         .eq('id', merchantId)
         .single();
       const today = getTodayForCountry(merchantRow?.country);
       const todayDate = new Date(today);
-      todayDate.setDate(todayDate.getDate() + BOOKING_HORIZON_DAYS);
+      todayDate.setDate(todayDate.getDate() + normalizeBookingHorizon(merchantRow?.booking_horizon_days));
       const horizonDate = todayDate.toISOString().split('T')[0];
 
       const { data, error } = await supabaseAdmin
