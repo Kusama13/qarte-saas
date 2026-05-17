@@ -110,6 +110,7 @@ export async function GET(request: NextRequest) {
           .from('merchant_planning_slots')
           .select('merchant_id, client_name, slot_date, start_time, booked_at, booked_online, deposit_confirmed')
           .not('client_name', 'is', null)
+          .neq('client_name', '__blocked__')
           .not('booked_at', 'is', null)
           .is('primary_slot_id', null)
           .gte('booked_at', periodStart);
@@ -218,7 +219,7 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    const SOURCE_LABELS: Record<string, string> = { birthday: 'Anniversaire', welcome: 'Nouveaux clients', offer: 'Offre promo', referral: 'Parrainage', redemption: 'Récompense' };
+    const SOURCE_LABELS: Record<string, string> = { birthday: 'Anniversaire', welcome: 'Nouveaux clients', offer: 'Offre promo', referral: 'Parrainage', redemption: 'Récompense', gift: 'Bon cadeau' };
     (usedVouchers || []).forEach((v: { used_at: string; merchant_id: string; source: string | null; reward_description: string | null }) => {
       const sourceLabel = (v.source && SOURCE_LABELS[v.source]) || 'Récompense';
       events.push({

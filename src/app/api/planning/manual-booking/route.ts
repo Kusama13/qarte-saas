@@ -142,6 +142,10 @@ export async function POST(request: NextRequest) {
         customer_id: customer_id || null,
         notes: notes || null,
         total_duration_minutes,
+        // Résa créée par le merchant (pas la vitrine). booked_at est requis pour
+        // que la résa remonte dans l'activité admin + les stats Growth.
+        booked_online: false,
+        booked_at: new Date().toISOString(),
         custom_service_name: custom_service_name?.trim() || null,
         custom_service_duration: custom_service_duration ?? null,
         custom_service_price: custom_service_price ?? null,
