@@ -13,6 +13,22 @@ export function computeDepositAmount(
 }
 
 /**
+ * CA compté pour un RDV no-show : prestation non réalisée → on ne garde que
+ * l'acompte conservé (s'il avait été validé), sinon 0. Source unique partagée
+ * entre la pastille CA de l'agenda et la page Statistiques.
+ */
+export function noShowRevenue(
+  fullPrice: number,
+  depositConfirmed: boolean | null,
+  depositFixed?: number | null,
+  depositPercent?: number | null,
+): number {
+  return depositConfirmed === true
+    ? (computeDepositAmount(fullPrice, depositFixed, depositPercent) ?? 0)
+    : 0;
+}
+
+/**
  * Synthese complete du deposit pour le UI (sticky bar + totals box). Single
  * source of truth : evite la duplication observee dans BookingModal qui
  * recalculait rawDeposit/isFullPayment/cappedDeposit dans 2 endroits avec

@@ -25,6 +25,8 @@ interface DayViewProps {
   isFreeMod?: boolean;
   openingHours?: Record<string, DayOpeningHours> | null;
   country?: MerchantCountry | null;
+  depositPercent?: number | null;
+  depositAmount?: number | null;
   onSlotClick: (slot: PlanningSlot) => void;
   onBlockedSlotClick?: (slotId: string) => void;
   onAddSlots: (day: string) => void;
@@ -41,6 +43,8 @@ export default function DayView({
   isFreeMod = false,
   openingHours,
   country,
+  depositPercent,
+  depositAmount,
   onSlotClick,
   onBlockedSlotClick,
   onAddSlots,
@@ -66,8 +70,8 @@ export default function DayView({
   );
 
   const dayRevenue = useMemo(
-    () => computeDayRevenue(daySlots, serviceMap),
-    [daySlots, serviceMap]
+    () => computeDayRevenue(daySlots, serviceMap, { percent: depositPercent ?? null, amount: depositAmount ?? null }),
+    [daySlots, serviceMap, depositPercent, depositAmount]
   );
 
   // Current time indicator

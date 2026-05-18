@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { toBCP47 } from '@/lib/utils';
+import { computeDepositAmount, noShowRevenue } from '@/lib/deposit';
 import type { PlanningSlot } from '@/types';
 
 export function getWeekStart(offset: number): Date {
@@ -103,7 +104,7 @@ export function colorBorderStyle(color?: string): CSSProperties | undefined {
   return color ? { borderLeftWidth: '3px', borderLeftColor: color } : undefined;
 }
 
-export { computeDepositAmount } from '@/lib/deposit';
+export { computeDepositAmount };
 
 export { customServiceDisplayName, CUSTOM_SERVICE_DEFAULT_NAME } from '@/lib/utils';
 
@@ -121,15 +122,22 @@ export function getSlotColor(
 export function computeDayRevenue(
   daySlots: PlanningSlot[],
   serviceMap: Map<string, { price: number }>,
+  /** Config acompte du merchant — pour valoriser les no-show à l'acompte conservé. */
+  depositConfig?: { percent: number | null; amount: number | null },
 ): number {
   let total = 0;
   for (const slot of daySlots) {
     if (!slot.client_name || slot.client_name === '__blocked__') continue;
+    let slotPrice = 0;
     for (const id of getSlotServiceIds(slot)) {
       const svc = serviceMap.get(id);
-      if (svc?.price) total += svc.price;
+      if (svc?.price) slotPrice += svc.price;
     }
-    if (slot.custom_service_price) total += slot.custom_service_price;
+    if (slot.custom_service_price) slotPrice += slot.custom_service_price;
+    if (slot.attendance_status === 'no_show') {
+      slotPrice = noShowRevenue(slotPrice, slot.deposit_confirmed ?? null, depositConfig?.amount, depositConfig?.percent);
+    }
+    total += slotPrice;
   }
   return total;
 }

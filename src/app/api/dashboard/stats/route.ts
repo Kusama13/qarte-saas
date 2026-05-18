@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeMerchant, requirePlanFeature } from '@/lib/api-helpers';
+import { noShowRevenue } from '@/lib/deposit';
 import logger from '@/lib/logger';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -133,13 +134,13 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       supabaseAdmin
         .from('merchants')
-        .select('id, opening_hours, booking_mode')
+        .select('id, opening_hours, booking_mode, deposit_percent, deposit_amount')
         .eq('id', merchantId)
         .maybeSingle(),
 
       supabaseAdmin
         .from('merchant_planning_slots')
-        .select('id, slot_date, start_time, client_name, attendance_status, total_duration_minutes, custom_service_price, planning_slot_services(service:merchant_services!service_id(id, name, price, duration))')
+        .select('id, slot_date, start_time, client_name, attendance_status, deposit_confirmed, total_duration_minutes, custom_service_price, planning_slot_services(service:merchant_services!service_id(id, name, price, duration))')
         .eq('merchant_id', merchantId)
         .gte('slot_date', safeFrom)
         .lte('slot_date', to)
@@ -148,7 +149,7 @@ export async function GET(request: NextRequest) {
       hasPrevious
         ? supabaseAdmin
             .from('merchant_planning_slots')
-            .select('id, slot_date, client_name, attendance_status, total_duration_minutes, custom_service_price, planning_slot_services(service:merchant_services!service_id(price, duration))')
+            .select('id, slot_date, client_name, attendance_status, deposit_confirmed, total_duration_minutes, custom_service_price, planning_slot_services(service:merchant_services!service_id(price, duration))')
             .eq('merchant_id', merchantId)
             .gte('slot_date', prevFrom)
             .lte('slot_date', prevTo)
@@ -197,9 +198,16 @@ export async function GET(request: NextRequest) {
         .lte('created_at', to + 'T23:59:59'),
     ]);
 
-    const merchant = merchantRes.data as { opening_hours: OpeningHours; booking_mode?: string | null } | null;
+    const merchant = merchantRes.data as {
+      opening_hours: OpeningHours;
+      booking_mode?: string | null;
+      deposit_percent?: number | null;
+      deposit_amount?: number | null;
+    } | null;
     const openingHours = merchant?.opening_hours || null;
     const bookingMode = merchant?.booking_mode || 'slots';
+    const depositPercent = merchant?.deposit_percent ?? null;
+    const depositAmount = merchant?.deposit_amount ?? null;
 
     type ServiceInfo = { id: string; name: string; price: number | null; duration: number | null };
     type SlotServiceRow = { service: ServiceInfo | ServiceInfo[] | null };
@@ -209,6 +217,7 @@ export async function GET(request: NextRequest) {
       start_time?: string;
       client_name: string | null;
       attendance_status: string | null;
+      deposit_confirmed: boolean | null;
       total_duration_minutes: number | null;
       custom_service_price?: number | null;
       planning_slot_services: SlotServiceRow[] | null;
@@ -222,7 +231,11 @@ export async function GET(request: NextRequest) {
         const svc = Array.isArray(ps.service) ? ps.service[0] : ps.service;
         return sum + Number(svc?.price || 0);
       }, 0);
-      return catalog + Number(slot.custom_service_price || 0);
+      const fullPrice = catalog + Number(slot.custom_service_price || 0);
+      if (slot.attendance_status === 'no_show') {
+        return noShowRevenue(fullPrice, slot.deposit_confirmed, depositAmount, depositPercent);
+      }
+      return fullPrice;
     };
 
     const isBlocked = (s: SlotRow) => s.client_name === '__blocked__';

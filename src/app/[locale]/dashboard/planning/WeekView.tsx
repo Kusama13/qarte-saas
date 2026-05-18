@@ -25,6 +25,8 @@ interface WeekViewProps {
   isFreeMod?: boolean;
   openingHours?: Record<string, DayOpeningHours> | null;
   country?: MerchantCountry | null;
+  depositPercent?: number | null;
+  depositAmount?: number | null;
   onSlotClick: (slot: PlanningSlot) => void;
   onBlockedSlotClick?: (slotId: string) => void;
   onDayClick: (day: Date) => void;
@@ -35,6 +37,7 @@ interface WeekViewProps {
 export default function WeekView({
   weekDays, slotsByDate, services, serviceColorMap, locale,
   selectedDay, secondarySelectedStr, isFreeMod = false, openingHours, country,
+  depositPercent, depositAmount,
   onSlotClick, onBlockedSlotClick, onDayClick, isToday, isPast,
 }: WeekViewProps) {
   const t = useTranslations('planning');
@@ -58,12 +61,12 @@ export default function WeekView({
         past: isPast(day),
         overlays: computeOverlays(day, openingHours, isFreeMod, labels),
         slotCards: computeSlotCards(daySlots, serviceMap, serviceColorMap),
-        revenue: computeDayRevenue(daySlots, serviceMap),
+        revenue: computeDayRevenue(daySlots, serviceMap, { percent: depositPercent ?? null, amount: depositAmount ?? null }),
       };
     });
   // t not stable in next-intl; intentionally omitted
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weekDays, slotsByDate, serviceMap, serviceColorMap, openingHours, isFreeMod, isPast, locale]);
+  }, [weekDays, slotsByDate, serviceMap, serviceColorMap, openingHours, isFreeMod, isPast, locale, depositPercent, depositAmount]);
 
   const gridCols = `48px repeat(${weekDays.length}, minmax(0, 1fr))`;
   const isCompact = weekDays.length <= 2;

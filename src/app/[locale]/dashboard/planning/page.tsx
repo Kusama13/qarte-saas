@@ -1181,6 +1181,8 @@ export default function PlanningDashboard() {
                   isFreeMod={isFreeMod}
                   openingHours={merchant?.opening_hours || null}
                   country={merchant?.country || null}
+                  depositPercent={merchant?.deposit_percent ?? null}
+                  depositAmount={merchant?.deposit_amount ?? null}
                   onSlotClick={openEditSlot}
                   onBlockedSlotClick={setConfirmDeleteBlock}
                   onDayClick={setSelectedDay}
@@ -1199,6 +1201,8 @@ export default function PlanningDashboard() {
                   isFreeMod={isFreeMod}
                   openingHours={merchant?.opening_hours || null}
                   country={merchant?.country || null}
+                  depositPercent={merchant?.deposit_percent ?? null}
+                  depositAmount={merchant?.deposit_amount ?? null}
                   onSlotClick={openEditSlot}
                   onBlockedSlotClick={setConfirmDeleteBlock}
                   onDayClick={setSelectedDay}
@@ -1217,6 +1221,8 @@ export default function PlanningDashboard() {
                   isFreeMod={isFreeMod}
                   openingHours={merchant?.opening_hours || null}
                   country={merchant?.country || null}
+                  depositPercent={merchant?.deposit_percent ?? null}
+                  depositAmount={merchant?.deposit_amount ?? null}
                   onSlotClick={openEditSlot}
                   onBlockedSlotClick={setConfirmDeleteBlock}
                   onAddSlots={openAddSlotsModal}
