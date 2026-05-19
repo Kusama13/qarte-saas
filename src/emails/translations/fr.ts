@@ -217,11 +217,11 @@ export const fr = {
       preview: '{shopName} — petit souci de paiement',
       heading: 'Petit souci avec ton paiement',
       greeting: 'Bonjour <strong>{shopName}</strong>,',
-      intro: 'On n\'a pas pu traiter ton dernier paiement pour ton abonnement Qarte. Pas de panique — on r\u00e9essaie automatiquement dans quelques jours.',
+      intro: 'On n\'a pas pu traiter ton dernier paiement pour ton abonnement Qarte. Mets \u00e0 jour ta carte rapidement pour \u00e9viter la suspension de ton compte.',
       whyTitle: 'Pourquoi ?',
       whyText: 'Carte expir\u00e9e, fonds insuffisants ou blocage bancaire. Une simple mise \u00e0 jour de ta carte r\u00e8gle le probl\u00e8me.',
       cta: 'Ajouter ma nouvelle carte — 30 secondes',
-      helpText: 'Si tout est OK côté banque, tu peux ignorer cet email — on réessaie bientôt.',
+      helpText: 'Un souci avec ta banque ? Réponds à cet email, on t\'aide.',
       signature: 'L\'équipe Qarte 💜',
     },
     step2: {

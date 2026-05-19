@@ -1144,10 +1144,10 @@ Source : `src/emails/translations/fr.ts`. Les `<strong>...</strong>` ont été c
 - **Heading** : `Petit souci avec ton paiement`
 - **Body** :
   - Greeting: `Bonjour **{shopName}**,`
-  - intro: `On n'a pas pu traiter ton dernier paiement pour ton abonnement Qarte. Pas de panique — on réessaie automatiquement dans quelques jours.`
+  - intro: `On n'a pas pu traiter ton dernier paiement pour ton abonnement Qarte. Mets à jour ta carte rapidement pour éviter la suspension de ton compte.`
   - whyTitle: `Pourquoi ?`
   - whyText: `Carte expirée, fonds insuffisants ou blocage bancaire. Une simple mise à jour de ta carte règle le problème.`
-  - helpText: `Si tout est OK côté banque, tu peux ignorer cet email — on réessaie bientôt.`
+  - helpText: `Un souci avec ta banque ? Réponds à cet email, on t'aide.`
 - **CTA** : `Ajouter ma nouvelle carte — 30 secondes`
 - **Signature** : `L'équipe Qarte`
 

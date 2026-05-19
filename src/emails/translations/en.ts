@@ -217,11 +217,11 @@ export const en = {
       preview: '{shopName} — small payment issue',
       heading: 'Small payment issue',
       greeting: 'Hi <strong>{shopName}</strong>,',
-      intro: 'We couldn\'t process your last Qarte payment. No worries — we\'ll retry automatically in a few days.',
+      intro: 'We couldn\'t process your last Qarte payment. Update your card quickly to avoid your account being suspended.',
       whyTitle: 'Why?',
       whyText: 'Expired card, insufficient funds, or a bank block. A quick card update fixes it.',
       cta: 'Update my card',
-      helpText: 'If everything looks fine on your bank\'s side, you can ignore this — we\'ll retry soon.',
+      helpText: 'A problem with your bank? Reply to this email, we\'ll help.',
       signature: 'The Qarte team 💜',
     },
     step2: {
