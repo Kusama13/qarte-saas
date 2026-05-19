@@ -99,7 +99,7 @@ export default function BirthdaySection({ merchant, customerId, hasBirthday }: B
                 <select
                   value={birthdayDay}
                   onChange={(e) => { setBirthdayDay(e.target.value); setBirthdayError(null); }}
-                  className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white"
+                  className="flex-1 px-3 py-3 rounded-xl border border-gray-200 text-sm bg-white"
                 >
                   <option value="">{t('day')}</option>
                   {Array.from({ length: 31 }, (_, i) => (
@@ -109,7 +109,7 @@ export default function BirthdaySection({ merchant, customerId, hasBirthday }: B
                 <select
                   value={birthdayMonth}
                   onChange={(e) => { setBirthdayMonth(e.target.value); setBirthdayError(null); }}
-                  className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white"
+                  className="flex-1 px-3 py-3 rounded-xl border border-gray-200 text-sm bg-white"
                 >
                   <option value="">{t('month')}</option>
                   {t('months').split(',').map((m, i) => (
@@ -123,7 +123,7 @@ export default function BirthdaySection({ merchant, customerId, hasBirthday }: B
               <button
                 onClick={handleSaveBirthday}
                 disabled={!birthdayMonth || !birthdayDay || savingBirthday}
-                className="w-full py-2.5 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
               >
                 {savingBirthday ? (

@@ -51,7 +51,7 @@ export default function ReviewCard({ reviewLink, shopName, merchantId }: ReviewC
           <p className="text-sm font-bold text-gray-900 leading-tight">
             {t('leaveReview')}
           </p>
-          <p className="text-[11px] text-gray-500 leading-tight mt-0.5">
+          <p className="text-xs text-gray-600 leading-tight mt-0.5">
             {t('helpsALot')}
           </p>
         </div>

@@ -49,14 +49,6 @@ export default function VoucherRewards({ vouchers, merchant, onSelectVoucher }: 
           className="mb-4 rounded-2xl overflow-hidden shadow-lg shadow-black/5"
         >
           <div className="relative p-5 overflow-hidden" style={{ background: gradient }}>
-            {/* Shimmer sweep */}
-            <motion.div
-              animate={{ x: ['-150%', '200%'] }}
-              transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"
-            />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.15),transparent)] pointer-events-none" />
-
             <div className="relative flex items-center gap-4">
               <motion.div
                 animate={{ scale: [1, 1.08, 1] }}
@@ -66,7 +58,7 @@ export default function VoucherRewards({ vouchers, merchant, onSelectVoucher }: 
                 <Gift className="w-7 h-7 text-white" />
               </motion.div>
               <div className="flex-1 min-w-0">
-                <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">
+                <p className="text-white/80 text-xs font-bold uppercase tracking-widest mb-1">
                   {group[0].source === 'offer' && group[0].merchant_offers?.title
                     ? group[0].merchant_offers.title
                     : ({ birthday: t('birthdayGift'), referral: t('referral'), welcome: t('welcomeOffer'), offer: t('promoOffer'), gift: t('giftCard'), redemption: t('reward') } as Record<string, string>)[group[0].source || ''] || t('reward')
@@ -76,7 +68,7 @@ export default function VoucherRewards({ vouchers, merchant, onSelectVoucher }: 
                   {desc}
                 </p>
                 {group[0].expires_at && (
-                  <p className="text-white/50 text-[10px] mt-1">
+                  <p className="text-white/80 text-xs mt-1">
                     {t('expiresOn', { date: new Date(group[0].expires_at).toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'long' }) })}
                   </p>
                 )}
@@ -90,7 +82,7 @@ export default function VoucherRewards({ vouchers, merchant, onSelectVoucher }: 
                 source: group[0].source || null,
                 expiresAt: group[0].expires_at || null,
               })}
-              className="relative mt-4 w-full py-2.5 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 text-white font-bold text-sm hover:bg-white/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              className="relative mt-4 w-full min-h-[44px] py-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 text-white font-bold text-sm hover:bg-white/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
             >
               <Eye className="w-4 h-4" />
               {t('view')}

@@ -54,7 +54,7 @@ export default function ReviewPrompt({ merchantId, shopName, reviewLink }: Revie
           {/* Content */}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-gray-800 leading-tight">{t('title')}</p>
-            <p className="text-[11px] text-gray-500 mt-0.5">{t('subtitle')}</p>
+            <p className="text-xs text-gray-600 mt-0.5">{t('subtitle')}</p>
           </div>
 
           {/* CTA button */}

@@ -269,12 +269,12 @@ export default function HistorySection({
                       )}
                       <span className="truncate">{getLabel()}</span>
                     </p>
-                    <p className="text-[10px] text-gray-500 flex items-center gap-1">
+                    <p className="text-xs text-gray-600 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {formatDateTime(item.date, locale)}
                     </p>
                     {isAppointment && item.serviceNames && item.serviceNames.length > 0 && (
-                      <p className="text-[10px] text-gray-500 mt-0.5 truncate">{item.serviceNames.join(', ')}</p>
+                      <p className="text-xs text-gray-600 mt-0.5 truncate">{item.serviceNames.join(', ')}</p>
                     )}
                   </div>
                   {isAppointment ? (
@@ -344,7 +344,7 @@ export default function HistorySection({
       ) : (
         <div className="p-8 text-center">
           <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <LoyaltyIcon className="w-6 h-6 text-gray-300" />
+            <LoyaltyIcon className="w-6 h-6 text-gray-500" />
           </div>
           <p className="text-gray-500 font-medium text-sm">{t('noHistory')}</p>
         </div>

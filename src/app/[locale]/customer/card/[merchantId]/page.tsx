@@ -464,28 +464,8 @@ export default function CustomerCardPage({
     }
   }, [merchantId, router, isPreview]);
 
-  // Auto-subscribe to push notifications when PWA is first opened (once per 24h)
-  useEffect(() => {
-    if (
-      card &&
-      push.isStandalone &&
-      !push.pushSubscribed &&
-      push.pushPermission !== 'denied' &&
-      push.pushSupported &&
-      !push.pushSubscribing
-    ) {
-      const lastAttempt = localStorage.getItem('qarte_auto_subscribe_attempted');
-      if (lastAttempt && Date.now() - parseInt(lastAttempt, 10) < 24 * 60 * 60 * 1000) return;
-
-      localStorage.setItem('qarte_auto_subscribe_attempted', Date.now().toString());
-
-      const timer = setTimeout(() => {
-        push.handlePushSubscribe();
-      }, 1500);
-
-      return () => clearTimeout(timer);
-    }
-  }, [card, push]);
+  // Push notifications: opt-in only — la cliente s'abonne via le bandeau dédié
+  // ci-dessous (action explicite). Pas d'auto-souscription au chargement.
 
   // Capture Android beforeinstallprompt event for native install
   useEffect(() => {
@@ -829,26 +809,26 @@ export default function CustomerCardPage({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          className="relative z-10 -mt-8 mb-4 bg-white rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-100/80 p-5"
+          className="relative z-10 -mt-8 mb-4 bg-white rounded-2xl shadow-sm border border-gray-100/80 p-5"
         >
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-sm text-gray-500 font-medium">{t('hello')}</p>
+              <p className="text-sm text-gray-600 font-medium">{t('hello')}</p>
               <p className="text-2xl font-black tracking-tight text-gray-900">{card?.customer?.first_name}</p>
-              <p className="text-[11px] text-gray-500 mt-0.5 italic">{getGreetingMessage(t)}</p>
+              <p className="text-xs text-gray-600 mt-0.5 italic">{getGreetingMessage(t)}</p>
             </div>
             {!memberCard && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('loyalClient')}</span>
+                <span className="text-xs font-bold text-gray-600 uppercase tracking-widest">{t('loyalClient')}</span>
               </div>
             )}
           </div>
           {/* Hero counter + progress */}
           <div className="flex items-end justify-between mb-2">
             <p className="text-4xl font-black tracking-tight" style={{ color: safeColor }}>
-              {currentStamps}<span className="text-gray-300 text-2xl mx-0.5">/</span><span className="text-gray-500 text-2xl">{tier2Enabled && effectiveTier1Redeemed ? tier2Required : tier1Required}</span>
+              {currentStamps}<span className="text-gray-500 text-2xl mx-0.5">/</span><span className="text-gray-600 text-2xl">{tier2Enabled && effectiveTier1Redeemed ? tier2Required : tier1Required}</span>
             </p>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+            <p className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-1">
               {getLoyaltyLabel(currentStamps, t)}
             </p>
           </div>
@@ -918,7 +898,7 @@ export default function CustomerCardPage({
                 </div>
                 <button
                   onClick={() => setRedeemError(null)}
-                  className="text-red-400 hover:text-red-600 text-lg font-bold px-1"
+                  className="text-red-600 hover:text-red-700 text-lg font-bold px-2 py-1 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   aria-label={t('close')}
                 >
                   &times;
@@ -935,7 +915,7 @@ export default function CustomerCardPage({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="relative p-3 bg-gradient-to-br from-amber-50 via-white to-amber-50/30 border border-amber-200 rounded-2xl shadow-md mb-3"
+              className="relative p-3 bg-amber-50 border border-amber-200 rounded-2xl shadow-sm mb-3"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
@@ -951,8 +931,8 @@ export default function CustomerCardPage({
                 </div>
               </div>
               <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-amber-100">
-                <Shield className="w-3 h-3 text-gray-500" />
-                <span className="text-[9px] font-medium text-gray-500 uppercase tracking-wider">
+                <Shield className="w-3.5 h-3.5 text-gray-600" />
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">
                   {t('protectedByShield')}
                 </span>
               </div>
@@ -960,7 +940,7 @@ export default function CustomerCardPage({
           )}
         </AnimatePresence>
 
-        {/* Upcoming Appointments — placé juste avant parrainage */}
+        {/* Prochains RDV — en haut : l'info la plus urgente pour une cliente qui revient */}
         {merchant.planning_enabled && upcomingAppointments.length > 0 && (
           <UpcomingAppointmentsSection
             appointments={upcomingAppointments}
@@ -982,97 +962,14 @@ export default function CustomerCardPage({
           />
         )}
 
-        {/* Bouton Parrainer un ami */}
-        {merchant.referral_program_enabled && (card as LoyaltyCard & { referral_code?: string }).referral_code && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-4"
-          >
-            <div
-              className="rounded-2xl overflow-hidden shadow-lg shadow-gray-200/50 border border-gray-100/80"
-              style={{ background: `linear-gradient(135deg, white 65%, ${merchant.primary_color}08 100%)` }}
-            >
-              <div className="p-4 flex items-center gap-3.5">
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                  style={{
-                    background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`,
-                    boxShadow: `0 4px 12px ${merchant.primary_color}25`,
-                  }}
-                >
-                  <UserPlus className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-gray-900 text-sm">{t('referFriend')}</p>
-                  <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
-                    {merchant.referral_reward_referred && merchant.referral_reward_referrer
-                      ? t('referralRewardBoth', { referred: merchant.referral_reward_referred, referrer: merchant.referral_reward_referrer })
-                      : t('referralRewardGeneric')}
-                  </p>
-                </div>
-                <motion.button
-                  whileTap={{ scale: 0.92 }}
-                  onClick={handleShareReferral}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-white font-bold text-xs shrink-0 transition-all"
-                  style={{
-                    background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`,
-                    boxShadow: `0 2px 8px ${merchant.primary_color}30`,
-                  }}
-                >
-                  {shareCopied ? (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      {t('copied')}
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="w-3.5 h-3.5" />
-                      {t('share')}
-                    </>
-                  )}
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Offre Duo */}
-        {merchant.duo_offer_enabled && merchant.duo_offer_description && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-4"
-          >
-            <div className="rounded-2xl bg-white shadow-lg shadow-gray-200/50 border border-gray-100/80 p-4">
-              <div className="flex items-center gap-3.5">
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                  style={{
-                    background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`,
-                    boxShadow: `0 4px 12px ${merchant.primary_color}25`,
-                  }}
-                >
-                  <Users className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-gray-900 text-sm">{t('duoOfferTitle')}</p>
-                  <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">{merchant.duo_offer_description}</p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Offre Exclusive */}
-        {offer && <ExclusiveOffer offer={offer} merchantColor={merchant.primary_color} isPreview={isPreview} />}
+        {/* ═══ STATUT — bloc héros : ce pour quoi la cliente vient ═══ */}
 
         {/* Stamps / Cagnotte Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.35 }}
-          className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100/80 p-5 mb-4"
+          className="bg-white rounded-2xl shadow-sm border border-gray-100/80 p-5 mb-4"
         >
           {merchant.loyalty_mode === 'cagnotte' ? (
             <CagnotteSection
@@ -1135,113 +1032,192 @@ export default function CustomerCardPage({
           onSelectVoucher={(v) => { setSelectedVoucher(v); setShowVoucherDetail(true); }}
         />
 
-        {/* Member Card Badge — clean inline */}
-        {memberCard && isMemberCardActive && (
-          <motion.div
-            id="member-badge"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full mb-4"
-          >
-            <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100/80 p-4">
-              <div className="flex items-center justify-between mb-2.5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
-                    <Crown className="w-5 h-5 text-indigo-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-900">{memberCard.program?.name}</p>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">{t('privilegeMember')}</p>
-                  </div>
-                </div>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                  {t('memberActive')}
-                </span>
-              </div>
+        {/* ═══ VOS AVANTAGES — parrainage, duo, offres, statut VIP, concours ═══ */}
+        {(
+          (merchant.referral_program_enabled && (card as LoyaltyCard & { referral_code?: string }).referral_code) ||
+          (merchant.duo_offer_enabled && merchant.duo_offer_description) ||
+          offer ||
+          (memberCard && isMemberCardActive) ||
+          (merchant.contest_enabled && merchant.contest_prize)
+        ) && (
+          <section className="mt-8 mb-4">
+            <h2 className="text-sm font-bold text-gray-700 uppercase tracking-widest mb-3 px-1">
+              Vos avantages
+            </h2>
 
-              {(memberCard.program?.discount_percent || memberCard.program?.skip_deposit || memberCard.program?.benefit_label) && (
-                <div className="flex flex-wrap gap-1.5 mb-2.5">
-                  {!!memberCard.program?.discount_percent && (
-                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-50 border border-emerald-100 text-emerald-700">
-                      -{memberCard.program.discount_percent}%
-                    </span>
-                  )}
-                  {memberCard.program?.skip_deposit && (
-                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-violet-50 border border-violet-100 text-violet-700">
-                      {t('memberSkipDeposit')}
-                    </span>
-                  )}
-                  {memberCard.program?.benefit_label && (
-                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-50 border border-indigo-100 text-indigo-700">
-                      {memberCard.program.benefit_label}
-                    </span>
-                  )}
+            <div className="space-y-3">
+              {/* Bouton Parrainer un ami */}
+              {merchant.referral_program_enabled && (card as LoyaltyCard & { referral_code?: string }).referral_code && (
+                <div
+                  className="rounded-2xl overflow-hidden shadow-sm border border-gray-100/80"
+                  style={{ background: `linear-gradient(135deg, white 65%, ${merchant.primary_color}08 100%)` }}
+                >
+                  <div className="p-4 flex items-center gap-3.5">
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
+                    >
+                      <UserPlus className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-900 text-sm">{t('referFriend')}</p>
+                      <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
+                        {merchant.referral_reward_referred && merchant.referral_reward_referrer
+                          ? t('referralRewardBoth', { referred: merchant.referral_reward_referred, referrer: merchant.referral_reward_referrer })
+                          : t('referralRewardGeneric')}
+                      </p>
+                    </div>
+                    <motion.button
+                      whileTap={{ scale: 0.92 }}
+                      onClick={handleShareReferral}
+                      className="flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] rounded-xl text-white font-bold text-xs shrink-0 transition-all"
+                      style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
+                    >
+                      {shareCopied ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          {t('copied')}
+                        </>
+                      ) : (
+                        <>
+                          <Share2 className="w-3.5 h-3.5" />
+                          {t('share')}
+                        </>
+                      )}
+                    </motion.button>
+                  </div>
                 </div>
               )}
 
-              <p className="text-[10px] text-gray-500">
-                {t('memberValidUntil')} {new Date(memberCard.valid_until).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-              </p>
+              {/* Offre Duo */}
+              {merchant.duo_offer_enabled && merchant.duo_offer_description && (
+                <div className="rounded-2xl bg-white shadow-sm border border-gray-100/80 p-4">
+                  <div className="flex items-center gap-3.5">
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
+                    >
+                      <Users className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-900 text-sm">{t('duoOfferTitle')}</p>
+                      <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">{merchant.duo_offer_description}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Offre Exclusive */}
+              {offer && <ExclusiveOffer offer={offer} merchantColor={merchant.primary_color} isPreview={isPreview} />}
+
+              {/* Member Card Badge — clean inline */}
+              {memberCard && isMemberCardActive && (
+                <div id="member-badge" className="w-full">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100/80 p-4">
+                    <div className="flex items-center justify-between mb-2.5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
+                          <Crown className="w-5 h-5 text-indigo-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-900">{memberCard.program?.name}</p>
+                          <p className="text-xs text-gray-600 uppercase tracking-wider">{t('privilegeMember')}</p>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                        {t('memberActive')}
+                      </span>
+                    </div>
+
+                    {(memberCard.program?.discount_percent || memberCard.program?.skip_deposit || memberCard.program?.benefit_label) && (
+                      <div className="flex flex-wrap gap-1.5 mb-2.5">
+                        {!!memberCard.program?.discount_percent && (
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 border border-emerald-100 text-emerald-700">
+                            -{memberCard.program.discount_percent}%
+                          </span>
+                        )}
+                        {memberCard.program?.skip_deposit && (
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-violet-50 border border-violet-100 text-violet-700">
+                            {t('memberSkipDeposit')}
+                          </span>
+                        )}
+                        {memberCard.program?.benefit_label && (
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 border border-indigo-100 text-indigo-700">
+                            {memberCard.program.benefit_label}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    <p className="text-xs text-gray-600">
+                      {t('memberValidUntil')} {new Date(memberCard.valid_until).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Contest Badge */}
+              {merchant.contest_enabled && merchant.contest_prize && (
+                <div className="w-full">
+                  <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-white shadow-sm border border-gray-100/80">
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                      <Trophy className="w-5 h-5 text-amber-500" />
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-xs font-bold uppercase tracking-[0.15em] text-amber-600">{t('contestLabel')}</p>
+                      <p className="text-xs text-gray-600 mt-0.5 leading-snug">{t('contestCardDesc')}</p>
+                      <p className="text-sm font-semibold text-gray-700 mt-0.5">{merchant.contest_prize}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          </motion.div>
+          </section>
         )}
 
-        {/* Contest Badge */}
-        {merchant.contest_enabled && merchant.contest_prize && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full mb-4"
-          >
-            <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-white shadow-lg shadow-gray-200/50 border border-gray-100/80">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-                <Trophy className="w-5 h-5 text-amber-500" />
-              </div>
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-amber-600">{t('contestLabel')}</p>
-                <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">{t('contestCardDesc')}</p>
-                <p className="text-xs font-semibold text-gray-700 mt-0.5">{merchant.contest_prize}</p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Birthday Input */}
+        {/* ═══ MON COMPTE — anniversaire, email, notifications ═══ */}
         {!isPreview && (
-          <BirthdaySection merchant={merchant} customerId={card.customer_id} hasBirthday={hasBirthday} />
-        )}
+          <section className="mt-8 mb-4">
+            <h2 className="text-sm font-bold text-gray-700 uppercase tracking-widest mb-3 px-1">
+              Mon compte
+            </h2>
 
-        {/* Email (optional, modifiable) */}
-        {!isPreview && card.customer && (
-          <EmailSection
-            merchant={merchant}
-            customerId={card.customer_id}
-            initialEmail={card.customer.email ?? null}
-          />
-        )}
+            <div className="space-y-3">
+              {/* Birthday Input */}
+              <BirthdaySection merchant={merchant} customerId={card.customer_id} hasBirthday={hasBirthday} />
 
-        {/* Push Notification Banner */}
-        {push.isStandalone && isMobile && !push.pushSubscribed && push.pushPermission !== 'denied' && (
-          <motion.button
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={push.handlePushSubscribe}
-            disabled={push.pushSubscribing}
-            className="w-full mb-4"
-          >
-            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white shadow-lg shadow-gray-200/50 border border-gray-100/80">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${merchant.primary_color}12` }}>
-                <Bell className="w-4 h-4" style={{ color: merchant.primary_color }} />
-              </div>
-              <span className="flex-1 text-xs font-medium text-gray-700 text-left">{t('enableNotifications')}</span>
-              {push.pushSubscribing ? (
-                <Loader2 className="w-4 h-4 animate-spin shrink-0" style={{ color: merchant.primary_color }} />
-              ) : (
-                <ChevronRight className="w-4 h-4 shrink-0" style={{ color: merchant.primary_color }} />
+              {/* Email (optional, modifiable) */}
+              {card.customer && (
+                <EmailSection
+                  merchant={merchant}
+                  customerId={card.customer_id}
+                  initialEmail={card.customer.email ?? null}
+                />
+              )}
+
+              {/* Push Notification Banner — souscription explicite uniquement */}
+              {push.isStandalone && isMobile && !push.pushSubscribed && push.pushPermission !== 'denied' && (
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={push.handlePushSubscribe}
+                  disabled={push.pushSubscribing}
+                  className="w-full"
+                >
+                  <div className="flex items-center gap-3 px-4 py-3 min-h-[44px] rounded-2xl bg-white shadow-sm border border-gray-100/80">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${merchant.primary_color}12` }}>
+                      <Bell className="w-4 h-4" style={{ color: merchant.primary_color }} />
+                    </div>
+                    <span className="flex-1 text-sm font-medium text-gray-700 text-left">{t('enableNotifications')}</span>
+                    {push.pushSubscribing ? (
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" style={{ color: merchant.primary_color }} />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 shrink-0" style={{ color: merchant.primary_color }} />
+                    )}
+                  </div>
+                </motion.button>
               )}
             </div>
-          </motion.button>
+          </section>
         )}
 
         {/* Push Error / iOS Settings Guidance */}
@@ -1265,30 +1241,39 @@ export default function CustomerCardPage({
           )
         )}
 
-        {/* Historique */}
-        <HistorySection
-          visits={visits}
-          adjustments={adjustments}
-          redemptions={redemptions}
-          usedVouchers={vouchers
-            .filter(v => v.is_used && v.used_at)
-            .map(v => ({ id: v.id, used_at: v.used_at!, reward_description: v.reward_description, source: v.source }))
-          }
-          appointments={pastAppointments}
-          merchant={merchant}
-        />
+        {/* ═══ ACTIVITÉ & SALON — historique, réseaux, avis ═══ */}
+        <section className="mt-8">
+          <h2 className="text-sm font-bold text-gray-700 uppercase tracking-widest mb-3 px-1">
+            Mon activité
+          </h2>
 
-        {/* Réseaux sociaux */}
-        <SocialLinks merchant={merchant} />
+          <div className="space-y-3">
+            {/* Historique */}
+            <HistorySection
+              visits={visits}
+              adjustments={adjustments}
+              redemptions={redemptions}
+              usedVouchers={vouchers
+                .filter(v => v.is_used && v.used_at)
+                .map(v => ({ id: v.id, used_at: v.used_at!, reward_description: v.reward_description, source: v.source }))
+              }
+              appointments={pastAppointments}
+              merchant={merchant}
+            />
 
-        {/* Encart avis Google — affiché si review_link configuré */}
-        {merchant.review_link && !isPreview && (
-          <ReviewCard
-            reviewLink={merchant.review_link}
-            shopName={merchant.shop_name}
-            merchantId={merchantId}
-          />
-        )}
+            {/* Réseaux sociaux */}
+            <SocialLinks merchant={merchant} />
+
+            {/* Encart avis Google — affiché si review_link configuré */}
+            {merchant.review_link && !isPreview && (
+              <ReviewCard
+                reviewLink={merchant.review_link}
+                shopName={merchant.shop_name}
+                merchantId={merchantId}
+              />
+            )}
+          </div>
+        </section>
 
         <footer className="py-6 text-center">
           <a href="https://www.getqarte.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
@@ -1346,14 +1331,14 @@ export default function CustomerCardPage({
 
       {/* Onboarding CTA - Sticky bottom button to generate QR code */}
       {isPreview && isOnboarding && !isDemo && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white/90 backdrop-blur-xl border-t border-gray-200 shadow-2xl shadow-gray-900/10">
+        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white/90 backdrop-blur-xl border-t border-gray-200 shadow-lg shadow-gray-900/10">
           <div className="max-w-lg mx-auto">
             <Link href="/dashboard/qr-download">
               <motion.button
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-neutral-900 text-white font-bold text-base rounded-2xl shadow-lg shadow-gray-900/20 hover:shadow-xl hover:bg-neutral-800 transition-all active:scale-[0.98]"
+                className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-neutral-900 text-white font-bold text-base rounded-2xl shadow-sm hover:bg-neutral-800 transition-all active:scale-[0.98]"
               >
                 <QrCode className="w-5 h-5" />
                 {t('generateQrCode')}

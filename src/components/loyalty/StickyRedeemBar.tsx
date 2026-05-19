@@ -49,7 +49,7 @@ export default function StickyRedeemBar({
       {isRewardReady && !effectiveTier1Redeemed && (
         <Button
           onClick={onRedeemTier1}
-          className="w-full h-12 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all"
+          className="w-full h-12 rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all"
           style={{
             background: isCagnotte
               ? 'linear-gradient(135deg, #10b981, #059669)'
@@ -65,7 +65,7 @@ export default function StickyRedeemBar({
       {tier2Enabled && isTier2Ready && (
         <Button
           onClick={onRedeemTier2}
-          className="w-full h-12 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all"
+          className="w-full h-12 rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all"
           style={{
             background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)'
           }}

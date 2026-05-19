@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useCallback, useState } from 'react';
-import { Link, useRouter } from '@/i18n/navigation';
+import { Link } from '@/i18n/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { CreditCard, Gift, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -122,7 +122,6 @@ export default function ScanSuccessStep({
   tier2Redeemed,
   cagnotteData,
 }: ScanSuccessStepProps) {
-  const router = useRouter();
   const t = useTranslations('scanSuccess');
   const locale = useLocale();
   const primaryColor = merchant.primary_color;
@@ -184,12 +183,7 @@ export default function ScanSuccessStep({
       setDisplayedStamps(currentStamps);
     }, 1100);
 
-    // 3s — auto-redirect to card page
-    const t3 = setTimeout(() => {
-      router.replace(`/customer/card/${merchant.id}?scan_success=1&points=${lastCheckinPoints}`);
-    }, 3000);
-
-    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -268,7 +262,7 @@ export default function ScanSuccessStep({
         {/* x2 badge — shown on double day */}
         {lastCheckinPoints > 1 && (
           <motion.div
-            className="absolute -bottom-2 -right-6 px-2 py-0.5 rounded-full bg-amber-400 text-white text-[10px] font-black uppercase tracking-wide shadow-lg"
+            className="absolute -bottom-2 -right-6 px-2 py-0.5 rounded-full bg-amber-400 text-white text-xs font-black uppercase tracking-wide shadow-md"
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.8, type: 'spring', stiffness: 400 }}
@@ -294,7 +288,7 @@ export default function ScanSuccessStep({
             <p className="text-gray-500 mb-8">{celebration.subtitle}</p>
 
             {/* Score card */}
-            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 mx-auto max-w-sm">
+            <div className="bg-white rounded-3xl shadow-md border border-gray-100 p-6 mx-auto max-w-sm">
               {/* Animated counter */}
               <div className="flex items-baseline justify-center gap-1 mb-1">
                 <motion.span
@@ -307,10 +301,10 @@ export default function ScanSuccessStep({
                 >
                   {displayedStamps}
                 </motion.span>
-                <span className="text-xl font-bold text-gray-300">/{displayTarget}</span>
+                <span className="text-xl font-bold text-gray-500">/{displayTarget}</span>
               </div>
 
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-1">
                 {t('stampsAccumulated')}{tier2On && tier1Done ? t('tier2Label') : tier2On ? t('tier1Label') : ''}
               </p>
 
@@ -361,15 +355,16 @@ export default function ScanSuccessStep({
               )}
             </div>
 
-            {/* Link — fallback if auto-redirect feels slow */}
+            {/* CTA — la cliente continue quand elle veut (pas de redirection auto) */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1 }}
             >
               <Link
-                href={`/customer/card/${merchant.id}`}
-                className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-600 transition-colors"
+                href={`/customer/card/${merchant.id}?scan_success=1&points=${lastCheckinPoints}`}
+                className="mt-6 inline-flex items-center justify-center gap-2 min-h-[48px] px-6 text-sm font-semibold text-white rounded-xl shadow-sm transition-colors"
+                style={{ backgroundColor: primaryColor }}
               >
                 <CreditCard className="w-4 h-4" />
                 {t('viewFullCard')}

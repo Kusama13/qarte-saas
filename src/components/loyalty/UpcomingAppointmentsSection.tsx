@@ -311,20 +311,20 @@ export default function UpcomingAppointmentsSection({
                       {appt.deposit_confirmed === false && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 border border-amber-200 shrink-0">
                           <Hourglass className="w-2.5 h-2.5 text-amber-700" />
-                          <span className="text-[10px] font-bold text-amber-800">{t('depositPending')}</span>
+                          <span className="text-xs font-bold text-amber-800">{t('depositPending')}</span>
                         </span>
                       )}
                       {appt.deposit_confirmed === true && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 border border-emerald-200 shrink-0">
                           <Check className="w-2.5 h-2.5 text-emerald-700" />
-                          <span className="text-[10px] font-bold text-emerald-800">{t('depositOk')}</span>
+                          <span className="text-xs font-bold text-emerald-800">{t('depositOk')}</span>
                         </span>
                       )}
                     </div>
                     {serviceNames.length > 0 && (
                       <ul className="mt-1.5 space-y-0.5">
                         {serviceNames.map((name, i) => (
-                          <li key={i} className="flex items-start gap-1.5 text-[11px] text-gray-600">
+                          <li key={i} className="flex items-start gap-1.5 text-xs text-gray-600">
                             <span
                               className="mt-[5px] w-1 h-1 rounded-full shrink-0"
                               style={{ backgroundColor: merchantColor }}
@@ -339,7 +339,7 @@ export default function UpcomingAppointmentsSection({
                     {appt.deposit_confirmed === false && depositLinks.length > 0 && (
                       <div className="mt-2.5 pt-2.5 border-t" style={{ borderColor: `${merchantColor}15` }}>
                         {depositLinks.length > 1 && (
-                          <p className="text-[10px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+                          <p className="text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
                             {t('depositChooseMethod')}
                           </p>
                         )}
@@ -369,7 +369,7 @@ export default function UpcomingAppointmentsSection({
                             );
                           })}
                         </div>
-                        <p className="mt-1.5 text-[10px] text-gray-500 text-center leading-snug">
+                        <p className="mt-1.5 text-xs text-gray-600 text-center leading-snug">
                           {t('depositValidationHint', { shop: shopName })}
                         </p>
                       </div>
@@ -382,7 +382,7 @@ export default function UpcomingAppointmentsSection({
                           <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={() => openRescheduleModal(appt)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-3 rounded-lg text-xs font-semibold transition-colors"
                             style={{
                               backgroundColor: `${merchantColor}10`,
                               color: merchantColor,
@@ -398,7 +398,7 @@ export default function UpcomingAppointmentsSection({
                           <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={() => setConfirmCancelSlot(appt)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-3 rounded-lg text-xs font-semibold bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 transition-colors"
                             aria-label={t('cancelBooking')}
                           >
                             <X className="w-3.5 h-3.5" />
@@ -413,7 +413,7 @@ export default function UpcomingAppointmentsSection({
                       <div className="mt-2 pt-2 border-t" style={{ borderColor: `${merchantColor}15` }}>
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100">
                           <Clock className="w-2.5 h-2.5 text-gray-500" />
-                          <span className="text-[10px] text-gray-500">{t('editDeadlinePassed')}</span>
+                          <span className="text-xs text-gray-600">{t('editDeadlinePassed')}</span>
                         </span>
                       </div>
                     )}
@@ -426,7 +426,7 @@ export default function UpcomingAppointmentsSection({
 
         {/* Footer message — only when no edit is allowed */}
         {showFooterContact && (
-          <p className="text-[10px] text-gray-500 text-center pt-2 border-t border-gray-100">
+          <p className="text-xs text-gray-600 text-center pt-2 border-t border-gray-100">
             {t('contactToModify', { shop: shopName })}
           </p>
         )}
@@ -554,7 +554,7 @@ export default function UpcomingAppointmentsSection({
                   <h3 className="text-sm font-bold text-gray-900 leading-tight">
                     {t('rescheduleTitle')}
                   </h3>
-                  <p className="text-[11px] text-gray-500 truncate">
+                  <p className="text-xs text-gray-600 truncate">
                     {formatLongDate(rescheduleSlot.slot_date)} — {formatTime(rescheduleSlot.start_time, locale)}
                   </p>
                 </div>
@@ -577,7 +577,7 @@ export default function UpcomingAppointmentsSection({
                 {/* Date + time picker */}
                 {!loadingSlots && availableDates.length > 0 && (
                   <>
-                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('reschedulePickSlot')}</p>
+                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">{t('reschedulePickSlot')}</p>
 
                     {/* Horizontal scrollable dates with fade edges */}
                     <div className="relative mb-3">
@@ -589,7 +589,7 @@ export default function UpcomingAppointmentsSection({
                               key={date}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => { setSelectedDate(date); setSelectedTime(null); }}
-                              className={`shrink-0 px-3 py-2 rounded-xl text-[11px] font-bold capitalize transition-all ${
+                              className={`shrink-0 px-3 py-3 rounded-xl text-xs font-bold capitalize transition-all ${
                                 isSelected
                                   ? 'text-white'
                                   : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-100'
@@ -618,7 +618,7 @@ export default function UpcomingAppointmentsSection({
                               whileTap={{ scale: 0.95 }}
                               onClick={() => setSelectedTime(isSameSlot ? null : time)}
                               disabled={isSameSlot}
-                              className={`py-2 rounded-lg text-xs font-semibold transition-all ${
+                              className={`py-3 rounded-xl text-xs font-semibold transition-all ${
                                 isSameSlot
                                   ? 'bg-gray-50 text-gray-300 cursor-not-allowed line-through'
                                   : isSelected

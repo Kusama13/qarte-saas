@@ -131,7 +131,7 @@ export function ClientScanView({
   return (
     <div className="space-y-6">
       {/* Progress Section */}
-      <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6">
+      <div className="bg-white rounded-3xl shadow-md border border-gray-100 p-6">
         {/* Customer Info */}
         <div className="flex items-center gap-4 mb-6">
           <div
@@ -159,9 +159,9 @@ export function ClientScanView({
             >
               {currentStamps}
             </motion.span>
-            <span className="text-2xl font-bold text-gray-300">/{stampsTarget}</span>
+            <span className="text-2xl font-bold text-gray-500">/{stampsTarget}</span>
           </div>
-          <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px] mt-2">
+          <p className="text-gray-600 font-bold uppercase tracking-[0.2em] text-xs mt-2">
             {t('passages')}
           </p>
         </div>
@@ -199,7 +199,7 @@ export function ClientScanView({
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: -20 }}
-            className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-3xl p-6 text-white text-center shadow-xl shadow-green-200"
+            className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-3xl p-6 text-white text-center shadow-md shadow-green-200"
           >
             <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Gift className="w-8 h-8" />
@@ -219,7 +219,7 @@ export function ClientScanView({
       </AnimatePresence>
 
       {/* Checkin Section */}
-      <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6">
+      <div className="bg-white rounded-3xl shadow-md border border-gray-100 p-6">
         {/* Error Message */}
         <AnimatePresence>
           {error && (
@@ -240,7 +240,7 @@ export function ClientScanView({
           <Button
             onClick={handleCheckin}
             disabled={isProcessing}
-            className="w-full h-16 rounded-2xl text-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+            className="w-full h-16 rounded-2xl text-xl font-bold shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
             style={{
               background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`,
             }}
@@ -302,7 +302,7 @@ export function ClientScanView({
           <Gift className="w-6 h-6" style={{ color: merchant.primary_color }} />
         </div>
         <div>
-          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">
+          <p className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-0.5">
             {t('atStamps', { count: stampsTarget })}
           </p>
           <p className="font-bold text-gray-900">{merchant.reward_description}</p>

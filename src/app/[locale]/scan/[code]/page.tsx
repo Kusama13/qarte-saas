@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, use, useCallback } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import { Link, useRouter } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -124,11 +124,6 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     rewardPercent: number | null;
   } | null>(null);
 
-  // Amount confirm countdown
-  const [confirmProgress, setConfirmProgress] = useState(0);
-  const confirmTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const confirmStartRef = useRef<number>(0);
-
   // Push notifications (via shared hook)
   const push = usePushNotifications({ customerId: customer?.id });
 
@@ -142,13 +137,6 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
   // Previous stamps for success animation (old → new)
   const [previousStamps, setPreviousStamps] = useState(0);
-
-  // Cleanup confirm timer on unmount
-  useEffect(() => {
-    return () => {
-      if (confirmTimerRef.current) clearInterval(confirmTimerRef.current);
-    };
-  }, []);
 
   // Fetch merchant + referral info in parallel
   useEffect(() => {
@@ -549,30 +537,12 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       return;
     }
 
-    // Go to confirmation step with 5-second countdown
-    setConfirmProgress(0);
+    // Go to confirmation step — requires an explicit tap to validate
     setStep('amount-confirm');
-    confirmStartRef.current = Date.now();
-
-    confirmTimerRef.current = setInterval(() => {
-      const elapsed = Date.now() - confirmStartRef.current;
-      const progress = Math.min(elapsed / 5000, 1);
-      setConfirmProgress(progress);
-
-      if (progress >= 1) {
-        if (confirmTimerRef.current) clearInterval(confirmTimerRef.current);
-        confirmTimerRef.current = null;
-        submitAmount();
-      }
-    }, 50);
   };
 
   const submitAmount = async () => {
     if (submitting) return;
-    if (confirmTimerRef.current) {
-      clearInterval(confirmTimerRef.current);
-      confirmTimerRef.current = null;
-    }
 
     const amount = parseFloat(amountInput.replace(',', '.'));
     setSubmitting(true);
@@ -591,10 +561,6 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   };
 
   const cancelAmountConfirm = () => {
-    if (confirmTimerRef.current) {
-      clearInterval(confirmTimerRef.current);
-      confirmTimerRef.current = null;
-    }
     setStep('amount');
   };
 
@@ -903,18 +869,18 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
                 <button
                   onClick={() => setIsHowItWorksOpen(!isHowItWorksOpen)}
-                  className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50/50 transition-colors focus:outline-none group"
+                  className="w-full flex items-center justify-between px-4 py-3 min-h-[44px] text-left hover:bg-gray-50 transition-colors focus:outline-none group"
                   aria-expanded={isHowItWorksOpen}
                 >
                   <div className="flex items-center gap-2">
-                    <HelpCircle className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
-                    <span className="font-medium text-gray-600 text-sm">{t('howItWorks')}</span>
+                    <HelpCircle className="w-4 h-4 text-gray-600 group-hover:text-gray-700 transition-colors" />
+                    <span className="font-medium text-gray-700 text-sm">{t('howItWorks')}</span>
                   </div>
                   <motion.div
                     animate={{ rotate: isHowItWorksOpen ? 180 : 0 }}
                     transition={{ duration: 0.3, ease: "circOut" }}
                   >
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                    <ChevronDown className="w-5 h-5 text-gray-600" />
                   </motion.div>
                 </button>
 
@@ -965,7 +931,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                             </div>
                             <div className="flex-1 pt-0.5">
                               <h4 className="font-bold text-gray-900 text-sm mb-0.5">{step.title}</h4>
-                              <p className="text-gray-500 text-xs leading-relaxed">{step.description}</p>
+                              <p className="text-gray-600 text-xs leading-relaxed">{step.description}</p>
                             </div>
                           </motion.div>
                         ))}
@@ -976,7 +942,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-5">
+            <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-5">
               <form onSubmit={handlePhoneSubmit} className="space-y-3">
                 {error && (
                   <div className="p-3 text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-xl">
@@ -992,13 +958,13 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   onCountryChange={setPhoneCountry}
                   countries={['FR', 'BE', 'CH']}
                   required
-                  className="h-12 text-base bg-gray-50/50 border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-200 rounded-r-xl transition-all"
+                  className="h-12 text-base bg-gray-50 border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-200 rounded-r-xl transition-all"
                 />
 
                 <button
                   type="submit"
                   disabled={submitting || (!!refCode && referralLoading)}
-                  className="w-full h-12 text-base font-bold rounded-xl text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full h-12 text-base font-bold rounded-xl text-white shadow-md hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
                 >
                   {submitting || (!!refCode && referralLoading) ? (
@@ -1018,32 +984,23 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         {step === 'register' && (
           <div className="animate-fade-in">
             <style>{`
-              @keyframes shimmer {
-                0% { transform: translateX(-100%); }
-                100% { transform: translateX(100%); }
-              }
               .glamour-input:focus {
-                box-shadow: 0 0 0 3px ${primaryColor}25, 0 0 12px ${primaryColor}15;
+                box-shadow: 0 0 0 3px ${primaryColor}25;
                 border-color: ${primaryColor}50;
               }
             `}</style>
-            <div className="relative bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden">
-              {/* Immersive gradient header with decorative elements */}
+            <div className="relative bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+              {/* Gradient header */}
               <div
-                className="relative px-8 pt-10 pb-8 text-center overflow-hidden"
+                className="relative px-8 pt-10 pb-8 text-center"
                 style={{ background: `linear-gradient(135deg, ${primaryColor}18, ${secondaryColor || primaryColor}12, ${primaryColor}08)` }}
               >
-                {/* Decorative circles */}
-                <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-20" style={{ background: primaryColor }} />
-                <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full opacity-15" style={{ background: secondaryColor || primaryColor }} />
-                <div className="absolute top-1/2 right-4 w-8 h-8 rounded-full opacity-10" style={{ background: primaryColor }} />
-
                 {merchant.logo_url ? (
-                  <div className="relative inline-flex w-20 h-20 rounded-2xl overflow-hidden border-2 shadow-lg mb-4" style={{ borderColor: `${primaryColor}30` }}>
+                  <div className="relative inline-flex w-20 h-20 rounded-2xl overflow-hidden border-2 shadow-md mb-4" style={{ borderColor: `${primaryColor}30` }}>
                     <img src={merchant.logo_url} alt={merchant.shop_name} className="w-full h-full object-cover" />
                   </div>
                 ) : (
-                  <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 shadow-lg" style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}>
+                  <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 shadow-md" style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}>
                     <span className="text-3xl font-black text-white">{merchant.shop_name[0]?.toUpperCase()}</span>
                   </div>
                 )}
@@ -1052,7 +1009,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   {t('privileges')}
                   <Flower2 className="w-5 h-5" style={{ color: primaryColor }} />
                 </h2>
-                <p className="mt-2 text-gray-500 text-sm">
+                <p className="mt-2 text-gray-600 text-sm">
                   {referralInfo
                     ? t('finishSignupReferral')
                     : t('loyaltyCardAwaits', { name: merchant.shop_name })}
@@ -1096,23 +1053,17 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   <button
                     type="submit"
                     disabled={submitting || (!!refCode && referralLoading)}
-                    className="relative w-full h-14 text-lg font-bold rounded-2xl text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 overflow-hidden"
+                    className="w-full h-14 text-lg font-bold rounded-2xl text-white shadow-md hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                     style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
                   >
-                    {/* Shimmer on button */}
-                    <div className="absolute inset-0 overflow-hidden">
-                      <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)', animation: 'shimmer 2.5s infinite' }} />
-                    </div>
-                    <span className="relative flex items-center gap-2">
-                      {submitting || (!!refCode && referralLoading) ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <>
-                          {t('letsGo')}
-                          <ArrowRight className="w-5 h-5" />
-                        </>
-                      )}
-                    </span>
+                    {submitting || (!!refCode && referralLoading) ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        {t('letsGo')}
+                        <ArrowRight className="w-5 h-5" />
+                      </>
+                    )}
                   </button>
                 </form>
               </div>
@@ -1122,7 +1073,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
         {step === 'amount' && (
           <div className="animate-fade-in">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 overflow-hidden">
               <div className="text-center mb-5">
                 <div
                   className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-3"
@@ -1131,7 +1082,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   <span className="text-2xl">💰</span>
                 </div>
                 <h2 className="text-lg font-bold text-gray-900">{t('serviceAmount')}</h2>
-                <p className="text-sm text-gray-500 mt-1">{t('enterAmount')}</p>
+                <p className="text-sm text-gray-600 mt-1">{t('enterAmount')}</p>
               </div>
               <form onSubmit={handleAmountSubmit} className="space-y-4">
                 {error && (
@@ -1148,14 +1099,14 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     onChange={(e) => setAmountInput(e.target.value)}
                     required
                     autoFocus
-                    className="h-16 text-3xl font-bold text-center pr-14 bg-gray-50/50 border-gray-200 rounded-2xl"
+                    className="h-16 text-3xl font-bold text-center pr-14 bg-gray-50 border-gray-200 rounded-2xl"
                   />
-                  <span className="absolute right-5 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-300">{getCurrencySymbol(merchant?.country)}</span>
+                  <span className="absolute right-5 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-600">{getCurrencySymbol(merchant?.country)}</span>
                 </div>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full h-12 text-base font-bold rounded-xl text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full h-12 text-base font-bold rounded-xl text-white shadow-md hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
                 >
                   {submitting ? (
@@ -1174,10 +1125,9 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
         {step === 'amount-confirm' && (() => {
           const parsedConfirmAmount = parseFloat(amountInput.replace(',', '.')) || 0;
-          const remainingSeconds = Math.max(1, Math.ceil(5 - confirmProgress * 5));
           return (
             <div className="animate-fade-in">
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 text-center">
+              <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 text-center">
                 <div
                   className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-3"
                   style={{ backgroundColor: `${primaryColor}12` }}
@@ -1189,37 +1139,30 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     {customer.first_name} {customer.last_name}
                   </p>
                 )}
-                <p className="text-xs text-gray-400 mb-1">{t('amountToRecord')}</p>
+                <p className="text-sm text-gray-600 mb-1">{t('amountToRecord')}</p>
                 <p className="text-4xl font-black text-gray-900 mb-4">
                   {formatCurrency(parsedConfirmAmount, merchant?.country)}
                 </p>
 
-                {/* Progress bar countdown */}
-                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-3">
-                  <div
-                    className="h-full rounded-full transition-none"
-                    style={{
-                      width: `${confirmProgress * 100}%`,
-                      background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})`,
-                    }}
-                  />
+                <div className="flex items-center justify-center gap-2 mb-5 px-4 py-3 rounded-xl bg-amber-50 border border-amber-100">
+                  <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <p className="text-sm font-semibold text-amber-700">
+                    Vérifiez le montant avant de confirmer
+                  </p>
                 </div>
-                <p className="text-xs text-gray-400 mb-5">
-                  {t('autoValidation', { seconds: remainingSeconds })}
-                </p>
 
                 <div className="flex gap-3">
                   <button
                     onClick={cancelAmountConfirm}
                     disabled={submitting}
-                    className="flex-1 h-11 text-sm font-bold rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    className="flex-1 h-12 text-sm font-bold rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
                   >
                     {t('modify')}
                   </button>
                   <button
                     onClick={submitAmount}
                     disabled={submitting}
-                    className="flex-1 h-11 text-sm font-bold rounded-xl text-white shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                    className="flex-1 h-12 text-sm font-bold rounded-xl text-white shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
                     style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
                   >
                     {submitting ? (
@@ -1294,7 +1237,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         {/* Referral / Welcome / Offer Success */}
         {step === 'referral-success' && (referralResult || welcomeResult || offerResult) && (
           <div className="animate-fade-in">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden text-center">
+            <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8 overflow-hidden text-center">
               <div
                 className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl"
                 style={{ backgroundColor: `${primaryColor}15` }}
@@ -1310,7 +1253,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 {offerResult ? `${offerResult.offer_title}` : welcomeResult ? t('welcomeAt', { name: welcomeResult.shop_name }) : t('welcome')}
               </h2>
               {referralResult && (
-                <p className="text-gray-500 mb-4">
+                <p className="text-gray-600 mb-4">
                   {t('referredBy')} <span className="font-bold text-gray-900">{referralResult.referrer_name}</span>
                 </p>
               )}
@@ -1321,7 +1264,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               >
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <Gift className="w-4 h-4" style={{ color: primaryColor }} />
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">
                     {offerResult ? offerResult.offer_title : welcomeResult ? t('yourWelcomeOffer') : t('yourReward')}
                   </span>
                 </div>
@@ -1330,7 +1273,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 </p>
               </div>
 
-              <p className="text-xs text-gray-400 mb-6">
+              <p className="text-sm text-gray-600 mb-6">
                 {offerResult
                   ? t('offerPresentVoucher')
                   : welcomeResult
@@ -1340,7 +1283,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
               <button
                 onClick={() => router.push(`/customer/card/${offerResult?.merchant_id || welcomeResult?.merchant_id || referralResult?.merchant_id}`)}
-                className="w-full h-14 text-lg font-bold rounded-2xl text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="w-full h-14 text-lg font-bold rounded-2xl text-white shadow-md hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
               >
                 <CheckCircle2 className="w-5 h-5" />
@@ -1353,16 +1296,16 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         {/* Banned Screen */}
         {step === 'banned' && (
           <div className="animate-fade-in">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden text-center">
+            <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8 overflow-hidden text-center">
               <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl bg-red-100">
                 <Ban className="w-10 h-10 text-red-600" />
               </div>
 
               <h2 className="text-2xl font-black text-gray-900 mb-2">{t('accessDenied')}</h2>
-              <p className="text-gray-500 mb-8">
+              <p className="text-gray-600 mb-8">
                 {t('bannedMessage', { name: merchant?.shop_name || 'ce commerce' })}
               </p>
-              <p className="text-sm text-gray-400 mb-8">
+              <p className="text-sm text-gray-600 mb-8">
                 {t('bannedContact', { name: merchant?.shop_name || 'le commerçant' })}
               </p>
 
@@ -1394,10 +1337,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       {/* Qarte Footer - Compact */}
       <footer className="py-3 text-center">
         <Link href="/auth/merchant/signup?utm_source=scan_page&utm_medium=footer" className="inline-flex items-center gap-1 group transition-all duration-300 hover:opacity-70">
-          <div className="w-4 h-4 bg-gradient-to-br from-indigo-600 to-violet-600 rounded flex items-center justify-center">
-            <span className="text-white text-[6px] font-black italic">Q</span>
+          <div className="w-5 h-5 bg-gradient-to-br from-indigo-600 to-violet-600 rounded flex items-center justify-center">
+            <span className="text-white text-[10px] font-black italic">Q</span>
           </div>
-          <span className="text-xs font-bold tracking-tight text-gray-400">
+          <span className="text-xs font-bold tracking-tight text-gray-600">
             {t('poweredBy')}
           </span>
         </Link>

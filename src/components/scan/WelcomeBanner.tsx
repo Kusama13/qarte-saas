@@ -13,46 +13,26 @@ interface WelcomeBannerProps {
 export default function WelcomeBanner({ merchant, primaryColor, secondaryColor }: WelcomeBannerProps) {
   const t = useTranslations('welcomeBanner');
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
+  const tier2Color = secondaryColor || primaryColor;
   return (
-    <div className="relative mb-4 overflow-hidden rounded-3xl shadow-xl border border-gray-100">
+    <div className="relative mb-4 overflow-hidden rounded-3xl shadow-lg border border-gray-100">
       {/* Logo/Image Section */}
       <div
         className="relative h-40 flex items-center justify-center overflow-hidden"
         style={{ background: `linear-gradient(135deg, ${primaryColor}30, ${secondaryColor || primaryColor}40)` }}
       >
-        <div
-          className="absolute -top-12 -right-12 w-36 h-36 rounded-full opacity-30"
-          style={{ background: `radial-gradient(circle, ${primaryColor}, transparent)` }}
-        />
-        <div
-          className="absolute -bottom-8 -left-8 w-28 h-28 rounded-full opacity-25"
-          style={{ background: `radial-gradient(circle, ${secondaryColor || primaryColor}, transparent)` }}
-        />
-
         {merchant.logo_url ? (
-          <div className="relative">
-            <div
-              className="absolute -inset-3 rounded-2xl blur-xl opacity-40"
-              style={{ backgroundColor: primaryColor }}
-            />
-            <img
-              src={merchant.logo_url}
-              alt={merchant.shop_name}
-              className="relative w-28 h-28 rounded-2xl object-cover shadow-2xl border-[3px] border-white/90"
-            />
-          </div>
+          <img
+            src={merchant.logo_url}
+            alt={merchant.shop_name}
+            className="w-28 h-28 rounded-2xl object-cover shadow-lg border-[3px] border-white"
+          />
         ) : (
-          <div className="relative">
-            <div
-              className="absolute -inset-3 rounded-full blur-xl opacity-40"
-              style={{ backgroundColor: primaryColor }}
-            />
-            <div
-              className="relative w-28 h-28 rounded-full flex items-center justify-center shadow-2xl border-[3px] border-white/90"
-              style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
-            >
-              <span className="text-5xl font-black text-white drop-shadow-lg">{merchant.shop_name[0]}</span>
-            </div>
+          <div
+            className="w-28 h-28 rounded-2xl flex items-center justify-center shadow-lg border-[3px] border-white"
+            style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
+          >
+            <span className="text-5xl font-black text-white">{merchant.shop_name[0]}</span>
           </div>
         )}
       </div>
@@ -100,17 +80,20 @@ export default function WelcomeBanner({ merchant, primaryColor, secondaryColor }
             </div>
 
             {merchant.tier2_enabled && merchant.tier2_stamps_required && (merchant.tier2_reward_description || (isCagnotte && merchant.cagnotte_tier2_percent)) && (
-              <div className="rounded-2xl p-3.5 border-2 border-amber-200 bg-amber-50/60 shadow-md">
+              <div
+                className="rounded-2xl p-3.5 border-2 shadow-md"
+                style={{ backgroundColor: `${tier2Color}10`, borderColor: `${tier2Color}25` }}
+              >
                 <div className="flex items-center justify-center gap-2 mb-1">
-                  <Trophy className="w-4 h-4 text-amber-500" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">
+                  <Trophy className="w-4 h-4" style={{ color: tier2Color }} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
                     {isCagnotte ? t('tier2Rate') : t('tier2Premium')}
                   </span>
                 </div>
                 <p className="text-base font-extrabold text-gray-900 text-center">
                   {isCagnotte ? t('cagnotteReward', { percent: Number(merchant.cagnotte_tier2_percent || 0) }) : merchant.tier2_reward_description}
                 </p>
-                <p className="text-xs font-bold text-center mt-1 text-amber-600">
+                <p className="text-xs font-bold text-center mt-1" style={{ color: tier2Color }}>
                   {t('afterVisits', { count: merchant.tier2_stamps_required })}
                 </p>
               </div>

@@ -111,22 +111,24 @@ export default function CustomerCardsPage() {
         </span>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 text-gray-400 hover:text-gray-600 transition-colors"
+          aria-label="Déconnexion"
+          className="flex items-center gap-2 min-h-[44px] px-3 -mr-3 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
         >
           <span className="text-xs font-medium">{phoneNumber}</span>
-          <LogOut className="w-3.5 h-3.5" />
+          <LogOut className="w-4 h-4" />
+          <span className="text-xs font-semibold">Déconnexion</span>
         </button>
       </div>
 
       {/* Greeting */}
       <div className="px-6 pt-2 pb-8 max-w-4xl mx-auto">
         {firstName && (
-          <p className="text-base text-gray-400 font-medium mb-1">{t('hello')}</p>
+          <p className="text-base text-gray-600 font-medium mb-1">{t('hello')}</p>
         )}
         <h1 className="text-4xl font-black text-gray-900 leading-none mb-2">
           {firstName ? `${firstName}.` : t('myCards')}
         </h1>
-        <p className="text-sm text-gray-400 font-medium">
+        <p className="text-sm text-gray-600 font-medium">
           {cards.length > 0
             ? t('loyaltyCards', { count: cards.length })
             : t('noActiveProgram')}
@@ -136,7 +138,7 @@ export default function CustomerCardsPage() {
       {/* Cards grid */}
       <main className="px-4 pb-16 max-w-4xl mx-auto">
         {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-100 rounded-2xl text-sm text-red-600 font-medium">
+          <div className="mb-4 p-4 bg-rose-50 border border-rose-100 rounded-2xl text-sm text-rose-600 font-medium">
             {error}
           </div>
         )}
@@ -198,16 +200,22 @@ export default function CustomerCardsPage() {
                           <p className="text-[15px] font-black text-white leading-tight truncate">
                             {card.shop_name}
                           </p>
-                          <p className="text-[10px] font-bold text-white/55 uppercase tracking-widest mt-0.5">
+                          <p className="text-xs font-bold text-white/70 uppercase tracking-widest mt-0.5">
                             {t('loyalty')}
                           </p>
                         </div>
 
                         {/* Right side */}
                         {hasUnclaimedReward ? (
-                          <span className="shrink-0 px-2.5 py-1 rounded-full bg-white/20 border border-white/30 text-[11px] font-black text-white">
+                          <motion.span
+                            animate={{ scale: [1, 1.09, 1] }}
+                            transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
+                            className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white text-[11px] font-bold shadow-sm"
+                            style={{ color: card.primary_color }}
+                          >
+                            <Gift className="w-3 h-3" />
                             {t('ready')}
-                          </span>
+                          </motion.span>
                         ) : (
                           <ChevronRight className="w-4 h-4 text-white/40 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
                         )}
@@ -220,14 +228,17 @@ export default function CustomerCardsPage() {
                             {/* Tier 1 */}
                             <div>
                               <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                                <span className="text-xs font-bold text-gray-600 uppercase tracking-widest">
                                   {t('tier1')}
                                 </span>
-                                <span className="text-[10px] font-bold text-gray-400">
+                                <span className="text-base font-black text-gray-900">
                                   {Math.min(card.current_stamps, tier1Required)}/{tier1Required}
                                 </span>
                               </div>
-                              <div className="h-1.5 bg-black/5 rounded-full overflow-hidden">
+                              <div
+                                className="h-1.5 bg-black/5 rounded-full overflow-hidden transition-shadow"
+                                style={{ boxShadow: isTier1Ready && !effectiveTier1Redeemed ? `0 0 0 1.5px ${card.primary_color}, 0 1px 8px ${card.primary_color}66` : undefined }}
+                              >
                                 <div
                                   className="h-full rounded-full transition-all duration-700"
                                   style={{
@@ -238,7 +249,7 @@ export default function CustomerCardsPage() {
                                   }}
                                 />
                               </div>
-                              <p className="text-[10px] text-gray-400 font-medium mt-1 truncate">
+                              <p className="text-sm text-gray-700 font-medium mt-1 truncate">
                                 {card.reward_description || t('defaultReward')}
                               </p>
                             </div>
@@ -246,14 +257,17 @@ export default function CustomerCardsPage() {
                             {/* Tier 2 */}
                             <div className={effectiveTier1Redeemed ? '' : 'opacity-40'}>
                               <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                                  <Trophy className="w-2.5 h-2.5" /> {t('tier2')}
+                                <span className="text-xs font-bold text-gray-600 uppercase tracking-widest flex items-center gap-1">
+                                  <Trophy className="w-3.5 h-3.5" /> {t('tier2')}
                                 </span>
-                                <span className="text-[10px] font-bold text-gray-400">
+                                <span className="text-base font-black text-gray-900">
                                   {Math.min(Math.max(0, card.current_stamps - tier1Required), tier2Required - tier1Required)}/{tier2Required - tier1Required}
                                 </span>
                               </div>
-                              <div className="h-1.5 bg-black/5 rounded-full overflow-hidden">
+                              <div
+                                className="h-1.5 bg-black/5 rounded-full overflow-hidden transition-shadow"
+                                style={{ boxShadow: isTier2Ready ? '0 0 0 1.5px #8B5CF6, 0 1px 8px rgba(139,92,246,0.4)' : undefined }}
+                              >
                                 <div
                                   className="h-full rounded-full transition-all duration-700"
                                   style={{
@@ -262,7 +276,7 @@ export default function CustomerCardsPage() {
                                   }}
                                 />
                               </div>
-                              <p className="text-[10px] text-gray-400 font-medium mt-1 truncate">
+                              <p className="text-sm text-gray-700 font-medium mt-1 truncate">
                                 {card.tier2_reward_description || t('defaultPremiumReward')}
                               </p>
                             </div>
@@ -270,17 +284,20 @@ export default function CustomerCardsPage() {
                         ) : (
                           <div>
                             <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-[10px] font-bold text-gray-500">
+                              <span className="text-base font-black text-gray-900">
                                 {t('stampsOf', { current: card.current_stamps, total: tier1Required })}
                               </span>
                               {isTier1Ready && (
-                                <span className="flex items-center gap-1 text-[10px] font-bold" style={{ color: card.primary_color }}>
-                                  <Gift className="w-3 h-3" />
+                                <span className="flex items-center gap-1 text-sm font-bold" style={{ color: card.primary_color }}>
+                                  <Gift className="w-4 h-4" />
                                   {t('available')}
                                 </span>
                               )}
                             </div>
-                            <div className="h-1.5 bg-black/5 rounded-full overflow-hidden">
+                            <div
+                              className="h-1.5 bg-black/5 rounded-full overflow-hidden transition-shadow"
+                              style={{ boxShadow: isTier1Ready ? `0 0 0 1.5px ${card.primary_color}, 0 1px 8px ${card.primary_color}66` : undefined }}
+                            >
                               <div
                                 className="h-full rounded-full transition-all duration-700"
                                 style={{
@@ -289,7 +306,7 @@ export default function CustomerCardsPage() {
                                 }}
                               />
                             </div>
-                            <p className="text-[10px] text-gray-400 font-medium mt-1.5 truncate">
+                            <p className="text-sm text-gray-700 font-medium mt-1.5 truncate">
                               {card.reward_description || t('defaultLoyaltyReward')}
                             </p>
                           </div>
@@ -307,7 +324,7 @@ export default function CustomerCardsPage() {
               <CreditCard className="w-8 h-8 text-gray-200" />
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">{t('noCardsFound')}</h2>
-            <p className="text-gray-400 max-w-xs mx-auto text-sm leading-relaxed">
+            <p className="text-gray-600 max-w-xs mx-auto text-sm leading-relaxed">
               {t('scanToAdd')}
             </p>
           </div>
@@ -316,7 +333,7 @@ export default function CustomerCardsPage() {
 
       <footer className="py-8 text-center">
         <Link href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
-          <span className="text-xs text-gray-300 group-hover:text-gray-400">{t('madeWithLove')}</span>
+          <span className="text-xs text-gray-600 group-hover:text-gray-700">{t('madeWithLove')}</span>
           <span className="text-xs font-bold text-indigo-600">
             Qarte
           </span>

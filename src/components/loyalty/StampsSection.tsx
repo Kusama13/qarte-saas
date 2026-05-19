@@ -62,19 +62,19 @@ function getTier1StatusBadge(
   t: (key: string, params?: any) => string,
 ) {
   if (effectiveTier1Redeemed) {
-    return <span className="px-2.5 py-1 rounded-full bg-gray-200 text-[10px] font-bold text-gray-500 uppercase">{t('claimed')}</span>;
+    return <span className="px-2.5 py-1 rounded-full bg-gray-200 text-sm font-bold text-gray-600 uppercase">{t('claimed')}</span>;
   }
   if (isRewardReady) {
     return (
-      <motion.span animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="px-2.5 py-1 rounded-full bg-amber-500 text-[10px] font-black text-white uppercase shadow-lg shadow-amber-200">
+      <motion.span animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="px-2.5 py-1 rounded-full bg-amber-500 text-sm font-black text-white uppercase shadow-sm shadow-amber-200">
         {t('ready')}
       </motion.span>
     );
   }
   if (remaining <= 2) {
-    return <span className="px-2.5 py-1 rounded-full bg-amber-100 text-[10px] font-black text-amber-700 border border-amber-200">{t('onlyLeft', { count: remaining })}</span>;
+    return <span className="px-2.5 py-1 rounded-full bg-amber-100 text-sm font-black text-amber-700 border border-amber-200">{t('onlyLeft', { count: remaining })}</span>;
   }
-  return <span className="text-[10px] font-bold text-gray-500">{t('remaining', { count: remaining })}</span>;
+  return <span className="text-sm font-bold text-gray-600">{t('remaining', { count: remaining })}</span>;
 }
 
 export default function StampsSection({
@@ -100,7 +100,7 @@ export default function StampsSection({
   const showDoubleDaysHint = doubleDaysEnabled && doubleDays.length > 0;
   const formattedDoubleDays = showDoubleDaysHint ? formatDoubleDays(doubleDaysOfWeek, locale) : '';
   const cycleBadge = completedCycles > 0 ? (
-    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 border ${
+    <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 border ${
       completedCycles >= 4 ? 'bg-amber-50 border-amber-200 text-amber-700'
         : completedCycles >= 2 ? 'bg-violet-50 border-violet-200 text-violet-600'
         : 'bg-pink-50 border-pink-200 text-pink-600'
@@ -126,7 +126,7 @@ export default function StampsSection({
           <div className="flex justify-between items-center mb-3">
             <div className="flex items-center gap-2">
               <Gift className={`w-4 h-4 ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-500' : 'text-gray-500'}`} />
-              <span className={`text-[11px] font-black uppercase tracking-widest ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-600' : 'text-gray-500'}`}>
+              <span className={`text-sm font-black uppercase tracking-widest ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-600' : 'text-gray-600'}`}>
                 {t('tier1')}
               </span>
             </div>
@@ -163,7 +163,7 @@ export default function StampsSection({
           <p
             className="text-center text-sm font-bold"
             style={{
-              color: effectiveTier1Redeemed ? '#9ca3af' : (isRewardReady ? '#92400e' : merchantColor),
+              color: effectiveTier1Redeemed ? '#6b7280' : (isRewardReady ? '#92400e' : merchantColor),
             }}
           >
             {rewardDescription || t('defaultReward')}
@@ -180,23 +180,23 @@ export default function StampsSection({
         }`}>
           <div className="flex justify-between items-center mb-3">
             <div className="flex items-center gap-2">
-              <Trophy className="w-4 h-4" style={{ color: isTier2Ready ? tier2Color : '#9ca3af' }} />
-              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: isTier2Ready ? tier2Color : '#9ca3af' }}>{t('tier2')}</span>
+              <Trophy className="w-4 h-4" style={{ color: isTier2Ready ? tier2Color : '#6b7280' }} />
+              <span className="text-sm font-black uppercase tracking-widest" style={{ color: isTier2Ready ? tier2Color : '#6b7280' }}>{t('tier2')}</span>
             </div>
             {isTier2Ready ? (
               <motion.span
                 animate={{ scale: [1, 1.05, 1] }}
                 transition={{ repeat: Infinity, duration: 2 }}
-                className="px-2.5 py-1 rounded-full text-[10px] font-black text-white uppercase shadow-lg"
+                className="px-2.5 py-1 rounded-full text-sm font-black text-white uppercase shadow-sm"
                 style={{ backgroundColor: tier2Color, boxShadow: `0 4px 14px ${tier2Color}30` }}
               >{t('unlocked')}</motion.span>
             ) : tier2Required - currentStamps <= 2 ? (
               <span
-                className="px-2.5 py-1 rounded-full text-[10px] font-black border"
+                className="px-2.5 py-1 rounded-full text-sm font-black border"
                 style={{ backgroundColor: `${tier2Color}15`, color: tier2Color, borderColor: `${tier2Color}30` }}
               >{t('onlyLeft', { count: tier2Required - currentStamps })}</span>
             ) : (
-              <span className="text-[10px] font-bold text-gray-500">{t('remaining', { count: tier2Required - currentStamps })}</span>
+              <span className="text-sm font-bold text-gray-600">{t('remaining', { count: tier2Required - currentStamps })}</span>
             )}
           </div>
 
@@ -240,7 +240,7 @@ export default function StampsSection({
         {showDoubleDaysHint && (
           <div className="flex items-center justify-center gap-1.5 pt-1">
             <Flame className="w-3 h-3 text-amber-400 shrink-0" />
-            <span className="text-[11px] text-gray-500 font-medium">
+            <span className="text-xs text-gray-600 font-medium">
               {t('doubleDaysHint', { days: formattedDoubleDays })}
             </span>
           </div>
@@ -254,7 +254,7 @@ export default function StampsSection({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-black text-gray-500 uppercase tracking-widest">{t('myLoyalty')}</span>
+          <span className="text-xs font-black text-gray-600 uppercase tracking-widest">{t('myLoyalty')}</span>
           {cycleBadge}
         </div>
         {isRewardReady ? (
@@ -306,7 +306,7 @@ export default function StampsSection({
       {showDoubleDaysHint && (
         <div className="flex items-center justify-center gap-1.5">
           <Flame className="w-3 h-3 text-amber-400 shrink-0" />
-          <span className="text-[11px] text-gray-500 font-medium">
+          <span className="text-xs text-gray-600 font-medium">
             {t('doubleDaysHint', { days: formattedDoubleDays })}
           </span>
         </div>

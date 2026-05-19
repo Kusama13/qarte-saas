@@ -161,14 +161,14 @@ export default function CustomerLoginPage() {
             <h1 className="text-4xl font-black text-gray-900 leading-none mb-3">
               {t(heroKey)}
             </h1>
-            <p className="text-base text-gray-400 font-medium">
+            <p className="text-base text-gray-700 font-medium">
               {t(subtitleKey, ctx.fromShop ? { shop: ctx.fromShop } : undefined)}
             </p>
           </div>
 
-          {/* Glass card form */}
+          {/* Solid card form */}
           <motion.div
-            className="p-8 bg-white/70 backdrop-blur-2xl border border-white/80 shadow-[0_8px_60px_rgba(99,102,241,0.10)] rounded-[2.5rem]"
+            className="p-8 bg-white border border-gray-100 shadow-md rounded-[2.5rem]"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
@@ -178,9 +178,12 @@ export default function CustomerLoginPage() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="p-4 text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-2xl"
+                  className="p-4 rounded-2xl bg-rose-50 border border-rose-100"
                 >
-                  {error}
+                  <p className="text-sm font-semibold text-rose-600">{error}</p>
+                  <p className="mt-2 text-xs text-gray-600 leading-relaxed">
+                    Vous n&apos;avez pas encore de carte ? Scannez le QR code en salon lors de votre prochaine visite.
+                  </p>
                 </motion.div>
               )}
 
@@ -193,7 +196,7 @@ export default function CustomerLoginPage() {
                 countries={['FR', 'BE', 'CH']}
                 required
                 autoFocus
-                className="h-14 text-lg bg-white/60 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-r-2xl transition-all shadow-sm"
+                className="h-14 text-lg bg-white border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-r-2xl transition-all shadow-sm"
               />
 
               <Button
@@ -208,12 +211,12 @@ export default function CustomerLoginPage() {
           </motion.div>
 
           <motion.div
-            className="mt-10 p-5 rounded-3xl bg-white/40 backdrop-blur-lg border border-white/60 text-center"
+            className="mt-10 p-5 rounded-3xl bg-white border border-gray-100 shadow-sm text-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.5 }}
           >
-            <p className="text-sm text-gray-500 leading-relaxed">
+            <p className="text-sm text-gray-700 leading-relaxed">
               {t(helper.lead)} <span className="font-bold text-indigo-600">{t(helper.accent)}</span> {t(helper.tail)}
             </p>
           </motion.div>
@@ -223,11 +226,11 @@ export default function CustomerLoginPage() {
       {/* ── Footer ── */}
       <footer className="relative z-10 py-8 text-center">
         <Link href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
-          <span className="text-xs text-gray-400 group-hover:text-gray-500">{t('poweredBy')}</span>
+          <span className="text-xs text-gray-600 group-hover:text-gray-700">{t('poweredBy')}</span>
           <span className="text-xs font-bold text-indigo-600">
             Qarte
           </span>
-          <span className="text-xs text-gray-400 group-hover:text-gray-500">{t('inFrance')}</span>
+          <span className="text-xs text-gray-600 group-hover:text-gray-700">{t('inFrance')}</span>
         </Link>
       </footer>
 

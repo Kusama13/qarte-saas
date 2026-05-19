@@ -15,7 +15,7 @@ export default function CardSkeleton() {
       </header>
       <main className="px-4 max-w-lg mx-auto pb-10">
         {/* Skeleton Greeting Card */}
-        <div className="relative z-10 -mt-8 mb-4 bg-white rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-100/80 p-5">
+        <div className="relative z-10 -mt-8 mb-4 bg-white rounded-2xl shadow-sm shadow-gray-200/60 border border-gray-100/80 p-5">
           <div className="flex items-center justify-between mb-3">
             <div>
               <div className="w-16 h-4 bg-gray-100 rounded animate-pulse mb-2" />

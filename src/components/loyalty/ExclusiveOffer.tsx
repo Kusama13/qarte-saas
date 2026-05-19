@@ -34,7 +34,7 @@ export default function ExclusiveOffer({ offer, merchantColor, isPreview }: Excl
       className="mb-4 overflow-hidden rounded-2xl shadow-lg shadow-black/5 border border-white/20 relative"
     >
       {isPreview && (
-        <div className="absolute top-2 right-2 z-20 bg-white/90 backdrop-blur-sm text-[10px] font-bold text-gray-500 px-2 py-0.5 rounded-full border border-gray-200 shadow-sm">
+        <div className="absolute top-2 right-2 z-20 bg-white/90 backdrop-blur-sm text-xs font-bold text-gray-600 px-2 py-0.5 rounded-full border border-gray-200 shadow-sm">
           {t('previewBadge')}
         </div>
       )}
@@ -48,14 +48,12 @@ export default function ExclusiveOffer({ offer, merchantColor, isPreview }: Excl
             background: `linear-gradient(135deg, ${merchantColor} 0%, ${merchantColor}dd 100%)`
           }}
         >
-          <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
-
           <div className="relative flex items-center justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <div className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/20 flex items-center gap-1.5">
+                <div className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-xl border border-white/20 flex items-center gap-1.5">
                   <Flower2 className="w-3 h-3 text-white" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-white">{t('exclusiveOffer')}</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-white">{t('exclusiveOffer')}</span>
                 </div>
               </div>
               <h3 className="text-base font-extrabold leading-tight mb-1 drop-shadow-sm">

@@ -87,13 +87,6 @@ export default function RewardCard({
           className="relative w-full p-5 overflow-hidden text-left"
           style={{ background: gradient }}
         >
-          <motion.div
-            animate={{ x: ['-150%', '200%'] }}
-            transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"
-          />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.15),transparent)] pointer-events-none" />
-
           <div className="relative flex items-center gap-4">
             <motion.div
               animate={{ scale: [1, 1.08, 1] }}
@@ -103,7 +96,7 @@ export default function RewardCard({
               <Coins className="w-7 h-7 text-white" />
             </motion.div>
             <div className="flex-1 min-w-0">
-              <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">
+              <p className="text-white/80 text-xs font-bold uppercase tracking-widest mb-1">
                 {tierLabel ? t('tierUnlocked', { tier: tierLabel }) : t('cagnotteUnlocked')}
               </p>
               <p className="text-white text-2xl font-black leading-snug">
@@ -112,7 +105,7 @@ export default function RewardCard({
               <p className="text-white/80 text-xs font-semibold mt-0.5">
                 {t('onYourCagnotte', { percent: cashbackPercent || 0 })}
               </p>
-              <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mt-1.5">
+              <p className="text-white/80 text-xs font-bold uppercase tracking-wider mt-1.5">
                 {t('claimCagnotte')}
               </p>
             </div>
@@ -142,7 +135,7 @@ export default function RewardCard({
               <Coins className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-0.5">
                 {tierLabel ? t('cagnotteLabel', { tier: tierLabel }) : t('cagnotteSimple')}
               </p>
               <p className="text-sm font-bold text-gray-800 line-clamp-2">
@@ -178,14 +171,6 @@ export default function RewardCard({
           className="relative w-full p-5 overflow-hidden text-left"
           style={{ background: gradient }}
         >
-          {/* Shimmer sweep */}
-          <motion.div
-            animate={{ x: ['-150%', '200%'] }}
-            transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"
-          />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.15),transparent)] pointer-events-none" />
-
           <div className="relative flex items-center gap-4">
             <motion.div
               animate={{ scale: [1, 1.08, 1] }}
@@ -195,11 +180,8 @@ export default function RewardCard({
               <TierIcon className="w-7 h-7 text-white" />
             </motion.div>
             <div className="flex-1 min-w-0">
-              <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">
-                {tierLabel ? t('tierUnlocked', { tier: tierLabel }) : t('rewardUnlocked')}
-              </p>
-              <p className="text-white text-base font-black leading-snug line-clamp-2">
-                {description}
+              <p className="text-white text-base font-black leading-snug">
+                {t('rewardUnlocked')}
               </p>
               <p className="text-white/80 text-xs font-semibold mt-1">
                 {t('claimNow')}
@@ -219,7 +201,7 @@ export default function RewardCard({
               <TierIcon className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-0.5">
                 {tierLabel ? t('rewardLabel', { tier: tierLabel }) : t('rewardSimple')}
               </p>
               <p className="text-sm font-bold text-gray-800 line-clamp-2">

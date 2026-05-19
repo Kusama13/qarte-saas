@@ -72,24 +72,24 @@ export async function POST(request: NextRequest) {
     // Get card IDs to fetch redemptions
     const cardIds = (cardsData || []).map((c) => c.id);
 
-    // Fetch redemptions for all cards to know if tier 1 was already redeemed
+    // Fetch redemptions for all cards to know if tier 1 was redeemed in the current cycle
     // Guard: .in() with empty array would return ALL rows
-    let redemptionsData: { loyalty_card_id: string; tier: number }[] | null = null;
+    let redemptionsData: { loyalty_card_id: string; tier: number; redeemed_at: string }[] | null = null;
     if (cardIds.length > 0) {
       const { data } = await supabaseAdmin
         .from('redemptions')
-        .select('loyalty_card_id, tier')
+        .select('loyalty_card_id, tier, redeemed_at')
         .in('loyalty_card_id', cardIds);
       redemptionsData = data;
     }
 
-    // Create a map of card_id -> redeemed tiers
-    const redemptionsByCard: Record<string, number[]> = {};
+    // Create a map of card_id -> redemptions (tier + date, for cycle-aware checks)
+    const redemptionsByCard: Record<string, { tier: number; redeemed_at: string }[]> = {};
     (redemptionsData || []).forEach((r) => {
       if (!redemptionsByCard[r.loyalty_card_id]) {
         redemptionsByCard[r.loyalty_card_id] = [];
       }
-      redemptionsByCard[r.loyalty_card_id].push(r.tier || 1);
+      redemptionsByCard[r.loyalty_card_id].push({ tier: r.tier || 1, redeemed_at: r.redeemed_at });
     });
 
     // Define merchant type for the select query result
@@ -114,8 +114,20 @@ export async function POST(request: NextRequest) {
         const tier2Enabled = merchant.tier2_enabled;
         const tier1Required = merchant.stamps_required;
         const tier2Required = merchant.tier2_stamps_required || tier1Required * 2;
-        const redeemedTiers = redemptionsByCard[card.id] || [];
-        const tier1Redeemed = redeemedTiers.includes(1);
+        // tier1_redeemed = redeemed dans le CYCLE courant uniquement.
+        // Dual : palier 1 utilisé après le dernier palier 2. Mono-palier : toujours
+        // false (utiliser remet les tampons à 0, une carte "prête" n'a donc pas
+        // pu être consommée ce cycle).
+        const cardRedemptions = redemptionsByCard[card.id] || [];
+        let tier1Redeemed = false;
+        if (tier2Enabled) {
+          const lastTier2 = cardRedemptions
+            .filter((r) => r.tier === 2)
+            .reduce((max, r) => Math.max(max, new Date(r.redeemed_at).getTime()), 0);
+          tier1Redeemed = cardRedemptions.some(
+            (r) => r.tier === 1 && new Date(r.redeemed_at).getTime() > lastTier2,
+          );
+        }
 
         return {
           merchant_id: merchant.id,

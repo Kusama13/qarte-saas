@@ -74,7 +74,7 @@ export default function InstallPrompts({
       {showSuccessToast && (
         <div className="fixed bottom-6 left-4 right-4 z-50 animate-slide-up">
           <div
-            className="max-w-md mx-auto rounded-2xl p-4 shadow-2xl flex items-center gap-3"
+            className="max-w-md mx-auto rounded-2xl p-4 shadow-md flex items-center gap-3"
             style={{ backgroundColor: merchant.primary_color }}
           >
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
@@ -108,7 +108,7 @@ export default function InstallPrompts({
       {showIOSVersionWarning && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div
-            className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-slide-up"
+            className="relative w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden animate-slide-up"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6 text-center">
