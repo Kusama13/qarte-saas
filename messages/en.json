@@ -2973,12 +2973,12 @@
   "welcomeBanner": {
     "welcomeAt": "Welcome to",
     "rewardLoyalty": "We reward your loyalty",
-    "yourReward": "Your reward",
+    "yourReward": "First reward",
     "cagnotteReward": "{percent}% cashback on your loyalty balance",
     "afterVisits": "After {count} visit{count, plural, one {} other {s}}",
     "afterVisitsCagnotte": "After {count} visit{count, plural, one {} other {s}} · on your spending",
-    "tier2Premium": "Tier 2 — Premium Reward",
-    "tier2Rate": "Tier 2 — Improved Rate"
+    "tier2Premium": "Second reward",
+    "tier2Rate": "Second reward"
   },
   "scanAlready": {
     "title": "Already checked in!",

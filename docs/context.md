@@ -97,7 +97,7 @@ current_stamps += points_earned
 
 Le client cumule un **montant depense** (EUR). Au bout de N visites → X% cashback sur le cumul.
 
-**Flux scan** : QR → telephone → **saisie montant** (jauge 5s) → `POST /api/cagnotte/checkin` → meme logique + montant
+**Flux scan** : QR → telephone → **saisie montant** (confirmation par tap explicite, pas d'auto-validation) → `POST /api/cagnotte/checkin` → meme logique + montant
 
 ```
 current_stamps += 1    // toujours 1, pas de x2
@@ -154,7 +154,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 | Increment | +1 (ou +2 jours doubles) | +1 tampon + montant EUR |
 | Recompense | Fixe (ex: "1 brushing") | % du cumul |
 | Jours doubles | Oui | Non |
-| Saisie client | Rien | Montant depense (jauge 5s) |
+| Saisie client | Rien | Montant depense (confirme par tap) |
 | `amount_spent` (visit) | NULL | Montant EUR |
 | `reward_value` (redemption) | NULL | Cashback EUR |
 

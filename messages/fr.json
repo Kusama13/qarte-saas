@@ -2976,12 +2976,12 @@
   "welcomeBanner": {
     "welcomeAt": "Bienvenue chez",
     "rewardLoyalty": "Nous récompensons votre fidélité",
-    "yourReward": "Votre récompense",
+    "yourReward": "Première récompense",
     "cagnotteReward": "{percent}% sur votre cagnotte fidélité",
     "afterVisits": "Après {count} passage{count, plural, one {} other {s}}",
     "afterVisitsCagnotte": "Après {count} passage{count, plural, one {} other {s}} · sur vos dépenses",
-    "tier2Premium": "Palier 2 — Récompense Premium",
-    "tier2Rate": "Palier 2 — Taux amélioré"
+    "tier2Premium": "Deuxième récompense",
+    "tier2Rate": "Deuxième récompense"
   },
   "scanAlready": {
     "title": "Déjà validé !",
