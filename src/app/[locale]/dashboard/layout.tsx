@@ -121,15 +121,6 @@ function DashboardLayoutContent({
     merchant?.subscription_status || 'trial'
   );
 
-  // Skip is intentionally not persisted — merchant sees survey again until they complete it
-  const needsSurvey = trialStatus.isFullyExpired && !merchant?.churn_survey_seen_at;
-
-  const shouldRedirectSurvey = !loading
-    && !!merchant
-    && needsSurvey
-    && pathname !== '/dashboard/survey'
-    && pathname !== '/dashboard/subscription';
-
   // Past_due bloque (>72h) : redirect dur vers /dashboard/subscription. Mig 164.
   // Le merchant ne peut plus rien faire d'autre tant qu'il n'a pas regularise.
   const isPastDueLocked = !!merchant && isPastDueBlocked({
@@ -139,18 +130,15 @@ function DashboardLayoutContent({
 
   const shouldRedirectSubscription = !loading
     && !!merchant
-    && (trialStatus.isInGracePeriod || (trialStatus.isFullyExpired && !!merchant.churn_survey_seen_at) || isPastDueLocked)
-    && pathname !== '/dashboard/subscription'
-    && pathname !== '/dashboard/survey';
+    && (trialStatus.isInGracePeriod || trialStatus.isFullyExpired || isPastDueLocked)
+    && pathname !== '/dashboard/subscription';
 
   // Redirection forcée dès la fin de l'essai (grâce ou expiration complète) OU past_due bloque
   useEffect(() => {
-    if (shouldRedirectSurvey) {
-      router.push('/dashboard/survey');
-    } else if (shouldRedirectSubscription) {
+    if (shouldRedirectSubscription) {
       router.push('/dashboard/subscription');
     }
-  }, [shouldRedirectSurvey, shouldRedirectSubscription, router]);
+  }, [shouldRedirectSubscription, router]);
 
 
   // Block only on hasMounted (hydration mismatch). Don't gate on `loading` —
@@ -163,11 +151,11 @@ function DashboardLayoutContent({
     );
   }
 
-  if (shouldRedirectSurvey || shouldRedirectSubscription) {
+  if (shouldRedirectSubscription) {
     return null;
   }
 
-  if (pathname === '/dashboard/setup' || pathname === '/dashboard/survey' || pathname === '/dashboard/personalize') {
+  if (pathname === '/dashboard/setup' || pathname === '/dashboard/personalize') {
     return <>{children}</>;
   }
 

@@ -103,7 +103,6 @@ const SMS_TYPE_LABELS: Record<string, string> = {
   checkin_nudge: 'Check-in nudge',
   checkin_combo: 'Check-in combo',
   trial_pre_loss: 'Pré-churn',
-  churn_survey: 'Sondage',
 };
 
 type FilterItem = { key: string; label: string } | { separator: true };

@@ -19,10 +19,9 @@ export const TRACKING_CODES = {
   UPGRADE_SMS_CAMPAIGN_BLOCKED: -330,
   UPGRADE_BOOKING_REQUEST_MANUAL: -331,
 
-  // Trial ending / expired / churn
+  // Trial ending / expired
   TRIAL_ENDING_J2: -201,
   TRIAL_EXPIRED_J1: -211,
-  CHURN_SURVEY_REMINDER: -213,
 
   // Grace period
   GRACE_PERIOD_SETUP: -113,

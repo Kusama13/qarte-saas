@@ -44,13 +44,10 @@ import {
   SmsPackPurchaseEmail,
   VitrineReminderEmail,
   PlanningReminderEmail,
-  ChurnSurveyReminderEmail,
   ReferralPromoEmail,
   ReferralReminderEmail,
   SocialProofEmail,
   SlotReleasedEmail,
-  PostSurveyFollowUpEmail,
-  PostSurveyLastChanceEmail,
   AmbassadorWelcomeEmail,
   ActivationStalledEmail,
   UpgradeAllInEmail,
@@ -355,55 +352,6 @@ export async function sendActivationStalledEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'activationStalled', { shopName }), ActivationStalledEmail, { shopName, shopType, locale }, {
     logLabel: `Activation stalled email (S0 J+3)`,
-  });
-}
-
-export async function sendChurnSurveyReminderEmail(
-  to: string,
-  shopName: string,
-  locale: EmailLocale = 'fr'
-): Promise<SendEmailResult> {
-  return sendEmail(to, subj(locale, 'churnSurveyReminder', { shopName }), ChurnSurveyReminderEmail, { shopName, locale }, {
-    logLabel: 'Churn survey reminder email (J+3)',
-  });
-}
-
-// Post-survey follow-up (targeted by Q4 variant)
-const FOLLOW_UP_SUBJECT_KEYS: Record<string, string> = {
-  lower_price: 'postSurveyFollowUpLowerPrice',
-  longer_trial: 'postSurveyFollowUpLongerTrial',
-  team_demo: 'postSurveyFollowUpTeamDemo',
-  more_features: 'postSurveyFollowUpMoreFeatures',
-  fidelity_tier_ok: 'postSurveyFollowUpFidelityTierOk',
-  nothing: 'postSurveyFollowUpNothing',
-};
-
-export async function sendPostSurveyFollowUpEmail(
-  to: string,
-  shopName: string,
-  variant: string,
-  daysRemaining: number,
-  locale: EmailLocale = 'fr'
-): Promise<SendEmailResult> {
-  const subjectKey = daysRemaining <= 1 ? 'postSurveyFollowUpLastDay' : (FOLLOW_UP_SUBJECT_KEYS[variant] || 'postSurveyFollowUpNothing');
-  return sendEmail(to, subj(locale, subjectKey, { shopName }), PostSurveyFollowUpEmail, { shopName, variant, daysRemaining, locale }, {
-    logLabel: `Post-survey follow-up (${variant}, ${daysRemaining <= 1 ? 'last day' : 'mid'})`,
-  });
-}
-
-const LAST_CHANCE_SUBJECT_KEYS: Record<string, string> = {
-  lower_price: 'postSurveyLastChanceLowerPrice',
-};
-
-export async function sendPostSurveyLastChanceEmail(
-  to: string,
-  shopName: string,
-  variant: string,
-  locale: EmailLocale = 'fr'
-): Promise<SendEmailResult> {
-  const subjectKey = LAST_CHANCE_SUBJECT_KEYS[variant] || 'postSurveyLastChance';
-  return sendEmail(to, subj(locale, subjectKey, { shopName }), PostSurveyLastChanceEmail, { shopName, variant, locale }, {
-    logLabel: `Post-survey last chance (${variant})`,
   });
 }
 

@@ -585,28 +585,9 @@
 **Index** : `idx_merchant_contests_merchant` (merchant_id, contest_month DESC)
 **RLS** : merchants SELECT own, service role full access
 
-### 2.29 merchant_churn_surveys (mig 106)
+### ~~2.29 merchant_churn_surveys~~ — SUPPRIMEE (mig 169)
 
-Questionnaire de retention affiche aux merchants dont le trial est fully expired (> J+3). Une seule reponse par merchant. Completion accorde +2 jours bonus sur `trial_ends_at` + pose `merchants.churn_survey_seen_at`. Si Q4 = `lower_price`, le code promo Stripe `QARTEPRO10` (-10% 3 mois) est affiche sur la page de succes.
-
-| Colonne | Type | Default | Contrainte |
-|---------|------|---------|------------|
-| id | UUID PK | `gen_random_uuid()` | |
-| merchant_id | UUID FK | NOT NULL | → merchants(id) ON DELETE CASCADE, UNIQUE |
-| blocker | TEXT | NOT NULL | CHECK IN (`price`, `not_enough_clients`, `missing_feature`, `too_complex`, `other`) |
-| missing_feature | TEXT | | Optionnel — texte libre Q2 |
-| features_tested | TEXT[] | `{}` | NOT NULL — array de `loyalty` / `planning` / `online_booking` / `sms` / `push_offers` / `referral` |
-| would_convince | TEXT | NOT NULL | CHECK IN (`lower_price`, `longer_trial`, `team_demo`, `more_features`, `nothing`) |
-| free_comment | TEXT | | Optionnel |
-| bonus_days_granted | INTEGER | 0 | NOT NULL |
-| created_at | TIMESTAMPTZ | `NOW()` | |
-
-**Index** : `idx_churn_surveys_created` (created_at DESC), `idx_churn_surveys_blocker` (blocker)
-**RLS** : merchants INSERT/SELECT own, service role full access
-
-**Colonne ajoutee sur `merchants`** : `churn_survey_seen_at TIMESTAMPTZ` — posee a la completion (PAS au skip, le skip n'est pas persiste pour que le merchant reverra le questionnaire a la prochaine visite).
-
-**Source unique** : les enums + labels sont dans `src/lib/churn-survey-config.ts` (partages entre Zod API, client page, admin page).
+Questionnaire de retention post-expiration retire (formulaire de churn). Table `merchant_churn_surveys` + colonnes `merchants.churn_survey_seen_at` / `churn_survey_skip_count` / `team_demo_requested_at` + RPC `increment_churn_survey_skip` droppes par mig 169.
 
 ### 2.30 sms_logs (mig 092-094)
 
@@ -1357,6 +1338,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 167 | customer_booking_message | `merchant_planning_slots.customer_message TEXT NULL` — note libre laissée par la cliente à la résa en ligne (distincte de `notes`, la note merchant). `move_booking` recréée pour transférer/reset le champ. |
 | 168 | booking_horizon | `merchants.booking_horizon_days SMALLINT NOT NULL DEFAULT 90 CHECK (30,60,90)` — horizon de réservation configurable (combien de jours à l'avance une cliente peut réserver en ligne). Remplace la constante code 90j partagée. S'applique aux 2 modes. Réglable dans Planning > Paramètres > Résa en ligne. Source unique `lib/booking-window.ts` (`normalizeBookingHorizon` fallback 90), lue par les 4 consommateurs (api planning GET public, p/[slug] SSR, BookingModal maxDate, api book garde serveur). Colonne additive NOT NULL DEFAULT — rétrocompat totale. |
 | 164 | past_due_blocking | **Blocage merchants past_due apres 72h**. Ajoute `merchants.past_due_since TIMESTAMPTZ` set par Stripe webhook `invoice.payment_failed` a la transition active→past_due (atomic claim WHERE past_due_since IS NULL — Stripe peut re-fire, on ne reset pas le compteur a chaque retry), reset NULL sur `invoice.payment_succeeded`. **Backfill conditionnel** (mai 2026, decision produit "trop d'impayes") : pour les past_due deja en base, `past_due_since = COALESCE(past_due_sms1_sent_at, updated_at)` UNIQUEMENT si cette estimation est > 72h (donc bloque immediatement les past_due > 72h, laisse les recents passer par le flow webhook normal). Source `past_due_sms1_sent_at` (mig 163) plus fiable que `updated_at` (toggle settings reset). Index partiel `idx_merchants_past_due_since ON (past_due_since) WHERE subscription_status='past_due' AND past_due_since IS NOT NULL`. **Source de verite double** : (1) blocage 72h via helper [`src/lib/merchant-access.ts`](../src/lib/merchant-access.ts) `isPastDueBlocked()` + `isMerchantBlocked()` (combine trial-expired + past_due_blocked), utilise par dashboard layout (redirect dur vers `/dashboard/subscription`) + 8 routes API client-facing (checkin, cagnotte/checkin, welcome, referrals, planning/book, vouchers/use, merchant-offers/claim, gift-cards/request) qui retournent 403 + `<SuspendedBanner />` etendu sur `/p/[slug]` + `/scan/[code]` (meme texte neutre "Page suspendue", on ne mentionne PAS l'impaye cote client). (2) emails dunning J+3/J+7/J+10 cron morning bascules de `updated_at` vers `past_due_since` (sinon toggle settings reset le compteur — bypass trivial). UX dashboard `/dashboard/subscription` : nouveau bandeau rouge `alertPastDueBlocked` "Paiement a regulariser — compte suspendu" + desc "Tes clientes ne peuvent plus reserver ni scanner. Mets a jour ta carte..." (separe du `alertPastDue` initial qui reste pour J0-J+2). |
+| 169 | drop_churn_survey | **Suppression du formulaire de churn** (questionnaire post-expiration). `DROP TABLE merchant_churn_surveys` + `DROP FUNCTION increment_churn_survey_skip` + `ALTER merchants DROP COLUMN churn_survey_seen_at, churn_survey_skip_count, team_demo_requested_at`. Code retire en parallele : pages `/dashboard/survey` + `/admin/churn-surveys`, routes `/api/churn-survey` / `/api/admin/churn-surveys` / `/api/merchant/survey-skip`, 3 templates email (ChurnSurveyReminder, PostSurveyFollowUp, PostSurveyLastChance), section 1b du cron `morning`, `src/lib/churn-survey-config.ts`. Les merchants fully expired sont desormais rediriges directement vers `/dashboard/subscription`. La valeur `churn_survey` reste dans le CHECK `merchant_marketing_sms_logs.sms_type` (lignes historiques). |
 
 ---
 

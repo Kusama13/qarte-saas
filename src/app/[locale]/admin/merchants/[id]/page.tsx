@@ -413,7 +413,6 @@ const EMAIL_LABELS: Record<number, string> = {
   [-203]: 'Trial expire J-3',
   [-211]: 'Trial expire +1j',
   [-212]: 'Trial expire +2j',
-  [-213]: 'Churn survey reminder',
   [-214]: 'Recap features (one-off)',
   [-301]: 'Rappel config programme J+1',
   [-302]: 'Rappel config programme J+2',

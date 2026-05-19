@@ -25,7 +25,6 @@ const MERCHANT_SMS_TYPES = [
   'checkin_nudge',
   'checkin_combo',
   'trial_pre_loss',
-  'churn_survey',
 ];
 
 function getCategory(smsType: string): CategoryKey {

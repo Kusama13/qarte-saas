@@ -461,28 +461,6 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Dashboard `/dashboard/members` accessible via bouton "Clients fideles" dans `/dashboard/customers`
 - **Page `/dashboard/customers`** : header purple-tint avec titre + compteur total, liens secondaires `Clients fideles` + `Jeu concours` (amber outline). **2 StatsCards fidelite** sous le header : `Passages` (UserCheck emerald, total `visits` merchant) + `Recompenses debloquees` (Gift rose, total `redemptions` merchant) — count queries `head: true` paralleles dans `fetchData`. Search bar (bg-blanc, X clear) + bouton `Filtrer` + CTA `Nouveau` (gradient indigo→violet) sur la meme ligne. Modal filtres groupes (`PlanningModal`-style mais inline) : **Statut** (Nouveaux 7j / Actifs 30j / Inactifs 60j+ / Proche recompense / Recompense prete / Anniv. ce mois — exclusif) + **Communication** (Notifiables) + **Avantages actifs** (Bienvenue / Promo). Filtre `Anniv. ce mois` utilise `customer.birth_month === new Date().getMonth() + 1`
 
-### Churn Retention Survey (mig 106)
-- **Trigger** : merchants fully expired (> J+3) et `churn_survey_seen_at IS NULL` sont rediriges par le dashboard layout vers `/dashboard/survey` au lieu de `/dashboard/subscription`
-- **Questionnaire** : 4 questions (blocker, missing_feature optionnel, features_tested multi, would_convince), avec textarea libre finale
-- **Bonus variable selon Q4** : `CHURN_BONUS_DAYS_BY_CONVINCE` dans `churn-survey-config.ts` — lower_price +2j, longer_trial +7j, team_demo +5j, more_features +2j, nothing +2j. Calcul `GREATEST(NOW(), current) + bonus days` + pose `churn_survey_seen_at` (one-shot definitif)
-- **Skip** : lien "Passer" discret → redirect direct vers `/dashboard/subscription` SANS poser de flag. Le merchant revoit le questionnaire a la prochaine visite (incite a repondre)
-- **Promo conditionnelle** : si `would_convince === 'lower_price'`, la page de succes affiche un code Stripe `MRSSURVEY15` (15€ de remise fixe, `amount_off` `once`, valable mensuel ET 6 mois). Un `amount_off` est choisi expres : un `percent_off repeating` sur-deduisait le forfait 6 mois (25% de la facture entiere de 120€ au lieu de 3 mois)
-- **Demo equipe** : si `would_convince === 'team_demo'`, email admin envoye a `contact@getqarte.com` (shop_name, email, phone, blocker, commentaire) + message "On te contacte sous 24h" dans la page de succes
-- **Email de relance** : `ChurnSurveyReminderEmail` envoye par cron morning au J+3 (tracking code -213, idempotent)
-- **Admin view** : `/admin/churn-surveys` avec stats agregees (blockers/convinces/features/converted count), filtres + recherche + expand par ligne pour voir toutes les reponses
-- **Source unique** : `src/lib/churn-survey-config.ts` — enums partages entre Zod API, client page, admin page
-- **Table** : `merchant_churn_surveys` (UNIQUE merchant_id) + colonne `merchants.churn_survey_seen_at TIMESTAMPTZ`
-- **Routes** : `POST /api/churn-survey` (merchant auth), `GET /api/admin/churn-surveys` (admin auth)
-- **Email merchant — gotcha (fixé mai 2026)** : l'email du merchant n'est **pas** sur la table `merchants` (pas de colonne `email`, il vit dans `auth.users`). Toujours le récupérer via `user.email` (route avec auth merchant) ou via une map `user_id → email` construite depuis `auth.admin.listUsers()` (routes admin / crons). Bug historique : `/api/churn-survey` et `/api/admin/win-back` faisaient `select('email')` sur `merchants` → erreur PostgREST → 404/500 systématique → survey jamais enregistré, email jamais envoyé. Helper `buildEmailMap()` dans la route win-back.
-- **Flow email post-survey** : apres completion du survey + bonus, les merchants ne recoivent plus les emails trial generiques (TrialEnding/TrialExpired). A la place, emails cibles selon `would_convince` :
-  - `PostSurveyFollowUpEmail` (tracking -221 mid-bonus, -222 dernier jour) : contenu adapte par variant (lower_price = rappel promo, longer_trial = features pas testees, team_demo = suivi demo, more_features = nouveautes, nothing = social proof)
-  - `PostSurveyLastChanceEmail` (tracking -223, J+1 apres expiration bonus) : urgence finale, CTA subscription
-  - Guard dans cron morning Section 1 : `if (churn_survey_seen_at) continue` → skip emails trial generiques
-  - Nouvelle Section 1b dans cron morning : fetch `would_convince` depuis `merchant_churn_surveys`, calcul midDay/lastDay selon bonus days
-- **Scripts one-off** :
-  - `scripts/send-churn-survey-email.mjs` — relance churn survey aux merchants deja expired au moment du deploy (tracking -213)
-  - `scripts/send-features-recap.mjs` — recap des 6 features cles (vitrine, planning, SMS, fidelite, bienvenue, avis Google) avec gift box bonus pointant vers `/dashboard/survey` (tracking -214, scheduled_at Resend)
-
 ---
 
 ## 6. Routes API
@@ -798,7 +776,7 @@ Apres 4 retries Stripe (configurable, ~21 jours par defaut via Stripe Smart Retr
 
 ## 9. Emails (37 templates)
 
-**i18n** : Tous les templates utilisent `getEmailT(locale)` de `src/emails/translations/{fr,en}.ts`. La locale vient de `merchants.locale`. Aucun texte hardcode FR restant. `getEmailT` supporte les cles imbriquees a N niveaux (ex: `paymentFailed.step1.heading`, `postSurveyFollowUp.lowerPrice.intro`).
+**i18n** : Tous les templates utilisent `getEmailT(locale)` de `src/emails/translations/{fr,en}.ts`. La locale vient de `merchants.locale`. Aucun texte hardcode FR restant. `getEmailT` supporte les cles imbriquees a N niveaux (ex: `paymentFailed.step1.heading`).
 
 **Sign-off harmonisé** ([`src/emails/EmailSignoff.tsx`](../src/emails/EmailSignoff.tsx), nov 2026) : composant partagé qui rend la fin de mail "L'équipe Qarte 💜" avec highlight purple `#4b0082` font-weight 600 + ligne grise au-dessus pour le prefix optionnel. API : `<EmailSignoff prefix={...} italic>{...}</EmailSignoff>`. Utilisé par 56 templates (3 patterns absorbés : sans prefix / avec prefix `signaturePrefix` / italic pour SmsPack & SmsQuota). Centralise la typo + couleur du sign-off — un seul endroit pour ajuster à l'avenir. Skipped : `ReactivationEmail` (sans highlight) et `ReferralPromoEmail` (sans sign-off du tout, CTA-only).
 
@@ -813,19 +791,15 @@ WelcomeEmail, IncompleteSignupEmail (+15min + +2h), GuidedSignupEmail (J+1 incom
 FirstScanEmail (2e visite), **FirstBookingEmail (1ere resa en ligne, tracking -105)**, FirstRewardEmail, Tier2UpsellEmail, PendingPointsEmail (Shield), WeeklyDigestEmail (DESACTIVE)
 
 ### Retention & Trial (epure)
-TrialEndingEmail (J-2 uniquement — etait J-3 + J-1), TrialExpiredEmail (J+1 uniquement — etait J+1 + J+2), ChurnSurveyReminderEmail (J+3 fully expired — code -213, vers `/dashboard/survey`, bonus +2 jours), PostSurveyFollowUpEmail (mid-bonus -221, last day -222 — contenu cible par variant would_convince), PostSurveyLastChanceEmail (J+1 post-expiration bonus -223), InactiveMerchantDay7/14/30Email
+TrialEndingEmail (J-2 uniquement — etait J-3 + J-1), TrialExpiredEmail (J+1 uniquement — etait J+1 + J+2), InactiveMerchantDay7/14/30Email
 
 ### Stripe & Post-subscription
 SubscriptionConfirmedEmail, PaymentFailedEmail (4 steps dunning: J+0 webhook, J+3/J+7/J+10 cron — ton escalade progressif), SubscriptionCanceledEmail, SubscriptionReactivatedEmail, ReactivationEmail (J+7/14/30), **ReferralPromoEmail (J+2 post-abonnement — "Gagne 10€ par pro recommande", lien `?ref={slug}`)**, **ReferralReminderEmail (J+14 et J+30 post-abo, tracking -316/-317, uniquement si 0 referrals)**
 
 ### Cancel flow — Save offer
-Modal dans `/dashboard/subscription` : quand le merchant clique sur le lien discret "Annuler mon abonnement", questionnaire raison d'annulation (6 choix). Si "trop cher" → offre **-25% pendant 2 mois** avec code `2MOISQARTEPRO25` (coupon Stripe `percent_off=25, duration=repeating, duration_in_months=2`). Churn survey post-expiration → **15€ de remise** avec code `MRSSURVEY15` (coupon Stripe `IgNRHb6z` : `amount_off=1500 EUR, duration=once` — montant fixe identique sur mensuel et 6 mois). Note : le `2MOISQARTEPRO25` en `percent_off` sur-deduit le forfait 6 mois (25% de 120€ = 30€ au lieu de ~2 mois), a migrer en `amount_off` si reutilise sur du 6 mois.
+Modal dans `/dashboard/subscription` : quand le merchant clique sur le lien discret "Annuler mon abonnement", questionnaire raison d'annulation (6 choix). Si "trop cher" → offre **-25% pendant 2 mois** avec code `2MOISQARTEPRO25` (coupon Stripe `percent_off=25, duration=repeating, duration_in_months=2`). Note : le `2MOISQARTEPRO25` en `percent_off` sur-deduit le forfait 6 mois (25% de 120€ = 30€ au lieu de ~2 mois), a migrer en `amount_off` si reutilise sur du 6 mois.
 
 **Tracking churn (mig 127, avril 2026)** : la raison cliquee est POST-ee a `/api/merchant/cancellation-reason` au moment du select (avant meme l'eventuel passage en portail Stripe), persistee dans `merchants.cancellation_reason` + `cancellation_reason_at` (CHECK constraint sur les 6 valeurs). Pixels FB + TikTok firent un event `cancelIntent(reason)` au meme moment pour optimisation des audiences ads. Modal de confirmation finale ajoutee entre le bouton "Continuer" du save-offer et le portail Stripe (point de non-retour) : copy `finalCancel*` (FR/EN), bouton rouge "Oui, annuler definitivement" + retour possible vers le save-offer.
-
-**Survey skip (mig 127)** : `/api/merchant/survey-skip` POST increment `merchants.churn_survey_skip_count` a chaque skip. A 3 skips, l'API marque `churn_survey_seen_at = NOW()` automatiquement, ce qui stoppe la re-redirection forcee depuis le dashboard layout.
-
-**Demo team requested (mig 127)** : si Q4 = `team_demo`, `merchants.team_demo_requested_at` est mis a jour cote `/api/churn-survey` POST. Visible cote admin pour suivi follow-up (l'email `PostSurveyFollowUpEmail.teamDemo` envoye au merchant dit "notre equipe va te contacter sous 24h" — process manuel cote ops).
 
 ### Autres
 BirthdayNotificationEmail, GracePeriodSetupEmail, ProductUpdateEmail, AnnouncementMaPageEmail, WinBackEmail (envoi manuel admin), BookingNotificationEmail (transactionnel), SlotReleasedEmail (acompte non recu — cron horaire `deposit-expiration`, mentionne la possibilite de recuperer la resa depuis le dashboard), **BlogDigestEmail** (avril 2026 — envoie 1 article de blog tous les 3+ jours, source `src/data/blog-articles.ts`, cron `/api/cron/blog-digest`, idempotence via table `blog_email_dispatches` mig 125)
@@ -836,7 +810,7 @@ Tous les codes promo emails ont ete supprimes (QARTE50, QARTEBOOST, QARTELAST, Q
 ### Cron Jobs
 | Cron | Horaire | Description |
 |------|---------|-------------|
-| `/api/cron/morning` | 08:00 UTC | **Emails billing-critical** : trial (J-2/J+1/churn), post-survey, reactivation, dunning, incomplete signup T+24h, grace period setup + cleanup tracking |
+| `/api/cron/morning` | 08:00 UTC | **Emails billing-critical** : trial (J-2/J+1), reactivation, dunning, incomplete signup T+24h, grace period setup + cleanup tracking |
 | `/api/cron/email-onboarding` | 10:00 UTC | **Emails setup progressif** : program reminder J+1, social proof J+3, vitrine J+3, planning J+4, QR code, first client script |
 | `/api/cron/email-engagement` | 13:00 UTC | **Emails engagement** : first scan/booking/reward, tier 2 upsell, inactifs J+7/14/30, referral promo J+2, referral reminders J+14/30, pending points |
 | `/api/cron/morning-jobs` | 07:00 UTC (9h Paris ete / 8h hiver) | Vouchers anniversaire + push client + email merchant + push merchant + **warning acomptes expirant dans 4h**. SMS anniversaire skip ici (hors plage legale < 10h local) — fallback via `sms-hourly` |

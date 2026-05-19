@@ -15,6 +15,8 @@ import {
   ShieldCheck,
   Gift,
   Copy,
+  Eye,
+  ExternalLink,
 } from 'lucide-react';
 import BillingToggle from './_components/BillingToggle';
 import PlanCard from './_components/PlanCard';
@@ -425,6 +427,12 @@ export default function SubscriptionPage() {
     merchant?.subscription_status || 'trial'
   );
   const isCanceled = subscriptionStatus === 'canceled';
+  const pastDueBlocked = !!merchant && isPastDueBlocked({
+    subscription_status: merchant.subscription_status,
+    past_due_since: merchant.past_due_since,
+  });
+  // Redirection forcée vers cette page = essai expiré (grâce ou complet) ou past_due bloqué.
+  const isRedirectForced = trialStatus.isInGracePeriod || trialStatus.isFullyExpired || pastDueBlocked;
   const hasStripe = !!merchant?.stripe_subscription_id;
   const showSubscribeCTA = !isPaid && !isCanceling && !hasStripe && !polling;
 
@@ -502,11 +510,7 @@ export default function SubscriptionPage() {
         </div>
       )}
       {!polling && isPastDue && (() => {
-        const blocked = merchant ? isPastDueBlocked({
-          subscription_status: merchant.subscription_status,
-          past_due_since: merchant.past_due_since,
-        }) : false;
-        if (blocked) {
+        if (pastDueBlocked) {
           return (
             <div className="flex flex-col gap-1.5 px-4 py-3 mb-6 rounded-xl bg-red-500 text-white text-sm font-semibold">
               <div className="flex items-center gap-2">
@@ -526,6 +530,28 @@ export default function SubscriptionPage() {
           </div>
         );
       })()}
+
+      {/* Aperçu page publique — incite a se reabonner en montrant ce que les clientes perdent */}
+      {!polling && isRedirectForced && merchant?.slug && (
+        <a
+          href={`/p/${merchant.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 px-4 py-3 mb-6 rounded-xl border border-slate-200 bg-white transition-colors hover:border-slate-300"
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+            <Eye className="h-4 w-4 text-slate-500" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-slate-900">{t('previewLockedTitle')}</p>
+            <p className="mt-0.5 text-xs text-slate-500">{t('previewLockedDesc')}</p>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary">
+            {t('previewLockedCta')}
+            <ExternalLink className="h-3.5 w-3.5" />
+          </span>
+        </a>
+      )}
 
       <div className={merchant?.stripe_subscription_id ? 'grid gap-6 lg:grid-cols-5' : 'space-y-6'}>
         {/* ===== LEFT COLUMN — Pricing or Status ===== */}

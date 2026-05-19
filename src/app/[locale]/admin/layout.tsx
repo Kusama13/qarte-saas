@@ -20,7 +20,6 @@ import {
   Link2,
   MessageSquare,
   Eye,
-  MessageCircleQuestion,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -29,7 +28,6 @@ const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/merchants', icon: Store, label: 'Commerçants' },
   { href: '/admin/leads', icon: UserPlus, label: 'Leads' },
-  { href: '/admin/churn-surveys', icon: MessageCircleQuestion, label: 'Rétention' },
   { href: '/admin/activite', icon: Activity, label: 'Activité' },
   { href: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/admin/affiliation', icon: Link2, label: 'Affiliation' },
