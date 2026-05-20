@@ -116,7 +116,7 @@ export default function WelcomeBanner({ merchant, primaryColor, secondaryColor }
                     ? t('cagnotteReward', { percent: Number(merchant.cagnotte_tier2_percent || 0) })
                     : merchant.tier2_reward_description ?? ''
                 }
-                afterText={t('afterVisits', { count: merchant.tier2_stamps_required })}
+                afterText={t('afterVisits', { count: merchant.tier2_stamps_required ?? 0 })}
               />
             )}
           </div>
