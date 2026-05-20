@@ -4192,6 +4192,7 @@
     "programAmountsHint": "Affichés en chips. Le client peut aussi entrer un montant libre.",
     "programAmountsAdd": "Ajouter",
     "programAmountsRemove": "Retirer",
+    "programAmountsDuplicate": "Doublon — sera fusionné à l'enregistrement",
     "programMessageLabel": "Mot d'introduction",
     "programMessageHint": "Affiché sous le titre de la modal — facultatif",
     "programMessagePlaceholder": "Ex : Faites plaisir à vos proches avec un soin signature.",

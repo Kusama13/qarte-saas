@@ -4189,6 +4189,7 @@
     "programAmountsHint": "Shown as chips. Buyer can also enter a custom amount.",
     "programAmountsAdd": "Add",
     "programAmountsRemove": "Remove",
+    "programAmountsDuplicate": "Duplicate — will be merged on save",
     "programMessageLabel": "Intro message",
     "programMessageHint": "Shown below the modal title — optional",
     "programMessagePlaceholder": "E.g.: Treat your loved ones to a signature treatment.",

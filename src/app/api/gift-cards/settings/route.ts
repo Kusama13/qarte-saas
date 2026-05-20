@@ -80,7 +80,9 @@ export async function PATCH(request: NextRequest) {
     // Patch partiel : on ne touche aux amounts/message que s'ils sont fournis
     // dans le body (sinon le toggle écraserait la config existante).
     if (amounts !== undefined) {
-      const cleanAmounts = amounts.filter((a) => a >= GIFT_CARD_MIN_AMOUNT && a <= GIFT_CARD_MAX_AMOUNT);
+      const cleanAmounts = Array.from(new Set(
+        amounts.filter((a) => a >= GIFT_CARD_MIN_AMOUNT && a <= GIFT_CARD_MAX_AMOUNT)
+      ));
       updatePayload.gift_card_amounts = cleanAmounts.length > 0 ? cleanAmounts : GIFT_CARD_DEFAULT_AMOUNTS;
     }
     if (message !== undefined) {

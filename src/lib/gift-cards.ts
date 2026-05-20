@@ -95,9 +95,11 @@ export async function resolveGiftCardServiceNames(
 /** Parse `merchants.gift_card_amounts` (JSONB) → array de nombres validés. */
 export function parseGiftCardAmounts(raw: unknown): number[] {
   if (!Array.isArray(raw)) return GIFT_CARD_DEFAULT_AMOUNTS;
-  const amounts = raw
-    .map((v) => Number(v))
-    .filter((v) => Number.isFinite(v) && v >= GIFT_CARD_MIN_AMOUNT && v <= GIFT_CARD_MAX_AMOUNT);
+  const amounts = Array.from(new Set(
+    raw
+      .map((v) => Number(v))
+      .filter((v) => Number.isFinite(v) && v >= GIFT_CARD_MIN_AMOUNT && v <= GIFT_CARD_MAX_AMOUNT)
+  ));
   return amounts.length > 0 ? amounts : GIFT_CARD_DEFAULT_AMOUNTS;
 }
 

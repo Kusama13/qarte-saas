@@ -381,7 +381,9 @@ function SettingsPanel({
         body: JSON.stringify({
           merchantId,
           enabled: true,
-          amounts: (override?.amounts ?? amounts).filter((a) => a >= GIFT_CARD_MIN_AMOUNT && a <= GIFT_CARD_MAX_AMOUNT),
+          amounts: Array.from(new Set(
+            (override?.amounts ?? amounts).filter((a) => a >= GIFT_CARD_MIN_AMOUNT && a <= GIFT_CARD_MAX_AMOUNT)
+          )),
           message: (override?.message ?? message)?.trim() || null,
           servicesEnabled: override?.servicesEnabled ?? servicesEnabled,
           paymentLink: normalizePaymentLink(override?.paymentLink ?? paymentLink),
@@ -449,10 +451,17 @@ function SettingsPanel({
               </label>
               <p className="text-xs text-gray-400 mb-2.5">{t('programAmountsHint')}</p>
               <div className="flex flex-wrap gap-2">
-                {amounts.map((amount, idx) => (
+                {amounts.map((amount, idx) => {
+                  const isDup = amount > 0 && amounts.indexOf(amount) !== idx;
+                  return (
                   <div
                     key={idx}
-                    className="group inline-flex items-baseline gap-0.5 pl-3 pr-1 py-2 rounded-lg border border-gray-200 bg-white hover:border-rose-300 hover:bg-rose-50/40 transition-colors"
+                    title={isDup ? t('programAmountsDuplicate') : undefined}
+                    className={`group inline-flex items-baseline gap-0.5 pl-3 pr-1 py-2 rounded-lg border transition-colors ${
+                      isDup
+                        ? 'border-red-300 bg-red-50/60'
+                        : 'border-gray-200 bg-white hover:border-rose-300 hover:bg-rose-50/40'
+                    }`}
                   >
                     <input
                       type="number"
@@ -479,7 +488,8 @@ function SettingsPanel({
                       ×
                     </button>
                   </div>
-                ))}
+                  );
+                })}
                 <button
                   type="button"
                   onClick={() => {
