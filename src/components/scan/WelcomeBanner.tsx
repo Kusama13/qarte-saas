@@ -41,6 +41,12 @@ export default function WelcomeBanner({ merchant, primaryColor, secondaryColor }
   const t = useTranslations('welcomeBanner');
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
   const gold = '#B8923D';
+  // Tier 2 réellement visible : on n'affiche "Première / Deuxième" que dans ce cas.
+  const showTier2 = !!(
+    merchant.tier2_enabled
+    && merchant.tier2_stamps_required
+    && (merchant.tier2_reward_description || (isCagnotte && merchant.cagnotte_tier2_percent))
+  );
   return (
     <div className="relative mb-4 overflow-hidden rounded-3xl shadow-lg border border-gray-100">
       {/* Logo/Image Section — bandeau couleur pleine */}
@@ -86,7 +92,7 @@ export default function WelcomeBanner({ merchant, primaryColor, secondaryColor }
               icon={Gift}
               color={primaryColor}
               borderColor={`${primaryColor}55`}
-              label={t('yourReward')}
+              label={t(showTier2 ? 'yourReward' : 'singleReward')}
               reward={
                 isCagnotte
                   ? t('cagnotteReward', { percent: Number(merchant.cagnotte_percent || 0) })
@@ -99,7 +105,7 @@ export default function WelcomeBanner({ merchant, primaryColor, secondaryColor }
               }
             />
 
-            {merchant.tier2_enabled && merchant.tier2_stamps_required && (merchant.tier2_reward_description || (isCagnotte && merchant.cagnotte_tier2_percent)) && (
+            {showTier2 && (
               <RewardBadge
                 icon={Trophy}
                 color={gold}

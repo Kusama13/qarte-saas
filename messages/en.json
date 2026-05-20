@@ -2977,6 +2977,7 @@
     "welcomeAt": "Welcome to",
     "rewardLoyalty": "We reward your loyalty",
     "yourReward": "First reward",
+    "singleReward": "Reward",
     "cagnotteReward": "{percent}% cashback on your loyalty balance",
     "afterVisits": "After {count} visit{count, plural, one {} other {s}}",
     "afterVisitsCagnotte": "After {count} visit{count, plural, one {} other {s}} · on your spending",

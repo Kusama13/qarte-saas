@@ -2980,6 +2980,7 @@
     "welcomeAt": "Bienvenue chez",
     "rewardLoyalty": "Nous récompensons votre fidélité",
     "yourReward": "Première récompense",
+    "singleReward": "Récompense",
     "cagnotteReward": "{percent}% sur votre cagnotte fidélité",
     "afterVisits": "Après {count} passage{count, plural, one {} other {s}}",
     "afterVisitsCagnotte": "Après {count} passage{count, plural, one {} other {s}} · sur vos dépenses",
