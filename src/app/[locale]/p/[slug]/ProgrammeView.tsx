@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Flame, Trophy, CalendarDays, CalendarCheck, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard, Wallet, Tag } from 'lucide-react';
+import { Gift, Users, Flame, Trophy, CalendarDays, CalendarCheck, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard, Wallet, Tag, Home } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import { SuspendedBanner } from '@/components/shared/SuspendedBanner';
@@ -120,6 +120,8 @@ type MerchantPublic = Pick<
   | 'gift_card_message'
   | 'gift_card_services_enabled'
   | 'gift_card_expiry_months'
+  | 'home_service_enabled'
+  | 'home_service_radius_km'
 >;
 
 export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], bookedSlots = [], isDemo = false, demoOffer }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; bookedSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null }) {
@@ -405,6 +407,24 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 <Navigation className="w-2.5 h-2.5" />
                 {t('goThere')}
               </a>
+            </motion.div>
+          )}
+          {merchant.home_service_enabled && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.14, duration: 0.35 }}
+              className="flex items-center mb-2"
+            >
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                style={{ backgroundColor: `${p}15`, color: p }}
+              >
+                <Home className="w-2.5 h-2.5" />
+                {merchant.home_service_radius_km
+                  ? t('homeServiceBadgeWithRadius', { radius: merchant.home_service_radius_km })
+                  : t('homeServiceBadge')}
+              </span>
             </motion.div>
           )}
 

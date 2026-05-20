@@ -167,6 +167,7 @@ export interface Merchant {
   booking_horizon_days: 30 | 60 | 90;
   // Service à domicile — calcul durée de trajet entre RDV
   home_service_enabled: boolean;
+  home_service_radius_km: number | null;
   shop_lat: number | null;
   shop_lng: number | null;
   hide_address_on_public_page: boolean;

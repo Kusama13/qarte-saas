@@ -9,6 +9,7 @@
 
 import { getSupabaseAdmin } from '@/lib/supabase';
 import logger from '@/lib/logger';
+import { haversineKm } from '@/lib/geo';
 
 const ORS_URL = 'https://api.openrouteservice.org/v2/directions/driving-car';
 const BAN_URL = 'https://api-adresse.data.gouv.fr/search/';
@@ -58,16 +59,8 @@ export async function geocodeAddress(query: string): Promise<GeocodeResult | nul
   }
 }
 
-function haversineKm(a: Coords, b: Coords): number {
-  const R = 6371;
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
+// Re-export `haversineKm` depuis `@/lib/geo` (split client/server-safe).
+export { haversineKm };
 
 function fallbackMinutes(origin: Coords, dest: Coords): number {
   const km = haversineKm(origin, dest) * FALLBACK_ROUTE_FACTOR;

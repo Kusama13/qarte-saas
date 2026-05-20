@@ -5,7 +5,7 @@ import { getTodayForCountry } from '@/lib/utils';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
-import { getTravelTime, cacheKey as coordKey, type Coords } from '@/lib/travel-time';
+import { getTravelTime, cacheKey as coordKey, haversineKm, type Coords } from '@/lib/travel-time';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, booking_mode, buffer_minutes, country, auto_booking_enabled, planning_enabled, opening_hours, home_service_enabled, shop_lat, shop_lng')
+      .select('id, booking_mode, buffer_minutes, country, auto_booking_enabled, planning_enabled, opening_hours, home_service_enabled, home_service_radius_km, shop_lat, shop_lng')
       .eq('id', merchantId)
       .is('deleted_at', null)
       .single();
@@ -151,6 +151,10 @@ export async function GET(request: NextRequest) {
       if (!shopCoords) {
         // Marchande à domicile mais shop_address pas géocodée → on ne peut rien proposer
         return NextResponse.json({ slots: [] });
+      }
+      // Hors zone (rayon configuré) → on coupe avant tout appel routing
+      if (merchant.home_service_radius_km && haversineKm(shopCoords, customerCoords) > merchant.home_service_radius_km) {
+        return NextResponse.json({ slots: [], outOfZone: true, radiusKm: merchant.home_service_radius_km });
       }
     }
 

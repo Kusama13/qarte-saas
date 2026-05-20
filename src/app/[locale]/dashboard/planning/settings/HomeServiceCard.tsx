@@ -1,8 +1,8 @@
 'use client';
 
-import { Home, Info, Clock } from 'lucide-react';
+import { Home, Info, Clock, MapPin } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Switch, SettingCard } from '@/components/ui';
+import { Switch, SettingCard, ChipGroup } from '@/components/ui';
 
 interface HomeServiceCardProps {
   enabled: boolean;
@@ -12,6 +12,23 @@ interface HomeServiceCardProps {
   hideAddress: boolean;
   onHideAddressChange: (next: boolean) => void;
   bufferMinutes: number;
+  radiusKm: number | null;
+  onRadiusChange: (next: number | null) => void;
+}
+
+const RADIUS_PRESETS = ['10', '15', '20', '30', '50'] as const;
+const RADIUS_NONE = 'none';
+
+function radiusToChipValue(km: number | null): string {
+  if (km == null) return RADIUS_NONE;
+  return String(km);
+}
+
+function chipValueToRadius(value: string): number | null {
+  if (value === RADIUS_NONE || value === '') return null;
+  const n = parseInt(value, 10);
+  if (!Number.isFinite(n) || n < 1 || n > 200) return null;
+  return n;
 }
 
 export function HomeServiceCard({
@@ -22,6 +39,8 @@ export function HomeServiceCard({
   hideAddress,
   onHideAddressChange,
   bufferMinutes,
+  radiusKm,
+  onRadiusChange,
 }: HomeServiceCardProps) {
   const t = useTranslations('planning');
 
@@ -50,6 +69,26 @@ export function HomeServiceCard({
       {helpOpen && (
         <div className="mt-3 p-3 bg-emerald-50/60 border border-emerald-100 rounded-lg">
           <p className="text-[11px] text-emerald-900 leading-relaxed whitespace-pre-line">{t('homeServiceHelpBody')}</p>
+        </div>
+      )}
+
+      {enabled && (
+        <div className="mt-3">
+          <div className="flex items-center gap-2 mb-2">
+            <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <p className="text-xs font-semibold text-gray-700">{t('homeServiceRadiusLabel')}</p>
+          </div>
+          <ChipGroup
+            options={[
+              ...RADIUS_PRESETS.map(km => ({ value: km, label: `${km} km` })),
+              { value: RADIUS_NONE, label: t('homeServiceRadiusNone') },
+            ]}
+            value={radiusToChipValue(radiusKm)}
+            onChange={v => onRadiusChange(chipValueToRadius(v))}
+            custom={{ placeholder: 'km', min: 1, max: 200 }}
+            fill
+          />
+          <p className="mt-1.5 text-[11px] text-gray-500 leading-relaxed">{t('homeServiceRadiusHint')}</p>
         </div>
       )}
 

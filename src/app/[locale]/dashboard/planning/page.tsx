@@ -73,6 +73,7 @@ export default function PlanningDashboard() {
     bookingHorizonDays, setBookingHorizonDays,
     homeServiceEnabled, setHomeServiceEnabled,
     hideAddressOnPublicPage, setHideAddressOnPublicPage,
+    homeServiceRadiusKm, setHomeServiceRadiusKm,
     services,
     modalState, setModalState, closeModal,
     selectedTimes, setSelectedTimes, customTime, setCustomTime,
@@ -563,6 +564,7 @@ export default function PlanningDashboard() {
         buffer_minutes: bufferMinutes,
         booking_horizon_days: bookingHorizonDays,
         home_service_enabled: homeServiceEnabled,
+        home_service_radius_km: homeServiceEnabled ? homeServiceRadiusKm : null,
         shop_lat: shopLat,
         shop_lng: shopLng,
         hide_address_on_public_page: hideAddressOnPublicPage,
@@ -659,6 +661,12 @@ export default function PlanningDashboard() {
       return;
     }
     setHomeServiceEnabled(true);
+    // Pré-remplit le rayon à 20 km à la 1ère activation (valeur médiane pour
+    // une pro mobile urbaine/péri-urbaine). Si la merchant avait déjà un rayon
+    // (réactivation), on respecte sa valeur précédente.
+    if (homeServiceRadiusKm == null) {
+      setHomeServiceRadiusKm(20);
+    }
     // Privacy default: when activating home service, propose hiding the address
     // (it's likely the merchant's home). Merchant can untick the sub-toggle.
     if (!merchant.hide_address_on_public_page) {
@@ -1405,6 +1413,8 @@ export default function PlanningDashboard() {
                   hideAddress={hideAddressOnPublicPage}
                   onHideAddressChange={setHideAddressOnPublicPage}
                   bufferMinutes={bufferMinutes}
+                  radiusKm={homeServiceRadiusKm}
+                  onRadiusChange={setHomeServiceRadiusKm}
                 />
               )}
             </>

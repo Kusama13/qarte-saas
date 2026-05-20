@@ -14,7 +14,7 @@ import { sendMerchantPush } from '@/lib/merchant-push';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 import { getPlanFeatures } from '@/lib/plan-tiers';
-import { getTravelTime, type Coords } from '@/lib/travel-time';
+import { getTravelTime, haversineKm, type Coords } from '@/lib/travel-time';
 import { recomputeDayTravel } from '@/lib/travel-recompute';
 import { buildDepositLinks } from '@/lib/payment-providers';
 import { computeBookingPrice } from '@/lib/booking-pricing';
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, past_due_since, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, deposit_only_for_new_customers, welcome_offer_enabled, welcome_offer_description, welcome_offer_discount_percent, booking_mode, buffer_minutes, booking_horizon_days, home_service_enabled, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days')
+      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, past_due_since, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, deposit_only_for_new_customers, welcome_offer_enabled, welcome_offer_description, welcome_offer_discount_percent, booking_mode, buffer_minutes, booking_horizon_days, home_service_enabled, home_service_radius_km, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days')
       .eq('id', merchant_id)
       .single();
 
@@ -132,6 +132,17 @@ export async function POST(request: NextRequest) {
       }
       if (merchant.shop_lat == null || merchant.shop_lng == null) {
         return NextResponse.json({ error: 'Le salon n\'a pas configuré son adresse de départ' }, { status: 400 });
+      }
+      // Garde rayon d'intervention — défense serveur (la vitrine bloque déjà côté UI)
+      if (merchant.home_service_radius_km
+          && haversineKm(
+            { lat: merchant.shop_lat, lng: merchant.shop_lng },
+            { lat: customer_lat, lng: customer_lng },
+          ) > merchant.home_service_radius_km) {
+        return NextResponse.json(
+          { error: 'out_of_zone', radius_km: merchant.home_service_radius_km },
+          { status: 400 },
+        );
       }
     }
 

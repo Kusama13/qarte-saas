@@ -9,10 +9,12 @@ import { formatTime, toBCP47, formatCurrency, validateEmail } from '@/lib/utils'
 import type { Merchant, MerchantCountry } from '@/types';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { AddressAutocomplete, type AddressSuggestion } from '@/components/ui/AddressAutocomplete';
+import { Callout } from '@/components/ui';
 import { detectPaymentProvider } from '@/lib/payment-providers';
 import { computeBookingPrice } from '@/lib/booking-pricing';
 import { computeDepositInfo } from '@/lib/deposit';
 import { normalizeBookingHorizon } from '@/lib/booking-window';
+import { haversineKm } from '@/lib/geo';
 
 type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
 type ServiceCategory = { id: string; name: string; position: number };
@@ -25,7 +27,7 @@ type MerchantBooking = Pick<
   'auto_booking_enabled' | 'deposit_link' | 'deposit_percent' | 'deposit_amount' | 'deposit_only_for_new_customers' |
   'welcome_offer_enabled' | 'welcome_offer_description' | 'welcome_offer_discount_percent' | 'subscription_status' | 'booking_mode' |
   'allow_customer_cancel' | 'cancel_deadline_days' | 'allow_customer_reschedule' | 'reschedule_deadline_days' |
-  'home_service_enabled' | 'booking_horizon_days'
+  'home_service_enabled' | 'home_service_radius_km' | 'shop_lat' | 'shop_lng' | 'booking_horizon_days'
 >;
 
 interface BookingModalProps {
@@ -110,6 +112,17 @@ export default function BookingModal({
   // Home service: customer address (only used when isHomeService === true)
   const [customerAddress, setCustomerAddress] = useState('');
   const [customerCoords, setCustomerCoords] = useState<{ lat: number; lng: number } | null>(null);
+  // Hors zone : check Haversine (vol d'oiseau) entre adresse pro + adresse cliente.
+  // null si pas de coords cliente OU pas de rayon configuré OU pas de coords pro.
+  const outOfZoneKm = useMemo(() => {
+    if (!isHomeService || !customerCoords || !merchant.home_service_radius_km) return null;
+    if (merchant.shop_lat == null || merchant.shop_lng == null) return null;
+    const dist = haversineKm(
+      { lat: merchant.shop_lat, lng: merchant.shop_lng },
+      customerCoords,
+    );
+    return dist > merchant.home_service_radius_km ? Math.round(dist) : null;
+  }, [isHomeService, customerCoords, merchant.home_service_radius_km, merchant.shop_lat, merchant.shop_lng]);
   // Mode libre: date/time selection
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
@@ -377,6 +390,7 @@ export default function BookingModal({
   useEffect(() => {
     if (!isFreeMod || !selectedDate || totalDuration === 0) return;
     if (isHomeService && !customerCoords) return; // address required first
+    if (outOfZoneKm !== null) return; // hors zone : inutile d'appeler l'API, l'UI bloque deja
     setFreeSlots([]);
     setSelectedTime('');
     setFreeSlotsError(false);
@@ -395,7 +409,7 @@ export default function BookingModal({
       .then(data => setFreeSlots(data.slots || []))
       .catch(() => setFreeSlotsError(true))
       .finally(() => setLoadingFreeSlots(false));
-  }, [isFreeMod, isHomeService, customerCoords, selectedDate, totalDuration, merchant.id]);
+  }, [isFreeMod, isHomeService, customerCoords, outOfZoneKm, selectedDate, totalDuration, merchant.id]);
 
   // Pre-fetch les dispos du mois affiche pour montrer dots vert/rouge sur chaque jour.
   // Skip si home_service (pas calculable sans coords cliente) ou pas de service selectionne.
@@ -944,6 +958,13 @@ export default function BookingModal({
                 />
                 {customerAddress && !customerCoords && (
                   <p className="mt-2 text-[11px] text-gray-500">{t('addressNeedSelect')}</p>
+                )}
+                {outOfZoneKm !== null && (
+                  <div className="mt-3">
+                    <Callout variant="danger" title={t('addressOutOfZoneTitle')}>
+                      {t('addressOutOfZoneBody', { radius: merchant.home_service_radius_km ?? 0, distance: outOfZoneKm })}
+                    </Callout>
+                  </div>
                 )}
               </motion.div>
             )}
@@ -1562,7 +1583,7 @@ export default function BookingModal({
                 <button
                   type="button"
                   onClick={() => setStep('datetime')}
-                  disabled={!customerCoords}
+                  disabled={!customerCoords || outOfZoneKm !== null}
                   className="ml-auto shrink-0 px-5 py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center gap-2"
                   style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
                 >

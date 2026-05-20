@@ -102,6 +102,7 @@ export function usePlanningState() {
   // Service à domicile
   const [homeServiceEnabled, setHomeServiceEnabled] = useState(false);
   const [hideAddressOnPublicPage, setHideAddressOnPublicPage] = useState(false);
+  const [homeServiceRadiusKm, setHomeServiceRadiusKm] = useState<number | null>(null);
 
   // Services with duration
   const [services, setServices] = useState<ServiceWithDuration[]>([]);
@@ -182,6 +183,7 @@ export function usePlanningState() {
       setBookingHorizonDays(normalizeBookingHorizon(merchant.booking_horizon_days));
       setHomeServiceEnabled(!!merchant.home_service_enabled);
       setHideAddressOnPublicPage(!!merchant.hide_address_on_public_page);
+      setHomeServiceRadiusKm(merchant.home_service_radius_km ?? null);
     }
   }, [merchant]);
 
@@ -745,6 +747,7 @@ export function usePlanningState() {
     bookingHorizonDays, setBookingHorizonDays,
     homeServiceEnabled, setHomeServiceEnabled,
     hideAddressOnPublicPage, setHideAddressOnPublicPage,
+    homeServiceRadiusKm, setHomeServiceRadiusKm,
     // Services
     services,
     // Modal state machine
