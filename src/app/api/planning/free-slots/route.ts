@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import { getTodayForCountry } from '@/lib/utils';
+import { getMinutesSinceMidnightForCountry } from '@/lib/booking-window';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
@@ -159,10 +160,19 @@ export async function GET(request: NextRequest) {
     }
 
     // 6. Generate candidates every 15 min from open to (close - totalDuration)
+    // Si on est sur le jour courant, on coupe au passé (heure locale merchant) —
+    // sinon on sert des créneaux périmés (cf. /api/planning/book qui les rejette).
     const lastStart = closeMins - totalDuration;
     const baseCandidates: number[] = [];
 
+    let earliestStartToday = openMins;
+    if (date === today) {
+      const nowMins = getMinutesSinceMidnightForCountry(merchant.country as MerchantCountry);
+      earliestStartToday = Math.max(openMins, nowMins);
+    }
+
     for (let t = openMins; t <= lastStart; t += 15) {
+      if (t < earliestStartToday) continue;
       const candidateEnd = t + totalDuration;
       if (breakStart !== null && breakEnd !== null && t < breakEnd && candidateEnd > breakStart) continue;
       const hasConflict = bookings.some(b => t < b.end && candidateEnd > b.start);
@@ -207,6 +217,7 @@ export async function GET(request: NextRequest) {
         if (travelIn > MAX_TRAVEL_MINUTES) continue;
         const tight = Math.ceil((b.end + travelIn) / 5) * 5;
         if (tight % 15 === 0) continue;
+        if (tight < earliestStartToday) continue;
         if (tight < openMins || tight + totalDuration > closeMins) continue;
         if (breakStart !== null && breakEnd !== null && tight < breakEnd && tight + totalDuration > breakStart) continue;
         if (bookings.some(x => tight < x.end && tight + totalDuration > x.start)) continue;

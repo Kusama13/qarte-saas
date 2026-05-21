@@ -249,8 +249,15 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   // Planning: group slots by month then by date
   const MONTH_NAMES = t('monthNames').split(',');
   const DAY_NAMES_FULL = t('dayNamesFull').split(',');
-  const todayLocal = useMemo(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }, []);
-  const nowTime = useMemo(() => { const d = new Date(); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }, []);
+  // Heure courante dans le fuseau du merchant (pas celui du device cliente).
+  // Sinon une cliente avec horloge décalée verrait des créneaux périmés — et le
+  // serveur les rejetterait au book (`slot_in_past`). Source : `merchantLocalDate`
+  // déjà calculée en haut du composant pour le badge Ouvert/Fermé.
+  const todayLocal = useMemo(
+    () => `${merchantLocalDate.getFullYear()}-${String(merchantLocalDate.getMonth()+1).padStart(2,'0')}-${String(merchantLocalDate.getDate()).padStart(2,'0')}`,
+    [merchantLocalDate],
+  );
+  const nowTime = merchantNowHHMM;
   const planningByMonth = useMemo(() => {
     if (!merchant.planning_enabled || planningSlots.length === 0) return [];
     const grouped: { month: string; days: { label: string; dateStr: string; times: { raw: string; display: string }[] }[] }[] = [];

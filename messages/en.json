@@ -3694,6 +3694,7 @@
     "cancelPolicy": "Cancellation allowed up to {days, plural, one {# day} other {# days}} before the appointment",
     "reschedulePolicy": "Rescheduling allowed up to {days, plural, one {# day} other {# days}} before the appointment",
     "bookingError": "Booking error, please try again",
+    "slotInPast": "That slot just passed. Pick the next one.",
     "invalidPhone": "Invalid phone number",
     "welcomeOfferHint": "New client offer",
     "noModify": "Appointments cannot be modified or cancelled",

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import { formatPhoneNumber, validatePhone, getTimezoneForCountry, getTodayForCountry, getAllPhoneFormats, getAppUrl, getCurrencyForCountry, truncate } from '@/lib/utils';
-import { normalizeBookingHorizon } from '@/lib/booking-window';
+import { normalizeBookingHorizon, isSlotInPast } from '@/lib/booking-window';
 import { isMerchantBlocked } from '@/lib/merchant-access';
 import type { EmailLocale } from '@/emails/translations';
 import { computeDepositDeadline } from '@/lib/deposit';
@@ -101,6 +101,13 @@ export async function POST(request: NextRequest) {
       if (slot_date < horizonStart || slot_date > horizonEnd.toISOString().split('T')[0]) {
         return NextResponse.json({ error: 'Ce créneau n\'est plus réservable' }, { status: 400 });
       }
+    }
+
+    // Garde anti-rétroactif : refuse une résa cliente sur un créneau déjà passé
+    // (cliente avec horloge décalée, UI buggée, requête forgée). Le manual-booking
+    // dashboard n'est PAS gardé ici — un merchant peut légitimement backdater.
+    if (isSlotInPast(slot_date, slot_time, merchant.country)) {
+      return NextResponse.json({ error: 'slot_in_past' }, { status: 400 });
     }
 
     // 2. Format & validate phone

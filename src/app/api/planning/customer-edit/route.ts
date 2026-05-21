@@ -6,6 +6,7 @@ import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit
 import { sendMerchantPush } from '@/lib/merchant-push';
 import { sendBookingRescheduledEmail, sendBookingCancelledEmail } from '@/lib/email';
 import { getTodayForCountry, formatDate } from '@/lib/utils';
+import { isSlotInPast } from '@/lib/booking-window';
 import logger from '@/lib/logger';
 import type { EmailLocale } from '@/emails/translations';
 
@@ -240,6 +241,14 @@ export async function PATCH(request: NextRequest) {
     if ('error' in checks) return checks.error;
 
     const { supabaseAdmin, merchant, slot } = checks;
+
+    // Garde anti-rétroactif : interdit à la cliente de déplacer son RDV sur un
+    // créneau déjà passé (heure merchant). Symétrique avec /api/planning/book.
+    // Le dashboard merchant (PATCH /api/planning, manual-booking) reste libre
+    // de backdater — saisie a posteriori légitime.
+    if (isSlotInPast(new_date, new_time, merchant.country)) {
+      return NextResponse.json({ error: 'slot_in_past' }, { status: 400 });
+    }
     const isFreeMod = merchant.booking_mode === 'free';
 
     let newSlotId: string;

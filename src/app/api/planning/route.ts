@@ -8,7 +8,7 @@ import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 import { requirePlanFeature } from '@/lib/api-helpers';
 import { recomputeDayTravel } from '@/lib/travel-recompute';
-import { normalizeBookingHorizon } from '@/lib/booking-window';
+import { normalizeBookingHorizon, isSlotInPast } from '@/lib/booking-window';
 import { validateAppliedDiscounts } from '@/lib/applied-discounts';
 import { buildServiceLines } from '@/lib/booking-pricing';
 
@@ -64,7 +64,14 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
       }
 
-      return NextResponse.json({ slots: data || [] });
+      // Filtre les créneaux du jour dont l'heure est déjà passée (heure merchant).
+      // La DB filtre la date, JS coupe l'heure pour aujourd'hui — volume borné par
+      // l'horizon, négligeable.
+      const slots = (data || []).filter(s =>
+        s.slot_date !== today || !isSlotInPast(s.slot_date, s.start_time, merchantRow?.country),
+      );
+
+      return NextResponse.json({ slots });
     }
 
     // Auth mode: merchant sees all their slots

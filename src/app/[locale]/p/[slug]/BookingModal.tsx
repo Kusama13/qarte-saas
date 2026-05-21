@@ -5,7 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Clock, ChevronRight, ChevronLeft, ChevronDown, Loader2, Gift, CreditCard, CalendarDays, Hourglass, Info, Crown } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
-import { formatTime, toBCP47, formatCurrency, validateEmail } from '@/lib/utils';
+import { formatTime, toBCP47, formatCurrency, validateEmail, getTimezoneForCountry } from '@/lib/utils';
+import { formatInTimeZone } from 'date-fns-tz';
+import { getMinutesSinceMidnightForCountry } from '@/lib/booking-window';
 import type { Merchant, MerchantCountry } from '@/types';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { AddressAutocomplete, type AddressSuggestion } from '@/components/ui/AddressAutocomplete';
@@ -130,6 +132,10 @@ export default function BookingModal({
   // mais devient modifiable si la prestation choisie ne tient pas dans ce créneau.
   const [pickedTime, setPickedTime] = useState<string | null>(slotTime);
   const [freeSlots, setFreeSlots] = useState<PlanningSlotPublic[]>([]);
+  // Bumpé quand le serveur renvoie `slot_in_past` : force /free-slots à re-fetch
+  // (le cache contenait le slot qui vient d'expirer — sans bump la cliente
+  // re-clique le même slot en boucle).
+  const [freeSlotsBump, setFreeSlotsBump] = useState(0);
   const [loadingFreeSlots, setLoadingFreeSlots] = useState(false);
   const [freeSlotsError, setFreeSlotsError] = useState(false);
   const [calMonth, setCalMonth] = useState<Date>(() => { const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d; });
@@ -361,11 +367,13 @@ export default function BookingModal({
 
   // Mode créneaux : si le créneau cliqué est trop court, on propose les autres
   // horaires libres du même jour qui, eux, tiennent la durée de la prestation.
+  // On calcule today + now dans le fuseau merchant : sinon une cliente avec
+  // horloge décalée verrait des créneaux que le serveur rejette (`slot_in_past`).
   const validDaySlots = useMemo(() => {
     if (isFreeMod || !slotDate || totalDuration === 0) return [];
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const nowMins = now.getHours() * 60 + now.getMinutes();
+    const tz = getTimezoneForCountry(merchant.country);
+    const todayStr = formatInTimeZone(new Date(), tz, 'yyyy-MM-dd');
+    const nowMins = getMinutesSinceMidnightForCountry(merchant.country);
     return planningSlots
       .filter(s => s.slot_date === slotDate)
       .filter(s => slotDate !== todayStr || timeToMinutes(s.start_time) >= nowMins)
@@ -373,7 +381,7 @@ export default function BookingModal({
       .map(s => s.start_time)
       .sort((a, b) => timeToMinutes(a) - timeToMinutes(b));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFreeMod, slotDate, totalDuration, planningSlots, bookedSlots]);
+  }, [isFreeMod, slotDate, totalDuration, planningSlots, bookedSlots, merchant.country]);
 
   const effectiveDate = isFreeMod ? selectedDate : (slotDate || '');
   const effectiveTime = isFreeMod ? selectedTime : (pickedTime || '');
@@ -409,7 +417,7 @@ export default function BookingModal({
       .then(data => setFreeSlots(data.slots || []))
       .catch(() => setFreeSlotsError(true))
       .finally(() => setLoadingFreeSlots(false));
-  }, [isFreeMod, isHomeService, customerCoords, outOfZoneKm, selectedDate, totalDuration, merchant.id]);
+  }, [isFreeMod, isHomeService, customerCoords, outOfZoneKm, selectedDate, totalDuration, merchant.id, freeSlotsBump]);
 
   // Pre-fetch les dispos du mois affiche pour montrer dots vert/rouge sur chaque jour.
   // Skip si home_service (pas calculable sans coords cliente) ou pas de service selectionne.
@@ -512,7 +520,20 @@ export default function BookingModal({
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || t('bookingError'));
+        // `slot_in_past` = la cliente a cliqué sur un créneau pile au moment où
+        // il devenait périmé (race UI ↔ NOW serveur). Message dédié + reset
+        // pour qu'elle puisse re-piocher dans la liste fraîchement filtrée.
+        if (data.error === 'slot_in_past') {
+          setError(t('slotInPast'));
+          if (isFreeMod) {
+            setSelectedTime('');
+            setFreeSlotsBump(n => n + 1); // re-fetch /free-slots, le cache contient encore le slot expiré
+          } else {
+            setPickedTime(null);
+          }
+        } else {
+          setError(data.error || t('bookingError'));
+        }
         setSubmitting(false);
         return;
       }

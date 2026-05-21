@@ -3697,6 +3697,7 @@
     "cancelPolicy": "Annulation possible jusqu''à {days, plural, one {# jour} other {# jours}} avant le RDV",
     "reschedulePolicy": "Modification possible jusqu''à {days, plural, one {# jour} other {# jours}} avant le RDV",
     "bookingError": "Erreur lors de la réservation, veuillez réessayer",
+    "slotInPast": "Ce créneau vient de passer. Choisissez le suivant.",
     "invalidPhone": "Numéro de téléphone invalide",
     "welcomeOfferHint": "Offre nouveaux clients",
     "noModify": "Les rendez-vous ne sont ni modifiables ni annulables",
