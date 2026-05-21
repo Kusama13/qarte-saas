@@ -748,16 +748,22 @@ Apres 72h en `past_due`, le merchant est **bloque** : redirect dashboard vers `/
 
 **Override admin** : pas implemente en V1 (a voir plus tard si besoin de debloquer manuellement un faux positif Stripe).
 
-### Cas Stripe force-cancel apres echecs (gap email connu)
-Apres 4 retries Stripe (configurable, ~21 jours par defaut via Stripe Smart Retries), si tous les paiements echouent, Stripe envoie `customer.subscription.deleted`. Notre webhook (ligne 245-273) :
+### Cas Stripe force-cancel apres echecs (cron de reconciliation, mai 2026)
+Apres 4 retries Stripe (configurable, ~21 jours par defaut via Stripe Smart Retries), si tous les paiements echouent, Stripe envoie `customer.subscription.deleted`. Notre webhook ([webhook/route.ts:265-292](../src/app/api/stripe/webhook/route.ts#L265-L292)) :
 - Set `subscription_status = 'canceled'` + `stripe_subscription_id = NULL`
-- **Aucun email envoye** (le commentaire "Email deja envoye au moment du passage en 'canceling'" est trompeur : vrai pour annulations volontaires, faux pour force-cancel Stripe ou on saute directement past_due → canceled sans passer par 'canceling')
-- `past_due_since` reste defini (jamais reset a la transition canceled — innocent car `isPastDueBlocked` filtre sur status, mais stale data)
-- Cron `morning` REACTIVATION prend le relais : envoie `sendReactivationEmail` a J+7/J+14/J+30 post-cancellation (templates generiques "tu nous manques", code -301/-302/-303)
+- N'envoie PAS d'email (le webhook reste muet — choix assume : le commentaire d'origine "email deja envoye via 'canceling'" est trompeur pour le force-cancel, c'est le cron de reconciliation ci-dessous qui couvre)
+- `past_due_since` reste defini (innocent — `isPastDueBlocked` filtre sur status — mais stale)
 
 **Blocage maintenu** : `isMerchantBlocked()` continue a retourner true via la branche `trial_expired` (canceled n'est pas dans active/canceling/past_due dans `getTrialStatus`). Dashboard redirect + 8 routes API 403 + SuspendedBanner restent actifs.
 
-**Gap UX** : le merchant ne sait pas qu'il vient d'etre annule definitivement par Stripe — il l'apprend au prochain login ou au 1er email de reactivation a J+7. **Fix possible** : nouveau template `SubscriptionForceCanceledEmail` envoye dans `subscription.deleted` quand le statut courant est `past_due` (detection via SELECT pre-UPDATE). Pas implemente.
+**Cron de reconciliation `/api/cron/stripe-reconcile`** (`0 9 * * *`, mai 2026) : ferme le trou si le webhook `customer.subscription.deleted` n'arrive jamais (downtime, event delivery failed cote Stripe). Selectionne les merchants `past_due` avec `past_due_since > 14j` (`STALE_PAST_DUE_DAYS`), interroge `stripe.subscriptions.retrieve` pour chacun :
+- Statut Stripe `canceled` ou `incomplete_expired` OU 404 (`resource_missing`) → on aligne en `canceled` cote DB (atomic `UPDATE ... WHERE subscription_status='past_due'`, no-race avec webhook live), reset `past_due_since`, vide `stripe_subscription_id`, puis envoi `SubscriptionForceCanceledEmail` (template dedie, ton informatif sur l'auto-cancel + 30j de conservation des donnees, CTA reactivation).
+- Statut Stripe encore vivant → on laisse le webhook faire son travail (probable retry final en cours).
+- Pas de `stripe_subscription_id` → force-cancel direct (signal fort apres 14j sans aucun lien Stripe).
+
+Fenetre 14j choisie pour rester sous Smart Retries (~21j) avec marge. Idempotent : un merchant deja `canceled` n'est jamais re-selectionne (filtre `subscription_status='past_due'`). Volume attendu : tres petit set / mois.
+
+**Cron `morning` REACTIVATION** prend ensuite le relais : envoie `sendReactivationEmail` a J+7/J+14/J+30 post-cancellation (templates generiques "tu nous manques", code -301/-302/-303).
 
 ### Page Abonnement (`/dashboard/subscription`)
 - Toggle Mensuel/6 mois avec badge "Recommande" + savings sur 6 mois (mai 2026 : annuel retire du picker pour les nouveaux merchants, garde pour les abonnés annuels existants legacy via `PaidStatusCard`). Type local `PickerInterval = Exclude<BillingInterval, 'annual'>` pour le state du toggle, `BillingInterval` (3 valeurs) pour l'affichage paid status.
@@ -776,7 +782,7 @@ Apres 4 retries Stripe (configurable, ~21 jours par defaut via Stripe Smart Retr
 
 ---
 
-## 9. Emails (37 templates)
+## 9. Emails (38 templates)
 
 **i18n** : Tous les templates utilisent `getEmailT(locale)` de `src/emails/translations/{fr,en}.ts`. La locale vient de `merchants.locale`. Aucun texte hardcode FR restant. `getEmailT` supporte les cles imbriquees a N niveaux (ex: `paymentFailed.step1.heading`).
 
@@ -796,7 +802,7 @@ FirstScanEmail (2e visite), **FirstBookingEmail (1ere resa en ligne, tracking -1
 TrialEndingEmail (J-2 uniquement — etait J-3 + J-1), TrialExpiredEmail (J+1 uniquement — etait J+1 + J+2), InactiveMerchantDay7/14/30Email
 
 ### Stripe & Post-subscription
-SubscriptionConfirmedEmail, PaymentFailedEmail (4 steps dunning: J+0 webhook, J+3/J+7/J+10 cron — ton escalade progressif), SubscriptionCanceledEmail, SubscriptionReactivatedEmail, ReactivationEmail (J+7/14/30), **ReferralPromoEmail (J+2 post-abonnement — "Gagne 10€ par pro recommande", lien `?ref={slug}`)**, **ReferralReminderEmail (J+14 et J+30 post-abo, tracking -316/-317, uniquement si 0 referrals)**
+SubscriptionConfirmedEmail, PaymentFailedEmail (4 steps dunning: J+0 webhook, J+3/J+7/J+10 cron — ton escalade progressif), SubscriptionCanceledEmail (annulation volontaire), **SubscriptionForceCanceledEmail (cron `stripe-reconcile` — force-cancel auto après échecs Stripe, ton informatif + 30j de conservation)**, SubscriptionReactivatedEmail, ReactivationEmail (J+7/14/30), **ReferralPromoEmail (J+2 post-abonnement — "Gagne 10€ par pro recommande", lien `?ref={slug}`)**, **ReferralReminderEmail (J+14 et J+30 post-abo, tracking -316/-317, uniquement si 0 referrals)**
 
 ### Cancel flow — Save offer
 Modal dans `/dashboard/subscription` : quand le merchant clique sur le lien discret "Annuler mon abonnement", questionnaire raison d'annulation (6 choix). Si "trop cher" → offre **-25% pendant 2 mois** avec code `2MOISQARTEPRO25` (coupon Stripe `percent_off=25, duration=repeating, duration_in_months=2`). Note : le `2MOISQARTEPRO25` en `percent_off` sur-deduit le forfait 6 mois (25% de 120€ = 30€ au lieu de ~2 mois), a migrer en `amount_off` si reutilise sur du 6 mois.
@@ -822,6 +828,7 @@ Tous les codes promo emails ont ete supprimes (QARTE50, QARTEBOOST, QARTELAST, Q
 | `/api/cron/weekly-recap` | 17:00 UTC dimanche | Push recap semaine a venir aux merchants (X RDV, ~Y€ prevus, 7 jours glissants) |
 | `/api/cron/blog-digest` | 06:30 UTC (8h30 Paris ete / 7h30 hiver) | Envoie 1 article de blog tous les 3+ jours min. **Audience** : tous les abonnes payants (`active`/`canceling`/`past_due`) quelle que soit la date d'inscription + trials inscrits depuis < 21 jours (`RECENT_TRIAL_SIGNUP_DAYS = 21`, onboarding educatif). Source `src/data/blog-articles.ts`. **Throttle global** entre articles via table `blog_email_dispatches` (mig 125). **Dedup per-merchant** via table `blog_email_recipients` (mig 126, PK `(article_slug, merchant_id)`) — garantit qu'un merchant ne recoit jamais 2 fois le meme article meme en cas de retry/crash mid-loop. Template `BlogDigestEmail.tsx`. Respecte `canEmail()` et `email_bounced_at`. |
 | `/api/cron/monthly-contest` | 08:00 UTC, 1er du mois | Tirage au sort mensuel : pick random parmi clients ayant reserve le mois precedent, insert merchant_contests, push + email merchant |
+| `/api/cron/stripe-reconcile` | 09:00 UTC | Reconciliation force-cancel Stripe : aligne en `canceled` les merchants `past_due` > 14j dont l'abo Stripe est `canceled`/404, envoie `SubscriptionForceCanceledEmail`. Ferme le trou des `customer.subscription.deleted` ratees |
 | `/api/cron/reactivation` | — | Deprecie (integre dans morning, section 7) |
 
 ### Anti-spam & Delivrabilite

@@ -8,6 +8,7 @@ import {
   PendingPointsEmail,
   PaymentFailedEmail,
   SubscriptionCanceledEmail,
+  SubscriptionForceCanceledEmail,
   ReactivationEmail,
   ProgramReminderEmail,
   IncompleteSignupEmail,
@@ -623,6 +624,16 @@ export async function sendSubscriptionCanceledEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'subscriptionCanceled', { shopName }), SubscriptionCanceledEmail, { shopName, endDate, locale }, {
     logLabel: 'Subscription canceled email',
+  });
+}
+
+export async function sendSubscriptionForceCanceledEmail(
+  to: string,
+  shopName: string,
+  locale: EmailLocale = 'fr'
+): Promise<SendEmailResult> {
+  return sendEmail(to, subj(locale, 'subscriptionForceCanceled', { shopName }), SubscriptionForceCanceledEmail, { shopName, locale }, {
+    logLabel: 'Subscription force-canceled email',
   });
 }
 
