@@ -16,6 +16,16 @@ export interface BlogArticle {
  */
 export const BLOG_ARTICLES: BlogArticle[] = [
   {
+    slug: 'service-domicile-salon-beaute-rayon-trajets',
+    title: 'Service à domicile : comment caler tes RDV sans courir d\'une cliente à l\'autre',
+    description:
+      'Rayon d\'intervention configurable, calcul auto des trajets entre RDV, message hors-zone, adresse perso masquée : tout ce que Qarte fait pour les pros mobiles (esthéticiennes, prothésistes ongulaires, coiffeuses à domicile).',
+    readTime: '5 min',
+    category: 'Service à domicile',
+    date: '2026-05-22',
+    image: '/blog/social/article-7-cover.png',
+  },
+  {
     slug: 'acompte-rdv-salon-sans-commission',
     title: 'Acompte salon : pourquoi tu perds 0,72€ sur chaque RDV (et comment encaisser 100% direct sur ton compte)',
     description:

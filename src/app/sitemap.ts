@@ -29,7 +29,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // --- Blog pages ---
   const blogPages: MetadataRoute.Sitemap = [
-    entry('/blog', { priority: 0.8, changeFrequency: 'weekly', lastModified: new Date('2026-04-16') }),
+    entry('/blog', { priority: 0.8, changeFrequency: 'weekly', lastModified: new Date('2026-05-22') }),
+    entry('/blog/service-domicile-salon-beaute-rayon-trajets', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-05-22') }),
+    entry('/blog/acompte-rdv-salon-sans-commission', { priority: 0.9, changeFrequency: 'monthly', lastModified: new Date('2026-05-08') }),
+    entry('/blog/avis-planity-booksy-ne-tappartiennent-pas', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-04-29') }),
+    entry('/blog/ne-pas-mettre-lien-planity-bio-instagram', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-04-26') }),
+    entry('/blog/clients-planity-booksy-ne-reviennent-jamais', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-04-23') }),
     entry('/blog/comment-attirer-clientes-salon-beaute', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-04-16') }),
     entry('/blog/eviter-no-show-salon-rendez-vous', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-04-16') }),
     entry('/blog/logiciel-reservation-en-ligne-salon-beaute', { priority: 0.9, changeFrequency: 'monthly', lastModified: new Date('2026-04-16') }),
