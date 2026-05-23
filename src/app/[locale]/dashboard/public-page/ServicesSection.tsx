@@ -134,6 +134,12 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
   }, [categories, services]);
 
   // ── Category handlers ──
+  // Bust l'ISR de /p/[slug] (revalidate=3600) après mutation services/cats,
+  // sinon la vitrine peut servir l'ordre/contenu pré-cache jusqu'à 1h.
+  const revalidateVitrine = () => {
+    fetch('/api/dashboard/revalidate-merchant-page', { method: 'POST' }).catch(() => {});
+  };
+
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return;
     setAddingCategory(true);
@@ -152,6 +158,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
         setCategories(prev => [...prev, data.category]);
         setNewCategoryName('');
         setShowAddCategory(false);
+        revalidateVitrine();
       }
     } catch {
       // silent
@@ -177,6 +184,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
       if (res.ok && data.category) {
         setCategories(prev => prev.map(c => c.id === id ? data.category : c));
         setEditingCategory(null);
+        revalidateVitrine();
       }
     } catch {
       // silent
@@ -203,6 +211,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
         body: JSON.stringify({ type: 'category_reorder', id, merchant_id: merchant.id, direction }),
       });
       if (!res.ok) setCategories(prevCategories);
+      else revalidateVitrine();
     } catch {
       setCategories(prevCategories);
     }
@@ -236,6 +245,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
         body: JSON.stringify({ type: 'service_reorder', id, merchant_id: merchant.id, direction }),
       });
       if (!res.ok) setServices(prevServices);
+      else revalidateVitrine();
     } catch {
       setServices(prevServices);
     }
@@ -251,6 +261,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
       if (res.ok) {
         setCategories(prev => prev.filter(c => c.id !== id));
         setServices(prev => prev.map(s => s.category_id === id ? { ...s, category_id: null } : s));
+        revalidateVitrine();
       }
     } catch {
       // silent
@@ -287,6 +298,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
         setNewServiceDuration('');
         setNewServiceDescription('');
         setNewServicePriceFrom(false);
+        revalidateVitrine();
       }
     } catch {
       // silent
@@ -311,6 +323,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
         setEditCategoryId(data.category.id);
         setEditNewCatName('');
         setEditShowNewCat(false);
+        revalidateVitrine();
       }
     } catch {
       // silent
@@ -344,6 +357,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
       if (res.ok && data.service) {
         setServices(prev => prev.map(s => s.id === id ? data.service : s));
         setEditingService(null);
+        revalidateVitrine();
       }
     } catch {
       // silent
@@ -359,6 +373,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
       });
       if (res.ok) {
         setServices(prev => prev.filter(s => s.id !== id));
+        revalidateVitrine();
       }
     } catch {
       // silent
