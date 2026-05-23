@@ -1631,6 +1631,8 @@
     "svcOther": "Other",
     "svcCatMoveUp": "Move category up",
     "svcCatMoveDown": "Move category down",
+    "svcMoveUp": "Move service up",
+    "svcMoveDown": "Move service down",
     "svcNone": "No services",
     "svcNoneHint": "Add your services and prices below",
     "svcAddTitle": "Add a service",

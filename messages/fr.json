@@ -1620,6 +1620,8 @@
     "svcOther": "Autres",
     "svcCatMoveUp": "Monter la catégorie",
     "svcCatMoveDown": "Descendre la catégorie",
+    "svcMoveUp": "Monter cette prestation",
+    "svcMoveDown": "Descendre cette prestation",
     "svcNone": "Aucune prestation",
     "svcNoneHint": "Ajoute tes services et tarifs ci-dessous",
     "svcAddTitle": "Ajouter une prestation",

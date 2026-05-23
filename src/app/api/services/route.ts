@@ -191,6 +191,13 @@ const reorderCategorySchema = z.object({
   direction: z.enum(['up', 'down']),
 });
 
+const reorderServiceSchema = z.object({
+  type: z.literal('service_reorder'),
+  id: z.string().uuid(),
+  merchant_id: z.string().uuid(),
+  direction: z.enum(['up', 'down']),
+});
+
 export async function PUT(request: NextRequest) {
   try {
     const supabase = await createRouteHandlerSupabaseClient();
@@ -241,6 +248,58 @@ export async function PUT(request: NextRequest) {
       ]);
       if (swap1.error || swap2.error) {
         logger.error('Reorder category error:', swap1.error || swap2.error);
+        return NextResponse.json({ error: 'Erreur lors de la réorganisation' }, { status: 500 });
+      }
+
+      return NextResponse.json({ ok: true });
+    }
+
+    const reorderServiceParsed = reorderServiceSchema.safeParse(body);
+    if (reorderServiceParsed.success) {
+      const { id, merchant_id, direction } = reorderServiceParsed.data;
+
+      if (!await verifyOwnership(supabase, merchant_id, user.id)) {
+        return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+      }
+
+      const { data: current, error: fetchError } = await supabase
+        .from('merchant_services')
+        .select('id, position, category_id')
+        .eq('id', id)
+        .eq('merchant_id', merchant_id)
+        .single();
+
+      if (fetchError || !current) {
+        return NextResponse.json({ error: 'Prestation introuvable' }, { status: 404 });
+      }
+
+      const isUp = direction === 'up';
+      // Scope au même bucket visuel (même category_id, NULL inclus), sinon une presta
+      // de A swap avec B et désorganise les groupes côté UI.
+      const baseNeighborQuery = supabase
+        .from('merchant_services')
+        .select('id, position')
+        .eq('merchant_id', merchant_id)
+        .filter('position', isUp ? 'lt' : 'gt', current.position)
+        .order('position', { ascending: !isUp })
+        .limit(1);
+
+      const scopedNeighborQuery = current.category_id === null
+        ? baseNeighborQuery.is('category_id', null)
+        : baseNeighborQuery.eq('category_id', current.category_id);
+
+      const { data: neighbor } = await scopedNeighborQuery.maybeSingle();
+
+      if (!neighbor) {
+        return NextResponse.json({ ok: true, noop: true });
+      }
+
+      const [swap1, swap2] = await Promise.all([
+        supabase.from('merchant_services').update({ position: neighbor.position }).eq('id', current.id).eq('merchant_id', merchant_id),
+        supabase.from('merchant_services').update({ position: current.position }).eq('id', neighbor.id).eq('merchant_id', merchant_id),
+      ]);
+      if (swap1.error || swap2.error) {
+        logger.error('Reorder service error:', swap1.error || swap2.error);
         return NextResponse.json({ error: 'Erreur lors de la réorganisation' }, { status: 500 });
       }
 

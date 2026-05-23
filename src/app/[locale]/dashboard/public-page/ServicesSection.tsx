@@ -26,6 +26,35 @@ interface ServicesSectionProps {
   merchant: Merchant;
 }
 
+interface ReorderButtonsProps {
+  isFirst: boolean;
+  isLast: boolean;
+  onMove: (direction: 'up' | 'down') => void;
+  upLabel: string;
+  downLabel: string;
+}
+
+function ReorderButtons({ isFirst, isLast, onMove, upLabel, downLabel }: ReorderButtonsProps) {
+  return (
+    <>
+      {(['up', 'down'] as const).map((dir) => {
+        const Icon = dir === 'up' ? ChevronUp : ChevronDown;
+        return (
+          <button
+            key={dir}
+            onClick={() => onMove(dir)}
+            disabled={dir === 'up' ? isFirst : isLast}
+            aria-label={dir === 'up' ? upLabel : downLabel}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-400"
+          >
+            <Icon className="w-3 h-3" />
+          </button>
+        );
+      })}
+    </>
+  );
+}
+
 export default function ServicesSection({ merchant }: ServicesSectionProps) {
   const locale = useLocale();
   const t = useTranslations('publicPage');
@@ -99,6 +128,8 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
         grouped.uncategorized.push(svc);
       }
     }
+    // Re-tri requis : le swap optimistic mute `position` sans réordonner l'array source.
+    for (const arr of Object.values(grouped)) arr.sort((a, b) => a.position - b.position);
     return grouped;
   }, [categories, services]);
 
@@ -174,6 +205,39 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
       if (!res.ok) setCategories(prevCategories);
     } catch {
       setCategories(prevCategories);
+    }
+  };
+
+  const handleReorderService = async (
+    id: string,
+    direction: 'up' | 'down',
+    scopedServices: Service[],
+  ) => {
+    const idx = scopedServices.findIndex(s => s.id === id);
+    if (idx === -1) return;
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= scopedServices.length) return;
+
+    const prevServices = services;
+    const a = scopedServices[idx];
+    const b = scopedServices[targetIdx];
+    // Mute les positions sur place ; le useMemo servicesByCategory re-trie le bucket.
+    const reordered = services.map(s => {
+      if (s.id === a.id) return { ...s, position: b.position };
+      if (s.id === b.id) return { ...s, position: a.position };
+      return s;
+    });
+    setServices(reordered);
+
+    try {
+      const res = await fetch('/api/services', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'service_reorder', id, merchant_id: merchant.id, direction }),
+      });
+      if (!res.ok) setServices(prevServices);
+    } catch {
+      setServices(prevServices);
     }
   };
 
@@ -318,180 +382,191 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
     return m > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
   };
 
-  const renderServiceRow = (service: Service) => (
-    <div key={service.id} className="group px-3.5 py-3 rounded-xl hover:bg-gray-50/80 transition-colors">
-      {editingService === service.id ? (
-        <div className="space-y-2">
-          <input
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
-            className="w-full text-sm font-medium bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
-            placeholder={t('svcName')}
-            onKeyDown={(e) => e.key === 'Enter' && handleUpdateService(service.id)}
-            autoFocus
-          />
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <input
-                value={editPrice}
-                onChange={(e) => setEditPrice(e.target.value)}
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder={t('svcPrice')}
-                className={`w-full text-sm font-bold bg-white border rounded-lg px-3 py-2 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 ${editPriceFrom ? 'border-indigo-200 bg-indigo-50/30' : 'border-gray-200'}`}
-                onKeyDown={(e) => e.key === 'Enter' && handleUpdateService(service.id)}
-              />
-              <Euro className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+  const renderServiceRow = (service: Service, idx: number, scopedServices: Service[]) => {
+    const isFirst = idx === 0;
+    const isLast = idx === scopedServices.length - 1;
+    return (
+      <div key={service.id} className="group px-3.5 py-3 rounded-xl hover:bg-gray-50/80 transition-colors">
+        {editingService === service.id ? (
+          <div className="space-y-2">
+            <input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="w-full text-sm font-medium bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+              placeholder={t('svcName')}
+              onKeyDown={(e) => e.key === 'Enter' && handleUpdateService(service.id)}
+              autoFocus
+            />
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <input
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder={t('svcPrice')}
+                  className={`w-full text-sm font-bold bg-white border rounded-lg px-3 py-2 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 ${editPriceFrom ? 'border-indigo-200 bg-indigo-50/30' : 'border-gray-200'}`}
+                  onKeyDown={(e) => e.key === 'Enter' && handleUpdateService(service.id)}
+                />
+                <Euro className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              </div>
+              <div className="relative flex-1">
+                <input
+                  value={editDuration}
+                  onChange={(e) => setEditDuration(e.target.value)}
+                  type="number"
+                  min="1"
+                  max="600"
+                  placeholder={t('svcDuration')}
+                  className="w-full text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+                />
+                <Clock className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              </div>
             </div>
-            <div className="relative flex-1">
-              <input
-                value={editDuration}
-                onChange={(e) => setEditDuration(e.target.value)}
-                type="number"
-                min="1"
-                max="600"
-                placeholder={t('svcDuration')}
-                className="w-full text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
-              />
-              <Clock className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-            </div>
-          </div>
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <button
-              type="button"
-              role="switch"
-              aria-checked={editPriceFrom}
-              onClick={() => setEditPriceFrom(!editPriceFrom)}
-              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${editPriceFrom ? 'bg-indigo-600' : 'bg-gray-200'}`}
-            >
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform ${editPriceFrom ? 'translate-x-4' : 'translate-x-0.5'}`} />
-            </button>
-            <span className={`text-[12px] transition-colors ${editPriceFrom ? 'text-indigo-600 font-medium' : 'text-gray-400'}`}>{t('svcFromLabel')}</span>
-          </label>
-          <input
-            value={editDescription}
-            onChange={(e) => setEditDescription(e.target.value)}
-            placeholder={t('svcDescOpt')}
-            className="w-full text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
-          />
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] text-gray-400 font-medium">{t('svcIn')}</span>
-            <button
-              onClick={() => setEditCategoryId(null)}
-              className={`px-2.5 py-1 text-[11px] font-medium rounded-full border transition-all ${
-                !editCategoryId
-                  ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
-                  : 'border-gray-200 text-gray-500 hover:border-gray-300'
-              }`}
-            >
-              {t('svcNoCat')}
-            </button>
-            {categories.map((cat) => (
+            <label className="flex items-center gap-2 cursor-pointer group">
               <button
-                key={cat.id}
-                onClick={() => setEditCategoryId(cat.id)}
+                type="button"
+                role="switch"
+                aria-checked={editPriceFrom}
+                onClick={() => setEditPriceFrom(!editPriceFrom)}
+                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${editPriceFrom ? 'bg-indigo-600' : 'bg-gray-200'}`}
+              >
+                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform ${editPriceFrom ? 'translate-x-4' : 'translate-x-0.5'}`} />
+              </button>
+              <span className={`text-[12px] transition-colors ${editPriceFrom ? 'text-indigo-600 font-medium' : 'text-gray-400'}`}>{t('svcFromLabel')}</span>
+            </label>
+            <input
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              placeholder={t('svcDescOpt')}
+              className="w-full text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+            />
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] text-gray-400 font-medium">{t('svcIn')}</span>
+              <button
+                onClick={() => setEditCategoryId(null)}
                 className={`px-2.5 py-1 text-[11px] font-medium rounded-full border transition-all ${
-                  editCategoryId === cat.id
+                  !editCategoryId
                     ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
                     : 'border-gray-200 text-gray-500 hover:border-gray-300'
                 }`}
               >
-                {cat.name}
+                {t('svcNoCat')}
               </button>
-            ))}
-            {editShowNewCat ? (
-              <div className="flex items-center gap-1">
-                <input
-                  value={editNewCatName}
-                  onChange={(e) => setEditNewCatName(e.target.value)}
-                  placeholder={t('svcCatPlaceholder')}
-                  className="text-[11px] bg-white border border-indigo-300 rounded-full px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 max-w-[140px]"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleCreateCategoryInEdit();
-                    if (e.key === 'Escape') { setEditShowNewCat(false); setEditNewCatName(''); }
-                  }}
-                  autoFocus
-                />
+              {categories.map((cat) => (
                 <button
-                  onClick={handleCreateCategoryInEdit}
-                  disabled={editAddingCat || !editNewCatName.trim()}
-                  className="p-1 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+                  key={cat.id}
+                  onClick={() => setEditCategoryId(cat.id)}
+                  className={`px-2.5 py-1 text-[11px] font-medium rounded-full border transition-all ${
+                    editCategoryId === cat.id
+                      ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
+                      : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                  }`}
                 >
-                  {editAddingCat ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                  {cat.name}
                 </button>
-                <button
-                  onClick={() => { setEditShowNewCat(false); setEditNewCatName(''); }}
-                  className="p-1 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ) : (
-              categories.length < 10 && (
-                <button
-                  onClick={() => setEditShowNewCat(true)}
-                  className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-full border border-dashed border-indigo-300 text-indigo-600 hover:bg-indigo-50 transition-all"
-                >
-                  <Plus className="w-3 h-3" />
-                  {t('svcAddCat')}
-                </button>
-              )
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 justify-end">
-            <button onClick={() => setEditingService(null)} className="px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200 transition-colors">
-              {t('svcCancel')}
-            </button>
-            <button onClick={() => handleUpdateService(service.id)} className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-1.5">
-              <Check className="w-3.5 h-3.5" />
-              {t('svcSave')}
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-3">
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-medium text-gray-700 truncate">{service.name}</p>
-            <div className="flex items-center gap-2 mt-0.5">
-              {service.duration && (
-                <span className="text-[11px] text-gray-400 flex items-center gap-0.5">
-                  <Clock className="w-3 h-3" />
-                  {formatDuration(service.duration)}
-                </span>
-              )}
-              {service.description && (
-                <span className="text-[11px] text-gray-400 truncate max-w-[200px]">{service.description}</span>
+              ))}
+              {editShowNewCat ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    value={editNewCatName}
+                    onChange={(e) => setEditNewCatName(e.target.value)}
+                    placeholder={t('svcCatPlaceholder')}
+                    className="text-[11px] bg-white border border-indigo-300 rounded-full px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 max-w-[140px]"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleCreateCategoryInEdit();
+                      if (e.key === 'Escape') { setEditShowNewCat(false); setEditNewCatName(''); }
+                    }}
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleCreateCategoryInEdit}
+                    disabled={editAddingCat || !editNewCatName.trim()}
+                    className="p-1 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+                  >
+                    {editAddingCat ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                  </button>
+                  <button
+                    onClick={() => { setEditShowNewCat(false); setEditNewCatName(''); }}
+                    className="p-1 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                categories.length < 10 && (
+                  <button
+                    onClick={() => setEditShowNewCat(true)}
+                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-full border border-dashed border-indigo-300 text-indigo-600 hover:bg-indigo-50 transition-all"
+                  >
+                    <Plus className="w-3 h-3" />
+                    {t('svcAddCat')}
+                  </button>
+                )
               )}
             </div>
+            <div className="flex items-center gap-1.5 justify-end">
+              <button onClick={() => setEditingService(null)} className="px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200 transition-colors">
+                {t('svcCancel')}
+              </button>
+              <button onClick={() => handleUpdateService(service.id)} className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-1.5">
+                <Check className="w-3.5 h-3.5" />
+                {t('svcSave')}
+              </button>
+            </div>
           </div>
-          <p className="text-[13px] font-bold text-gray-900 shrink-0 tabular-nums">
-            {service.price_from && <span className="text-[11px] font-normal text-gray-400 mr-0.5">{t('svcFrom')} </span>}
-            {formatCurrency(Number(service.price), merchant.country, locale)}
-          </p>
-          <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={() => {
-                setEditingService(service.id);
-                setEditName(service.name);
-                setEditPrice(String(service.price));
-                setEditDuration(service.duration ? String(service.duration) : '');
-                setEditDescription(service.description || '');
-                setEditPriceFrom(service.price_from || false);
-                setEditCategoryId(service.category_id || null);
-              }}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
-            >
-              <Pencil className="w-3 h-3" />
-            </button>
-            <button onClick={() => handleDeleteService(service.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
-              <Trash2 className="w-3 h-3" />
-            </button>
+        ) : (
+          <div className="flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-medium text-gray-700 truncate">{service.name}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                {service.duration && (
+                  <span className="text-[11px] text-gray-400 flex items-center gap-0.5">
+                    <Clock className="w-3 h-3" />
+                    {formatDuration(service.duration)}
+                  </span>
+                )}
+                {service.description && (
+                  <span className="text-[11px] text-gray-400 truncate max-w-[200px]">{service.description}</span>
+                )}
+              </div>
+            </div>
+            <p className="text-[13px] font-bold text-gray-900 shrink-0 tabular-nums">
+              {service.price_from && <span className="text-[11px] font-normal text-gray-400 mr-0.5">{t('svcFrom')} </span>}
+              {formatCurrency(Number(service.price), merchant.country, locale)}
+            </p>
+            <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+              <ReorderButtons
+                isFirst={isFirst}
+                isLast={isLast}
+                onMove={(dir) => handleReorderService(service.id, dir, scopedServices)}
+                upLabel={t('svcMoveUp')}
+                downLabel={t('svcMoveDown')}
+              />
+              <button
+                onClick={() => {
+                  setEditingService(service.id);
+                  setEditName(service.name);
+                  setEditPrice(String(service.price));
+                  setEditDuration(service.duration ? String(service.duration) : '');
+                  setEditDescription(service.description || '');
+                  setEditPriceFrom(service.price_from || false);
+                  setEditCategoryId(service.category_id || null);
+                }}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+              >
+                <Pencil className="w-3 h-3" />
+              </button>
+              <button onClick={() => handleDeleteService(service.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        )}
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -573,20 +648,13 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                             <span className="px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600 bg-indigo-50 rounded-md tabular-nums">{catServices.length}</span>
                           </div>
                           <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover/cat:opacity-100 transition-opacity">
-                            {(['up', 'down'] as const).map((dir) => {
-                              const Icon = dir === 'up' ? ChevronUp : ChevronDown;
-                              return (
-                                <button
-                                  key={dir}
-                                  onClick={() => handleReorderCategory(cat.id, dir)}
-                                  disabled={dir === 'up' ? isFirst : isLast}
-                                  aria-label={t(dir === 'up' ? 'svcCatMoveUp' : 'svcCatMoveDown')}
-                                  className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-400"
-                                >
-                                  <Icon className="w-3 h-3" />
-                                </button>
-                              );
-                            })}
+                            <ReorderButtons
+                              isFirst={isFirst}
+                              isLast={isLast}
+                              onMove={(dir) => handleReorderCategory(cat.id, dir)}
+                              upLabel={t('svcCatMoveUp')}
+                              downLabel={t('svcCatMoveDown')}
+                            />
                             <button
                               onClick={() => { setEditingCategory(cat.id); setEditCategoryName(cat.name); }}
                               className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
@@ -606,7 +674,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                       <div className="ml-3 pl-4 border-l-2 border-indigo-200">
                         {catServices.length > 0 ? (
                           <div className="divide-y divide-gray-50">
-                            {catServices.map(renderServiceRow)}
+                            {catServices.map((svc, i) => renderServiceRow(svc, i, catServices))}
                           </div>
                         ) : (
                           <p className="text-xs text-gray-400 py-3 italic">{t('svcNoneInCat')}</p>
@@ -625,7 +693,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                   <p className="text-sm font-bold text-gray-400 mb-2">{t('svcOther')}</p>
                 )}
                 <div className={`divide-y divide-gray-50 ${categories.length > 0 ? 'ml-3 pl-4 border-l-2 border-gray-200' : 'rounded-xl border border-gray-100 overflow-hidden'}`}>
-                  {servicesByCategory.uncategorized.map(renderServiceRow)}
+                  {servicesByCategory.uncategorized.map((svc, i) => renderServiceRow(svc, i, servicesByCategory.uncategorized))}
                 </div>
               </div>
             )}
