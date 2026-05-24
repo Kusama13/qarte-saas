@@ -173,7 +173,7 @@ export function usePlanningState() {
       setDepositLink2Label(merchant.deposit_link_2_label || '');
       setDepositPercent(merchant.deposit_percent ? String(merchant.deposit_percent) : '');
       setDepositAmount(merchant.deposit_amount ? String(merchant.deposit_amount) : '');
-      setDepositDeadlineHours(merchant.deposit_deadline_hours != null ? String(merchant.deposit_deadline_hours) : '1');
+      setDepositDeadlineHours(merchant.deposit_deadline_hours != null ? String(merchant.deposit_deadline_hours) : '');
       setAllowCustomerCancel(!!merchant.allow_customer_cancel);
       setAllowCustomerReschedule(!!merchant.allow_customer_reschedule);
       setCancelDeadlineDays(String(merchant.cancel_deadline_days ?? 1));
