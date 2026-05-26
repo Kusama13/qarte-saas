@@ -199,10 +199,14 @@ export async function GET(request: NextRequest) {
 
       // Skip Planning Reminder for merchants who explicitly opted out of the planning module
       // (set via "Je n'utilise pas le planning" link in onboarding checklist).
+      // Skip si TrialEnding (-201) ou TrialFinalDay (-212) déjà envoyé par morning cron
+      // (cadence 1 email/jour : la priorité va aux emails billing-critical du matin).
       const planningDay2 = configuredActiveMerchants.filter(m =>
         m.created_at <= fortyEightHoursAgo.toISOString() && m.created_at >= fortyNineHoursAgo.toISOString()
         && !m.planning_enabled
         && !isPlanningHidden(m)
+        && !globalTrackingSet.has(`${m.id}:-201`)
+        && !globalTrackingSet.has(`${m.id}:-212`)
       );
       planningDay2.forEach(m => emailedAtJ2.add(m.id));
 
@@ -235,7 +239,9 @@ export async function GET(request: NextRequest) {
         m.subscription_status === 'trial' && canEmail(m) &&
         m.created_at >= fortyNineHoursAgoSP.toISOString() &&
         m.created_at <= fortyEightHoursAgoSP.toISOString() &&
-        !emailedAtJ2.has(m.id)
+        !emailedAtJ2.has(m.id) &&
+        !globalTrackingSet.has(`${m.id}:-201`) &&
+        !globalTrackingSet.has(`${m.id}:-212`)
       );
 
       if (socialProofCandidates.length > 0) {

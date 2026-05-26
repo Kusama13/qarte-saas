@@ -60,6 +60,8 @@ import {
   SmsCampaignSentEmail,
   AffiliationWelcomeEmail,
   AffiliateConversionEmail,
+  QuickStartEmail,
+  TrialFinalDayEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import type { BookingConfirmationMode } from '@/emails/BookingConfirmationEmail';
@@ -314,6 +316,37 @@ export async function sendTrialEndingEmail(
     {
       logLabel: `Trial ending email (${daysRemaining}d, S${stats.activationState ?? '?'}, tier: ${recommendedTier ?? 'none'})`,
     }
+  );
+}
+
+export async function sendQuickStartEmail(
+  to: string,
+  shopName: string,
+  shopType?: string | null,
+  city?: string | null,
+  locale: EmailLocale = 'fr',
+): Promise<SendEmailResult> {
+  return sendEmail(
+    to,
+    subj(locale, 'quickStart', { shopName }),
+    QuickStartEmail,
+    { shopName, shopType, city, locale },
+    { logLabel: 'QuickStart email (J+0 +3h)' },
+  );
+}
+
+export async function sendTrialFinalDayEmail(
+  to: string,
+  shopName: string,
+  slug?: string | null,
+  locale: EmailLocale = 'fr',
+): Promise<SendEmailResult> {
+  return sendEmail(
+    to,
+    subj(locale, 'trialFinalDay', { shopName }),
+    TrialFinalDayEmail,
+    { shopName, slug, locale },
+    { logLabel: 'TrialFinalDay email (J+3 last day)' },
   );
 }
 

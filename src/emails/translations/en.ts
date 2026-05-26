@@ -68,6 +68,8 @@ export const en = {
     affiliationWelcome: '{parentShopName} gives you $10 off Qarte',
     affiliationWelcomeNoParent: 'Welcome to Qarte — $10 off',
     affiliateConversion: '+$10 for you: {filleulShopName} subscribed to Qarte',
+    quickStart: '{shopName}, your Qarte page is already live',
+    trialFinalDay: '{shopName}, last day: continue before tonight',
   },
 
   baseLayout: {
@@ -1001,4 +1003,32 @@ export const en = {
     nudge: 'Keep sharing your link: every new paid signup earns you $10.',
     signature: 'The Qarte team',
   },
+  quickStart: {
+    preview: '{shopName}, your Qarte page is already created. Here is what it looks like.',
+    heading: 'Your Qarte page is ready',
+    greeting: 'Hi <strong>{shopName}</strong>,',
+    intro: 'We have already created an online page with your salon name. All it needs is your bio (2 lines) and 2-3 photos to really feel like yours.',
+    subtitleFallback: 'Your salon',
+    bioPlaceholder: 'Your bio will appear here',
+    benefit: 'A complete page shows up on Google and gets 3x more requests. 2 minutes now means more bookings throughout the rest of your trial.',
+    cta: 'Complete my page',
+    footerNote: 'Bio, photos, hours: everything edits from your dashboard, at your own pace.',
+    signature: 'The Qarte team',
+  },
+
+  trialFinalDay: {
+    preview: 'If Qarte works for you, here is how to keep it.',
+    heading: 'Today is your last trial day',
+    greeting: 'Hi <strong>{shopName}</strong>,',
+    intro: 'You have been using Qarte for 3 days. Here is what happens tonight if nothing changes:',
+    consequence1: 'Your page <strong>{page}</strong> becomes inaccessible',
+    consequence2: 'Your clients can no longer book or view their card',
+    consequence3: 'Your data stays paused for 3 days then is deleted',
+    body: 'If Qarte works for you, the subscription starts at €24/mo with no commitment, cancel in 1 click.',
+    cta: 'Subscribe now',
+    footerNote: 'A question before committing? Reply to this email, we get back to you fast.',
+    pageFallback: 'your online page',
+    signature: 'The Qarte team',
+  },
 } as const;
+

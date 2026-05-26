@@ -14,7 +14,7 @@ export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { verifyCronAuth } from '@/lib/cron-helpers';
+import { verifyCronAuth, batchGetUserEmails, canEmail } from '@/lib/cron-helpers';
 import { computeActivationScoresBatch } from '@/lib/activation-score';
 import { sendTrialMarketingSms } from '@/lib/sms-trial-marketing';
 import {
@@ -22,6 +22,8 @@ import {
   exampleVitrineSmsBody,
 } from '@/lib/trial-sms-copy';
 import { TRIAL_MARKETING_CUTOFF } from '@/lib/trial-marketing-cutoff';
+import { sendQuickStartEmail } from '@/lib/email';
+import type { EmailLocale } from '@/emails/translations';
 import logger from '@/lib/logger';
 
 const supabase = createClient(
@@ -37,16 +39,21 @@ interface MerchantRow {
   created_at: string;
   bio: string | null;
   shop_address: string | null;
+  shop_type: string | null;
+  user_id: string;
+  locale: string | null;
   trial_ends_at: string | null;
   subscription_status: string;
   no_contact: boolean;
   email_unsubscribed_at: string | null;
+  email_bounced_at: string | null;
   marketing_sms_opted_out: boolean;
   example_vitrine_sms_sent_at: string | null;
   celebration_sms_sent_at: string | null;
+  quickstart_email_sent_at: string | null;
 }
 
-const SELECT = 'id, shop_name, phone, country, created_at, bio, shop_address, trial_ends_at, subscription_status, no_contact, email_unsubscribed_at, marketing_sms_opted_out, example_vitrine_sms_sent_at, celebration_sms_sent_at';
+const SELECT = 'id, shop_name, phone, country, created_at, bio, shop_address, shop_type, user_id, locale, trial_ends_at, subscription_status, no_contact, email_unsubscribed_at, email_bounced_at, marketing_sms_opted_out, example_vitrine_sms_sent_at, celebration_sms_sent_at, quickstart_email_sent_at';
 
 export async function GET(request: NextRequest) {
   if (!verifyCronAuth(request.headers.get('authorization'))) {
@@ -56,6 +63,7 @@ export async function GET(request: NextRequest) {
   const results = {
     exampleVitrine: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     checkIn: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    quickstartEmail: { processed: 0, sent: 0, skipped: 0, errors: 0 },
   };
 
   // Frequency cap intra-cron : un merchant ne reçoit pas 2 SMS dans la même run
@@ -165,6 +173,60 @@ export async function GET(request: NextRequest) {
     }
   } catch (err) {
     logger.error('checkin_section_failed', { err: String(err) });
+  }
+
+  // ==================== SECTION 2 — QUICKSTART EMAIL (T+3h) ====================
+  // 2e email du jour J+0 (le 1er = Welcome envoyé en immédiat à signup).
+  // Cible : merchants créés il y a ≥3h et ≤6h, en trial, sans quickstart_email_sent_at.
+  // Fenêtre 3h car cron horaire — chaque merchant passe au max 4 fois dans la fenêtre.
+  const QUICKSTART_MIN_HOURS = 3;
+  const QUICKSTART_MAX_HOURS = 6;
+  const quickstartOldest = new Date(Date.now() - QUICKSTART_MAX_HOURS * 60 * 60 * 1000);
+  const quickstartNewest = new Date(Date.now() - QUICKSTART_MIN_HOURS * 60 * 60 * 1000);
+
+  try {
+    const { data: quickstartCandidates } = await supabase
+      .from('merchants')
+      .select(SELECT)
+      .eq('subscription_status', 'trial')
+      .is('quickstart_email_sent_at', null)
+      .gte('created_at', quickstartOldest.toISOString())
+      .lte('created_at', quickstartNewest.toISOString());
+
+    const rows = (quickstartCandidates as MerchantRow[]) || [];
+    const emailableRows = rows.filter(m => canEmail(m));
+    const emailMap = await batchGetUserEmails(supabase, emailableRows.map(m => m.user_id));
+
+    for (const merchant of emailableRows) {
+      results.quickstartEmail.processed++;
+      const email = emailMap.get(merchant.user_id);
+      if (!email) { results.quickstartEmail.skipped++; continue; }
+
+      try {
+        const res = await sendQuickStartEmail(
+          email,
+          merchant.shop_name,
+          merchant.shop_type ?? null,
+          null,
+          (merchant.locale as EmailLocale) || 'fr',
+        );
+
+        if (res.success) {
+          await supabase
+            .from('merchants')
+            .update({ quickstart_email_sent_at: new Date().toISOString() })
+            .eq('id', merchant.id);
+          results.quickstartEmail.sent++;
+        } else {
+          results.quickstartEmail.errors++;
+        }
+      } catch (err) {
+        results.quickstartEmail.errors++;
+        logger.error('quickstart_email_failed', { merchantId: merchant.id, err: String(err) });
+      }
+    }
+  } catch (err) {
+    logger.error('quickstart_section_failed', { err: String(err) });
   }
 
   return NextResponse.json({ ok: true, results });

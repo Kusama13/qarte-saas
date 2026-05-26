@@ -68,6 +68,8 @@ export const fr = {
     affiliationWelcome: '{parentShopName} t\'offre 10€ sur Qarte',
     affiliationWelcomeNoParent: 'Bienvenue sur Qarte — 10€ offerts',
     affiliateConversion: '+10€ pour toi : {filleulShopName} s\'abonne à Qarte',
+    quickStart: '{shopName}, ta vitrine Qarte est déjà créée',
+    trialFinalDay: '{shopName}, dernier jour : continue avant ce soir',
   },
 
   baseLayout: {
@@ -1001,4 +1003,32 @@ export const fr = {
     nudge: 'Continue à partager ton lien : chaque nouvelle inscription payante te rapporte 10€.',
     signature: 'L\'équipe Qarte',
   },
+  quickStart: {
+    preview: '{shopName}, on a déjà créé ta page. Voici à quoi elle ressemble.',
+    heading: 'Ta vitrine Qarte est prête',
+    greeting: 'Bonjour <strong>{shopName}</strong>,',
+    intro: 'On t\'a déjà créé une page vitrine avec ton nom de salon. Il manque ta bio (2 lignes) et 2-3 photos pour qu\'elle soit vraiment à toi.',
+    subtitleFallback: 'Ton salon',
+    bioPlaceholder: 'Ta bio apparaitra ici',
+    benefit: 'Une vitrine complète apparaît sur Google et reçoit 3x plus de demandes. 2 minutes maintenant te font gagner des réservations tout le reste de ton essai.',
+    cta: 'Compléter ma vitrine',
+    footerNote: 'Bio, photos, horaires : tout se modifie depuis ton dashboard, à ton rythme.',
+    signature: 'L\'équipe Qarte',
+  },
+
+  trialFinalDay: {
+    preview: 'Si Qarte te convient, voici comment continuer.',
+    heading: 'C\'est ton dernier jour d\'essai',
+    greeting: 'Bonjour <strong>{shopName}</strong>,',
+    intro: 'Tu utilises Qarte depuis 3 jours. Voici ce qui se passe ce soir si tu ne fais rien :',
+    consequence1: 'Ta page <strong>{page}</strong> redevient inaccessible',
+    consequence2: 'Tes clientes ne peuvent plus réserver ni consulter leur carte',
+    consequence3: 'Tes données restent 3 jours en pause puis sont supprimées',
+    body: 'Si Qarte te convient, l\'abonnement démarre à 24€/mois sans engagement, résiliable en 1 clic.',
+    cta: 'S\'abonner maintenant',
+    footerNote: 'Une question avant de t\'engager ? Réponds à cet email, on te répond rapidement.',
+    pageFallback: 'ta page vitrine',
+    signature: 'L\'équipe Qarte',
+  },
 } as const;
+

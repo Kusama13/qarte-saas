@@ -227,35 +227,69 @@ J+2   priorité descendante (1 email max/merchant) :
 
 ---
 
-## 4. Trial — Flow standard
+## 4. Trial — Flow standard (cadence 3j, 1 email/jour)
+
+5 emails sur 4 jours : 2 le jour d'inscription, 1 par jour les 3 jours suivants. Apres expiration, `TrialExpired` prend le relais (J+4 grace day 1).
 
 ```
-        INSCRIPTION
-            │
-            ▼
-    ┌───────────────┐
-    │  ESSAI 3 JOURS │
-    │  (trial)       │
-    └───────┬───────┘
-            │
-     J-1    ▼
+J+0  immediat (API merchants/create)
     ┌─────────────────────────────────────┐
-    │  TRIAL ENDING                       │
-    │  Objet : "{shopName}, dernier       │
-    │         jour d'essai"                │
-    │  Code: -201                         │
-    │  Trigger: daysRemaining === 1 (J+2) │
+    │  WELCOME                             │
+    │  Sujet : "Bienvenue {shopName} !"   │
+    │  Cible : tous les signups            │
     └─────────────────────────────────────┘
-            │
-     J+0    │  ← trial_ends_at (expiration)
-            │
-     J+1    ▼
+
+J+0  T+3h (cron horaire sms-trial-marketing, section QuickStart)
     ┌─────────────────────────────────────┐
-    │  TRIAL EXPIRED                      │
-    │  Objet: "{shopName}, ton essai est  │
-    │         termine"                     │
+    │  QUICKSTART                          │
+    │  Sujet : "{shopName}, ta vitrine    │
+    │          Qarte est deja creee"      │
+    │  Dedup : merchants.quickstart_email │
+    │          _sent_at                    │
+    │  Condition : trial + 3-6h post-signup│
+    └─────────────────────────────────────┘
+
+J+1  10:00 UTC (cron email-onboarding, priority dedup)
+    1 max parmi : ActivationStalled (S0)
+                > VitrineReminder (no bio)
+                > ProgramReminder (pas configure)
+
+J+2  10:00 UTC (cron email-onboarding, priority dedup)
+    1 max parmi : PlanningReminder (no planning)
+                > SocialProof (fallback trial)
+    Skip si TrialEnding (-201) ou TrialFinalDay (-212) deja envoyes
+    le matin meme (priorite billing-critical).
+
+J+2 ou J+3  08:00 UTC (cron morning, daysRemaining===1 1ere occurrence)
+    ┌─────────────────────────────────────┐
+    │  TRIAL ENDING                        │
+    │  Sujet : "{shopName}, plus que 1    │
+    │          jour" ou variantes S0/S1/.. │
+    │  Code: -201                         │
+    │  Trigger : trialStatus.daysRemaining │
+    │            === 1 ET pas encore envoye│
+    └─────────────────────────────────────┘
+
+J+3  08:00 UTC (cron morning, daysRemaining===1 2eme occurrence)
+    ┌─────────────────────────────────────┐
+    │  TRIAL FINAL DAY                     │
+    │  Sujet : "{shopName}, dernier jour :│
+    │          continue avant ce soir"     │
+    │  Code: -212                         │
+    │  Trigger : daysRemaining===1 ET     │
+    │            TrialEnding deja envoye   │
+    └─────────────────────────────────────┘
+
+J+3  ← trial_ends_at (expiration ce soir si pas abonne)
+
+J+4  08:00 UTC (cron morning, grace day 1)
+    ┌─────────────────────────────────────┐
+    │  TRIAL EXPIRED                       │
+    │  Sujet: "{shopName}, ton essai est  │
+    │          termine"                    │
     │  Code: -211                         │
-    │  Condition: grace period (3 jours)  │
+    │  Trigger : isInGracePeriod ET       │
+    │            daysExpired===1           │
     └─────────────────────────────────────┘
 ```
 
@@ -577,8 +611,9 @@ J+30    Reactivation late               Cron
 | -113 | Grace period setup |
 | -150 | Guided signup |
 | -200 | Welcome |
-| -201 | Trial ending (J-2) |
-| -211 | Trial expired (J+1) |
+| -201 | Trial ending (J+2 ou J+3, 1ère occurrence daysRemaining=1) |
+| -212 | Trial final day (J+3, 2ème occurrence — "dernier jour") |
+| -211 | Trial expired (J+4 grace day 1) |
 | -301 | Program reminder |
 | -304 | Vitrine reminder |
 | -308 | Planning reminder |

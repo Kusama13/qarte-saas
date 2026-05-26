@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import {
   sendTrialEndingEmail,
   sendTrialExpiredEmail,
+  sendTrialFinalDayEmail,
   sendReactivationEmail,
   sendGuidedSignupEmail,
   sendGracePeriodSetupEmail,
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
   }
 
   const results = {
-    trialEmails: { processed: 0, ending: 0, expired: 0, skipped: 0, errors: 0 },
+    trialEmails: { processed: 0, ending: 0, finalDay: 0, expired: 0, skipped: 0, errors: 0 },
     reactivation: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     dunning: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     dunningSms: { processed: 0, sent: 0, skipped: 0, errors: 0 },
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
   // ==================== PREFETCH ====================
   const { data: allMerchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, user_id, locale, trial_ends_at, subscription_status, created_at, updated_at, past_due_since, reward_description, no_contact, email_bounced_at, email_unsubscribed_at, bio, shop_address');
+    .select('id, shop_name, slug, user_id, locale, trial_ends_at, subscription_status, created_at, updated_at, past_due_since, reward_description, no_contact, email_bounced_at, email_unsubscribed_at, bio, shop_address');
 
   const allMerchantsList = allMerchants || [];
   const allUserIds = [...new Set(allMerchantsList.map(m => m.user_id))];
@@ -88,31 +89,45 @@ export async function GET(request: NextRequest) {
         if (!email) continue;
 
         try {
+          // J+2 morning : TrialEnding "plus que 1 jour" (1ʳᵉ fois où daysRemaining=1)
+          // J+3 morning : TrialFinalDay "c'est aujourd'hui" (2ᵉ fois où daysRemaining=1)
+          // Math.ceil garde daysRemaining=1 sur ~23h → on dédup par tracking code pour
+          // garantir 1 email/jour, et l'autre suit naturellement le lendemain.
           if (trialStatus.isActive && trialStatus.daysRemaining === 1) {
-            const trackCode = -201;
-            if (globalTrackingSet.has(`${merchant.id}:${trackCode}`)) continue;
-            const [recommendedTier, activation, customersRes, bookingsRes] = await Promise.all([
-              recommendTierForMerchant(supabase, merchant.id),
-              computeActivationScore(supabase, { id: merchant.id, bio: merchant.bio, shop_address: merchant.shop_address }),
-              supabase.from('customers').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
-              supabase.from('merchant_planning_slots').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id).eq('booked_online', true),
-            ]);
-            await sendTrialEndingEmail(
-              email,
-              merchant.shop_name,
-              trialStatus.daysRemaining,
-              (merchant.locale as EmailLocale) || 'fr',
-              recommendedTier,
-              {
-                activationState: activation.score,
-                customerCount: customersRes.count ?? 0,
-                bookingCount: bookingsRes.count ?? 0,
-                firstPillar: activation.firstPillar,
-              },
-            );
-            await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
-            results.trialEmails.ending++;
-            await rateLimitDelay();
+            const trialEndingCode = -201;
+            const trialFinalDayCode = -212;
+            const alreadyEnding = globalTrackingSet.has(`${merchant.id}:${trialEndingCode}`);
+            const alreadyFinalDay = globalTrackingSet.has(`${merchant.id}:${trialFinalDayCode}`);
+
+            if (!alreadyEnding) {
+              const [recommendedTier, activation, customersRes, bookingsRes] = await Promise.all([
+                recommendTierForMerchant(supabase, merchant.id),
+                computeActivationScore(supabase, { id: merchant.id, bio: merchant.bio, shop_address: merchant.shop_address }),
+                supabase.from('customers').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
+                supabase.from('merchant_planning_slots').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id).eq('booked_online', true),
+              ]);
+              await sendTrialEndingEmail(
+                email,
+                merchant.shop_name,
+                trialStatus.daysRemaining,
+                (merchant.locale as EmailLocale) || 'fr',
+                recommendedTier,
+                {
+                  activationState: activation.score,
+                  customerCount: customersRes.count ?? 0,
+                  bookingCount: bookingsRes.count ?? 0,
+                  firstPillar: activation.firstPillar,
+                },
+              );
+              await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trialEndingCode, pending_count: 0 });
+              results.trialEmails.ending++;
+              await rateLimitDelay();
+            } else if (!alreadyFinalDay) {
+              await sendTrialFinalDayEmail(email, merchant.shop_name, merchant.slug, (merchant.locale as EmailLocale) || 'fr');
+              await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trialFinalDayCode, pending_count: 0 });
+              results.trialEmails.finalDay++;
+              await rateLimitDelay();
+            }
           }
           if (trialStatus.isInGracePeriod) {
             const daysExpired = Math.abs(trialStatus.daysRemaining);
