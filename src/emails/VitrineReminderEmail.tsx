@@ -35,9 +35,11 @@ export function VitrineReminderEmail({ shopName, daysRemaining, locale = 'fr' }:
         <Text style={featureDesc}>{t('vitrineReminder.featureDesc')}</Text>
       </Section>
 
-      <Section style={urgencyBox}>
-        <Text style={urgencyText} dangerouslySetInnerHTML={{ __html: t('vitrineReminder.trialNote', { daysRemaining, daysPlural: daysRemaining > 1 ? 's' : '' }) }} />
-      </Section>
+      {daysRemaining > 0 && (
+        <Section style={urgencyBox}>
+          <Text style={urgencyText} dangerouslySetInnerHTML={{ __html: t('vitrineReminder.trialNote', { daysRemaining, daysPlural: daysRemaining > 1 ? 's' : '' }) }} />
+        </Section>
+      )}
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/public-page">

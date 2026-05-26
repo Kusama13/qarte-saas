@@ -55,6 +55,12 @@ export async function GET(request: NextRequest) {
 
   const now = new Date();
 
+  // Dedup intra-run: 1 email max par merchant pour le bucket J+1 et J+2 (cadence 3j trial).
+  // Higher-priority sections (ActivationStalled, PlanningReminder) ajoutent au Set;
+  // lower-priority sections (VitrineReminder, SocialProof) filtrent dessus.
+  const emailedAtJ1 = new Set<string>();
+  const emailedAtJ2 = new Set<string>();
+
   // ==================== PREFETCH ====================
   const { data: allMerchants } = await supabase
     .from('merchants')
@@ -82,6 +88,51 @@ export async function GET(request: NextRequest) {
     ['trial', 'active'].includes(m.subscription_status) && canEmail(m)
   );
 
+  // ==================== ACTIVATION STALLED (S0 J+1, priorité haute) ====================
+  // Run BEFORE programReminders pour que les S0 configurés soient dedup contre VitrineReminder
+  if (isTimedOut()) { sectionStatuses.push({ name: 'activationStalled', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
+    const twentyFiveHoursAgoAS = new Date(now.getTime() - 25 * 60 * 60 * 1000);
+    const twentyFourHoursAgoAS = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const TRACK_ACTIVATION_STALLED = TRACKING_CODES.ACTIVATION_STALLED;
+
+    const stalledCandidates = configuredActiveMerchants.filter(m =>
+      m.subscription_status === 'trial' &&
+      m.created_at <= twentyFourHoursAgoAS.toISOString() &&
+      m.created_at >= twentyFiveHoursAgoAS.toISOString() &&
+      !globalTrackingSet.has(`${m.id}:${TRACK_ACTIVATION_STALLED}`)
+    );
+
+    for (const merchant of stalledCandidates) {
+      results.activationStalled.processed++;
+      const email = globalEmailMap.get(merchant.user_id);
+      if (!email) { results.activationStalled.skipped++; continue; }
+
+      try {
+        const activation = await computeActivationScore(supabase, {
+          id: merchant.id,
+          bio: merchant.bio,
+          shop_address: merchant.shop_address,
+        });
+
+        if (activation.score !== 0) {
+          results.activationStalled.skipped++;
+          continue;
+        }
+
+        await sendActivationStalledEmail(email, merchant.shop_name, (merchant.locale as EmailLocale) || 'fr', merchant.shop_type);
+        await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: TRACK_ACTIVATION_STALLED, pending_count: 0 });
+        results.activationStalled.sent++;
+        emailedAtJ1.add(merchant.id);
+      } catch {
+        results.activationStalled.errors++;
+      }
+    }
+    sectionStatuses.push({ name: 'activationStalled', status: 'ok' });
+  } catch (error) {
+    sectionStatuses.push({ name: 'activationStalled', status: 'error', error: String(error) });
+  }
+
   // ==================== PROGRAM REMINDERS (J+1) + VITRINE/PLANNING ====================
   if (isTimedOut()) { sectionStatuses.push({ name: 'programReminders', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
   else try {
@@ -100,6 +151,7 @@ export async function GET(request: NextRequest) {
       emailMap: globalEmailMap,
       globalTrackingSet,
     });
+    unconfiguredMerchants.forEach(m => emailedAtJ1.add(m.id));
 
     sendOnboardingPushes(sendMerchantPush, supabase, unconfiguredMerchants, {
       notificationType: 'onboarding_config_j1',
@@ -108,15 +160,82 @@ export async function GET(request: NextRequest) {
       url: '/dashboard/setup',
     }, pushPromises);
 
-    // Social proof J+3
+    // Vitrine reminder J+1 (cadence 3j trial)
     {
-      const seventyThreeHoursAgoSP = new Date(now.getTime() - 73 * 60 * 60 * 1000);
-      const seventyTwoHoursAgoSP = new Date(now.getTime() - 72 * 60 * 60 * 1000);
+      const twentyFiveHoursAgoV = new Date(now.getTime() - 25 * 60 * 60 * 1000);
+      const twentyFourHoursAgoV = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+      const vitrineDay1 = configuredActiveMerchants.filter(m =>
+        m.created_at <= twentyFourHoursAgoV.toISOString() && m.created_at >= twentyFiveHoursAgoV.toISOString()
+        && !m.bio && !m.shop_address
+        && !emailedAtJ1.has(m.id)
+      );
+
+      await runStandardEmailSection(supabase, {
+        candidates: vitrineDay1,
+        trackingCode: -304,
+        stats: results.programReminders,
+        sendFn: (email, m) => {
+          const trialStatus = getTrialStatus(m.trial_ends_at, m.subscription_status);
+          return sendVitrineReminderEmail(email, m.shop_name, Math.max(trialStatus.daysRemaining, 0), (m.locale as EmailLocale) || 'fr');
+        },
+        emailMap: globalEmailMap,
+        globalTrackingSet,
+      });
+      vitrineDay1.forEach(m => emailedAtJ1.add(m.id));
+
+      sendOnboardingPushes(sendMerchantPush, supabase, vitrineDay1, {
+        notificationType: 'onboarding_vitrine',
+        titleFr: 'Complète ta vitrine en ligne', titleEn: 'Complete your online page',
+        bodyFr: 'Ajoute ta bio et ton adresse pour apparaître sur Google.', bodyEn: 'Add your bio and address to appear on Google.',
+        url: '/dashboard/public-page',
+      }, pushPromises);
+    }
+
+    // Planning reminder J+2 (cadence 3j trial)
+    {
+      const fortyNineHoursAgo = new Date(now.getTime() - 49 * 60 * 60 * 1000);
+      const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+
+      // Skip Planning Reminder for merchants who explicitly opted out of the planning module
+      // (set via "Je n'utilise pas le planning" link in onboarding checklist).
+      const planningDay2 = configuredActiveMerchants.filter(m =>
+        m.created_at <= fortyEightHoursAgo.toISOString() && m.created_at >= fortyNineHoursAgo.toISOString()
+        && !m.planning_enabled
+        && !isPlanningHidden(m)
+      );
+      planningDay2.forEach(m => emailedAtJ2.add(m.id));
+
+      await runStandardEmailSection(supabase, {
+        candidates: planningDay2,
+        trackingCode: -308,
+        stats: results.programReminders,
+        sendFn: (email, m) => {
+          const trialStatus = getTrialStatus(m.trial_ends_at, m.subscription_status);
+          return sendPlanningReminderEmail(email, m.shop_name, Math.max(trialStatus.daysRemaining, 0), (m.locale as EmailLocale) || 'fr');
+        },
+        emailMap: globalEmailMap,
+        globalTrackingSet,
+      });
+
+      sendOnboardingPushes(sendMerchantPush, supabase, planningDay2, {
+        notificationType: 'onboarding_planning',
+        titleFr: 'Reçois des réservations en ligne', titleEn: 'Start receiving online bookings',
+        bodyFr: 'Active ton planning en un clic.', bodyEn: 'Enable your calendar in one click.',
+        url: '/dashboard/planning',
+      }, pushPromises);
+    }
+
+    // Social proof J+2 (fallback : merchants en trial qui n'ont pas reçu PlanningReminder)
+    {
+      const fortyNineHoursAgoSP = new Date(now.getTime() - 49 * 60 * 60 * 1000);
+      const fortyEightHoursAgoSP = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
       const socialProofCandidates = allMerchantsList.filter(m =>
         m.subscription_status === 'trial' && canEmail(m) &&
-        m.created_at >= seventyThreeHoursAgoSP.toISOString() &&
-        m.created_at <= seventyTwoHoursAgoSP.toISOString()
+        m.created_at >= fortyNineHoursAgoSP.toISOString() &&
+        m.created_at <= fortyEightHoursAgoSP.toISOString() &&
+        !emailedAtJ2.has(m.id)
       );
 
       if (socialProofCandidates.length > 0) {
@@ -128,119 +247,13 @@ export async function GET(request: NextRequest) {
           emailMap: globalEmailMap,
           globalTrackingSet,
         });
+        socialProofCandidates.forEach(m => emailedAtJ2.add(m.id));
       }
-    }
-
-    // Vitrine reminder J+3
-    {
-      const seventyThreeHoursAgo = new Date(now.getTime() - 73 * 60 * 60 * 1000);
-      const seventyTwoHoursAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
-
-      const vitrineDay3 = configuredActiveMerchants.filter(m =>
-        m.created_at <= seventyTwoHoursAgo.toISOString() && m.created_at >= seventyThreeHoursAgo.toISOString()
-        && !m.bio && !m.shop_address
-      );
-
-      await runStandardEmailSection(supabase, {
-        candidates: vitrineDay3,
-        trackingCode: -304,
-        stats: results.programReminders,
-        sendFn: (email, m) => {
-          const trialStatus = getTrialStatus(m.trial_ends_at, m.subscription_status);
-          return sendVitrineReminderEmail(email, m.shop_name, Math.max(trialStatus.daysRemaining, 0), (m.locale as EmailLocale) || 'fr');
-        },
-        emailMap: globalEmailMap,
-        globalTrackingSet,
-      });
-
-      sendOnboardingPushes(sendMerchantPush, supabase, vitrineDay3, {
-        notificationType: 'onboarding_vitrine',
-        titleFr: 'Complète ta vitrine en ligne', titleEn: 'Complete your online page',
-        bodyFr: 'Ajoute ta bio et ton adresse pour apparaître sur Google.', bodyEn: 'Add your bio and address to appear on Google.',
-        url: '/dashboard/public-page',
-      }, pushPromises);
-    }
-
-    // Planning reminder J+4
-    {
-      const ninetySixHoursAgo = new Date(now.getTime() - 96 * 60 * 60 * 1000);
-      const ninetySevenHoursAgo = new Date(now.getTime() - 97 * 60 * 60 * 1000);
-
-      // Skip Planning Reminder for merchants who explicitly opted out of the planning module
-      // (set via "Je n'utilise pas le planning" link in onboarding checklist).
-      const planningDay4 = configuredActiveMerchants.filter(m =>
-        m.created_at <= ninetySixHoursAgo.toISOString() && m.created_at >= ninetySevenHoursAgo.toISOString()
-        && !m.planning_enabled
-        && !isPlanningHidden(m)
-      );
-
-      await runStandardEmailSection(supabase, {
-        candidates: planningDay4,
-        trackingCode: -308,
-        stats: results.programReminders,
-        sendFn: (email, m) => {
-          const trialStatus = getTrialStatus(m.trial_ends_at, m.subscription_status);
-          return sendPlanningReminderEmail(email, m.shop_name, Math.max(trialStatus.daysRemaining, 0), (m.locale as EmailLocale) || 'fr');
-        },
-        emailMap: globalEmailMap,
-        globalTrackingSet,
-      });
-
-      sendOnboardingPushes(sendMerchantPush, supabase, planningDay4, {
-        notificationType: 'onboarding_planning',
-        titleFr: 'Reçois des réservations en ligne', titleEn: 'Start receiving online bookings',
-        bodyFr: 'Active ton planning en un clic.', bodyEn: 'Enable your calendar in one click.',
-        url: '/dashboard/planning',
-      }, pushPromises);
     }
 
     sectionStatuses.push({ name: 'programReminders', status: 'ok' });
   } catch (error) {
     sectionStatuses.push({ name: 'programReminders', status: 'error', error: String(error) });
-  }
-
-  // ==================== ACTIVATION STALLED (S0 J+3, plan v2 Email 8) ====================
-  if (isTimedOut()) { sectionStatuses.push({ name: 'activationStalled', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
-  else try {
-    const seventyThreeHoursAgo = new Date(now.getTime() - 73 * 60 * 60 * 1000);
-    const seventyTwoHoursAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
-    const TRACK_ACTIVATION_STALLED = TRACKING_CODES.ACTIVATION_STALLED;
-
-    const stalledCandidates = configuredActiveMerchants.filter(m =>
-      m.subscription_status === 'trial' &&
-      m.created_at <= seventyTwoHoursAgo.toISOString() &&
-      m.created_at >= seventyThreeHoursAgo.toISOString() &&
-      !globalTrackingSet.has(`${m.id}:${TRACK_ACTIVATION_STALLED}`)
-    );
-
-    for (const merchant of stalledCandidates) {
-      results.activationStalled.processed++;
-      const email = globalEmailMap.get(merchant.user_id);
-      if (!email) { results.activationStalled.skipped++; continue; }
-
-      try {
-        const activation = await computeActivationScore(supabase, {
-          id: merchant.id,
-          bio: merchant.bio,
-          shop_address: merchant.shop_address,
-        });
-
-        // On envoie uniquement aux S0 (aucun pilier atteint après 3 jours)
-        if (activation.score !== 0) {
-          results.activationStalled.skipped++;
-          continue;
-        }
-
-        await sendActivationStalledEmail(email, merchant.shop_name, (merchant.locale as EmailLocale) || 'fr', merchant.shop_type);
-        await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: TRACK_ACTIVATION_STALLED, pending_count: 0 });
-        results.activationStalled.sent++;
-      } catch {
-        results.activationStalled.errors++;
-      }
-    }
-    sectionStatuses.push({ name: 'activationStalled', status: 'ok' });
-  } catch (error) {
-    sectionStatuses.push({ name: 'activationStalled', status: 'error', error: String(error) });
   }
 
   // ==================== QR CODE + FIRST CLIENT SCRIPT ====================

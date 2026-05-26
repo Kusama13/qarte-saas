@@ -68,7 +68,7 @@ export default function ZeroScansCoach({ merchant }: ZeroScansCoachProps) {
         </div>
       </div>
 
-      {trial.isActive && (
+      {trial.isActive && daysRemaining <= TRIAL_DURATION_DAYS && (
         <p className="text-xs text-center text-gray-400 pt-1">
           {t('trialDay', { current: TRIAL_DURATION_DAYS - daysRemaining + 1, total: TRIAL_DURATION_DAYS })}
         </p>

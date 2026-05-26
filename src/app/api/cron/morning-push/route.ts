@@ -400,8 +400,8 @@ export async function GET(request: NextRequest) {
       let body: string | null = null;
       let refSuffix: string | null = null;
 
-      if (trialStatus.isActive && trialStatus.daysRemaining === 2) {
-        title = isEN ? 'Your trial ends in 2 days' : 'Ton essai se termine dans 2 jours';
+      if (trialStatus.isActive && trialStatus.daysRemaining === 1) {
+        title = isEN ? 'Your trial ends tomorrow' : 'Ton essai se termine demain';
         body = isEN
           ? 'Subscribe now to keep your clients and bookings.'
           : 'Abonne-toi pour garder tes clients et tes réservations.';

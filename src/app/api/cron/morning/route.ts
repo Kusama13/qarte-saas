@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
         if (!email) continue;
 
         try {
-          if (trialStatus.isActive && trialStatus.daysRemaining === 2) {
+          if (trialStatus.isActive && trialStatus.daysRemaining === 1) {
             const trackCode = -201;
             if (globalTrackingSet.has(`${merchant.id}:${trackCode}`)) continue;
             const [recommendedTier, activation, customersRes, bookingsRes] = await Promise.all([

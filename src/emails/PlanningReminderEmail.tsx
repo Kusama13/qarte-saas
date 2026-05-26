@@ -40,9 +40,11 @@ export function PlanningReminderEmail({ shopName, daysRemaining, locale = 'fr' }
         <Text style={featureDesc} dangerouslySetInnerHTML={{ __html: t('planningReminder.bonusDesc') }} />
       </Section>
 
-      <Section style={urgencyBox}>
-        <Text style={urgencyText} dangerouslySetInnerHTML={{ __html: t('planningReminder.trialNote', { daysRemaining, daysPlural: daysRemaining > 1 ? 's' : '' }) }} />
-      </Section>
+      {daysRemaining > 0 && (
+        <Section style={urgencyBox}>
+          <Text style={urgencyText} dangerouslySetInnerHTML={{ __html: t('planningReminder.trialNote', { daysRemaining, daysPlural: daysRemaining > 1 ? 's' : '' }) }} />
+        </Section>
+      )}
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/planning">
