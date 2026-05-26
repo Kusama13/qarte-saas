@@ -2569,7 +2569,7 @@
     "step2Desc": "Depuis ta page, elles choisissent un créneau et réservent en 1 clic.",
     "step3Title": "Carte fidélité automatique",
     "step3Desc": "Chaque cliente qui réserve reçoit automatiquement sa carte de fidélité.",
-    "trialDay": "Jour {current} sur 7 de ton essai"
+    "trialDay": "Jour {current} sur {total} de ton essai"
   },
   "pendingDeposits": {
     "title": "Acomptes en attente",

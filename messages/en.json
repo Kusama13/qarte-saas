@@ -2579,7 +2579,7 @@
     "step2Desc": "From your page, they pick a slot and book in 1 click.",
     "step3Title": "Loyalty card automatically",
     "step3Desc": "Every client who books automatically gets their loyalty card.",
-    "trialDay": "Day {current} of 7 of your trial"
+    "trialDay": "Day {current} of {total} of your trial"
   },
   "pendingDeposits": {
     "title": "Pending deposits",

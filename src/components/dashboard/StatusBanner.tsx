@@ -8,7 +8,7 @@ export type TrialSeverity = 'calm' | 'warning' | 'urgent';
 
 export function trialSeverityFromDays(daysRemaining: number): TrialSeverity {
   if (daysRemaining <= 1) return 'urgent';
-  if (daysRemaining <= 3) return 'warning';
+  if (daysRemaining <= 2) return 'warning';
   return 'calm';
 }
 
@@ -18,7 +18,7 @@ interface StatusBannerProps {
   linkText?: string;
   linkHref?: string;
   onLinkClick?: () => void;
-  /** Only used for 'trial' variant. calm (J-7→J-4), warning (J-3→J-2), urgent (J-1→J0). */
+  /** Only used for 'trial' variant. calm (J-3), warning (J-2), urgent (J-1→J0). */
   severity?: TrialSeverity;
   /** Secondary text shown below the main message (used by grace variant) */
   description?: string;

@@ -275,7 +275,7 @@ export async function GET(request: NextRequest) {
     const totalClaims = offers.reduce((s, o) => s + (o.claim_count || 0), 0);
 
     // ── Nouveaux abonnés payants par mois (12 derniers mois) ──
-    // Proxy date conversion = trial_ends_at (trial 7j → ≈ date 1ère facture).
+    // Proxy date conversion = trial_ends_at (trial 3j → ≈ date 1ère facture).
     // Inclut les canceled (ils ont payé à un moment donné).
     const newPaidByMonth: { month: string; count: number; monthKey: string }[] = [];
     for (let i = 11; i >= 0; i--) {

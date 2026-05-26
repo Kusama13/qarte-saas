@@ -9,6 +9,7 @@ import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
 import { EmailSignoff } from './EmailSignoff';
 import { getEmailT, type EmailLocale } from './translations';
+import { TRIAL_DURATION_DAYS } from '@/lib/utils';
 
 interface WelcomeEmailProps {
   shopName: string;
@@ -17,7 +18,7 @@ interface WelcomeEmailProps {
   locale?: EmailLocale;
 }
 
-export function WelcomeEmail({ shopName, trialDays = 3, locale = 'fr' }: WelcomeEmailProps) {
+export function WelcomeEmail({ shopName, trialDays = TRIAL_DURATION_DAYS, locale = 'fr' }: WelcomeEmailProps) {
   const t = getEmailT(locale);
 
   return (

@@ -319,6 +319,9 @@ export function getMerchantMonthlyPrice(merchant: {
   return monthly;
 }
 
+// Source of truth — aligned with supabase/migrations/171_trial_3_days.sql DEFAULT.
+export const TRIAL_DURATION_DAYS = 3;
+
 export function getTrialStatus(trialEndsAt: string | null, subscriptionStatus: string): TrialStatus {
   const GRACE_PERIOD_DAYS = 3;
 

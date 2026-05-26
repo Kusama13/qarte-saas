@@ -4,18 +4,16 @@ import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Globe, CalendarDays, Heart, ArrowDown } from 'lucide-react';
 import type { Merchant } from '@/types';
+import { TRIAL_DURATION_DAYS, getTrialStatus } from '@/lib/utils';
 
 interface ZeroScansCoachProps {
   merchant: Merchant;
 }
 
-const TRIAL_DURATION_DAYS = 3;
-
 export default function ZeroScansCoach({ merchant }: ZeroScansCoachProps) {
   const t = useTranslations('zeroScans');
-  const trialEnd = new Date(merchant.trial_ends_at);
-  const now = new Date();
-  const daysRemaining = Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+  const trial = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
+  const daysRemaining = Math.max(0, trial.daysRemaining);
 
   return (
     <div className="space-y-2">
@@ -70,10 +68,9 @@ export default function ZeroScansCoach({ merchant }: ZeroScansCoachProps) {
         </div>
       </div>
 
-      {/* Trial urgency */}
-      {merchant.subscription_status === 'trial' && daysRemaining <= TRIAL_DURATION_DAYS && (
+      {trial.isActive && (
         <p className="text-xs text-center text-gray-400 pt-1">
-          {t('trialDay', { current: TRIAL_DURATION_DAYS - daysRemaining })}
+          {t('trialDay', { current: TRIAL_DURATION_DAYS - daysRemaining + 1, total: TRIAL_DURATION_DAYS })}
         </p>
       )}
     </div>

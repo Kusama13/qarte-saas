@@ -245,7 +245,7 @@ J+4         ┌─────────────────────�
             │
             ▼
     ┌───────────────┐
-    │  ESSAI 7 JOURS │
+    │  ESSAI 3 JOURS │
     │  (trial)       │
     └───────┬───────┘
             │
@@ -526,12 +526,12 @@ J+3     Social proof                    Tous les trial
 J+3     Vitrine reminder                Si pas de bio/adresse
 J+4     Planning reminder               Si planning non active
 J+4     First client script             Si QR envoye + 0 visites
-J+5     Trial ending (J-2)              Standard
+J+1     Trial ending (J-2)              Standard
 
-═══════ EXPIRATION TRIAL (J+7) ═══════
+═══════ EXPIRATION TRIAL (J+3) ═══════
 
-J+8     Trial expired (J+1)             Standard
-J+10    Grace period expire             → fully expired
+J+4     Trial expired (J+1)             Standard
+J+6     Grace period expire             → fully expired
 
 ═══════ SI ABONNEMENT SOUSCRIT ═══════
 
