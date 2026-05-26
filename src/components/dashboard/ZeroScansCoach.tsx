@@ -9,6 +9,8 @@ interface ZeroScansCoachProps {
   merchant: Merchant;
 }
 
+const TRIAL_DURATION_DAYS = 3;
+
 export default function ZeroScansCoach({ merchant }: ZeroScansCoachProps) {
   const t = useTranslations('zeroScans');
   const trialEnd = new Date(merchant.trial_ends_at);
@@ -69,9 +71,9 @@ export default function ZeroScansCoach({ merchant }: ZeroScansCoachProps) {
       </div>
 
       {/* Trial urgency */}
-      {merchant.subscription_status === 'trial' && daysRemaining <= 5 && (
+      {merchant.subscription_status === 'trial' && daysRemaining <= TRIAL_DURATION_DAYS && (
         <p className="text-xs text-center text-gray-400 pt-1">
-          {t('trialDay', { current: 7 - daysRemaining })}
+          {t('trialDay', { current: TRIAL_DURATION_DAYS - daysRemaining })}
         </p>
       )}
     </div>

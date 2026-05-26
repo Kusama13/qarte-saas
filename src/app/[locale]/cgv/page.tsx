@@ -68,7 +68,7 @@ function CGVContentFR() {
           <li><strong>6 mois :</strong> 120€ pour 6 mois (soit 20€/mois — un mois offert), facturé en une fois, engagement ferme de six (6) mois.</li>
         </ul>
         <p className="text-gray-600 mt-2 text-sm italic">Les Clients ayant souscrit avant mai 2026 à un abonnement annuel (190€/an Fidélité ou 240€/an Tout-en-un) restent soumis aux conditions de cet abonnement annuel jusqu&apos;à son terme.</p>
-        <p className="text-gray-600 mt-3"><strong>Essai gratuit :</strong> un essai gratuit de 7 jours est proposé sans carte bancaire. À l&apos;issue de l&apos;essai, le Client doit souscrire une formule pour continuer à utiliser le Service.</p>
+        <p className="text-gray-600 mt-3"><strong>Essai gratuit :</strong> un essai gratuit de 3 jours est proposé sans carte bancaire. À l&apos;issue de l&apos;essai, le Client doit souscrire une formule pour continuer à utiliser le Service.</p>
         <p className="text-gray-600 mt-3">
           Les prix indiqués s&apos;entendent hors taxes (HT). La TVA applicable au jour de la facturation (20% pour la France, taux applicable dans le pays de résidence du Client pour la Belgique et la Suisse) est ajoutée au tarif HT. Le paiement est effectué par carte bancaire via la plateforme sécurisée Stripe. Le Client peut basculer d&apos;une formule à l&apos;autre à tout moment ; un prorata est appliqué en cas d&apos;upgrade en cours de période et le changement prend effet à la prochaine échéance en cas de downgrade.
         </p>

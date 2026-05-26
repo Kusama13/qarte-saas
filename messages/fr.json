@@ -44,7 +44,7 @@
     "titlePart2": "remplir ton agenda et fidéliser tes clientes.",
     "subtitle": "Vitrine, Réservations, Fidélité digitale — et tout ce qu'il faut aux pros de la beauté. Tu économises près de 1 150€ par an par rapport aux autres plateformes.",
     "ctaPrimary": "Créer ma page beauté gratuitement",
-    "ctaSubtext": "7 jours gratuits · Sans carte bancaire",
+    "ctaSubtext": "3 jours gratuits · Sans carte bancaire",
     "ctaDemo": "Voir la démo",
     "socialProofText": "Utilisée par 800+ pros de la beauté",
     "appBadge": "App mobile dispo après inscription",
@@ -81,7 +81,7 @@
   "pricing": {
     "title": "Tout compris,",
     "titleHighlight": "zéro commission",
-    "subtitle": "Plus de 800 pros de la beauté ont déjà choisi Qarte. 7 jours gratuits, sans carte bancaire.",
+    "subtitle": "Plus de 800 pros de la beauté ont déjà choisi Qarte. 3 jours gratuits, sans carte bancaire.",
     "condensedSubtitle": "Sans engagement. Annule en 1 clic. Tes données gardées 30 jours après.",
     "condensedFidelityHint": "Tu as déjà un système de résa en ligne ? Ajoute la fidélité.",
     "condensedFidelitySemestrial": "ou 95€/6 mois (un mois offert)",
@@ -94,7 +94,7 @@
     "condensedAllInF2": "100 SMS marketing/mois inclus — 110 sur 6 mois",
     "condensedAllInF3": "Cartes VIP pour tes meilleures clientes + Jeu concours mensuel",
     "condensedCompareLink": "Comparer en détail",
-    "trialBadge": "7 jours gratuits",
+    "trialBadge": "3 jours gratuits",
     "billingMonthly": "Mensuel",
     "billingSemestrial": "6 mois",
     "semestrialSavingFidelity": "Un mois offert (95€)",
@@ -210,7 +210,7 @@
     "referralDesc": "Tes clientes parrainent leurs amies. Les deux sont récompensées. Chaque cliente satisfaite te rapporte de nouvelles clientes.",
     "referralBothRewarded": "Les deux sont récompensées",
     "cta": "Booste ton salon en 5 min",
-    "ctaSub": "7 jours d'essai gratuit"
+    "ctaSub": "3 jours d'essai gratuit"
   },
   "comparison": {
     "title": "Déjà sur Planity, Booksy ou tu gères tout seule ?",
@@ -242,7 +242,7 @@
     "philoTitle": "La réservation, simplifiée.",
     "philoText": "Tes clientes voient tes dispos, choisissent leur prestation et réservent en ligne. Tu reçois une notification, l'acompte est sécurisé, et le créneau est bloqué automatiquement.",
     "cta": "Tester gratuit, sans CB",
-    "ctaSub": "7 jours gratuits, sans carte bancaire"
+    "ctaSub": "3 jours gratuits, sans carte bancaire"
   },
   "features": {
     "title": "Tout ce dont tu as besoin,",
@@ -267,7 +267,7 @@
     "avisTitle": "Avis Google automatiques",
     "avisDesc": "Après chaque passage, on demande un avis au bon moment. Plus d'avis = plus de visibilité.",
     "cta": "Tester gratuit, sans CB",
-    "ctaSub": "7 jours gratuits, sans carte bancaire"
+    "ctaSub": "3 jours gratuits, sans carte bancaire"
   },
   "pagePro": {
     "badge": "Planning & acompte",
@@ -318,7 +318,7 @@
     "welcomeNewClient": "Sophie M. — Nouvelle cliente",
     "welcomeBadge": "+1 cliente",
     "cta": "Activer la résa en ligne",
-    "ctaSub": "7 jours gratuits, sans carte bancaire"
+    "ctaSub": "3 jours gratuits, sans carte bancaire"
   },
   "bento": {
     "badge": "",
@@ -364,7 +364,7 @@
     "autoOffer3Badge": "Programmé",
     "autoBadge": "100% auto",
     "cta": "Booste ton salon en 5 min",
-    "ctaSub": "7 jours gratuits, sans carte bancaire"
+    "ctaSub": "3 jours gratuits, sans carte bancaire"
   },
   "featuresGrid": {
     "title": "Facturé chez les concurrents.",
@@ -484,7 +484,7 @@
     "planityOpt2Feat4": "Fidélité créée automatiquement à chaque résa",
     "planityCompareLabel": "Voir les comparatifs :",
     "cta": "Fid\u00e9lise tes clientes en 5 min",
-    "ctaSub": "7 jours gratuits, sans carte bancaire"
+    "ctaSub": "3 jours gratuits, sans carte bancaire"
   },
   "howItWorks": {
     "title": "Pour commencer,",
@@ -559,7 +559,7 @@
     "q14": "Combien je peux économiser en passant de Planity ou Booksy à Qarte ?",
     "a14": "<strong>Planity équivalent</strong> : <span class='text-rose-600 font-semibold'>~120€/mois</span> (Pro 80€ + Fidélité 25€ + Site 15€).<br /><strong>Qarte Tout-en-un</strong> : <span class='text-indigo-600 font-bold'>24€/mois</span>.<br /><br />Tu gardes <span class='text-indigo-600 font-bold'>~1 150€/an</span>, exactement les mêmes outils : résa, fidélité, vitrine, SMS, acomptes, parrainage, avis.<br /><br />Sur Booksy, ajoute la commission marketplace (jusqu'à 20% sur les nouvelles clientes) : l'économie peut dépasser <span class='text-rose-600 font-semibold'>2 000€/an</span>.",
     "q15": "Et si je perds les nouveaux clients de la marketplace Planity ou Booksy ?",
-    "a15": "En vrai, tes nouvelles clientes viennent surtout d'<strong>Insta, du bouche-à-oreille et de Google</strong>, pas de la marketplace. Et celles qui passent par Planity ou Booksy, <strong>tu les paies en commission</strong>.<br /><br />Avec Qarte tu pilotes ton salon sans intermédiaire : résa sur ton lien à toi, fidélité, vitrine SEO Google, parrainage, avis, SMS automatiques. Tout pour <span class='text-indigo-600 font-bold'>24€/mois</span>, <span class='text-indigo-600 font-semibold'>0 commission</span>.<br /><br /><strong>Bonus :</strong> garde Planity ou Booksy en parallèle pendant ton essai 7 jours.",
+    "a15": "En vrai, tes nouvelles clientes viennent surtout d'<strong>Insta, du bouche-à-oreille et de Google</strong>, pas de la marketplace. Et celles qui passent par Planity ou Booksy, <strong>tu les paies en commission</strong>.<br /><br />Avec Qarte tu pilotes ton salon sans intermédiaire : résa sur ton lien à toi, fidélité, vitrine SEO Google, parrainage, avis, SMS automatiques. Tout pour <span class='text-indigo-600 font-bold'>24€/mois</span>, <span class='text-indigo-600 font-semibold'>0 commission</span>.<br /><br /><strong>Bonus :</strong> garde Planity ou Booksy en parallèle pendant ton essai 3 jours.",
     "showMore": "Voir {count} autres questions",
     "midCtaPrefix": "Convaincue ?",
     "midCtaButton": "Démarre l'essai gratuit",
@@ -572,7 +572,7 @@
     "title": "Comment Nail Salon by Elodie a",
     "titleBold": "augmenté ses clientes régulières de 45%",
     "metric": "+45% de clientes fidèles en 6 mois.",
-    "ctaButton": "Démarrer mes 7 jours gratuits",
+    "ctaButton": "Démarrer mes 3 jours gratuits",
     "quote": "Avant Qarte, mes clientes passaient une fois et disparaissaient. En 6 mois, j'ai 45% de clientes fidèles en plus — elles reçoivent leurs notifs, elles reviennent toutes seules. Je ne cours plus après personne.",
     "role": "Onglerie à Paris",
     "whatChanged": "Ce qui a changé :",
@@ -643,7 +643,7 @@
     "ctaChecklist1": "Page pro en ligne",
     "ctaChecklist2": "Programme fid\u00e9lit\u00e9 actif",
     "ctaChecklist3": "Premiers SMS partis",
-    "ctaTrust": "7 jours gratuits \u00b7 Sans CB \u00b7 Annulation 1 clic",
+    "ctaTrust": "3 jours gratuits \u00b7 Sans CB \u00b7 Annulation 1 clic",
     "googleRating": "5.0 sur Google",
     "tagline": "Vitrine en ligne et programme de fidélité pour salons de beauté, coiffeurs et instituts.",
     "madeIn": "Conçu avec amour à Marseille par Tenga Labs.",
@@ -681,7 +681,7 @@
     "title": "Rejoins les centaines de",
     "titleBold": "salons de beauté",
     "titleEnd": "qui ont choisi Qarte",
-    "subtitle": "Commence ton essai gratuit de 7 jours",
+    "subtitle": "Commence ton essai gratuit de 3 jours",
     "emailLabel": "Email",
     "emailPlaceholder": "ton@email.fr",
     "didYouMean": "Tu voulais dire",
@@ -720,7 +720,7 @@
     "countryLabel": "Pays",
     "phoneLabel": "Ton téléphone",
     "cta": "Lancer mon essai gratuit",
-    "ctaEmailHint": "Réponds OK à l'email qu'on va t'envoyer pour activer tes 7 jours d'essai gratuit.",
+    "ctaEmailHint": "Réponds OK à l'email qu'on va t'envoyer pour activer tes 3 jours d'essai gratuit.",
     "noCreditCard": "Sans carte bancaire",
     "readyIn2min": "Prêt en 30 sec",
     "back": "Retour",
@@ -801,17 +801,17 @@
   "pricingPage": {
     "login": "Se connecter",
     "metaTitle": "Tarifs Qarte — Fidélité 19€ ou Tout-en-un 24€/mois",
-    "metaDesc": "2 plans Qarte : Fidélité 19€/mois (programme + vitrine) ou Tout-en-un 24€/mois (+ planning, résa en ligne, SMS). Essai 7j gratuit.",
+    "metaDesc": "2 plans Qarte : Fidélité 19€/mois (programme + vitrine) ou Tout-en-un 24€/mois (+ planning, résa en ligne, SMS). Essai 3j gratuit.",
     "heroBadge": "Tarifs",
     "heroTitle": "Choisis ton plan",
     "heroTitleHighlight": "Qarte",
-    "heroSubtitle": "Sans surprise, sans commission. 7 jours gratuits, sans carte bancaire.",
+    "heroSubtitle": "Sans surprise, sans commission. 3 jours gratuits, sans carte bancaire.",
     "faqTitle": "Questions",
     "faqTitleHighlight": "fréquentes",
     "faq": {
       "q1": "Puis-je changer de plan en cours de route ?",
       "a1": "Oui, à tout moment depuis ton tableau de bord. Tu passes de Fidélité à Tout-en-un (ou inverse) en 1 clic, facturation ajustée au prorata. Si tu es client avant le 5 avril 2026, ton tarif historique est conservé — contacte le support pour changer de plan.",
-      "q2": "Que se passe-t-il après les 7 jours d'essai ?",
+      "q2": "Que se passe-t-il après les 3 jours d'essai ?",
       "a2": "Si tu as configuré une carte bancaire, ton plan choisi démarre. Sinon, ton compte passe en pause 3 jours puis est supprimé. Aucune surprise, aucun débit automatique sans ton accord.",
       "q3": "Quels moyens de paiement ?",
       "a3": "Carte bancaire (Visa, Mastercard, Amex) via Stripe. Paiement 100% sécurisé. Tu peux aussi changer ta carte à tout moment.",
@@ -828,7 +828,7 @@
     "trustGdpr": "RGPD conforme",
     "trustNoCommitment": "Sans engagement",
     "finalCtaTitle": "Prêt à essayer ?",
-    "finalCtaSub": "7 jours gratuits, sans carte bancaire. Tu choisis ton plan à la fin.",
+    "finalCtaSub": "3 jours gratuits, sans carte bancaire. Tu choisis ton plan à la fin.",
     "finalCtaBtn": "Démarrer mon essai gratuit",
     "copyright": "© 2026 Qarte. Tous droits réservés.",
     "legalNotices": "Mentions légales",
@@ -1746,7 +1746,7 @@
     "chooseFidelityCta": "Choisir Fidélité",
     "startAllInCta": "Démarrer Tout-en-un",
     "pageChooseTitle": "Choisis ton plan Qarte",
-    "pageChooseSubtitle": "Sans engagement. Résiliable en 1 clic. Essai 7 jours actif.",
+    "pageChooseSubtitle": "Sans engagement. Résiliable en 1 clic. Essai 3 jours actif.",
     "currentTierLabel": "Plan actuel",
     "changeTierCta": "Changer de plan",
     "legacyBadge": "Tarif historique",
@@ -3596,9 +3596,9 @@
   },
   "pricingMeta": {
     "title": "Tarifs — Réservation, fidélité et vitrine tout inclus dès 24 €/mois",
-    "description": "Un prix unique pour tout : réservation en ligne sans commission, programme de fidélité (tampons, cagnotte, relances auto, avis Google) et vitrine SEO. Essai gratuit 7 jours, sans carte bancaire.",
+    "description": "Un prix unique pour tout : réservation en ligne sans commission, programme de fidélité (tampons, cagnotte, relances auto, avis Google) et vitrine SEO. Essai gratuit 3 jours, sans carte bancaire.",
     "ogTitle": "Tarifs — Réservation, fidélité et vitrine tout inclus dès 24 €/mois | Qarte",
-    "ogDescription": "Réservation en ligne + fidélité + vitrine pour salons de beauté. 24 €/mois tout inclus, essai gratuit 7 jours sans carte bancaire."
+    "ogDescription": "Réservation en ligne + fidélité + vitrine pour salons de beauté. 24 €/mois tout inclus, essai gratuit 3 jours sans carte bancaire."
   },
   "socialMediaTemplate": {
     "loyaltyProgram": "Programme de fidélité",
@@ -3850,7 +3850,7 @@
     "badge": "Comparatif",
     "heroTitle": "Tu paies {competitor} pour r\u00e9server. Et la fid\u00e9lit\u00e9 ?",
     "heroSubtitle": "Qarte combine r\u00e9servation, fid\u00e9lit\u00e9 et vitrine en un seul outil — sans commission, pour {price}/mois.",
-    "ctaPrimary": "Tester gratuitement — 7 jours",
+    "ctaPrimary": "Tester gratuitement — 3 jours",
     "ctaSecondary": "Sans carte bancaire",
     "tableTitle": "Ce qui est",
     "tableSubtitle": "inclus",
@@ -3914,7 +3914,7 @@
     "faqQ4": "Y a-t-il un engagement ?",
     "faqA4": "Aucun. R\u00e9siliation en 1 clic, sans justification, sans frais cach\u00e9s.",
     "finalCtaTitle": "Tes clientes m\u00e9ritent mieux qu'une simple r\u00e9servation",
-    "finalCtaDesc": "R\u00e9servation + fid\u00e9lit\u00e9 + vitrine — 7 jours gratuits, sans carte bancaire.",
+    "finalCtaDesc": "R\u00e9servation + fid\u00e9lit\u00e9 + vitrine — 3 jours gratuits, sans carte bancaire.",
     "planity_name": "Planity",
     "planity_desc": "Planity est une plateforme de r\u00e9servation en ligne pour les salons de beaut\u00e9. Elle se concentre sur la prise de rendez-vous.",
     "planity_sms": "Payant en suppl\u00e9ment",
@@ -3964,11 +3964,11 @@
     "altHeroTitle": "Alternative à {competitor} : Qarte, 0% commission et fidélité incluse",
     "altHeroSubtitle": "Tu en as assez des commissions de {competitor} ? Qarte combine réservation, fidélité et vitrine en un seul outil — sans commission, pour 24€/mois tout compris.",
     "altMetaTitlePlanity": "Alternative à Planity — Qarte, sans commission (2026)",
-    "altMetaDescPlanity": "Alternative à Planity sans commission : réservation + fidélité + vitrine SEO pour 24€/mois. Essai 7 jours gratuit, résiliation en 1 clic.",
+    "altMetaDescPlanity": "Alternative à Planity sans commission : réservation + fidélité + vitrine SEO pour 24€/mois. Essai 3 jours gratuit, résiliation en 1 clic.",
     "altMetaTitleBooksy": "Alternative à Booksy — Qarte, sans commission et sans app (2026)",
-    "altMetaDescBooksy": "Alternative à Booksy sans commission et sans app client : réservation, fidélité, vitrine, SMS inclus pour 24€/mois. Essai gratuit 7 jours.",
+    "altMetaDescBooksy": "Alternative à Booksy sans commission et sans app client : réservation, fidélité, vitrine, SMS inclus pour 24€/mois. Essai gratuit 3 jours.",
     "altMetaTitleBookinbeautiful": "Alternative à Book in Beautiful — Qarte tout-en-un 24€/mois",
-    "altMetaDescBookinbeautiful": "Alternative à Book in Beautiful : réservation, fidélité, vitrine SEO et parrainage en un outil, sans commission. 7 jours d'essai gratuit.",
+    "altMetaDescBookinbeautiful": "Alternative à Book in Beautiful : réservation, fidélité, vitrine SEO et parrainage en un outil, sans commission. 3 jours d'essai gratuit.",
     "altMigrationTitle": "Passer de {competitor} à Qarte en",
     "altMigrationTitleBold": "moins de 10 minutes",
     "altMigrationDesc": "Zéro prise de tête. On te guide pour récupérer ta base clientes et garder tes habitudes.",
@@ -3997,7 +3997,7 @@
     "step1Title": "Remplis le formulaire",
     "step1Desc": "Remplis le formulaire ci-dessous en 2 minutes. On traite ta candidature sous 24-48h.",
     "step2Title": "Partage autour de toi",
-    "step2Desc": "Envoie ton lien aux pros de la beauté que tu connais. Elles testent Qarte gratuitement pendant 7 jours.",
+    "step2Desc": "Envoie ton lien aux pros de la beauté que tu connais. Elles testent Qarte gratuitement pendant 3 jours.",
     "step3Title": "Touche ta commission",
     "step3Desc": "Chaque pro qui s'abonne via ton lien te rapporte 3,80 à 4,80\u20ac/mois selon son plan. 10 salons = 38 à 48\u20ac/mois. 50 salons = 190 à 240\u20ac/mois.",
     "perksTitle": "Ce que tu",
@@ -4008,7 +4008,7 @@
     "perk2Desc": "Parraine des salons dans les 3 pays. Un seul lien, pas de restriction géographique.",
     "perk3Title": "Dashboard en temps réel",
     "perk3Desc": "Suis tes parrainages, tes conversions et tes gains depuis ton espace dédié.",
-    "perk4Title": "Essai gratuit 7 jours",
+    "perk4Title": "Essai gratuit 3 jours",
     "perk4Desc": "Les pros testent Qarte sans carte bancaire. Tu n'as pas besoin de convaincre, juste de partager.",
     "perk5Title": "Paiement mensuel par virement",
     "perk5Desc": "Tes commissions sont calculées chaque mois et versées directement sur ton compte bancaire.",
@@ -4047,7 +4047,7 @@
     "faqQ3": "Ça me coûte quelque chose ?",
     "faqA3": "Rien du tout. Le programme est 100% gratuit, sans engagement, sans investissement. Tu peux arrêter quand tu veux sans justification.",
     "faqQ4": "Est-ce que les pros que je recommande doivent payer tout de suite ?",
-    "faqA4": "Non. Elles bénéficient de 7 jours d'essai gratuit sans carte bancaire. Tu ne touches ta commission que si elles s'abonnent après l'essai.",
+    "faqA4": "Non. Elles bénéficient de 3 jours d'essai gratuit sans carte bancaire. Tu ne touches ta commission que si elles s'abonnent après l'essai.",
     "faqQ5": "Que se passe-t-il si un salon résilie ?",
     "faqA5": "Ta commission s'arrête pour ce salon uniquement. Tes autres parrainages continuent normalement. Tu peux toujours parrainer de nouveaux salons.",
     "faqQ6": "Est-ce que je dois vendre ou convaincre ?",

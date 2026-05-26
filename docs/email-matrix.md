@@ -636,9 +636,9 @@ Source : `src/emails/translations/fr.ts`. Les `<strong>...</strong>` ont été c
   - Greeting: `Bonjour,`
   - body1: `Vous avez créé un compte Qarte ({email}) il y a une semaine, mais votre commerce n'est toujours pas enregistré.`
   - warningBox: `Votre espace sera **supprimé automatiquement** dans quelques jours si l'inscription n'est pas finalisée.`
-  - body2: `L'inscription prend **3 minutes** et l'essai est 100% gratuit pendant 7 jours, sans carte bancaire.`
-  - promoTitle: `Essai gratuit 7 jours`
-  - promoText: `Testez Qarte gratuitement pendant 7 jours : vitrine en ligne, programme fidélité, réservation en ligne, parrainage et cadeaux anniversaire. Sans carte bancaire.`
+  - body2: `L'inscription prend **3 minutes** et l'essai est 100% gratuit pendant 3 jours, sans carte bancaire.`
+  - promoTitle: `Essai gratuit 3 jours`
+  - promoText: `Testez Qarte gratuitement pendant 3 jours : vitrine en ligne, programme fidélité, réservation en ligne, parrainage et cadeaux anniversaire. Sans carte bancaire.`
   - helpLine: `Une question avant de vous lancer ? Répondez à cet email.`
 - **CTA** : `Finaliser mon inscription`
 - **Signature** : `L'équipe Qarte`
@@ -710,7 +710,7 @@ Source : `src/emails/translations/fr.ts`. Les `<strong>...</strong>` ont été c
 - **Body** :
   - Greeting: `Bonjour **{shopName}**,`
   - intro: `Ton compte est créé. Voici ce que Qarte va faire pour toi :`
-  - replyPrompt: `Réponds **OK** à cet email pour activer tes 7 jours d'essai gratuit.`
+  - replyPrompt: `Réponds **OK** à cet email pour activer tes 3 jours d'essai gratuit.`
   - benefitsTitle: `Tout est interconnecté :`
   - benefit1: `Ta **vitrine en ligne** attire de nouvelles clientes via Google`
   - benefit2: `Elles **réservent en ligne** depuis ta page, même à 23h`

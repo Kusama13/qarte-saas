@@ -17,7 +17,7 @@ interface WelcomeEmailProps {
   locale?: EmailLocale;
 }
 
-export function WelcomeEmail({ shopName, trialDays = 7, locale = 'fr' }: WelcomeEmailProps) {
+export function WelcomeEmail({ shopName, trialDays = 3, locale = 'fr' }: WelcomeEmailProps) {
   const t = getEmailT(locale);
 
   return (

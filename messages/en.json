@@ -43,8 +43,8 @@
     "titlePart1": "The simplest way to",
     "titlePart2": "fill your calendar and keep clients coming back.",
     "subtitle": "Storefront, Bookings, Digital Loyalty — and everything beauty pros need. Save nearly €1,150 a year compared to other platforms.",
-    "ctaPrimary": "Start my 7 days free",
-    "ctaSubtext": "7 days free · No credit card",
+    "ctaPrimary": "Start my 3 days free",
+    "ctaSubtext": "3 days free · No credit card",
     "ctaDemo": "See the demo",
     "googleRating": "5.0 on Google",
     "appBadge": "Mobile app — available after sign-up",
@@ -104,8 +104,8 @@
   "pricing": {
     "title": "Everything included,",
     "titleHighlight": "zero commission",
-    "subtitle": "Over 800 beauty pros already chose Qarte. 7 days free, no credit card.",
-    "condensedSubtitle": "Pick the plan that matches your usage. 7 days free, no credit card.",
+    "subtitle": "Over 800 beauty pros already chose Qarte. 3 days free, no credit card.",
+    "condensedSubtitle": "Pick the plan that matches your usage. 3 days free, no credit card.",
     "condensedFidelityHint": "Already have an online booking tool? Add loyalty.",
     "condensedFidelitySemestrial": "or €95 for 6 months (one month free)",
     "condensedAllInSemestrial": "or €120 for 6 months (one month free)",
@@ -117,7 +117,7 @@
     "condensedAllInF2": "100 marketing SMS/month included — 110 on 6-month plan",
     "condensedAllInF3": "VIP Member programs + monthly contest",
     "condensedCompareLink": "Compare in detail",
-    "trialBadge": "7-day free trial",
+    "trialBadge": "3-day free trial",
     "billingMonthly": "Monthly",
     "billingSemestrial": "6 months",
     "semestrialSavingFidelity": "One month free (€95)",
@@ -129,8 +129,8 @@
     "perDayAllIn": "i.e. €0.80/day — less than a coffee",
     "vsBooksy": "vs Booksy €60/mo + commissions",
     "popularBadge": "Recommended",
-    "ctaTrialFidelity": "Try Loyalty — 7 days free",
-    "ctaTrialAllIn": "Try All-in-one — 7 days free",
+    "ctaTrialFidelity": "Try Loyalty — 3 days free",
+    "ctaTrialAllIn": "Try All-in-one — 3 days free",
     "trustLine": "No credit card · 1-click cancel",
     "fidelityName": "Loyalty",
     "fidelityTagline": "Already paying for booking? Stop <em>losing your clients</em>.",
@@ -231,7 +231,7 @@
     "referralDesc": "Your clients refer their friends. Both get rewarded. Every happy client brings you new ones.",
     "referralBothRewarded": "Both are rewarded",
     "cta": "Boost your salon in 5 min",
-    "ctaSub": "7-day free trial"
+    "ctaSub": "3-day free trial"
   },
   "comparison": {
     "title": "Already on Planity, Booksy, or managing solo?",
@@ -263,7 +263,7 @@
     "philoTitle": "Booking, simplified.",
     "philoText": "Your clients see your availability, choose their service and book online. You get a notification, the deposit is secured, and the slot is blocked automatically.",
     "cta": "Try for free",
-    "ctaSub": "7-day free trial, no credit card"
+    "ctaSub": "3-day free trial, no credit card"
   },
   "features": {
     "title": "Everything you need,",
@@ -288,7 +288,7 @@
     "avisTitle": "Automatic Google reviews",
     "avisDesc": "After each visit, we ask for a review at the right time. More reviews = more visibility.",
     "cta": "Try for free",
-    "ctaSub": "7-day free trial, no credit card"
+    "ctaSub": "3-day free trial, no credit card"
   },
   "pagePro": {
     "badge": "All-in-one plan",
@@ -339,7 +339,7 @@
     "welcomeNewClient": "Sophie M. — New client",
     "welcomeBadge": "+1 client",
     "cta": "Turn on online booking",
-    "ctaSub": "7 days free, no credit card"
+    "ctaSub": "3 days free, no credit card"
   },
   "bento": {
     "badge": "",
@@ -385,7 +385,7 @@
     "autoOffer3Badge": "Scheduled",
     "autoBadge": "100% auto",
     "cta": "Boost your salon in 5 min",
-    "ctaSub": "7 days free, no credit card"
+    "ctaSub": "3 days free, no credit card"
   },
   "featuresGrid": {
     "title": "Charged by competitors.",
@@ -504,7 +504,7 @@
     "planityOpt2Feat4": "Loyalty card auto-created on every booking",
     "planityCompareLabel": "See the comparisons:",
     "cta": "Build client loyalty in 5 min",
-    "ctaSub": "7 days free, no credit card"
+    "ctaSub": "3 days free, no credit card"
   },
   "howItWorks": {
     "title": "Getting started is",
@@ -579,7 +579,7 @@
     "q14": "How much can I save switching from Planity or Booksy to Qarte?",
     "a14": "On Planity, a typical setup (Pro €80 + Loyalty option €25 + Personal site €15) costs ~€120/month — €1,440/year. With Qarte All-in-one at €24/month, you pay €288/year. Savings: ~€1,150/year, and you keep the same things: booking, loyalty, storefront, SMS, deposits, referrals, reviews. On Booksy, add the marketplace commission (up to 20% on new clients) — savings can exceed €2,000/year depending on your revenue.",
     "q15": "What if I lose new clients from the Planity or Booksy marketplace?",
-    "a15": "Honestly, most of your new clients come from your Insta, word-of-mouth and Google — not from the marketplace. And the ones that do come through Planity or Booksy, you pay for them (commission). With Qarte you get everything you need to run your salon without a middleman: booking on your own link, loyalty, SEO storefront ranked on Google, referrals, review collection, automatic SMS. All for €24/month, nothing extra to pay, no commission. Bonus: you can keep Planity or Booksy in parallel during your 7-day trial.",
+    "a15": "Honestly, most of your new clients come from your Insta, word-of-mouth and Google — not from the marketplace. And the ones that do come through Planity or Booksy, you pay for them (commission). With Qarte you get everything you need to run your salon without a middleman: booking on your own link, loyalty, SEO storefront ranked on Google, referrals, review collection, automatic SMS. All for €24/month, nothing extra to pay, no commission. Bonus: you can keep Planity or Booksy in parallel during your 3-day trial.",
     "showMore": "Show {count} more questions",
     "whatsappTitle": "Have a question? Message us directly.",
     "whatsappSub": "Response in under 1 hour",
@@ -590,7 +590,7 @@
     "title": "How Nail Salon by Elodie",
     "titleBold": "grew regular clients by 45%",
     "metric": "+45% loyal clients in 6 months.",
-    "ctaButton": "Start my 7 days free",
+    "ctaButton": "Start my 3 days free",
     "quote": "Before Qarte, my clients would come once and vanish. In 6 months, I have 45% more loyal clients — they get their notifs, they come back on their own. I don't chase anyone anymore.",
     "role": "Nail salon in Paris",
     "whatChanged": "What changed:",
@@ -695,7 +695,7 @@
     "title": "Join hundreds of",
     "titleBold": "beauty salons",
     "titleEnd": "who chose Qarte",
-    "subtitle": "Start your free 7-day trial",
+    "subtitle": "Start your free 3-day trial",
     "emailLabel": "Email",
     "emailPlaceholder": "you@yoursalon.com",
     "didYouMean": "Did you mean",
@@ -734,7 +734,7 @@
     "countryLabel": "Country",
     "phoneLabel": "Your phone",
     "cta": "Start my free trial",
-    "ctaEmailHint": "Reply OK to the email we'll send you to activate your 7-day free trial.",
+    "ctaEmailHint": "Reply OK to the email we'll send you to activate your 3-day free trial.",
     "noCreditCard": "No credit card",
     "readyIn2min": "Ready in 30 sec",
     "back": "Back",
@@ -815,17 +815,17 @@
   "pricingPage": {
     "login": "Sign in",
     "metaTitle": "Qarte Pricing — Loyalty €19 or All-in-one €24/mo",
-    "metaDesc": "2 Qarte plans: Loyalty €19/mo (program + storefront) or All-in-one €24/mo (+ booking, online reservation, SMS). 7-day free trial.",
+    "metaDesc": "2 Qarte plans: Loyalty €19/mo (program + storefront) or All-in-one €24/mo (+ booking, online reservation, SMS). 3-day free trial.",
     "heroBadge": "Pricing",
     "heroTitle": "Choose your plan",
     "heroTitleHighlight": "Qarte",
-    "heroSubtitle": "No surprises, no commission. 7 days free, no credit card.",
+    "heroSubtitle": "No surprises, no commission. 3 days free, no credit card.",
     "faqTitle": "Frequently asked",
     "faqTitleHighlight": "questions",
     "faq": {
       "q1": "Can I switch plans anytime?",
       "a1": "Yes, anytime from your dashboard. Switch from Loyalty to All-in-one (or back) in 1 click, prorated billing. If you signed up before April 5, 2026, your historical rate is preserved — contact support to switch plans.",
-      "q2": "What happens after the 7-day trial?",
+      "q2": "What happens after the 3-day trial?",
       "a2": "If you've added a credit card, your chosen plan starts. Otherwise, your account is paused for 3 days then deleted. No surprises, no automatic charges without your consent.",
       "q3": "Payment methods?",
       "a3": "Credit card (Visa, Mastercard, Amex) via Stripe. 100% secure. You can update your card anytime.",
@@ -842,7 +842,7 @@
     "trustGdpr": "GDPR compliant",
     "trustNoCommitment": "No commitment",
     "finalCtaTitle": "Ready to try?",
-    "finalCtaSub": "7 days free, no credit card. Pick your plan at the end.",
+    "finalCtaSub": "3 days free, no credit card. Pick your plan at the end.",
     "finalCtaBtn": "Start my free trial",
     "copyright": "© 2026 Qarte. All rights reserved.",
     "legalNotices": "Legal notices",
@@ -1755,7 +1755,7 @@
     "chooseFidelityCta": "Choose Loyalty",
     "startAllInCta": "Start All-in-one",
     "pageChooseTitle": "Choose your Qarte plan",
-    "pageChooseSubtitle": "No commitment. Cancel in 1 click. 7-day trial still active.",
+    "pageChooseSubtitle": "No commitment. Cancel in 1 click. 3-day trial still active.",
     "tierAllInName": "All-in-one",
     "tierAllInHint": "Loyalty + scheduling + SMS + campaigns.",
     "currentTierLabel": "Current plan",
@@ -3593,9 +3593,9 @@
   },
   "pricingMeta": {
     "title": "Pricing — Booking, loyalty & salon page all-inclusive from $24/month",
-    "description": "One price for everything: online booking with 0% commission, loyalty program (stamps, cashback, auto follow-ups, Google reviews) and SEO salon page. Free 7-day trial, no credit card required.",
+    "description": "One price for everything: online booking with 0% commission, loyalty program (stamps, cashback, auto follow-ups, Google reviews) and SEO salon page. Free 3-day trial, no credit card required.",
     "ogTitle": "Pricing — Booking, loyalty & salon page all-inclusive from $24/month | Qarte",
-    "ogDescription": "Online booking + loyalty + salon page for beauty salons. $24/month all-inclusive, free 7-day trial with no credit card."
+    "ogDescription": "Online booking + loyalty + salon page for beauty salons. $24/month all-inclusive, free 3-day trial with no credit card."
   },
   "socialMediaTemplate": {
     "loyaltyProgram": "Loyalty Program",
@@ -3847,7 +3847,7 @@
     "badge": "Comparison",
     "heroTitle": "You pay {competitor} for booking. What about loyalty?",
     "heroSubtitle": "Qarte combines booking, loyalty and storefront in one tool — no commission, for {price}/mo.",
-    "ctaPrimary": "Try free — 7 days",
+    "ctaPrimary": "Try free — 3 days",
     "ctaSecondary": "No credit card required",
     "tableTitle": "What's",
     "tableSubtitle": "included",
@@ -3911,7 +3911,7 @@
     "faqQ4": "Is there a commitment?",
     "faqA4": "None. Cancel in 1 click, no justification, no hidden fees.",
     "finalCtaTitle": "Your clients deserve more than just a booking",
-    "finalCtaDesc": "Booking + loyalty + storefront — 7 days free, no credit card.",
+    "finalCtaDesc": "Booking + loyalty + storefront — 3 days free, no credit card.",
     "planity_name": "Planity",
     "planity_desc": "Planity is an online booking platform for beauty salons. It focuses on appointment scheduling.",
     "planity_sms": "Paid add-on",
@@ -3961,11 +3961,11 @@
     "altHeroTitle": "{competitor} alternative: Qarte with 0% commission and loyalty included",
     "altHeroSubtitle": "Tired of {competitor}'s commissions? Qarte combines booking, loyalty and storefront in one tool — no commission, €24/month all-in.",
     "altMetaTitlePlanity": "Planity alternative — Qarte, no commission (2026)",
-    "altMetaDescPlanity": "Planity alternative with no commission: booking + loyalty + SEO storefront for €24/month. 7-day free trial, cancel anytime.",
+    "altMetaDescPlanity": "Planity alternative with no commission: booking + loyalty + SEO storefront for €24/month. 3-day free trial, cancel anytime.",
     "altMetaTitleBooksy": "Booksy alternative — no commission, no client app (2026)",
-    "altMetaDescBooksy": "Booksy alternative with no commission and no client app: booking, loyalty, storefront, SMS included for €24/month. 7-day free trial.",
+    "altMetaDescBooksy": "Booksy alternative with no commission and no client app: booking, loyalty, storefront, SMS included for €24/month. 3-day free trial.",
     "altMetaTitleBookinbeautiful": "Book in Beautiful alternative — Qarte all-in-one €24/month",
-    "altMetaDescBookinbeautiful": "Book in Beautiful alternative: booking, loyalty, SEO storefront and referrals in one tool, no commission. 7-day free trial.",
+    "altMetaDescBookinbeautiful": "Book in Beautiful alternative: booking, loyalty, SEO storefront and referrals in one tool, no commission. 3-day free trial.",
     "altMigrationTitle": "Switch from {competitor} to Qarte in",
     "altMigrationTitleBold": "under 10 minutes",
     "altMigrationDesc": "Zero hassle. We help you keep your client base and existing habits.",
@@ -3994,7 +3994,7 @@
     "step1Title": "Fill out the form",
     "step1Desc": "Fill out the form below in 2 minutes. We review your application within 24-48h.",
     "step2Title": "Share it around",
-    "step2Desc": "Send your link to beauty professionals you know. They can try Qarte free for 7 days.",
+    "step2Desc": "Send your link to beauty professionals you know. They can try Qarte free for 3 days.",
     "step3Title": "Earn your commission",
     "step3Desc": "Every pro who subscribes via your link earns you \u20ac3.80 to \u20ac4.80/month depending on their plan. 10 salons = \u20ac38 to \u20ac48/month. 50 salons = \u20ac190 to \u20ac240/month.",
     "perksTitle": "What you",
@@ -4005,7 +4005,7 @@
     "perk2Desc": "Refer salons in all 3 countries. One link, no geographic restrictions.",
     "perk3Title": "Real-time dashboard",
     "perk3Desc": "Track your referrals, conversions and earnings from your dedicated space.",
-    "perk4Title": "Free 7-day trial",
+    "perk4Title": "Free 3-day trial",
     "perk4Desc": "Pros try Qarte without a credit card. You don't need to convince — just share.",
     "perk5Title": "Monthly bank transfer",
     "perk5Desc": "Commissions are calculated monthly and paid directly to your bank account.",
@@ -4044,7 +4044,7 @@
     "faqQ3": "Does it cost me anything?",
     "faqA3": "Nothing at all. The program is 100% free, no commitment, no investment. You can stop anytime without justification.",
     "faqQ4": "Do the pros I refer have to pay right away?",
-    "faqA4": "No. They get a 7-day free trial without a credit card. You only earn your commission if they subscribe after the trial.",
+    "faqA4": "No. They get a 3-day free trial without a credit card. You only earn your commission if they subscribe after the trial.",
     "faqQ5": "What happens if a salon cancels?",
     "faqA5": "Your commission stops for that salon only. Your other referrals continue as normal. You can always refer new salons.",
     "faqQ6": "Do I need to sell or convince anyone?",

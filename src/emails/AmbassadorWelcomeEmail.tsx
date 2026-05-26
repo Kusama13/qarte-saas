@@ -55,7 +55,7 @@ export function AmbassadorWelcomeEmail({
       <Section style={earningsBox}>
         <Text style={earningsTitle}>Comment ça marche</Text>
         <Text style={earningsItem}>&#x2713; Tu partages ton lien aux pros de la beauté que tu connais</Text>
-        <Text style={earningsItem}>&#x2713; Elles testent Qarte gratuitement pendant 7 jours</Text>
+        <Text style={earningsItem}>&#x2713; Elles testent Qarte gratuitement pendant 3 jours</Text>
         <Text style={earningsItem}>&#x2713; Si elles s&apos;abonnent, tu touches 4,80&euro;/mois par salon</Text>
         <Text style={earningsItem}>&#x2713; Les commissions sont versées chaque mois par virement</Text>
       </Section>

@@ -206,7 +206,7 @@ export default function BooksyCostCalculator() {
                   onClick={() => trackCtaClick('booksy_cost_calc', 'booksy_cost_savings')}
                   className="inline-flex items-center gap-2 px-10 py-5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02]"
                 >
-                  Essai gratuit 7 jours
+                  Essai gratuit 3 jours
                   <ArrowRight className="w-5 h-5" />
                 </Link>
                 <p className="text-xs text-gray-400 mt-3">Sans carte bancaire — résiliation en 1 clic</p>
@@ -243,7 +243,7 @@ export default function BooksyCostCalculator() {
           <div className="space-y-3">
             {[
               { q: 'Qarte prend vraiment 0% de commission ?', a: 'Oui. Tu mets ton propre lien de paiement (Revolut, PayPal, Stripe, SumUp…) pour les acomptes. L\'argent va direct sur ton compte, Qarte ne prélève jamais rien.' },
-              { q: 'Est-ce que je peux garder Booksy en parallèle ?', a: 'Absolument. Tu peux tester Qarte 7 jours gratuits sans toucher à Booksy. Beaucoup de pros gardent Booksy quelques semaines le temps de la transition.' },
+              { q: 'Est-ce que je peux garder Booksy en parallèle ?', a: 'Absolument. Tu peux tester Qarte 3 jours gratuits sans toucher à Booksy. Beaucoup de pros gardent Booksy quelques semaines le temps de la transition.' },
               { q: 'Mes clientes Booksy vont-elles me suivre sur Qarte ?', a: 'Tes clientes réservent en ligne via ta vitrine Qarte (lien unique à partager sur Insta/SMS/Google). Tu peux aussi importer leurs coordonnées manuellement dans ton dashboard.' },
               { q: 'Les 100 SMS inclus, c\'est vraiment assez ?', a: 'Pour un salon 1-3 employés qui envoie des rappels et confirmations, 100 SMS/mois couvre environ 30-50 RDV. Si tu en envoies plus, les packs Qarte commencent à 5,70€ pour 50 SMS (0,075€/SMS).' },
             ].map((item, i) => (
@@ -264,7 +264,7 @@ export default function BooksyCostCalculator() {
         <div className="relative max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">Récupère cet argent.</h2>
           <p className="text-[1.05rem] md:text-lg text-gray-800 mb-8">
-            Essai gratuit 7 jours, sans carte bancaire. Garde Booksy le temps de la transition si tu veux.
+            Essai gratuit 3 jours, sans carte bancaire. Garde Booksy le temps de la transition si tu veux.
           </p>
           <Link
             href="/auth/merchant/signup"

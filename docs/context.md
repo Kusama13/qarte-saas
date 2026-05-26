@@ -12,7 +12,7 @@
 - **Langues:** Francais uniquement (EN desactive via redirect 301, infra conservee) via `next-intl` | **Version:** 0.1.0
 - **Pays:** FR, BE, CH uniquement (signup + PhoneInput)
 - **Ton FR:** tutoiement dashboard merchant, vouvoiement client-facing
-- **Essai:** 7 jours | **Prix:** Tout-en-un 24€/mois ou 120€/6 mois (1 mois offert) — Fidélité 19€/mois ou 95€/6 mois (annuel 240€/190€ legacy, plus proposé aux nouveaux merchants depuis mai 2026)
+- **Essai:** 3 jours | **Prix:** Tout-en-un 24€/mois ou 120€/6 mois (1 mois offert) — Fidélité 19€/mois ou 95€/6 mois (annuel 240€/190€ legacy, plus proposé aux nouveaux merchants depuis mai 2026)
 - **Cible:** Salons de beaute (coiffeurs, barbiers, instituts, ongleries, spas, estheticiennes)
 - **Entite:** SAS Tenga Labs — 58 rue de Monceau, CS 48756, 75380 Paris Cedex 08
 
@@ -360,7 +360,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Bandeau "Page suspendue"** : bandeau rouge sticky en haut de `/p/[slug]` pour merchants expires. Condition : `subscription_status` hors active/canceling/past_due, ET si trial → verifie `trial_ends_at + 3j grace`. Message : "Page suspendue — compte inactif. Un abonnement est necessaire pour reactiver cette page." Pression sociale pour inciter le merchant a s'abonner. Note : `subscription_status` reste `trial` en DB meme apres expiration (jamais mute automatiquement), d'ou la verification sur `trial_ends_at`.
 - **Bandeau demo** : bandeau fixe bottom sur pages demo (`isDemo`) : "Mode demo — les actions sont desactivees" + CTA "Creer mon compte".
 - **Acompte** : toggle on/off dans parametres planning (`depositEnabled` state local, sync au load). `computeDepositAmount()` cappe au prix total (`Math.min`). Si acompte >= prix → affiche "Paiement integral" au lieu de "Acompte" (vitrine + dashboard).
-- **Reply OK warm-up** : texte sous bouton signup "Reponds OK a l'email pour activer tes 7 jours d'essai gratuit" + encart jaune dans Welcome email demandant de repondre OK (warm-up deliverabilite)
+- **Reply OK warm-up** : texte sous bouton signup "Reponds OK a l'email pour activer tes 3 jours d'essai gratuit" + encart jaune dans Welcome email demandant de repondre OK (warm-up deliverabilite)
 
 ### Service à domicile — calcul auto durée de trajet (mig 134-136)
 
@@ -699,7 +699,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 ### Statuts
 | Statut | Description |
 |--------|-------------|
-| `trial` | Periode d'essai (7 jours) |
+| `trial` | Periode d'essai (3 jours) |
 | `active` | Abonnement actif |
 | `canceling` | Annulation programmee (cancel_at_period_end=true) |
 | `canceled` | Annule (orthographe US) |
@@ -862,20 +862,20 @@ Hero (rework avril 2026, **Burger King vs McDo style** sur l'objection prix) :
 - titlePart2 (rose-500) : "Chez Qarte, c'est 24€."
 - subtitle parite + bonus + chiffre : "Mêmes résas, mêmes SMS, même planning. Un programme de fidélité digitale offert en plus. Tu économises près de 1 150€ par an." (anaphore "même × 3" repond a l'objection switching cost)
 - ctaPrimary : "Créer ma page beauté gratuitement" (gradient indigo→violet)
-- ctaSubtext : "7 jours gratuits · Sans carte bancaire" (1 ligne sobre, leve l'incertitude duree gratuite)
+- ctaSubtext : "3 jours gratuits · Sans carte bancaire" (1 ligne sobre, leve l'incertitude duree gratuite)
 - "85€/mois" wrappe avec U+2060 (Word Joiner) entre 85€/mois pour empecher le navigateur de couper a la barre oblique sur mobile
 - Code splitter title supporte `\n+` ou separateur de phrase (`/(?<=[.?!])\s+/`)
 - Hero mockup : `HeroPersonMockup` (style Bookin Beautiful) — photo pro beauté générée Imagen 4 (fond supprimé via rembg, `public/images/hero-person-4-crop.png`, z-20 au centre), 3 cartes flottantes : **SMS rappel** (top, z-30), **Rdv du jour** (gauche, z-10, -rotate-6), **Fidélité** (droite, z-10, +rotate-6). Container 580×620px, scale responsive 0.62→1, `min-w-0` sur colonnes grid pour éviter overflow mobile.
 - Hero responsive : single-col jusqu'a `xl` (1280px+) ou bascule en 2-col `[1fr_1.2fr]` (image col elargie pour contenir mockup 580px sans overlap). iPad Pro 13" portrait (1024×1366) reste single-col, evite chevauchement texte/image. Pill social proof au-dessus H1 affiche logos top 5 marchands DB via `getTopMerchants()` server-side cache 7j.
 - MobileStickyCta : sticky bottom mobile-only, copy synchro avec hero ("Creer ma page beaute gratuitement"). Cache automatiquement quand `#footer-cta` entre dans le viewport (IntersectionObserver) pour ne pas couvrir la checklist du footer.
-- SocialProofMerged avatars : 4 logos hardcodes en local (`public/images/testimonials/{laila,ericka,yam,lindsay}.{jpeg,png}`) — pas de query DB runtime, simple. Farida T. (pas de compte) affichee en cercle colore "F". Roles alignes au shop_type DB reel : Yam=Prothesiste ongulaire, Ericka=Institut de beaute, Lindsay=Institut de beaute. Mini-citation Doux Regard (fausse) remplacee par Laila (mini dans FideliteSection, role corrige Estheticienne→Prothesiste ongulaire). JSON-LD Reviews dans `src/app/layout.tsx` itere sur les 4 testimonials. Case study Nail Salon by Elodie en bloc separe (fond `bg-stone-900`), CTA contextuel "Demarrer mes 7 jours gratuits" (au lieu du generique "Tester gratuit, sans CB" qui tuait le momentum narratif).
+- SocialProofMerged avatars : 4 logos hardcodes en local (`public/images/testimonials/{laila,ericka,yam,lindsay}.{jpeg,png}`) — pas de query DB runtime, simple. Farida T. (pas de compte) affichee en cercle colore "F". Roles alignes au shop_type DB reel : Yam=Prothesiste ongulaire, Ericka=Institut de beaute, Lindsay=Institut de beaute. Mini-citation Doux Regard (fausse) remplacee par Laila (mini dans FideliteSection, role corrige Estheticienne→Prothesiste ongulaire). JSON-LD Reviews dans `src/app/layout.tsx` itere sur les 4 testimonials. Case study Nail Salon by Elodie en bloc separe (fond `bg-stone-900`), CTA contextuel "Demarrer mes 3 jours gratuits" (au lieu du generique "Tester gratuit, sans CB" qui tuait le momentum narratif).
 Footer badge Google Reviews : logo Google couleur + 5 etoiles + "5.0 sur Google" — sous "Concu avec amour a Marseille par Tenga Labs" dans FooterDark
 
 SocialProof bandeau : "Plus d'un millier de **pros de la beaute** attirent et **fidelisent** avec Qarte" — mots cles en indigo-600
 
 Demos accessibles via : bouton hero → demo carte fidelite, page vitrine `/p/demo-*`, selecteur tampons/cagnotte sur carte demo.
 
-**SEO getqarte.com (avril 2026)** : meta description mise a jour pour forcer "Qarte" en premier mot (reduit le hijack par footer dans Google SERP) : *"Qarte — l'app tout-en-un des salons de beaute : carte de fidelite digitale, reservation en ligne sans commission, page salon. Essai 7 jours."* LandingNav desktop + mobile ajoute liens **Blog** + **Comparatifs** (pointe `/compare/planity`) pour influencer les sitelinks Google (pages nav-level > pages footer-only).
+**SEO getqarte.com (avril 2026)** : meta description mise a jour pour forcer "Qarte" en premier mot (reduit le hijack par footer dans Google SERP) : *"Qarte — l'app tout-en-un des salons de beaute : carte de fidelite digitale, reservation en ligne sans commission, page salon. Essai 3 jours."* LandingNav desktop + mobile ajoute liens **Blog** + **Comparatifs** (pointe `/compare/planity`) pour influencer les sitelinks Google (pages nav-level > pages footer-only).
 Demo popup (sessionStorage) : explique les 2 piliers (carte + vitrine) au premier affichage de la demo carte.
 CTA uniforme : "Essayer gratuitement" (toutes sections). Positionnement : page pro (acquisition) + programme fidelite (retention) = un seul outil. Lien en bio = feature principale.
 

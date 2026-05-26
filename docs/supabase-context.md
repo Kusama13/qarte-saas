@@ -39,7 +39,7 @@
 | promo_message | TEXT | NULL | |
 | stamps_required | INTEGER | `10` | CHECK (1..15) — mig 054 (etait 1..50) |
 | reward_description | TEXT | NULL | NULL = isFirstSetup |
-| trial_ends_at | TIMESTAMPTZ | `NOW() + 7 days` | mig 034 (etait 14j, corrige a 7j mig 026+034) |
+| trial_ends_at | TIMESTAMPTZ | `NOW() + 3 days` | mig 171 (15j → 7j mig 026+034 → 3j mig 171) |
 | stripe_customer_id | TEXT | NULL | |
 | stripe_subscription_id | TEXT | NULL | mig 028/029 |
 | subscription_status | TEXT | `'trial'` | CHECK (trial, active, canceled, canceling, past_due) — mig 027 |

@@ -17,7 +17,7 @@ export function GET() {
 - **6 mois** : 95 EUR pour 6 mois (équivalent ~16 EUR/mois — un mois offert, engagement ferme 6 mois)
 
 ### Conditions communes
-- **Essai gratuit** : 7 jours, sans carte bancaire
+- **Essai gratuit** : 3 jours, sans carte bancaire
 - **Commission sur réservations** : 0 %
 - **Frais par transaction** : 0 %
 - **Zone de service** : France, Belgique, Suisse

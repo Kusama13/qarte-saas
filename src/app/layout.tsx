@@ -12,7 +12,7 @@ const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
 // EN is 301-redirected to FR (middleware.ts) — metadata is FR-only.
 // Short title (<60 chars) for SERP display. Description <160 chars for full snippet.
 const TITLE = 'Qarte — Réservation & fidélité pour salons de beauté';
-const DESCRIPTION = "Qarte — l'app tout-en-un des salons de beauté : carte de fidélité digitale, réservation en ligne sans commission, page salon. Essai 7 jours.";
+const DESCRIPTION = "Qarte — l'app tout-en-un des salons de beauté : carte de fidélité digitale, réservation en ligne sans commission, page salon. Essai 3 jours.";
 
 export const viewport: Viewport = {
   width: 'device-width',

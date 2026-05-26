@@ -670,7 +670,7 @@ export default function Page() {
           <div className="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl p-8 text-center text-white">
             <CheckCircle2 className="w-10 h-10 mx-auto mb-4 opacity-90" />
             <h3 className="text-xl sm:text-2xl font-bold mb-3">
-              Teste Qarte gratuitement pendant 7 jours
+              Teste Qarte gratuitement pendant 3 jours
             </h3>
             <p className="text-indigo-100 mb-6 max-w-xl mx-auto">
               Réservation en ligne avec acompte, programme de fidélité digital, page salon SEO, SMS de rappel

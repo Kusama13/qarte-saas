@@ -625,7 +625,7 @@ export default function Page() {
               href="/auth/merchant/signup"
               className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-700 font-bold rounded-2xl hover:bg-indigo-50 transition-colors"
             >
-              Essai gratuit 7 jours
+              Essai gratuit 3 jours
               <ArrowRight className="w-5 h-5" />
             </Link>
           </div>

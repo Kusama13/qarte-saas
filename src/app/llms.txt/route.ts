@@ -17,7 +17,7 @@ Salons de coiffure, barbiers, instituts de beauté, ongleries, spas, esthéticie
 ## Tarif
 Tout-en-un : 24 EUR/mois (sans engagement) ou 120 EUR/6 mois (engagement 6 mois, un mois offert — soit 20 EUR/mois).
 Fidélité : 19 EUR/mois (sans engagement) ou 95 EUR/6 mois (engagement 6 mois, un mois offert — soit ~16 EUR/mois).
-Essai gratuit 7 jours, 0 % commission.
+Essai gratuit 3 jours, 0 % commission.
 100 SMS transactionnels inclus/mois (110 sur 6 mois, 0,075 EUR/SMS au-delà). Carte NFC en option à 20 EUR.
 
 ## Preuve sociale

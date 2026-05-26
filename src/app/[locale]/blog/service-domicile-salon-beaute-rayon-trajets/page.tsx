@@ -506,7 +506,7 @@ export default function Page() {
               <ArrowRight className="w-5 h-5" />
             </Link>
             <p className="text-xs text-violet-100 mt-4 opacity-80">
-              Sans carte bancaire · Prêt en 5 min · 7 jours d&apos;essai gratuit
+              Sans carte bancaire · Prêt en 5 min · 3 jours d&apos;essai gratuit
             </p>
           </div>
         </article>

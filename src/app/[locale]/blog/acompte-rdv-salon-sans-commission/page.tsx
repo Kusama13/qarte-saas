@@ -102,7 +102,7 @@ const jsonLd = {
         },
         {
           '@type': 'Offer',
-          name: 'Essai gratuit 7 jours',
+          name: 'Essai gratuit 3 jours',
           price: '0',
           priceCurrency: 'EUR',
           url: 'https://getqarte.com/auth/merchant/signup',
@@ -692,14 +692,14 @@ export default function Page() {
               Arrête de payer pour toucher ton propre argent
             </h3>
             <p className="text-emerald-50 mb-6 max-w-xl mx-auto">
-              7 jours gratuits pour tester. En 10 minutes ta vitrine est en ligne, avec ton lien
+              3 jours gratuits pour tester. En 10 minutes ta vitrine est en ligne, avec ton lien
               Revolut (ou PayPal, SumUp). Et chaque acompte tombe direct chez toi, à 100%.
             </p>
             <Link
               href="/auth/merchant/signup"
               className="inline-flex items-center gap-2 px-8 py-4 bg-white text-emerald-700 font-bold rounded-2xl hover:bg-emerald-50 transition-colors"
             >
-              Je teste 7 jours gratuit
+              Je teste 3 jours gratuit
               <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
