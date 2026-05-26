@@ -4,7 +4,7 @@ import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supaba
 import { resolveAudienceUnion, resolveAudienceWithNames } from '@/lib/sms-audience';
 import type { AudienceFilter } from '@/lib/sms-audience';
 import { countSms, validateMarketingSms, normalizeToGsm7, withOvhStopClause, bodyHasPersonalization, computeCampaignSmsBreakdown } from '@/lib/sms-validator';
-import { SMS_UNIT_COST_CENTS, getSmsUsageThisMonth, getEffectiveQuota, isPaidMerchant } from '@/lib/sms';
+import { SMS_UNIT_COST_CENTS, isPaidMerchant } from '@/lib/sms';
 import { isLegalSendTime, nextLegalSlot } from '@/lib/sms-compliance';
 import { sendNewSmsCampaignNotification } from '@/lib/email';
 import logger from '@/lib/logger';
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, country, subscription_status, plan_tier, shop_name, billing_period_start, sms_pack_balance, sms_quota_override, sms_quota_override_cycle_anchor, billing_interval, created_at')
+      .select('id, country, subscription_status, plan_tier, shop_name, sms_pack_balance, billing_interval, created_at')
       .eq('id', merchantId)
       .eq('user_id', user.id)
       .single();
@@ -53,10 +53,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Souscris pour envoyer une campagne SMS.' }, { status: 403 });
     }
 
-    // Note : depuis que Fidélité a marketingSms=true (envoi possible via pack),
-    // le vrai blocage est `quotaLeft + packBalance >= recipients` plus bas (402).
-    // Le trigger UpgradeAllInEmail historique ne déclenche plus ici — l'utilisateur
-    // peut acheter un pack OU upgrader, on laisse le choix.
 
     // Validate content (appends STOP, checks length/forbidden)
     const validation = validateMarketingSms(body);
@@ -97,21 +93,15 @@ export async function POST(request: NextRequest) {
 
     const costCentsInt = Math.round(totalSmsRequested * SMS_UNIT_COST_CENTS);
 
-    // Check quota strict avant insert — bloque la soumission si SMS demandes > dispo
-    // (quota mensuel restant + pack achete). Force le merchant a acheter un pack.
-    const usage = await getSmsUsageThisMonth(supabaseAdmin, merchantId, merchant.billing_period_start, 100);
-    const quotaTotal = getEffectiveQuota(merchant, usage.periodStart);
-    const quotaLeft = Math.max(0, quotaTotal - usage.sent);
+    // Campagnes manuelles : pack-only. Le quota gratuit (100/cycle) est reserve
+    // aux automatisations et au transactionnel. Force l'achat d'un pack pour lancer.
     const packBalance = Number(merchant.sms_pack_balance || 0);
-    const smsAvailable = quotaLeft + packBalance;
-    if (totalSmsRequested > smsAvailable) {
+    if (totalSmsRequested > packBalance) {
       return NextResponse.json(
         {
-          error: 'quota_insufficient',
-          message: `Cette campagne demande ${totalSmsRequested} SMS mais seulement ${smsAvailable} sont dispo (${quotaLeft} inclus + ${packBalance} pack). Achete un pack pour la lancer.`,
+          error: 'pack_insufficient',
+          message: `Cette campagne demande ${totalSmsRequested} SMS mais ton pack n'a que ${packBalance} crédit${packBalance > 1 ? 's' : ''}. Achete un pack pour la lancer.`,
           requested: totalSmsRequested,
-          available: smsAvailable,
-          quotaLeft,
           packBalance,
         },
         { status: 402 },

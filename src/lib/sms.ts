@@ -50,6 +50,11 @@ export function isFidelityFreeSms(merchant: { plan_tier?: string | null } | null
   return merchant?.plan_tier === 'fidelity' && FIDELITY_FREE_SMS_TYPES.includes(smsType);
 }
 
+/** SMS types qui consomment UNIQUEMENT `sms_pack_balance` (jamais le quota mensuel gratuit).
+ *  Aujourd'hui : campagnes manuelles. Le quota gratuit reste réservé aux automatisations
+ *  et au transactionnel — protège les rappels RDV d'une campagne qui sature le compteur. */
+export const PACK_ONLY_SMS_TYPES: MarketingSmsType[] = ['campaign'];
+
 // Re-export depuis le module leaf `subscription-status.ts` (sans deps Node)
 // pour que les call-sites client (SmsTab) ne tirent pas web-push dans le bundle.
 export { PAID_STATUSES, isPaidStatus, isPaidMerchant } from './subscription-status';
@@ -262,16 +267,14 @@ export async function getSmsUsageThisMonth(supabase: SupabaseClient, merchantId:
     periodStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
   }
 
-  // Exclure les SMS Fidélité-free (birthday + referral_reward) du compteur quota :
-  // ils sont envoyés gracieusement par Qarte et ne doivent pas consommer le quota
-  // Tout-en-un (ni impacter un merchant qui vient d'upgrader).
+  const excludedTypes = [...FIDELITY_FREE_SMS_TYPES, ...PACK_ONLY_SMS_TYPES];
   const { count } = await supabase
     .from('sms_logs')
     .select('id', { count: 'exact', head: true })
     .eq('merchant_id', merchantId)
     .gte('created_at', periodStart)
     .neq('status', 'failed')
-    .not('sms_type', 'in', `(${FIDELITY_FREE_SMS_TYPES.map(t => `"${t}"`).join(',')})`);
+    .not('sms_type', 'in', `(${excludedTypes.map(t => `"${t}"`).join(',')})`);
 
   const sent = count || 0;
   const overageCount = Math.max(0, sent - freeQuota);
@@ -282,6 +285,19 @@ export async function getSmsUsageThisMonth(supabase: SupabaseClient, merchantId:
     overageCost: parseFloat((overageCount * SMS_OVERAGE_COST).toFixed(2)),
     periodStart,
   };
+}
+
+/** Compte les SMS pack-only (campagnes manuelles) envoyes depuis `periodStart`.
+ *  Affiche dans la jauge merchant — pas de fail filtering car comptage purement informatif. */
+export async function countPackOnlySmsSince(supabase: SupabaseClient, merchantId: string, periodStart: string): Promise<number> {
+  const { count } = await supabase
+    .from('sms_logs')
+    .select('id', { count: 'exact', head: true })
+    .eq('merchant_id', merchantId)
+    .in('sms_type', PACK_ONLY_SMS_TYPES)
+    .gte('created_at', periodStart)
+    .neq('status', 'failed');
+  return count || 0;
 }
 
 /**
@@ -716,21 +732,32 @@ export async function sendMarketingSms(
     }
     const bps = billingPeriodStart !== undefined ? billingPeriodStart : (merchantRow.billing_period_start || null);
     const packBalance = Number(merchantRow.sms_pack_balance || 0);
-    const usage = await getSmsUsageThisMonth(supabase, merchantId, bps, 100);
-    const freeQuota = getEffectiveQuota(merchantRow, usage.periodStart);
-    const quotaLeft = Math.max(0, freeQuota - usage.sent);
-
-    dispatchQuotaAlerts(supabase, merchantId, usage.sent, freeQuota, usage.periodStart.slice(0, 10), packBalance);
-
-    if (quotaLeft === 0 && packBalance === 0) {
-      return { success: false, blocked: true, error: 'quota_exhausted' };
-    }
-
     let consumedFromPack = false;
-    if (quotaLeft === 0) {
+
+    if (PACK_ONLY_SMS_TYPES.includes(smsType)) {
+      // Campagnes manuelles : pack-only. Ne touche jamais le quota gratuit.
+      if (packBalance === 0) {
+        return { success: false, blocked: true, error: 'pack_empty' };
+      }
       const ok = await consumePackOne(supabase, merchantId);
       if (!ok) return { success: false, blocked: true, error: 'pack_race' };
       consumedFromPack = true;
+    } else {
+      // Automatisations marketing : quota d'abord, puis pack en backup.
+      const usage = await getSmsUsageThisMonth(supabase, merchantId, bps, 100);
+      const freeQuota = getEffectiveQuota(merchantRow, usage.periodStart);
+      const quotaLeft = Math.max(0, freeQuota - usage.sent);
+
+      dispatchQuotaAlerts(supabase, merchantId, usage.sent, freeQuota, usage.periodStart.slice(0, 10), packBalance);
+
+      if (quotaLeft === 0 && packBalance === 0) {
+        return { success: false, blocked: true, error: 'quota_exhausted' };
+      }
+      if (quotaLeft === 0) {
+        const ok = await consumePackOne(supabase, merchantId);
+        if (!ok) return { success: false, blocked: true, error: 'pack_race' };
+        consumedFromPack = true;
+      }
     }
 
     // 2. Insert log (refund pack si échec d'insertion pour préserver la cohérence)

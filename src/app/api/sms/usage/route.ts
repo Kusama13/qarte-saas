@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
-import { getSmsUsageThisMonth, getEffectiveQuota } from '@/lib/sms';
+import { getSmsUsageThisMonth, getEffectiveQuota, countPackOnlySmsSince } from '@/lib/sms';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -32,5 +32,7 @@ export async function GET(request: NextRequest) {
   const usage = await getSmsUsageThisMonth(supabase, merchantId, merchant.billing_period_start, 100);
   const quota = getEffectiveQuota(merchant, usage.periodStart);
   const packBalance = Number((merchant as { sms_pack_balance?: number }).sms_pack_balance || 0);
-  return NextResponse.json({ ...usage, packBalance, quota });
+  const campaignsSentThisMonth = await countPackOnlySmsSince(supabase, merchantId, usage.periodStart);
+
+  return NextResponse.json({ ...usage, packBalance, quota, campaignsSentThisMonth });
 }

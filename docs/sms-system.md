@@ -4,15 +4,17 @@ Dernière MAJ : 27 avril 2026.
 
 ## Vue d'ensemble
 
-3 cas d'usage puisant dans **un seul pot** (quota gratuit 100/cycle → pack SMS prépayé) :
+3 cas d'usage avec **deux pots distincts** (quota gratuit 100/cycle + pack SMS prépayé) :
 
 | Usage | Exemple | Consomme |
 |-------|---------|----------|
-| **Transactionnel** | Rappel RDV J-1, J-0, confirmations, modifs, annulations, parrainage | Quota + pack |
-| **Marketing auto** | Welcome, avis Google, voucher expire, parrainage invite, inactif, événements, plus qu'un tampon | Quota + pack |
-| **Marketing manuel** | Campagnes composées par le merchant + audience multi-filtres, modérées admin | Quota + pack |
+| **Transactionnel** | Rappel RDV J-1, J-0, confirmations, modifs, annulations, parrainage | Quota d'abord, puis pack |
+| **Marketing auto** | Welcome, avis Google, voucher expire, parrainage invite, inactif, événements, plus qu'un tampon | Quota d'abord, puis pack |
+| **Marketing manuel** | Campagnes composées par le merchant + audience multi-filtres, modérées admin | **Pack uniquement** |
 
-**Règle centrale** : pas d'overage facturé. Alerte push+email à 80% et 100%. Blocage dur à 0.
+**Pourquoi cloisonner les campagnes manuelles sur le pack** : une campagne sur 100 destinataires consommait tout le quota mensuel en un envoi, asséchant le canal qui rapporte le plus (rappels RDV anti-no-show). Depuis cette refonte, les campagnes sortent uniquement du pack acheté — le quota gratuit reste réservé aux automatisations et au transactionnel. Liste centralisée : `PACK_ONLY_SMS_TYPES` dans [`src/lib/sms.ts`](../src/lib/sms.ts) (= `['campaign']` aujourd'hui).
+
+**Règle centrale** : pas d'overage facturé. Alerte push+email à 80% et 100% du quota gratuit (campagnes exclues du compteur). Blocage dur à 0.
 
 ---
 
@@ -80,9 +82,15 @@ Validité : valable pendant l'abonnement actif. Perdus à la résiliation. Strip
 `src/lib/sms-constants.ts` — client-safe. Exporte `SMS_FREE_QUOTA`, `SMS_UNIT_COST`, `SMS_UNIT_COST_CENTS`, `SMS_OVERAGE_COST`. `sms.ts` les re-exporte pour compat server.
 
 ### Priorité conso ([`src/lib/sms.ts`](../src/lib/sms.ts))
+
+**Transactionnel + automatisations marketing** (rappels, welcome, review, voucher_expiry, near_reward, referral_invite, inactive_reminder, events) :
 1. Quota gratuit 100 SMS/cycle
-2. Solde pack (`merchants.sms_pack_balance`)
-3. **Blocage** — `{ success: false, blocked: true }`
+2. Solde pack (`merchants.sms_pack_balance`) en backup
+3. **Blocage** — `{ success: false, blocked: true, error: 'quota_exhausted' }`
+
+**Campagnes manuelles** (`sms_type = 'campaign'`, liste `PACK_ONLY_SMS_TYPES`) :
+1. Solde pack uniquement (quota gratuit jamais touché, exclu du compteur `getSmsUsageThisMonth`)
+2. **Blocage** — `{ success: false, blocked: true, error: 'pack_empty' }` → cron dispatch re-schedule +1h avec note "Pack SMS épuisé".
 
 ### Fonctions d'envoi
 - `sendBookingSms()` — transactionnel (rappels, confirmations, parrainage, birthday). Check `PAID_STATUSES` + **`isPastDueBlocked` (mig 164, blocage past_due >72h)** + quota/pack + dedup par slot/phone/type/jour. **Routage provider** : pays détecté FR/BE → SMS Partner (si `SMS_PARTNER_ENABLED=true`), sinon OVH. **Fallback automatique vers OVH si SMS Partner échoue** (timeout/panne) — `sms_logs.provider` reflète le provider qui a vraiment envoyé. SMS Partner : timeout 10s + 3 attempts avec backoff 400ms→1500ms (cf. [sms-partner.ts](../src/lib/sms-partner.ts)).
@@ -301,6 +309,9 @@ Surveillance du **solde de crédits chez les providers eux-mêmes** (différent 
 - Provider unavailable (null) : skip silencieux, pas d'alerte (probable config manquante / blip réseau, pas une vraie urgence)
 
 ### Campagnes manuelles
+
+**Règle conso** : 1 SMS de campagne = 1 crédit décrémenté de `sms_pack_balance`. Quota gratuit jamais touché. Gate strict côté `/api/sms/campaign/submit` (HTTP 402 `pack_insufficient` si `totalSmsRequested > packBalance`) + côté `sendMarketingSms` (`error: 'pack_empty'`).
+
 ```
 merchant rédige dans SmsTab (audience multi-select)
   → POST /api/sms/campaign/submit

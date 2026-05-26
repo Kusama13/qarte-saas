@@ -66,20 +66,20 @@ export function SmsCampaignSentEmail({
 
       <Section style={quotaBox}>
         <Text style={quotaLabel}>
-          {isEn ? 'YOUR MONTHLY QUOTA' : 'TON QUOTA MENSUEL'}
+          {isEn ? 'YOUR SMS PACK' : 'TON PACK SMS'}
         </Text>
         <Text style={quotaMain}>
-          {quotaUsed} / {quotaTotal} {isEn ? 'SMS used this cycle' : 'SMS utilisés ce cycle'}
+          {packBalance} {isEn ? 'credits remaining' : 'crédits restants'}
         </Text>
-        {packBalance > 0 && (
-          <Text style={quotaSecondary}>
-            + {packBalance} {isEn ? 'SMS available in your pack' : 'SMS dispo dans ton pack'}
-          </Text>
-        )}
+        <Text style={quotaSecondary}>
+          {isEn
+            ? `${totalSmsSent} credit${totalSmsSent > 1 ? 's' : ''} debited for this campaign.`
+            : `${totalSmsSent} crédit${totalSmsSent > 1 ? 's' : ''} débité${totalSmsSent > 1 ? 's' : ''} pour cette campagne.`}
+        </Text>
         <Text style={quotaNote}>
           {isEn
-            ? 'Included in your subscription — no extra charge for this campaign.'
-            : 'Inclus dans ton abonnement — aucun frais supplémentaire pour cette campagne.'}
+            ? `Your monthly quota (${quotaUsed}/${quotaTotal}) wasn't touched — it stays reserved for reminders, confirmations and marketing automations.`
+            : `Ton quota mensuel (${quotaUsed}/${quotaTotal}) n'a pas bougé — il reste réservé aux rappels, confirmations et automatisations marketing.`}
         </Text>
       </Section>
 

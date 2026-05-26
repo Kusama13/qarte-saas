@@ -20,9 +20,9 @@ export interface PlanFeatures {
   smsQuota: number;
   planning: boolean;
   bookingOnline: boolean;
-  /** Accès aux campagnes SMS manuelles. Fidélité y a accès aussi mais avec quota=0
-   *  → ils doivent acheter un pack avant d'envoyer (cf submit/route.ts qui check
-   *  `quotaLeft + packBalance >= recipients`). */
+  /** Accès aux campagnes SMS manuelles. Toujours pack-only — le quota mensuel
+   *  est réservé aux automatisations et au transactionnel (cf submit/route.ts
+   *  qui check `packBalance >= totalSmsRequested`). */
   marketingSms: boolean;
   memberPrograms: boolean;
   contest: boolean;

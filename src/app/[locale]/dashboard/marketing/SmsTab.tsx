@@ -191,14 +191,13 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
     return audienceCount * (smsCount === 3 ? 3 : smsCount);
   }, [audienceCount, smsCount, breakdown, personalized]);
 
-  // SMS dispo (quota_left + pack_balance)
+  // Campagnes : seul le pack compte. Le quota gratuit reste reserve aux automatisations.
   const smsAvailable = useMemo(() => {
     if (!quotaState) return null;
-    const quotaLeft = Math.max(0, quotaState.quota - quotaState.sent);
-    return quotaLeft + quotaState.packBalance;
+    return quotaState.packBalance;
   }, [quotaState]);
 
-  const insufficientQuota = smsAvailable !== null && smsRequested > 0 && smsRequested > smsAvailable;
+  const insufficientPack = smsAvailable !== null && smsRequested > 0 && smsRequested > smsAvailable;
 
   // Frequence : compte les campagnes envoyees ce mois calendaire (pour soft warning).
   // 3+ campagnes/mois = taux de désinscription qui monte fortement (best practice secteur).
@@ -314,9 +313,9 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
         setBody('');
         fetchCampaigns();
         refreshQuota();
-      } else if (res.status === 402 && data.error === 'quota_insufficient') {
+      } else if (res.status === 402 && data.error === 'pack_insufficient') {
         // Race : audience a grossi entre check front et submit (rare).
-        setSubmitResult({ success: false, message: data.message || 'Quota insuffisant. Achete un pack pour lancer cette campagne.' });
+        setSubmitResult({ success: false, message: data.message || 'Pack SMS insuffisant. Achete un pack pour lancer cette campagne.' });
         refreshQuota();
       } else {
         const errs = Array.isArray(data.errors) ? data.errors.join(' ') : data.error || t('submitError');
@@ -617,16 +616,21 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
             </span>
           </div>
           {quotaState && (
-            <div className="flex items-center justify-between mb-3 text-xs">
-              <span className="text-gray-500">Quota dispo</span>
-              <span className="font-semibold text-gray-700">
-                {smsAvailable} SMS ({Math.max(0, quotaState.quota - quotaState.sent)} inclus + {quotaState.packBalance} pack)
-              </span>
+            <div className="mb-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-500">Pack dispo</span>
+                <span className="font-semibold text-gray-700">
+                  {quotaState.packBalance} crédit{quotaState.packBalance > 1 ? 's' : ''}
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] text-gray-400 leading-snug">
+                Les campagnes sortent du pack. Ton quota mensuel est réservé aux rappels RDV et SMS automatiques.
+              </p>
             </div>
           )}
 
           {/* Soft warning : frequence excessive (3+ campagnes/mois) */}
-          {frequencyWarning && !insufficientQuota && (
+          {frequencyWarning && !insufficientPack && (
             <div className="mb-3 rounded-xl bg-amber-50 border border-amber-200 p-3 flex items-start gap-3">
               <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-amber-600" />
               <div className="flex-1">
@@ -641,16 +645,16 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
             </div>
           )}
 
-          {/* Alerte quota insuffisant — bloque le submit */}
-          {insufficientQuota && (
+          {/* Alerte pack insuffisant — bloque le submit */}
+          {insufficientPack && (
             <div className="mb-3 rounded-xl bg-red-50 border border-red-200 p-3 flex items-start gap-3">
               <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-red-600" />
               <div className="flex-1">
                 <p className="text-xs font-bold text-red-900 mb-1">
-                  Quota insuffisant
+                  Pack SMS insuffisant
                 </p>
                 <p className="text-xs text-red-800 leading-relaxed mb-2">
-                  Cette campagne demande <strong>{smsRequested} SMS</strong> mais tu n&apos;en as que <strong>{smsAvailable}</strong> de dispo ce cycle.
+                  Cette campagne demande <strong>{smsRequested} SMS</strong> mais ton pack n&apos;a que <strong>{smsAvailable}</strong> crédit{(smsAvailable ?? 0) > 1 ? 's' : ''}.
                   Achète un pack pour la lancer.
                 </p>
                 {onBuyPack && (
@@ -668,7 +672,7 @@ export default function SmsTab({ onBuyPack }: SmsTabProps = {}) {
 
           <button
             onClick={handleSubmit}
-            disabled={!isPaid || submitting || !validation.ok || !body.trim() || audienceCount === 0 || (scheduleMode === 'later' && !scheduleDate) || insufficientQuota}
+            disabled={!isPaid || submitting || !validation.ok || !body.trim() || audienceCount === 0 || (scheduleMode === 'later' && !scheduleDate) || insufficientPack}
             className="w-full py-3 bg-[#4b0082] hover:bg-[#4b0082]/90 text-white font-bold text-sm rounded-xl active:scale-[0.98] touch-manipulation transition-all disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

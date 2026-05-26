@@ -13,6 +13,8 @@ interface SmsUsage {
   packBalance: number;
   periodStart: string;
   quota: number;
+  /** SMS de campagne envoyes ce cycle (debitees du pack, hors compteur quota). */
+  campaignsSentThisMonth: number;
 }
 
 interface SmsBalancePanelProps {
@@ -54,7 +56,7 @@ export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePan
     if (!merchantId) return;
     let cancelled = false;
     (async () => {
-      let fallback = { sent: 0, remaining: SMS_FREE_QUOTA, packBalance: 0, periodStart: '', quota: SMS_FREE_QUOTA };
+      let fallback: SmsUsage = { sent: 0, remaining: SMS_FREE_QUOTA, packBalance: 0, periodStart: '', quota: SMS_FREE_QUOTA, campaignsSentThisMonth: 0 };
       try {
         const res = await fetch(`/api/sms/usage?merchantId=${merchantId}`);
         if (res.ok) {
@@ -65,6 +67,7 @@ export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePan
             packBalance: Number(data.packBalance || 0),
             periodStart: String(data.periodStart || ''),
             quota: Number(data.quota || SMS_FREE_QUOTA),
+            campaignsSentThisMonth: Number(data.campaignsSentThisMonth || 0),
           };
         }
       } catch {
@@ -96,17 +99,19 @@ export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePan
   const percent = packOnly ? 0 : Math.min(100, Math.round((usage.sent / usage.quota) * 100));
   const quotaDepleted = usage.remaining === 0;
   const packEmpty = usage.packBalance === 0;
-  const blocked = packOnly ? packEmpty : (quotaDepleted && packEmpty);
-  // Warning visuel uniquement si pas de pack en backup (sinon on bascule en silence dessus)
-  const warning = !packOnly && percent >= 80 && !blocked && packEmpty;
+  // Automatisations + transactionnel bloques quand quota ET pack epuises.
+  // (Les campagnes manuelles, elles, sont bloquees des que pack=0 — gere dans SmsTab.)
+  const automationsBlocked = packOnly ? packEmpty : (quotaDepleted && packEmpty);
+  // Warning visuel : approche fin du quota mensuel sans pack pour prendre le relais.
+  const warning = !packOnly && percent >= 80 && !automationsBlocked && packEmpty;
 
-  const barColor = blocked
+  const barColor = automationsBlocked
     ? 'bg-red-500'
     : warning
       ? 'bg-amber-500'
       : 'bg-emerald-500';
 
-  const cardStyle = blocked
+  const cardStyle = automationsBlocked
     ? 'border-red-200 bg-red-50'
     : warning
       ? 'border-amber-200 bg-amber-50'
@@ -128,12 +133,18 @@ export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePan
         </button>
       </div>
 
+      {/* Section 1 — Inclus mensuel (rappels RDV + automatisations) */}
       {!packOnly && (
-        <div className="mt-3">
+        <div className="mt-4">
           <div className="flex items-baseline justify-between mb-1.5">
-            <span className="text-xs text-gray-500">
-              {t('includedUsage', { sent: usage.sent, quota: usage.quota })}
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-gray-700">
+                {t('includedUsage', { sent: usage.sent, quota: usage.quota })}
+              </span>
+              <span className="text-[11px] text-gray-400 leading-snug mt-0.5">
+                {t('includedScope')}
+              </span>
+            </div>
             <span className="text-xs font-semibold text-gray-700">{percent}%</span>
           </div>
           <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
@@ -145,21 +156,32 @@ export default function SmsBalancePanel({ merchantId, onBuyPack }: SmsBalancePan
         </div>
       )}
 
-      <div className="mt-3 flex items-center justify-between text-xs">
-        <span className="text-gray-500">
-          {packOnly
-            ? t('packOnlyBalance', { balance: usage.packBalance })
-            : t('packBalance', { balance: usage.packBalance })}
-        </span>
+      {/* Section 2 — Pack SMS (campagnes manuelles) */}
+      <div className={`${packOnly ? 'mt-3' : 'mt-4 pt-3 border-t border-gray-100'}`}>
+        <div className="flex items-baseline justify-between">
+          <span className="text-xs font-semibold text-gray-700">
+            {packOnly
+              ? t('packOnlyBalance', { balance: usage.packBalance })
+              : t('packBalanceLabel', { balance: usage.packBalance })}
+          </span>
+        </div>
+        <p className="mt-0.5 text-[11px] text-gray-400 leading-snug">
+          {t('packScope')}
+        </p>
+        {usage.campaignsSentThisMonth > 0 && (
+          <p className="mt-1 text-[11px] text-gray-500 leading-snug">
+            {t('campaignsSentThisMonth', { count: usage.campaignsSentThisMonth })}
+          </p>
+        )}
       </div>
 
-      {blocked && (
+      {automationsBlocked && (
         <div className="mt-3 flex items-start gap-2 rounded-xl bg-red-100 p-2.5 text-xs text-red-800">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-          <span className="font-medium">{packOnly ? t('packOnlyBlockedMessage') : t('blockedMessage')}</span>
+          <span className="font-medium">{packOnly ? t('packOnlyBlockedMessage') : t('automationsBlockedMessage')}</span>
         </div>
       )}
-      {warning && !blocked && (
+      {warning && !automationsBlocked && (
         <div className="mt-3 flex items-start gap-2 rounded-xl bg-amber-100 p-2.5 text-xs text-amber-800">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           <span className="font-medium">{t('warningMessage')}</span>

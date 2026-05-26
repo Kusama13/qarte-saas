@@ -193,6 +193,7 @@ export async function GET(request: NextRequest) {
           phone,
           body: message,
           billingPeriodStart: merchant.billing_period_start,
+          smsType: 'campaign',
         });
 
         if (result.success) {
@@ -249,7 +250,7 @@ export async function GET(request: NextRequest) {
         .update({
           status: 'scheduled',
           scheduled_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-          review_note: 'Quota SMS épuisé — retenté dans 1h (achetez un pack pour débloquer).',
+          review_note: 'Pack SMS épuisé — retenté dans 1h. Achete un pack pour reprendre.',
           pending_phones: remainingPhones,
         })
         .eq('id', campaign.id);
@@ -275,7 +276,7 @@ export async function GET(request: NextRequest) {
           recipient_count: finalSent,
           cost_cents: finalCost,
           pending_phones: [],
-          review_note: blockedHit ? 'Quota SMS atteint pendant l\'envoi.' : null,
+          review_note: blockedHit ? 'Pack SMS épuisé pendant l\'envoi.' : null,
         })
         .eq('id', campaign.id);
 
