@@ -25,6 +25,7 @@ import {
 } from '@/lib/cron-helpers';
 import { recommendTierForMerchant } from '@/lib/trial-tier-reco';
 import { computeActivationScore } from '@/lib/activation-score';
+import { TRACKING_CODES } from '@/lib/email-tracking-codes';
 import logger from '@/lib/logger';
 
 const supabase = createClient(
@@ -89,17 +90,14 @@ export async function GET(request: NextRequest) {
         if (!email) continue;
 
         try {
-          // J+2 morning : TrialEnding "plus que 1 jour" (1ʳᵉ fois où daysRemaining=1)
-          // J+3 morning : TrialFinalDay "c'est aujourd'hui" (2ᵉ fois où daysRemaining=1)
-          // Math.ceil garde daysRemaining=1 sur ~23h → on dédup par tracking code pour
-          // garantir 1 email/jour, et l'autre suit naturellement le lendemain.
-          if (trialStatus.isActive && trialStatus.daysRemaining === 1) {
-            const trialEndingCode = -201;
-            const trialFinalDayCode = -212;
-            const alreadyEnding = globalTrackingSet.has(`${merchant.id}:${trialEndingCode}`);
-            const alreadyFinalDay = globalTrackingSet.has(`${merchant.id}:${trialFinalDayCode}`);
-
-            if (!alreadyEnding) {
+          // Cadence trial 3j : 2 emails distincts portés par 2 triggers daysRemaining différents.
+          // Math.ceil fait que chaque valeur de daysRemaining est rencontrée au plus 1 morning cron
+          // → un trigger == un email garanti, sans nested check.
+          //   daysRemaining===2 : TrialEnding "plus que 1 jour" (J+1 ou J+2 selon heure signup)
+          //   daysRemaining===1 : TrialFinalDay "dernier jour" (J+2 ou J+3 selon heure signup)
+          if (trialStatus.isActive && trialStatus.daysRemaining === 2) {
+            const trackCode = TRACKING_CODES.TRIAL_ENDING_J2;
+            if (!globalTrackingSet.has(`${merchant.id}:${trackCode}`)) {
               const [recommendedTier, activation, customersRes, bookingsRes] = await Promise.all([
                 recommendTierForMerchant(supabase, merchant.id),
                 computeActivationScore(supabase, { id: merchant.id, bio: merchant.bio, shop_address: merchant.shop_address }),
@@ -119,12 +117,16 @@ export async function GET(request: NextRequest) {
                   firstPillar: activation.firstPillar,
                 },
               );
-              await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trialEndingCode, pending_count: 0 });
+              await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
               results.trialEmails.ending++;
               await rateLimitDelay();
-            } else if (!alreadyFinalDay) {
+            }
+          }
+          if (trialStatus.isActive && trialStatus.daysRemaining === 1) {
+            const trackCode = TRACKING_CODES.TRIAL_FINAL_DAY_J3;
+            if (!globalTrackingSet.has(`${merchant.id}:${trackCode}`)) {
               await sendTrialFinalDayEmail(email, merchant.shop_name, merchant.slug, (merchant.locale as EmailLocale) || 'fr');
-              await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trialFinalDayCode, pending_count: 0 });
+              await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
               results.trialEmails.finalDay++;
               await rateLimitDelay();
             }
@@ -132,7 +134,7 @@ export async function GET(request: NextRequest) {
           if (trialStatus.isInGracePeriod) {
             const daysExpired = Math.abs(trialStatus.daysRemaining);
             if (daysExpired === 1) {
-              const trackCode = -211;
+              const trackCode = TRACKING_CODES.TRIAL_EXPIRED_J1;
               if (globalTrackingSet.has(`${merchant.id}:${trackCode}`)) continue;
               await sendTrialExpiredEmail(email, merchant.shop_name, trialStatus.daysUntilDeletion, (merchant.locale as EmailLocale) || 'fr');
               await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
@@ -426,7 +428,7 @@ export async function GET(request: NextRequest) {
 
     const eightDaysAgo = new Date();
     eightDaysAgo.setDate(eightDaysAgo.getDate() - 8);
-    await supabase.from('pending_email_tracking').delete().lt('sent_at', eightDaysAgo.toISOString()).in('reminder_day', [-201, -203, -211, -212]);
+    await supabase.from('pending_email_tracking').delete().lt('sent_at', eightDaysAgo.toISOString()).in('reminder_day', [TRACKING_CODES.TRIAL_ENDING_J2, -203, TRACKING_CODES.TRIAL_EXPIRED_J1, TRACKING_CODES.TRIAL_FINAL_DAY_J3]);
 
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);

@@ -253,31 +253,37 @@ J+1  10:00 UTC (cron email-onboarding, priority dedup)
     1 max parmi : ActivationStalled (S0)
                 > VitrineReminder (no bio)
                 > ProgramReminder (pas configure)
+    Skip si TrialEnding (-201) deja envoye par morning meme jour
+    (cas signup avant 08h : TrialEnding fire J+1 matin).
 
 J+2  10:00 UTC (cron email-onboarding, priority dedup)
     1 max parmi : PlanningReminder (no planning)
                 > SocialProof (fallback trial)
     Skip si TrialEnding (-201) ou TrialFinalDay (-212) deja envoyes
-    le matin meme (priorite billing-critical).
+    par morning meme jour (priorite billing-critical).
 
-J+2 ou J+3  08:00 UTC (cron morning, daysRemaining===1 1ere occurrence)
+J+1 ou J+2  08:00 UTC (cron morning, premier trigger daysRemaining===2)
     ┌─────────────────────────────────────┐
     │  TRIAL ENDING                        │
-    │  Sujet : "{shopName}, plus que 1    │
-    │          jour" ou variantes S0/S1/.. │
+    │  Sujet : "{shopName}, plus que 2    │
+    │          jours" ou variantes S0/S1/  │
     │  Code: -201                         │
     │  Trigger : trialStatus.daysRemaining │
-    │            === 1 ET pas encore envoye│
+    │            === 2 ET pas encore envoye│
+    │  NB : fire J+1 matin pour signups   │
+    │       avant 08h, J+2 matin sinon    │
     └─────────────────────────────────────┘
 
-J+3  08:00 UTC (cron morning, daysRemaining===1 2eme occurrence)
+J+2 ou J+3  08:00 UTC (cron morning, premier trigger daysRemaining===1)
     ┌─────────────────────────────────────┐
     │  TRIAL FINAL DAY                     │
     │  Sujet : "{shopName}, dernier jour :│
     │          continue avant ce soir"     │
     │  Code: -212                         │
-    │  Trigger : daysRemaining===1 ET     │
-    │            TrialEnding deja envoye   │
+    │  Trigger : trialStatus.daysRemaining │
+    │            === 1 ET pas encore envoye│
+    │  NB : fire J+2 matin pour signups   │
+    │       avant 08h, J+3 matin sinon    │
     └─────────────────────────────────────┘
 
 J+3  ← trial_ends_at (expiration ce soir si pas abonne)
@@ -611,9 +617,9 @@ J+30    Reactivation late               Cron
 | -113 | Grace period setup |
 | -150 | Guided signup |
 | -200 | Welcome |
-| -201 | Trial ending (J+2 ou J+3, 1ère occurrence daysRemaining=1) |
-| -212 | Trial final day (J+3, 2ème occurrence — "dernier jour") |
-| -211 | Trial expired (J+4 grace day 1) |
+| -201 | Trial ending — trigger daysRemaining===2 (fire J+1 ou J+2 selon heure signup) |
+| -212 | Trial final day — trigger daysRemaining===1 (fire J+2 ou J+3 selon heure signup) |
+| -211 | Trial expired (J+4 grace day 1, daysExpired===1) |
 | -301 | Program reminder |
 | -304 | Vitrine reminder |
 | -308 | Planning reminder |

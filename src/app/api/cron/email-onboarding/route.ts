@@ -100,7 +100,8 @@ export async function GET(request: NextRequest) {
       m.subscription_status === 'trial' &&
       m.created_at <= twentyFourHoursAgoAS.toISOString() &&
       m.created_at >= twentyFiveHoursAgoAS.toISOString() &&
-      !globalTrackingSet.has(`${m.id}:${TRACK_ACTIVATION_STALLED}`)
+      !globalTrackingSet.has(`${m.id}:${TRACK_ACTIVATION_STALLED}`) &&
+      !globalTrackingSet.has(`${m.id}:${TRACKING_CODES.TRIAL_ENDING_J2}`)
     );
 
     for (const merchant of stalledCandidates) {
@@ -139,8 +140,11 @@ export async function GET(request: NextRequest) {
     const twentyFiveHoursAgo = new Date(now.getTime() - 25 * 60 * 60 * 1000);
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
+    // Cadence 1 email/jour : skip si morning cron (08:00) a déjà envoyé TrialEnding aujourd'hui.
+    // Cas typique : merchant inscrit avant 08:00 → daysRemaining===2 dès J+1 matin.
     const unconfiguredMerchants = unconfiguredActiveMerchants.filter(m =>
       m.created_at <= twentyFourHoursAgo.toISOString() && m.created_at >= twentyFiveHoursAgo.toISOString()
+      && !globalTrackingSet.has(`${m.id}:${TRACKING_CODES.TRIAL_ENDING_J2}`)
     );
 
     await runStandardEmailSection(supabase, {
@@ -169,6 +173,7 @@ export async function GET(request: NextRequest) {
         m.created_at <= twentyFourHoursAgoV.toISOString() && m.created_at >= twentyFiveHoursAgoV.toISOString()
         && !m.bio && !m.shop_address
         && !emailedAtJ1.has(m.id)
+        && !globalTrackingSet.has(`${m.id}:${TRACKING_CODES.TRIAL_ENDING_J2}`)
       );
 
       await runStandardEmailSection(supabase, {
@@ -205,8 +210,8 @@ export async function GET(request: NextRequest) {
         m.created_at <= fortyEightHoursAgo.toISOString() && m.created_at >= fortyNineHoursAgo.toISOString()
         && !m.planning_enabled
         && !isPlanningHidden(m)
-        && !globalTrackingSet.has(`${m.id}:-201`)
-        && !globalTrackingSet.has(`${m.id}:-212`)
+        && !globalTrackingSet.has(`${m.id}:${TRACKING_CODES.TRIAL_ENDING_J2}`)
+        && !globalTrackingSet.has(`${m.id}:${TRACKING_CODES.TRIAL_FINAL_DAY_J3}`)
       );
       planningDay2.forEach(m => emailedAtJ2.add(m.id));
 
@@ -240,8 +245,8 @@ export async function GET(request: NextRequest) {
         m.created_at >= fortyNineHoursAgoSP.toISOString() &&
         m.created_at <= fortyEightHoursAgoSP.toISOString() &&
         !emailedAtJ2.has(m.id) &&
-        !globalTrackingSet.has(`${m.id}:-201`) &&
-        !globalTrackingSet.has(`${m.id}:-212`)
+        !globalTrackingSet.has(`${m.id}:${TRACKING_CODES.TRIAL_ENDING_J2}`) &&
+        !globalTrackingSet.has(`${m.id}:${TRACKING_CODES.TRIAL_FINAL_DAY_J3}`)
       );
 
       if (socialProofCandidates.length > 0) {

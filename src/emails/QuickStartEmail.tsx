@@ -12,13 +12,12 @@ import { getEmailT, type EmailLocale } from './translations';
 interface QuickStartEmailProps {
   shopName: string;
   shopType?: string | null;
-  city?: string | null;
   locale?: EmailLocale;
 }
 
-export function QuickStartEmail({ shopName, shopType, city, locale = 'fr' }: QuickStartEmailProps) {
+export function QuickStartEmail({ shopName, shopType, locale = 'fr' }: QuickStartEmailProps) {
   const t = getEmailT(locale);
-  const subtitle = [shopType, city].filter(Boolean).join(' · ') || t('quickStart.subtitleFallback');
+  const subtitle = shopType || t('quickStart.subtitleFallback');
 
   return (
     <BaseLayout preview={t('quickStart.preview', { shopName })} locale={locale}>

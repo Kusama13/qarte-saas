@@ -322,15 +322,14 @@ export async function sendTrialEndingEmail(
 export async function sendQuickStartEmail(
   to: string,
   shopName: string,
-  shopType?: string | null,
-  city?: string | null,
+  shopType: string | null = null,
   locale: EmailLocale = 'fr',
 ): Promise<SendEmailResult> {
   return sendEmail(
     to,
     subj(locale, 'quickStart', { shopName }),
     QuickStartEmail,
-    { shopName, shopType, city, locale },
+    { shopName, shopType, locale },
     { logLabel: 'QuickStart email (J+0 +3h)' },
   );
 }

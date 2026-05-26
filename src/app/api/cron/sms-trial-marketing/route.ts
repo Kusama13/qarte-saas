@@ -1,12 +1,13 @@
 /**
- * Cron horaire SMS marketing trial (plan v2 emails+SMS).
- * Voir docs/email-sms-trial-plan.md §5.
+ * Cron horaire SMS marketing trial + email QuickStart (plan v2 + cadence 3j).
+ * Voir docs/email-matrix.md §2-4 et docs/email-sms-trial-plan.md §5.
  *
- * 2 sections :
- * 0. Exemple vitrine — T+15min après signup, lien vers vitrine exemple + WhatsApp support
- * 1. Célébration — check-in J+1 (24h), détecte 1er aha event, envoie 1 SMS dedup global
+ * 3 sections :
+ * 0. Exemple vitrine SMS — T+15min après signup, lien vers vitrine exemple + WhatsApp support
+ * 1. Célébration SMS — check-in J+1 (24h), détecte 1er aha event, envoie 1 SMS dedup global
+ * 2. QuickStart EMAIL — T+3h post-signup, 2ème email du jour signup (cadence 3j trial)
  *
- * Gating commun : opt-out, no_contact, unsubscribed, plage légale FR 10h-20h.
+ * Gating commun : opt-out, no_contact, unsubscribed, plage légale FR 10h-20h (SMS uniquement).
  * Frequency cap intra-cron : on n'envoie pas 2 SMS au même merchant dans la même run.
  */
 
@@ -14,7 +15,7 @@ export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { verifyCronAuth, batchGetUserEmails, canEmail } from '@/lib/cron-helpers';
+import { verifyCronAuth, batchGetUserEmails, canEmail, rateLimitDelay } from '@/lib/cron-helpers';
 import { computeActivationScoresBatch } from '@/lib/activation-score';
 import { sendTrialMarketingSms } from '@/lib/sms-trial-marketing';
 import {
@@ -207,7 +208,6 @@ export async function GET(request: NextRequest) {
           email,
           merchant.shop_name,
           merchant.shop_type ?? null,
-          null,
           (merchant.locale as EmailLocale) || 'fr',
         );
 
@@ -217,6 +217,7 @@ export async function GET(request: NextRequest) {
             .update({ quickstart_email_sent_at: new Date().toISOString() })
             .eq('id', merchant.id);
           results.quickstartEmail.sent++;
+          await rateLimitDelay();
         } else {
           results.quickstartEmail.errors++;
         }

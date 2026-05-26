@@ -19,8 +19,11 @@ export const TRACKING_CODES = {
   UPGRADE_SMS_CAMPAIGN_BLOCKED: -330,
   UPGRADE_BOOKING_REQUEST_MANUAL: -331,
 
-  // Trial ending / expired
+  // Trial ending / expired (cadence 3j)
+  // TRIAL_ENDING fires sur le 1er morning où daysRemaining===2 (J+1 ou J+2 selon heure signup).
+  // TRIAL_FINAL_DAY fires sur le 1er morning où daysRemaining===1 (J+2 ou J+3 selon heure signup).
   TRIAL_ENDING_J2: -201,
+  TRIAL_FINAL_DAY_J3: -212,
   TRIAL_EXPIRED_J1: -211,
 
   // Grace period
