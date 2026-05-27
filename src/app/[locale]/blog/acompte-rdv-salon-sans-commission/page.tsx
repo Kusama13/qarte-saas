@@ -136,10 +136,10 @@ const jsonLd = {
     {
       '@type': 'ImageObject',
       '@id': 'https://getqarte.com/blog/acompte-rdv-salon-sans-commission#primaryimage',
-      url: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=80',
-      contentUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=80',
-      width: 1200,
-      height: 675,
+      url: 'https://getqarte.com/blog/social/article-10-cover.png',
+      contentUrl: 'https://getqarte.com/blog/social/article-10-cover.png',
+      width: 1080,
+      height: 1080,
       caption: 'Acompte de RDV salon de beauté direct sur compte pro',
     },
     {
@@ -320,10 +320,10 @@ export default function Page() {
 
             <div className="mt-8 rounded-2xl overflow-hidden">
               <Image
-                src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=80"
+                src="/blog/social/article-10-cover.png"
                 alt="Acompte de RDV salon de beauté direct sur compte pro"
-                width={1200}
-                height={675}
+                width={1080}
+                height={1080}
                 className="w-full h-auto"
                 priority
               />

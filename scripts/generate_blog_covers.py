@@ -152,6 +152,68 @@ ARTICLES = [
             'editorial photography, 50mm f/1.4, shallow depth of field, luxury clean aesthetic'
         ),
     },
+    {
+        'id': 8,
+        'filename': 'article-8-cover.png',
+        'label': 'FIDÉLITÉ',
+        'label_rgb': (124, 58, 237),     # violet
+        'title_lines': [
+            'Carte de fidélité',
+            'dématérialisée :',
+            'passer au digital',
+        ],
+        'platform_line': 'Tampons digitaux  ·  QR code  ·  Sans appli',
+        'imagen_prompt': (
+            'Close-up of an elegant feminine hand holding a sleek smartphone above a polished '
+            'marble salon counter, screen softly glowing with a clean digital loyalty card '
+            'interface featuring violet accents and small stamp icons (no readable text), '
+            'a subtle QR code sticker on the marble, blurred luxury beauty salon interior in '
+            'the background with soft greenery and warm wood, golden hour window light, '
+            'creamy warm tones, editorial fashion photography, 85mm f/1.4, shallow depth of '
+            'field, ultra sharp foreground, cinematic'
+        ),
+    },
+    {
+        'id': 9,
+        'filename': 'article-9-cover.png',
+        'label': 'CROISSANCE',
+        'label_rgb': (16, 185, 129),     # emerald
+        'title_lines': [
+            'Augmenter ton CA',
+            'de salon : les',
+            '7 leviers qui marchent',
+        ],
+        'platform_line': 'Fidélité  ·  Réservation  ·  Google  ·  Parrainage',
+        'imagen_prompt': (
+            'Stylish modern French beauty salon interior shot from a slight high angle, '
+            'a polished wooden reception counter in the foreground with fresh pink and white '
+            'peonies in a glass vase, elegant white styling chairs softly visible in the '
+            'background, warm morning sunlight streaming through tall windows, plants and '
+            'small green accents, no people, no text, no logos, editorial lifestyle photography, '
+            '35mm wide angle, warm creamy tones with subtle emerald and gold highlights, '
+            'luxury Parisian decor, ultra sharp, cinematic'
+        ),
+    },
+    {
+        'id': 10,
+        'filename': 'article-10-cover.png',
+        'label': 'ARGENT',
+        'label_rgb': (217, 119, 6),      # amber
+        'title_lines': [
+            'Acompte salon :',
+            '0% commission,',
+            '100% sur ton compte',
+        ],
+        'platform_line': 'Revolut  ·  PayPal  ·  SumUp  ·  Stripe',
+        'imagen_prompt': (
+            'Close-up of an elegant feminine hand holding a sleek smartphone above a luxury '
+            'beauty salon reception desk, screen softly glowing with a clean payment confirmation '
+            'interface (green check mark, no readable text), warm amber and golden ambient '
+            'lighting, blurred salon chairs and a small bouquet of flowers in the background, '
+            'dark rich tones with warm gold highlights, editorial fashion photography, '
+            '85mm f/1.2, shallow depth of field, ultra sharp foreground, cinematic'
+        ),
+    },
 ]
 
 

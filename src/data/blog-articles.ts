@@ -16,6 +16,26 @@ export interface BlogArticle {
  */
 export const BLOG_ARTICLES: BlogArticle[] = [
   {
+    slug: 'augmenter-chiffre-affaires-salon-beaute',
+    title: 'Augmenter le chiffre d\'affaires de son salon de beauté : 7 idées qui marchent vraiment',
+    description:
+      'Augmenter le CA de ton salon de beauté en 2026 : 7 leviers testés (fidélisation, no-show, bons cadeaux, panier moyen). Chiffres et plan d\'action.',
+    readTime: '12 min',
+    category: 'Croissance',
+    date: '2026-05-27',
+    image: '/blog/social/article-9-cover.png',
+  },
+  {
+    slug: 'carte-fidelite-dematerialisee-salon-beaute',
+    title: 'Carte de fidélité dématérialisée pour salon de beauté : pourquoi passer au digital en 2026',
+    description:
+      'Carte de fidélité dématérialisée salon : pourquoi tes cartes papier perdent 47 % de retours. Comparatif, prix, parcours cliente en 3 étapes.',
+    readTime: '8 min',
+    category: 'Fidélisation',
+    date: '2026-05-27',
+    image: '/blog/social/article-8-cover.png',
+  },
+  {
     slug: 'service-domicile-salon-beaute-rayon-trajets',
     title: 'Service à domicile : comment caler tes RDV sans courir d\'une cliente à l\'autre',
     description:
@@ -33,7 +53,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
     readTime: '6 min',
     category: 'Argent & commissions',
     date: '2026-05-08',
-    image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=80',
+    image: '/blog/social/article-10-cover.png',
   },
   {
     slug: 'comment-attirer-clientes-salon-beaute',

@@ -29,7 +29,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // --- Blog pages ---
   const blogPages: MetadataRoute.Sitemap = [
-    entry('/blog', { priority: 0.8, changeFrequency: 'weekly', lastModified: new Date('2026-05-22') }),
+    entry('/blog', { priority: 0.8, changeFrequency: 'weekly', lastModified: new Date('2026-05-27') }),
+    entry('/blog/augmenter-chiffre-affaires-salon-beaute', { priority: 0.9, changeFrequency: 'monthly', lastModified: new Date('2026-05-27') }),
+    entry('/blog/carte-fidelite-dematerialisee-salon-beaute', { priority: 0.9, changeFrequency: 'monthly', lastModified: new Date('2026-05-27') }),
     entry('/blog/service-domicile-salon-beaute-rayon-trajets', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-05-22') }),
     entry('/blog/acompte-rdv-salon-sans-commission', { priority: 0.9, changeFrequency: 'monthly', lastModified: new Date('2026-05-08') }),
     entry('/blog/avis-planity-booksy-ne-tappartiennent-pas', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-04-29') }),

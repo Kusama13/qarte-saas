@@ -18,6 +18,7 @@ import {
   TrendingDown,
 } from 'lucide-react';
 import { FacebookPixel } from '@/components/analytics/FacebookPixel';
+import { RelatedPosts } from '@/components/blog/RelatedPosts';
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -610,6 +611,8 @@ export default function Page() {
               </div>
             </div>
           </section>
+
+          <RelatedPosts slugs={['augmenter-chiffre-affaires-salon-beaute', 'carte-fidelite-dematerialisee-salon-beaute']} />
 
           {/* CTA */}
           <div className="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl p-8 text-center text-white">
