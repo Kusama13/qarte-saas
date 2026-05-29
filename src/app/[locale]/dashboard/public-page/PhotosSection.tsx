@@ -1,27 +1,40 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Camera,
   Plus,
   Trash2,
   Loader2,
+  Pencil,
+  RefreshCw,
+  X,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { compressOfferImage } from '@/lib/image-compression';
 import { useTranslations } from 'next-intl';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import type { Merchant } from '@/types';
 
 interface PhotosSectionProps {
   merchant: Merchant;
 }
 
+type Photo = { id: string; url: string; position: number };
+
 export default function PhotosSection({ merchant }: PhotosSectionProps) {
   const t = useTranslations('publicPage');
   const supabase = getSupabase();
 
-  const [photos, setPhotos] = useState<Array<{ id: string; url: string; position: number }>>([]);
+  const [photos, setPhotos] = useState<Photo[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState<number | null>(null);
+  const [menuPhoto, setMenuPhoto] = useState<Photo | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
+  const replacePositionRef = useRef<number | null>(null);
+
+  useBodyScrollLock(!!menuPhoto);
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -35,6 +48,44 @@ export default function PhotosSection({ merchant }: PhotosSectionProps) {
     fetchPhotos();
   }, [merchant, supabase]);
 
+  useEffect(() => {
+    if (!menuPhoto) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMenuPhoto(null);
+        setConfirmingDelete(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menuPhoto]);
+
+  const closeMenu = () => {
+    setMenuPhoto(null);
+    setConfirmingDelete(false);
+  };
+
+  const uploadToPosition = async (file: File, position: number) => {
+    setUploadingPhoto(position);
+    try {
+      const compressed = await compressOfferImage(file);
+      const formData = new FormData();
+      formData.append('file', compressed);
+      formData.append('merchantId', merchant.id);
+      formData.append('position', String(position));
+
+      const res = await fetch('/api/photos', { method: 'POST', body: formData });
+      const result = await res.json();
+      if (res.ok && result.photo) {
+        setPhotos(prev => [...prev.filter(p => p.position !== position), result.photo].sort((a, b) => a.position - b.position));
+      }
+    } catch (error) {
+      console.error('Photo upload error:', error);
+    } finally {
+      setUploadingPhoto(null);
+    }
+  };
+
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -44,41 +95,43 @@ export default function PhotosSection({ merchant }: PhotosSectionProps) {
     const filesToUpload = Array.from(files).slice(0, availablePositions.length);
 
     for (let i = 0; i < filesToUpload.length; i++) {
-      const file = filesToUpload[i];
-      const position = availablePositions[i];
-      setUploadingPhoto(position);
-      try {
-        const compressed = await compressOfferImage(file);
-        const formData = new FormData();
-        formData.append('file', compressed);
-        formData.append('merchantId', merchant.id);
-        formData.append('position', String(position));
-
-        const res = await fetch('/api/photos', { method: 'POST', body: formData });
-        const result = await res.json();
-        if (res.ok && result.photo) {
-          setPhotos(prev => [...prev.filter(p => p.position !== position), result.photo].sort((a, b) => a.position - b.position));
-        }
-      } catch (error) {
-        console.error('Photo upload error:', error);
-      }
+      await uploadToPosition(filesToUpload[i], availablePositions[i]);
     }
-    setUploadingPhoto(null);
     e.target.value = '';
   };
 
-  const handlePhotoDelete = async (photoId: string) => {
+  const startReplace = (position: number) => {
+    closeMenu();
+    replacePositionRef.current = position;
+    replaceInputRef.current?.click();
+  };
+
+  const handleReplacePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const position = replacePositionRef.current;
+    e.target.value = '';
+    replacePositionRef.current = null;
+    if (file && position != null) {
+      void uploadToPosition(file, position);
+    }
+  };
+
+  const handlePhotoDelete = async (photo: Photo) => {
+    setDeleting(true);
     try {
       const res = await fetch('/api/photos', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photoId, merchantId: merchant.id }),
+        body: JSON.stringify({ photoId: photo.id, merchantId: merchant.id }),
       });
       if (res.ok) {
-        setPhotos(prev => prev.filter(p => p.id !== photoId));
+        setPhotos(prev => prev.filter(p => p.id !== photo.id));
+        closeMenu();
       }
     } catch (error) {
       console.error('Photo delete error:', error);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -94,34 +147,114 @@ export default function PhotosSection({ merchant }: PhotosSectionProps) {
         {[1, 2, 3, 4, 5, 6].map((position) => {
           const photo = photos.find(p => p.position === position);
           const isUploading = uploadingPhoto === position;
-          return (
-            <div key={position} className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 border-2 border-dashed border-gray-200 group">
-              {isUploading ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+
+          if (isUploading) {
+            return (
+              <div key={position} className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-200">
+                <div className="absolute inset-0 flex items-center justify-center">
                   <Loader2 className="w-5 h-5 text-pink-500 animate-spin" />
                 </div>
-              ) : photo ? (
-                <>
-                  <img src={photo.url} alt={t('photosAlt', { position })} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
-                  <button
-                    type="button"
-                    onClick={() => handlePhotoDelete(photo.id)}
-                    className="absolute top-1.5 right-1.5 p-1.5 bg-black/60 rounded-lg text-white opacity-0 group-hover:opacity-100 hover:bg-red-500 transition-all"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </>
-              ) : (
-                <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 hover:border-indigo-300 transition-colors">
-                  <Plus className="w-5 h-5 text-gray-300" />
-                  <input type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoUpload} />
-                </label>
-              )}
-            </div>
+              </div>
+            );
+          }
+
+          if (photo) {
+            return (
+              <button
+                key={position}
+                type="button"
+                onClick={() => { setConfirmingDelete(false); setMenuPhoto(photo); }}
+                aria-label={t('photosEditAria', { position })}
+                className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-200 group focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              >
+                <img src={photo.url} alt={t('photosAlt', { position })} className="w-full h-full object-cover" />
+                <span className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                <span className="absolute bottom-1.5 right-1.5 flex items-center gap-1 px-2 py-1 rounded-lg bg-black/60 text-white text-[11px] font-medium">
+                  <Pencil className="w-3 h-3" />
+                  {t('photosEdit')}
+                </span>
+              </button>
+            );
+          }
+
+          return (
+            <label key={position} className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 hover:border-indigo-300 transition-colors">
+              <Plus className="w-5 h-5 text-gray-300" />
+              <input type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoUpload} />
+            </label>
           );
         })}
       </div>
+
+      <input ref={replaceInputRef} type="file" accept="image/*" className="hidden" onChange={handleReplacePick} />
+
+      {menuPhoto && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={closeMenu}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="photo-menu-title"
+            className="w-full max-w-xs rounded-2xl border border-gray-100 bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <img src={menuPhoto.url} alt="" className="w-14 h-14 rounded-xl object-cover border border-gray-100" />
+              <div className="flex-1">
+                <p id="photo-menu-title" className="text-sm font-semibold text-gray-800">{t('photosMenuTitle')}</p>
+                <p className="text-xs text-gray-400">{t('photosMenuPosition', { position: menuPhoto.position })}</p>
+              </div>
+              <button type="button" onClick={closeMenu} aria-label={t('photosCancel')} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {confirmingDelete ? (
+              <div className="space-y-2.5">
+                <p className="text-sm text-gray-600">{t('photosDeleteConfirmText')}</p>
+                <button
+                  type="button"
+                  onClick={() => handlePhotoDelete(menuPhoto)}
+                  disabled={deleting}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-60"
+                >
+                  {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  {t('photosDeleteConfirmAction')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDelete(false)}
+                  disabled={deleting}
+                  className="w-full rounded-xl bg-gray-100 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
+                >
+                  {t('photosCancel')}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                <button
+                  type="button"
+                  onClick={() => startReplace(menuPhoto.position)}
+                  className="flex w-full items-center gap-3 rounded-xl bg-gray-50 px-4 py-3 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-100"
+                >
+                  <RefreshCw className="w-4 h-4 text-indigo-500" />
+                  {t('photosChangeAction')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDelete(true)}
+                  className="flex w-full items-center gap-3 rounded-xl bg-gray-50 px-4 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {t('photosDeleteAction')}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
