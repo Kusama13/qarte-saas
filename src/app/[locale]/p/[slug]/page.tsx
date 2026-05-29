@@ -8,7 +8,6 @@ import type { Metadata } from 'next';
 import { isDemoSlug, getDemoMerchantData } from '@/lib/demo-merchants';
 import { getTodayForCountry, extractCityFromAddress } from '@/lib/utils';
 import { normalizeBookingHorizon } from '@/lib/booking-window';
-import DemoNav from './DemoNav';
 
 // SEO-optimised, terser shop labels for the title tag (no slashes, no compound forms).
 const SHOP_TYPES_SEO: Record<string, string> = {
@@ -212,9 +211,6 @@ export default async function ProgrammePage({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (
-    <>
-      {isDemo && <DemoNav current={slug} />}
-      <ProgrammeView merchant={result.merchant as any} photos={result.photos} services={result.services} serviceCategories={result.serviceCategories} planningSlots={result.planningSlots} bookedSlots={result.bookedSlots} isDemo={isDemo} demoOffer={result.demoOffer} />
-    </>
+    <ProgrammeView merchant={result.merchant as any} photos={result.photos} services={result.services} serviceCategories={result.serviceCategories} planningSlots={result.planningSlots} bookedSlots={result.bookedSlots} isDemo={isDemo} demoOffer={result.demoOffer} />
   );
 }

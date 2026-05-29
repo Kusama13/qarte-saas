@@ -44,6 +44,7 @@ src/
 │   │   ├── boutique/      # Carte NFC (20€)
 │   │   ├── p/[slug]/      # Page publique programme (bio reseaux)
 │   │   ├── pros/          # Social proof merchants
+│   │   ├── exemples/      # Showcase pages demo par metier (vitrine + carte cliente)
 │   │   └── page.tsx       # Landing page
 │   ├── layout.tsx         # Root shell (fonts, analytics)
 │   └── [locale]/layout.tsx # Locale layout (NextIntlClientProvider, metadata)
@@ -283,7 +284,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **TikTokPixel** : seule exception, utilise `usePathname` de `next/navigation` (besoin du path complet avec prefixe pour analytics)
 
 ### SEO i18n
-- **Sitemap principal** (`src/app/sitemap.ts`) : pages statiques + blog + compare + alternatives + tools. **Pas les démos `/p/demo-*`** (polluaient les SERPs "qarte" brandée), **pas les pages merchant** (cf sitemap secondaire ci-dessous)
+- **Sitemap principal** (`src/app/sitemap.ts`) : pages statiques (dont `/exemples`, showcase des démos par métier) + blog + compare + alternatives + tools. **Pas les démos `/p/demo-*`** (polluaient les SERPs "qarte" brandée ; restent noindex), **pas les pages merchant** (cf sitemap secondaire ci-dessous). Note : `/exemples` est indexable (page marketing), elle linke vers les `/p/demo-*` qui restent noindex.
 - **Sitemap secondaire merchants** (`src/app/sitemap-merchants.xml/route.ts`) : route handler XML qui liste les `/p/[slug]` éligibles (exclut canceled + trial expiré). **Volontairement non déclaré dans `robots.ts`** — soumis manuellement à Google Search Console pour que les marchands soient indexés sans pollution brand "qarte". Cache 1h.
 - **robots.ts (dynamic)** : disallow `/api/`, `/dashboard/`, `/admin/`, `/auth/`, `/customer/`, `/scan/`. + 11 règles AI bots opt-in (GPTBot, PerplexityBot, ClaudeBot, Google-Extended, Applebot-Extended, Bingbot, etc.) + opt-out CCBot. **Bug critique fix mai 2026** : `public/robots.txt` statique shadow le dynamic en Next.js → suppression du fichier statique pour que les règles AI bots soient enfin servies
 - **noindex** : `/scan/[code]` et `/customer/card/[merchantId]` (layouts avec `robots: { index: false, follow: false }`). **Page marchand `/p/[slug]` aussi noindex** quand : démo (`isDemoSlug(slug)`), abonnement annulé / trial expiré, ou trop pauvre (0 service ET 0 photo ET pas de logo). Garde `follow: true` pour le link juice

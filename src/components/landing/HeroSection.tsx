@@ -157,25 +157,25 @@ export function HeroSection({ topLogos = [] }: { topLogos?: HeroLogo[] } = {}) {
             {t('subtitle')}
           </p>
 
-          <div className="flex flex-col items-center xl:items-start gap-3 w-full sm:w-auto pt-2">
-            <div className="flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row">
+          <div className="flex flex-col items-center xl:items-start gap-2.5 w-full sm:w-auto pt-2">
+            <div className="flex w-full sm:w-auto flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <Link
                 href="/auth/merchant/signup"
                 onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-                className="flex w-full sm:w-auto items-center justify-center px-10 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-base sm:text-lg rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-[transform,box-shadow] duration-200"
+                className="inline-flex items-center justify-center px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-base sm:text-lg rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-[transform,box-shadow] duration-200 whitespace-nowrap"
               >
                 <span>{t('ctaPrimary')}</span>
               </Link>
               <Link
                 href="/exemples"
                 onClick={() => trackCtaClick('hero_demo', 'hero_section')}
-                className="flex w-full sm:w-auto items-center justify-center gap-2 px-8 py-3.5 bg-white text-gray-900 font-bold text-base sm:text-lg rounded-xl border border-gray-300 hover:bg-gray-50 hover:border-gray-400 active:scale-[0.98] transition-[transform,colors] duration-200"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white text-indigo-700 font-semibold text-base rounded-xl border border-indigo-200 shadow-sm hover:bg-indigo-50 hover:border-indigo-300 active:scale-[0.98] transition-colors duration-200 whitespace-nowrap"
               >
-                <Eye className="w-5 h-5 text-indigo-600" />
+                <Eye className="w-4 h-4" />
                 <span>{t('ctaExamples')}</span>
               </Link>
             </div>
-            <p className="text-xs text-gray-600 font-medium text-center xl:text-left">{t('ctaSubtext')}</p>
+            <p className="text-xs text-gray-600 font-medium text-center xl:text-left pt-0.5">{t('ctaSubtext')}</p>
             <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 border border-indigo-100 px-3 py-1 mt-1">
               <Smartphone className="w-3.5 h-3.5 text-indigo-600" />
               <p className="text-xs font-semibold text-indigo-700">{t('appBadge')}</p>

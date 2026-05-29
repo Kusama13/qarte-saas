@@ -208,33 +208,19 @@ function withDefaultsAndVariants(merchants: Record<string, DemoMerchantFullRaw>,
 }
 
 // ── Photos (shared across locales — same images) ─────────────────────────────
+// Chaque métier a 6 photos dans /public/images/demo/<metier>/{1..6}.jpg
 
-const PHOTOS_ONGLERIE: DemoPhoto[] = [
-  { id: 'p1', url: '/images/demo/onglerie/1.jpg', position: 1 },
-  { id: 'p2', url: '/images/demo/onglerie/2.jpg', position: 2 },
-  { id: 'p3', url: '/images/demo/onglerie/3.jpg', position: 3 },
-  { id: 'p4', url: '/images/demo/onglerie/4.jpg', position: 4 },
-  { id: 'p5', url: '/images/demo/onglerie/5.jpg', position: 5 },
-  { id: 'p6', url: '/images/demo/onglerie/6.jpg', position: 6 },
-];
+const makePhotos = (metier: string): DemoPhoto[] =>
+  [1, 2, 3, 4, 5, 6].map((n) => ({ id: `p${n}`, url: `/images/demo/${metier}/${n}.jpg`, position: n }));
 
-const PHOTOS_COIFFURE: DemoPhoto[] = [
-  { id: 'p1', url: '/images/demo/coiffure/1.jpg', position: 1 },
-  { id: 'p2', url: '/images/demo/coiffure/2.jpg', position: 2 },
-  { id: 'p3', url: '/images/demo/coiffure/3.jpg', position: 3 },
-  { id: 'p4', url: '/images/demo/coiffure/4.jpg', position: 4 },
-  { id: 'p5', url: '/images/demo/coiffure/5.jpg', position: 5 },
-  { id: 'p6', url: '/images/demo/coiffure/6.jpg', position: 6 },
-];
-
-const PHOTOS_TATOUAGE: DemoPhoto[] = [
-  { id: 'p1', url: '/images/demo/tatouage/1.jpg', position: 1 },
-  { id: 'p2', url: '/images/demo/tatouage/2.jpg', position: 2 },
-  { id: 'p3', url: '/images/demo/tatouage/3.jpg', position: 3 },
-  { id: 'p4', url: '/images/demo/tatouage/4.jpg', position: 4 },
-  { id: 'p5', url: '/images/demo/tatouage/5.jpg', position: 5 },
-  { id: 'p6', url: '/images/demo/tatouage/6.jpg', position: 6 },
-];
+const PHOTOS_ONGLERIE = makePhotos('onglerie');
+const PHOTOS_COIFFURE = makePhotos('coiffure');
+const PHOTOS_TATOUAGE = makePhotos('tatouage');
+const PHOTOS_BARBIER = makePhotos('barbier');
+const PHOTOS_INSTITUT = makePhotos('institut');
+const PHOTOS_SPA = makePhotos('spa');
+const PHOTOS_ESTHETICIENNE = makePhotos('estheticienne');
+const PHOTOS_AUTRE = makePhotos('autre');
 
 // ── FR data ──────────────────────────────────────────────────────────────────
 
@@ -402,7 +388,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFullRaw> = {
       opening_hours: { '1': { open: '09:00', close: '19:30' }, '2': { open: '09:00', close: '19:30' }, '3': { open: '09:00', close: '19:30' }, '4': { open: '09:00', close: '20:00' }, '5': { open: '09:00', close: '20:00' }, '6': { open: '08:30', close: '18:00' }, '7': null },
       phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'FR',
     },
-    offer: null, photos: [], serviceCategories: [
+    offer: null, photos: PHOTOS_BARBIER, serviceCategories: [
       { id: 'cat-1', name: 'Coupes', position: 1 },
       { id: 'cat-2', name: 'Barbe', position: 2 },
       { id: 'cat-3', name: 'Soins', position: 3 },
@@ -442,7 +428,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFullRaw> = {
       phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'FR',
     },
     offer: { id: 'offer-institut', title: 'Offre decouverte', description: '-25% sur votre premier soin visage', expires_at: null, discount_percent: 25, target_service_ids: null },
-    photos: [], serviceCategories: [
+    photos: PHOTOS_INSTITUT, serviceCategories: [
       { id: 'cat-1', name: 'Soins visage', position: 1 },
       { id: 'cat-2', name: 'Epilation', position: 2 },
       { id: 'cat-3', name: 'Modelage', position: 3 },
@@ -481,7 +467,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFullRaw> = {
       opening_hours: { '1': { open: '10:00', close: '20:00' }, '2': { open: '10:00', close: '20:00' }, '3': { open: '10:00', close: '20:00' }, '4': { open: '10:00', close: '21:00' }, '5': { open: '10:00', close: '21:00' }, '6': { open: '09:00', close: '19:00' }, '7': null },
       phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: 'Présentez-vous 15 min avant votre soin pour profiter pleinement du hammam et du sauna.', auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'FR',
     },
-    offer: null, photos: [], serviceCategories: [
+    offer: null, photos: PHOTOS_SPA, serviceCategories: [
       { id: 'cat-1', name: 'Massages', position: 1 },
       { id: 'cat-2', name: 'Acces spa', position: 2 },
       { id: 'cat-3', name: 'Forfaits', position: 3 },
@@ -520,7 +506,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFullRaw> = {
       phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'FR',
     },
     offer: { id: 'offer-estheticienne', title: 'Offre decouverte', description: '-20% sur le rehaussement de cils', expires_at: null, discount_percent: 20, target_service_ids: null },
-    photos: [], serviceCategories: [
+    photos: PHOTOS_ESTHETICIENNE, serviceCategories: [
       { id: 'cat-1', name: 'Regard', position: 1 },
       { id: 'cat-2', name: 'Epilation', position: 2 },
       { id: 'cat-3', name: 'Soins', position: 3 },
@@ -559,7 +545,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFullRaw> = {
       opening_hours: { '1': { open: '09:00', close: '19:00' }, '2': { open: '09:00', close: '19:00' }, '3': { open: '09:00', close: '19:00' }, '4': { open: '09:00', close: '19:00' }, '5': { open: '09:00', close: '19:00' }, '6': null, '7': null },
       phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'FR',
     },
-    offer: null, photos: [], serviceCategories: [
+    offer: null, photos: PHOTOS_AUTRE, serviceCategories: [
       { id: 'cat-1', name: 'Seances', position: 1 },
       { id: 'cat-2', name: 'Forfaits', position: 2 },
     ],
@@ -740,7 +726,7 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFullRaw> = {
       opening_hours: { '1': { open: '09:00', close: '19:30' }, '2': { open: '09:00', close: '19:30' }, '3': { open: '09:00', close: '19:30' }, '4': { open: '09:00', close: '20:00' }, '5': { open: '09:00', close: '20:00' }, '6': { open: '08:30', close: '18:00' }, '7': null },
       phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'US',
     },
-    offer: null, photos: [], serviceCategories: [
+    offer: null, photos: PHOTOS_BARBIER, serviceCategories: [
       { id: 'cat-1', name: 'Haircuts', position: 1 },
       { id: 'cat-2', name: 'Beard', position: 2 },
       { id: 'cat-3', name: 'Treatments', position: 3 },
@@ -780,7 +766,7 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFullRaw> = {
       phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'US',
     },
     offer: { id: 'offer-institut', title: 'Discovery offer', description: '25% off your first facial', expires_at: null, discount_percent: 25, target_service_ids: null },
-    photos: [], serviceCategories: [
+    photos: PHOTOS_INSTITUT, serviceCategories: [
       { id: 'cat-1', name: 'Facials', position: 1 },
       { id: 'cat-2', name: 'Waxing', position: 2 },
       { id: 'cat-3', name: 'Body', position: 3 },
@@ -819,7 +805,7 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFullRaw> = {
       opening_hours: { '1': { open: '10:00', close: '20:00' }, '2': { open: '10:00', close: '20:00' }, '3': { open: '10:00', close: '20:00' }, '4': { open: '10:00', close: '21:00' }, '5': { open: '10:00', close: '21:00' }, '6': { open: '09:00', close: '19:00' }, '7': null },
       phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: 'Please arrive 15 min before your treatment to fully enjoy the steam room and sauna.', auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'US',
     },
-    offer: null, photos: [], serviceCategories: [
+    offer: null, photos: PHOTOS_SPA, serviceCategories: [
       { id: 'cat-1', name: 'Massages', position: 1 },
       { id: 'cat-2', name: 'Spa access', position: 2 },
       { id: 'cat-3', name: 'Packages', position: 3 },
@@ -858,7 +844,7 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFullRaw> = {
       phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'US',
     },
     offer: { id: 'offer-estheticienne', title: 'Discovery offer', description: '20% off lash lift', expires_at: null, discount_percent: 20, target_service_ids: null },
-    photos: [], serviceCategories: [
+    photos: PHOTOS_ESTHETICIENNE, serviceCategories: [
       { id: 'cat-1', name: 'Lashes & brows', position: 1 },
       { id: 'cat-2', name: 'Waxing', position: 2 },
       { id: 'cat-3', name: 'Treatments', position: 3 },
@@ -897,7 +883,7 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFullRaw> = {
       opening_hours: { '1': { open: '09:00', close: '19:00' }, '2': { open: '09:00', close: '19:00' }, '3': { open: '09:00', close: '19:00' }, '4': { open: '09:00', close: '19:00' }, '5': { open: '09:00', close: '19:00' }, '6': null, '7': null },
       phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, country: 'US',
     },
-    offer: null, photos: [], serviceCategories: [
+    offer: null, photos: PHOTOS_AUTRE, serviceCategories: [
       { id: 'cat-1', name: 'Sessions', position: 1 },
       { id: 'cat-2', name: 'Packages', position: 2 },
     ],
@@ -942,3 +928,6 @@ export function getDemoMerchantData(slug: string, locale: string = 'fr'): DemoMe
 
 /** All base demo slugs (without -libre variants) */
 export const DEMO_BASE_SLUGS = Object.keys(DEMO_MERCHANTS_FR);
+
+/** URL de la carte fidélité côté cliente en mode démo (preview, sans auth). */
+export const demoCardUrl = (slug: string): string => `/customer/card/${slug}?preview=true&demo=true`;
