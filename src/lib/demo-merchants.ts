@@ -122,7 +122,7 @@ type CommonDefaults = Pick<DemoMerchant,
 >;
 const COMMON_DEFAULTS: CommonDefaults = {
   subscription_status: 'active',
-  whatsapp_url: null,
+  whatsapp_url: 'https://wa.me/33612345678',
   buffer_minutes: 15,
   allow_customer_cancel: true,
   allow_customer_reschedule: true,
@@ -199,7 +199,7 @@ function withDefaultsAndVariants(merchants: Record<string, DemoMerchantFullRaw>,
     const libreSlug = `${slug}-libre`;
     // home_service uniquement sur estheticienne-libre : seul cas metier "mobile beauty".
     const libreOverrides: Partial<DemoMerchant> = m.shop_type === 'estheticienne'
-      ? { home_service_enabled: true, hide_address_on_public_page: true, shop_lat: 48.8566, shop_lng: 2.3522 }
+      ? { home_service_enabled: true, hide_address_on_public_page: true, shop_lat: 45.7578, shop_lng: 4.8320 }
       : {};
     const libreM: DemoMerchant = { ...slotsM, id: libreSlug, slug: libreSlug, scan_code: libreSlug, booking_mode: 'free', ...libreOverrides };
     result[libreSlug] = { ...entry, merchant: libreM };
@@ -376,8 +376,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFullRaw> = {
       { id: 's7', name: 'Piercing hélix / tragus', price: 45, position: 7, category_id: 'cat-2', duration: 15, description: null, price_from: false },
       { id: 's8', name: 'Piercing septum', price: 50, position: 8, category_id: 'cat-2', duration: 15, description: null, price_from: false },
       { id: 's9', name: 'Piercing nez', price: 40, position: 9, category_id: 'cat-2', duration: 15, description: null, price_from: false },
-      { id: 's10', name: 'Retouche (< 3 mois)', price: 0, position: 10, category_id: 'cat-3', duration: 30, description: 'Gratuite dans les 3 mois suivant la séance', price_from: false },
-      { id: 's11', name: 'Retouche (> 3 mois)', price: 50, position: 11, category_id: 'cat-3', duration: 60, description: null, price_from: true },
+      { id: 's10', name: 'Retouche (> 3 mois)', price: 50, position: 10, category_id: 'cat-3', duration: 60, description: null, price_from: true },
     ],
   },
 

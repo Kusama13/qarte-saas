@@ -21,6 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry('/ambassadeur', { priority: 0.6, changeFrequency: 'monthly', lastModified: new Date('2026-04-12') }),
     entry('/contact', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-03-01') }),
     entry('/pros', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-03-15') }),
+    entry('/exemples', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-05-29') }),
     entry('/boutique', { priority: 0.7, lastModified: new Date('2026-03-01') }),
     entry('/cgv', { priority: 0.3, lastModified: new Date('2026-01-15') }),
     entry('/mentions-legales', { priority: 0.3, lastModified: new Date('2026-01-15') }),

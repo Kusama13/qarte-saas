@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, X, Heart, Smartphone } from 'lucide-react';
+import { Check, X, Heart, Smartphone, Eye } from 'lucide-react';
 import Image from 'next/image';
 import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
@@ -157,14 +157,24 @@ export function HeroSection({ topLogos = [] }: { topLogos?: HeroLogo[] } = {}) {
             {t('subtitle')}
           </p>
 
-          <div className="flex flex-col items-center xl:items-start gap-2 w-full sm:w-auto pt-2">
-            <Link
-              href="/auth/merchant/signup"
-              onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-              className="flex w-full sm:w-auto sm:min-w-[400px] items-center justify-center px-10 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-base sm:text-lg rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-[transform,box-shadow] duration-200"
-            >
-              <span>{t('ctaPrimary')}</span>
-            </Link>
+          <div className="flex flex-col items-center xl:items-start gap-3 w-full sm:w-auto pt-2">
+            <div className="flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row">
+              <Link
+                href="/auth/merchant/signup"
+                onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
+                className="flex w-full sm:w-auto items-center justify-center px-10 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-base sm:text-lg rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-[transform,box-shadow] duration-200"
+              >
+                <span>{t('ctaPrimary')}</span>
+              </Link>
+              <Link
+                href="/exemples"
+                onClick={() => trackCtaClick('hero_demo', 'hero_section')}
+                className="flex w-full sm:w-auto items-center justify-center gap-2 px-8 py-3.5 bg-white text-gray-900 font-bold text-base sm:text-lg rounded-xl border border-gray-300 hover:bg-gray-50 hover:border-gray-400 active:scale-[0.98] transition-[transform,colors] duration-200"
+              >
+                <Eye className="w-5 h-5 text-indigo-600" />
+                <span>{t('ctaExamples')}</span>
+              </Link>
+            </div>
             <p className="text-xs text-gray-600 font-medium text-center xl:text-left">{t('ctaSubtext')}</p>
             <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 border border-indigo-100 px-3 py-1 mt-1">
               <Smartphone className="w-3.5 h-3.5 text-indigo-600" />
