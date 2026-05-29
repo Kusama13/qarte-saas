@@ -8,12 +8,11 @@ import {
   Loader2,
   Pencil,
   RefreshCw,
-  X,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { compressOfferImage } from '@/lib/image-compression';
 import { useTranslations } from 'next-intl';
-import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
+import { Modal } from '@/components/ui/Modal';
 import type { Merchant } from '@/types';
 
 interface PhotosSectionProps {
@@ -163,7 +162,7 @@ export default function PhotosSection({ merchant }: PhotosSectionProps) {
               <button
                 key={position}
                 type="button"
-                onClick={() => { setConfirmingDelete(false); setMenuPhoto(photo); }}
+                onClick={() => setMenuPhoto(photo)}
                 aria-label={t('photosEditAria', { position })}
                 className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-200 group focus:outline-none focus:ring-2 focus:ring-indigo-400"
               >
@@ -189,29 +188,16 @@ export default function PhotosSection({ merchant }: PhotosSectionProps) {
       <input ref={replaceInputRef} type="file" accept="image/*" className="hidden" onChange={handleReplacePick} />
 
       {menuPhoto && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={closeMenu}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="photo-menu-title"
-            className="w-full max-w-xs rounded-2xl border border-gray-100 bg-white p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <img src={menuPhoto.url} alt="" className="w-14 h-14 rounded-xl object-cover border border-gray-100" />
-              <div className="flex-1">
-                <p id="photo-menu-title" className="text-sm font-semibold text-gray-800">{t('photosMenuTitle')}</p>
-                <p className="text-xs text-gray-400">{t('photosMenuPosition', { position: menuPhoto.position })}</p>
-              </div>
-              <button type="button" onClick={closeMenu} aria-label={t('photosCancel')} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors">
-                <X className="w-4 h-4" />
-              </button>
+        <Modal isOpen onClose={closeMenu} size="sm">
+          <div className="flex items-center gap-3 mb-4">
+            <img src={menuPhoto.url} alt="" className="w-14 h-14 rounded-xl object-cover border border-gray-100" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-800">{t('photosMenuTitle')}</p>
+              <p className="text-xs text-gray-400">{t('photosMenuPosition', { position: menuPhoto.position })}</p>
             </div>
+          </div>
 
-            {confirmingDelete ? (
+          {confirmingDelete ? (
               <div className="space-y-2.5">
                 <p className="text-sm text-gray-600">{t('photosDeleteConfirmText')}</p>
                 <button
@@ -252,8 +238,7 @@ export default function PhotosSection({ merchant }: PhotosSectionProps) {
                 </button>
               </div>
             )}
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );
