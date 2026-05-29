@@ -33,8 +33,6 @@ export default function PhotosSection({ merchant }: PhotosSectionProps) {
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const replacePositionRef = useRef<number | null>(null);
 
-  useBodyScrollLock(!!menuPhoto);
-
   useEffect(() => {
     const fetchPhotos = async () => {
       const { data } = await supabase
@@ -46,18 +44,6 @@ export default function PhotosSection({ merchant }: PhotosSectionProps) {
     };
     fetchPhotos();
   }, [merchant, supabase]);
-
-  useEffect(() => {
-    if (!menuPhoto) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setMenuPhoto(null);
-        setConfirmingDelete(false);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [menuPhoto]);
 
   const closeMenu = () => {
     setMenuPhoto(null);
