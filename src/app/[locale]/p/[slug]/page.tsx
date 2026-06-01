@@ -78,7 +78,7 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
 
   const isFreeMod = (merchant as any).booking_mode === 'free';
 
-  const [photosResult, servicesResult, categoriesResult, planningResult] = await Promise.all([
+  const [photosResult, servicesResult, categoriesResult, planningResult, contestPrizeResult] = await Promise.all([
     supabaseAdmin
       .from('merchant_photos')
       .select('id, url, position')
@@ -106,7 +106,20 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
           .order('slot_date')
           .order('start_time')
       : Promise.resolve({ data: [] }),
+    // Lot du concours pour le mois en cours (priorité sur le lot par défaut, cf. cron monthly-contest)
+    (merchant as any).contest_enabled
+      ? supabaseAdmin
+          .from('merchant_contest_prizes')
+          .select('prize_description')
+          .eq('merchant_id', (merchant as any).id)
+          .eq('contest_month', today.slice(0, 7))
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
+
+  // Affiche le lot planifié du mois si défini, sinon le lot par défaut — même règle que le tirage
+  const plannedPrize = (contestPrizeResult.data as any)?.prize_description;
+  if (plannedPrize) (merchant as any).contest_prize = plannedPrize;
 
   const allSlots = (planningResult.data as any[]) || [];
   return {

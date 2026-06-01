@@ -73,6 +73,7 @@ export const en = {
     affiliateConversion: '+$10 for you: {filleulShopName} subscribed to Qarte',
     quickStart: '{shopName}, your Qarte page is already live',
     trialFinalDay: '{shopName}, last day: continue before tonight',
+    contestWinner: '{shopName} — {winnerName} won your monthly draw',
   },
 
   baseLayout: {
@@ -1076,6 +1077,20 @@ export const en = {
     cta: 'Subscribe now',
     footerNote: 'A question before committing? Reply to this email, we get back to you fast.',
     pageFallback: 'your online page',
+    signature: 'The Qarte team',
+  },
+
+  contestWinner: {
+    preview: 'Your giveaway has a winner: {winnerName}.',
+    heading: 'The monthly draw is in',
+    greeting: 'Hi <strong>{shopName}</strong>,',
+    intro: 'Your monthly giveaway is over. We drew the winner at random among all the clients who booked with you last month.',
+    winnerLabel: 'The winner',
+    prizeLabel: 'Her prize',
+    participants: 'Drawn at random among {count} client{plural} in the running this month.',
+    next: 'Let her know quickly and treat her. To announce the result on Instagram, we prepared a story ready to post.',
+    cta: 'See the story to post',
+    helpText: 'The story includes your shop name and the prize. Just share it to show your clients that booking with you pays off.',
     signature: 'The Qarte team',
   },
 } as const;

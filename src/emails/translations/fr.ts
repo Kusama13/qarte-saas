@@ -73,6 +73,7 @@ export const fr = {
     affiliateConversion: '+10€ pour toi : {filleulShopName} s\'abonne à Qarte',
     quickStart: '{shopName}, ta vitrine Qarte est déjà créée',
     trialFinalDay: '{shopName}, dernier jour : continue avant ce soir',
+    contestWinner: '{shopName} — {winnerName} a gagné ton tirage du mois',
   },
 
   baseLayout: {
@@ -1076,6 +1077,20 @@ export const fr = {
     cta: 'S\'abonner maintenant',
     footerNote: 'Une question avant de t\'engager ? Réponds à cet email, on te répond rapidement.',
     pageFallback: 'ta page vitrine',
+    signature: 'L\'équipe Qarte',
+  },
+
+  contestWinner: {
+    preview: 'Ton jeu concours a sa gagnante : {winnerName}.',
+    heading: 'Le tirage du mois est tombé',
+    greeting: 'Bonjour <strong>{shopName}</strong>,',
+    intro: 'Ton jeu concours du mois est terminé. On a tiré au sort la gagnante parmi toutes les clientes qui ont réservé chez toi le mois dernier.',
+    winnerLabel: 'La gagnante',
+    prizeLabel: 'Son cadeau',
+    participants: 'Tirée au sort parmi {count} cliente{plural} en lice ce mois-ci.',
+    next: 'Préviens-la vite et fais-lui plaisir. Pour annoncer le résultat sur Instagram, on t\'a préparé une story toute prête à publier.',
+    cta: 'Voir la story à publier',
+    helpText: 'La story reprend ton nom de salon et le cadeau. Tu n\'as plus qu\'à la partager pour montrer à tes clientes que ça vaut le coup de réserver chez toi.',
     signature: 'L\'équipe Qarte',
   },
 } as const;

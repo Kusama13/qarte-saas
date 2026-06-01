@@ -95,9 +95,11 @@ export async function POST(request: NextRequest) {
     const merchant = card.merchant as Record<string, unknown>;
     const planningEnabled = !!merchant.planning_enabled;
     const today = planningEnabled ? getTodayForCountry(merchant.country as string) : '';
+    const contestEnabled = !!merchant.contest_enabled;
+    const contestMonth = contestEnabled ? getTodayForCountry(merchant.country as string).slice(0, 7) : '';
     const slotSelect = 'id, slot_date, start_time, total_duration_minutes, deposit_confirmed, booked_online, primary_slot_id, custom_service_name, custom_service_duration, planning_slot_services(service_id, service:merchant_services!service_id(name, duration))';
 
-    const [visitsResult, adjustmentsResult, memberCardResult, redemptionsResult, vouchersResult, upcomingResult, pastResult] = await Promise.all([
+    const [visitsResult, adjustmentsResult, memberCardResult, redemptionsResult, vouchersResult, upcomingResult, pastResult, contestPrizeResult] = await Promise.all([
       // Visits
       supabaseAdmin
         .from('visits')
@@ -180,10 +182,24 @@ export async function POST(request: NextRequest) {
             .order('start_time', { ascending: false })
             .limit(20)
         : Promise.resolve({ data: [] }),
+
+      // Lot du concours pour le mois en cours (priorité sur le lot par défaut, cf. cron monthly-contest)
+      contestEnabled
+        ? supabaseAdmin
+            .from('merchant_contest_prizes')
+            .select('prize_description')
+            .eq('merchant_id', merchantId)
+            .eq('contest_month', contestMonth)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
 
     const upcomingAppointments = upcomingResult.data || [];
     const pastAppointments = pastResult.data || [];
+
+    // Affiche le lot planifié du mois si défini, sinon le lot par défaut — même règle que le tirage
+    const plannedPrize = (contestPrizeResult.data as { prize_description?: string } | null)?.prize_description;
+    if (plannedPrize) merchant.contest_prize = plannedPrize;
 
     // Process offer data from merchant (already included in card.merchant)
     const isOfferExpired = merchant.offer_expires_at &&

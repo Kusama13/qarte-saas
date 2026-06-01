@@ -62,6 +62,7 @@ import {
   AffiliateConversionEmail,
   QuickStartEmail,
   TrialFinalDayEmail,
+  ContestWinnerEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import type { BookingConfirmationMode } from '@/emails/BookingConfirmationEmail';
@@ -346,6 +347,23 @@ export async function sendTrialFinalDayEmail(
     TrialFinalDayEmail,
     { shopName, slug, locale },
     { logLabel: 'TrialFinalDay email (J+3 last day)' },
+  );
+}
+
+export async function sendContestWinnerEmail(
+  to: string,
+  shopName: string,
+  winnerName: string,
+  prize: string,
+  participantsCount: number,
+  locale: EmailLocale = 'fr',
+): Promise<SendEmailResult> {
+  return sendEmail(
+    to,
+    subj(locale, 'contestWinner', { shopName, winnerName }),
+    ContestWinnerEmail,
+    { shopName, winnerName, prize, participantsCount, locale },
+    { logLabel: 'Contest winner email (monthly draw)' },
   );
 }
 

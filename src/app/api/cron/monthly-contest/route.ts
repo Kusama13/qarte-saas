@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { getTodayForCountry } from '@/lib/utils';
 import { sendMerchantPush } from '@/lib/merchant-push';
-import { resend, EMAIL_FROM, EMAIL_HEADERS } from '@/lib/resend';
+import { sendContestWinnerEmail } from '@/lib/email';
 import { verifyCronAuth, rateLimitDelay } from '@/lib/cron-helpers';
 import logger from '@/lib/logger';
 
@@ -141,25 +141,19 @@ export async function GET(request: NextRequest) {
           tag: 'qarte-merchant-contest',
         });
 
-        // Notify merchant — email
+        // Notify merchant — email (template React, cf. ContestWinnerEmail)
         if (merchant.user_id) {
           try {
             const { data: authUser } = await supabase.auth.admin.getUserById(merchant.user_id);
             if (authUser?.user?.email) {
-              const subject = isEN
-                ? `${merchant.shop_name} — Draw winner: ${winner.client_name}`
-                : `${merchant.shop_name} — Gagnant(e) du tirage : ${winner.client_name}`;
-              const text = isEN
-                ? `The monthly draw for ${merchant.shop_name} is done!\n\nWinner: ${winner.client_name}\nPrize: ${prize}\nParticipants: ${participants.length}\n\nLog in to generate the announcement story:\nhttps://getqarte.com/dashboard/contest`
-                : `Le tirage mensuel de ${merchant.shop_name} est terminé !\n\nGagnant(e) : ${winner.client_name}\nLot : ${prize}\nParticipants : ${participants.length}\n\nConnecte-toi pour générer la story d'annonce :\nhttps://getqarte.com/dashboard/contest`;
-
-              await resend?.emails.send({
-                from: EMAIL_FROM,
-                to: authUser.user.email,
-                subject,
-                text,
-                headers: EMAIL_HEADERS,
-              });
+              await sendContestWinnerEmail(
+                authUser.user.email,
+                merchant.shop_name,
+                winner.client_name,
+                prize,
+                participants.length,
+                isEN ? 'en' : 'fr',
+              );
             }
           } catch (emailErr) {
             logger.error(`Contest email error for ${merchant.id}:`, emailErr);
