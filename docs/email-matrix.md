@@ -534,6 +534,20 @@ activite    │  INACTIVE DAY 30                    │
 |-------|-------|-------------|
 | Announcement Ma Page | "{shopName}, decouvre ce qu'on a prepare pour toi" | Feature launch (one-shot) |
 | Product Update | "{shopName}, decouvre les nouveautes Qarte de la semaine" | Digest hebdo (on-demand) |
+| Reactivation Recent | "Ta page beaute est restee a mi-chemin" | One-shot, non-abonnes (essai expire < 45j) |
+| Reactivation Tiede | "Pourquoi 70% des nouvelles clientes ne reviennent pas" | One-shot, non-abonnes (essai expire 45j-4mois) |
+| Reactivation Ancien | "Qarte n'est plus le meme qu'a ton inscription" | One-shot, non-abonnes (essai expire > 4mois) |
+
+### Campagne reactivation one-shot (juin 2026)
+
+Script : [`scripts/send-reactivation.ts`](../scripts/send-reactivation.ts) (`npx tsx`, flags `--dry-run` / `--segment=recent|tiede|ancien`).
+Segmente les non-abonnes (`trial` expire ou `canceled`) par anciennete via `trial_ends_at` : recent (< 45j), tiede (45j-4mois), ancien (> 4mois ou canceled). Templates `src/emails/Reactivation{Recent,Tiede,Ancien}Email.tsx` sur `BaseLayout`.
+
+Strategie (skills email-sequence + churn-prevention + recherche win-back 2026) : value-first, jamais de prix en frontal, 1 CTA/mail, momentum Planity/Booksy formule factuelle ("le mouvement s'accelere", pas de superlatif invérifiable). CTA differencies : recent → finir sa page + `/exemples` ; tiede → article blog ; ancien → `/exemples`.
+
+Garde-fous integres : exclut admins, `active`, `deleted_at`, `email_bounced_at`, `email_unsubscribed_at`, et noms suspects (charabia clavier / placeholders / email-comme-nom via `isSuspiciousName`). Rate-limit 600ms.
+
+1er envoi 2026-06-01 : segments recent (168) + tiede (347) = 515 mails, 0 echec. Churn (canceled) + > 4 mois volontairement exclus a la demande.
 
 ---
 
