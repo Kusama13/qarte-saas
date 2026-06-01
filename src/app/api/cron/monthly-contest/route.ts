@@ -70,7 +70,8 @@ export async function GET(request: NextRequest) {
         const nextMonth = new Date(prevYear, todayDate.getMonth() + 1, 1);
         const monthEnd = nextMonth.toISOString().slice(0, 10);
 
-        // Query all booked slots for previous month (main slots only, with customer_id)
+        // Query all booked slots for previous month (main slots only).
+        // On inclut aussi les réservations manuelles (sans customer_id) saisies par le pro.
         const { data: slots } = await supabase
           .from('merchant_planning_slots')
           .select('customer_id, client_name, client_phone')
@@ -78,14 +79,22 @@ export async function GET(request: NextRequest) {
           .gte('slot_date', monthStart)
           .lt('slot_date', monthEnd)
           .not('client_name', 'is', null)
-          .is('primary_slot_id', null)
-          .not('customer_id', 'is', null);
+          .neq('client_name', '__blocked__')
+          .is('primary_slot_id', null);
 
-        // Deduplicate by customer_id
-        const customerMap = new Map<string, { customer_id: string; client_name: string; client_phone: string | null }>();
+        // Déduplication : téléphone (9 derniers chiffres, rapproche les formats
+        // national/E.164) en priorité, sinon customer_id, sinon nom. Une même
+        // personne présente en réservation online ET manuelle ne compte qu'une fois.
+        const customerMap = new Map<string, { customer_id: string | null; client_name: string; client_phone: string | null }>();
         for (const slot of slots || []) {
-          if (slot.customer_id && !customerMap.has(slot.customer_id)) {
-            customerMap.set(slot.customer_id, {
+          const digits = (slot.client_phone || '').replace(/\D/g, '');
+          const key = digits.length >= 9
+            ? `p:${digits.slice(-9)}`
+            : slot.customer_id
+              ? `c:${slot.customer_id}`
+              : `n:${slot.client_name.toLowerCase().trim()}`;
+          if (!customerMap.has(key)) {
+            customerMap.set(key, {
               customer_id: slot.customer_id,
               client_name: slot.client_name,
               client_phone: slot.client_phone,
