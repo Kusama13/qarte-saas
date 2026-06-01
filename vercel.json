@@ -71,6 +71,10 @@
     {
       "path": "/api/cron/stripe-reconcile",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/monthly-contest",
+      "schedule": "0 8 1 * *"
     }
   ]
 }
