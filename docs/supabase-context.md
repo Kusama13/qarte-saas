@@ -584,6 +584,7 @@
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
 **Index** : `idx_merchant_contests_merchant` (merchant_id, contest_month DESC)
+**Tirage** (cron `monthly-contest`, 1er du mois, `0 8 1 * *` dans `vercel.json`) : participants = slots `merchant_planning_slots` du mois précédent par `slot_date`, `client_name NOT NULL` + `!= '__blocked__'` + `primary_slot_id IS NULL`, **online ET manuels** (pas de filtre `customer_id`). Dédup téléphone (9 derniers chiffres) → `customer_id` → nom. Annulations exclues (slot annulé → `client_name = NULL`). `winner_customer_id`/`winner_name`/`winner_phone` nullables (gagnant manuel sans compte client). Concours sans participant → ligne avec `participants_count = 0` et winner null.
 **RLS** : merchants SELECT own, service role full access
 
 ### ~~2.29 merchant_churn_surveys~~ — SUPPRIMEE (mig 169)

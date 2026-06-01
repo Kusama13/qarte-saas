@@ -525,6 +525,7 @@ activite    │  INACTIVE DAY 30                    │
 | Pending points (alerte) | "{shopName} - {n} point(s) a moderer" | Points en attente J+0/J+1 |
 | Pending points (rappel) | "{shopName} - Rappel : {n} point(s) en attente" | Points en attente J+2/J+3 |
 | Grace period setup | "{shopName}, on garde tes donnees encore {n} jours" | Programme non config + trial expire |
+| Contest winner | "{shopName} — {winnerName} a gagne ton tirage du mois" | Cron monthly-contest (1er du mois), si gagnant tire |
 
 ---
 
