@@ -624,9 +624,8 @@ export default function Page() {
                 </h3>
                 <p className="text-base text-gray-700 leading-relaxed">
                   Les tarifs vont de <strong>19 € à 79 €/mois</strong> selon les fonctionnalités et le nombre de
-                  collaborateurs. Planity : ~30 €/mois + commissions. Treatwell : à partir de 35 €/mois + 2,5 % de
-                  commission. Booksy : 29-79 €/mois selon le plan. Qarte : 24 €/mois sans commission ni frais par
-                  réservation.
+                  collaborateurs. Planity : dès 59 €/mois, sans commission. Treatwell : à partir de 35 €/mois +
+                  commission marketplace. Booksy : 29-79 €/mois selon le plan. Qarte : 24 €/mois, tout compris.
                 </p>
               </div>
               <div>
@@ -634,8 +633,8 @@ export default function Page() {
                   Faut-il préférer un logiciel avec annuaire (marketplace) ou sans ?
                 </h3>
                 <p className="text-base text-gray-700 leading-relaxed">
-                  L&apos;annuaire (Planity, Treatwell) apporte du trafic mais prélève une commission de{' '}
-                  <strong>20-30 % sur les nouveaux clients</strong> et affiche tes concurrents à côté de toi. Sans
+                  Un annuaire à commission (Treatwell, ou l&apos;option Boost de Booksy) apporte du trafic mais prélève
+                  <strong> 20-30 % sur les nouveaux clients</strong> et affiche tes concurrents à côté de toi. Sans
                   annuaire (Qarte), tu gardes 100 % de tes revenus mais dois générer ton propre trafic (Google
                   Business, Instagram). Idéal : commencer avec annuaire pour l&apos;acquisition, migrer vers sans
                   annuaire quand le bouche-à-oreille prend le relais.

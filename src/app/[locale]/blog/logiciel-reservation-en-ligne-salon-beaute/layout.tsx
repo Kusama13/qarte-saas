@@ -40,8 +40,8 @@ export async function generateMetadata(): Promise<Metadata> {
         ? 'Logiciel de réservation en ligne salon de beauté : comparatif 2026'
         : 'Online booking software for beauty salons: 2026 comparison',
       description: isFr
-        ? 'Comparatif Planity, Treatwell, Booksy, Qarte : tarifs, commissions, fonctionnalités, pour quel type de salon.'
-        : 'Comparison Planity, Treatwell, Booksy, Qarte: pricing, commissions, features.',
+        ? 'Comparatif Planity, Treatwell, Booksy, Qarte : tarifs, fonctionnalités, pour quel type de salon.'
+        : 'Comparison Planity, Treatwell, Booksy, Qarte: pricing, features, for which type of salon.',
       url: `https://getqarte.com/${locale === 'fr' ? '' : 'en/'}blog/logiciel-reservation-en-ligne-salon-beaute`,
       type: 'article',
       images: [

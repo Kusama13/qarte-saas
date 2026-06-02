@@ -9,9 +9,9 @@ export function FeaturesGridSection() {
   const t = useTranslations('featuresGrid');
 
   const features = [
-    { number: '100', titleKey: 'policyTitle',    descKey: 'policyDesc',    competitorKey: 'policyCompetitor',    bg: 'bg-sky-50',     border: 'border-sky-100',     text: 'text-sky-600'     },
-    { number: '0%',  titleKey: 'remindersTitle', descKey: 'remindersDesc', competitorKey: 'remindersCompetitor', bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-700' },
-    { number: '0€', titleKey: 'dashboardTitle', descKey: 'dashboardDesc', competitorKey: 'dashboardCompetitor', bg: 'bg-rose-50',    border: 'border-rose-100',    text: 'text-rose-600'    },
+    { number: '100', titleKey: 'policyTitle',    descKey: 'policyDesc',    bg: 'bg-sky-50',     border: 'border-sky-100',     text: 'text-sky-600'     },
+    { number: '0%',  titleKey: 'remindersTitle', descKey: 'remindersDesc', bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-700' },
+    { number: '0€', titleKey: 'dashboardTitle', descKey: 'dashboardDesc', bg: 'bg-rose-50',    border: 'border-rose-100',    text: 'text-rose-600'    },
   ] as const;
 
   return (
@@ -40,7 +40,7 @@ export function FeaturesGridSection() {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-5">
-          {features.map(({ number, titleKey, descKey, competitorKey, bg, border, text }, i) => (
+          {features.map(({ number, titleKey, descKey, bg, border, text }, i) => (
             <motion.div
               key={titleKey}
               initial={{ opacity: 0, transform: 'translateY(20px)' }}
@@ -59,9 +59,6 @@ export function FeaturesGridSection() {
               </div>
               <p className="text-sm md:text-base text-gray-500 leading-snug md:leading-relaxed">
                 {t(descKey)}
-              </p>
-              <p className="text-xs text-gray-400 italic leading-snug">
-                {t(competitorKey)}
               </p>
             </motion.div>
           ))}

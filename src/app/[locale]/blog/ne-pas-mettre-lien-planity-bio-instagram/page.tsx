@@ -308,7 +308,7 @@ export default function Page() {
                 <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold text-gray-900 text-sm mb-1">Tu finances la croissance de Planity</p>
-                  <p className="text-sm text-gray-600">Ton contenu Instagram attire du trafic. Planity le convertit en réservations — et en commission. Tu travailles, ils encaissent.</p>
+                  <p className="text-sm text-gray-600">Ton contenu Instagram attire du trafic. Planity le capte et garde la relation cliente : le lendemain, ta cliente rouvre l&apos;app et voit aussi tes concurrents.</p>
                 </div>
               </div>
               <div className="flex items-start gap-4 p-5 border border-red-100 bg-red-50 rounded-xl">

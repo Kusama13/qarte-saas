@@ -117,7 +117,7 @@ const jsonLd = {
       '@id': 'https://getqarte.com/blog/acompte-rdv-salon-sans-commission#webpage',
       url: 'https://getqarte.com/blog/acompte-rdv-salon-sans-commission',
       name: 'Acompte salon : 0€ de commission, direct sur ton compte',
-      description: 'Planity prélève 1,80%, Booksy 2,49%, Treatwell jusqu\'à 25% sur tes acomptes. Découvre comment encaisser 100% en 24h via ton lien Revolut, PayPal ou SumUp.',
+      description: 'Les plateformes à paiement intégré prélèvent des frais sur tes acomptes. Découvre comment encaisser 100% en 24h via ton propre lien Revolut, PayPal ou SumUp.',
       inLanguage: 'fr-FR',
       isPartOf: {
         '@type': 'WebSite',
@@ -161,9 +161,9 @@ const jsonLd = {
       '@id': 'https://getqarte.com/blog/acompte-rdv-salon-sans-commission#article',
       isPartOf: { '@id': 'https://getqarte.com/blog/acompte-rdv-salon-sans-commission#webpage' },
       mainEntityOfPage: { '@id': 'https://getqarte.com/blog/acompte-rdv-salon-sans-commission#webpage' },
-      headline: 'Acompte salon : pourquoi tu perds 0,72€ sur chaque RDV (et comment encaisser 100% direct sur ton compte)',
+      headline: 'Acompte salon : pourquoi une partie t\'échappe sur chaque RDV (et comment encaisser 100% direct sur ton compte)',
       alternativeHeadline: 'Acompte salon : 0€ de commission, direct sur ton compte',
-      description: 'Planity prélève 1,80%, Booksy 2,49%, Treatwell jusqu\'à 25% sur tes acomptes. Découvre comment encaisser 100% en 24h via ton lien Revolut, PayPal ou SumUp. 0€ commission Qarte.',
+      description: 'Les plateformes à paiement intégré prélèvent des frais sur tes acomptes. Découvre comment encaisser 100% en 24h via ton propre lien Revolut, PayPal ou SumUp. 0€ commission Qarte.',
       image: { '@id': 'https://getqarte.com/blog/acompte-rdv-salon-sans-commission#primaryimage' },
       datePublished: '2026-05-08T08:00:00+02:00',
       dateModified: '2026-05-08T08:00:00+02:00',
@@ -216,7 +216,7 @@ const jsonLd = {
           name: 'Combien Planity prélève sur un acompte de RDV ?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Planity Pro applique 1,80% + 0,18€ HT par paiement en ligne (via Stripe Connect). Sur un acompte de 30€, ça fait 0,72€ qui ne tombent jamais dans ta caisse. Sur 100 acomptes par mois, c\'est 72€ qui partent à la plateforme.',
+            text: 'Planity passe par un paiement en ligne intégré qui applique des frais sur chaque acompte. Une partie de chaque acompte ne tombe donc jamais dans ta caisse. Avec Qarte, tu utilises ton propre lien (Revolut, PayPal, SumUp) et tu encaisses 100%.',
           },
         },
         {
@@ -224,7 +224,7 @@ const jsonLd = {
           name: 'Combien Booksy prend de commission sur un paiement ?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Booksy Biz facture 2,49% + 0,30$ par transaction de paiement intégré. Si tu veux recevoir l\'argent en moins de 30 minutes (Fast Payouts), c\'est +1,5% supplémentaires. Sur 100 acomptes de 30€, tu perds environ 87€ par mois.',
+            text: 'Booksy facture des frais sur les paiements via son système intégré, avec un supplément si tu veux être payé rapidement. Avec Qarte, l\'acompte arrive direct sur ton compte via ton propre lien, sans frais de plateforme.',
           },
         },
         {
@@ -240,7 +240,7 @@ const jsonLd = {
           name: 'Au bout de combien de temps je reçois l\'argent de l\'acompte avec Qarte ?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'L\'argent tombe directement sur ton compte pro (Revolut, PayPal, SumUp...) sans passer par Qarte. Avec Revolut Business, le virement est instantané. Avec PayPal ou SumUp, c\'est en général sous 24h. Tu n\'attends jamais 7 jours comme sur Planity ou Treatwell.',
+            text: 'L\'argent tombe directement sur ton compte pro (Revolut, PayPal, SumUp...) sans passer par Qarte. Avec Revolut Business, le virement est instantané. Avec PayPal ou SumUp, c\'est en général sous 24h, sans la rétention de plusieurs jours imposée par certaines plateformes.',
           },
         },
         {
@@ -256,7 +256,7 @@ const jsonLd = {
           name: 'Est-ce que Qarte est vraiment la seule plateforme à proposer ça ?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'À notre connaissance, sur le marché FR/BE/CH en mai 2026, oui. Planity, Booksy, Treatwell, Fresha, Kiute, Wavy obligent toutes à passer par leur Stripe interne avec leurs frais. Aucune ne te laisse coller ton propre lien Revolut/PayPal/SumUp dans la vitrine de réservation à 0€ de commission plateforme.',
+            text: 'À notre connaissance, sur le marché FR/BE/CH en mai 2026, oui. Planity, Booksy, Treatwell, Fresha, Kiute, Wavy passent par leur paiement intégré, avec leurs propres frais. Aucune ne te laisse coller ton propre lien Revolut/PayPal/SumUp dans la vitrine de réservation à 0€ de frais plateforme.',
           },
         },
       ],
@@ -308,13 +308,13 @@ export default function Page() {
               </div>
 
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-6">
-                Acompte salon : pourquoi tu perds 0,72€ sur chaque RDV (et comment encaisser 100% direct sur ton compte)
+                Acompte salon : pourquoi une partie t&apos;échappe sur chaque RDV (et comment encaisser 100% direct sur ton compte)
               </h1>
 
               <p className="text-lg text-gray-600 leading-relaxed">
-                Tu encaisses 30€ d&apos;acompte sur une couleur. Planity en garde 0,72€. Booksy
-                0,87€. Treatwell jusqu&apos;à 8€. Et tu attends 7 jours le reste. On te montre
-                comment garder tes 30€ entiers, sur ton compte, en 24h.
+                Tu encaisses 30€ d&apos;acompte sur une couleur. Sur les plateformes à paiement
+                intégré, une partie part en frais et le reste met parfois plusieurs jours à tomber.
+                On te montre comment garder tes 30€ entiers, sur ton compte, en 24h.
               </p>
             </motion.div>
 
@@ -638,16 +638,17 @@ export default function Page() {
               <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2">Combien Planity prélève sur un acompte de RDV ?</h3>
                 <p className="text-base text-gray-700 leading-relaxed">
-                  1,80% + 0,18€ HT par paiement (via Stripe Connect). Sur un acompte de 30€, ça fait
-                  0,72€ qui ne tombent jamais dans ta caisse. Sur 100 acomptes par mois, 72€ qui
-                  partent à la plateforme.
+                  Planity passe par un paiement en ligne intégré qui applique des frais sur chaque
+                  acompte : une partie ne tombe jamais dans ta caisse. Avec Qarte, tu encaisses 100%
+                  via ton propre lien.
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Combien Booksy prend de commission ?</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Combien Booksy prend sur un paiement ?</h3>
                 <p className="text-base text-gray-700 leading-relaxed">
-                  2,49% + 0,30$ par transaction. Et si tu veux recevoir l&apos;argent en moins de
-                  30min (Fast Payouts), c&apos;est +1,5%. Sur 100 acomptes de 30€, environ 87€/mois.
+                  Booksy applique des frais sur les paiements via son système intégré, avec un
+                  supplément si tu veux être payé rapidement. Avec Qarte, l&apos;argent arrive direct
+                  sur ton compte via ton propre lien, sans frais de plateforme.
                 </p>
               </div>
               <div>
@@ -664,8 +665,8 @@ export default function Page() {
                 <h3 className="text-lg font-bold text-gray-900 mb-2">Au bout de combien de temps je reçois l&apos;argent avec Qarte ?</h3>
                 <p className="text-base text-gray-700 leading-relaxed">
                   L&apos;argent va directement sur ton compte pro, sans passer par Qarte. Avec
-                  Revolut Business, c&apos;est instantané. PayPal et SumUp, en général sous 24h. Tu
-                  n&apos;attends jamais 7 jours comme sur Planity ou Treatwell.
+                  Revolut Business, c&apos;est instantané. PayPal et SumUp, en général sous 24h, sans
+                  la rétention de plusieurs jours imposée par certaines plateformes.
                 </p>
               </div>
               <div>

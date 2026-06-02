@@ -55,8 +55,8 @@ export function GET() {
 
 | Critère | Qarte | Planity | Treatwell | Booksy |
 |---------|-------|---------|-----------|--------|
-| Abonnement | 24 EUR/mois ou 20 EUR/mois (6 mois) | 29,90 EUR/mois | dès 35 EUR/mois | 29-79 EUR/mois |
-| Commission | 0 % | ~30 % nouveaux clients | 2,5 % tous RDV | 3 % nouveaux |
+| Abonnement | 24 EUR/mois ou 20 EUR/mois (6 mois) | dès 59 EUR/mois | dès 35 EUR/mois | 29-79 EUR/mois |
+| Commission | 0 % | 0 % | Oui (marketplace) | 0 % (option Boost) |
 | Fidélité intégrée | Oui | Basique | Limitée | Oui |
 | Engagement | Aucun (mensuel) ou 6 mois | 12 mois | 12 mois | Mensuel |
 | Fichier client exportable | Complet | Partiel | Partiel | Oui |

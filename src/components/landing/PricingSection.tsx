@@ -251,9 +251,9 @@ export function PricingSection() {
 
             {[
               { row: 'Price', us: 'compareRowPriceUs', planity: 'compareRowPricePlanity', booksy: 'compareRowPriceBooksy', label: 'compareRowPrice' },
-              { row: 'Commission', us: 'compareRowCommissionUs', planity: 'compareRowCommissionPlanity', booksy: 'compareRowCommissionBooksy', label: 'compareRowCommission', highlightUs: true },
+              { row: 'Commission', us: 'compareRowCommissionUs', planity: 'compareRowCommissionPlanity', booksy: 'compareRowCommissionBooksy', label: 'compareRowCommission' },
               { row: 'SMS', us: 'compareRowSmsUs', planity: 'compareRowSmsPlanity', booksy: 'compareRowSmsBooksy', label: 'compareRowSms' },
-              { row: 'Loyalty', us: 'compareRowLoyaltyUs', planity: 'compareRowLoyaltyPlanity', booksy: 'compareRowLoyaltyBooksy', label: 'compareRowLoyalty' },
+              { row: 'Loyalty', us: 'compareRowLoyaltyUs', planity: 'compareRowLoyaltyPlanity', booksy: 'compareRowLoyaltyBooksy', label: 'compareRowLoyalty', highlightUs: true },
               { row: 'AnnualCost', us: 'compareRowAnnualCostUs', planity: 'compareRowAnnualCostPlanity', booksy: 'compareRowAnnualCostBooksy', label: 'compareRowAnnualCost', highlightUs: true, emphasis: true },
             ].map((r) => (
               <div key={r.row} className={`grid grid-cols-4 border-b border-gray-50 last:border-b-0 text-xs md:text-sm ${r.emphasis ? 'bg-indigo-50/30' : ''}`}>

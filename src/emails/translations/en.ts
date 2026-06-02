@@ -833,7 +833,7 @@ export const en = {
     tip3: 'Collect your Google reviews right after the appointment, while they\'re happy.',
     guideText: 'We wrote a full guide about this.',
     guideCta: 'Read the guide',
-    momentum: 'And yes, Qarte does these 3 things for you. More and more pros are joining us, leaving Planity or Booksy, fed up with commissions and rising subscriptions. The spot is open whenever you want.',
+    momentum: 'And yes, Qarte does these 3 things for you. More and more pros are joining us, leaving Planity or Booksy, fed up with paying more and more for their subscription. The spot is open whenever you want.',
     signature: 'The Qarte team 💜',
   },
 

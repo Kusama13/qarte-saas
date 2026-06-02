@@ -117,7 +117,7 @@ export default function BooksyCostCalculator() {
                     onChange={(e) => setCommissionPct(Number(e.target.value))}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                   />
-                  <p className="text-xs text-gray-400 mt-1">% prélevé sur les réservations via leur marketplace (environ 20% en moyenne).</p>
+                  <p className="text-xs text-gray-400 mt-1">% prélevé sur les nouvelles clientes via le Boost / marketplace Booksy. Sans Boost, Booksy ne prend pas de commission.</p>
                 </div>
 
                 <div>
@@ -221,7 +221,7 @@ export default function BooksyCostCalculator() {
         <div className="max-w-3xl mx-auto px-6">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Comment on calcule</h2>
           <div className="space-y-3 text-sm md:text-base text-gray-600 leading-relaxed">
-            <p><strong className="text-gray-900">Commissions Booksy :</strong> Booksy prélève une commission sur les réservations effectuées via leur marketplace. Le taux varie selon ton plan (environ 20% sur les nouveaux clients Booksy).</p>
+            <p><strong className="text-gray-900">Commissions Booksy :</strong> avec l&apos;option Boost, Booksy prélève une commission sur les nouvelles clientes venues de leur marketplace. Sans Boost, Booksy ne prend pas de commission : ajuste le curseur à 0% si tu n&apos;utilises pas le Boost.</p>
             <p><strong className="text-gray-900">Abonnement Booksy :</strong> plan Pro autour de 60€/mois (Starter ~29€, Premium ~100€).</p>
             <p><strong className="text-gray-900">SMS Booksy :</strong> tarif moyen 0,10€/SMS envoyé (rappel, confirmation, marketing) en supplément de l&apos;abonnement.</p>
             <p><strong className="text-gray-900">Qarte :</strong> 24€/mois tout compris. 100 SMS/mois inclus. Au-delà, pack à 0,075€/SMS. Zéro commission, jamais.</p>

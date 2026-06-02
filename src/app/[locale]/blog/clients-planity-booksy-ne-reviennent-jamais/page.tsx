@@ -84,7 +84,7 @@ const jsonLd = {
           name: 'Combien coûte vraiment Planity pour un salon de beauté ?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Planity est gratuit à l\'inscription mais prend jusqu\'à 20% de commission sur les réservations générées via leur marketplace. Sur un CA de 3 000€/mois, c\'est jusqu\'à 600€ de commission, sans compter les options payantes (SMS, marketing) à 150€/mois en plus.',
+            text: 'Planity fonctionne par abonnement fixe (à partir d\'environ 59€/mois selon la formule), sans commission sur les rendez-vous. Le vrai coût est ailleurs : les clientes venues de leur marketplace restent attachées à la plateforme et non à ton salon, et les options (SMS, marketing, site) font grimper la facture.',
           },
         },
         {
@@ -221,10 +221,9 @@ export default function Page() {
             </p>
             <div className="bg-rose-50 border border-rose-200 rounded-xl p-5 mb-6">
               <p className="text-sm text-rose-900 leading-relaxed">
-                <strong>Et pendant ce temps :</strong> Planity prend jusqu&apos;à{' '}
-                <strong>20% de commission</strong> sur chaque réservation générée. Sur un CA de 3 000 €/mois,
-                c&apos;est jusqu&apos;à <strong>600 € qui partent chaque mois</strong> sans aucun retour
-                en termes de fidélisation.
+                <strong>Et pendant ce temps :</strong> la cliente reste attachée à{' '}
+                <strong>la plateforme, pas à ton salon</strong>. Tu paies ton abonnement et tes options,
+                mais tu n&apos;as ni son contact ni de quoi la faire revenir d&apos;elle-même.
               </p>
             </div>
           </section>
@@ -291,8 +290,8 @@ export default function Page() {
               <div className="flex items-start gap-4 p-5 border border-gray-200 rounded-xl">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 text-red-700 font-bold text-sm flex items-center justify-center">1</div>
                 <div>
-                  <h3 className="font-bold text-gray-900 mb-1">Jusqu&apos;à 20% de commission par réservation</h3>
-                  <p className="text-sm text-gray-600">Planity prend une commission sur chaque cliente générée par leur marketplace. Tu travailles, elles encaissent.</p>
+                  <h3 className="font-bold text-gray-900 mb-1">Une facture qui grimpe vite</h3>
+                  <p className="text-sm text-gray-600">Abonnement, puis options SMS, marketing et site : le ticket mensuel monte bien au-delà du prix affiché.</p>
                 </div>
               </div>
               <div className="flex items-start gap-4 p-5 border border-gray-200 rounded-xl">
@@ -361,7 +360,7 @@ export default function Page() {
                 <tbody className="divide-y divide-gray-100">
                   <tr>
                     <td className="px-4 py-3">Prix mensuel</td>
-                    <td className="px-4 py-3 text-gray-500">Gratuit + 20% commission</td>
+                    <td className="px-4 py-3 text-gray-500">Abonnement dès 59€/mois</td>
                     <td className="px-4 py-3 font-semibold text-emerald-700">24€/mois tout inclus</td>
                   </tr>
                   <tr>
@@ -417,9 +416,10 @@ export default function Page() {
                   Combien coûte vraiment Planity pour un salon de beauté ?
                 </h3>
                 <p className="text-base text-gray-700 leading-relaxed">
-                  Planity est gratuit à l&apos;inscription mais prend jusqu&apos;à <strong>20% de commission</strong>{' '}
-                  sur les réservations. Sur 3 000€/mois de CA, c&apos;est 600€ de commission — sans compter les
-                  options marketing à 150€/mois en plus.
+                  Planity fonctionne par <strong>abonnement fixe</strong> (à partir d&apos;environ 59€/mois selon la
+                  formule), sans commission sur les rendez-vous. Le vrai coût est ailleurs : les clientes du
+                  marketplace restent attachées à la plateforme, et les options (SMS, marketing, site) alourdissent
+                  la facture.
                 </p>
               </div>
               <div>

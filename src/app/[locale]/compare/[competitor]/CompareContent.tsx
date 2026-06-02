@@ -27,7 +27,7 @@ const FEATURES: Array<{ key: FeatureKey; qarteValue: 'yes' | 'custom'; competito
   { key: 'push', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
   { key: 'commission', qarteValue: 'custom', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'custom' } },
   { key: 'app_download', qarteValue: 'custom', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'custom' } },
-  { key: 'inactive_reminders', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
+  { key: 'inactive_reminders', qarteValue: 'yes', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'no' } },
   { key: 'qr_nfc', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
   { key: 'interconnection', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
 ];
@@ -68,6 +68,7 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
     if (key === 'sms') return { text: t(`${competitor}_sms`), type: 'custom' };
     if (key === 'commission') return { text: t(`${competitor}_commission`), type: 'custom' };
     if (key === 'app_download') return { text: t(`${competitor}_app`), type: 'custom' };
+    if (key === 'inactive_reminders') return { text: t(`${competitor}_inactive_reminders`), type: 'custom' };
     return { text: t('notIncluded'), type: 'no' };
   }
 
