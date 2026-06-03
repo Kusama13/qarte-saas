@@ -57,9 +57,9 @@ export const BLOG_ARTICLES: BlogArticle[] = [
   },
   {
     slug: 'acompte-rdv-salon-sans-commission',
-    title: 'Acompte salon : pourquoi tu perds 0,72€ sur chaque RDV (et comment encaisser 100% direct sur ton compte)',
+    title: 'Acompte salon : pourquoi une partie t\'échappe sur chaque RDV (et comment encaisser 100% direct sur ton compte)',
     description:
-      'Planity prélève 1,80%, Booksy 2,49%, Treatwell jusqu\'à 25% sur tes acomptes. Découvre comment encaisser 100% en 24h via ton lien Revolut, PayPal ou SumUp. 0€ commission Qarte.',
+      'Comment demander un acompte pour tes RDV et l\'encaisser en entier sur ton compte pro, en 24h, via ton lien Revolut, PayPal ou SumUp. 0€ de commission Qarte.',
     readTime: '6 min',
     category: 'Argent & commissions',
     date: '2026-05-08',
@@ -89,7 +89,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
     slug: 'logiciel-reservation-en-ligne-salon-beaute',
     title: 'Logiciel de réservation en ligne pour salon de beauté : le comparatif 2026',
     description:
-      'Planity, Treatwell, Booksy, Qarte : comparatif honnête des 4 logiciels qui dominent le marché. Tarifs, commissions cachées, fonctionnalités, pour quel type de salon.',
+      'Planity, Treatwell, Booksy, Qarte : comparatif honnête des 4 solutions qui dominent le marché. Tarifs, fonctionnalités, ce qui est inclus ou en option, pour quel type de salon.',
     readTime: '9 min',
     category: 'Outils',
     date: '2026-04-16',
@@ -99,7 +99,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
     slug: 'clients-planity-booksy-ne-reviennent-jamais',
     title: 'Planity, Booksy, Treatwell : ces clientes qui réservent et ne reviennent jamais',
     description:
-      'Les clientes venues de Planity, Booksy ou Treatwell ne te cherchaient pas — elles cherchaient un créneau. Voici la vraie source de clientes fidèles et comment les garder sans payer de commission.',
+      'Les clientes venues de Planity, Booksy ou Treatwell ne te cherchaient pas, elles cherchaient un créneau. Voici la vraie source de clientes fidèles et comment les garder.',
     readTime: '5 min',
     category: 'Fidélisation',
     date: '2026-04-23',
@@ -109,7 +109,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
     slug: 'ne-pas-mettre-lien-planity-bio-instagram',
     title: 'Lien Planity en bio Instagram : l\'erreur qui envoie tes clientes chez la concurrente',
     description:
-      'Mettre ton lien Planity, Booksy ou Treatwell en bio Instagram, c\'est envoyer tes abonnées chez la concurrente. Voici pourquoi — et ce qu\'il faut mettre à la place.',
+      'Mettre ton lien Planity, Booksy ou Treatwell en bio Instagram, c\'est envoyer tes abonnées chez la concurrente. Voici pourquoi, et ce qu\'il faut mettre à la place.',
     readTime: '5 min',
     category: 'Stratégie',
     date: '2026-04-26',
@@ -117,7 +117,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
   },
   {
     slug: 'avis-planity-booksy-ne-tappartiennent-pas',
-    title: 'Tes avis sur Planity, Booksy et Treatwell ne t\'appartiennent pas — et c\'est dangereux',
+    title: 'Tes avis sur Planity, Booksy et Treatwell ne t\'appartiennent pas (et c\'est dangereux)',
     description:
       'Tes avis sur Planity ou Booksy disparaissent le jour où tu pars ou te fais déprioritiser. Seuls les avis Google t\'appartiennent vraiment. Comment les collecter automatiquement après chaque visite.',
     readTime: '5 min',

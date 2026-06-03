@@ -7,8 +7,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: isFr
-      ? 'Tes avis sur Planity, Booksy et Treatwell ne t\'appartiennent pas — et c\'est dangereux'
-      : 'Your reviews on Planity, Booksy and Treatwell don\'t belong to you — and it\'s dangerous',
+      ? 'Tes avis sur Planity, Booksy et Treatwell ne t\'appartiennent pas (et c\'est dangereux)'
+      : 'Your reviews on Planity, Booksy and Treatwell don\'t belong to you (and it\'s dangerous)',
     description: isFr
       ? 'Tes avis sur Planity ou Booksy disparaissent le jour où tu pars ou te fais déprioritiser. Seuls les avis Google t\'appartiennent vraiment. Voici comment les collecter automatiquement.'
       : 'Your reviews on Planity or Booksy disappear the day you leave or get deprioritized. Only Google reviews truly belong to you. Here is how to collect them automatically.',
@@ -38,8 +38,8 @@ export async function generateMetadata(): Promise<Metadata> {
         ? 'Tes avis Planity et Booksy ne t\'appartiennent pas'
         : 'Your Planity and Booksy reviews don\'t belong to you',
       description: isFr
-        ? '47 avis 5 étoiles sur Planity. Le jour où tu pars — ils disparaissent. Seuls les avis Google restent à toi pour toujours.'
-        : '47 five-star reviews on Planity. The day you leave — they disappear. Only Google reviews stay yours forever.',
+        ? '47 avis 5 étoiles sur Planity. Le jour où tu pars, ils disparaissent. Seuls les avis Google restent à toi pour toujours.'
+        : '47 five-star reviews on Planity. The day you leave, they disappear. Only Google reviews stay yours forever.',
       url: `https://getqarte.com/${locale === 'fr' ? '' : 'en/'}blog/avis-planity-booksy-ne-tappartiennent-pas`,
       type: 'article',
       images: [

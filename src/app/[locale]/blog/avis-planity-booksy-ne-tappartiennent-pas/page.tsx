@@ -48,7 +48,7 @@ const jsonLd = {
     },
     {
       '@type': 'Article',
-      headline: 'Tes avis sur Planity, Booksy et Treatwell ne t\'appartiennent pas — et c\'est dangereux',
+      headline: 'Tes avis sur Planity, Booksy et Treatwell ne t\'appartiennent pas (et c\'est dangereux)',
       description: 'Tes avis sur Planity ou Booksy disparaissent si tu pars. Seuls les avis Google t\'appartiennent vraiment. Comment les collecter automatiquement.',
       image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=80',
       datePublished: '2026-04-29',
@@ -77,7 +77,7 @@ const jsonLd = {
           name: 'Comment obtenir plus d\'avis Google pour mon salon de beauté ?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'La méthode la plus efficace est l\'envoi automatique d\'un SMS avec lien direct vers ta fiche Google, juste après chaque visite. C\'est ce que fait Qarte automatiquement après chaque scan de carte de fidélité — sans action de ta part.',
+            text: 'La méthode la plus efficace est l\'envoi automatique d\'un SMS avec lien direct vers ta fiche Google, juste après chaque visite. C\'est ce que fait Qarte automatiquement après chaque scan de carte de fidélité, sans action de ta part.',
           },
         },
         {
@@ -145,12 +145,12 @@ export default function Page() {
               </div>
 
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-6">
-                Tes avis sur Planity, Booksy et Treatwell ne t&apos;appartiennent pas — et c&apos;est dangereux
+                Tes avis sur Planity, Booksy et Treatwell ne t&apos;appartiennent pas (et c&apos;est dangereux)
               </h1>
 
               <p className="text-lg text-gray-600 leading-relaxed">
-                Tu as 47 avis 5 étoiles sur Planity. Bravo. Mais le jour où tu pars — ou le jour où
-                tu ne leur rapportes plus assez — ils disparaissent. Et tu repars de zéro, avec zéro
+                Tu as 47 avis 5 étoiles sur Planity. Bravo. Mais le jour où tu pars, ou le jour où
+                tu ne leur rapportes plus assez, ils disparaissent. Et tu repars de zéro, avec zéro
                 avis en ligne, comme si tu n&apos;avais jamais existé.
               </p>
             </motion.div>
@@ -195,7 +195,7 @@ export default function Page() {
           <div className="mb-12 bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-xl">
             <p className="text-sm font-bold text-amber-900 mb-2">L&apos;essentiel en 30 secondes</p>
             <p className="text-base text-gray-700 leading-relaxed">
-              Tes avis Planity, Booksy ou Treatwell <strong>t&apos;appartiennent</strong> — tant que ta fiche
+              Tes avis Planity, Booksy ou Treatwell <strong>t&apos;appartiennent</strong>, tant que ta fiche
               existe sur leur plateforme. Le jour où tu pars, ils disparaissent. Les{' '}
               <strong>avis Google sont les seuls qui restent à toi pour toujours</strong>, qui comptent pour
               le référencement local, et qui sont visibles sans compte. Qarte automatise leur collecte
@@ -211,10 +211,10 @@ export default function Page() {
             </h2>
             <p className="text-base text-gray-700 leading-relaxed mb-4">
               Quand une cliente laisse un avis sur ta fiche Planity, Booksy ou Treatwell, elle laisse un
-              avis sur <strong>leur plateforme</strong> — rattaché à ta fiche du moment.
+              avis sur <strong>leur plateforme</strong>, rattaché à ta fiche du moment.
             </p>
             <p className="text-base text-gray-700 leading-relaxed mb-4">
-              Cette fiche, c&apos;est eux qui la possèdent. Toi, tu l&apos;occupes — tant que tu leur
+              Cette fiche, c&apos;est eux qui la possèdent. Toi, tu l&apos;occupes, tant que tu leur
               es utile. Si tu migres, si ton abonnement expire, si la plateforme décide de déprioritiser
               ton profil parce que tu génères moins de volume que le salon d&apos;à côté...
             </p>
@@ -300,8 +300,8 @@ export default function Page() {
               Planity ferme dans cinq ans.
             </p>
             <p className="text-base text-gray-700 leading-relaxed mb-4">
-              Et dans les recherches locales — <em>&quot;coiffeuse à Lyon&quot;</em>,{' '}
-              <em>&quot;onglerie près de moi&quot;</em> — ce sont ces avis qui décident si tu apparais
+              Et dans les recherches locales (&quot;coiffeuse à Lyon&quot;,{' '}
+              &quot;onglerie près de moi&quot;), ce sont ces avis qui décident si tu apparais
               dans le pack local de Google Maps. Pas tes avis Booksy. Pas tes avis Treatwell.
             </p>
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-6">
@@ -341,7 +341,7 @@ export default function Page() {
             <p className="text-base text-gray-700 leading-relaxed mb-6">
               Avec <strong>Qarte</strong>, après chaque scan de ta carte de fidélité, ta cliente reçoit
               un SMS personnalisé avec le lien direct vers ta fiche Google. Elle note en 10 secondes.
-              L&apos;avis est publié sur <strong>ta fiche</strong> — pas sur une plateforme tierce.
+              L&apos;avis est publié sur <strong>ta fiche</strong>, pas sur une plateforme tierce.
             </p>
 
             <div className="bg-gray-900 text-gray-100 rounded-xl p-5 my-6 font-mono text-sm leading-relaxed">
@@ -355,7 +355,7 @@ export default function Page() {
             <div className="grid sm:grid-cols-2 gap-4">
               {[
                 'Envoi automatique après chaque visite scannée',
-                'Lien direct vers ta fiche Google — 0 friction',
+                'Lien direct vers ta fiche Google, 0 friction',
                 'Avis sur ta fiche, pas sur une marketplace',
                 'Capital digital qui t\'appartient pour toujours',
               ].map((item, i) => (
@@ -418,7 +418,7 @@ export default function Page() {
           <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl p-8 text-center text-white">
             <Star className="w-10 h-10 mx-auto mb-4 opacity-90" />
             <h3 className="text-xl sm:text-2xl font-bold mb-3">
-              Construis ta réputation Google — automatiquement
+              Construis ta réputation Google, automatiquement
             </h3>
             <p className="text-amber-100 mb-6 max-w-xl mx-auto">
               Après chaque visite, Qarte envoie un SMS à ta cliente pour un avis Google en 10 secondes.
