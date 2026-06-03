@@ -68,7 +68,7 @@ const jsonLd = {
           name: 'Quel lien mettre dans sa bio Instagram quand on est coiffeuse ou esthéticienne ?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Le lien de ta propre page de réservation — pas celui de Planity ou Booksy. Une page qui ne montre que ton salon, sans concurrentes à côté. Avec Qarte, tu as une page publique à ton nom qui sert de lien de bio parfait.',
+            text: 'Le lien de ta propre page de réservation, pas celui de Planity ou Booksy. Une page qui ne montre que ton salon, sans concurrentes à côté. Avec Qarte, tu as une page publique à ton nom qui sert de lien de bio parfait.',
           },
         },
         {
@@ -76,7 +76,7 @@ const jsonLd = {
           name: 'Pourquoi Planity affiche-t-il d\'autres salons sur ma fiche ?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Planity est une marketplace : son modèle économique consiste à proposer plusieurs prestataires pour que la cliente choisisse. Quand une cliente arrive sur ta fiche via ton lien Instagram, elle voit d\'autres salons en dessous — c\'est volontaire de leur part pour maximiser les réservations sur leur plateforme.',
+            text: 'Planity est une marketplace : son modèle économique consiste à proposer plusieurs prestataires pour que la cliente choisisse. Quand une cliente arrive sur ta fiche via ton lien Instagram, elle voit d\'autres salons en dessous, c\'est volontaire de leur part pour maximiser les réservations sur leur plateforme.',
           },
         },
         {
@@ -92,7 +92,7 @@ const jsonLd = {
           name: 'Peut-on utiliser Planity et Qarte en même temps ?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Oui. Le plan Fidélité de Qarte (19€/mois) est compatible avec Planity — tu gardes ton agenda Planity et tu ajoutes la fidélisation Qarte. Dans ce cas, mets quand même le lien Qarte en bio Instagram pour éviter que tes abonnées voient la concurrence.',
+            text: 'Oui. Le plan Fidélité de Qarte (19€/mois) est compatible avec Planity, tu gardes ton agenda Planity et tu ajoutes la fidélisation Qarte. Dans ce cas, mets quand même le lien Qarte en bio Instagram pour éviter que tes abonnées voient la concurrence.',
           },
         },
       ],
@@ -195,7 +195,7 @@ export default function Page() {
             <p className="text-sm font-bold text-violet-900 mb-2">L&apos;essentiel en 30 secondes</p>
             <p className="text-base text-gray-700 leading-relaxed">
               Quand ton lien de bio pointe vers Planity, Booksy ou Treatwell, ta cliente arrive sur <strong>ta
-              fiche</strong> — mais avec des dizaines de <strong>concurrentes affichées en dessous</strong>.
+              fiche</strong>, mais avec des dizaines de <strong>concurrentes affichées en dessous</strong>.
               Elle peut partir chez l&apos;une d&apos;elles en un clic. La solution : un lien vers{' '}
               <strong>ta propre page</strong>, sans concurrent visible, avec carte de fidélité automatique.
             </p>
@@ -218,8 +218,8 @@ export default function Page() {
               <div className="flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-amber-900 leading-relaxed">
-                  Il suffit qu&apos;une de tes abonnées voie : <em>&quot;Tiens, celle-là a l&apos;air pas mal
-                  aussi — et elle est ouverte le dimanche...&quot;</em> Et c&apos;est une cliente de perdue. Une
+                  Il suffit qu&apos;une de tes abonnées voie : &quot;Tiens, celle-là a l&apos;air pas mal
+                  aussi, et elle est ouverte le dimanche...&quot; Et c&apos;est une cliente de perdue. Une
                   cliente que <strong>tu avais convaincue avec ton contenu</strong>, que tu envoies toi-même
                   voir ailleurs.
                 </p>
@@ -280,7 +280,7 @@ export default function Page() {
 
             <p className="text-base text-gray-700 leading-relaxed">
               Ces plateformes utilisent ton audience Instagram pour alimenter leur marketplace. Pas pour
-              te fidéliser des clientes — pour fidéliser des utilisatrices à <strong>leur service</strong>.
+              te fidéliser des clientes, pour fidéliser des utilisatrices à <strong>leur service</strong>.
             </p>
           </section>
 
@@ -292,7 +292,7 @@ export default function Page() {
             </h2>
             <p className="text-base text-gray-700 leading-relaxed mb-6">
               Chaque abonnée qui clique sur ton lien Planity est une cliente potentielle que tu offres au marché.
-              Elle n&apos;a pas cherché &quot;salon de beauté&quot; sur Google — elle <em>te</em> suivait, toi.
+              Elle n&apos;a pas cherché &quot;salon de beauté&quot; sur Google, elle <strong>te</strong> suivait, toi.
               Et tu la redistribues à des dizaines de concurrentes en un clic.
             </p>
 
@@ -335,9 +335,9 @@ export default function Page() {
 
             <div className="grid sm:grid-cols-2 gap-4 mb-8">
               {[
-                'Ta page uniquement — aucune concurrente visible',
+                'Ta page uniquement · aucune concurrente visible',
                 'Carte de fidélité automatique dès la 1ère réservation',
-                'SMS de rappel inclus — moins de no-shows',
+                'SMS de rappel inclus · moins de no-shows',
                 '0% de commission sur tes réservations',
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-3 p-4 bg-emerald-50 rounded-xl">
@@ -350,7 +350,7 @@ export default function Page() {
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
               <p className="text-sm font-bold text-gray-700 mb-2">Et si je veux garder Planity pour les nouvelles clientes ?</p>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Le plan Fidélité Qarte (19€/mois) est compatible avec Planity — tu gardes ton agenda
+                Le plan Fidélité Qarte (19€/mois) est compatible avec Planity, tu gardes ton agenda
                 Planity et tu ajoutes la fidélisation Qarte. Dans ce cas, mets le lien Qarte en bio
                 Instagram pour éviter que tes abonnées voient la concurrence.
               </p>
@@ -366,7 +366,7 @@ export default function Page() {
                   Quel lien mettre dans sa bio Instagram quand on est coiffeuse ou esthéticienne ?
                 </h3>
                 <p className="text-base text-gray-700 leading-relaxed">
-                  Le lien de ta propre page de réservation — pas celui de Planity ou Booksy. Une page qui
+                  Le lien de ta propre page de réservation, pas celui de Planity ou Booksy. Une page qui
                   ne montre que ton salon, sans concurrentes à côté. Avec Qarte, ta page publique sert de
                   lien de bio parfait.
                 </p>
@@ -378,7 +378,7 @@ export default function Page() {
                 <p className="text-base text-gray-700 leading-relaxed">
                   Planity est une marketplace : son modèle consiste à proposer plusieurs prestataires.
                   Quand ta cliente arrive via ton lien Instagram, elle voit d&apos;autres salons en dessous
-                  — c&apos;est volontaire de leur part pour maximiser les réservations sur leur plateforme.
+                  c&apos;est volontaire de leur part pour maximiser les réservations sur leur plateforme.
                 </p>
               </div>
               <div>
@@ -386,7 +386,7 @@ export default function Page() {
                   Peut-on utiliser Planity et Qarte en même temps ?
                 </h3>
                 <p className="text-base text-gray-700 leading-relaxed">
-                  Oui. Le plan Fidélité de Qarte (19€/mois) est compatible avec Planity — tu gardes ton
+                  Oui. Le plan Fidélité de Qarte (19€/mois) est compatible avec Planity, tu gardes ton
                   agenda Planity et tu ajoutes la fidélisation. Mets le lien Qarte en bio pour protéger
                   ton audience Instagram.
                 </p>

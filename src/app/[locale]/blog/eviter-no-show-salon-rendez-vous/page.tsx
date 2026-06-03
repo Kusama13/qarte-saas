@@ -283,7 +283,7 @@ export default function Page() {
               Les 5 causes réelles des rendez-vous manqués
             </h2>
             <p className="text-base text-gray-700 leading-relaxed mb-8">
-              Avant de poser un acompte ou un SMS de rappel, il faut comprendre <em>pourquoi</em> les clientes ne
+              Avant de poser un acompte ou un SMS de rappel, il faut comprendre <strong>pourquoi</strong> les clientes ne
               viennent pas. Les vraies raisons sont rarement "elles se fichent de nous".
             </p>
 
@@ -297,7 +297,7 @@ export default function Page() {
                     <h3 className="text-base font-bold text-gray-900 mb-1">L&apos;oubli pur et simple (42 %)</h3>
                     <p className="text-sm text-gray-700 leading-relaxed">
                       La cause n°1. La cliente a réservé 3 semaines plus tôt, sa vie a pris le dessus, elle a oublié.
-                      Pas de mauvaise foi — juste pas de rappel. <strong>Solution</strong> : SMS de confirmation à
+                      Pas de mauvaise foi, juste pas de rappel. <strong>Solution</strong> : SMS de confirmation à
                       J-2 et rappel à J-1.
                     </p>
                   </div>
@@ -418,12 +418,12 @@ export default function Page() {
                   <strong>SMS, ouvert à 98 % en moins de 3 minutes</strong> (Mobile Marketing Association, 2024).
                 </p>
                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 my-4">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">J-2 — Confirmation</p>
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">J-2 · Confirmation</p>
                   <p className="text-sm text-gray-700 italic mb-4">
                     "Hello Laura 👋 on se voit mercredi 18 avril à 14h pour ton balayage. Pour annuler ou décaler :
                     [lien]. À bientôt ! L&apos;équipe [Salon]"
                   </p>
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">J-1 — Rappel pratique</p>
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">J-1 · Rappel pratique</p>
                   <p className="text-sm text-gray-700 italic">
                     "Rappel : demain 14h, [adresse]. Parking possible rue Voltaire. Sms &quot;OUI&quot; pour
                     confirmer 😊"
@@ -471,7 +471,7 @@ export default function Page() {
                   La liste d&apos;attente : remplir les créneaux libérés
                 </h3>
                 <p className="text-base text-gray-700 leading-relaxed mb-3">
-                  Quand un créneau se libère à la dernière minute, ne laisse pas le trou — propose-le aux clientes
+                  Quand un créneau se libère à la dernière minute, ne laisse pas le trou, propose-le aux clientes
                   en liste d&apos;attente. Un outil de réservation en ligne moderne notifie automatiquement la
                   première cliente en attente, qui réserve en 1 clic.
                 </p>

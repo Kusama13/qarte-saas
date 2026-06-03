@@ -366,7 +366,7 @@ export default function Page() {
             </p>
           </div>
 
-          {/* Section 1 — Coût caché */}
+          {/* Section 1 · Coût caché */}
           <section id="cout-cache" className="mb-16 scroll-mt-24">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
               <AlertTriangle className="w-7 h-7 text-emerald-600 flex-shrink-0" />
@@ -426,7 +426,7 @@ export default function Page() {
                   </tr>
                   <tr className="bg-emerald-50">
                     <td className="px-4 py-3 font-bold text-emerald-900">Qarte + Revolut</td>
-                    <td className="px-4 py-3 text-emerald-700 font-semibold">0€ — aucune commission</td>
+                    <td className="px-4 py-3 text-emerald-700 font-semibold">0€ · aucune commission</td>
                     <td className="px-4 py-3 text-emerald-700 font-bold">+30€ entiers</td>
                     <td className="px-4 py-3 text-emerald-700 font-bold">Instantané</td>
                   </tr>
@@ -443,7 +443,7 @@ export default function Page() {
             </p>
           </section>
 
-          {/* Section 2 — Méthode Qarte */}
+          {/* Section 2 · Méthode Qarte */}
           <section id="methode-qarte" className="mb-16 scroll-mt-24">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
               <Wallet className="w-7 h-7 text-emerald-600 flex-shrink-0" />
@@ -469,7 +469,7 @@ export default function Page() {
             </div>
           </section>
 
-          {/* Section 3 — Économies */}
+          {/* Section 3 · Économies */}
           <section id="economies" className="mb-16 scroll-mt-24">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
               <Calculator className="w-7 h-7 text-emerald-600 flex-shrink-0" />
@@ -535,7 +535,7 @@ export default function Page() {
             </div>
           </section>
 
-          {/* Section 4 — Délai */}
+          {/* Section 4 · Délai */}
           <section id="delai" className="mb-16 scroll-mt-24">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
               <Zap className="w-7 h-7 text-emerald-600 flex-shrink-0" />
@@ -549,11 +549,11 @@ export default function Page() {
             </p>
             <p className="text-base text-gray-700 leading-relaxed mb-4">
               Concrètement : ta cliente réserve, paie son acompte. 30 secondes après, ping Revolut
-              sur ton iPhone : <em>+30€</em>. Tu sais que la résa est sérieuse avant même
+              sur ton iPhone : <strong>+30€</strong>. Tu sais que la résa est sérieuse avant même
               d&apos;ouvrir ton agenda.
             </p>
             <p className="text-base text-gray-700 leading-relaxed mb-4">
-              Pas de <em>« virement Planity le 8 du mois prochain »</em>. Pas de provision bloquée
+              Pas de « virement Planity le 8 du mois prochain ». Pas de provision bloquée
               par Stripe. Pas d&apos;écart entre ton agenda et ton compte.
             </p>
             <p className="text-base text-gray-700 leading-relaxed">
@@ -562,7 +562,7 @@ export default function Page() {
             </p>
           </section>
 
-          {/* Section 5 — Si paie pas */}
+          {/* Section 5 · Si paie pas */}
           <section id="si-paie-pas" className="mb-16 scroll-mt-24">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
               <ShieldCheck className="w-7 h-7 text-emerald-600 flex-shrink-0" />
@@ -598,7 +598,7 @@ export default function Page() {
             </div>
           </section>
 
-          {/* Section 6 — Seule plateforme */}
+          {/* Section 6 · Seule plateforme */}
           <section id="seule" className="mb-16 scroll-mt-24">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
               <CheckCircle2 className="w-7 h-7 text-emerald-600 flex-shrink-0" />

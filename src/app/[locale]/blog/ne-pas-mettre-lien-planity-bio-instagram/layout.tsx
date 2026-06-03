@@ -10,8 +10,8 @@ export async function generateMetadata(): Promise<Metadata> {
       ? 'Lien Planity en bio Instagram : l\'erreur qui t\'envoie tes clientes chez la concurrente'
       : 'Planity link in Instagram bio: the mistake sending your clients to competitors',
     description: isFr
-      ? 'Mettre ton lien Planity, Booksy ou Treatwell en bio Instagram, c\'est envoyer tes abonnées chez la concurrente. Voici pourquoi — et ce qu\'il faut mettre à la place.'
-      : 'Putting your Planity, Booksy or Treatwell link in your Instagram bio sends your followers to competitors. Here is why — and what to put instead.',
+      ? 'Mettre ton lien Planity, Booksy ou Treatwell en bio Instagram, c\'est envoyer tes abonnées chez la concurrente. Voici pourquoi, et ce qu\'il faut mettre à la place.'
+      : 'Putting your Planity, Booksy or Treatwell link in your Instagram bio sends your followers to competitors. Here is why, and what to put instead.',
     keywords: isFr
       ? [
           'lien Planity bio Instagram',

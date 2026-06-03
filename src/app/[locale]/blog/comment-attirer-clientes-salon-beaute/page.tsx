@@ -118,7 +118,7 @@ const strategies: Strategy[] = [
   {
     num: 1,
     icon: MapPin,
-    title: 'Optimise ta fiche Google Business — le levier n°1',
+    title: 'Optimise ta fiche Google Business, le levier n°1',
     kpi: '46 % des recherches Google sont locales',
     content: [
       '46 % des recherches Google ont une intention locale (Google, 2024). "Coiffeur près de moi", "institut beauté Paris 11e", "manucure pas cher" : ces requêtes mènent directement à une fiche Google Business, pas à un site web.',
@@ -131,7 +131,7 @@ const strategies: Strategy[] = [
     title: 'Active la réservation en ligne 24h/24',
     kpi: '+35 % de rendez-vous la première semaine',
     content: [
-      '70 % des clientes de salons réservent entre 19 h et minuit (Square, 2024). Si ta seule option est "appeler aux heures d\'ouverture", tu perds mécaniquement ces clientes — elles vont chez le concurrent qui affiche "Réserver en ligne".',
+      '70 % des clientes de salons réservent entre 19 h et minuit (Square, 2024). Si ta seule option est "appeler aux heures d\'ouverture", tu perds mécaniquement ces clientes, elles vont chez le concurrent qui affiche "Réserver en ligne".',
       'La réservation en ligne travaille pendant que tu dors. Une cliente scroll Instagram à 22 h, clique sur ton lien, voit un créneau libre demain à 14 h, réserve. Zéro friction, zéro appel manqué. Et avec un acompte (10-20 % du prix), tu divises tes no-show par 4.',
     ],
   },
@@ -142,7 +142,7 @@ const strategies: Strategy[] = [
     kpi: '+21 % de trafic salon via Instagram',
     content: [
       'Instagram reste le premier canal d\'inspiration beauté (81 % des 18-34 ans, Meta 2024). Mais poster n\'importe quoi ne sert à rien : il faut 3 types de contenus qui convertissent.',
-      '1) Avant/après (réalisations) : génère les demandes de RDV en DM. 2) Reels "coulisses" (technique, produits, équipe) : crée la confiance. 3) Story "créneaux dispos cette semaine" : remplit les trous de dernière minute. Mets ton lien de réservation en bio — chaque vue doit pouvoir se transformer en RDV en 2 clics.',
+      '1) Avant/après (réalisations) : génère les demandes de RDV en DM. 2) Reels "coulisses" (technique, produits, équipe) : crée la confiance. 3) Story "créneaux dispos cette semaine" : remplit les trous de dernière minute. Mets ton lien de réservation en bio, chaque vue doit pouvoir se transformer en RDV en 2 clics.',
     ],
   },
   {
@@ -152,7 +152,7 @@ const strategies: Strategy[] = [
     kpi: '5× moins cher que la pub',
     content: [
       'Acquérir une nouvelle cliente coûte 5 fois plus cher que fidéliser une existante (Harvard Business Review). Le parrainage inverse cette équation : une cliente satisfaite devient ton commercial gratuit.',
-      'Offre concrète à proposer : "10 € offerts à toi et à ton amie lors de sa 1re visite". Le double avantage est crucial — on ne parraine pas par pitié, on parraine quand il y a un vrai bénéfice pour les deux. Avec un programme structuré, 20 à 30 % de tes clientes ramèneront au moins une amie dans l\'année.',
+      'Offre concrète à proposer : "10 € offerts à toi et à ton amie lors de sa 1re visite". Le double avantage est crucial : on ne parraine pas par pitié, on parraine quand il y a un vrai bénéfice pour les deux. Avec un programme structuré, 20 à 30 % de tes clientes ramèneront au moins une amie dans l\'année.',
     ],
   },
   {
@@ -293,7 +293,7 @@ export default function Page() {
                 <strong className="text-gray-900">70 % des nouvelles clientes ne reviennent pas</strong> après leur
                 première visite. Et 6 salons sur 10 tournent en dessous de leur capacité réelle faute de stratégie
                 d&apos;acquisition structurée. Voici les 12 leviers concrets qui remplissent un agenda salon, institut
-                ou onglerie en 2026 — du gratuit au payant, du rapide au long terme.
+                ou onglerie en 2026, du gratuit au payant, du rapide au long terme.
               </p>
             </motion.div>
 

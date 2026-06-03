@@ -10,12 +10,12 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       title: {
         template: '%s | Qarte Blog',
-        default: 'Blog — Loyalty tips for beauty salons | Qarte',
+        default: 'Blog: Loyalty tips for beauty salons | Qarte',
       },
       description:
         'Tips, guides and strategies to boost client retention in hair salons, nail studios and beauty salons. By Qarte, the digital loyalty card.',
       openGraph: {
-        title: 'Qarte Blog — Beauty loyalty tips',
+        title: 'Qarte Blog: Beauty loyalty tips',
         description: 'Practical guides to boost client retention in beauty salons.',
         type: 'website',
         locale: 'en_US',
@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: {
       template: '%s | Blog Qarte',
-      default: 'Blog — Conseils fidélisation pour salons de beauté | Qarte',
+      default: 'Blog : Conseils fidélisation pour salons de beauté | Qarte',
     },
     description:
       'Conseils, guides et astuces pour fidéliser vos clientes en salon de coiffure, onglerie et institut de beauté. Par Qarte, la carte de fidélité digitale.',
@@ -43,7 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
       'blog salon de coiffure',
     ],
     openGraph: {
-      title: 'Blog Qarte — Conseils fidélisation beauté',
+      title: 'Blog Qarte : Conseils fidélisation beauté',
       description: 'Guides pratiques pour fidéliser vos clientes en salon de beauté.',
       type: 'website',
       locale: 'fr_FR',

@@ -211,7 +211,7 @@ export default function Page() {
               </h1>
 
               <p className="text-lg text-gray-600 leading-relaxed">
-                <strong className="text-gray-900">4 logiciels dominent le marché français</strong> — Planity,
+                <strong className="text-gray-900">4 logiciels dominent le marché français</strong> · Planity,
                 Treatwell, Booksy, Qarte. Mais les tarifs affichés cachent des commissions parfois invisibles, et
                 toutes les solutions ne conviennent pas à tous les salons. Voici le comparatif honnête, basé sur les
                 tarifs publics 2026, pour choisir sans se tromper.
@@ -284,7 +284,7 @@ export default function Page() {
             </h2>
             <p className="text-base text-gray-700 leading-relaxed mb-6">
               Avant de regarder le tarif affiché, vérifie ces 7 points. L&apos;écart réel entre deux solutions se
-              joue souvent sur les critères 3, 5 et 7 — ceux que les comparateurs classiques oublient.
+              joue souvent sur les critères 3, 5 et 7, ceux que les comparateurs classiques oublient.
             </p>
 
             <div className="space-y-4">
@@ -381,7 +381,7 @@ export default function Page() {
             </h2>
             <p className="text-base text-gray-700 leading-relaxed mb-6">
               Tarifs et conditions publics au 16 avril 2026. Les commissions marketplace varient selon la ville et
-              le type de prestation — nous indiquons l&apos;ordre de grandeur typique.
+              le type de prestation, nous indiquons l&apos;ordre de grandeur typique.
             </p>
 
             <div className="overflow-x-auto rounded-xl border border-gray-200 mb-6">

@@ -68,7 +68,7 @@ const jsonLd = {
           name: 'Pourquoi les clientes de Planity ou Booksy ne reviennent-elles pas ?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Ces clientes n\'ont pas choisi ton salon pour toi — elles cherchaient un créneau disponible. Sans relation personnelle établie, elles retournent sur la plateforme pour leur prochain rendez-vous et réservent là où il y a de la place, peu importe le salon.',
+            text: 'Ces clientes n\'ont pas choisi ton salon pour toi, elles cherchaient un créneau disponible. Sans relation personnelle établie, elles retournent sur la plateforme pour leur prochain rendez-vous et réservent là où il y a de la place, peu importe le salon.',
           },
         },
         {
@@ -151,7 +151,7 @@ export default function Page() {
 
               <p className="text-lg text-gray-600 leading-relaxed">
                 Tu remplis ton agenda grâce à Planity ou Booksy. Mais combien de ces clientes ont repris
-                rendez-vous d&apos;elles-mêmes ? Si la réponse t&apos;embarrasse, tu n&apos;es pas seule —
+                rendez-vous d&apos;elles-mêmes ? Si la réponse t&apos;embarrasse, tu n&apos;es pas seule,
                 et ce n&apos;est pas de ta faute. C&apos;est le modèle de ces plateformes qui est conçu comme ça.
               </p>
             </motion.div>
@@ -198,7 +198,7 @@ export default function Page() {
             <p className="text-base text-gray-700 leading-relaxed">
               Les clientes de Planity, Booksy et Treatwell cherchaient <strong>un créneau</strong>, pas toi.
               Elles reviendront là où il y a de la place. Tes vraies clientes fidèles viennent de{' '}
-              <strong>tes réseaux sociaux</strong> — elles te suivent pour ton travail et ta personnalité.
+              <strong>tes réseaux sociaux</strong>, elles te suivent pour ton travail et ta personnalité.
               C&apos;est sur celles-là qu&apos;il faut investir, avec{' '}
               <strong>une page de réservation qui t&apos;appartient + une carte de fidélité automatique</strong>.
             </p>
@@ -211,12 +211,12 @@ export default function Page() {
               Ce que Planity, Booksy et Treatwell ne te disent pas
             </h2>
             <p className="text-base text-gray-700 leading-relaxed mb-4">
-              Une cliente qui te trouve sur ces plateformes ne te cherchait pas, <em>toi</em>. Elle cherchait{' '}
+              Une cliente qui te trouve sur ces plateformes ne te cherchait pas, <strong>toi</strong>. Elle cherchait{' '}
               <strong>un créneau disponible, une prestation, un prix</strong>. Le tien était libre. Elle a réservé.
             </p>
             <p className="text-base text-gray-700 leading-relaxed mb-4">
               Après la prestation ? Elle retourne sur la même plateforme, relance sa recherche, et réserve là où
-              il y a de la place — pas forcément chez toi. C&apos;est une cliente <strong>transactionnelle</strong>.
+              il y a de la place, pas forcément chez toi. C&apos;est une cliente <strong>transactionnelle</strong>.
               Ce n&apos;est pas de la fidélité, c&apos;est de la disponibilité.
             </p>
             <div className="bg-rose-50 border border-rose-200 rounded-xl p-5 mb-6">
@@ -235,7 +235,7 @@ export default function Page() {
               D&apos;où viennent vraiment tes clientes fidèles ?
             </h2>
             <p className="text-base text-gray-700 leading-relaxed mb-6">
-              La cliente qui te suit sur Instagram depuis 3 mois pour tes réalisations — elle vient pour{' '}
+              La cliente qui te suit sur Instagram depuis 3 mois pour tes réalisations, elle vient pour{' '}
               <strong>toi</strong>. Elle ne compare pas tes prix. Elle ne regarde pas si le salon
               d&apos;à côté a une place libre samedi. Elle veut toi.
             </p>
@@ -312,7 +312,7 @@ export default function Page() {
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 text-red-700 font-bold text-sm flex items-center justify-center">4</div>
                 <div>
                   <h3 className="font-bold text-gray-900 mb-1">Ta clientèle appartient à la plateforme</h3>
-                  <p className="text-sm text-gray-600">Le jour où tu pars, tes clientes restent sur Planity — et voient d&apos;autres salons.</p>
+                  <p className="text-sm text-gray-600">Le jour où tu pars, tes clientes restent sur Planity, et voient d&apos;autres salons.</p>
                 </div>
               </div>
             </div>
@@ -327,7 +327,7 @@ export default function Page() {
             <p className="text-base text-gray-700 leading-relaxed mb-6">
               <strong>Qarte</strong> est la solution de fidélisation numéro 1 en France pour les pros de la
               beauté. Dès qu&apos;une cliente réserve via ta page, elle reçoit automatiquement sa carte de
-              fidélité — sans friction, sans application à télécharger.
+              fidélité, sans friction, sans application à télécharger.
             </p>
 
             <div className="grid sm:grid-cols-2 gap-4 mb-8">
@@ -397,7 +397,7 @@ export default function Page() {
                   Pourquoi les clientes de Planity ou Booksy ne reviennent-elles pas ?
                 </h3>
                 <p className="text-base text-gray-700 leading-relaxed">
-                  Ces clientes n&apos;ont pas choisi ton salon pour toi — elles cherchaient un créneau disponible.
+                  Ces clientes n&apos;ont pas choisi ton salon pour toi, elles cherchaient un créneau disponible.
                   Sans relation personnelle, elles retournent sur la plateforme et réservent là où il y a de la
                   place, peu importe le salon.
                 </p>
@@ -439,7 +439,7 @@ export default function Page() {
           <div className="bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl p-8 text-center text-white">
             <Star className="w-10 h-10 mx-auto mb-4 opacity-90" />
             <h3 className="text-xl sm:text-2xl font-bold mb-3">
-              Construis ta base de clientes fidèles — sans commission
+              Construis ta base de clientes fidèles, sans commission
             </h3>
             <p className="text-rose-100 mb-6 max-w-xl mx-auto">
               Carte de fidélité automatique, SMS de rappel, parrainage, avis Google : tout en un,
