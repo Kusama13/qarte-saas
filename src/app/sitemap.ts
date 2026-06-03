@@ -54,6 +54,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry('/compare/planity', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-04-12') }),
     entry('/compare/booksy', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-04-12') }),
     entry('/compare/bookinbeautiful', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-04-12') }),
+    entry('/compare/treatwell', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-06-03') }),
+    entry('/compare/fresha', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-06-03') }),
   ];
 
   // --- Alternative pages (switch intent) ---
@@ -61,6 +63,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry('/alternatives/planity', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-04-18') }),
     entry('/alternatives/booksy', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-04-18') }),
     entry('/alternatives/bookinbeautiful', { priority: 0.7, changeFrequency: 'monthly', lastModified: new Date('2026-04-18') }),
+    entry('/alternatives/treatwell', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-06-03') }),
+    entry('/alternatives/fresha', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-06-03') }),
   ];
 
   // --- Tools / calculators ---

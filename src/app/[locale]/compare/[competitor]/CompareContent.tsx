@@ -6,7 +6,7 @@ import { useInView } from '@/hooks/useInView';
 import { Check, X, ArrowRight } from 'lucide-react';
 import { trackCtaClick } from '@/lib/analytics';
 
-type Competitor = 'planity' | 'booksy' | 'bookinbeautiful';
+type Competitor = 'planity' | 'booksy' | 'bookinbeautiful' | 'treatwell' | 'fresha';
 
 interface CompareContentProps {
   competitor: Competitor;
@@ -16,23 +16,23 @@ interface CompareContentProps {
 type FeatureKey = 'booking' | 'loyalty' | 'storefront' | 'sms' | 'google_reviews' | 'referral' | 'welcome_offer' | 'birthday' | 'push' | 'commission' | 'app_download' | 'inactive_reminders' | 'qr_nfc' | 'interconnection' | 'pos' | 'multi_user' | 'deposit' | 'promo' | 'inventory';
 
 const FEATURES: Array<{ key: FeatureKey; qarteValue: 'yes' | 'no' | 'custom'; competitorValue: Record<Competitor, 'yes' | 'no' | 'custom'> }> = [
-  { key: 'booking', qarteValue: 'yes', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'yes' } },
-  { key: 'loyalty', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
-  { key: 'storefront', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
-  { key: 'sms', qarteValue: 'yes', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'yes' } },
-  { key: 'deposit', qarteValue: 'yes', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'yes' } },
-  { key: 'google_reviews', qarteValue: 'yes', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'no' } },
-  { key: 'referral', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
-  { key: 'welcome_offer', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
-  { key: 'promo', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
-  { key: 'birthday', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
-  { key: 'commission', qarteValue: 'custom', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'custom' } },
-  { key: 'app_download', qarteValue: 'custom', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'custom' } },
-  { key: 'pos', qarteValue: 'no', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'no' } },
-  { key: 'multi_user', qarteValue: 'no', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'yes' } },
-  { key: 'inventory', qarteValue: 'no', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'no' } },
-  { key: 'inactive_reminders', qarteValue: 'yes', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'no' } },
-  { key: 'interconnection', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
+  { key: 'booking', qarteValue: 'yes', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'yes', treatwell: 'yes', fresha: 'yes' } },
+  { key: 'loyalty', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no', treatwell: 'no', fresha: 'no' } },
+  { key: 'storefront', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no', treatwell: 'no', fresha: 'no' } },
+  { key: 'sms', qarteValue: 'yes', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'yes', treatwell: 'custom', fresha: 'custom' } },
+  { key: 'deposit', qarteValue: 'yes', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'yes', treatwell: 'yes', fresha: 'yes' } },
+  { key: 'google_reviews', qarteValue: 'yes', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'no', treatwell: 'custom', fresha: 'custom' } },
+  { key: 'referral', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no', treatwell: 'no', fresha: 'no' } },
+  { key: 'welcome_offer', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no', treatwell: 'no', fresha: 'no' } },
+  { key: 'promo', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no', treatwell: 'no', fresha: 'no' } },
+  { key: 'birthday', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no', treatwell: 'no', fresha: 'no' } },
+  { key: 'commission', qarteValue: 'custom', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'custom', treatwell: 'custom', fresha: 'custom' } },
+  { key: 'app_download', qarteValue: 'custom', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'custom', treatwell: 'custom', fresha: 'custom' } },
+  { key: 'pos', qarteValue: 'no', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'no', treatwell: 'yes', fresha: 'yes' } },
+  { key: 'multi_user', qarteValue: 'no', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'yes', treatwell: 'yes', fresha: 'yes' } },
+  { key: 'inventory', qarteValue: 'no', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'no', treatwell: 'yes', fresha: 'yes' } },
+  { key: 'inactive_reminders', qarteValue: 'yes', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'no', treatwell: 'custom', fresha: 'custom' } },
+  { key: 'interconnection', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no', treatwell: 'no', fresha: 'no' } },
 ];
 
 const FEATURES_BY_KEY = Object.fromEntries(FEATURES.map(f => [f.key, f])) as Record<FeatureKey, (typeof FEATURES)[number]>;

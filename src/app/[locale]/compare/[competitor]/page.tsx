@@ -4,7 +4,7 @@ import { ScrollToTopButton } from '@/components/landing';
 import LandingNav from '@/components/landing/LandingNav';
 import CompareContent from './CompareContent';
 
-const COMPETITORS = ['planity', 'booksy', 'bookinbeautiful'] as const;
+const COMPETITORS = ['planity', 'booksy', 'bookinbeautiful', 'treatwell', 'fresha'] as const;
 type Competitor = (typeof COMPETITORS)[number];
 
 function isValidCompetitor(c: string): c is Competitor {
@@ -25,6 +25,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     planity: { title: 'metaTitlePlanity', desc: 'metaDescPlanity' },
     booksy: { title: 'metaTitleBooksy', desc: 'metaDescBooksy' },
     bookinbeautiful: { title: 'metaTitleBookinbeautiful', desc: 'metaDescBookinbeautiful' },
+    treatwell: { title: 'metaTitleTreatwell', desc: 'metaDescTreatwell' },
+    fresha: { title: 'metaTitleFresha', desc: 'metaDescFresha' },
   };
   const meta = metaKeys[competitor];
   if (!meta) return {};
