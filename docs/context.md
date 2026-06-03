@@ -1030,10 +1030,14 @@ Page produit immersive pour commander la carte NFC (20€, paiement Stripe one-s
 - Pages merchant indexables mais PAS dans le sitemap (evite les sitelinks Google sous getqarte.com)
 - `/scan/` et `/customer/` : noindex + robots disallow
 
-### Blog (7 articles SEO/AEO — refresh avril-mai 2026)
+### Blog (11 articles SEO/AEO — refresh avril-juin 2026)
 - **Strategie funnel** : TOFU (acquisition) + MOFU (pain point) + BOFU (commercial intent)
 - **Optimisation AEO** : answer-first paragraphs 40-60 mots, tables comparatives, statistiques sourcees (Square, BrightLocal, Bain, Beauty Business France), FAQPage + Article + Organization + SoftwareApplication + WebPage schema graph-linked via @id (mai 2026)
 - **Articles actifs** (registre `src/data/blog-articles.ts`) :
+  - `/blog/instagram-salon-de-beaute` — TOFU/MOFU juin 2026, "transformer tes abonnées en clientes" (tunnel abonnée→cliente, 7 idées de contenu, lien en bio, conversion+fidélité auto). Cluster fort volume : instagram salon coiffure/esthéticienne, idées posts, lien en bio. Maille vers ne-pas-mettre-lien-planity-bio + clients-planity-booksy + carte-fidelite + comment-attirer. **Cover `article-11-cover.png` à générer (Imagen)**. Premier article avec `layout.tsx` dédié (metadata propres) (9 min)
+  - `/blog/augmenter-chiffre-affaires-salon-beaute` — mai 2026, 7 leviers de CA (fidélisation, no-show, bons cadeaux, panier moyen) (12 min)
+  - `/blog/carte-fidelite-dematerialisee-salon-beaute` — BOFU mai 2026, carte digitale vs papier (comparatif outils, prix, parcours cliente 3 étapes) (8 min)
+  - `/blog/service-domicile-salon-beaute-rayon-trajets` — niche pros mobiles, rayon + calcul trajets (5 min)
   - `/blog/acompte-rdv-salon-sans-commission` — BOFU mai 2026, angle "100% acompte direct sur compte pro via lien Revolut/PayPal/SumUp". Meta/FAQ/H1 adoucis en juin 2026 (frais de paiement sans % chiffrés) ; le corps garde encore 2 tableaux détaillés (frais Stripe ~1,8%, à revoir) (6 min)
   - `/blog/avis-planity-booksy-ne-tappartiennent-pas` — MOFU avril 2026, avis Google vs marketplace (5 min)
   - `/blog/ne-pas-mettre-lien-planity-bio-instagram` — MOFU avril 2026, anti-bait Instagram bio (5 min)
@@ -1041,7 +1045,7 @@ Page produit immersive pour commander la carte NFC (20€, paiement Stripe one-s
   - `/blog/comment-attirer-clientes-salon-beaute` — TOFU, 12 strategies acquisition (10 min)
   - `/blog/eviter-no-show-salon-rendez-vous` — MOFU, methode 6 etapes anti-no-show + modele CGV (8 min)
   - `/blog/logiciel-reservation-en-ligne-salon-beaute` — BOFU, comparatif Planity/Treatwell/Booksy/Qarte (9 min)
-- **Structure** : `src/app/[locale]/blog/<slug>/page.tsx` — page client avec JSON-LD inline, layout `[locale]/blog/layout.tsx` server avec `generateMetadata` locale-aware
+- **Structure** : `src/app/[locale]/blog/<slug>/page.tsx` — page client avec JSON-LD inline, layout `[locale]/blog/layout.tsx` server avec `generateMetadata` locale-aware (metadata par défaut de l'index `/blog`). **Metadata par article** (juin 2026, à propager) : ajouter un `layout.tsx` dédié dans le dossier de l'article avec `generateMetadata` (title unique + meta description + canonical + alternates + OG), sinon l'article hérite du titre générique du blog. Fait pour `instagram-salon-de-beaute` ; les 10 autres restent à backfiller. Penser aussi : entrée dans `src/data/blog-articles.ts` (registre `/blog` + cron blog-digest) ET dans `src/app/sitemap.ts` (liste codée en dur)
 - **Schema graph (mai 2026, article acompte-rdv-salon-sans-commission)** : Organization + SoftwareApplication (offers 24€/240€/Trial 7j) + WebPage + ImageObject + BreadcrumbList + Article (mentions des concurrents) + FAQPage, tous interconnectes via `@id`. Pattern a propager sur les autres articles
 - **Email update** (`ProductUpdateEmail.tsx`) : lien pointe sur article comparatif logiciels (BOFU intent)
 - **Process redaction** : `seo-audit` + `ai-seo` + `copywriting` + `schema-markup` skills, plus passe agent senior SEO (recherche concurrence reelle + volumes + SERP audit) avant brief, plus 3 agents audit en parallele post-redaction (copywriting + ai-seo + schema-markup) avant publication

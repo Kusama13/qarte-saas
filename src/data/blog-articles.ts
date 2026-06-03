@@ -16,6 +16,16 @@ export interface BlogArticle {
  */
 export const BLOG_ARTICLES: BlogArticle[] = [
   {
+    slug: 'instagram-salon-de-beaute',
+    title: 'Instagram pour salon de beauté : transformer tes abonnées en clientes',
+    description:
+      'Instagram pour salon de beauté : la méthode pour transformer tes abonnées en vraies clientes. 7 idées de contenu, le bon lien en bio, et comment convertir un like en rendez-vous.',
+    readTime: '9 min',
+    category: 'Réseaux sociaux',
+    date: '2026-06-03',
+    image: '/blog/social/article-11-cover.png',
+  },
+  {
     slug: 'augmenter-chiffre-affaires-salon-beaute',
     title: 'Augmenter le chiffre d\'affaires de son salon de beauté : 7 idées qui marchent vraiment',
     description:
