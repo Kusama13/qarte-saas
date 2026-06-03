@@ -242,24 +242,22 @@ export function PricingSection() {
           </div>
 
           <div className="bg-white border border-gray-200 rounded-3xl shadow-sm overflow-hidden max-w-4xl mx-auto">
-            <div className="grid grid-cols-4 border-b border-gray-100 bg-gray-50/80 text-xs md:text-sm font-semibold">
+            <div className="grid grid-cols-3 border-b border-gray-100 bg-gray-50/80 text-xs md:text-sm font-semibold">
               <div className="px-3 py-3 md:px-5 md:py-4 text-gray-500" />
               <div className="px-3 py-3 md:px-5 md:py-4 text-center text-indigo-600">{t('compareColUs')}</div>
-              <div className="px-3 py-3 md:px-5 md:py-4 text-center text-gray-500">{t('compareColPlanity')}</div>
               <div className="px-3 py-3 md:px-5 md:py-4 text-center text-gray-500">{t('compareColBooksy')}</div>
             </div>
 
             {[
-              { row: 'Price', us: 'compareRowPriceUs', planity: 'compareRowPricePlanity', booksy: 'compareRowPriceBooksy', label: 'compareRowPrice' },
-              { row: 'Commission', us: 'compareRowCommissionUs', planity: 'compareRowCommissionPlanity', booksy: 'compareRowCommissionBooksy', label: 'compareRowCommission' },
-              { row: 'SMS', us: 'compareRowSmsUs', planity: 'compareRowSmsPlanity', booksy: 'compareRowSmsBooksy', label: 'compareRowSms' },
-              { row: 'Loyalty', us: 'compareRowLoyaltyUs', planity: 'compareRowLoyaltyPlanity', booksy: 'compareRowLoyaltyBooksy', label: 'compareRowLoyalty', highlightUs: true },
-              { row: 'AnnualCost', us: 'compareRowAnnualCostUs', planity: 'compareRowAnnualCostPlanity', booksy: 'compareRowAnnualCostBooksy', label: 'compareRowAnnualCost', highlightUs: true, emphasis: true },
+              { row: 'Price', us: 'compareRowPriceUs', booksy: 'compareRowPriceBooksy', label: 'compareRowPrice' },
+              { row: 'Commission', us: 'compareRowCommissionUs', booksy: 'compareRowCommissionBooksy', label: 'compareRowCommission' },
+              { row: 'SMS', us: 'compareRowSmsUs', booksy: 'compareRowSmsBooksy', label: 'compareRowSms' },
+              { row: 'Loyalty', us: 'compareRowLoyaltyUs', booksy: 'compareRowLoyaltyBooksy', label: 'compareRowLoyalty', highlightUs: true },
+              { row: 'AnnualCost', us: 'compareRowAnnualCostUs', booksy: 'compareRowAnnualCostBooksy', label: 'compareRowAnnualCost', highlightUs: true, emphasis: true },
             ].map((r) => (
-              <div key={r.row} className={`grid grid-cols-4 border-b border-gray-50 last:border-b-0 text-xs md:text-sm ${r.emphasis ? 'bg-indigo-50/30' : ''}`}>
+              <div key={r.row} className={`grid grid-cols-3 border-b border-gray-50 last:border-b-0 text-xs md:text-sm ${r.emphasis ? 'bg-indigo-50/30' : ''}`}>
                 <div className={`px-3 py-3 md:px-5 md:py-4 text-gray-700 ${r.emphasis ? 'font-bold' : 'font-medium'}`}>{t(r.label)}</div>
                 <div className={`px-3 py-3 md:px-5 md:py-4 text-center font-semibold ${r.highlightUs ? 'text-emerald-600' : 'text-indigo-600'}`}>{t(r.us)}</div>
-                <div className="px-3 py-3 md:px-5 md:py-4 text-center text-gray-500">{t(r.planity)}</div>
                 <div className="px-3 py-3 md:px-5 md:py-4 text-center text-gray-500">{t(r.booksy)}</div>
               </div>
             ))}

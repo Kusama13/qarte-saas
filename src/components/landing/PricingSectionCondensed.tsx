@@ -43,7 +43,6 @@ export function PricingSectionCondensed() {
               <p className="text-sm text-gray-500 leading-snug">{t('condensedFidelityHint')}</p>
             </div>
 
-            <p className="text-xs text-gray-400 line-through mb-1">{t('condensedFidelityCompare')}</p>
             <div className="mb-1 flex items-baseline gap-1">
               <span className="text-4xl md:text-5xl font-extrabold tracking-tighter text-gray-900 tabular-nums">19€</span>
               <span className="text-sm font-semibold text-gray-400">{t('perMonth')}</span>
@@ -91,7 +90,6 @@ export function PricingSectionCondensed() {
               <p className="text-sm text-gray-500 leading-snug">{t('condensedAllInHint')}</p>
             </div>
 
-            <p className="text-xs text-gray-400 line-through mb-1">{t('condensedAllInCompare')}</p>
             <div className="mb-1 flex items-baseline gap-1">
               <span className="text-4xl md:text-5xl font-extrabold tracking-tighter text-gray-900 tabular-nums">24€</span>
               <span className="text-sm font-semibold text-gray-400">{t('perMonth')}</span>
