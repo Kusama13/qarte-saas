@@ -214,6 +214,25 @@ ARTICLES = [
             '85mm f/1.2, shallow depth of field, ultra sharp foreground, cinematic'
         ),
     },
+    {
+        'id': 11,
+        'filename': 'article-11-cover.png',
+        'label': 'RÉSEAUX SOCIAUX',
+        'label_rgb': (124, 58, 237),     # violet
+        'title_lines': [
+            'Transformer tes',
+            'abonnées Insta',
+            'en vraies clientes',
+        ],
+        'platform_line': 'Instagram  ·  Lien en bio  ·  Réservation',
+        'imagen_prompt': (
+            "Close-up of a hairstylist's hand holding a sleek smartphone photographing a freshly "
+            'styled client result in a luxury beauty salon, Instagram-style vertical framing, '
+            'soft natural window light, violet and pink ambient tones, blurred elegant salon '
+            'interior with green plants and warm wood in the background, no readable text on screen, '
+            'editorial fashion photography, 50mm f/1.4, shallow depth of field, ultra sharp, cinematic'
+        ),
+    },
 ]
 
 
