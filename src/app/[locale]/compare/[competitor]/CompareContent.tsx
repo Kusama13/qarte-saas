@@ -13,22 +13,25 @@ interface CompareContentProps {
   variant?: 'compare' | 'alternative';
 }
 
-type FeatureKey = 'booking' | 'loyalty' | 'storefront' | 'sms' | 'google_reviews' | 'referral' | 'welcome_offer' | 'birthday' | 'push' | 'commission' | 'app_download' | 'inactive_reminders' | 'qr_nfc' | 'interconnection';
+type FeatureKey = 'booking' | 'loyalty' | 'storefront' | 'sms' | 'google_reviews' | 'referral' | 'welcome_offer' | 'birthday' | 'push' | 'commission' | 'app_download' | 'inactive_reminders' | 'qr_nfc' | 'interconnection' | 'pos' | 'multi_user' | 'deposit' | 'promo' | 'inventory';
 
-const FEATURES: Array<{ key: FeatureKey; qarteValue: 'yes' | 'custom'; competitorValue: Record<Competitor, 'yes' | 'no' | 'custom'> }> = [
+const FEATURES: Array<{ key: FeatureKey; qarteValue: 'yes' | 'no' | 'custom'; competitorValue: Record<Competitor, 'yes' | 'no' | 'custom'> }> = [
   { key: 'booking', qarteValue: 'yes', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'yes' } },
   { key: 'loyalty', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
   { key: 'storefront', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
-  { key: 'sms', qarteValue: 'custom', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'custom' } },
-  { key: 'google_reviews', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
+  { key: 'sms', qarteValue: 'yes', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'yes' } },
+  { key: 'deposit', qarteValue: 'yes', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'yes' } },
+  { key: 'google_reviews', qarteValue: 'yes', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'no' } },
   { key: 'referral', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
   { key: 'welcome_offer', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
+  { key: 'promo', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
   { key: 'birthday', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
-  { key: 'push', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
   { key: 'commission', qarteValue: 'custom', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'custom' } },
   { key: 'app_download', qarteValue: 'custom', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'custom' } },
+  { key: 'pos', qarteValue: 'no', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'no' } },
+  { key: 'multi_user', qarteValue: 'no', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'yes' } },
+  { key: 'inventory', qarteValue: 'no', competitorValue: { planity: 'yes', booksy: 'yes', bookinbeautiful: 'no' } },
   { key: 'inactive_reminders', qarteValue: 'yes', competitorValue: { planity: 'custom', booksy: 'custom', bookinbeautiful: 'no' } },
-  { key: 'qr_nfc', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
   { key: 'interconnection', qarteValue: 'yes', competitorValue: { planity: 'no', booksy: 'no', bookinbeautiful: 'no' } },
 ];
 
@@ -54,10 +57,10 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
 
   const competitorName = t(`${competitor}_name`);
 
-  function getQarteDisplay(key: FeatureKey): { text: string; type: 'yes' | 'custom' } {
-    if (key === 'sms') return { text: t('smsQarte'), type: 'custom' };
+  function getQarteDisplay(key: FeatureKey): { text: string; type: 'yes' | 'no' | 'custom' } {
     if (key === 'commission') return { text: t('commissionQarte'), type: 'custom' };
     if (key === 'app_download') return { text: t('appQarte'), type: 'custom' };
+    if (key === 'pos' || key === 'multi_user' || key === 'inventory') return { text: t('notIncluded'), type: 'no' };
     return { text: t('included'), type: 'yes' };
   }
 
@@ -69,6 +72,7 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
     if (key === 'commission') return { text: t(`${competitor}_commission`), type: 'custom' };
     if (key === 'app_download') return { text: t(`${competitor}_app`), type: 'custom' };
     if (key === 'inactive_reminders') return { text: t(`${competitor}_inactive_reminders`), type: 'custom' };
+    if (key === 'google_reviews') return { text: t(`${competitor}_google_reviews`), type: 'custom' };
     return { text: t('notIncluded'), type: 'no' };
   }
 
