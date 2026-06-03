@@ -31,6 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // --- Blog pages ---
   const blogPages: MetadataRoute.Sitemap = [
     entry('/blog', { priority: 0.8, changeFrequency: 'weekly', lastModified: new Date('2026-06-03') }),
+    entry('/blog/beauty-profs-2026-salon-beaute-marseille', { priority: 0.8, changeFrequency: 'monthly', lastModified: new Date('2026-06-03') }),
     entry('/blog/instagram-salon-de-beaute', { priority: 0.9, changeFrequency: 'monthly', lastModified: new Date('2026-06-03') }),
     entry('/blog/augmenter-chiffre-affaires-salon-beaute', { priority: 0.9, changeFrequency: 'monthly', lastModified: new Date('2026-05-27') }),
     entry('/blog/carte-fidelite-dematerialisee-salon-beaute', { priority: 0.9, changeFrequency: 'monthly', lastModified: new Date('2026-05-27') }),

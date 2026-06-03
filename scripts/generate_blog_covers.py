@@ -233,6 +233,25 @@ ARTICLES = [
             'editorial fashion photography, 50mm f/1.4, shallow depth of field, ultra sharp, cinematic'
         ),
     },
+    {
+        'id': 12,
+        'filename': 'article-12-cover.png',
+        'label': 'ÉVÉNEMENT',
+        'label_rgb': (236, 64, 122),     # rose vif
+        'title_lines': [
+            'Beauty Profs 2026',
+            'le rendez-vous des',
+            'pros de la beauté',
+        ],
+        'platform_line': 'Ongles  ·  Cils & sourcils  ·  Marseille  ·  14-15 nov',
+        'imagen_prompt': (
+            'Close-up of an elegant manicured hand with intricate artistic nail art being '
+            'admired at a professional beauty trade show, softly blurred exhibition booths with '
+            'warm spotlights and people in the background, violet and pink ambient event lighting, '
+            'glamorous editorial atmosphere, no readable text, no logos, editorial fashion '
+            'photography, 85mm f/1.4, shallow depth of field, ultra sharp foreground, cinematic'
+        ),
+    },
 ]
 
 

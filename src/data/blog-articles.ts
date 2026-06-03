@@ -16,6 +16,16 @@ export interface BlogArticle {
  */
 export const BLOG_ARTICLES: BlogArticle[] = [
   {
+    slug: 'beauty-profs-2026-salon-beaute-marseille',
+    title: 'Beauty Profs 2026 : pourquoi les pros de l\'ongle et du regard doivent y aller',
+    description:
+      'Beauty Profs 2026, le salon pro de l\'esthétique à Marseille (14-15 novembre, Parc Chanot) : pourquoi y aller quand tu travailles l\'ongle ou le regard, les temps forts et comment rentabiliser ta visite.',
+    readTime: '7 min',
+    category: 'Événement',
+    date: '2026-06-03',
+    image: '/blog/social/article-12-cover.png',
+  },
+  {
     slug: 'instagram-salon-de-beaute',
     title: 'Instagram pour salon de beauté : transformer tes abonnées en clientes',
     description:
