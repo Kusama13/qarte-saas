@@ -47,6 +47,7 @@
 | onboarding_completed | BOOLEAN | `FALSE` | |
 | loyalty_mode | TEXT | `'visit'` | CHECK (visit, cagnotte) — mig 003+050 |
 | review_link | TEXT | NULL | mig 003 |
+| google_place_id | TEXT | NULL | mig 173, place_id Google de la fiche (Places API New). Stockable indéfiniment (ToS). Alimente la section avis sur la vitrine |
 | scan_code | TEXT | NULL | UNIQUE, mig 008b |
 | tier2_enabled | BOOLEAN | `FALSE` | mig 016 |
 | tier2_stamps_required | INTEGER | NULL | CHECK > stamps_required AND <= 30 — mig 054 |
@@ -136,6 +137,21 @@
 **Indexes** : `idx_merchants_user_id`, `idx_merchants_slug`, `idx_merchants_scan_code`
 
 **Trigger** : `update_merchants_updated_at` → `update_updated_at_column()` (exclut `last_seen_at` depuis mig 032)
+
+---
+
+### 2.1b merchant_google_reviews_cache (mig 173)
+
+Cache court (72h) des avis Google par salon, alimenté par la Places API (New) à la consultation de la vitrine. Le texte des avis n'y vit que le temps du TTL (ToS Google : pas de stockage durable). RLS activé, accès `service_role` uniquement (lecture vitrine via supabaseAdmin).
+
+| Colonne | Type | Null | Notes |
+|---|---|---|---|
+| merchant_id | UUID PK FK → merchants | NOT NULL | ON DELETE CASCADE |
+| rating | NUMERIC(2,1) | NULL | note moyenne |
+| rating_count | INTEGER | 0 | nb total d'avis Google |
+| reviews | JSONB | '[]' | jusqu'à 5 avis (auteur, note, texte, date relative) |
+| maps_uri | TEXT | NULL | lien fiche Google (« voir tout ») |
+| fetched_at | TIMESTAMPTZ | NOW() | refetch si > 72h |
 
 ---
 

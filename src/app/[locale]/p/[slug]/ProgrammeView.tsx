@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, Users, Flame, Trophy, CalendarDays, CalendarCheck, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard, Wallet, Tag, Home } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
+import GoogleReviewsSection from '@/components/vitrine/GoogleReviewsSection';
+import type { GoogleReviewsData } from '@/lib/google-places';
 import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import { SuspendedBanner } from '@/components/shared/SuspendedBanner';
 import { isMerchantBlocked } from '@/lib/merchant-access';
@@ -124,7 +126,7 @@ type MerchantPublic = Pick<
   | 'home_service_radius_km'
 >;
 
-export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], bookedSlots = [], isDemo = false, demoOffer }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; bookedSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null }) {
+export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], bookedSlots = [], isDemo = false, demoOffer, googleReviews = null }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; bookedSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null; googleReviews?: GoogleReviewsData | null }) {
   const t = useTranslations('programmeView');
   const pgcT = useTranslations('giftCards');
   const locale = useLocale();
@@ -450,6 +452,30 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               </motion.a>
             );
           })()}
+
+          {googleReviews && googleReviews.ratingCount > 0 && (
+            <motion.button
+              type="button"
+              onClick={() => document.getElementById('avis-google')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.35 }}
+              aria-label={t('seeGoogleReviews')}
+              className="mt-4 max-w-[92%] rounded-2xl px-5 py-3 text-center group active:scale-[0.98] transition-transform"
+              style={{ background: `linear-gradient(135deg, ${p}16, ${s}0E)`, border: `1px solid ${p}24` }}
+            >
+              <span className="block font-[family-name:var(--font-display)] italic text-[16px] leading-snug text-gray-800 group-hover:text-gray-900 transition-colors">
+                {t.rich('ratedOnGoogle', {
+                  shop: merchant.shop_name,
+                  rating: googleReviews.rating.toFixed(1).replace('.', ','),
+                  gold: (chunks) => <span className="not-italic font-extrabold text-[19px]" style={{ color: '#B8860B' }}>{chunks}</span>,
+                })}
+              </span>
+              {googleReviews.ratingCount > 10 && (
+                <span className="mt-0.5 block text-[11px] text-gray-400 font-medium">{t('googleRatingCount', { count: googleReviews.ratingCount })}</span>
+              )}
+            </motion.button>
+          )}
 
         </div>
       </section>
@@ -1287,6 +1313,19 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 </button>
               ))}
             </div>
+          </motion.div>
+        )}
+
+        {/* ── AVIS GOOGLE ── */}
+        {googleReviews && googleReviews.ratingCount > 0 && (
+          <motion.div
+            id="avis-google"
+            className="scroll-mt-4"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55, duration: 0.4 }}
+          >
+            <GoogleReviewsSection data={googleReviews} accent={p} accent2={s} />
           </motion.div>
         )}
 

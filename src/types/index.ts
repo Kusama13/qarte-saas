@@ -77,6 +77,7 @@ export interface Merchant {
   welcome_message: string | null;
   promo_message: string | null;
   review_link: string | null;
+  google_place_id: string | null;
   opening_hours: Record<string, { open: string; close: string; break_start?: string; break_end?: string } | null> | null;
   instagram_url: string | null;
   facebook_url: string | null;

@@ -1438,6 +1438,13 @@
     "cancel": "Cancel",
     "googleReviewTitle": "Google Reviews",
     "googleReviewDesc": "— Automatic request from the 1st visit, at the 3rd and each reward",
+    "googlePlaceLabel": "Your Google profile (rating + reviews on your page)",
+    "googlePlacePlaceholder": "Your salon name + city",
+    "googlePlaceSearch": "Search",
+    "googlePlaceConnected": "Google profile connected",
+    "googlePlaceChange": "Change",
+    "googlePlaceNoResult": "No profile found. Try with your city or address.",
+    "googleReviewLinkLabel": "Review link (for the SMS request)",
     "googleReviewInvalid": "This is not a Google review or My Business URL. Use a g.page, search.google.com, maps.app.goo.gl or maps.google.com link.",
     "googleReviewMaybeNotGoogle": "This doesn't look like a Google URL. Check it points to your Google Business profile or review link (g.page, maps.app.goo.gl…).",
     "googleReviewHelp": "Don't have a Google Business profile yet? Create one here",
@@ -2927,6 +2934,9 @@
     "bonusDays": "Bonus days",
     "bonusDaysDesc": "On {days}, every visit counts double — take advantage!",
     "ourWork": "Our work",
+    "seeGoogleReviews": "See Google reviews",
+    "ratedOnGoogle": "{shop} is rated <gold>{rating}/5</gold> on Google",
+    "googleRatingCount": "{count} reviews",
     "joinOnQarte": "Create your own page on",
     "poweredBy": "Powered by",
     "bookAppointment": "Book",
@@ -3360,6 +3370,11 @@
     "mainMessage": "A review is the best way to support us.",
     "leaveReview": "Leave a review",
     "noThanks": "No thanks"
+  },
+  "googleReviews": {
+    "basedOn": "based on {count} Google reviews",
+    "verified": "Reviews published on Google",
+    "seeAll": "See all reviews on Google"
   },
   "referralModal": {
     "title": "Invite a friend!",

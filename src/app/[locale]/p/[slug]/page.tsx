@@ -8,6 +8,7 @@ import type { Metadata } from 'next';
 import { isDemoSlug, getDemoMerchantData } from '@/lib/demo-merchants';
 import { getTodayForCountry, extractCityFromAddress } from '@/lib/utils';
 import { normalizeBookingHorizon } from '@/lib/booking-window';
+import { getMerchantGoogleReviews } from '@/lib/google-places';
 
 // SEO-optimised, terser shop labels for the title tag (no slashes, no compound forms).
 const SHOP_TYPES_SEO: Record<string, string> = {
@@ -63,7 +64,7 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
       'student_offer_enabled, student_offer_description, subscription_status, past_due_since, plan_tier, trial_ends_at, ' +
       'booking_mode, buffer_minutes, booking_horizon_days, home_service_enabled, home_service_radius_km, shop_lat, shop_lng, hide_address_on_public_page, ' +
       'allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days, ' +
-      'contest_enabled, contest_prize, ' +
+      'contest_enabled, contest_prize, google_place_id, ' +
       'gift_card_enabled, gift_card_amounts, gift_card_message, gift_card_services_enabled, gift_card_expiry_months'
     )
     .eq('slug', slug)
@@ -222,8 +223,17 @@ export default async function ProgrammePage({
 
   const isDemo = isDemoSlug(slug);
 
+  // Avis Google : UNIQUEMENT pour les abonnés payants ayant relié leur fiche
+  // (garde-fou coût Places API). Exclut trial + annulé.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const m = result.merchant as any;
+  const isSubscriber = m.subscription_status === 'active' || m.subscription_status === 'past_due';
+  const googleReviews = (!isDemo && isSubscriber && m.google_place_id)
+    ? await getMerchantGoogleReviews(m.id, m.google_place_id)
+    : null;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (
-    <ProgrammeView merchant={result.merchant as any} photos={result.photos} services={result.services} serviceCategories={result.serviceCategories} planningSlots={result.planningSlots} bookedSlots={result.bookedSlots} isDemo={isDemo} demoOffer={result.demoOffer} />
+    <ProgrammeView merchant={result.merchant as any} photos={result.photos} services={result.services} serviceCategories={result.serviceCategories} planningSlots={result.planningSlots} bookedSlots={result.bookedSlots} isDemo={isDemo} demoOffer={result.demoOffer} googleReviews={googleReviews} />
   );
 }

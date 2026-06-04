@@ -1425,6 +1425,13 @@
     "cancel": "Annuler",
     "googleReviewTitle": "Avis Google",
     "googleReviewDesc": "— Demande automatique dès le 1er passage, au 3e et à chaque récompense",
+    "googlePlaceLabel": "Ta fiche Google (note + avis sur ta vitrine)",
+    "googlePlacePlaceholder": "Nom de ton salon + ville",
+    "googlePlaceSearch": "Chercher",
+    "googlePlaceConnected": "Fiche Google reliée",
+    "googlePlaceChange": "Changer",
+    "googlePlaceNoResult": "Aucune fiche trouvée. Essaie avec ta ville ou ton adresse.",
+    "googleReviewLinkLabel": "Lien d'avis (pour la demande par SMS)",
     "googleReviewInvalid": "Ce lien n'est pas une URL d'avis Google ou de fiche My Business. Utilise un lien g.page, search.google.com, maps.app.goo.gl ou maps.google.com.",
     "googleReviewMaybeNotGoogle": "Ce lien ne ressemble pas à une URL Google. Vérifie qu'il pointe bien vers ta fiche Google Business ou ton lien d'avis (g.page, maps.app.goo.gl…).",
     "googleReviewHelp": "Tu n'as pas encore de fiche Google Business ? Crée-la ici",
@@ -2928,6 +2935,9 @@
     "bonusDays": "Jours bonus",
     "bonusDaysDesc": "Les {days}, chaque passage compte double — profitez-en.",
     "ourWork": "Nos réalisations",
+    "seeGoogleReviews": "Voir les avis Google",
+    "ratedOnGoogle": "{shop} est noté <gold>{rating}/5</gold> sur Google",
+    "googleRatingCount": "{count} avis",
     "joinOnQarte": "Vous aussi, créez votre vitrine sur",
     "poweredBy": "Propulsé par",
     "bookAppointment": "Réserver",
@@ -3361,6 +3371,11 @@
     "mainMessage": "Un avis, c'est la plus belle façon de nous soutenir.",
     "leaveReview": "Laisser mon avis",
     "noThanks": "Non merci"
+  },
+  "googleReviews": {
+    "basedOn": "d'après {count} avis Google",
+    "verified": "Avis publiés sur Google",
+    "seeAll": "Voir tous les avis sur Google"
   },
   "referralModal": {
     "title": "Invite un proche !",

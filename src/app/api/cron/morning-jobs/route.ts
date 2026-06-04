@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
     depositDeadline: { released: 0, warned: 0 },
     attendanceAutoMarked: { count: 0 },
     contestPrizeReminder: { processed: 0, alerted: 0 },
+    googleReviewsCachePurge: { deleted: 0 },
   };
 
   const sectionStatuses: Array<{ name: string; status: 'ok' | 'error'; error?: string }> = [];
@@ -466,6 +467,23 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     logger.error('contest prize reminder error:', err);
     sectionStatuses.push({ name: 'contestPrizeReminder', status: 'error', error: err instanceof Error ? err.message : String(err) });
+  }
+
+  // ==================== PURGE CACHE AVIS GOOGLE (ToS) ====================
+  // Le texte des avis Google ne doit pas être stocké au-delà de ~72h. Le cache
+  // est rafraîchi à la consultation, mais les salons sans trafic / churned
+  // laisseraient des lignes périmées : on les supprime ici.
+  try {
+    const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();
+    const { data: purged } = await supabase
+      .from('merchant_google_reviews_cache')
+      .delete()
+      .lt('fetched_at', cutoff)
+      .select('merchant_id');
+    results.googleReviewsCachePurge.deleted = purged?.length || 0;
+    sectionStatuses.push({ name: 'googleReviewsCachePurge', status: 'ok' });
+  } catch (err) {
+    sectionStatuses.push({ name: 'googleReviewsCachePurge', status: 'error', error: err instanceof Error ? err.message : String(err) });
   }
 
   // Await all push promises before returning

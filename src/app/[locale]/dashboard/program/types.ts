@@ -95,6 +95,7 @@ export interface ProgramFormData {
   primaryColor: string;
   secondaryColor: string;
   reviewLink: string;
+  googlePlaceId: string;
   loyaltyMode: 'visit' | 'cagnotte';
   stampsRequired: number;
   rewardDescription: string;

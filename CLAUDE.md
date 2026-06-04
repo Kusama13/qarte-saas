@@ -55,7 +55,8 @@ Required env vars (server-side):
 `RESEND_API_KEY`, `CRON_SECRET`, `VAPID_PRIVATE_KEY`, `IP_HASH_SALT`,
 `OVH_APP_KEY`, `OVH_APP_SECRET`, `OVH_CONSUMER_KEY`, `OVH_SMS_SERVICE`, `OVH_SMS_SENDER`,
 `SMS_PARTNER_API_KEY`, `SMS_PARTNER_SENDER` (default "Qarte"), `SMS_PARTNER_ENABLED` ("true" pour router le transactionnel FR/BE), `SMS_PARTNER_SANDBOX` ("true" en dev), `SMS_PARTNER_DLR_SECRET` (mig 162 — secret query du webhook DLR `/api/sms-partner/dlr`, configurer aussi côté dashboard SMS Partner comme `urlDlr=${NEXT_PUBLIC_APP_URL}/api/sms-partner/dlr?secret=...`),
-`OPENROUTESERVICE_API_KEY` (mode service à domicile, signup gratuit https://openrouteservice.org/dev/)
+`OPENROUTESERVICE_API_KEY` (mode service à domicile, signup gratuit https://openrouteservice.org/dev/),
+`GOOGLE_MAPS_API_KEY` (Places API New — note + avis Google sur la vitrine `/p/[slug]` ; restreindre la clé à Places API ; quota gratuit suffisant à l'échelle actuelle grâce au cache 72h)
 
 Public (NEXT_PUBLIC_):
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`

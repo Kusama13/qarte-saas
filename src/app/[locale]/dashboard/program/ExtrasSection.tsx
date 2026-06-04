@@ -8,7 +8,11 @@ import {
   Gift,
   AlertTriangle,
   ExternalLink,
+  Search,
+  Check,
+  Loader2,
 } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui';
 import { BIRTHDAY_SUGGESTIONS, DUO_OFFER_SUGGESTIONS, REFERRAL_SUGGESTIONS, type ProgramFormData } from './types';
@@ -321,6 +325,35 @@ function GoogleReviewSection({ formData, setFormData }: GoogleReviewSectionProps
   const suspicious = reviewLink.length > 0 && !isGoogleReviewUrl(reviewLink);
   const inputBorder = suspicious ? 'border-amber-300' : 'border-gray-200';
 
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<{ placeId: string; name: string; address: string }[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const connected = formData.googlePlaceId.trim().length > 0;
+
+  const runSearch = async () => {
+    if (query.trim().length < 3) return;
+    setSearching(true);
+    setSearched(false);
+    try {
+      const res = await fetch(`/api/places/search?q=${encodeURIComponent(query.trim())}`);
+      const data = await res.json();
+      setResults(data.results || []);
+    } catch {
+      setResults([]);
+    } finally {
+      setSearching(false);
+      setSearched(true);
+    }
+  };
+
+  const pick = (placeId: string, name: string) => {
+    setFormData(prev => ({ ...prev, googlePlaceId: placeId }));
+    setResults([]);
+    setQuery(name);
+    setSearched(false);
+  };
+
   return (
     <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
       <div className="p-3 md:p-5">
@@ -333,6 +366,69 @@ function GoogleReviewSection({ formData, setFormData }: GoogleReviewSectionProps
             <p className="text-[11px] md:text-xs text-slate-400 mt-0.5">{t('googleReviewDesc')}</p>
           </div>
         </div>
+
+        {/* Connexion fiche Google → affiche note + avis sur la vitrine */}
+        <div className="mb-4">
+          <label className="block text-[12px] font-semibold text-slate-700 mb-1.5">{t('googlePlaceLabel')}</label>
+          {connected ? (
+            <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-100">
+              <span className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-emerald-700 min-w-0">
+                <Check className="w-4 h-4 shrink-0" />
+                <span className="truncate">{t('googlePlaceConnected')}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => { setFormData(prev => ({ ...prev, googlePlaceId: '' })); setQuery(''); setResults([]); }}
+                className="text-[12px] font-medium text-slate-500 hover:text-slate-700 shrink-0"
+              >
+                {t('googlePlaceChange')}
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  className="bg-white border border-gray-200 h-11 text-sm rounded-xl w-full"
+                  placeholder={t('googlePlacePlaceholder')}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); runSearch(); } }}
+                />
+                <button
+                  type="button"
+                  onClick={runSearch}
+                  disabled={searching || query.trim().length < 3}
+                  className="shrink-0 h-11 px-4 rounded-xl bg-slate-900 text-white text-sm font-semibold inline-flex items-center gap-1.5 disabled:opacity-40"
+                >
+                  {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  {t('googlePlaceSearch')}
+                </button>
+              </div>
+              {results.length > 0 && (
+                <div className="mt-2 rounded-xl border border-gray-100 divide-y divide-gray-50 overflow-hidden">
+                  {results.map((r) => (
+                    <button
+                      key={r.placeId}
+                      type="button"
+                      onClick={() => pick(r.placeId, r.name)}
+                      className="w-full text-left p-2.5 hover:bg-gray-50 transition-colors"
+                    >
+                      <p className="text-[13px] font-semibold text-slate-900">{r.name}</p>
+                      <p className="text-[11px] text-slate-400">{r.address}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {searched && results.length === 0 && !searching && (
+                <p className="mt-2 text-[11px] text-slate-400">{t('googlePlaceNoResult')}</p>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Lien avis (flux SMS / demande d'avis) */}
+        <label className="block text-[12px] font-semibold text-slate-700 mb-1.5">{t('googleReviewLinkLabel')}</label>
         <Input
           type="url"
           className={`bg-white border h-11 text-sm rounded-xl w-full focus:ring-2 focus:border-amber-400 focus:ring-amber-400/20 ${inputBorder}`}
