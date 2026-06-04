@@ -98,6 +98,7 @@ interface Stats {
   planningBookingsCount: number;
   pendingDepositsCount: number;
   onlineBookingsCount: number;
+  manualBookingsCount: number;
 }
 
 interface GiftCardStats {
@@ -459,7 +460,7 @@ export default function MerchantDetailPage() {
     totalCustomers: 0, activeCustomers: 0, totalVisits: 0, totalRedemptions: 0,
     pushSubscribers: 0, pushSent: 0, smsSent: 0, pendingPoints: 0, weeklyScans: 0,
     lastVisitDate: null, totalReferrals: 0, pendingReferrals: 0, completedReferrals: 0,
-    servicesCount: 0, photosCount: 0, welcomeVouchers: 0, offerVouchers: 0, planningSlotsCount: 0, planningBookingsCount: 0, pendingDepositsCount: 0, onlineBookingsCount: 0,
+    servicesCount: 0, photosCount: 0, welcomeVouchers: 0, offerVouchers: 0, planningSlotsCount: 0, planningBookingsCount: 0, pendingDepositsCount: 0, onlineBookingsCount: 0, manualBookingsCount: 0,
   });
   const [memberPrograms, setMemberPrograms] = useState<MemberProgram[]>([]);
   const [smsCredit, setSmsCredit] = useState<{ sent: number; quota: number; packBalance: number; totalAvailable: number } | null>(null);
@@ -1263,6 +1264,7 @@ export default function MerchantDetailPage() {
           <StatCard icon={<StatIcon icon={Image} color="cyan" />} value={stats.photosCount} label="Photos" />
           <StatCard icon={<StatIcon icon={CalendarDays} color="indigo" />} value={`${stats.planningBookingsCount} / ${stats.planningSlotsCount}`} label="Resa / creneaux" highlight={stats.planningBookingsCount > 0 ? 'green' : undefined} />
           <StatCard icon={<StatIcon icon={Globe} color="emerald" />} value={stats.onlineBookingsCount} label="Resas en ligne" highlight={stats.onlineBookingsCount > 0 ? 'green' : undefined} />
+          <StatCard icon={<StatIcon icon={UserPlus} color="cyan" />} value={stats.manualBookingsCount} label="Resas manuelles" highlight={stats.manualBookingsCount > 0 ? 'green' : undefined} />
           <StatCard
             icon={<div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", stats.pendingDepositsCount > 0 ? "bg-amber-100" : "bg-gray-50")}><Hourglass className={cn("w-4 h-4", stats.pendingDepositsCount > 0 ? "text-amber-600" : "text-gray-400")} /></div>}
             value={stats.pendingDepositsCount}
