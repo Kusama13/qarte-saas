@@ -225,14 +225,15 @@ export default async function ProgrammePage({
   const isDemo = isDemoSlug(slug);
 
   // Avis Google. Démos : avis fictifs statiques (vitrine de démonstration).
-  // Réels : UNIQUEMENT pour les abonnés payants ayant relié leur fiche
-  // (garde-fou coût Places API). Exclut trial + annulé.
+  // Réels : abonnés (active/past_due) + essai EN COURS. On ne fetch plus dès que
+  // le compte n'est plus abonné (essai expiré ou annulé) → garde-fou coût Places API.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const m = result.merchant as any;
-  const isSubscriber = m.subscription_status === 'active' || m.subscription_status === 'past_due';
+  const trialLive = m.subscription_status === 'trial' && (!m.trial_ends_at || new Date(m.trial_ends_at) >= new Date());
+  const canShowReviews = m.subscription_status === 'active' || m.subscription_status === 'past_due' || trialLive;
   const googleReviews = isDemo
     ? getDemoGoogleReviews(m.shop_type)
-    : (isSubscriber && m.google_place_id)
+    : (canShowReviews && m.google_place_id)
       ? await getMerchantGoogleReviews(m.id, m.google_place_id)
       : null;
 
