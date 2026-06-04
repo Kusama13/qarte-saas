@@ -183,6 +183,16 @@ export default function ProgramPage() {
 
       if (error) throw error;
 
+      // Fiche Google reliée : fetch immédiat + revalidation de la vitrine
+      // (affichage direct des avis, sans attendre le 1er rendu). Fire-and-forget.
+      if (formData.googlePlaceId.trim()) {
+        fetch('/api/places/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ placeId: formData.googlePlaceId.trim() }),
+        }).catch(() => {});
+      }
+
       // Update merchant cache so preview page loads with fresh data
       try {
         const updatedMerchant = {

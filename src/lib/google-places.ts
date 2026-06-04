@@ -68,7 +68,8 @@ export async function fetchPlaceDetails(placeId: string, languageCode = 'fr'): P
  */
 export async function getMerchantGoogleReviews(
   merchantId: string,
-  placeId: string | null
+  placeId: string | null,
+  force = false
 ): Promise<GoogleReviewsData | null> {
   if (!placeId || !PLACES_KEY) return null;
   const admin = getSupabaseAdmin();
@@ -89,7 +90,7 @@ export async function getMerchantGoogleReviews(
         }
       : null;
 
-  const fresh = cached?.fetched_at && Date.now() - new Date(cached.fetched_at).getTime() < CACHE_TTL_MS;
+  const fresh = !force && cached?.fetched_at && Date.now() - new Date(cached.fetched_at).getTime() < CACHE_TTL_MS;
   if (fresh) return cachedData();
 
   const data = await fetchPlaceDetails(placeId);
