@@ -9,6 +9,7 @@ import { isDemoSlug, getDemoMerchantData } from '@/lib/demo-merchants';
 import { getTodayForCountry, extractCityFromAddress } from '@/lib/utils';
 import { normalizeBookingHorizon } from '@/lib/booking-window';
 import { getMerchantGoogleReviews } from '@/lib/google-places';
+import { getDemoGoogleReviews } from '@/lib/demo-reviews';
 
 // SEO-optimised, terser shop labels for the title tag (no slashes, no compound forms).
 const SHOP_TYPES_SEO: Record<string, string> = {
@@ -223,14 +224,17 @@ export default async function ProgrammePage({
 
   const isDemo = isDemoSlug(slug);
 
-  // Avis Google : UNIQUEMENT pour les abonnés payants ayant relié leur fiche
+  // Avis Google. Démos : avis fictifs statiques (vitrine de démonstration).
+  // Réels : UNIQUEMENT pour les abonnés payants ayant relié leur fiche
   // (garde-fou coût Places API). Exclut trial + annulé.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const m = result.merchant as any;
   const isSubscriber = m.subscription_status === 'active' || m.subscription_status === 'past_due';
-  const googleReviews = (!isDemo && isSubscriber && m.google_place_id)
-    ? await getMerchantGoogleReviews(m.id, m.google_place_id)
-    : null;
+  const googleReviews = isDemo
+    ? getDemoGoogleReviews(m.shop_type)
+    : (isSubscriber && m.google_place_id)
+      ? await getMerchantGoogleReviews(m.id, m.google_place_id)
+      : null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (
