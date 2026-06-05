@@ -11,6 +11,7 @@ import { recomputeDayTravel } from '@/lib/travel-recompute';
 import { normalizeBookingHorizon, isSlotInPast } from '@/lib/booking-window';
 import { validateAppliedDiscounts } from '@/lib/applied-discounts';
 import { buildServiceLines } from '@/lib/booking-pricing';
+import { customerAddressFields } from '@/lib/customer-address';
 
 async function verifyOwnership(supabase: Awaited<ReturnType<typeof createRouteHandlerSupabaseClient>>, merchantId: string, userId: string) {
   const { data } = await supabase
@@ -367,10 +368,11 @@ export async function PATCH(request: NextRequest) {
           }
 
           // Mig 174 : persiste l'adresse sur la fiche customer pour pre-remplir
-          // au prochain RDV. Skip si pas de customer_id ou si on est en train
-          // de vider l'adresse (le merchant peut effacer le slot sans vouloir
-          // oublier l'adresse historique du client).
-          if (trimmedAddr) {
+          // au prochain RDV. Skip si on est en train de vider l'adresse
+          // (le merchant peut effacer le slot sans vouloir oublier l'adresse
+          // historique du client).
+          const addrFields = customerAddressFields(trimmedAddr, customer_lat, customer_lng);
+          if (addrFields) {
             let effectiveCustomerId = customer_id;
             if (effectiveCustomerId === undefined) {
               const { data: slotRow } = await supabaseAdmin
@@ -381,14 +383,7 @@ export async function PATCH(request: NextRequest) {
               effectiveCustomerId = slotRow?.customer_id ?? null;
             }
             if (effectiveCustomerId) {
-              await supabaseAdmin
-                .from('customers')
-                .update({
-                  address: trimmedAddr,
-                  address_lat: customer_lat ?? null,
-                  address_lng: customer_lng ?? null,
-                })
-                .eq('id', effectiveCustomerId);
+              await supabaseAdmin.from('customers').update(addrFields).eq('id', effectiveCustomerId);
             }
           }
         }

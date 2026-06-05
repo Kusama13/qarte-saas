@@ -8,6 +8,7 @@ import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 import { validateAppliedDiscounts } from '@/lib/applied-discounts';
 import { buildServiceLines } from '@/lib/booking-pricing';
+import { customerAddressFields } from '@/lib/customer-address';
 
 const schema = z.object({
   merchantId: z.string().uuid(),
@@ -175,17 +176,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Home service: persiste l'adresse sur la fiche customer (mig 174) pour
-    // qu'on puisse la pre-remplir au prochain RDV. Skip si pas de customer_id
-    // ou pas d'adresse. Le mode home_service est la seule condition d'ecriture.
-    if (homeService && customer_id && hasAddressText) {
-      await supabaseAdmin
-        .from('customers')
-        .update({
-          address: customer_address!.trim(),
-          address_lat: hasCoords ? customer_lat : null,
-          address_lng: hasCoords ? customer_lng : null,
-        })
-        .eq('id', customer_id);
+    // qu'on puisse la pre-remplir au prochain RDV. Skip si pas de customer_id.
+    if (homeService && customer_id) {
+      const addrFields = customerAddressFields(
+        customer_address,
+        hasCoords ? customer_lat : null,
+        hasCoords ? customer_lng : null,
+      );
+      if (addrFields) {
+        await supabaseAdmin.from('customers').update(addrFields).eq('id', customer_id);
+      }
     }
 
     // Home service: recompute travel times for the day. Only useful when the new
