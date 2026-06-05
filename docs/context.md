@@ -1000,6 +1000,7 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 - JSON-LD `LocalBusiness` (name, address, image, url, makesOffer)
 - SEO: `generateMetadata()` avec og:image (1ere photo ou logo), description dynamique
 - **QR desktop flottant** : bloc fixe bottom-right (visible `lg:` uniquement) avec `BrandedQRCode` aux couleurs merchant — permet de scanner pour ouvrir sur mobile
+- **Bouton "retour en haut"** : pastille ronde fixe bottom-right (couleur `primary_color` merchant, icône `ArrowUp`), apparaît après ~600px de scroll (fade+scale via `AnimatePresence`), scroll smooth vers le haut. Écouteur scroll passif + throttle rAF + garde anti no-op. Se décale en `bottom-20` au-dessus du bandeau démo. Libellé i18n `common.backToTop`
 
 ### Page Boutique — Carte NFC (`/boutique`)
 Page produit immersive pour commander la carte NFC (20€, paiement Stripe one-shot via `STRIPE_NFC_URL`, livraison 7j). Refonte mai 2026 : vitrine produit alignée sur l'identité landing (gradient `#4b0082`→violet, Bodoni italic sur les mots-clés, accent fuchsia). Sections : hero drenched violet avec carte mise en scène (flottement + tilt, `useReducedMotion` respecté) → comparaison QR vs NFC → 3 étapes → grille réassurance 4 (compatible tous tels, sans app, sans abonnement, rien à recharger) → FAQ accordéon 5 questions → CTA final. Tutoiement merchant (cohérent landing). `LandingNav minimal` + `FooterDark`. i18n `boutique.*` FR + EN.

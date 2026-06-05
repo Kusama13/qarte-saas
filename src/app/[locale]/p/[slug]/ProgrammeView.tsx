@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Flame, Trophy, CalendarDays, CalendarCheck, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard, Wallet, Tag, Home } from 'lucide-react';
+import { Gift, Users, Flame, Trophy, CalendarDays, CalendarCheck, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard, Wallet, Tag, Home, ArrowUp } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import GoogleReviewsSection from '@/components/vitrine/GoogleReviewsSection';
 import type { GoogleReviewsData } from '@/lib/google-places';
@@ -128,6 +128,7 @@ type MerchantPublic = Pick<
 
 export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], bookedSlots = [], isDemo = false, demoOffer, googleReviews = null }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; bookedSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null; googleReviews?: GoogleReviewsData | null }) {
   const t = useTranslations('programmeView');
+  const commonT = useTranslations('common');
   const pgcT = useTranslations('giftCards');
   const locale = useLocale();
 
@@ -171,6 +172,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   );
   const [bookingSlot, setBookingSlot] = useState<{ date: string | null; time: string | null } | null>(null);
   const [giftCardOpen, setGiftCardOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   // Opening hours
   const DAY_LABELS_SHORT = t('dayLabelsShort').split(',');
@@ -231,6 +233,26 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
     document.addEventListener('keydown', handleLightboxKey);
     return () => document.removeEventListener('keydown', handleLightboxKey);
   }, [lightboxIndex, handleLightboxKey]);
+
+  // Flèche "retour en haut" : apparaît un peu après le scroll (~600px).
+  useEffect(() => {
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        setShowScrollTop(prev => {
+          const next = window.scrollY > 600;
+          return next === prev ? prev : next;
+        });
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
 
   const reward = merchant.reward_description || '';
 
@@ -1601,6 +1623,25 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           onClose={() => setBookingSlot(null)}
         />
       )}
+
+      {/* ── BACK TO TOP ── */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            type="button"
+            initial={{ opacity: 0, scale: 0.8, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 8 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            aria-label={commonT('backToTop')}
+            className={`fixed right-4 z-40 flex h-11 w-11 items-center justify-center rounded-full text-white shadow-[0_4px_16px_rgba(15,10,40,0.22)] backdrop-blur-sm transition-transform active:scale-95 ${isDemo ? 'bottom-20' : 'bottom-6'}`}
+            style={{ backgroundColor: p }}
+          >
+            <ArrowUp className="h-5 w-5" strokeWidth={2.5} />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* ── DEMO BANNER ── */}
       {isDemo && (
