@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
 
       const result = await supabaseAdmin
         .from('customers')
-        .select('id, first_name, last_name, phone_number, instagram_handle, tiktok_handle, facebook_url, loyalty_cards!inner(merchant_id)')
+        .select('id, first_name, last_name, phone_number, instagram_handle, tiktok_handle, facebook_url, address, address_lat, address_lng, loyalty_cards!inner(merchant_id)')
         .eq('loyalty_cards.merchant_id', merchantId)
         .or(phonePatterns.map(p => `phone_number.ilike.${p}`).join(','))
         .limit(10);
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
       const pattern = `%${sanitized}%`;
       const result = await supabaseAdmin
         .from('customers')
-        .select('id, first_name, last_name, phone_number, instagram_handle, tiktok_handle, facebook_url, loyalty_cards!inner(merchant_id)')
+        .select('id, first_name, last_name, phone_number, instagram_handle, tiktok_handle, facebook_url, address, address_lat, address_lng, loyalty_cards!inner(merchant_id)')
         .eq('loyalty_cards.merchant_id', merchantId)
         .or(`first_name.ilike.${pattern},last_name.ilike.${pattern},phone_number.ilike.${pattern}`)
         .limit(10);
@@ -97,6 +97,9 @@ export async function GET(request: NextRequest) {
         instagram_handle: c.instagram_handle,
         tiktok_handle: c.tiktok_handle,
         facebook_url: c.facebook_url,
+        address: c.address,
+        address_lat: c.address_lat,
+        address_lng: c.address_lng,
       })),
     });
   } catch (error) {

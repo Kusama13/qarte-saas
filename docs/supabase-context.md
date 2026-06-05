@@ -170,6 +170,9 @@ Cache court (72h) des avis Google par salon, alimenté par la Places API (New) �
 | tiktok_handle | TEXT | NULL | mig 073 |
 | facebook_url | TEXT | NULL | mig 073 |
 | email | TEXT | NULL | CHECK regex + length ≤254, mig 148 (modifiable depuis carte client) |
+| address | TEXT | NULL | mig 174, persistee uniquement pour merchants home_service_enabled |
+| address_lat | NUMERIC(10,7) | NULL | mig 174, latitude geocodee BAN |
+| address_lng | NUMERIC(10,7) | NULL | mig 174, longitude geocodee BAN |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
 **Indexes** : `idx_customers_phone`, `idx_customers_merchant`, `idx_customers_birthday`

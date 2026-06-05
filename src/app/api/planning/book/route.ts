@@ -18,6 +18,7 @@ import { getTravelTime, haversineKm, type Coords } from '@/lib/travel-time';
 import { recomputeDayTravel } from '@/lib/travel-recompute';
 import { buildDepositLinks } from '@/lib/payment-providers';
 import { computeBookingPrice } from '@/lib/booking-pricing';
+import { customerAddressFields } from '@/lib/customer-address';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -300,13 +301,22 @@ export async function POST(request: NextRequest) {
 
     const isNewCustomer = !existingCustomer;
 
+    // Home service (mig 174) : persiste l'adresse sur la fiche customer pour
+    // pre-remplir au prochain RDV. Seul ce mode ecrit ces 3 colonnes.
+    const addrFields = homeService
+      ? customerAddressFields(customer_address, customer_lat, customer_lng)
+      : null;
+
     if (existingCustomer) {
       customerId = existingCustomer.id;
-      // Backfill / update email if the customer just provided a new one
-      if (trimmedEmail && trimmedEmail !== existingCustomer.email) {
+      // Merge email + address upsert en 1 seul UPDATE (defense fenetre serveur).
+      const updateFields: Record<string, unknown> = {};
+      if (trimmedEmail && trimmedEmail !== existingCustomer.email) updateFields.email = trimmedEmail;
+      if (addrFields) Object.assign(updateFields, addrFields);
+      if (Object.keys(updateFields).length > 0) {
         await supabaseAdmin
           .from('customers')
-          .update({ email: trimmedEmail })
+          .update(updateFields)
           .eq('id', existingCustomer.id);
       }
     } else {
@@ -319,6 +329,7 @@ export async function POST(request: NextRequest) {
           phone_number: formattedPhone,
           merchant_id: merchant_id,
           email: trimmedEmail,
+          ...(addrFields ?? {}),
         })
         .select('id')
         .single();

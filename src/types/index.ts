@@ -401,6 +401,10 @@ export interface CustomerSearchResult {
   instagram_handle: string | null;
   tiktok_handle: string | null;
   facebook_url: string | null;
+  // mig 174 — uniquement utilisee si merchant.home_service_enabled
+  address?: string | null;
+  address_lat?: number | null;
+  address_lng?: number | null;
 }
 
 export interface LoyaltyCard {
