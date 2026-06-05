@@ -220,6 +220,32 @@ export default function PlanningDashboard() {
     return catalog + custom;
   }, [manualServiceIds, manualCustomService, serviceMap]);
 
+  // Service a domicile : auto-prefill l'adresse depuis la derniere resa du client
+  // (s'il a deja reserve, on evite de la retaper). Skip si le merchant a deja saisi
+  // quelque chose manuellement.
+  useEffect(() => {
+    if (!showManualBookingModal || !homeServiceEnabled || !merchant?.id) return;
+    if (!draft.customerId) return;
+    if (manualCustomerAddress.trim()) return;
+    const controller = new AbortController();
+    fetch(`/api/planning?merchantId=${merchant.id}&customerId=${draft.customerId}`, { signal: controller.signal })
+      .then(r => r.ok ? r.json() : { slots: [] })
+      .then(data => {
+        if (controller.signal.aborted) return;
+        const slots = (data.slots || []) as Array<{ slot_date: string; start_time: string; customer_address: string | null; customer_lat: number | null; customer_lng: number | null }>;
+        const lastWithAddress = slots
+          .filter(s => s.customer_address)
+          .sort((a, b) => (b.slot_date + b.start_time).localeCompare(a.slot_date + a.start_time))[0];
+        if (lastWithAddress) {
+          setManualCustomerAddress(lastWithAddress.customer_address || '');
+          setManualCustomerLat(lastWithAddress.customer_lat);
+          setManualCustomerLng(lastWithAddress.customer_lng);
+        }
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [showManualBookingModal, homeServiceEnabled, merchant?.id, draft.customerId, manualCustomerAddress]);
+
 
   // Helper unique pour ouvrir le modal manual booking — soit fresh (openManualBookingModal),
   // soit pré-rempli depuis une archive d'acompte échoué (openManualBookingFromFailure).
@@ -1742,34 +1768,6 @@ export default function PlanningDashboard() {
                     </div>
                   </div>
 
-                  {/* ───── Adresse cliente (mode service à domicile) ───── */}
-                  {homeServiceEnabled && (
-                    <div>
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5 flex items-center gap-1.5">
-                        <MapPin className="w-3 h-3 text-sky-600" />
-                        {t('addressLabelOptional')}
-                      </label>
-                      <AddressAutocomplete
-                        value={manualCustomerAddress}
-                        onChange={(value: string, suggestion?: AddressSuggestion) => {
-                          setManualCustomerAddress(value);
-                          if (suggestion) {
-                            setManualCustomerLat(suggestion.lat);
-                            setManualCustomerLng(suggestion.lng);
-                          } else {
-                            setManualCustomerLat(null);
-                            setManualCustomerLng(null);
-                          }
-                        }}
-                        placeholder={t('addressPlaceholder')}
-                        className="text-sm border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
-                      />
-                      {manualCustomerAddress.trim() && manualCustomerLat == null && (
-                        <p className="text-[10px] text-amber-700 mt-1">{t('addressNeedSelect')}</p>
-                      )}
-                    </div>
-                  )}
-
                   {/* Conflit de créneau (409) — affiché sur l'étape 1 pour que le merchant ajuste l'horaire */}
                   {manualConflict && (
                     <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
@@ -1944,6 +1942,35 @@ export default function PlanningDashboard() {
                     </button>
                   )}
                   </div>
+
+                  {/* ───── Adresse cliente (mode service à domicile) — apres la selection client
+                       pour pouvoir auto-prefill depuis sa derniere resa home_service ───── */}
+                  {homeServiceEnabled && (
+                    <div>
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5 flex items-center gap-1.5">
+                        <MapPin className="w-3 h-3 text-sky-600" />
+                        {t('addressLabelOptional')}
+                      </label>
+                      <AddressAutocomplete
+                        value={manualCustomerAddress}
+                        onChange={(value: string, suggestion?: AddressSuggestion) => {
+                          setManualCustomerAddress(value);
+                          if (suggestion) {
+                            setManualCustomerLat(suggestion.lat);
+                            setManualCustomerLng(suggestion.lng);
+                          } else {
+                            setManualCustomerLat(null);
+                            setManualCustomerLng(null);
+                          }
+                        }}
+                        placeholder={t('addressPlaceholder')}
+                        className="text-sm border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                      />
+                      {manualCustomerAddress.trim() && manualCustomerLat == null && (
+                        <p className="text-[10px] text-amber-700 mt-1">{t('addressNeedSelect')}</p>
+                      )}
+                    </div>
+                  )}
 
                   {/* ───── 4. NOTES ───── */}
                   <div>
