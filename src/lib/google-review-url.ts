@@ -46,3 +46,8 @@ export function isGoogleReviewUrl(rawUrl: string): boolean {
   }
   return true;
 }
+
+/** Lien « laisser un avis » Google déduit du place_id (flux SMS / modal). */
+export function writeReviewUrl(placeId: string): string {
+  return `https://search.google.com/local/writereview?placeid=${placeId}`;
+}

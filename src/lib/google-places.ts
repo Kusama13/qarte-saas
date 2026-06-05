@@ -113,28 +113,28 @@ export async function getMerchantGoogleReviews(
   return data;
 }
 
-/** Recherche de fiches (Text Search New) pour relier un salon depuis le dashboard. */
-export async function searchPlaces(query: string): Promise<{ placeId: string; name: string; address: string }[]> {
-  if (!PLACES_KEY || !query.trim()) return [];
+/** Autocomplétion de fiches (Places Autocomplete New) pour relier un salon depuis le dashboard. */
+export async function autocompletePlaces(input: string): Promise<{ placeId: string; name: string; address: string }[]> {
+  if (!PLACES_KEY || input.trim().length < 3) return [];
   try {
-    const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
+    const res = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': PLACES_KEY,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress',
-      },
-      body: JSON.stringify({ textQuery: query, languageCode: 'fr', maxResultCount: 5 }),
+      headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': PLACES_KEY },
+      body: JSON.stringify({ input, languageCode: 'fr' }),
       cache: 'no-store',
     });
     if (!res.ok) return [];
     const data = await res.json();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (data.places || []).map((p: any) => ({
-      placeId: p.id,
-      name: p.displayName?.text || '',
-      address: p.formattedAddress || '',
-    }));
+    return (data.suggestions || [])
+      .map((sg: any) => sg.placePrediction)
+      .filter(Boolean)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((p: any) => ({
+        placeId: p.placeId,
+        name: p.structuredFormat?.mainText?.text || p.text?.text || '',
+        address: p.structuredFormat?.secondaryText?.text || '',
+      }));
   } catch {
     return [];
   }

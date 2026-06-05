@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
-import { searchPlaces } from '@/lib/google-places';
+import { autocompletePlaces } from '@/lib/google-places';
 
-// Proxy serveur de recherche de fiches Google (Text Search New).
+// Proxy serveur d'autocomplétion de fiches Google (Places Autocomplete New).
 // Garde la clé API côté serveur. Auth merchant requise (anti-abus).
 export async function GET(request: NextRequest) {
   try {
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const q = new URL(request.url).searchParams.get('q')?.trim() || '';
     if (q.length < 3) return NextResponse.json({ results: [] });
 
-    const results = await searchPlaces(q);
+    const results = await autocompletePlaces(q);
     return NextResponse.json({ results });
   } catch {
     return NextResponse.json({ error: 'Erreur recherche' }, { status: 500 });

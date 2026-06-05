@@ -183,13 +183,15 @@ export default function ProgramPage() {
 
       if (error) throw error;
 
-      // Fiche Google reliée : fetch immédiat + revalidation de la vitrine
-      // (affichage direct des avis, sans attendre le 1er rendu). Fire-and-forget.
-      if (formData.googlePlaceId.trim()) {
+      // Fiche Google fraîchement reliée/changée : fetch immédiat + revalidation
+      // de la vitrine (affichage direct des avis). Uniquement si le place_id a
+      // changé (évite un appel Google payant à chaque sauvegarde). Fire-and-forget.
+      const newPlaceId = formData.googlePlaceId.trim();
+      if (newPlaceId && newPlaceId !== (merchant.google_place_id || '')) {
         fetch('/api/places/refresh', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ placeId: formData.googlePlaceId.trim() }),
+          body: JSON.stringify({ placeId: newPlaceId }),
         }).catch(() => {});
       }
 

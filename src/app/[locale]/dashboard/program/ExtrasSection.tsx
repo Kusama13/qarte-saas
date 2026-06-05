@@ -12,11 +12,11 @@ import {
   Check,
   Loader2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui';
 import { BIRTHDAY_SUGGESTIONS, DUO_OFFER_SUGGESTIONS, REFERRAL_SUGGESTIONS, type ProgramFormData } from './types';
-import { isGoogleReviewUrl } from '@/lib/google-review-url';
+import { isGoogleReviewUrl, writeReviewUrl } from '@/lib/google-review-url';
 
 interface ExtrasSectionProps {
   formData: ProgramFormData;
@@ -325,33 +325,41 @@ function GoogleReviewSection({ formData, setFormData }: GoogleReviewSectionProps
   const suspicious = reviewLink.length > 0 && !isGoogleReviewUrl(reviewLink);
   const inputBorder = suspicious ? 'border-amber-300' : 'border-gray-200';
 
+  const connected = formData.googlePlaceId.trim().length > 0;
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<{ placeId: string; name: string; address: string }[]>([]);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
-  const connected = formData.googlePlaceId.trim().length > 0;
 
-  const runSearch = async () => {
-    if (query.trim().length < 3) return;
-    setSearching(true);
-    setSearched(false);
-    try {
-      const res = await fetch(`/api/places/search?q=${encodeURIComponent(query.trim())}`);
-      const data = await res.json();
-      setResults(data.results || []);
-    } catch {
-      setResults([]);
-    } finally {
-      setSearching(false);
-      setSearched(true);
-    }
-  };
+  // Autocomplétion live (debounce 320ms) via le proxy serveur Places Autocomplete.
+  useEffect(() => {
+    if (connected) { setResults([]); return; }
+    const q = query.trim();
+    if (q.length < 3) { setResults([]); setSearched(false); return; }
+    const ctrl = new AbortController();
+    const tid = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(`/api/places/search?q=${encodeURIComponent(q)}`, { signal: ctrl.signal });
+        const data = await res.json();
+        if (ctrl.signal.aborted) return; // une frappe plus récente a pris le relais
+        setResults(data.results || []);
+        setSearched(true);
+      } catch { /* abort / erreur réseau */ }
+      finally { if (!ctrl.signal.aborted) setSearching(false); }
+    }, 320);
+    return () => { clearTimeout(tid); ctrl.abort(); };
+  }, [query, connected]);
 
-  const pick = (placeId: string, name: string) => {
-    setFormData(prev => ({ ...prev, googlePlaceId: placeId }));
+  // Relie la fiche + déduit le lien d'avis (backup, modifiable) du place_id.
+  const pick = (placeId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      googlePlaceId: placeId,
+      reviewLink: writeReviewUrl(placeId),
+    }));
     setResults([]);
-    setQuery(name);
-    setSearched(false);
+    setQuery('');
   };
 
   return (
@@ -385,25 +393,17 @@ function GoogleReviewSection({ formData, setFormData }: GoogleReviewSectionProps
               </button>
             </div>
           ) : (
-            <>
-              <div className="flex gap-2">
+            <div className="relative">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
                   type="text"
-                  className="bg-white border border-gray-200 h-11 text-sm rounded-xl w-full"
+                  className="bg-white border border-gray-200 h-11 text-sm rounded-xl w-full pl-9 pr-9"
                   placeholder={t('googlePlacePlaceholder')}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); runSearch(); } }}
                 />
-                <button
-                  type="button"
-                  onClick={runSearch}
-                  disabled={searching || query.trim().length < 3}
-                  className="shrink-0 h-11 px-4 rounded-xl bg-slate-900 text-white text-sm font-semibold inline-flex items-center gap-1.5 disabled:opacity-40"
-                >
-                  {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                  {t('googlePlaceSearch')}
-                </button>
+                {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 animate-spin" />}
               </div>
               {results.length > 0 && (
                 <div className="mt-2 rounded-xl border border-gray-100 divide-y divide-gray-50 overflow-hidden">
@@ -411,24 +411,25 @@ function GoogleReviewSection({ formData, setFormData }: GoogleReviewSectionProps
                     <button
                       key={r.placeId}
                       type="button"
-                      onClick={() => pick(r.placeId, r.name)}
+                      onClick={() => pick(r.placeId)}
                       className="w-full text-left p-2.5 hover:bg-gray-50 transition-colors"
                     >
                       <p className="text-[13px] font-semibold text-slate-900">{r.name}</p>
-                      <p className="text-[11px] text-slate-400">{r.address}</p>
+                      {r.address && <p className="text-[11px] text-slate-400">{r.address}</p>}
                     </button>
                   ))}
                 </div>
               )}
-              {searched && results.length === 0 && !searching && (
+              {searched && results.length === 0 && !searching && query.trim().length >= 3 && (
                 <p className="mt-2 text-[11px] text-slate-400">{t('googlePlaceNoResult')}</p>
               )}
-            </>
+            </div>
           )}
         </div>
 
-        {/* Lien avis (flux SMS / demande d'avis) */}
+        {/* Lien avis (backup / flux SMS) — auto-rempli depuis la fiche, modifiable */}
         <label className="block text-[12px] font-semibold text-slate-700 mb-1.5">{t('googleReviewLinkLabel')}</label>
+        {connected && <p className="text-[11px] text-slate-400 -mt-0.5 mb-1.5">{t('googleReviewLinkAuto')}</p>}
         <Input
           type="url"
           className={`bg-white border h-11 text-sm rounded-xl w-full focus:ring-2 focus:border-amber-400 focus:ring-amber-400/20 ${inputBorder}`}
