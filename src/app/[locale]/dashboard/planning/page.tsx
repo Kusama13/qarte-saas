@@ -220,33 +220,6 @@ export default function PlanningDashboard() {
     return catalog + custom;
   }, [manualServiceIds, manualCustomService, serviceMap]);
 
-  // Service a domicile : auto-prefill l'adresse depuis la derniere resa du client
-  // (s'il a deja reserve, on evite de la retaper). Skip si le merchant a deja saisi
-  // quelque chose manuellement.
-  useEffect(() => {
-    if (!showManualBookingModal || !homeServiceEnabled || !merchant?.id) return;
-    if (!draft.customerId) return;
-    if (manualCustomerAddress.trim()) return;
-    const controller = new AbortController();
-    fetch(`/api/planning?merchantId=${merchant.id}&customerId=${draft.customerId}`, { signal: controller.signal })
-      .then(r => r.ok ? r.json() : { slots: [] })
-      .then(data => {
-        if (controller.signal.aborted) return;
-        const slots = (data.slots || []) as Array<{ slot_date: string; start_time: string; customer_address: string | null; customer_lat: number | null; customer_lng: number | null }>;
-        const lastWithAddress = slots
-          .filter(s => s.customer_address)
-          .sort((a, b) => (b.slot_date + b.start_time).localeCompare(a.slot_date + a.start_time))[0];
-        if (lastWithAddress) {
-          setManualCustomerAddress(lastWithAddress.customer_address || '');
-          setManualCustomerLat(lastWithAddress.customer_lat);
-          setManualCustomerLng(lastWithAddress.customer_lng);
-        }
-      })
-      .catch(() => {});
-    return () => controller.abort();
-  }, [showManualBookingModal, homeServiceEnabled, merchant?.id, draft.customerId, manualCustomerAddress]);
-
-
   // Helper unique pour ouvrir le modal manual booking — soit fresh (openManualBookingModal),
   // soit pré-rempli depuis une archive d'acompte échoué (openManualBookingFromFailure).
   // Reset systématique des flags transients (step/error/conflict/grants/SMS) puis applique le prefill.
@@ -1823,7 +1796,16 @@ export default function PlanningDashboard() {
                       <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
                         {customerResults.length > 0 ? (
                           customerResults.map(c => (
-                            <button key={c.id} onPointerDown={() => selectCustomer(c)}
+                            <button key={c.id} onPointerDown={() => {
+                              selectCustomer(c);
+                              // Service a domicile : prefill l'adresse du client (mig 174)
+                              // si pas deja saisie manuellement par le merchant.
+                              if (homeServiceEnabled && c.address && !manualCustomerAddress.trim()) {
+                                setManualCustomerAddress(c.address);
+                                setManualCustomerLat(c.address_lat ?? null);
+                                setManualCustomerLng(c.address_lng ?? null);
+                              }
+                            }}
                               className="w-full text-left px-3 py-2.5 hover:bg-indigo-50 transition-colors border-b border-gray-50 last:border-0 touch-manipulation">
                               <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium text-gray-800">{c.first_name} {c.last_name || ''}</span>

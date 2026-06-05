@@ -300,6 +300,16 @@ export async function POST(request: NextRequest) {
 
     const isNewCustomer = !existingCustomer;
 
+    // Home service (mig 174) : persiste l'adresse sur la fiche customer pour
+    // pre-remplir au prochain RDV. Seul ce mode ecrit ces 3 colonnes.
+    const customerAddressUpsert = homeService && customer_address
+      ? {
+          address: customer_address.trim(),
+          address_lat: customer_lat ?? null,
+          address_lng: customer_lng ?? null,
+        }
+      : null;
+
     if (existingCustomer) {
       customerId = existingCustomer.id;
       // Backfill / update email if the customer just provided a new one
@@ -307,6 +317,12 @@ export async function POST(request: NextRequest) {
         await supabaseAdmin
           .from('customers')
           .update({ email: trimmedEmail })
+          .eq('id', existingCustomer.id);
+      }
+      if (customerAddressUpsert) {
+        await supabaseAdmin
+          .from('customers')
+          .update(customerAddressUpsert)
           .eq('id', existingCustomer.id);
       }
     } else {
@@ -319,6 +335,7 @@ export async function POST(request: NextRequest) {
           phone_number: formattedPhone,
           merchant_id: merchant_id,
           email: trimmedEmail,
+          ...(customerAddressUpsert ?? {}),
         })
         .select('id')
         .single();

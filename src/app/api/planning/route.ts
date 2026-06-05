@@ -365,6 +365,32 @@ export async function PATCH(request: NextRequest) {
             updateData.customer_lat = customer_lat;
             updateData.customer_lng = customer_lng;
           }
+
+          // Mig 174 : persiste l'adresse sur la fiche customer pour pre-remplir
+          // au prochain RDV. Skip si pas de customer_id ou si on est en train
+          // de vider l'adresse (le merchant peut effacer le slot sans vouloir
+          // oublier l'adresse historique du client).
+          if (trimmedAddr) {
+            let effectiveCustomerId = customer_id;
+            if (effectiveCustomerId === undefined) {
+              const { data: slotRow } = await supabaseAdmin
+                .from('merchant_planning_slots')
+                .select('customer_id')
+                .eq('id', slotId)
+                .maybeSingle();
+              effectiveCustomerId = slotRow?.customer_id ?? null;
+            }
+            if (effectiveCustomerId) {
+              await supabaseAdmin
+                .from('customers')
+                .update({
+                  address: trimmedAddr,
+                  address_lat: customer_lat ?? null,
+                  address_lng: customer_lng ?? null,
+                })
+                .eq('id', effectiveCustomerId);
+            }
+          }
         }
       }
     }

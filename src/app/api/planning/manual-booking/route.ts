@@ -174,6 +174,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Home service: persiste l'adresse sur la fiche customer (mig 174) pour
+    // qu'on puisse la pre-remplir au prochain RDV. Skip si pas de customer_id
+    // ou pas d'adresse. Le mode home_service est la seule condition d'ecriture.
+    if (homeService && customer_id && hasAddressText) {
+      await supabaseAdmin
+        .from('customers')
+        .update({
+          address: customer_address!.trim(),
+          address_lat: hasCoords ? customer_lat : null,
+          address_lng: hasCoords ? customer_lng : null,
+        })
+        .eq('id', customer_id);
+    }
+
     // Home service: recompute travel times for the day. Only useful when the new
     // booking has coords — otherwise it doesn't affect the chain (skipped slots
     // don't update prevCoords for following ones).
