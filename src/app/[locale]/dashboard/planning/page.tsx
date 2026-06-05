@@ -1088,7 +1088,7 @@ export default function PlanningDashboard() {
 
                     {/* Kebab menu — week-scoped actions (hidden in mode libre if rien à supprimer) */}
                     {(!isFreeMod || selectedDayFreeCount > 0 || freeSlots > 0) && (
-                    <div className="relative">
+                    <div className="relative z-30">
                       <button
                         onClick={() => setShowActionsMenu(v => !v)}
                         className="flex items-center justify-center p-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-500 hover:bg-gray-100 transition-colors"
@@ -1099,7 +1099,7 @@ export default function PlanningDashboard() {
                       {showActionsMenu && (
                         <>
                           <div className="fixed inset-0 z-10" onClick={() => setShowActionsMenu(false)} />
-                          <div className="absolute right-0 top-full mt-2 z-20 w-56 bg-white rounded-xl shadow-xl border border-gray-200 p-1.5">
+                          <div className="absolute right-0 top-full mt-2 z-30 w-56 bg-white rounded-xl shadow-xl border border-gray-200 p-1.5">
                             {!isFreeMod && (
                               <button
                                 onClick={() => { onDownloadStory(); setShowActionsMenu(false); }}
