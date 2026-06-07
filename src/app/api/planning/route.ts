@@ -437,7 +437,11 @@ export async function PATCH(request: NextRequest) {
         // Mode libre — recalculate total_duration_minutes
         updateData.total_duration_minutes = newDuration;
       } else if (slotMeta) {
-        // Mode créneaux — recalculate filler slots
+        // Mode créneaux — recalculate filler slots. Stocke aussi la duree sur
+        // le primary pour que les checks de conflit ulterieurs (notamment apres
+        // un switch slots->libre) sachent combien dure le RDV, au lieu de
+        // retomber sur un default 30 min qui laisserait passer des chevauchements.
+        updateData.total_duration_minutes = newDuration;
         const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
         const startMins = toMins(slotMeta.start_time);
         const endMins = startMins + newDuration;
