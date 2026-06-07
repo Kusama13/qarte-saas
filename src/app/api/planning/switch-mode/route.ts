@@ -53,6 +53,40 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Erreur lors du nettoyage des créneaux' }, { status: 500 });
       }
       deletedCount = count ?? 0;
+
+      // Backfill total_duration_minutes sur les resas creneaux existantes :
+      // en mode creneaux, la duree etait implicite via le nombre de child slots
+      // fillers (primary_slot_id pointant vers le parent). En mode libre, les
+      // checks de conflit retombent sur ?? 30 min si NULL, ce qui laisse passer
+      // des chevauchements pour les RDV >= 60 min.
+      const { data: primariesNeedingDuration } = await supabaseAdmin
+        .from('merchant_planning_slots')
+        .select('id')
+        .eq('merchant_id', merchantId)
+        .not('client_name', 'is', null)
+        .is('primary_slot_id', null)
+        .is('total_duration_minutes', null);
+      if (primariesNeedingDuration && primariesNeedingDuration.length > 0) {
+        const primaryIds = primariesNeedingDuration.map(p => p.id);
+        const { data: children } = await supabaseAdmin
+          .from('merchant_planning_slots')
+          .select('primary_slot_id')
+          .in('primary_slot_id', primaryIds);
+        const childCountByPrimary = new Map<string, number>();
+        for (const c of children || []) {
+          if (!c.primary_slot_id) continue;
+          childCountByPrimary.set(c.primary_slot_id, (childCountByPrimary.get(c.primary_slot_id) || 0) + 1);
+        }
+        await Promise.all(
+          primaryIds.map(id => {
+            const duration = 30 + 30 * (childCountByPrimary.get(id) || 0);
+            return supabaseAdmin
+              .from('merchant_planning_slots')
+              .update({ total_duration_minutes: duration })
+              .eq('id', id);
+          }),
+        );
+      }
     }
 
     const updatePayload: Record<string, unknown> = { booking_mode: targetMode };
