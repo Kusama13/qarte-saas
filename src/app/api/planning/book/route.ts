@@ -523,10 +523,13 @@ export async function POST(request: NextRequest) {
         if (depositDeadlineAt) baseData.deposit_deadline_at = depositDeadlineAt;
       }
 
-      // Block primary slot
+      // Block primary slot — stocke aussi total_duration_minutes pour que les
+      // checks de conflit ulterieurs (notamment apres un switch slots->libre)
+      // sachent combien de temps le RDV dure vraiment, au lieu de retomber sur
+      // un default 30 min qui laisserait passer des chevauchements.
       const { error: primaryError } = await supabaseAdmin
         .from('merchant_planning_slots')
-        .update(baseData)
+        .update({ ...baseData, total_duration_minutes: totalDuration })
         .eq('id', targetSlot!.id)
         .is('client_name', null);
 
