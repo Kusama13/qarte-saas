@@ -66,47 +66,30 @@ export async function POST(request: NextRequest) {
     // Booked slot with force flag → use the atomic RPC that transfers booking data
     // (source stays in grid as a free slot, target is created or reused)
     if (slot.client_name && force) {
-      // Free mode: check for OVERLAP with existing bookings at target date/time
-      // The RPC only checks exact start_time match; we need range overlap
       const { data: merchantData } = await supabaseAdmin
         .from('merchants')
         .select('booking_mode, buffer_minutes')
         .eq('id', merchantId)
         .single();
 
-      if (merchantData?.booking_mode === 'free') {
-        const { data: existingBookings } = await supabaseAdmin
-          .from('merchant_planning_slots')
-          .select('start_time, total_duration_minutes')
-          .eq('merchant_id', merchantId)
-          .eq('slot_date', targetDate)
-          .not('client_name', 'is', null)
-          .neq('id', slotId)
-          .is('primary_slot_id', null);
-
-        const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
-        const buffer = merchantData.buffer_minutes ?? 0;
-        const moveDuration = slot.total_duration_minutes ?? 60;
-        const moveStart = toMins(newTime);
-        const moveEnd = moveStart + moveDuration;
-
-        const hasConflict = (existingBookings || []).some(b => {
-          const bStart = toMins(b.start_time);
-          const bEnd = bStart + (b.total_duration_minutes ?? 60) + buffer;
-          return moveStart < bEnd && moveEnd > bStart;
-        });
-
-        if (hasConflict) {
-          return NextResponse.json({ error: 'Un RDV existe déjà sur cette plage' }, { status: 409 });
-        }
-      }
-
-      const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('move_booking', {
-        p_merchant_id: merchantId,
-        p_source_slot_id: slotId,
-        p_target_date: targetDate,
-        p_target_time: newTime,
-      });
+      // Mode libre : move_booking_free prend le lock (merchant+jour) + re-check de
+      // chevauchement de plage AVANT le move => atomique, plus de double-booking.
+      // Mode créneaux : move_booking (match start_time exact, déjà atomique).
+      const { data: rpcData, error: rpcErr } = merchantData?.booking_mode === 'free'
+        ? await supabaseAdmin.rpc('move_booking_free', {
+            p_merchant_id: merchantId,
+            p_source_slot_id: slotId,
+            p_target_date: targetDate,
+            p_target_time: newTime,
+            p_duration: slot.total_duration_minutes ?? 60,
+            p_buffer: merchantData?.buffer_minutes ?? 0,
+          })
+        : await supabaseAdmin.rpc('move_booking', {
+            p_merchant_id: merchantId,
+            p_source_slot_id: slotId,
+            p_target_date: targetDate,
+            p_target_time: newTime,
+          });
       if (rpcErr) {
         logger.error('Planning move_booking RPC error:', rpcErr);
         return NextResponse.json({ error: 'Erreur lors du deplacement' }, { status: 500 });

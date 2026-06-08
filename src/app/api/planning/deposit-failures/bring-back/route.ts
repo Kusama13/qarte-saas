@@ -5,6 +5,7 @@ import { fromZonedTime } from 'date-fns-tz';
 import { getTimezoneForCountry } from '@/lib/utils';
 import { computeDepositDeadline } from '@/lib/deposit';
 import { sendBookingSms } from '@/lib/sms';
+import { reserveAndEnrich } from '@/lib/booking-reserve';
 import logger from '@/lib/logger';
 
 const bringBackSchema = z.object({
@@ -105,33 +106,13 @@ export async function POST(request: NextRequest) {
     let restoredSlotId: string;
 
     if (isFreeMode) {
+      // Réservation atomique sous advisory lock (check overlap + insert + rollback).
+      // Le re-check sous verrou de la RPC rend le pré-check JS inutile.
       const buffer = merchant.buffer_minutes ?? 0;
-      const { data: sameDay } = await supabaseAdmin
-        .from('merchant_planning_slots')
-        .select('start_time, total_duration_minutes')
-        .eq('merchant_id', merchantId)
-        .eq('slot_date', slotDate)
-        .not('client_name', 'is', null)
-        .is('primary_slot_id', null);
-
-      const requestedStart = timeToMinutes(slotTimeShort);
-      const requestedEnd = requestedStart + totalDuration;
-      const conflict = (sameDay || []).some(s => {
-        const sStart = timeToMinutes(s.start_time);
-        const sEnd = sStart + (s.total_duration_minutes ?? 30) + buffer;
-        return requestedStart < sEnd && requestedEnd > sStart;
-      });
-      if (conflict) {
-        return NextResponse.json({ error: 'Ce créneau n\'est plus disponible' }, { status: 409 });
-      }
-
-      const { data: newSlot, error: insertErr } = await supabaseAdmin
-        .from('merchant_planning_slots')
-        .insert({
-          merchant_id: merchantId,
-          slot_date: slotDate,
-          start_time: slotTimeShort,
-          client_name: failure.client_name,
+      const reserved = await reserveAndEnrich(
+        supabaseAdmin,
+        { merchantId, slotDate, startTime: slotTimeShort, durationMinutes: totalDuration, bufferMinutes: buffer, clientName: failure.client_name },
+        {
           client_phone: failure.client_phone,
           customer_id: failure.customer_id,
           total_duration_minutes: totalDuration,
@@ -144,15 +125,11 @@ export async function POST(request: NextRequest) {
           custom_service_duration: effectiveCustomDuration,
           custom_service_price: effectiveCustomPrice,
           custom_service_color: effectiveCustomColor,
-        })
-        .select('id')
-        .single();
-
-      if (insertErr || !newSlot) {
-        logger.error('Bring-back insert error (free mode):', insertErr);
-        return NextResponse.json({ error: 'Erreur lors de la restauration' }, { status: 500 });
-      }
-      restoredSlotId = newSlot.id;
+        },
+        { conflict: 'Ce créneau n\'est plus disponible', error: 'Erreur lors de la restauration' },
+      );
+      if (!reserved.ok) return reserved.response;
+      restoredSlotId = reserved.slotId;
     } else {
       const { data: daySlots } = await supabaseAdmin
         .from('merchant_planning_slots')

@@ -19,6 +19,7 @@ import { recomputeDayTravel } from '@/lib/travel-recompute';
 import { buildDepositLinks } from '@/lib/payment-providers';
 import { computeBookingPrice } from '@/lib/booking-pricing';
 import { customerAddressFields } from '@/lib/customer-address';
+import { reserveAndEnrich } from '@/lib/booking-reserve';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -444,20 +445,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (isFreeMod) {
-      // Cleanup orphan : un slot vide residuel d'un mode creneaux precedent au
-      // meme start_time ferait echouer l'INSERT (contrainte UNIQUE merchant_id,
-      // slot_date, start_time). Le switch slots->libre ne nettoie que la semaine
-      // affichee ; ce filet de securite couvre les autres semaines.
-      await supabaseAdmin
-        .from('merchant_planning_slots')
-        .delete()
-        .eq('merchant_id', merchant_id)
-        .eq('slot_date', slot_date)
-        .eq('start_time', slot_time)
-        .is('client_name', null)
-        .is('primary_slot_id', null);
-
-      // Mode libre: INSERT one slot (no filler slots)
+      // Mode libre: réservation atomique (lock merchant+jour) puis enrichissement.
       const insertData: Record<string, unknown> = {
         merchant_id,
         slot_date,
@@ -483,17 +471,14 @@ export async function POST(request: NextRequest) {
         insertData.travel_time_minutes = travelTimeIn;
       }
 
-      const { data: newSlot, error: insertError } = await supabaseAdmin
-        .from('merchant_planning_slots')
-        .insert(insertData)
-        .select('id')
-        .single();
-
-      if (insertError || !newSlot) {
-        logger.error('Booking insert error (free mode):', insertError);
-        return NextResponse.json({ error: 'Erreur lors de la réservation' }, { status: 500 });
-      }
-      bookedSlotId = newSlot.id;
+      const reserved = await reserveAndEnrich(
+        supabaseAdmin,
+        { merchantId: merchant_id, slotDate: slot_date, startTime: slot_time, durationMinutes: totalDuration, bufferMinutes: merchant.buffer_minutes ?? 0, clientName },
+        insertData,
+        { conflict: 'Ce créneau n\'est plus disponible', error: 'Erreur lors de la réservation' },
+      );
+      if (!reserved.ok) return reserved.response;
+      bookedSlotId = reserved.slotId;
     } else {
       // Mode créneaux: UPDATE existing pre-generated slots
       // Rebuild slotsToBlock from daySlots (computed earlier in the validation branch)

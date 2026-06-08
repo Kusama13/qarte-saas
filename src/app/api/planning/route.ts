@@ -417,11 +417,19 @@ export async function PATCH(request: NextRequest) {
     const servicesChanged = service_ids !== undefined;
     const customDurationChanged = custom_service_duration !== undefined;
     if ((servicesChanged || customDurationChanged) && trimmedName) {
-      const { data: slotMeta } = await supabaseAdmin
-        .from('merchant_planning_slots')
-        .select('total_duration_minutes, slot_date, start_time, client_phone, customer_id, custom_service_duration, planning_slot_services(service_id)')
-        .eq('id', slotId)
-        .single();
+      const [{ data: slotMeta }, { data: modeMerchant }] = await Promise.all([
+        supabaseAdmin
+          .from('merchant_planning_slots')
+          .select('total_duration_minutes, slot_date, start_time, client_phone, customer_id, custom_service_duration, planning_slot_services(service_id)')
+          .eq('id', slotId)
+          .single(),
+        supabaseAdmin
+          .from('merchants')
+          .select('booking_mode')
+          .eq('id', merchantId)
+          .single(),
+      ]);
+      const isFreeMode = modeMerchant?.booking_mode === 'free';
 
       // Fallback aux IDs catalogue existants si le payload ne les inclut pas
       // (sinon : update partiel = perte de la durée des autres composants)
@@ -433,14 +441,18 @@ export async function PATCH(request: NextRequest) {
       const customDuration = custom_service_duration ?? slotMeta?.custom_service_duration ?? 0;
       const newDuration = (catalogDuration + customDuration) || 30;
 
-      if (slotMeta?.total_duration_minutes != null) {
-        // Mode libre — recalculate total_duration_minutes
-        updateData.total_duration_minutes = newDuration;
+      // Mode déterminé par merchant.booking_mode (source de vérité). Avant, le
+      // proxy `total_duration_minutes != null` servait de discriminant — mais
+      // depuis que les résas créneaux stockent aussi cette colonne (book +
+      // switch-mode), il classait à tort un slot créneaux déjà renseigné comme
+      // "mode libre" et sautait le recalcul des fillers => créneau d'extension
+      // non bloqué, double-booking possible.
+      if (isFreeMode) {
+        // Mode libre — recalcule juste la durée totale (pas de fillers).
+        if (slotMeta) updateData.total_duration_minutes = newDuration;
       } else if (slotMeta) {
-        // Mode créneaux — recalculate filler slots. Stocke aussi la duree sur
-        // le primary pour que les checks de conflit ulterieurs (notamment apres
-        // un switch slots->libre) sachent combien dure le RDV, au lieu de
-        // retomber sur un default 30 min qui laisserait passer des chevauchements.
+        // Mode créneaux — stocke la durée sur le primary (robustesse après un
+        // switch slots->libre) ET recalcule les fillers bloqués.
         updateData.total_duration_minutes = newDuration;
         const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
         const startMins = toMins(slotMeta.start_time);

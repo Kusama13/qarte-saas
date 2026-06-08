@@ -9,6 +9,7 @@ import logger from '@/lib/logger';
 import { validateAppliedDiscounts } from '@/lib/applied-discounts';
 import { buildServiceLines } from '@/lib/booking-pricing';
 import { customerAddressFields } from '@/lib/customer-address';
+import { reserveAndEnrich } from '@/lib/booking-reserve';
 
 const schema = z.object({
   merchantId: z.string().uuid(),
@@ -119,32 +120,19 @@ export async function POST(request: NextRequest) {
     const hasAddressText = homeService && !!customer_address?.trim();
     const hasCoords = hasAddressText && customer_lat != null && customer_lng != null;
 
-    // Cleanup orphan : si un slot vide existe deja a ce start_time (residu d'un
-    // mode creneaux precedent), la contrainte UNIQUE(merchant_id, slot_date,
-    // start_time) ferait echouer l'INSERT. Le switch slots->libre ne nettoie que
-    // la semaine affichee, les autres semaines gardent leurs slots fantomes.
-    await supabaseAdmin
-      .from('merchant_planning_slots')
-      .delete()
-      .eq('merchant_id', merchantId)
-      .eq('slot_date', date)
-      .eq('start_time', start_time)
-      .is('client_name', null)
-      .is('primary_slot_id', null);
-
-    const { data: slot, error: insertError } = await supabaseAdmin
-      .from('merchant_planning_slots')
-      .insert({
-        merchant_id: merchantId,
-        slot_date: date,
-        start_time,
+    // Réservation atomique sous advisory lock (check overlap + insert + rollback).
+    // Le nettoyage du slot vide résiduel (résidu mode créneaux) est fait dans la RPC.
+    // force=true => superposition volontaire autorisée (skip du check, garde le lock).
+    // booked_at est requis pour que la résa remonte dans l'activité admin + stats Growth.
+    const reserved = await reserveAndEnrich(
+      supabaseAdmin,
+      { merchantId, slotDate: date, startTime: start_time, durationMinutes: total_duration_minutes, bufferMinutes: buffer, clientName: client_name, force: !!force },
+      {
         client_name,
         client_phone: formattedPhone,
         customer_id: customer_id || null,
         notes: notes || null,
         total_duration_minutes,
-        // Résa créée par le merchant (pas la vitrine). booked_at est requis pour
-        // que la résa remonte dans l'activité admin + les stats Growth.
         booked_online: false,
         booked_at: new Date().toISOString(),
         custom_service_name: custom_service_name?.trim() || null,
@@ -159,14 +147,11 @@ export async function POST(request: NextRequest) {
           customer_address: customer_address!.trim(),
           ...(hasCoords && { customer_lat, customer_lng }),
         }),
-      })
-      .select('id')
-      .single();
-
-    if (insertError || !slot) {
-      logger.error('Manual booking insert error:', insertError);
-      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
-    }
+      },
+      { conflict: 'Un RDV existe déjà sur cette plage', error: 'Erreur serveur' },
+    );
+    if (!reserved.ok) return reserved.response;
+    const slot = { id: reserved.slotId };
 
     // Link services
     if (service_ids?.length) {

@@ -7,6 +7,7 @@ import { sendMerchantPush } from '@/lib/merchant-push';
 import { sendBookingRescheduledEmail, sendBookingCancelledEmail } from '@/lib/email';
 import { getTodayForCountry, formatDate } from '@/lib/utils';
 import { isSlotInPast } from '@/lib/booking-window';
+import { reserveAndEnrich } from '@/lib/booking-reserve';
 import logger from '@/lib/logger';
 import type { EmailLocale } from '@/emails/translations';
 
@@ -254,40 +255,16 @@ export async function PATCH(request: NextRequest) {
     let newSlotId: string;
 
     if (isFreeMod) {
-      // Mode libre: delete old slot + create new one at target date/time
+      // Mode libre: réservation atomique au nouveau créneau (exclut l'ancien du
+      // check, géré sous verrou par la RPC), puis déplacement des services et
+      // suppression de l'ancien slot.
       const duration = slot.total_duration_minutes ?? 60;
       const buffer = merchant.buffer_minutes ?? 0;
 
-      // Check overlap at target
-      const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
-      const { data: existing } = await supabaseAdmin
-        .from('merchant_planning_slots')
-        .select('start_time, total_duration_minutes')
-        .eq('merchant_id', merchant_id)
-        .eq('slot_date', new_date)
-        .not('client_name', 'is', null)
-        .neq('id', slot_id)
-        .is('primary_slot_id', null);
-
-      const newStart = toMins(new_time);
-      const newEnd = newStart + duration;
-      const conflict = (existing || []).some(b => {
-        const bStart = toMins(b.start_time);
-        const bEnd = bStart + (b.total_duration_minutes ?? 30) + buffer;
-        return newStart < bEnd && newEnd > bStart;
-      });
-      if (conflict) {
-        return NextResponse.json({ error: 'Un RDV existe deja a cette heure' }, { status: 409 });
-      }
-
-      // Create new slot with booking data (incl. prestation sur mesure si présente)
-      const { data: newSlot, error: insertErr } = await supabaseAdmin
-        .from('merchant_planning_slots')
-        .insert({
-          merchant_id: merchant_id,
-          slot_date: new_date,
-          start_time: new_time,
-          client_name: slot.client_name,
+      const reserved = await reserveAndEnrich(
+        supabaseAdmin,
+        { merchantId: merchant_id, slotDate: new_date, startTime: new_time, durationMinutes: duration, bufferMinutes: buffer, clientName: slot.client_name, excludeSlotId: slot_id },
+        {
           client_phone: slot.client_phone,
           customer_id: slot.customer_id,
           customer_message: slot.customer_message,
@@ -295,14 +272,11 @@ export async function PATCH(request: NextRequest) {
           booked_online: true,
           booked_at: new Date().toISOString(),
           ...pickCustomService(slot),
-        })
-        .select('id')
-        .single();
-
-      if (insertErr || !newSlot) {
-        logger.error('customer-edit PATCH free mode insert error:', insertErr);
-        return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
-      }
+        },
+        { conflict: 'Un RDV existe deja a cette heure', error: 'Erreur serveur' },
+      );
+      if (!reserved.ok) return reserved.response;
+      const newSlot = { id: reserved.slotId };
 
       // Move services to new slot
       await supabaseAdmin
