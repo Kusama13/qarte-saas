@@ -2532,7 +2532,7 @@
     "validateReferrerHint": "Marks the referrer reward as used",
     "validateReferredTitle": "Referee reward used",
     "validateReferrerTitle": "Referrer reward used",
-    "validateReferredDesc": "<name></name> used their reward in store. Checking this also triggers the referrer's reward (automatic push + SMS).",
+    "validateReferredDesc": "<name></name> used their reward in store. Checking this also triggers the referrer's reward and notifies them (based on their settings).",
     "validateReferrerDesc": "<name></name> used their reward in store. It will be marked as used.",
     "validateReasonLabel": "A short note for your history (3 words is fine)",
     "validateReasonPlaceholder": "E.g. no phone today",
@@ -2623,7 +2623,8 @@
     "title": "Pending deposits",
     "viewAll": "View all",
     "today": "Today",
-    "tomorrow": "Tomorrow"
+    "tomorrow": "Tomorrow",
+    "sendSmsReject": "Notify the client by SMS about the cancellation"
   },
   "heroToday": {
     "todayLabel": "Today",

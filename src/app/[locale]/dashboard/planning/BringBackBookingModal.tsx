@@ -1,14 +1,17 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Undo2, CheckCircle2, Link2, MessageSquare, CalendarClock } from 'lucide-react';
+import { Undo2, CheckCircle2, Link2, CalendarClock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { BookingDepositFailure } from '@/types';
 import { formatTime, formatPhoneLabel, formatCurrency } from '@/lib/utils';
+import { useMerchant } from '@/contexts/MerchantContext';
+import { isPaidMerchant } from '@/lib/subscription-status';
 import { formatDateLong } from './utils';
 import type { ServiceWithDuration, CustomServiceDraft } from './usePlanningState';
 import PlanningModal, { ModalHeader } from './PlanningModal';
 import CustomServicePicker from './CustomServicePicker';
+import SmsToggle from './SmsToggle';
 
 interface Props {
   failure: BookingDepositFailure;
@@ -25,6 +28,8 @@ interface Props {
 
 export default function BringBackBookingModal({ failure, services, merchantCountry, locale, saving, onBringBack, onPickAnotherSlot, onClose }: Props) {
   const t = useTranslations('planning');
+  const { merchant } = useMerchant();
+  const isPaid = isPaidMerchant(merchant);
   const [markDepositConfirmed, setMarkDepositConfirmed] = useState(false);
   const [sendSms, setSendSms] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +58,7 @@ export default function BringBackBookingModal({ failure, services, merchantCount
   const handleConfirm = async () => {
     setError(null);
     setHasConflict(false);
-    const res = await onBringBack(failure.id, { markDepositConfirmed, sendSms, customService, customOverridden: customDirty });
+    const res = await onBringBack(failure.id, { markDepositConfirmed, sendSms: sendSms && isPaid, customService, customOverridden: customDirty });
     if (!res.success) {
       setError(res.error || t('errorGeneric'));
       setHasConflict(!!res.conflict);
@@ -141,22 +146,18 @@ export default function BringBackBookingModal({ failure, services, merchantCount
             </label>
           </div>
 
-          {/* SMS — libellé dynamique selon le choix : confirmation simple OU lien de paiement */}
+          {/* SMS — libellé dynamique selon le choix : confirmation simple OU lien de paiement.
+              Gaté isPaid via SmsToggle (verrou "Pro"), cohérent avec le reste du planning. */}
           {failure.client_phone && (
-            <label className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-white cursor-pointer hover:bg-gray-50 transition-colors">
-              <input
-                type="checkbox"
-                checked={sendSms}
-                onChange={e => setSendSms(e.target.checked)}
-                className="accent-indigo-600"
-              />
-              <div className="flex items-center gap-1.5 min-w-0">
-                <MessageSquare className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                <span className="text-sm text-gray-800">
-                  {markDepositConfirmed ? t('bringBackSendSms') : t('bringBackSendDepositSms')}
-                </span>
-              </div>
-            </label>
+            <SmsToggle
+              checked={sendSms && isPaid}
+              onToggle={() => setSendSms(s => !s)}
+              label={markDepositConfirmed ? t('bringBackSendSms') : t('bringBackSendDepositSms')}
+              hint={t('sendSmsTrialHint')}
+              isPaid={isPaid}
+              proLabel="Pro"
+              tint="indigo"
+            />
           )}
 
           {error && (

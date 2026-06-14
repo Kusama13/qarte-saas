@@ -30,7 +30,8 @@ export async function GET(request: NextRequest) {
       .select('id, shop_name, locale, country, subscription_status, no_contact, planning_enabled')
       .eq('planning_enabled', true)
       .in('subscription_status', ['trial', 'active', 'canceling', 'past_due'])
-      .eq('no_contact', false);
+      .eq('no_contact', false)
+      .is('deleted_at', null);
 
     if (!merchants || merchants.length === 0) {
       return NextResponse.json({ success: true, elapsedMs: Date.now() - cronStartTime, ...results });

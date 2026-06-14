@@ -555,6 +555,9 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **16 types de SMS** (migrations 092, 112, 113, 139, 146) :
   - `reminder_j1` — rappel la veille a 19h (cron evening, toggle `reminder_j1_enabled` default true, gate `planning_enabled`)
   - `reminder_j0` — rappel le matin meme H-3, plancher 7h local (cron sms-hourly, toggle `reminder_j0_enabled`, gate `planning_enabled`)
+  - **Rappels (j1/j0) — exclusion des résas non confirmées** : les 3 requêtes de rappel (evening, sms-hourly, sms-batch-audit) filtrent `.not('deposit_confirmed','is',false)` → une cliente dont l'acompte n'est pas payé (résa en attente) ne reçoit PAS de rappel ; dès confirmation (ou sans acompte) le rappel repart. Même exclusion ajoutée au tirage `monthly-contest` (une résa impayée ne participe pas et ne peut pas gagner)
+  - **Crons & merchants soft-deletés** : les prefetch merchant des crons d'envoi (morning-jobs, sms-hourly, evening, weekly-recap, morning-push, monthly-contest) filtrent `.is('deleted_at', null)` — un compte supprimé (soft-delete) ne déclenche plus de notif client/merchant même si son `subscription_status` n'a pas changé (cohérent avec `sendPastDueSms` + les routes publiques)
+  - **Refus d'une résa en attente (widget Acomptes en attente)** : `DELETE /api/planning` accepte `notifySms` ; le refus envoie un SMS `booking_cancelled` à la cliente **uniquement si le toggle SMS est activé** (composant `SmsToggle`, gaté `isPaid`, même UX que l'acceptation). Sans toggle, suppression silencieuse
   - `confirmation_no_deposit` / `confirmation_deposit` / `booking_moved` / `booking_cancelled` — opt-in dans modaux planning
   - `birthday` — voeux + cadeau anniversaire (cron morning-jobs)
   - `referral_reward` — notification parrain quand le filleul utilise sa recompense (toggle `referral_reward_sms_enabled` default ON, gate `referral_program_enabled`, opt-out respecte)

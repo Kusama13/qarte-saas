@@ -9,6 +9,8 @@ import { computeDepositAmount } from '@/lib/deposit';
 import { formatCurrency, getTodayForCountry, unwrapJoin } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
 import { useMerchant } from '@/contexts/MerchantContext';
+import SmsToggle from '@/app/[locale]/dashboard/planning/SmsToggle';
+import { isPaidMerchant } from '@/lib/subscription-status';
 import type { MerchantCountry } from '@/types';
 
 interface PendingDeposit {
@@ -36,13 +38,14 @@ export default function PendingDepositsWidget({ merchantId, country, depositFixe
   const locale = useLocale();
   const { addToast } = useToast();
   const { merchant } = useMerchant();
-  const isPaid = merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling' || merchant?.subscription_status === 'past_due';
+  const isPaid = isPaidMerchant(merchant);
   const [items, setItems] = useState<PendingDeposit[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [smsEnabled, setSmsEnabled] = useState<Record<string, boolean>>({});
   const [confirmReject, setConfirmReject] = useState<PendingDeposit | null>(null);
+  const [rejectSms, setRejectSms] = useState(false);
 
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -129,12 +132,13 @@ export default function PendingDepositsWidget({ merchantId, country, depositFixe
   };
 
   const handleReject = async (item: PendingDeposit) => {
+    const withSms = rejectSms && isPaid && !!item.client_phone;
     setBusyId(item.id);
     try {
       const res = await fetch('/api/planning', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ merchantId, slotIds: [item.id] }),
+        body: JSON.stringify({ merchantId, slotIds: [item.id], ...(withSms && { notifySms: true }) }),
       });
       if (!res.ok) throw new Error('fail');
       setItems((prev) => prev.filter((i) => i.id !== item.id));
@@ -242,7 +246,7 @@ export default function PendingDepositsWidget({ merchantId, country, depositFixe
                   )}
                   <button
                     type="button"
-                    onClick={() => setConfirmReject(item)}
+                    onClick={() => { setRejectSms(false); setConfirmReject(item); }}
                     disabled={busy}
                     className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg bg-white border border-red-200 text-red-600 text-xs font-bold hover:bg-red-50 active:scale-[0.98] transition-all disabled:opacity-60 touch-manipulation"
                   >
@@ -270,6 +274,19 @@ export default function PendingDepositsWidget({ merchantId, country, depositFixe
             <p className="mt-2 text-sm text-gray-600">
               {t('rejectConfirmBody', { name: confirmReject.client_name })}
             </p>
+            {confirmReject.client_phone && (
+              <div className="mt-4">
+                <SmsToggle
+                  checked={rejectSms}
+                  onToggle={() => setRejectSms((s) => !s)}
+                  label={t('sendSmsReject')}
+                  hint={t('smsPaidOnly')}
+                  isPaid={isPaid}
+                  proLabel="Pro"
+                  tint="red"
+                />
+              </div>
+            )}
             <div className="flex flex-col-reverse sm:flex-row gap-2.5 mt-5">
               <button
                 type="button"

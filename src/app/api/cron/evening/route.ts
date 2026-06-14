@@ -219,7 +219,8 @@ export async function GET(request: NextRequest) {
           .select('id, shop_name, country, locale, subscription_status, past_due_since, reminder_j1_enabled, planning_enabled')
           .in('subscription_status', ['active', 'canceling', 'past_due'])
           .eq('reminder_j1_enabled', true)
-          .eq('planning_enabled', true);
+          .eq('planning_enabled', true)
+          .is('deleted_at', null);
 
         const activeMerchants = smsMerchants || [];
 
@@ -239,6 +240,9 @@ export async function GET(request: NextRequest) {
             .eq('slot_date', tomorrowStr)
             .not('client_name', 'is', null)
             .not('client_phone', 'is', null)
+            // Pas de rappel pour les résas en attente d'acompte (non confirmées).
+            // deposit_confirmed: NULL = pas d'acompte (confirmé), false = en attente.
+            .not('deposit_confirmed', 'is', false)
             .is('primary_slot_id', null);
 
           for (const slot of tomorrowSlots || []) {

@@ -48,7 +48,8 @@ export async function GET(request: NextRequest) {
   // ==================== PREFETCH ====================
   const { data: allMerchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, shop_type, slug, user_id, locale, country, trial_ends_at, subscription_status, created_at, no_contact, offer_active, offer_title, offer_expires_at, pwa_installed_at, planning_enabled, billing_period_start');
+    .select('id, shop_name, shop_type, slug, user_id, locale, country, trial_ends_at, subscription_status, created_at, no_contact, offer_active, offer_title, offer_expires_at, pwa_installed_at, planning_enabled, billing_period_start')
+    .is('deleted_at', null);
 
   const allMerchantsList = allMerchants || [];
   const allMerchantsMap = new Map(allMerchantsList.map(m => [m.id, m]));

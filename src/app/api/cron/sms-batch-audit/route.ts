@@ -96,6 +96,8 @@ export async function GET(request: NextRequest) {
           .eq('slot_date', tomorrowStr)
           .not('client_name', 'is', null)
           .not('client_phone', 'is', null)
+          // Pas de rappel pour les résas en attente d'acompte (non confirmées).
+          .not('deposit_confirmed', 'is', false)
           .is('primary_slot_id', null);
 
         if (!slots || slots.length === 0) continue;

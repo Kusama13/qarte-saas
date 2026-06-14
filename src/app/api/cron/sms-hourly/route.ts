@@ -126,7 +126,8 @@ export async function GET(request: NextRequest) {
   const { data: merchants } = await supabase
     .from('merchants')
     .select('id, shop_name, country, locale, subscription_status, past_due_since, billing_period_start, reminder_j0_enabled, post_visit_review_enabled, voucher_expiry_sms_enabled, referral_invite_sms_enabled, inactive_sms_enabled, near_reward_sms_enabled, referral_program_enabled, planning_enabled, review_link, stamps_required, reward_description, tier2_enabled, tier2_stamps_required, tier2_reward_description, birthday_gift_enabled, birthday_gift_description')
-    .in('subscription_status', PAID_STATUSES);
+    .in('subscription_status', PAID_STATUSES)
+    .is('deleted_at', null);
 
   const activeMerchants = (merchants || []) as MerchantRow[];
 
@@ -150,6 +151,8 @@ export async function GET(request: NextRequest) {
         .eq('slot_date', today)
         .not('client_name', 'is', null)
         .not('client_phone', 'is', null)
+        // Pas de rappel pour les résas en attente d'acompte (non confirmées).
+        .not('deposit_confirmed', 'is', false)
         .is('primary_slot_id', null);
 
       for (const slot of slots || []) {

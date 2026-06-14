@@ -597,6 +597,8 @@ export async function PATCH(request: NextRequest) {
 const deleteSlotsSchema = z.object({
   merchantId: z.string().uuid(),
   slotIds: z.array(z.string().uuid()).min(1).max(200),
+  // Refus d'une résa en attente : prévenir la cliente par SMS (opt-in merchant).
+  notifySms: z.boolean().optional(),
 });
 
 export async function DELETE(request: NextRequest) {
@@ -615,13 +617,49 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
     }
 
-    const { merchantId, slotIds } = parsed.data;
+    const { merchantId, slotIds, notifySms } = parsed.data;
 
     if (!await verifyOwnership(supabase, merchantId, user.id)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+
+    // Refus d'une résa en attente : prévenir la cliente par SMS d'annulation avant
+    // suppression du créneau (opt-in merchant via le toggle du widget). sendBookingSms
+    // gère le gating plan + blacklist + dédup. Les slots sans téléphone sont ignorés.
+    if (notifySms) {
+      const [{ data: notifySlots }, { data: smsMerchant }] = await Promise.all([
+        supabaseAdmin
+          .from('merchant_planning_slots')
+          .select('id, client_phone, slot_date, start_time')
+          .eq('merchant_id', merchantId)
+          .in('id', slotIds)
+          .not('client_phone', 'is', null),
+        supabaseAdmin
+          .from('merchants')
+          .select('shop_name, locale, subscription_status, past_due_since')
+          .eq('id', merchantId)
+          .single(),
+      ]);
+      if (smsMerchant) {
+        for (const s of notifySlots || []) {
+          if (!s.client_phone) continue;
+          await sendBookingSms(supabaseAdmin, {
+            merchantId,
+            slotId: s.id,
+            phone: s.client_phone,
+            shopName: smsMerchant.shop_name,
+            date: s.slot_date,
+            time: s.start_time,
+            smsType: 'booking_cancelled',
+            locale: smsMerchant.locale || 'fr',
+            subscriptionStatus: smsMerchant.subscription_status,
+            pastDueSince: smsMerchant.past_due_since,
+          }).catch(err => logger.error('Reject booking SMS failed:', err));
+        }
+      }
+    }
 
     // Capture distinct slot_dates BEFORE deletion so we can recompute travel afterwards
     const { data: deletedSlots } = await supabaseAdmin

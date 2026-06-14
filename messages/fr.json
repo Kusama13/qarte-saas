@@ -2520,7 +2520,7 @@
     "validateReferrerHint": "Marque la récompense parrain comme utilisée",
     "validateReferredTitle": "Récompense filleul utilisée",
     "validateReferrerTitle": "Récompense parrain utilisée",
-    "validateReferredDesc": "<name></name> a utilisé sa récompense en boutique. En la cochant, le parrain reçoit automatiquement la sienne (push + SMS).",
+    "validateReferredDesc": "<name></name> a utilisé sa récompense en boutique. En la cochant, le parrain reçoit automatiquement la sienne et est prévenu (selon ses réglages).",
     "validateReferrerDesc": "<name></name> a utilisé sa récompense en boutique. Elle sera cochée comme utilisée.",
     "validateReasonLabel": "Une note pour ton historique (3 mots suffisent)",
     "validateReasonPlaceholder": "Ex: pas de téléphone aujourd'hui",
@@ -2615,7 +2615,7 @@
     "accept": "Accepter",
     "reject": "Refuser",
     "rejectConfirmTitle": "Refuser cette réservation ?",
-    "rejectConfirmBody": "Le créneau sera supprimé et redevient libre. {name} sera prévenu par SMS.",
+    "rejectConfirmBody": "Le créneau sera supprimé et redevient libre.",
     "rejectConfirmCta": "Oui, refuser",
     "cancel": "Annuler",
     "toastAccepted": "Acompte confirmé",
@@ -2623,7 +2623,8 @@
     "errorAction": "Une erreur est survenue",
     "smsOn": "SMS de confirmation activé",
     "smsOff": "Envoyer un SMS de confirmation",
-    "smsPaidOnly": "SMS disponibles après abonnement"
+    "smsPaidOnly": "SMS disponibles après abonnement",
+    "sendSmsReject": "Prévenir le client par SMS de l'annulation"
   },
   "heroToday": {
     "todayLabel": "Aujourd'hui",

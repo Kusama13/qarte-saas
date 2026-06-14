@@ -22,7 +22,8 @@ export async function GET(request: NextRequest) {
       .from('merchants')
       .select('id, shop_name, user_id, country, locale, contest_prize')
       .eq('contest_enabled', true)
-      .in('subscription_status', ['active', 'canceling']);
+      .in('subscription_status', ['active', 'canceling'])
+      .is('deleted_at', null);
 
     // Lookup planned prizes en bulk (1 query pour tous les merchants)
     const merchantIds = (merchants || []).map((m) => m.id);
@@ -80,6 +81,9 @@ export async function GET(request: NextRequest) {
           .lt('slot_date', monthEnd)
           .not('client_name', 'is', null)
           .neq('client_name', '__blocked__')
+          // Exclut les résas en attente d'acompte (non confirmées) : une cliente
+          // qui n'a pas payé ne participe pas et ne peut pas être tirée gagnante.
+          .not('deposit_confirmed', 'is', false)
           .is('primary_slot_id', null);
 
         // Déduplication : téléphone (9 derniers chiffres, rapproche les formats
