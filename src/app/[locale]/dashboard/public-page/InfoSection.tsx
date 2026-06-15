@@ -47,7 +47,7 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
   const hasHours = Object.values(openingHours).some(Boolean);
   const [hoursEnabled, setHoursEnabled] = useState(hasHours);
   const [hoursOpen, setHoursOpen] = useState(false);
-  const [socialsOpen, setSocialsOpen] = useState(false);
+  const [socialsOpen, setSocialsOpen] = useState(true);
 
   useEffect(() => {
     setShopName(merchant.shop_name || '');
