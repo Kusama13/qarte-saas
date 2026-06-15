@@ -42,12 +42,15 @@ export function getQuotaFor(merchant: {
   return getPlanFeatures(merchant as { subscription_status: SubscriptionStatus; plan_tier?: PlanTier } | null).smsQuota;
 }
 
-/** SMS types envoyés gratuitement aux merchants Fidélité (pas de quota, pas de pack consommé).
- *  Le coût OVH est absorbé par Qarte — usage attendu marginal (anniversaires + récompenses parrainage). */
-export const FIDELITY_FREE_SMS_TYPES: SmsType[] = ['birthday', 'referral_reward'];
+/** SMS types exclus du compteur quota mensuel — tous tiers (cf. getSmsUsageThisMonth).
+ *  birthday + referral_reward : automatisations à faible volume, jamais décomptées du quota.
+ *  ⚠️ Ne décide PAS de la gratuité (le bypass Fidélité = anniversaire seul, cf. isFidelityFreeSms). */
+export const QUOTA_EXEMPT_SMS_TYPES: SmsType[] = ['birthday', 'referral_reward'];
 
+/** SMS envoyés gratuitement aux merchants Fidélité (ni quota ni pack). Anniversaire seul :
+ *  geste Qarte à faible volume. Le parrainage Fidélité passe par le pack comme le reste. */
 export function isFidelityFreeSms(merchant: { plan_tier?: string | null } | null, smsType: SmsType): boolean {
-  return merchant?.plan_tier === 'fidelity' && FIDELITY_FREE_SMS_TYPES.includes(smsType);
+  return merchant?.plan_tier === 'fidelity' && smsType === 'birthday';
 }
 
 /** SMS types qui consomment UNIQUEMENT `sms_pack_balance` (jamais le quota mensuel gratuit).
@@ -267,7 +270,7 @@ export async function getSmsUsageThisMonth(supabase: SupabaseClient, merchantId:
     periodStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
   }
 
-  const excludedTypes = [...FIDELITY_FREE_SMS_TYPES, ...PACK_ONLY_SMS_TYPES];
+  const excludedTypes = [...QUOTA_EXEMPT_SMS_TYPES, ...PACK_ONLY_SMS_TYPES];
   const { count } = await supabase
     .from('sms_logs')
     .select('id', { count: 'exact', head: true })
@@ -479,7 +482,7 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
     }
 
     // 5. Gate: enforce quota selon tier + pack. No overage — block if both exhausted.
-    // Fidélité bypass : birthday + referral_reward envoyés sans quota ni pack (coût absorbé).
+    // Fidélité bypass : anniversaire envoyé sans quota ni pack (coût absorbé). Parrainage = pack.
     const { data: merchantRow } = await supabase
       .from('merchants')
       .select('billing_period_start, sms_pack_balance, plan_tier, subscription_status, sms_quota_override, sms_quota_override_cycle_anchor, billing_interval, created_at')

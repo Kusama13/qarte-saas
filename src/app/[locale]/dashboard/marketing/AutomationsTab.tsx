@@ -26,9 +26,9 @@ interface AutomationsTabProps {
   subscriptionStatus?: string | null;
 }
 
-// Fidélité : seules anniversaire (cron auto, sans toggle merchant) + récompense parrainage
-// sont incluses. Tout le reste demande Tout-en-un. Source : plan-tiers.ts +
-// FIDELITY_FREE_SMS_TYPES dans sms.ts.
+// Fidélité : anniversaire offert (cron auto, sans toggle merchant). La récompense parrainage
+// reste activable mais consomme un pack SMS. Tout le reste demande Tout-en-un.
+// Source : plan-tiers.ts + isFidelityFreeSms dans sms.ts.
 const FIDELITY_AVAILABLE_FIELDS = new Set<SmsToggleField>(['referral_reward_sms_enabled']);
 
 interface SmsSettings {
@@ -91,6 +91,7 @@ function SmsAutomationCard({
   updating,
   disabled,
   disabledHint,
+  note,
   onToggle,
   t,
 }: {
@@ -105,6 +106,8 @@ function SmsAutomationCard({
   updating: string | null;
   disabled?: boolean;
   disabledHint?: string;
+  /** Note informative affichée même quand le toggle est actif (ex: "pack SMS requis pour l'envoi"). */
+  note?: string;
   onToggle: (field: SmsToggleField, current: boolean) => void;
   t: (key: string) => string;
 }) {
@@ -154,6 +157,9 @@ function SmsAutomationCard({
         <p className="text-[11px] italic text-gray-400 leading-snug line-clamp-2">&ldquo;{template}&rdquo;</p>
         {disabled && disabledHint && (
           <p className="text-[10px] text-amber-600 mt-1">{disabledHint}</p>
+        )}
+        {!disabled && note && (
+          <p className="text-[10px] text-indigo-600 mt-1">{note}</p>
         )}
       </div>
     </div>
@@ -316,6 +322,7 @@ export default function AutomationsTab({ merchantId, shopName, planTier = 'all_i
         loading={loading}
         updating={updating}
         {...gateCard('referral_reward_sms_enabled', referralDisabled, t('referralDisabledHint'))}
+        note={isFidelity ? t('fidelityReferralPackNote') : undefined}
         onToggle={toggleSmsAutomation}
         t={t}
       />

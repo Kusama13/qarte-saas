@@ -111,7 +111,7 @@ Validité : valable pendant l'abonnement actif. Perdus à la résiliation. Strip
 | `booking_moved` | Transactionnel | SMS Partner | SMS Partner | OVH |
 | `booking_cancelled` | Transactionnel | SMS Partner | SMS Partner | OVH |
 | `birthday` | Transactionnel (free Qarte) | SMS Partner | SMS Partner | OVH |
-| `referral_reward` | Transactionnel (free Qarte) | SMS Partner | SMS Partner | OVH |
+| `referral_reward` | Transactionnel (hors quota ; **pack pour Fidélité** depuis juin 2026, voir `isFidelityFreeSms`) | SMS Partner | SMS Partner | OVH |
 | `gift_card_received` | Transactionnel | SMS Partner | SMS Partner | OVH |
 | `gift_card_used` | Transactionnel | SMS Partner | SMS Partner | OVH |
 | `gift_card_expiry_reminder` (J-7 destinataire) | Transactionnel | SMS Partner | SMS Partner | OVH |

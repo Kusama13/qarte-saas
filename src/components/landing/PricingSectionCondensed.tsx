@@ -44,7 +44,7 @@ export function PricingSectionCondensed() {
             </div>
 
             <div className="mb-1 flex items-baseline gap-1">
-              <span className="text-4xl md:text-5xl font-extrabold tracking-tighter text-gray-900 tabular-nums">19€</span>
+              <span className="text-4xl md:text-5xl font-extrabold tracking-tighter text-gray-900 tabular-nums">14€</span>
               <span className="text-sm font-semibold text-gray-400">{t('perMonth')}</span>
             </div>
             <div className="mb-5 flex items-center gap-2 flex-wrap">

@@ -46,17 +46,17 @@ export const PLAN_ANNUAL = {
 export const PLAN_FIDELITY = {
   name: 'Fidélité',
   tier: 'fidelity' as const,
-  price: 19,
+  price: 14,
   priceId: (process.env.STRIPE_PRICE_FIDELITY || '').trim(),
   interval: 'month' as const,
 };
 
-// Plan 6 mois Fidélité — engagement ferme 6 mois, 1 mois offert (5×19 = 95€).
+// Plan 6 mois Fidélité — engagement ferme 6 mois, 1 mois offert (5×14 = 70€).
 export const PLAN_FIDELITY_SEMESTRIAL = {
   name: 'Fidélité 6 mois',
   tier: 'fidelity' as const,
-  price: 95,
-  monthlyEquivalent: 16,
+  price: 70,
+  monthlyEquivalent: 12,
   priceId: (process.env.STRIPE_PRICE_FIDELITY_SEMESTRIAL || '').trim(),
   interval: 'month' as const,
   intervalCount: 6 as const,
@@ -70,6 +70,13 @@ export const PLAN_FIDELITY_ANNUAL = {
   monthlyEquivalent: 16,
   priceId: (process.env.STRIPE_PRICE_FIDELITY_ANNUAL || '').trim(),
   interval: 'year' as const,
+};
+
+// Legacy Fidélité prices (19€ mensuel / 95€ 6 mois) — abonnés grandfathered avant le
+// passage à 14€/70€. Reconnus par le webhook pour rester mappés 'fidelity'. Pas de nouveau checkout.
+export const PLAN_FIDELITY_LEGACY_PRICE_IDS = {
+  monthly: (process.env.STRIPE_PRICE_FIDELITY_LEGACY || '').trim(),
+  semestrial: (process.env.STRIPE_PRICE_FIDELITY_SEMESTRIAL_LEGACY || '').trim(),
 };
 
 // Legacy Tout-en-un prices — kept so existing subscribers who still pay against

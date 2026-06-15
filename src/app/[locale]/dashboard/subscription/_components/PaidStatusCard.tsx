@@ -14,6 +14,8 @@ interface PaidStatusCardProps {
   includedFeatures: ReactNode[];
   canChangeTier: boolean;
   isLegacy: boolean;
+  /** Abonné Fidélité : le CTA propose d'upgrader vers Tout-en-un (pas de "changer de plan"). */
+  isFidelity?: boolean;
   onChangeTier: () => void;
 }
 
@@ -27,6 +29,7 @@ export default function PaidStatusCard({
   includedFeatures,
   canChangeTier,
   isLegacy,
+  isFidelity = false,
   onChangeTier,
 }: PaidStatusCardProps) {
   const t = useTranslations('subscription');
@@ -88,7 +91,7 @@ export default function PaidStatusCard({
           className="w-full flex items-center justify-center gap-2 h-11 rounded-xl font-bold text-sm bg-slate-900 text-white hover:bg-slate-800 active:scale-[0.98] touch-manipulation transition-all"
         >
           <ArrowUpDown className="w-4 h-4" strokeWidth={2.25} />
-          {t('changeTierCta')}
+          {t(isFidelity ? 'changeTierCtaUpgrade' : 'changeTierCta')}
         </button>
       )}
     </div>

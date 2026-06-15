@@ -6,11 +6,11 @@ describe('isFidelityFreeSms', () => {
     expect(isFidelityFreeSms({ plan_tier: 'fidelity' }, 'birthday')).toBe(true);
   });
 
-  it('returns true for Fidélité merchant + referral_reward', () => {
-    expect(isFidelityFreeSms({ plan_tier: 'fidelity' }, 'referral_reward')).toBe(true);
+  it('returns false for Fidélité merchant + referral_reward — parrainage via pack', () => {
+    expect(isFidelityFreeSms({ plan_tier: 'fidelity' }, 'referral_reward')).toBe(false);
   });
 
-  it('returns false for Fidélité merchant + non-auto SMS type', () => {
+  it('returns false for Fidélité merchant + non-anniversaire SMS type', () => {
     expect(isFidelityFreeSms({ plan_tier: 'fidelity' }, 'reminder_j1')).toBe(false);
     expect(isFidelityFreeSms({ plan_tier: 'fidelity' }, 'confirmation_no_deposit')).toBe(false);
     expect(isFidelityFreeSms({ plan_tier: 'fidelity' }, 'booking_cancelled')).toBe(false);

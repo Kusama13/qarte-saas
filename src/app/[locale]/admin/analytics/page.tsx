@@ -309,7 +309,7 @@ function RevenueTab({ data }: { data: AnalyticsData['revenue'] }) {
 
         <ChartCard title="Mix tier">
           <div className="space-y-4">
-            <SplitBar label="Fidélité 19€" count={data.tierMix.fidelity} pct={pct(data.tierMix.fidelity)} color="bg-indigo-500" />
+            <SplitBar label="Fidélité 14€" count={data.tierMix.fidelity} pct={pct(data.tierMix.fidelity)} color="bg-indigo-500" />
             <SplitBar label="Tout-en-un 24€" count={data.tierMix.all_in} pct={pct(data.tierMix.all_in)} color="bg-emerald-500" />
           </div>
         </ChartCard>

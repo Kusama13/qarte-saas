@@ -1048,7 +1048,7 @@ Source : `src/emails/translations/fr.ts`. Les `<strong>...</strong>` ont été c
   - tierIntro: `Choisis ton plan en fonction de ton usage. Tu peux changer à tout moment.`
   - tierRecommendedBadge: `Recommandé pour toi`
   - tierAllInName: `Tout-en-un` — `24€/mois ou 120€/6 mois` — `Programme de fidélité + planning + résa en ligne + 100 SMS marketing/mois + campagnes SMS + programmes Membres VIP + jeu concours.`
-  - tierFidelityName: `Fidélité seule` — `19€/mois ou 95€/6 mois` — `Programme tampons/cagnotte + SMS anniversaire et parrainage envoyés automatiquement (inclus, sans quota) + vitrine SEO. Sans planning ni résa en ligne.`
+  - tierFidelityName: `Fidélité seule` — `14€/mois ou 70€/6 mois` — `Programme tampons/cagnotte + SMS anniversaire offert (parrainage via pack SMS) + vitrine SEO. Sans planning ni résa en ligne.`
   - statsLabel: `Tes résultats chez {shopName}`
   - statsCustomers: `cliente{plural}`
   - statsBookings: `résa{plural} en ligne`
@@ -1270,7 +1270,7 @@ Source : `src/emails/translations/fr.ts`. Les `<strong>...</strong>` ont été c
   - optionsTitle: `2 options, tu choisis`
   - option1TitleFidelity: `1. Passer à Tout-en-un pour tester plus`
   - option1DescFidelity: `Si tu veux activer résa en ligne + SMS marketing + planning, tu peux upgrader (+5€/mois, prorata auto).`
-  - option1TitleAllIn: `1. Downgrade en Fidélité (24 → 19€)`
+  - option1TitleAllIn: `1. Downgrade en Fidélité (24 → 14€)`
   - option1DescAllIn: `Si tu n'utilises pas le planning ni les SMS marketing, le plan Fidélité te suffit et te coûte 5€ de moins par mois.`
   - option2Title: `2. 30 min avec moi pour débloquer`
   - option2Desc: `Gratuit. On débloque ensemble ce qui te gêne — config, cas concret sur ton commerce, questions.`
@@ -1419,7 +1419,7 @@ Source : `src/emails/translations/fr.ts`. Les `<strong>...</strong>` ont été c
   - diffMarketingSms: `Campagnes SMS marketing (100 SMS/mois inclus)`
   - diffPlanning: `Planning pro avec gestion des créneaux`
   - diffVipPrograms: `Programmes Membres VIP + jeu concours`
-  - priceText: `Tout-en-un : 24€/mois (au lieu de 19€)`
+  - priceText: `Tout-en-un : 24€/mois`
   - prorataNote: `Prorata appliqué sur ton mois en cours — tu paies seulement la différence aujourd'hui.`
   - escape: `Rester sur Fidélité pour le moment`
 - **CTA** : `Passer à Tout-en-un`

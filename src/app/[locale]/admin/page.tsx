@@ -205,7 +205,7 @@ export default function AdminDashboardPage() {
     const resaEnLigne = merchants.filter((m: Merchant) => m.auto_booking_enabled);
     const modeLibre = merchants.filter((m: Merchant) => m.booking_mode === 'free');
 
-    // MRR: prix reel par merchant (19€ anciens, 24€ nouveaux, annuel /12)
+    // MRR via getMerchantMonthlyPrice : tarif par tier/cycle (14€ Fidélité, 24€ Tout-en-un, legacy 19€, annuel /12)
     const mrr = active.reduce((sum: number, m: Merchant) => {
       return sum + getMerchantMonthlyPrice(m);
     }, 0);

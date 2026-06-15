@@ -92,7 +92,7 @@ const jsonLd = {
           name: 'Peut-on utiliser Planity et Qarte en même temps ?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Oui. Le plan Fidélité de Qarte (19€/mois) est compatible avec Planity, tu gardes ton agenda Planity et tu ajoutes la fidélisation Qarte. Dans ce cas, mets quand même le lien Qarte en bio Instagram pour éviter que tes abonnées voient la concurrence.',
+            text: 'Oui. Le plan Fidélité de Qarte (14€/mois) est compatible avec Planity, tu gardes ton agenda Planity et tu ajoutes la fidélisation Qarte. Dans ce cas, mets quand même le lien Qarte en bio Instagram pour éviter que tes abonnées voient la concurrence.',
           },
         },
       ],
@@ -350,7 +350,7 @@ export default function Page() {
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
               <p className="text-sm font-bold text-gray-700 mb-2">Et si je veux garder Planity pour les nouvelles clientes ?</p>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Le plan Fidélité Qarte (19€/mois) est compatible avec Planity, tu gardes ton agenda
+                Le plan Fidélité Qarte (14€/mois) est compatible avec Planity, tu gardes ton agenda
                 Planity et tu ajoutes la fidélisation Qarte. Dans ce cas, mets le lien Qarte en bio
                 Instagram pour éviter que tes abonnées voient la concurrence.
               </p>
@@ -386,7 +386,7 @@ export default function Page() {
                   Peut-on utiliser Planity et Qarte en même temps ?
                 </h3>
                 <p className="text-base text-gray-700 leading-relaxed">
-                  Oui. Le plan Fidélité de Qarte (19€/mois) est compatible avec Planity, tu gardes ton
+                  Oui. Le plan Fidélité de Qarte (14€/mois) est compatible avec Planity, tu gardes ton
                   agenda Planity et tu ajoutes la fidélisation. Mets le lien Qarte en bio pour protéger
                   ton audience Instagram.
                 </p>

@@ -13,8 +13,8 @@ export function GET() {
 - **6 mois** : 120 EUR pour 6 mois (équivalent 20 EUR/mois — un mois offert, engagement ferme 6 mois)
 
 ### Fidélité (fidélité + vitrine + avis Google + parrainage, sans planning ni résa en ligne)
-- **Mensuel** : 19 EUR/mois (sans engagement)
-- **6 mois** : 95 EUR pour 6 mois (équivalent ~16 EUR/mois — un mois offert, engagement ferme 6 mois)
+- **Mensuel** : 14 EUR/mois (sans engagement)
+- **6 mois** : 70 EUR pour 6 mois (équivalent ~12 EUR/mois — un mois offert, engagement ferme 6 mois)
 
 ### Conditions communes
 - **Essai gratuit** : 3 jours, sans carte bancaire
