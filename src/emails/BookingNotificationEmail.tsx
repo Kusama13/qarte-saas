@@ -155,8 +155,8 @@ export function BookingNotificationEmail({
           </Text>
           <Text style={depositBalance}>
             {isEn
-              ? `Remaining balance: ${totalPrice - deposit.amount}€`
-              : `Solde restant dû : ${totalPrice - deposit.amount}€`}
+              ? `Remaining balance: ${Math.max(0, totalPrice - deposit.amount)}€`
+              : `Solde restant dû : ${Math.max(0, totalPrice - deposit.amount)}€`}
           </Text>
         </Section>
       )}
