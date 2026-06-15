@@ -1015,7 +1015,10 @@ export default function BookingDetailsModal({
                     </div>
                   )}
                   {slot.deposit_confirmed !== null && totalPrice !== null && (() => {
-                    const depAmt = computeDepositAmount(totalPrice, depositFixed, depositPercent);
+                    // Acompte sur le prix RÉDUIT (snapshot mig 176 ; fallback calcul live puis brut),
+                    // pas le brut — sinon acompte/reste faux pour une résa avec réduction.
+                    const depositBase = slot.total_price != null ? Number(slot.total_price) : (priceWithDiscounts?.finalPrice ?? totalPrice);
+                    const depAmt = computeDepositAmount(depositBase, depositFixed, depositPercent);
                     if (!depAmt) return null;
                     const isPaid = slot.deposit_confirmed === true;
                     const bandeauClass = isPaid
@@ -1025,9 +1028,9 @@ export default function BookingDetailsModal({
                     return (
                       <div className={`px-2.5 py-1.5 rounded-lg border ${bandeauClass}`}>
                         <p className={`text-[11px] font-medium ${textClass}`}>
-                          {depAmt >= totalPrice
+                          {depAmt >= depositBase
                             ? t('depositFullPaymentRecap', { deposit: formatCurrency(depAmt, merchantCountry, locale) })
-                            : t('depositRecap', { deposit: formatCurrency(depAmt, merchantCountry, locale), remaining: formatCurrency(totalPrice - depAmt, merchantCountry, locale) })}
+                            : t('depositRecap', { deposit: formatCurrency(depAmt, merchantCountry, locale), remaining: formatCurrency(depositBase - depAmt, merchantCountry, locale) })}
                         </p>
                         {slot.deposit_confirmed === false && (
                           <div className="flex flex-wrap items-center gap-1 mt-0.5">

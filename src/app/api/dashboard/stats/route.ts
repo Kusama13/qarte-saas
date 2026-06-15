@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
 
       supabaseAdmin
         .from('merchant_planning_slots')
-        .select('id, slot_date, start_time, client_name, attendance_status, deposit_confirmed, total_duration_minutes, custom_service_price, planning_slot_services(service:merchant_services!service_id(id, name, price, duration))')
+        .select('id, slot_date, start_time, client_name, attendance_status, deposit_confirmed, total_duration_minutes, custom_service_price, total_price, planning_slot_services(service:merchant_services!service_id(id, name, price, duration))')
         .eq('merchant_id', merchantId)
         .gte('slot_date', safeFrom)
         .lte('slot_date', to)
@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
       hasPrevious
         ? supabaseAdmin
             .from('merchant_planning_slots')
-            .select('id, slot_date, client_name, attendance_status, deposit_confirmed, total_duration_minutes, custom_service_price, planning_slot_services(service:merchant_services!service_id(price, duration))')
+            .select('id, slot_date, client_name, attendance_status, deposit_confirmed, total_duration_minutes, custom_service_price, total_price, planning_slot_services(service:merchant_services!service_id(price, duration))')
             .eq('merchant_id', merchantId)
             .gte('slot_date', prevFrom)
             .lte('slot_date', prevTo)
@@ -220,6 +220,7 @@ export async function GET(request: NextRequest) {
       deposit_confirmed: boolean | null;
       total_duration_minutes: number | null;
       custom_service_price?: number | null;
+      total_price?: number | null;
       planning_slot_services: SlotServiceRow[] | null;
     };
 
@@ -231,11 +232,13 @@ export async function GET(request: NextRequest) {
         const svc = Array.isArray(ps.service) ? ps.service[0] : ps.service;
         return sum + Number(svc?.price || 0);
       }, 0);
-      const fullPrice = catalog + Number(slot.custom_service_price || 0);
+      // Prix réduit snapshot (mig 176) ; fallback brut pour les résas legacy (total_price NULL).
+      const rawPrice = catalog + Number(slot.custom_service_price || 0);
+      const price = slot.total_price != null ? Number(slot.total_price) : rawPrice;
       if (slot.attendance_status === 'no_show') {
-        return noShowRevenue(fullPrice, slot.deposit_confirmed, depositAmount, depositPercent);
+        return noShowRevenue(price, slot.deposit_confirmed, depositAmount, depositPercent);
       }
-      return fullPrice;
+      return price;
     };
 
     const isBlocked = (s: SlotRow) => s.client_name === '__blocked__';

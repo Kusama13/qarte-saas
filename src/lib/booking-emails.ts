@@ -33,7 +33,7 @@ export async function sendDepositReceivedEmail(
   const [{ data: slot }, { data: merchant }, { data: customer }] = await Promise.all([
     supabaseAdmin
       .from('merchant_planning_slots')
-      .select('slot_date, start_time, total_duration_minutes, customer_address, planning_slot_services(service:merchant_services!service_id(name, price, duration))')
+      .select('slot_date, start_time, total_duration_minutes, customer_address, total_price, planning_slot_services(service:merchant_services!service_id(name, price, duration))')
       .eq('id', slotId)
       .single(),
     supabaseAdmin
@@ -60,7 +60,9 @@ export async function sendDepositReceivedEmail(
     return;
   }
 
-  const totalPrice = services.reduce((sum: number, s: { price: number }) => sum + s.price, 0);
+  // Prix réduit snapshot (mig 176) ; fallback somme brute pour les résas legacy (total_price NULL).
+  const rawTotal = services.reduce((sum: number, s: { price: number }) => sum + s.price, 0);
+  const totalPrice = slot.total_price != null ? Number(slot.total_price) : rawTotal;
   const totalDuration = slot.total_duration_minutes || services.reduce((sum: number, s: { duration: number }) => sum + s.duration, 0);
   const depositAmount = computeDepositAmount(
     totalPrice,

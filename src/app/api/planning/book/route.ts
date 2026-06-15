@@ -443,6 +443,9 @@ export async function POST(request: NextRequest) {
     if (priceResult.appliedDiscounts.welcome) {
       appliedDiscountFields.applied_welcome_percent = priceResult.appliedDiscounts.welcome;
     }
+    // Snapshot du prix final réduit (member + welcome/promo) — source unique du prix payé,
+    // lue par les emails acompte + les stats CA sans recalcul depuis le brut (mig 176).
+    appliedDiscountFields.total_price = priceResult.finalPrice;
 
     if (isFreeMod) {
       // Mode libre: réservation atomique (lock merchant+jour) puis enrichissement.

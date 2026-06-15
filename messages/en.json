@@ -3687,6 +3687,7 @@
     "promoTargetedSuffix": "on {services}",
     "promoTargetedLead": "Get -{percent}% on",
     "promoApplyInShop": "ℹ️ \"{title}\" available in store, ask your therapist",
+    "promoTargetedNotApplied": "Promo -{percent}% valid on: {names}",
     "welcomeBannerTitle": "Welcome!",
     "welcomeBannerSubtitle": "Discount applied to your first booking",
     "welcomeTeaserTitle": "New here?",

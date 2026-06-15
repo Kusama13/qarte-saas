@@ -3688,6 +3688,7 @@
     "promoTargetedSuffix": "sur {services}",
     "promoTargetedLead": "Bénéficiez de -{percent}% sur",
     "promoApplyInShop": "ℹ️ \"{title}\" applicable en boutique, parlez-en lors du RDV",
+    "promoTargetedNotApplied": "Promo -{percent}% valable sur : {names}",
     "welcomeBannerTitle": "Bienvenue !",
     "welcomeBannerSubtitle": "Réduction appliquée à votre première résa",
     "welcomeTeaserTitle": "Nouvelle ici ?",

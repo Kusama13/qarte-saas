@@ -124,11 +124,14 @@ export function computeBookingPrice(opts: BookingPriceOpts): BookingPriceResult 
   if (welcomeAmount > secondAmount) { secondWinner = 'welcome'; secondAmount = welcomeAmount; }
   if (promoAmount > secondAmount)   { secondWinner = 'promo';   secondAmount = promoAmount; }
 
-  const finalPrice = Math.round(total - memberAmount - secondAmount);
-
   // Precision centime sur tous les amounts : Math.round entier cassait l'affichage
   // (ex: promoAmount 0,50€ devenait 1€ via Math.round(0.50)=1).
   const round = (x: number) => Math.round(x * 100) / 100;
+
+  // finalPrice AU CENTIME (pas à l'euro) : Math.round entier transformait une presta
+  // décimale sans réduction (35,50€) en 36€ + faux prix barré. Garde anti-négatif :
+  // member (cap 20%) + promo 100% pouvait donner un total < 0.
+  const finalPrice = Math.max(0, round(total - memberAmount - secondAmount));
 
   return {
     rawPrice: total,

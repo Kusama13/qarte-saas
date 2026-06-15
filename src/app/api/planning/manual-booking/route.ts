@@ -77,6 +77,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: discountValidation.error }, { status: discountValidation.status });
     }
     const appliedOfferAmount = discountValidation.applied_offer_amount;
+    // Snapshot du prix final réduit (mig 176). Manuel = pas de member ; une seule offre
+    // possible (offer XOR welcome, garanti par validateAppliedDiscounts). appliedOfferAmount
+    // tient déjà compte du ciblage. Centime + garde anti-négatif, cohérent computeBookingPrice.
+    const rawTotal = serviceLines.reduce((s, l) => s + Number(l.price || 0), 0);
+    const welcomeAmount = applied_welcome_percent ? rawTotal * applied_welcome_percent / 100 : 0;
+    const totalPrice = Math.max(0, Math.round((rawTotal - (appliedOfferAmount || 0) - welcomeAmount) * 100) / 100);
     const buffer = m.buffer_minutes ?? 0;
     const country = (phone_country || m.country || 'FR') as MerchantCountry;
     const formattedPhone = client_phone ? formatPhoneNumber(client_phone.trim(), country) : null;
@@ -143,6 +149,7 @@ export async function POST(request: NextRequest) {
         applied_offer_percent: applied_offer_percent ?? null,
         applied_offer_amount: appliedOfferAmount,
         applied_welcome_percent: applied_welcome_percent ?? null,
+        total_price: totalPrice,
         ...(hasAddressText && {
           customer_address: customer_address!.trim(),
           ...(hasCoords && { customer_lat, customer_lng }),
