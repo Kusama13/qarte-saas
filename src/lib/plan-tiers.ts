@@ -3,8 +3,8 @@ export type { BillingInterval };
 
 /**
  * Plan tiers Qarte (avril 2026).
- * - fidelity (19€/95€/190€) : fidélité seule. Pas de planning, résa, ni campagnes SMS manuelles.
- *   SMS auto (anniversaire, parrainage récompense) envoyés sans quota — coût absorbé.
+ * - fidelity (14€/70€/190€) : fidélité seule. Pas de planning, résa, ni campagnes SMS manuelles.
+ *   SMS anniversaire offert sans quota (coût absorbé) ; parrainage via pack. Abonnés 19€/95€ grandfathered.
  * - all_in (24€/120€/240€) : full features. 100 SMS marketing/mois (compteur unique pour
  *   anniversaire + parrainage + auto + campagnes manuelles). +10 si abonnement 6 mois,
  *   +20 si abonnement annuel.
@@ -15,7 +15,7 @@ export type { BillingInterval };
 
 export interface PlanFeatures {
   /** Quota mensuel pour SMS marketing comptabilisés. 0 pour Fidélité (les SMS auto inclus
-   *  ne comptent pas — voir FIDELITY_FREE_SMS_TYPES dans sms.ts ; les campagnes manuelles
+   *  ne comptent pas — voir QUOTA_EXEMPT_SMS_TYPES dans sms.ts ; les campagnes manuelles
    *  sont possibles via achat de pack uniquement). */
   smsQuota: number;
   planning: boolean;

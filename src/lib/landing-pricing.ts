@@ -10,7 +10,7 @@
  */
 
 export const PLAN_PRICES = {
-  fidelity: { monthly: 19, semestrial: 95, monthlyEquiv: 16, annual: 190 },
+  fidelity: { monthly: 14, semestrial: 70, monthlyEquiv: 12, annual: 190 },
   all_in: { monthly: 24, semestrial: 120, monthlyEquiv: 20, annual: 240 },
 } as const;
 

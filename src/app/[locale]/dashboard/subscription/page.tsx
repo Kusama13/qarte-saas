@@ -65,14 +65,14 @@ const FALLBACK_PLAN_PRICE: Record<BillingInterval, number> = {
 };
 
 const TIER_PRICE_LABELS: Record<PlanTier, Record<BillingInterval, string>> = {
-  fidelity: { monthly: '19€/mois', semestrial: '95€/6 mois', annual: '190€/an' },
+  fidelity: { monthly: '14€/mois', semestrial: '70€/6 mois', annual: '190€/an' },
   all_in: { monthly: '24€/mois', semestrial: '120€/6 mois', annual: '240€/an' },
 };
 
 const TIER_PRICES: Record<PlanTier, Record<PickerInterval, { monthlyEquivalent: number; total: number }>> = {
   fidelity: {
-    monthly: { monthlyEquivalent: 19, total: 19 },
-    semestrial: { monthlyEquivalent: 95 / 6, total: 95 },
+    monthly: { monthlyEquivalent: 14, total: 14 },
+    semestrial: { monthlyEquivalent: 70 / 6, total: 70 },
   },
   all_in: {
     monthly: { monthlyEquivalent: 24, total: 24 },
@@ -441,7 +441,8 @@ export default function SubscriptionPage() {
   const effectiveTier: PlanTier = isPayingMerchant
     ? (isLegacy ? 'all_in' : ((merchant?.plan_tier as PlanTier) || 'all_in'))
     : planTier;
-  const tierDisplayName = effectiveTier === 'fidelity' ? t('tierFidelityName') : t('tierAllInName');
+  const isFidelityPlan = effectiveTier === 'fidelity';
+  const tierDisplayName = isFidelityPlan ? t('tierFidelityName') : t('tierAllInName');
   const fidelityPlan = buildPlan('fidelity', billingPlan, locale);
   const allInPlan = buildPlan('all_in', billingPlan, locale);
   const fidelitySemestrial = buildPlan('fidelity', 'semestrial', locale);
@@ -573,6 +574,7 @@ export default function SubscriptionPage() {
               includedFeatures={paidActiveFeatures}
               canChangeTier={canChangeTier}
               isLegacy={isLegacy}
+              isFidelity={isFidelityPlan}
               onChangeTier={() => setShowChangeTierModal(true)}
             />
           ) : !polling ? (
@@ -803,10 +805,12 @@ export default function SubscriptionPage() {
       {/* Change tier modal */}
       <Modal isOpen={showChangeTierModal} onClose={() => !changingTier && setShowChangeTierModal(false)} size="sm">
         <div className="space-y-4">
-          <h3 className="text-lg font-bold text-gray-900">{t('changeTierTitle')}</h3>
-          <p className="text-sm text-gray-500">{t('changeTierDesc')}</p>
+          <h3 className="text-lg font-bold text-gray-900">{t(isFidelityPlan ? 'changeTierTitleUpgrade' : 'changeTierTitle')}</h3>
+          <p className="text-sm text-gray-500">{t(isFidelityPlan ? 'changeTierDescUpgrade' : 'changeTierDesc')}</p>
 
-          {(['fidelity', 'all_in'] as const).map(tier => {
+          {/* Un abonné Fidélité ne se voit pas reproposer l'offre Fidélité (les grandfathered 19€
+              ne doivent pas découvrir le nouveau tarif 14€) : il peut seulement upgrader vers Tout-en-un. */}
+          {((isFidelityPlan ? ['all_in'] : ['fidelity', 'all_in']) as PlanTier[]).map(tier => {
             const isCurrent = merchant?.plan_tier === tier;
             const isDowngrade = merchant?.plan_tier === 'all_in' && tier === 'fidelity';
             const interval = normalizeBillingInterval(merchant?.billing_interval);

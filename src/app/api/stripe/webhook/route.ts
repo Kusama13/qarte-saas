@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { stripe, PLAN, PLAN_ANNUAL, PLAN_SEMESTRIAL, PLAN_FIDELITY, PLAN_FIDELITY_ANNUAL, PLAN_FIDELITY_SEMESTRIAL, PLAN_LEGACY_PRICE_IDS } from '@/lib/stripe';
+import { stripe, PLAN, PLAN_ANNUAL, PLAN_SEMESTRIAL, PLAN_FIDELITY, PLAN_FIDELITY_ANNUAL, PLAN_FIDELITY_SEMESTRIAL, PLAN_LEGACY_PRICE_IDS, PLAN_FIDELITY_LEGACY_PRICE_IDS } from '@/lib/stripe';
 import { getSmsQuotaFor, isLegacyMerchant, normalizeBillingInterval } from '@/lib/plan-tiers';
 import type { BillingInterval } from '@/types';
 
@@ -31,6 +31,8 @@ import type { SubscriptionStatus, PlanTier } from '@/types';
 function tierFromPriceId(priceId: string | null | undefined): PlanTier | null {
   if (!priceId) return null;
   if (priceId === PLAN_FIDELITY.priceId || priceId === PLAN_FIDELITY_ANNUAL.priceId || priceId === PLAN_FIDELITY_SEMESTRIAL.priceId) return 'fidelity';
+  // Legacy Fidélité prices (19€/95€) — abonnés grandfathered avant le passage à 14€/70€
+  if (priceId === PLAN_FIDELITY_LEGACY_PRICE_IDS.monthly || priceId === PLAN_FIDELITY_LEGACY_PRICE_IDS.semestrial) return 'fidelity';
   if (priceId === PLAN.priceId || priceId === PLAN_ANNUAL.priceId || priceId === PLAN_SEMESTRIAL.priceId) return 'all_in';
   // Legacy Tout-en-un prices — existing subscribers stay on these
   if (priceId === PLAN_LEGACY_PRICE_IDS.monthly || priceId === PLAN_LEGACY_PRICE_IDS.annual) return 'all_in';
