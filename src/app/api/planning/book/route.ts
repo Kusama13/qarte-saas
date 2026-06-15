@@ -5,7 +5,7 @@ import { formatPhoneNumber, validatePhone, getTimezoneForCountry, getTodayForCou
 import { normalizeBookingHorizon, isSlotInPast } from '@/lib/booking-window';
 import { isMerchantBlocked } from '@/lib/merchant-access';
 import type { EmailLocale } from '@/emails/translations';
-import { computeDepositDeadline } from '@/lib/deposit';
+import { computeDepositDeadline, computeDepositAmount } from '@/lib/deposit';
 import { fromZonedTime } from 'date-fns-tz';
 import { setPhoneCookie } from '@/lib/customer-auth';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
@@ -579,11 +579,13 @@ export async function POST(request: NextRequest) {
       duration: s.duration || 30,
     }));
 
-    const depositAmount = merchant.deposit_amount
-      ? Number(merchant.deposit_amount)
-      : merchant.deposit_percent
-        ? Math.round(totalPrice * merchant.deposit_percent) / 100
-        : null;
+    // Plafonné au prix de la prestation : un acompte fixe > total (ex: acompte 20€,
+    // presta 14€) ne doit pas demander plus que le service ni afficher un reste négatif.
+    const depositAmount = computeDepositAmount(
+      totalPrice,
+      merchant.deposit_amount ? Number(merchant.deposit_amount) : null,
+      merchant.deposit_percent ? Number(merchant.deposit_percent) : null,
+    );
 
     const links = buildDepositLinks(
       merchant.deposit_link,
