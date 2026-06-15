@@ -134,6 +134,8 @@ export function computeDayRevenue(
       if (svc?.price) slotPrice += svc.price;
     }
     if (slot.custom_service_price) slotPrice += slot.custom_service_price;
+    // Prix réduit snapshot (mig 176) ; fallback somme brute pour les résas legacy.
+    if (slot.total_price != null) slotPrice = Number(slot.total_price);
     if (slot.attendance_status === 'no_show') {
       slotPrice = noShowRevenue(slotPrice, slot.deposit_confirmed ?? null, depositConfig?.amount, depositConfig?.percent);
     }

@@ -890,6 +890,17 @@ export default function BookingModal({
                         {t('promoApplyInShop', { title: promoOffer.title })}
                       </p>
                     )}
+                    {/* Promo ciblée configurée mais aucune prestation éligible sélectionnée :
+                        on explique pourquoi la réduction n'apparaît pas (sinon promo "fantôme"). */}
+                    {promoOffer && promoIsTargeted && promoOffer.discount_percent && !priceResult.appliedDiscounts.promoAmount && (() => {
+                      const names = services.filter((s) => promoTargetSet!.has(s.id)).map((s) => s.name);
+                      if (names.length === 0) return null;
+                      return (
+                        <p className="text-[11px] text-amber-700 italic text-right leading-snug pt-0.5">
+                          {t('promoTargetedNotApplied', { percent: promoOffer.discount_percent, names: names.join(', ') })}
+                        </p>
+                      );
+                    })()}
                     {depositInfo && (
                       <>
                         <div className="flex justify-between text-sm">

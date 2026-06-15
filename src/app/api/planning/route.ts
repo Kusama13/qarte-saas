@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
     const supabaseAdmin = getSupabaseAdmin();
     let query = supabaseAdmin
       .from('merchant_planning_slots')
-      .select('id, slot_date, start_time, client_name, client_phone, customer_id, service_id, notes, customer_message, deposit_confirmed, deposit_deadline_at, primary_slot_id, total_duration_minutes, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, customer_address, customer_lat, customer_lng, travel_time_minutes, travel_time_overridden, created_at, planning_slot_services(service_id, service:merchant_services!service_id(name)), planning_slot_photos(id, url, position), planning_slot_result_photos(id, url, position), customer:customers!customer_id(instagram_handle, tiktok_handle, facebook_url)')
+      .select('id, slot_date, start_time, client_name, client_phone, customer_id, service_id, notes, customer_message, deposit_confirmed, deposit_deadline_at, primary_slot_id, total_duration_minutes, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, total_price, customer_address, customer_lat, customer_lng, travel_time_minutes, travel_time_overridden, created_at, planning_slot_services(service_id, service:merchant_services!service_id(name)), planning_slot_photos(id, url, position), planning_slot_result_photos(id, url, position), customer:customers!customer_id(instagram_handle, tiktok_handle, facebook_url)')
       .eq('merchant_id', merchantId)
       .order('slot_date')
       .order('start_time');
@@ -316,6 +316,7 @@ export async function PATCH(request: NextRequest) {
       updateData.applied_offer_percent = null;
       updateData.applied_offer_amount = null;
       updateData.applied_welcome_percent = null;
+      updateData.total_price = null;
       // Reset message cliente — le créneau est libéré, pas de message fantôme
       updateData.customer_message = null;
     } else {
@@ -343,6 +344,14 @@ export async function PATCH(request: NextRequest) {
       }
       if (applied_welcome_percent !== undefined) {
         updateData.applied_welcome_percent = applied_welcome_percent;
+      }
+      // Snapshot du prix réduit (mig 176). Recalcul seulement si les prestations sont
+      // fournies (sinon discountServiceLines serait partiel — ex: PATCH confirm acompte
+      // sans service_ids → on garde le total_price posé à la création).
+      if (service_ids !== undefined) {
+        const rawTotal = discountServiceLines.reduce((s, l) => s + Number(l.price || 0), 0);
+        const welcomeAmt = applied_welcome_percent ? rawTotal * applied_welcome_percent / 100 : 0;
+        updateData.total_price = Math.max(0, Math.round((rawTotal - (discountValidation.applied_offer_amount || 0) - welcomeAmt) * 100) / 100);
       }
       // Home service: address (only persisted when client info present AND
       // home_service_enabled — defense in depth, mirrors manual-booking gate).

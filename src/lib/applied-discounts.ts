@@ -58,16 +58,19 @@ export async function validateAppliedDiscounts(
     if (offer.expires_at && new Date(offer.expires_at) < new Date()) {
       return { ok: false, error: 'Offre expirée', status: 400 };
     }
+    // Precision centime (pas euro) : cohérent avec computeBookingPrice, sinon le
+    // montant stocké (applied_offer_amount) diverge de l'affiché côté client.
+    const roundCents = (x: number) => Math.round(x * 100) / 100;
     const targets = (offer.target_service_ids as string[] | null) || null;
     if (targets && targets.length > 0) {
       const set = new Set(targets);
       const targeted = serviceLines.filter((l) => set.has(l.id));
-      appliedOfferAmount = Math.round(
+      appliedOfferAmount = roundCents(
         targeted.reduce((s, l) => s + Number(l.price || 0) * applied_offer_percent / 100, 0),
       );
     } else {
       const total = serviceLines.reduce((s, l) => s + Number(l.price || 0), 0);
-      appliedOfferAmount = Math.round(total * applied_offer_percent / 100);
+      appliedOfferAmount = roundCents(total * applied_offer_percent / 100);
     }
   }
 

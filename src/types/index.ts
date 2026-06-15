@@ -252,6 +252,8 @@ export interface PlanningSlot {
   applied_offer_id?: string | null;
   applied_offer_percent?: number | null;
   applied_welcome_percent?: number | null;
+  // Prix final réduit snapshot (mig 176). NULL = legacy → fallback prix brut.
+  total_price?: number | null;
   planning_slot_services?: PlanningSlotService[];
   planning_slot_photos?: PlanningSlotPhoto[];
   planning_slot_result_photos?: PlanningSlotResultPhoto[];
