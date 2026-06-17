@@ -233,7 +233,12 @@ export default function FollowupScheduler(props: FollowupSchedulerProps) {
             )}
 
             {!loadingSlots && availableDates.length === 0 && (
-              <p className="text-[12px] text-gray-500 text-center py-4">{t('followupNoSlots')}</p>
+              <div className="text-center py-3 px-1">
+                <p className="text-[12px] font-semibold text-gray-700">
+                  {bookingMode === 'free' ? t('followupNoSlotsFree') : t('followupNoSlotsSlots')}
+                </p>
+                <p className="text-[11px] text-gray-500 mt-1">{t('followupNoSlotsReassure')}</p>
+              </div>
             )}
 
             {!loadingSlots && availableDates.length > 0 && (
@@ -295,6 +300,17 @@ export default function FollowupScheduler(props: FollowupSchedulerProps) {
                 {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                 {t('followupConfirm')}
               </motion.button>
+            )}
+
+            {/* Échappatoire : referme le planificateur sans réserver (jamais de cul-de-sac, surtout si aucun créneau). */}
+            {!loadingSlots && !submitting && (
+              <button
+                type="button"
+                onClick={() => { setActiveOpen(false); setSelectedTime(null); setError(null); }}
+                className="w-full mt-1.5 py-2 text-[12px] text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                {availableDates.length === 0 ? t('followupBack') : t('followupCancel')}
+              </button>
             )}
           </motion.div>
         )}
