@@ -38,7 +38,13 @@ const bookSchema = z.object({
   customer_lng: z.number().min(-180).max(180).optional(),
   customer_email: z.string().email().max(254).optional(),
   customer_message: z.string().max(500).optional(),
+  // RDV de suivi récurrent (+3/+6 sem.) : acompte différé (rappel J-7), pas d'envoi
+  // cliente immédiat, bypass de l'horizon de réservation. Cf. mig 177.
+  followup: z.boolean().optional(),
 });
+
+// Cap de sécurité pour les RDV de suivi (bypass de booking_horizon_days).
+const FOLLOWUP_MAX_DAYS = 120;
 
 const MAX_TRAVEL_MINUTES = 60;
 
@@ -61,13 +67,14 @@ export async function POST(request: NextRequest) {
     }
 
     const { merchant_id, slot_date, slot_time, phone_number, first_name, last_name, service_ids, customer_address, customer_lat, customer_lng, customer_email, customer_message } = parsed.data;
+    const isFollowup = parsed.data.followup === true;
     const trimmedEmail = customer_email?.trim().toLowerCase() || null;
     const trimmedMessage = customer_message?.trim() || null;
 
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, past_due_since, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, deposit_only_for_new_customers, welcome_offer_enabled, welcome_offer_description, welcome_offer_discount_percent, booking_mode, buffer_minutes, booking_horizon_days, home_service_enabled, home_service_radius_km, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days')
+      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, past_due_since, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, deposit_only_for_new_customers, welcome_offer_enabled, welcome_offer_description, welcome_offer_discount_percent, booking_mode, buffer_minutes, booking_horizon_days, home_service_enabled, home_service_radius_km, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days, recurring_followup_enabled')
       .eq('id', merchant_id)
       .single();
 
@@ -93,13 +100,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Ce commerce n\'accepte plus les réservations' }, { status: 403 });
     }
 
+    // Garde RDV de suivi : nécessite l'option activée (anti-spoof).
+    if (isFollowup && !merchant.recurring_followup_enabled) {
+      return NextResponse.json({ error: 'RDV de suivi indisponible' }, { status: 403 });
+    }
+
     // Garde horizon : refuse une résa au-delà de la fenêtre réglée par le merchant
     // (mig 168). Le maxDate du calendrier client borne déjà l'UI, ce check est
-    // la défense serveur anti-spoof.
+    // la défense serveur anti-spoof. Les RDV de suivi (cadence voulue par le merchant)
+    // bypassent l'horizon mais restent cappés à FOLLOWUP_MAX_DAYS.
     {
       const horizonStart = getTodayForCountry(merchant.country);
       const horizonEnd = new Date(horizonStart);
-      horizonEnd.setDate(horizonEnd.getDate() + normalizeBookingHorizon(merchant.booking_horizon_days));
+      horizonEnd.setDate(horizonEnd.getDate() + (isFollowup ? FOLLOWUP_MAX_DAYS : normalizeBookingHorizon(merchant.booking_horizon_days)));
       if (slot_date < horizonStart || slot_date > horizonEnd.toISOString().split('T')[0]) {
         return NextResponse.json({ error: 'Ce créneau n\'est plus réservable' }, { status: 400 });
       }
@@ -419,9 +432,14 @@ export async function POST(request: NextRequest) {
     const hasDeposit = !!merchant.deposit_link && !memberSkipDeposit && !skipForReturning;
     const bookedAt = new Date().toISOString();
 
-    // Compute deposit deadline (shared between modes)
+    // RDV de suivi : acompte différé (rappel J-7), pas de deadline au booking — elle
+    // sera posée au J-7 par le cron de rappel (= RDV − cancel_deadline_days). Tant que
+    // deposit_deadline_at est NULL, le cron deposit-expiration ne libère pas le slot.
+    const deferDeposit = isFollowup && hasDeposit;
+
+    // Compute deposit deadline (shared between modes) — sauf RDV de suivi (différé).
     let depositDeadlineAt: string | undefined;
-    if (hasDeposit && merchant.deposit_deadline_hours) {
+    if (hasDeposit && !deferDeposit && merchant.deposit_deadline_hours) {
       const tz = getTimezoneForCountry(merchant.country);
       const rdvTime = fromZonedTime(new Date(`${slot_date}T${slot_time}:00`), tz);
       const deadline = computeDepositDeadline(merchant.deposit_deadline_hours, rdvTime, tz);
@@ -465,6 +483,7 @@ export async function POST(request: NextRequest) {
       };
       if (hasDeposit) {
         insertData.deposit_confirmed = false;
+        if (deferDeposit) insertData.deposit_deferred = true;
         if (depositDeadlineAt) insertData.deposit_deadline_at = depositDeadlineAt;
       }
       if (homeService && customer_address) {
@@ -508,6 +527,7 @@ export async function POST(request: NextRequest) {
       };
       if (hasDeposit) {
         baseData.deposit_confirmed = false;
+        if (deferDeposit) baseData.deposit_deferred = true;
         if (depositDeadlineAt) baseData.deposit_deadline_at = depositDeadlineAt;
       }
 
@@ -607,7 +627,9 @@ export async function POST(request: NextRequest) {
     } : null;
 
     // 10. Send email notification to merchant (fire-and-forget)
-    const { data: merchantUser } = await supabaseAdmin.auth.admin.getUserById(merchant.user_id);
+    // RDV de suivi : pas d'email merchant (évite 3 mails d'un coup) — le merchant
+    // voit le RDV en agenda + reçoit une push.
+    const { data: merchantUser } = isFollowup ? { data: null } : await supabaseAdmin.auth.admin.getUserById(merchant.user_id);
     if (merchantUser?.user?.email) {
       sendBookingNotificationEmail(
         merchantUser.user.email,
@@ -629,8 +651,10 @@ export async function POST(request: NextRequest) {
       ).catch(err => logger.error('Booking notification email failed:', err));
     }
 
-    // 10a-bis. Send confirmation email to client (fire-and-forget) — only if email provided
-    if (trimmedEmail) {
+    // 10a-bis. Send confirmation email to client (fire-and-forget) — only if email provided.
+    // RDV de suivi : pas d'email cliente immédiat (rien à payer maintenant) — elle voit le
+    // récap à l'écran + sur sa carte ; l'email/SMS d'acompte partira 7 jours avant (cron J-7).
+    if (trimmedEmail && !isFollowup) {
       const merchantCurrency = getCurrencyForCountry(merchant.country) as 'EUR' | 'CHF';
       sendBookingConfirmationEmail(trimmedEmail, {
         shopName: merchant.shop_name,
@@ -678,7 +702,7 @@ export async function POST(request: NextRequest) {
       merchantId: merchant_id,
       notificationType: 'booking',
       referenceId: bookedSlotId,
-      title: 'Nouvelle réservation',
+      title: isFollowup ? 'RDV de suivi réservé' : 'Nouvelle réservation',
       body: pushBody,
       url: `/dashboard/planning?date=${slot_date}`,
       tag: 'qarte-merchant-booking',
@@ -691,6 +715,7 @@ export async function POST(request: NextRequest) {
     const jsonResponse = NextResponse.json({
       success: true,
       booking: {
+        slot_id: bookedSlotId,
         date: slot_date,
         time: slot_time,
         services: serviceDetails,

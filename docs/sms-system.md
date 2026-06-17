@@ -108,6 +108,7 @@ Validité : valable pendant l'abonnement actif. Perdus à la résiliation. Strip
 | `reminder_j1` (rappel J-1 19h) | Transactionnel | SMS Partner | SMS Partner | OVH |
 | `confirmation_no_deposit` | Transactionnel | SMS Partner | SMS Partner | OVH |
 | `confirmation_deposit` | Transactionnel | SMS Partner | SMS Partner | OVH |
+| `deposit_reminder` (rappel acompte J-7 d'un RDV de suivi, mig 177 ; cron `morning-jobs`, wording = `deposit_request`) | Transactionnel | SMS Partner | SMS Partner | OVH |
 | `booking_moved` | Transactionnel | SMS Partner | SMS Partner | OVH |
 | `booking_cancelled` | Transactionnel | SMS Partner | SMS Partner | OVH |
 | `birthday` | Transactionnel (free Qarte) | SMS Partner | SMS Partner | OVH |

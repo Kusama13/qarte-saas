@@ -65,7 +65,7 @@ import { isPaidStatus, isPaidMerchant } from './subscription-status';
 
 // ── Templates SMS (< 160 chars, vouvoiement client-facing) ──
 
-export type SmsType = 'reminder_j1' | 'reminder_j0' | 'confirmation_no_deposit' | 'confirmation_deposit' | 'deposit_request' | 'birthday' | 'referral_reward' | 'booking_moved' | 'booking_cancelled' | 'gift_card_received' | 'gift_card_used' | 'gift_card_expiry_reminder';
+export type SmsType = 'reminder_j1' | 'reminder_j0' | 'confirmation_no_deposit' | 'confirmation_deposit' | 'deposit_request' | 'deposit_reminder' | 'birthday' | 'referral_reward' | 'booking_moved' | 'booking_cancelled' | 'gift_card_received' | 'gift_card_used' | 'gift_card_expiry_reminder';
 
 export type MarketingSmsType = 'campaign' | 'welcome' | 'review_request' | 'voucher_expiry' | 'referral_invite' | 'inactive_reminder' | 'near_reward';
 
@@ -77,6 +77,8 @@ const SMS_TEMPLATES: Record<string, Record<SmsType, (...args: string[]) => strin
     confirmation_deposit: (shop, date, time) => `Acompte validé ! RDV chez ${shop} le ${date} à ${time}. À bientôt !`,
     // (shop, date, time, link) — lien de paiement merchant.deposit_link
     deposit_request: (shop, date, time, link) => `Acompte à régler pour votre RDV chez ${shop} le ${date} à ${time} : ${link}`,
+    // Rappel acompte 7 jours avant un RDV de suivi (mig 177). Même wording que deposit_request.
+    deposit_reminder: (shop, date, time, link) => `Acompte à régler pour votre RDV chez ${shop} le ${date} à ${time} : ${link}`,
     birthday: (shop, gift, name) => name ? `${name}, joyeux anniversaire ! ${shop} vous offre : ${gift}. Rendez-vous vite pour en profiter !` : `Joyeux anniversaire ! ${shop} vous offre : ${gift}. Rendez-vous vite pour en profiter !`,
     referral_reward: (shop, reward) => `Bonne nouvelle ! Votre filleul(e) a utilisé sa récompense. Votre cadeau vous attend chez ${shop} : ${reward}`,
     booking_moved: (shop, date, time) => `Votre RDV chez ${shop} a été déplacé au ${date} à ${time}. À bientôt !`,
@@ -93,6 +95,7 @@ const SMS_TEMPLATES: Record<string, Record<SmsType, (...args: string[]) => strin
     confirmation_no_deposit: (shop, date, time) => `Booking confirmed at ${shop} on ${date} at ${time}. Earn loyalty points on your visit!`,
     confirmation_deposit: (shop, date, time) => `Deposit confirmed! Appointment at ${shop} on ${date} at ${time}. See you soon!`,
     deposit_request: (shop, date, time, link) => `Deposit due for your booking at ${shop} on ${date} at ${time}: ${link}`,
+    deposit_reminder: (shop, date, time, link) => `Deposit due for your booking at ${shop} on ${date} at ${time}: ${link}`,
     birthday: (shop, gift, name) => name ? `${name}, happy birthday! ${shop} offers you: ${gift}. Visit us to claim it!` : `Happy birthday! ${shop} offers you: ${gift}. Visit us to claim it!`,
     referral_reward: (shop, reward) => `Great news! Your referral used their reward. Your gift is waiting at ${shop}: ${reward}`,
     booking_moved: (shop, date, time) => `Your appointment at ${shop} has been moved to ${date} at ${time}. See you soon!`,
@@ -138,6 +141,7 @@ function isTypeEnabled(smsType: SmsType, config: GlobalSmsConfig): boolean {
     case 'confirmation_no_deposit':
     case 'confirmation_deposit':
     case 'deposit_request':
+    case 'deposit_reminder':
     case 'booking_moved':
     case 'booking_cancelled': return true;
     case 'gift_card_received':
@@ -445,6 +449,7 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
         message = template(shopName, fmtDate, time || '');
         break;
       case 'deposit_request':
+      case 'deposit_reminder':
         if (!depositLink) return false; // garde-fou : sans lien, le SMS n'a pas de sens
         message = template(shopName, fmtDate, time || '', depositLink);
         break;

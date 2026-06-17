@@ -11,6 +11,7 @@ import { sendBookingSms } from '@/lib/sms';
 import { isLegalSendTime } from '@/lib/sms-compliance';
 import { resend, EMAIL_FROM, EMAIL_HEADERS } from '@/lib/resend';
 import { verifyCronAuth, batchGetUserEmails, rateLimitDelay } from '@/lib/cron-helpers';
+import { sendFollowupDepositReminders } from '@/lib/followup-reminders';
 import logger from '@/lib/logger';
 
 const supabase = createClient(
@@ -41,6 +42,7 @@ export async function GET(request: NextRequest) {
     attendanceAutoMarked: { count: 0 },
     contestPrizeReminder: { processed: 0, alerted: 0 },
     googleReviewsCachePurge: { deleted: 0 },
+    followupDepositReminders: { processed: 0, remindersSent: 0, errors: 0 },
   };
 
   const sectionStatuses: Array<{ name: string; status: 'ok' | 'error'; error?: string }> = [];
@@ -485,6 +487,19 @@ export async function GET(request: NextRequest) {
     sectionStatuses.push({ name: 'googleReviewsCachePurge', status: 'ok' });
   } catch (err) {
     sectionStatuses.push({ name: 'googleReviewsCachePurge', status: 'error', error: err instanceof Error ? err.message : String(err) });
+  }
+
+  // ==================== RAPPEL ACOMPTE J-7 — RDV DE SUIVI (mig 177) ====================
+  // RDV de suivi (+3/+6 sem.) réservés sans acompte : 7 jours avant, on rappelle la
+  // cliente (email + SMS) pour régler l'acompte / reporter / annuler, et on pose la
+  // deadline (= RDV − cancel_deadline_days). Le cron deposit-expiration libère ensuite.
+  if (isTimedOut()) { sectionStatuses.push({ name: 'followupDepositReminders', status: 'error', error: 'Skipped: cron timeout' }); }
+  else try {
+    const r = await sendFollowupDepositReminders(supabase, { now });
+    results.followupDepositReminders = r;
+    sectionStatuses.push({ name: 'followupDepositReminders', status: 'ok' });
+  } catch (err) {
+    sectionStatuses.push({ name: 'followupDepositReminders', status: 'error', error: err instanceof Error ? err.message : String(err) });
   }
 
   // Await all push promises before returning

@@ -8,6 +8,7 @@ import { getSupabase } from '@/lib/supabase';
 import { CalendarDays, CalendarCheck, CalendarRange, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, AlertTriangle, X, Trash2, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical, Settings, Save, MapPin } from 'lucide-react';
 import { DepositCard } from './settings/DepositCard';
 import { CustomerEditCard } from './settings/CustomerEditCard';
+import { FollowupCard } from './settings/FollowupCard';
 import { HomeServiceCard } from './settings/HomeServiceCard';
 import type { BookingMode, MerchantCountry, BookingDepositFailure } from '@/types';
 import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
@@ -67,6 +68,7 @@ export default function PlanningDashboard() {
     messageExpires, setMessageExpires, bookingMessage, setBookingMessage,
     autoBookingEnabled, setAutoBookingEnabled,
     allowCustomerCancel, setAllowCustomerCancel, allowCustomerReschedule, setAllowCustomerReschedule,
+    recurringFollowupEnabled, setRecurringFollowupEnabled,
     cancelDeadlineDays, setCancelDeadlineDays, rescheduleDeadlineDays, setRescheduleDeadlineDays,
     depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     bookingMode, setBookingMode, bufferMinutes, setBufferMinutes,
@@ -559,6 +561,7 @@ export default function PlanningDashboard() {
         allow_customer_reschedule: allowCustomerReschedule,
         cancel_deadline_days: parseInt(cancelDeadlineDays) || 1,
         reschedule_deadline_days: parseInt(rescheduleDeadlineDays) || 1,
+        recurring_followup_enabled: autoBookingEnabled && recurringFollowupEnabled,
         booking_mode: bookingMode,
         buffer_minutes: bufferMinutes,
         booking_horizon_days: bookingHorizonDays,
@@ -1403,6 +1406,12 @@ export default function PlanningDashboard() {
                 rescheduleDeadlineDays={rescheduleDeadlineDays}
                 onRescheduleDeadlineDaysChange={setRescheduleDeadlineDays}
               />
+              {autoBookingEnabled && (
+                <FollowupCard
+                  enabled={recurringFollowupEnabled}
+                  onEnabledChange={setRecurringFollowupEnabled}
+                />
+              )}
               {bookingMode === 'free' && (
                 <HomeServiceCard
                   enabled={homeServiceEnabled}
