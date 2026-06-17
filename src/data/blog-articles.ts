@@ -16,6 +16,16 @@ export interface BlogArticle {
  */
 export const BLOG_ARTICLES: BlogArticle[] = [
   {
+    slug: 'faire-revenir-clientes-prochain-rdv-salon',
+    title: 'Faire revenir ses clientes : leur faire reprendre le prochain RDV tout de suite',
+    description:
+      'Une cliente qui repart sans prochain RDV = un trou dans ton agenda. Comment proposer ses 2 prochains rendez-vous (+3 et +6 semaines) à la fin de la réservation en ligne, sans acompte tout de suite, pour remplir ton agenda sans relancer personne.',
+    readTime: '6 min',
+    category: 'Fidélisation',
+    date: '2026-06-17',
+    image: '/blog/social/article-13-cover.png',
+  },
+  {
     slug: 'beauty-profs-2026-salon-beaute-marseille',
     title: 'Beauty Profs 2026 : pourquoi les pros de l\'ongle et du regard doivent y aller',
     description:
