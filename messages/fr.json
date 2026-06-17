@@ -2110,6 +2110,8 @@
     "followupTitle": "Prochains rendez-vous",
     "followupToggle": "Proposer les prochains RDV",
     "followupToggleDesc": "À la fin d'une réservation en ligne, la cliente peut réserver ses 2 prochains RDV (à +3 et +6 semaines, ajustables), sans acompte tout de suite. Un rappel pour régler l'acompte part 7 jours avant.",
+    "followupSlotsHint": "En mode créneaux, pense à ouvrir tes créneaux jusqu'à ~6 semaines à l'avance : sinon les RDV de suivi ne pourront pas être réservés.",
+    "followupHorizonWarning": "Ton horizon de réservation est de {days} jours. Les RDV de suivi à 6 semaines ne seront pas réservables : choisis 60 ou 90 jours dans « Horizon de réservation ».",
     "allowCustomerCancel": "Autoriser les clients à annuler",
     "allowCustomerCancelDesc": "Les clients pourront annuler leur RDV depuis leur carte de fidélité.",
     "allowCustomerReschedule": "Autoriser les clients à modifier",

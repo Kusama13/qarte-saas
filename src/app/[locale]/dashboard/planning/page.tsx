@@ -1410,6 +1410,8 @@ export default function PlanningDashboard() {
                 <FollowupCard
                   enabled={recurringFollowupEnabled}
                   onEnabledChange={setRecurringFollowupEnabled}
+                  bookingMode={bookingMode}
+                  bookingHorizonDays={bookingHorizonDays}
                 />
               )}
               {bookingMode === 'free' && (
