@@ -1347,7 +1347,7 @@ export default function PlanningDashboard() {
                   <p className="text-[11px] text-gray-500 mb-3">{t('bufferHint')}</p>
                   <ChipGroup
                     fill
-                    options={[0, 10, 15, 20].map(v => ({ value: String(v), label: v === 0 ? t('bufferNone') : `${v} min` }))}
+                    options={[0, 10, 15, 20, 30].map(v => ({ value: String(v), label: v === 0 ? t('bufferNone') : `${v} min` }))}
                     value={String(bufferMinutes)}
                     onChange={(v) => setBufferMinutes(Number(v) as 0 | 10 | 15 | 20 | 30)}
                   />
@@ -1463,14 +1463,12 @@ export default function PlanningDashboard() {
                 rescheduleDeadlineDays={rescheduleDeadlineDays}
                 onRescheduleDeadlineDaysChange={setRescheduleDeadlineDays}
               />
-              {autoBookingEnabled && (
-                <FollowupCard
-                  enabled={recurringFollowupEnabled}
-                  onEnabledChange={setRecurringFollowupEnabled}
-                  bookingMode={bookingMode}
-                  bookingHorizonDays={bookingHorizonDays}
-                />
-              )}
+              <FollowupCard
+                enabled={recurringFollowupEnabled}
+                onEnabledChange={setRecurringFollowupEnabled}
+                bookingMode={bookingMode}
+                bookingHorizonDays={bookingHorizonDays}
+              />
             </>
           )}
             </div>
