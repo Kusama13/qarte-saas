@@ -7,6 +7,36 @@ export type SectionStats = { processed: number; sent: number; skipped: number; e
 export const RESEND_RATE_LIMIT_MS = 600;
 export const rateLimitDelay = () => new Promise(resolve => setTimeout(resolve, RESEND_RATE_LIMIT_MS));
 
+/**
+ * Envoi cadencé sous la limite Resend (5 req/s) pour les gros volumes.
+ * Par défaut : lots de 4 espacés de 1,1 s ≈ 3,6 req/s (marge de sécurité).
+ * Le délai 600ms `rateLimitDelay` ne s'applique qu'ENTRE les sends séquentiels —
+ * insuffisant quand un lot part en parallèle (10 sends concurrents = 429). À
+ * utiliser pour toute diffusion de masse (blog-digest, blog-drip).
+ * Retourne les compteurs + la liste des items envoyés avec succès (pour le tracking).
+ */
+export async function sendPaced<T>(
+  items: T[],
+  sendFn: (item: T) => Promise<boolean>,
+  opts: { batchSize?: number; delayMs?: number; onProgress?: (done: number, total: number) => void } = {},
+): Promise<{ sent: number; errors: number; ok: T[] }> {
+  const { batchSize = 4, delayMs = 1100, onProgress } = opts;
+  let sent = 0;
+  let errors = 0;
+  const ok: T[] = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const results = await Promise.allSettled(batch.map(async (it) => ({ it, ok: await sendFn(it) })));
+    for (const r of results) {
+      if (r.status === 'fulfilled' && r.value.ok) { sent++; ok.push(r.value.it); }
+      else errors++;
+    }
+    onProgress?.(Math.min(i + batchSize, items.length), items.length);
+    if (i + batchSize < items.length) await new Promise((res) => setTimeout(res, delayMs));
+  }
+  return { sent, errors, ok };
+}
+
 // Predicate: merchant can receive automated emails
 export const canEmail = (m: { no_contact?: boolean | null; email_bounced_at?: string | null; email_unsubscribed_at?: string | null }) =>
   !m.no_contact && !m.email_bounced_at && !m.email_unsubscribed_at;

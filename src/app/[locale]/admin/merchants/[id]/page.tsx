@@ -546,17 +546,35 @@ export default function MerchantDetailPage() {
     return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   };
 
+  // Fin d'essai en heure de Paris (le timestamp DB est en UTC), ex: "17/06/2026 à 08h30".
+  const formatParisDateTime = (iso: string | null): string | null => {
+    if (!iso) return null;
+    const parts = new Intl.DateTimeFormat('fr-FR', {
+      timeZone: 'Europe/Paris',
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    }).formatToParts(new Date(iso));
+    const p = (t: string) => parts.find((x) => x.type === t)?.value ?? '';
+    return `${p('day')}/${p('month')}/${p('year')} à ${p('hour')}h${p('minute')}`;
+  };
+
   const getStatusBadge = (m: Merchant) => {
     switch (m.subscription_status) {
       case 'trial': {
         const daysLeft = getDaysRemaining(m.trial_ends_at);
+        const endParis = formatParisDateTime(m.trial_ends_at);
         return (
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-100 rounded-full">En essai</span>
-            {daysLeft !== null && (
-              <span className={cn("text-sm", daysLeft <= 3 ? "text-red-600 font-medium" : "text-gray-500")}>
-                {daysLeft <= 0 ? "Expiré" : `${daysLeft}j restant${daysLeft > 1 ? 's' : ''}`}
-              </span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-100 rounded-full">En essai</span>
+              {daysLeft !== null && (
+                <span className={cn("text-sm", daysLeft <= 3 ? "text-red-600 font-medium" : "text-gray-500")}>
+                  {daysLeft <= 0 ? "Expiré" : `${daysLeft}j restant${daysLeft > 1 ? 's' : ''}`}
+                </span>
+              )}
+            </div>
+            {endParis && (
+              <span className="text-xs text-gray-500">Fin de l&apos;essai : {endParis} (heure de Paris)</span>
             )}
           </div>
         );
