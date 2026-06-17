@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
     const supabaseAdmin = getSupabaseAdmin();
     let query = supabaseAdmin
       .from('merchant_planning_slots')
-      .select('id, slot_date, start_time, client_name, client_phone, customer_id, service_id, notes, customer_message, deposit_confirmed, deposit_deadline_at, primary_slot_id, total_duration_minutes, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, total_price, customer_address, customer_lat, customer_lng, travel_time_minutes, travel_time_overridden, created_at, planning_slot_services(service_id, service:merchant_services!service_id(name)), planning_slot_photos(id, url, position), planning_slot_result_photos(id, url, position), customer:customers!customer_id(instagram_handle, tiktok_handle, facebook_url)')
+      .select('id, slot_date, start_time, client_name, client_phone, customer_id, service_id, notes, customer_message, deposit_confirmed, deposit_deferred, deposit_deadline_at, primary_slot_id, total_duration_minutes, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, total_price, customer_address, customer_lat, customer_lng, travel_time_minutes, travel_time_overridden, created_at, planning_slot_services(service_id, service:merchant_services!service_id(name)), planning_slot_photos(id, url, position), planning_slot_result_photos(id, url, position), customer:customers!customer_id(instagram_handle, tiktok_handle, facebook_url)')
       .eq('merchant_id', merchantId)
       .order('slot_date')
       .order('start_time');

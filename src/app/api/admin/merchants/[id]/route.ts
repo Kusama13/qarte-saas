@@ -113,7 +113,8 @@ export async function GET(
       supabaseAdmin.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('slot_date', new Date().toISOString().split('T')[0]),
       supabaseAdmin.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).not('client_name', 'is', null).is('primary_slot_id', null).gte('slot_date', new Date().toISOString().split('T')[0]),
       // Pending deposits: booked slots (future) with deposit required but not yet confirmed
-      supabaseAdmin.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('deposit_confirmed', false).not('client_name', 'is', null).is('primary_slot_id', null).gte('slot_date', new Date().toISOString().split('T')[0]),
+      // (exclut les RDV de suivi différés avant J-7 : acompte pas encore dû)
+      supabaseAdmin.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('deposit_confirmed', false).not('deposit_deferred', 'is', true).not('client_name', 'is', null).is('primary_slot_id', null).gte('slot_date', new Date().toISOString().split('T')[0]),
       supabaseAdmin.from('sms_logs').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).neq('status', 'failed'),
       supabaseAdmin.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('booked_online', true).not('client_name', 'is', null).is('primary_slot_id', null),
       supabaseAdmin.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('booked_online', false).not('client_name', 'is', null).is('primary_slot_id', null),

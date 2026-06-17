@@ -96,24 +96,28 @@ export function computeDepositDeadline(
   return new Date(Math.min(deadline.getTime(), rdvMinus4h.getTime()));
 }
 
+/** Délai laissé à la cliente pour régler l'acompte d'un RDV de suivi après le rappel J-7. */
+export const FOLLOWUP_DEPOSIT_WINDOW_HOURS = 48;
+
 /**
  * Deadline d'acompte pour un RDV de suivi (mig 177), posée au moment du rappel J-7.
- * On laisse la cliente régler jusqu'au délai d'annulation du merchant : deadline =
- * RDV − cancel_deadline_days (même heure, N jours avant). Cappée à RDV − 4h (cas
- * cancel_deadline_days = 0) et plancher `now` (jamais dans le passé). Le cron
- * deposit-expiration libère ensuite le créneau si l'acompte n'est pas reçu.
+ * La cliente a un délai fixe (`FOLLOWUP_DEPOSIT_WINDOW_HOURS`, 48h) après le rappel
+ * pour régler : deadline = now + 48h. Cappée à RDV − 4h (RDV très proche) et plancher
+ * `now` (jamais dans le passé). Indépendant du délai d'annulation du merchant — sinon
+ * un délai court (ex: 1j) libérerait le créneau trop tard (impossible à re-remplir) et
+ * un délai long (ex: 7j) ne laisserait aucun temps pour payer. Le cron deposit-expiration
+ * libère ensuite le créneau si l'acompte n'est pas reçu.
  */
 export function computeFollowupDepositDeadline(
   slotDate: string,
   startTime: string,
-  cancelDeadlineDays: number,
   timezone: string,
   now: Date = new Date(),
 ): Date {
   const rdv = fromZonedTime(new Date(`${slotDate}T${startTime}:00`), timezone);
-  const byCancel = new Date(rdv.getTime() - Math.max(0, cancelDeadlineDays) * 24 * 3600_000);
+  const window = new Date(now.getTime() + FOLLOWUP_DEPOSIT_WINDOW_HOURS * 3600_000);
   const cap = new Date(rdv.getTime() - 4 * 3600_000); // jamais moins de 4h avant
-  let deadline = byCancel.getTime() < cap.getTime() ? byCancel : cap;
+  let deadline = window.getTime() < cap.getTime() ? window : cap;
   if (deadline.getTime() < now.getTime()) deadline = now;
   return deadline;
 }

@@ -50,6 +50,8 @@ export async function GET(request: NextRequest) {
       .eq('merchant_id', merchantId)
       .eq('customer_id', customer.id)
       .eq('deposit_confirmed', false)
+      // RDV de suivi différé (avant J-7) : acompte pas encore dû → pas un acompte en attente.
+      .not('deposit_deferred', 'is', true)
       .gte('slot_date', today)
       .not('client_name', 'is', null)
       .is('primary_slot_id', null);
