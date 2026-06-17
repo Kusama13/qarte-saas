@@ -93,6 +93,19 @@ export default function PlanningDashboard() {
 
   const { saving: savingSettings, saved: savedSettings, save: saveSettings } = useDashboardSave(2000);
 
+  // Sous-navigation de l'onglet Paramètres : n'affiche qu'une section à la fois
+  // (l'état des réglages est partagé + le bouton Enregistrer est global, donc switcher
+  // de vue ne perd rien). Persisté comme la préférence de vue agenda.
+  const [settingsSection, setSettingsSection] = useState<'agenda' | 'booking' | 'comm'>(() => {
+    if (typeof window === 'undefined') return 'agenda';
+    const saved = window.localStorage.getItem('qarte_planning_settings_section');
+    return saved === 'booking' || saved === 'comm' ? saved : 'agenda';
+  });
+  const selectSettingsSection = (s: 'agenda' | 'booking' | 'comm') => {
+    setSettingsSection(s);
+    try { window.localStorage.setItem('qarte_planning_settings_section', s); } catch { /* quota/SSR */ }
+  };
+
   // Service color map
   const serviceColorMap = useMemo(() => getServiceColorMap(services), [services]);
 
@@ -1267,7 +1280,31 @@ export default function PlanningDashboard() {
       {planningEnabled && tab === 'settings' && (
         <div className="space-y-6 pb-20 lg:pb-24">
 
+          {/* Sous-navigation : une seule section affichée à la fois (allège le scroll mobile) */}
+          <div className="flex gap-1 p-1 bg-gray-100 rounded-xl lg:max-w-md">
+            {([
+              ['agenda', t('settingsNavAgenda'), 'text-indigo-700'],
+              ['booking', t('settingsNavBooking'), 'text-emerald-700'],
+              ['comm', t('settingsNavComm'), 'text-violet-700'],
+            ] as const).map(([key, label, activeColor]) => {
+              const active = settingsSection === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => selectSettingsSection(key)}
+                  className={`flex-1 py-1.5 px-2 rounded-lg text-[12px] font-semibold transition-all duration-150 touch-manipulation ${
+                    active ? `bg-white shadow-sm ${activeColor}` : 'text-gray-500 active:bg-white/50'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
           {/* ═══════ SECTION 1: MON AGENDA ═══════ */}
+          {settingsSection === 'agenda' && (
           <section>
             <h3 className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 mb-2 px-1">{t('sectionAgenda')}</h3>
             <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0">
@@ -1328,8 +1365,10 @@ export default function PlanningDashboard() {
 
             </div>
           </section>
+          )}
 
           {/* ═══════ SECTION 2: RÉSERVATION EN LIGNE ═══════ */}
+          {settingsSection === 'booking' && (
           <section>
             <h3 className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 mb-2 px-1">{t('sectionOnlineBooking')}</h3>
             <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0">
@@ -1431,8 +1470,10 @@ export default function PlanningDashboard() {
           )}
             </div>
           </section>
+          )}
 
           {/* ═══════ SECTION 3: COMMUNICATION ═══════ */}
+          {settingsSection === 'comm' && (
           <section>
             <h3 className="text-[11px] font-bold uppercase tracking-wider text-violet-600 mb-2 px-1">{t('sectionCommunication')}</h3>
             <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0">
@@ -1543,6 +1584,7 @@ export default function PlanningDashboard() {
               </SettingCard>
             </div>
           </section>
+          )}
 
           <div className="h-20 md:h-24" />
           <button
