@@ -98,7 +98,7 @@ export function usePlanningState() {
   const [depositDeadlineHours, setDepositDeadlineHours] = useState('1');
   // Booking mode + buffer
   const [bookingMode, setBookingMode] = useState<BookingMode>('slots');
-  const [bufferMinutes, setBufferMinutes] = useState<0 | 10 | 15 | 30>(0);
+  const [bufferMinutes, setBufferMinutes] = useState<0 | 10 | 15 | 20 | 30>(0);
   const [bookingHorizonDays, setBookingHorizonDays] = useState<BookingHorizonDays>(BOOKING_HORIZON_DAYS);
   // Service à domicile
   const [homeServiceEnabled, setHomeServiceEnabled] = useState(false);
@@ -181,7 +181,7 @@ export function usePlanningState() {
       setRescheduleDeadlineDays(String(merchant.reschedule_deadline_days ?? 1));
       setRecurringFollowupEnabled(!!merchant.recurring_followup_enabled);
       setBookingMode((merchant.booking_mode as BookingMode) || 'slots');
-      setBufferMinutes((merchant.buffer_minutes as 0 | 10 | 15 | 30) || 0);
+      setBufferMinutes((merchant.buffer_minutes as 0 | 10 | 15 | 20 | 30) || 0);
       setBookingHorizonDays(normalizeBookingHorizon(merchant.booking_horizon_days));
       setHomeServiceEnabled(!!merchant.home_service_enabled);
       setHideAddressOnPublicPage(!!merchant.hide_address_on_public_page);
