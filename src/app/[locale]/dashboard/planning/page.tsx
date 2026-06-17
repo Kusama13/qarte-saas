@@ -1364,6 +1364,34 @@ export default function PlanningDashboard() {
                 </Callout>
               )}
 
+              {/* Card: Horizon de réservation — mécanique d'agenda (déplacé depuis Réservation) */}
+              {autoBookingEnabled && (
+                <SettingCard icon={CalendarRange} title={t('horizonTitle')} className="sm:col-span-2">
+                  <p className="text-[11px] text-gray-500 mb-3">{t('horizonHint')}</p>
+                  <ChipGroup
+                    fill
+                    options={BOOKING_HORIZON_OPTIONS.map(v => ({ value: String(v), label: t('horizonMonths', { n: v / 30 }) }))}
+                    value={String(bookingHorizonDays)}
+                    onChange={(v) => setBookingHorizonDays(Number(v) as BookingHorizonDays)}
+                  />
+                </SettingCard>
+              )}
+
+              {/* Card: Service à domicile — mode de travail (déplacé depuis Réservation) */}
+              {autoBookingEnabled && bookingMode === 'free' && (
+                <HomeServiceCard
+                  enabled={homeServiceEnabled}
+                  onToggle={handleToggleHomeService}
+                  helpOpen={homeServiceHelpOpen}
+                  onHelpToggle={() => setHomeServiceHelpOpen(v => !v)}
+                  hideAddress={hideAddressOnPublicPage}
+                  onHideAddressChange={setHideAddressOnPublicPage}
+                  bufferMinutes={bufferMinutes}
+                  radiusKm={homeServiceRadiusKm}
+                  onRadiusChange={setHomeServiceRadiusKm}
+                />
+              )}
+
             </div>
           </section>
           )}
@@ -1394,17 +1422,6 @@ export default function PlanningDashboard() {
 
           {autoBookingEnabled && (
             <>
-              {/* Card: Horizon de réservation (les 2 modes) */}
-              <SettingCard icon={CalendarRange} title={t('horizonTitle')} tone="emerald" className="sm:col-span-2">
-                <p className="text-[11px] text-gray-500 mb-3">{t('horizonHint')}</p>
-                <ChipGroup
-                  fill
-                  options={BOOKING_HORIZON_OPTIONS.map(v => ({ value: String(v), label: t('horizonMonths', { n: v / 30 }) }))}
-                  value={String(bookingHorizonDays)}
-                  onChange={(v) => setBookingHorizonDays(Number(v) as BookingHorizonDays)}
-                />
-              </SettingCard>
-
               {/* Card: Conditions de reservation */}
               <SettingCard icon={Phone} title={t('bookingTitle')} tone="emerald" className="sm:col-span-2">
                 <p className="text-[11px] text-gray-500 mb-3">{t('bookingHint')}</p>
@@ -1452,19 +1469,6 @@ export default function PlanningDashboard() {
                   onEnabledChange={setRecurringFollowupEnabled}
                   bookingMode={bookingMode}
                   bookingHorizonDays={bookingHorizonDays}
-                />
-              )}
-              {bookingMode === 'free' && (
-                <HomeServiceCard
-                  enabled={homeServiceEnabled}
-                  onToggle={handleToggleHomeService}
-                  helpOpen={homeServiceHelpOpen}
-                  onHelpToggle={() => setHomeServiceHelpOpen(v => !v)}
-                  hideAddress={hideAddressOnPublicPage}
-                  onHideAddressChange={setHideAddressOnPublicPage}
-                  bufferMinutes={bufferMinutes}
-                  radiusKm={homeServiceRadiusKm}
-                  onRadiusChange={setHomeServiceRadiusKm}
                 />
               )}
             </>

@@ -2123,7 +2123,7 @@
     "followupToggle": "Offer next appointments",
     "followupToggleDesc": "At the end of an online booking, the client can book their next 2 appointments (at +3 and +6 weeks, adjustable), with no deposit right away. A reminder to pay the deposit is sent 7 days before.",
     "followupSlotsHint": "In slot mode, make sure to open your slots up to ~6 weeks ahead, otherwise follow-up appointments can't be booked.",
-    "followupHorizonWarning": "Your booking horizon is {days} days. Follow-up appointments at 6 weeks won't be bookable: choose 60 or 90 days in \"Booking horizon\".",
+    "followupHorizonWarning": "Your booking horizon is {days} days. Follow-up appointments at 6 weeks won't be bookable: choose 60 or 90 days in Calendar → \"Booking horizon\".",
     "allowCustomerCancel": "Allow clients to cancel",
     "allowCustomerCancelDesc": "Clients will be able to cancel their booking from their loyalty card.",
     "allowCustomerReschedule": "Allow clients to reschedule",
