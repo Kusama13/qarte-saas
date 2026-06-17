@@ -1280,13 +1280,14 @@ export default function PlanningDashboard() {
       {planningEnabled && tab === 'settings' && (
         <div className="space-y-6 pb-20 lg:pb-24">
 
-          {/* Sous-navigation : une seule section affichée à la fois (allège le scroll mobile) */}
+          {/* Sous-navigation : une seule section affichée à la fois (allège le scroll mobile).
+              Chaque section a sa couleur : la pilule active prend la couleur de sa section. */}
           <div className="flex gap-1 p-1 bg-gray-100 rounded-xl lg:max-w-md">
             {([
-              ['agenda', t('settingsNavAgenda'), 'text-indigo-700'],
-              ['booking', t('settingsNavBooking'), 'text-emerald-700'],
-              ['comm', t('settingsNavComm'), 'text-violet-700'],
-            ] as const).map(([key, label, activeColor]) => {
+              ['agenda', t('settingsNavAgenda'), 'bg-indigo-600'],
+              ['booking', t('settingsNavBooking'), 'bg-emerald-600'],
+              ['comm', t('settingsNavComm'), 'bg-violet-600'],
+            ] as const).map(([key, label, activeBg]) => {
               const active = settingsSection === key;
               return (
                 <button
@@ -1294,7 +1295,7 @@ export default function PlanningDashboard() {
                   type="button"
                   onClick={() => selectSettingsSection(key)}
                   className={`flex-1 py-1.5 px-2 rounded-lg text-[12px] font-semibold transition-all duration-150 touch-manipulation ${
-                    active ? `bg-white shadow-sm ${activeColor}` : 'text-gray-500 active:bg-white/50'
+                    active ? `${activeBg} text-white shadow-sm` : 'text-gray-500 active:bg-white/50'
                   }`}
                 >
                   {label}
