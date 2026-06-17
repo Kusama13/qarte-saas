@@ -1021,10 +1021,13 @@ export default function BookingDetailsModal({
                     const depAmt = computeDepositAmount(depositBase, depositFixed, depositPercent);
                     if (!depAmt) return null;
                     const isPaid = slot.deposit_confirmed === true;
+                    const isDeferred = !isPaid && slot.deposit_deferred === true;
                     const bandeauClass = isPaid
                       ? 'bg-emerald-50/60 border-emerald-100'
-                      : 'bg-amber-50 border-amber-100';
-                    const textClass = isPaid ? 'text-emerald-800' : 'text-amber-700';
+                      : isDeferred
+                        ? 'bg-violet-50 border-violet-100'
+                        : 'bg-amber-50 border-amber-100';
+                    const textClass = isPaid ? 'text-emerald-800' : isDeferred ? 'text-violet-800' : 'text-amber-700';
                     return (
                       <div className={`px-2.5 py-1.5 rounded-lg border ${bandeauClass}`}>
                         <p className={`text-[11px] font-medium ${textClass}`}>
@@ -1032,7 +1035,13 @@ export default function BookingDetailsModal({
                             ? t('depositFullPaymentRecap', { deposit: formatCurrency(depAmt, merchantCountry, locale) })
                             : t('depositRecap', { deposit: formatCurrency(depAmt, merchantCountry, locale), remaining: formatCurrency(depositBase - depAmt, merchantCountry, locale) })}
                         </p>
-                        {slot.deposit_confirmed === false && (
+                        {isDeferred && (
+                          <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200">{t('followupBadge')}</span>
+                            <span className="text-[10px] text-gray-400">{t('followupDepositNote')}</span>
+                          </div>
+                        )}
+                        {slot.deposit_confirmed === false && !isDeferred && (
                           <div className="flex flex-wrap items-center gap-1 mt-0.5">
                             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">{t('depositPending')}</span>
                             {slot.deposit_deadline_at && (
@@ -1371,8 +1380,9 @@ export default function BookingDetailsModal({
             />
           )}
 
-          {/* Confirm / cancel deposit */}
-          {slot.deposit_confirmed === false && onConfirmDeposit && (
+          {/* Confirm / cancel deposit — masqué tant que le RDV de suivi est différé
+              (avant J-7) : l'acompte n'a pas encore été demandé à la cliente. */}
+          {slot.deposit_confirmed === false && slot.deposit_deferred !== true && onConfirmDeposit && (
             <div className="space-y-2">
               {slot.client_phone && (
                 <SmsToggle
@@ -1403,7 +1413,7 @@ export default function BookingDetailsModal({
               </div>
             </div>
           )}
-          {slot.deposit_confirmed !== false && (
+          {(slot.deposit_confirmed !== false || slot.deposit_deferred === true) && (
             slot.client_name ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <button

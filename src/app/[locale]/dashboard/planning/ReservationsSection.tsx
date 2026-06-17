@@ -327,14 +327,17 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                         <span>{duration}min</span>
                       </div>
                     )}
-                    {slot.deposit_confirmed === false && (
+                    {slot.deposit_confirmed === true && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">{t('depositConfirmed')}</span>
+                    )}
+                    {slot.deposit_confirmed !== true && slot.deposit_deferred === true && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200">{t('followupBadge')}</span>
+                    )}
+                    {slot.deposit_confirmed === false && slot.deposit_deferred !== true && (
                       <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                         {t('depositPending')}
                         {slot.deposit_deadline_at && ` — ${new Date(slot.deposit_deadline_at).toLocaleString(toBCP47(locale), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`}
                       </span>
-                    )}
-                    {slot.deposit_confirmed === true && (
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">{t('depositConfirmed')}</span>
                     )}
                     {slot.customer_message && (
                       <span

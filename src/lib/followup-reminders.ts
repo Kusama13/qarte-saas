@@ -177,7 +177,6 @@ export async function sendFollowupDepositReminders(
       const deadline = computeFollowupDepositDeadline(
         slot.slot_date,
         slot.start_time,
-        merchant.cancel_deadline_days ?? 1,
         tz,
         now,
       );
@@ -192,9 +191,13 @@ export async function sendFollowupDepositReminders(
       processed++;
       remindersSent++;
       tasks.push((async () => {
+        // Le RDV de suivi sort de l'état "différé" : il devient une vraie résa
+        // "en attente d'acompte" (deposit_deferred=false, deposit_confirmed reste false).
+        // L'agenda, l'encart "Acomptes en attente" et le cron deposit-expiration le
+        // reprennent alors automatiquement (deadline désormais posée).
         const { error: updErr } = await supabase
           .from('merchant_planning_slots')
-          .update({ deposit_deadline_at: deadline.toISOString(), deposit_reminder_sent_at: nowIso })
+          .update({ deposit_deferred: false, deposit_deadline_at: deadline.toISOString(), deposit_reminder_sent_at: nowIso })
           .eq('id', slot.id);
         if (updErr) {
           logger.error(`sendFollowupDepositReminders: update failed for slot ${slot.id}`, updErr);

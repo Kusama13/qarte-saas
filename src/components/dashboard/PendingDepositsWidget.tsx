@@ -68,6 +68,9 @@ export default function PendingDepositsWidget({ merchantId, country, depositFixe
       )
       .eq('merchant_id', merchantId)
       .eq('deposit_confirmed', false)
+      // Exclut les RDV de suivi tant qu'ils sont "différés" (avant le rappel J-7) :
+      // l'acompte n'est pas encore dû, inutile de solliciter le merchant.
+      .not('deposit_deferred', 'is', true)
       .not('client_name', 'is', null)
       .neq('client_name', '__blocked__')
       .is('primary_slot_id', null)

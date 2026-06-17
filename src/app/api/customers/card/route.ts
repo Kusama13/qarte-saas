@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     const today = planningEnabled ? getTodayForCountry(merchant.country as string) : '';
     const contestEnabled = !!merchant.contest_enabled;
     const contestMonth = contestEnabled ? getTodayForCountry(merchant.country as string).slice(0, 7) : '';
-    const slotSelect = 'id, slot_date, start_time, total_duration_minutes, deposit_confirmed, booked_online, primary_slot_id, custom_service_name, custom_service_duration, planning_slot_services(service_id, service:merchant_services!service_id(name, duration))';
+    const slotSelect = 'id, slot_date, start_time, total_duration_minutes, deposit_confirmed, deposit_deferred, booked_online, primary_slot_id, custom_service_name, custom_service_duration, planning_slot_services(service_id, service:merchant_services!service_id(name, duration))';
 
     const [visitsResult, adjustmentsResult, memberCardResult, redemptionsResult, vouchersResult, upcomingResult, pastResult, contestPrizeResult] = await Promise.all([
       // Visits

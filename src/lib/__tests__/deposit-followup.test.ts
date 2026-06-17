@@ -4,25 +4,25 @@ import { computeFollowupDepositDeadline } from '../deposit';
 const TZ = 'Europe/Paris';
 
 describe('computeFollowupDepositDeadline', () => {
-  it('pose la deadline à RDV − cancel_deadline_days (même heure)', () => {
-    // RDV le 2026-07-01 à 10:00 Paris, délai d'annulation 2 jours, "now" bien avant.
+  it('pose la deadline à now + 48h (délai fixe après le rappel J-7)', () => {
+    // Rappel envoyé "now", RDV bien plus tard → deadline = now + 48h.
     const now = new Date('2026-06-01T08:00:00Z');
-    const deadline = computeFollowupDepositDeadline('2026-07-01', '10:00', 2, TZ, now);
-    // RDV − 2 jours = 2026-06-29 10:00 Paris = 08:00 UTC (heure d'été).
-    expect(deadline.toISOString()).toBe('2026-06-29T08:00:00.000Z');
+    const deadline = computeFollowupDepositDeadline('2026-07-01', '10:00', TZ, now);
+    expect(deadline.toISOString()).toBe('2026-06-03T08:00:00.000Z');
   });
 
-  it('cappe à RDV − 4h quand cancel_deadline_days = 0', () => {
-    const now = new Date('2026-06-01T08:00:00Z');
-    const deadline = computeFollowupDepositDeadline('2026-07-01', '10:00', 0, TZ, now);
-    // RDV 10:00 Paris (08:00 UTC) − 4h = 04:00 UTC.
+  it('cappe à RDV − 4h quand le RDV est trop proche pour 48h', () => {
+    // RDV le 2026-07-01 à 10:00 Paris (08:00 UTC), rappel à J-1 (RDV reporté tout près).
+    const now = new Date('2026-06-30T08:00:00Z');
+    const deadline = computeFollowupDepositDeadline('2026-07-01', '10:00', TZ, now);
+    // now + 48h dépasse le RDV → cap = RDV − 4h = 04:00 UTC.
     expect(deadline.toISOString()).toBe('2026-07-01T04:00:00.000Z');
   });
 
-  it('plancher à now si la deadline calculée est déjà passée', () => {
-    // RDV dans 1 jour, délai 7 jours → RDV − 7j est dans le passé → on retombe sur now.
-    const now = new Date('2026-06-30T09:00:00Z');
-    const deadline = computeFollowupDepositDeadline('2026-07-01', '10:00', 7, TZ, now);
+  it('plancher à now si RDV − 4h est déjà passé', () => {
+    // now après RDV − 4h → la deadline cappée serait dans le passé → on retombe sur now.
+    const now = new Date('2026-07-01T05:00:00Z');
+    const deadline = computeFollowupDepositDeadline('2026-07-01', '10:00', TZ, now);
     expect(deadline.getTime()).toBe(now.getTime());
   });
 });

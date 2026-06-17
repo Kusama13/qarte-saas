@@ -15,6 +15,7 @@ interface AppointmentSlot {
   start_time: string;
   total_duration_minutes?: number | null;
   deposit_confirmed?: boolean | null;
+  deposit_deferred?: boolean | null;
   booked_online?: boolean;
   custom_service_name?: string | null;
   custom_service_duration?: number | null;
@@ -308,7 +309,13 @@ export default function UpcomingAppointmentsSection({
                           {formatTime(appt.start_time, locale)}
                         </span>
                       </div>
-                      {appt.deposit_confirmed === false && (
+                      {appt.deposit_confirmed !== true && appt.deposit_deferred === true && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-100 border border-violet-200 shrink-0">
+                          <Hourglass className="w-2.5 h-2.5 text-violet-700" />
+                          <span className="text-xs font-bold text-violet-800">{t('followupBadge')}</span>
+                        </span>
+                      )}
+                      {appt.deposit_confirmed === false && appt.deposit_deferred !== true && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 border border-amber-200 shrink-0">
                           <Hourglass className="w-2.5 h-2.5 text-amber-700" />
                           <span className="text-xs font-bold text-amber-800">{t('depositPending')}</span>
@@ -335,8 +342,9 @@ export default function UpcomingAppointmentsSection({
                       </ul>
                     )}
 
-                    {/* Deposit payment block */}
-                    {appt.deposit_confirmed === false && depositLinks.length > 0 && (
+                    {/* Deposit payment block — masqué pour un RDV de suivi tant que
+                        l'acompte n'est pas demandé (rappel J-7) : pas de paiement à pousser avant. */}
+                    {appt.deposit_confirmed === false && appt.deposit_deferred !== true && depositLinks.length > 0 && (
                       <div className="mt-2.5 pt-2.5 border-t" style={{ borderColor: `${merchantColor}15` }}>
                         {depositLinks.length > 1 && (
                           <p className="text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
