@@ -14,6 +14,7 @@ import { AddressAutocomplete, type AddressSuggestion } from '@/components/ui/Add
 import { Callout } from '@/components/ui';
 import { detectPaymentProvider } from '@/lib/payment-providers';
 import { computeBookingPrice } from '@/lib/booking-pricing';
+import FollowupScheduler from './FollowupScheduler';
 import { computeDepositInfo } from '@/lib/deposit';
 import { normalizeBookingHorizon } from '@/lib/booking-window';
 import { haversineKm } from '@/lib/geo';
@@ -29,7 +30,8 @@ type MerchantBooking = Pick<
   'auto_booking_enabled' | 'deposit_link' | 'deposit_percent' | 'deposit_amount' | 'deposit_only_for_new_customers' |
   'welcome_offer_enabled' | 'welcome_offer_description' | 'welcome_offer_discount_percent' | 'subscription_status' | 'booking_mode' |
   'allow_customer_cancel' | 'cancel_deadline_days' | 'allow_customer_reschedule' | 'reschedule_deadline_days' |
-  'home_service_enabled' | 'home_service_radius_km' | 'shop_lat' | 'shop_lng' | 'booking_horizon_days'
+  'home_service_enabled' | 'home_service_radius_km' | 'shop_lat' | 'shop_lng' | 'booking_horizon_days' |
+  'recurring_followup_enabled'
 >;
 
 interface BookingModalProps {
@@ -1546,6 +1548,28 @@ export default function BookingModal({
                   </div>
                   );
                 })()}
+
+                {/* RDV de suivi récurrents (+3/+6 sem.) — proposés à la fin de la résa si activé (mig 177) */}
+                {merchant.recurring_followup_enabled && (
+                  <FollowupScheduler
+                    merchantId={merchant.id}
+                    primaryColor={p}
+                    secondaryColor={merchant.secondary_color}
+                    bookingMode={isFreeMod ? 'free' : 'slots'}
+                    isHomeService={isHomeService}
+                    customerCoords={customerCoords}
+                    customerAddress={customerAddress}
+                    serviceIds={Array.from(selectedServiceIds)}
+                    totalDuration={totalDuration}
+                    phone={phone}
+                    phoneCountry={phoneCountry}
+                    firstName={firstName}
+                    lastName={lastName}
+                    email={email}
+                    primaryDate={bookingResult.date}
+                    hasDeposit={!!depositResult?.link}
+                  />
+                )}
 
                 {depositResult?.link ? (
                   <>

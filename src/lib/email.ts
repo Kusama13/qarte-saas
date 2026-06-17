@@ -41,6 +41,7 @@ import {
   BookingConfirmationEmail,
   BookingRescheduledEmail,
   BookingCancelledEmail,
+  FollowupRecapEmail,
   SmsQuotaEmail,
   SmsPackPurchaseEmail,
   VitrineReminderEmail,
@@ -1172,6 +1173,30 @@ export async function sendBookingConfirmationEmail(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return sendEmail(to, subject, BookingConfirmationEmail as any, params as any, {
     logLabel: 'Booking confirmation email',
+  });
+}
+
+interface FollowupRecapParams {
+  shopName: string;
+  clientFirstName: string;
+  appointments: { date: string; time: string; services: string[] }[];
+  hasDeposit: boolean;
+  canCancel: boolean;
+  canReschedule: boolean;
+  loyaltyCardUrl: string;
+  locale: EmailLocale;
+}
+
+export async function sendFollowupRecapEmail(
+  to: string,
+  params: FollowupRecapParams
+): Promise<SendEmailResult> {
+  const subject = params.locale === 'en'
+    ? `Your next appointments — ${params.shopName}`
+    : `Vos prochains rendez-vous — ${params.shopName}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return sendEmail(to, subject, FollowupRecapEmail as any, params as any, {
+    logLabel: 'Followup recap email',
   });
 }
 

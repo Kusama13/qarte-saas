@@ -156,6 +156,8 @@ export interface Merchant {
   allow_customer_reschedule: boolean;
   cancel_deadline_days: number;
   reschedule_deadline_days: number;
+  // RDV de suivi récurrents (+3/+6 sem.) proposés en fin de résa, acompte différé (mig 177)
+  recurring_followup_enabled: boolean;
   // Public page link on loyalty card
   show_public_page_on_card: boolean;
   signup_source: string | null;
@@ -232,6 +234,9 @@ export interface PlanningSlot {
   customer_message?: string | null; // note libre saisie par la cliente à la résa — distincte de notes (côté merchant)
   deposit_confirmed: boolean | null;
   deposit_deadline_at: string | null;
+  // RDV de suivi : acompte différé (rappel J-7), cf. mig 177
+  deposit_deferred?: boolean;
+  deposit_reminder_sent_at?: string | null;
   booked_online: boolean;
   booked_at: string | null;
   primary_slot_id: string | null;

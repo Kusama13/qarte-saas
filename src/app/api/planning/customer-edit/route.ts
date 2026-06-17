@@ -97,7 +97,7 @@ async function commonChecks(
   const [slotResult, customerResult] = await Promise.all([
     supabaseAdmin
       .from('merchant_planning_slots')
-      .select('id, slot_date, start_time, client_name, client_phone, customer_id, booked_online, primary_slot_id, total_duration_minutes, customer_message, custom_service_name, custom_service_duration, custom_service_price, custom_service_color')
+      .select('id, slot_date, start_time, client_name, client_phone, customer_id, booked_online, primary_slot_id, total_duration_minutes, customer_message, custom_service_name, custom_service_duration, custom_service_price, custom_service_color, deposit_deferred, deposit_confirmed')
       .eq('id', slotId)
       .eq('merchant_id', merchantId)
       .single(),
@@ -382,6 +382,17 @@ export async function PATCH(request: NextRequest) {
         }
         newSlotId = result.target_id || targetSlot.id;
       }
+    }
+
+    // RDV de suivi à acompte différé (mig 177) : aucun des chemins de reschedule ci-dessus
+    // ne reporte les colonnes deposit_deferred/deposit_reminder_sent_at (sinon la cliente
+    // échapperait à l'acompte en déplaçant son RDV). On ré-arme l'état différé sur le nouveau
+    // créneau et on remet le rappel à zéro pour qu'il se redéclenche 7 jours avant la nouvelle date.
+    if (slot.deposit_deferred === true && slot.deposit_confirmed === false) {
+      await supabaseAdmin
+        .from('merchant_planning_slots')
+        .update({ deposit_deferred: true, deposit_confirmed: false, deposit_deadline_at: null, deposit_reminder_sent_at: null })
+        .eq('id', newSlotId);
     }
 
     const oldDate = formatDate(slot.slot_date);

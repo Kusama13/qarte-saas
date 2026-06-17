@@ -41,6 +41,7 @@ export { BookingNotificationEmail } from './BookingNotificationEmail';
 export { BookingConfirmationEmail } from './BookingConfirmationEmail';
 export { BookingRescheduledEmail } from './BookingRescheduledEmail';
 export { BookingCancelledEmail } from './BookingCancelledEmail';
+export { FollowupRecapEmail } from './FollowupRecapEmail';
 export { VitrineReminderEmail } from './VitrineReminderEmail';
 export { PlanningReminderEmail } from './PlanningReminderEmail';
 export { ReferralPromoEmail } from './ReferralPromoEmail';

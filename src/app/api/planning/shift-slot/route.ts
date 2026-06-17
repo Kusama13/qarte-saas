@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     // Get the slot to shift (include total_duration_minutes for free mode overlap check)
     const { data: slot } = await supabaseAdmin
       .from('merchant_planning_slots')
-      .select('id, slot_date, start_time, client_name, total_duration_minutes')
+      .select('id, slot_date, start_time, client_name, total_duration_minutes, deposit_deferred, deposit_confirmed')
       .eq('id', slotId)
       .eq('merchant_id', merchantId)
       .single();
@@ -131,6 +131,16 @@ export async function POST(request: NextRequest) {
         await supabaseAdmin
           .from('merchant_planning_slots')
           .update({ total_duration_minutes: slot.total_duration_minutes })
+          .eq('id', result.target_id);
+      }
+
+      // RDV de suivi à acompte différé (mig 177) : la RPC ne reporte pas deposit_deferred/
+      // deposit_reminder_sent_at. On ré-arme l'état différé sur le créneau cible et on remet
+      // le rappel à zéro (il se redéclenchera 7 jours avant la nouvelle date).
+      if (result.target_id && slot.deposit_deferred === true && slot.deposit_confirmed === false) {
+        await supabaseAdmin
+          .from('merchant_planning_slots')
+          .update({ deposit_deferred: true, deposit_confirmed: false, deposit_deadline_at: null, deposit_reminder_sent_at: null })
           .eq('id', result.target_id);
       }
 
