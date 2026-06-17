@@ -252,11 +252,57 @@ ARTICLES = [
             'photography, 85mm f/1.4, shallow depth of field, ultra sharp foreground, cinematic'
         ),
     },
+    {
+        'id': 13,
+        'filename': 'article-13-cover.png',
+        'label': 'FIDÉLISATION',
+        'label_rgb': (99, 102, 241),     # indigo
+        'title_lines': [
+            'Ses 2 prochains',
+            'RDV réservés',
+            'avant de partir',
+        ],
+        'platform_line': '+3 semaines  ·  +6 semaines  ·  Sans acompte',
+        'imagen_prompt': (
+            'Close-up of an elegant feminine hand holding a sleek smartphone above a polished '
+            'marble beauty salon counter, screen softly glowing with a clean calendar booking '
+            'interface showing two highlighted upcoming appointment dates (no readable text), '
+            'blurred luxury Parisian salon interior with warm wood and soft greenery in the '
+            'background, indigo and soft violet ambient lighting with warm golden window light, '
+            'creamy warm tones, editorial fashion photography, 85mm f/1.4, shallow depth of '
+            'field, ultra sharp foreground, cinematic'
+        ),
+    },
 ]
 
 
 def fetch_background(prompt: str) -> Image.Image:
-    print('  → Imagen 3 generating background...')
+    # Nano Banana (gemini-3-pro-image, fallback gemini-2.5-flash-image) — même
+    # modèle que les autres visuels Qarte. Fallback vers Imagen 4 en dernier recours.
+    print('  → Nano Banana (gemini-3-pro-image)...')
+    attempts = [
+        ('gemini-3-pro-image', dict(response_modalities=['Text', 'Image'],
+                                    image_config=types.ImageConfig(aspect_ratio='1:1'))),
+        ('gemini-3-pro-image', dict(response_modalities=['Text', 'Image'])),
+        ('gemini-2.5-flash-image', dict(response_modalities=['Text', 'Image'])),
+    ]
+    last_err = None
+    for model, cfg in attempts:
+        try:
+            resp = client.models.generate_content(
+                model=model, contents=prompt,
+                config=types.GenerateContentConfig(**cfg),
+            )
+            for part in resp.candidates[0].content.parts:
+                if getattr(part, 'inline_data', None) and part.inline_data.data:
+                    img = Image.open(io.BytesIO(part.inline_data.data)).convert('RGB')
+                    return img.resize((1080, 1080), Image.LANCZOS)
+            last_err = f'{model}: aucune image dans la réponse'
+        except Exception as e:  # noqa: BLE001
+            last_err = f'{model}: {e}'
+        print(f'    ! {last_err} — fallback...')
+    # Dernier recours : Imagen 4 Ultra
+    print('  → fallback Imagen 4 Ultra...')
     resp = client.models.generate_images(
         model='imagen-4.0-ultra-generate-001',
         prompt=prompt,
