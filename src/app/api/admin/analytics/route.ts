@@ -25,6 +25,15 @@ interface MerchantRow {
   double_days_enabled: boolean;
   planning_enabled: boolean;
   auto_booking_enabled: boolean;
+  recurring_followup_enabled: boolean;
+  home_service_enabled: boolean;
+  gift_card_enabled: boolean;
+  contest_enabled: boolean;
+  duo_offer_enabled: boolean;
+  student_offer_enabled: boolean;
+  allow_customer_cancel: boolean;
+  allow_customer_reschedule: boolean;
+  deposit_link: string | null;
   shield_enabled: boolean;
   tier2_enabled: boolean;
   pwa_installed_at: string | null;
@@ -69,7 +78,7 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       supabaseAdmin
         .from('merchants')
-        .select('id, user_id, shop_name, signup_source, created_at, subscription_status, plan_tier, billing_interval, billing_period_start, trial_ends_at, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, planning_enabled, auto_booking_enabled, shield_enabled, tier2_enabled, pwa_installed_at, logo_url, review_link, booking_url, loyalty_mode, booking_mode'),
+        .select('id, user_id, shop_name, signup_source, created_at, subscription_status, plan_tier, billing_interval, billing_period_start, trial_ends_at, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, planning_enabled, auto_booking_enabled, recurring_followup_enabled, home_service_enabled, gift_card_enabled, contest_enabled, duo_offer_enabled, student_offer_enabled, allow_customer_cancel, allow_customer_reschedule, deposit_link, shield_enabled, tier2_enabled, pwa_installed_at, logo_url, review_link, booking_url, loyalty_mode, booking_mode'),
       supabaseAdmin.from('super_admins').select('user_id'),
       supabaseAdmin.from('visits').select('merchant_id, visited_at').gte('visited_at', d90),
       supabaseAdmin.from('push_history').select('sent_count'),
@@ -99,7 +108,7 @@ export async function GET(request: NextRequest) {
     const bySource: Record<string, number> = {};
     const signupByDate: Record<string, number> = {};
     const tierBreakdown = { fidelity: 0, all_in: 0 };
-    const fc_counts = { logo: 0, referral: 0, birthday: 0, welcome: 0, doubleDays: 0, planning: 0, autoBooking: 0, shield: 0, tier2: 0, pwa: 0, review: 0, booking: 0, services: 0, photos: 0, cagnotte: 0, modeSlots: 0, modeFree: 0 };
+    const fc_counts = { logo: 0, referral: 0, birthday: 0, welcome: 0, doubleDays: 0, planning: 0, autoBooking: 0, followup: 0, homeService: 0, giftCard: 0, contest: 0, duo: 0, student: 0, customerCancel: 0, customerReschedule: 0, deposit: 0, shield: 0, tier2: 0, pwa: 0, review: 0, booking: 0, services: 0, photos: 0, cagnotte: 0, modeSlots: 0, modeFree: 0 };
     const merchantsWithServices = new Set((servicesRes.data || []).map((s: { merchant_id: string }) => s.merchant_id));
     const merchantsWithPhotos = new Set((photosRes.data || []).map((p: { merchant_id: string }) => p.merchant_id));
 
@@ -141,6 +150,15 @@ export async function GET(request: NextRequest) {
       if (m.review_link) fc_counts.review++;
       if (m.booking_url) fc_counts.booking++;
       if (m.auto_booking_enabled) fc_counts.autoBooking++;
+      if (m.recurring_followup_enabled) fc_counts.followup++;
+      if (m.home_service_enabled) fc_counts.homeService++;
+      if (m.gift_card_enabled) fc_counts.giftCard++;
+      if (m.contest_enabled) fc_counts.contest++;
+      if (m.duo_offer_enabled) fc_counts.duo++;
+      if (m.student_offer_enabled) fc_counts.student++;
+      if (m.allow_customer_cancel) fc_counts.customerCancel++;
+      if (m.allow_customer_reschedule) fc_counts.customerReschedule++;
+      if (m.deposit_link) fc_counts.deposit++;
       if (m.loyalty_mode === 'cagnotte') fc_counts.cagnotte++;
       if (m.booking_mode === 'slots') fc_counts.modeSlots++;
       if (m.booking_mode === 'free') fc_counts.modeFree++;
@@ -235,6 +253,15 @@ export async function GET(request: NextRequest) {
       mkF('Avis Google', fc_counts.review),
       mkF('Booking URL', fc_counts.booking),
       mkF('Résa en ligne', fc_counts.autoBooking),
+      mkF('RDV de suivi (+3/+6)', fc_counts.followup),
+      mkF('Service à domicile', fc_counts.homeService),
+      mkF('Acompte', fc_counts.deposit),
+      mkF('Annulation client', fc_counts.customerCancel),
+      mkF('Modification client', fc_counts.customerReschedule),
+      mkF('Bons cadeaux', fc_counts.giftCard),
+      mkF('Jeu concours', fc_counts.contest),
+      mkF('Offre duo', fc_counts.duo),
+      mkF('Offre étudiant', fc_counts.student),
       mkF('Prestations', fc_counts.services),
       mkF('Photos', fc_counts.photos),
       mkF('Mode cagnotte', fc_counts.cagnotte),

@@ -61,13 +61,14 @@ type FilterStatus = 'all' | 'trial' | 'trial_expired' | 'active' | 'canceling' |
 
 function getLifecycleStage(
   merchant: Merchant,
-  lastVisit: string | null,
-  todayScans: number,
   hasProgram: boolean,
 ): LifecycleStage {
   const now = new Date();
   const trialEnd = merchant.trial_ends_at ? new Date(merchant.trial_ends_at) : null;
   const status = merchant.subscription_status;
+  // Activité = action du merchant (dernière ouverture du dashboard), pas les scans clients.
+  const lastSeen = merchant.last_seen_at ? new Date(merchant.last_seen_at) : null;
+  const daysSinceSeen = lastSeen ? Math.floor((now.getTime() - lastSeen.getTime()) / (1000 * 60 * 60 * 24)) : null;
 
   // Essai expire
   if (status === 'trial' && trialEnd && trialEnd < now) {
@@ -92,17 +93,14 @@ function getLifecycleStage(
     return { label: 'Config programme', color: 'text-amber-700', bgColor: 'bg-amber-100', urgency: 2 };
   }
 
-  // 1er scan attendu (aucune visite)
-  if ((status === 'trial' || status === 'active') && !lastVisit) {
-    return { label: '1er scan attendu', color: 'text-amber-700', bgColor: 'bg-amber-100', urgency: 3 };
+  // Jamais connecté au dashboard
+  if ((status === 'trial' || status === 'active') && !lastSeen) {
+    return { label: 'Jamais connecté', color: 'text-amber-700', bgColor: 'bg-amber-100', urgency: 3 };
   }
 
-  // Inactif >7j
-  if ((status === 'trial' || status === 'active') && lastVisit) {
-    const daysSince = Math.floor((now.getTime() - new Date(lastVisit).getTime()) / (1000 * 60 * 60 * 24));
-    if (daysSince > 7) {
-      return { label: `Inactif ${daysSince}j`, color: 'text-red-700', bgColor: 'bg-red-100', urgency: 3 };
-    }
+  // Inactif >7j (dernière connexion au dashboard)
+  if ((status === 'trial' || status === 'active') && daysSinceSeen !== null && daysSinceSeen > 7) {
+    return { label: `Inactif ${daysSinceSeen}j`, color: 'text-red-700', bgColor: 'bg-red-100', urgency: 3 };
   }
 
   // Annulation programmee
@@ -121,8 +119,8 @@ function getLifecycleStage(
     return { label: `Essai J-${daysLeft}`, color: 'text-blue-700', bgColor: 'bg-blue-100', urgency: 7 };
   }
 
-  // Actif avec scans aujourd'hui
-  if (status === 'active' && todayScans > 0) {
+  // Actif (connecté aujourd'hui)
+  if (status === 'active' && daysSinceSeen === 0) {
     return { label: 'Actif', color: 'text-green-700', bgColor: 'bg-green-100', urgency: 10 };
   }
 
@@ -150,8 +148,7 @@ function getActivityLabel(lastVisit: string | null): { text: string; color: stri
 function computeHealthScore(
   merchant: Merchant,
   customerCount: number,
-  weeklyScans: number,
-  lastVisit: string | null,
+  lastSeenAt: string | null,
 ): number {
   let score = 0;
   if (merchant.reward_description !== null) score += 15;
@@ -162,11 +159,13 @@ function computeHealthScore(
   if (customerCount >= 21) score += 20;
   else if (customerCount >= 6) score += 15;
   else if (customerCount >= 1) score += 10;
-  if (weeklyScans > 0) score += 15;
-  if (lastVisit) {
-    const daysSince = Math.floor((Date.now() - new Date(lastVisit).getTime()) / (1000 * 60 * 60 * 24));
-    if (daysSince < 7) score += 10;
-    else if (daysSince < 14) score += 5;
+  // Activité = récence de la dernière action du merchant (ouverture du dashboard), pas les scans clients.
+  if (lastSeenAt) {
+    const daysSince = Math.floor((Date.now() - new Date(lastSeenAt).getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSince < 3) score += 25;
+    else if (daysSince < 7) score += 20;
+    else if (daysSince < 14) score += 10;
+    else if (daysSince < 30) score += 5;
   }
   if (merchant.referral_program_enabled) score += 5;
   if (merchant.shield_enabled) score += 5;
@@ -485,16 +484,13 @@ export default function AdminMerchantsPage() {
         merchant: m,
         lifecycle: getLifecycleStage(
           m,
-          data.lastVisitDates[m.id] || null,
-          data.todayScans[m.id] || 0,
           m.reward_description !== null,
         ),
         isAdmin: superAdminIds.has(m.user_id),
         healthScore: computeHealthScore(
           m,
           data.customerCounts[m.id] || 0,
-          data.weeklyScans[m.id] || 0,
-          data.lastVisitDates[m.id] || null,
+          m.last_seen_at || null,
         ),
       }))
       .sort((a, b) => {
@@ -509,8 +505,8 @@ export default function AdminMerchantsPage() {
           return new Date(b.merchant.created_at).getTime() - new Date(a.merchant.created_at).getTime();
         }
         if (sortBy === 'activity') {
-          const la = data.lastVisitDates[a.merchant.id] || '';
-          const lb = data.lastVisitDates[b.merchant.id] || '';
+          const la = a.merchant.last_seen_at || '';
+          const lb = b.merchant.last_seen_at || '';
           if (la && !lb) return -1;
           if (!la && lb) return 1;
           if (la !== lb) return lb.localeCompare(la);
@@ -841,8 +837,7 @@ export default function AdminMerchantsPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {displayedMerchants.map(({ merchant, lifecycle, isAdmin, healthScore }) => {
-                  const lastVisit = data?.lastVisitDates[merchant.id] || null;
-                  const activity = getActivityLabel(lastVisit);
+                  const activity = getActivityLabel(merchant.last_seen_at || null);
                   const today = data?.todayScans[merchant.id] || 0;
                   const customers = data?.customerCounts[merchant.id] || 0;
                   const pending = data?.pendingPoints[merchant.id] || 0;
@@ -946,8 +941,7 @@ export default function AdminMerchantsPage() {
           {/* Mobile Cards */}
           <div className="lg:hidden space-y-1.5">
             {displayedMerchants.map(({ merchant, lifecycle, isAdmin, healthScore }) => {
-              const lastVisit = data?.lastVisitDates[merchant.id] || null;
-              const activity = getActivityLabel(lastVisit);
+              const activity = getActivityLabel(merchant.last_seen_at || null);
               const today = data?.todayScans[merchant.id] || 0;
               const customers = data?.customerCounts[merchant.id] || 0;
               const pending = data?.pendingPoints[merchant.id] || 0;
