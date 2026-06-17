@@ -42,6 +42,7 @@ interface Merchant {
   billing_period_start: string | null;
   trial_ends_at: string | null;
   created_at: string;
+  last_seen_at: string | null;
   reward_description: string | null;
   logo_url: string | null;
   loyalty_mode: 'visit' | 'cagnotte';
@@ -167,12 +168,10 @@ export default function AdminDashboardPage() {
     const [
       { data: allMerchants },
       { data: superAdmins },
-      { data: allVisits },
       { data: recentMerchantsList },
     ] = await Promise.all([
-      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, billing_period_start, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode, bio, planning_enabled, auto_booking_enabled, booking_mode, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, shield_enabled, tier2_enabled'),
+      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, billing_period_start, trial_ends_at, created_at, last_seen_at, reward_description, logo_url, loyalty_mode, bio, planning_enabled, auto_booking_enabled, booking_mode, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, shield_enabled, tier2_enabled'),
       supabase.from('super_admins').select('user_id'),
-      supabase.from('visits').select('merchant_id, visited_at'),
       supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, billing_period_start, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode, bio, planning_enabled, auto_booking_enabled, booking_mode, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, shield_enabled, tier2_enabled').order('created_at', { ascending: false }).limit(10),
     ]);
 
@@ -186,19 +185,14 @@ export default function AdminDashboardPage() {
       : supabase.from('customers').select('*', { count: 'exact', head: true });
     const { count: totalCustomers } = await customerCountQuery;
 
-    // Build 7d scans map (used for weeklyActive count)
-    const scans7dMap = new Map<string, number>();
-    (allVisits || []).forEach((v: { merchant_id: string; visited_at: string }) => {
-      if (new Date(v.visited_at) >= sevenDaysAgo) {
-        scans7dMap.set(v.merchant_id, (scans7dMap.get(v.merchant_id) || 0) + 1);
-      }
-    });
-
     // Stats
     const trial = merchants.filter((m: Merchant) => m.subscription_status === 'trial');
     const active = merchants.filter((m: Merchant) => m.subscription_status === 'active' || m.subscription_status === 'canceling' || m.subscription_status === 'past_due');
     const canceled = merchants.filter((m: Merchant) => m.subscription_status === 'canceled');
-    const weeklyActive = new Set([...scans7dMap.keys()].filter(id => merchants.some((m: Merchant) => m.id === id)));
+    // Actifs 7j = merchants ayant ouvert leur dashboard dans les 7 derniers jours (action merchant, pas scans clients).
+    const weeklyActive = new Set(
+      merchants.filter((m: Merchant) => m.last_seen_at && new Date(m.last_seen_at) >= sevenDaysAgo).map((m: Merchant) => m.id),
+    );
 
     const cagnotte = merchants.filter((m: Merchant) => m.loyalty_mode === 'cagnotte');
     const planningActive = merchants.filter((m: Merchant) => m.planning_enabled);

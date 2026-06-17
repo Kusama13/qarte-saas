@@ -51,6 +51,7 @@ import {
   Crown,
   Sparkles,
   EyeOff,
+  Repeat,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn, generateQRCode, getScanUrl, formatDoubleDays, formatPhoneForWhatsApp, COUNTRY_FLAGS, formatContestMonth, formatCurrency } from '@/lib/utils';
@@ -169,8 +170,7 @@ function extractPseudo(url: string | null): string | null {
 function computeHealthScore(
   merchant: Merchant,
   totalCustomers: number,
-  weeklyScans: number,
-  lastVisitDate: string | null,
+  lastSeenAt: string | null,
 ): number {
   let score = 0;
   if (merchant.reward_description) score += 15;
@@ -181,11 +181,13 @@ function computeHealthScore(
   if (totalCustomers >= 21) score += 20;
   else if (totalCustomers >= 6) score += 15;
   else if (totalCustomers >= 1) score += 10;
-  if (weeklyScans > 0) score += 15;
-  if (lastVisitDate) {
-    const daysSince = Math.floor((Date.now() - new Date(lastVisitDate).getTime()) / (1000 * 60 * 60 * 24));
-    if (daysSince < 7) score += 10;
-    else if (daysSince < 14) score += 5;
+  // Activité = récence de la dernière action du merchant (ouverture du dashboard), pas les scans clients.
+  if (lastSeenAt) {
+    const daysSince = Math.floor((Date.now() - new Date(lastSeenAt).getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSince < 3) score += 25;
+    else if (daysSince < 7) score += 20;
+    else if (daysSince < 14) score += 10;
+    else if (daysSince < 30) score += 5;
   }
   if (merchant.referral_program_enabled) score += 5;
   if (merchant.shield_enabled) score += 5;
@@ -643,8 +645,8 @@ export default function MerchantDetailPage() {
   }, [merchant?.admin_notes]);
 
   const healthScore = useMemo(
-    () => merchant ? computeHealthScore(merchant, stats.totalCustomers, stats.weeklyScans, stats.lastVisitDate) : 0,
-    [merchant, stats.totalCustomers, stats.weeklyScans, stats.lastVisitDate]
+    () => merchant ? computeHealthScore(merchant, stats.totalCustomers, merchant.last_seen_at || null) : 0,
+    [merchant, stats.totalCustomers]
   );
 
   const formattedEmailTrackings = useMemo(
@@ -1195,6 +1197,7 @@ export default function MerchantDetailPage() {
         <div className="flex flex-wrap gap-1.5">
           <FeatureBadge active={merchant.planning_enabled} icon={<Clock className="w-3 h-3" />} label="Planning" />
           <FeatureBadge active={merchant.auto_booking_enabled} icon={<CalendarDays className="w-3 h-3" />} label="Resa en ligne" />
+          <FeatureBadge active={merchant.recurring_followup_enabled} icon={<Repeat className="w-3 h-3" />} label="RDV de suivi (+3/+6)" />
           <FeatureBadge active={merchant.welcome_offer_enabled} icon={<Gift className="w-3 h-3" />} label="Nouveaux clients" />
           <FeatureBadge active={merchant.show_public_page_on_card} icon={<Globe className="w-3 h-3" />} label="Lien sur carte" />
           {merchant.booking_mode && <FeatureBadge active icon={<Flame className="w-3 h-3" />} label={merchant.booking_mode === 'free' ? 'Mode Libre' : 'Mode Creneaux'} />}
