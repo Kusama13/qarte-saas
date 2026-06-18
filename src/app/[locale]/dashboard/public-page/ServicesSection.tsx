@@ -15,12 +15,15 @@ import {
   Clock,
   LayoutList,
   Tag,
+  Archive,
+  RotateCcw,
 } from 'lucide-react';
 import type { Merchant } from '@/types';
 import type { ServiceCategory, Service } from './types';
 import { formatCurrency } from '@/lib/utils';
 import { MAX_SERVICES_PER_MERCHANT } from '@/lib/plan-tiers';
 import { useLocale, useTranslations } from 'next-intl';
+import { useToast } from '@/components/ui/Toast';
 
 interface ServicesSectionProps {
   merchant: Merchant;
@@ -58,11 +61,17 @@ function ReorderButtons({ isFirst, isLast, onMove, upLabel, downLabel }: Reorder
 export default function ServicesSection({ merchant }: ServicesSectionProps) {
   const locale = useLocale();
   const t = useTranslations('publicPage');
+  const { addToast } = useToast();
 
   // Categories + Services
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [servicesLoading, setServicesLoading] = useState(true);
+
+  // Prestations archivées (masquées de la vitrine, conservées pour l'historique des RDV)
+  const [archivedServices, setArchivedServices] = useState<Service[]>([]);
+  const [showArchived, setShowArchived] = useState(false);
+  const [reactivatingId, setReactivatingId] = useState<string | null>(null);
 
   // Add service form
   const [newServiceName, setNewServiceName] = useState('');
@@ -101,11 +110,18 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const res = await fetch(`/api/services?merchantId=${merchant.id}`);
-        const data = await res.json();
-        if (res.ok) {
-          setCategories(data.categories || []);
-          setServices(data.services || []);
+        const [activeRes, archRes] = await Promise.all([
+          fetch(`/api/services?merchantId=${merchant.id}`),
+          fetch(`/api/services?merchantId=${merchant.id}&archived=1`),
+        ]);
+        const activeData = await activeRes.json();
+        if (activeRes.ok) {
+          setCategories(activeData.categories || []);
+          setServices(activeData.services || []);
+        }
+        if (archRes.ok) {
+          const archData = await archRes.json();
+          setArchivedServices(archData.archivedServices || []);
         }
       } catch {
         // silent
@@ -365,18 +381,54 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
   };
 
   const handleDeleteService = async (id: string) => {
+    // Le merchant ne sait pas si la presta est réservée → message générique, toast précis après.
+    if (!window.confirm(t('svcDeleteConfirm'))) return;
     try {
       const res = await fetch('/api/services', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'service', id, merchant_id: merchant.id }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
+        const svc = services.find(s => s.id === id);
         setServices(prev => prev.filter(s => s.id !== id));
+        if (data.archived) {
+          if (svc) setArchivedServices(prev => [...prev, svc]);
+          addToast(t('svcArchivedToast'), 'success');
+        } else {
+          addToast(t('svcDeletedToast'), 'info');
+        }
         revalidateVitrine();
+      } else {
+        addToast(t('svcActionError'), 'error');
       }
     } catch {
-      // silent
+      addToast(t('svcActionError'), 'error');
+    }
+  };
+
+  const handleReactivateService = async (id: string) => {
+    setReactivatingId(id);
+    try {
+      const res = await fetch('/api/services', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'service_reactivate', id, merchant_id: merchant.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.service) {
+        setArchivedServices(prev => prev.filter(s => s.id !== id));
+        setServices(prev => [...prev, data.service]);
+        addToast(t('svcReactivatedToast'), 'success');
+        revalidateVitrine();
+      } else {
+        addToast(data.error || t('svcActionError'), 'error');
+      }
+    } catch {
+      addToast(t('svcActionError'), 'error');
+    } finally {
+      setReactivatingId(null);
     }
   };
 
@@ -829,6 +881,46 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                 <Plus className="w-4 h-4" />
                 {t('svcAddCat')}
               </button>
+            )}
+
+            {/* Prestations archivées (masquées de la vitrine, RDV conservés) */}
+            {archivedServices.length > 0 && (
+              <div className="mt-5 pt-5 border-t border-gray-100">
+                <button
+                  onClick={() => setShowArchived(v => !v)}
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <Archive className="w-4 h-4" />
+                  {t('svcArchivedTitle')}
+                  <span className="px-1.5 py-0.5 text-[10px] font-semibold text-gray-500 bg-gray-100 rounded-md tabular-nums">{archivedServices.length}</span>
+                  <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showArchived ? 'rotate-90' : ''}`} />
+                </button>
+                {showArchived && (
+                  <div className="mt-3">
+                    <p className="text-[11px] text-gray-400 mb-2">{t('svcArchivedHint')}</p>
+                    <div className="space-y-1.5">
+                      {archivedServices.map((svc) => (
+                        <div key={svc.id} className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-gray-50/70 border border-gray-100">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-medium text-gray-500 truncate">{svc.name}</p>
+                          </div>
+                          <p className="text-[12px] text-gray-400 shrink-0 tabular-nums">
+                            {formatCurrency(Number(svc.price), merchant.country, locale)}
+                          </p>
+                          <button
+                            onClick={() => handleReactivateService(svc.id)}
+                            disabled={reactivatingId === svc.id}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors disabled:opacity-50"
+                          >
+                            {reactivatingId === svc.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
+                            {t('svcReactivate')}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </>
         )}

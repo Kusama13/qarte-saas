@@ -595,9 +595,10 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `DELETE /api/photos` — Supprimer photo + fichier storage (auth, ownership)
 
 ### Prestations
-- `GET /api/services?merchantId=` — Liste services + categories (public). Champs: name, price, position, category_id, duration, description, price_from
-- `POST /api/services` — CRUD services et categories (merchant auth, type discrimine: 'service' | 'category')
+- `GET /api/services?merchantId=` — Liste services **actifs** + categories (public). Champs: name, price, position, category_id, duration, description, price_from. `&archived=1` (owner only) → liste des prestations **archivées**
+- `POST /api/services` — CRUD services et categories (merchant auth, type discrimine: 'service' | 'category'). Quota `MAX_SERVICES_PER_MERCHANT` compté sur les **actives**
 - Services: duration (int, min, nullable), description (text, nullable), price_from (bool, "a partir de")
+- **Archivage (mig 179)** : `DELETE /api/services` (presta) **archive** au lieu de supprimer si la presta est utilisée par un RDV (le lien `planning_slot_services` est `ON DELETE CASCADE` → un hard delete ferait perdre le nom de la presta sur le RDV ; durée/prix survivent car snapshotés sur le créneau). Hard delete uniquement si jamais réservée. Réponse `{archived: true|false}`. Les archivées sont masquées de la vitrine + de la sélection (booking manuel, bon cadeau client) mais **gardent leur nom dans l'historique des RDV** (jointures inchangées). PUT `type:'service_reactivate'` les remet sur la vitrine (refusé si quota actif atteint). UI `ServicesSection` : section repliable « Archivées » + bouton Réactiver, toasts distincts archive/suppression
 
 ### Planning
 - `GET /api/planning?merchantId=&from=&to=` — Slots merchant (auth, join services avec noms+photos+result_photos+customer social) ou `&public=true` (dispo only, 30j). `&booked=true` filtre les creneaux reserves uniquement. `&customerId=` filtre par client

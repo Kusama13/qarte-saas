@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import { createRouteHandlerSupabaseClient, getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import logger from '@/lib/logger';
 import { MAX_SERVICES_PER_MERCHANT } from '@/lib/plan-tiers';
+
+const SERVICE_COLUMNS = 'id, name, price, position, category_id, duration, description, price_from';
 
 // ── Helper: verify merchant ownership
 async function verifyOwnership(supabase: Awaited<ReturnType<typeof createRouteHandlerSupabaseClient>>, merchantId: string, userId: string) {
@@ -15,17 +17,47 @@ async function verifyOwnership(supabase: Awaited<ReturnType<typeof createRouteHa
   return !!data;
 }
 
+// ── Helper: nombre de prestations ACTIVES (quota MAX_SERVICES_PER_MERCHANT) — les archivées ne comptent pas
+async function countActiveServices(supabase: Awaited<ReturnType<typeof createRouteHandlerSupabaseClient>>, merchantId: string): Promise<number> {
+  const { count } = await supabase
+    .from('merchant_services')
+    .select('id', { count: 'exact', head: true })
+    .eq('merchant_id', merchantId)
+    .is('archived_at', null);
+  return count || 0;
+}
+
 // ── GET: Fetch categories + services for a merchant (public)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const merchantId = searchParams.get('merchantId');
+    const wantArchived = searchParams.get('archived') === '1';
 
     if (!merchantId) {
       return NextResponse.json({ error: 'merchantId requis' }, { status: 400 });
     }
 
     const supabase = await createRouteHandlerSupabaseClient();
+
+    // Liste des archivées : données owner uniquement (le GET public ne renvoie que l'actif).
+    if (wantArchived) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !await verifyOwnership(supabase, merchantId, user.id)) {
+        return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+      }
+      const { data, error } = await supabase
+        .from('merchant_services')
+        .select(SERVICE_COLUMNS)
+        .eq('merchant_id', merchantId)
+        .not('archived_at', 'is', null)
+        .order('position');
+      if (error) {
+        logger.error('Fetch archived services error:', error);
+        return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+      }
+      return NextResponse.json({ archivedServices: data || [] });
+    }
 
     const [categoriesResult, servicesResult] = await Promise.all([
       supabase
@@ -35,8 +67,9 @@ export async function GET(request: NextRequest) {
         .order('position'),
       supabase
         .from('merchant_services')
-        .select('id, name, price, position, category_id, duration, description, price_from')
+        .select(SERVICE_COLUMNS)
         .eq('merchant_id', merchantId)
+        .is('archived_at', null)
         .order('position'),
     ]);
 
@@ -125,12 +158,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
       }
 
-      const { count } = await supabase
-        .from('merchant_services')
-        .select('id', { count: 'exact', head: true })
-        .eq('merchant_id', merchant_id);
-
-      if ((count || 0) >= MAX_SERVICES_PER_MERCHANT) {
+      const activeCount = await countActiveServices(supabase, merchant_id);
+      if (activeCount >= MAX_SERVICES_PER_MERCHANT) {
         return NextResponse.json({ error: `Maximum ${MAX_SERVICES_PER_MERCHANT} prestations` }, { status: 400 });
       }
 
@@ -141,7 +170,7 @@ export async function POST(request: NextRequest) {
           category_id: category_id || null,
           name: name.trim(),
           price,
-          position: (count || 0) + 1,
+          position: activeCount + 1,
           duration: duration || null,
           description: description?.trim() || null,
           price_from: price_from || false,
@@ -196,6 +225,12 @@ const reorderServiceSchema = z.object({
   id: z.string().uuid(),
   merchant_id: z.string().uuid(),
   direction: z.enum(['up', 'down']),
+});
+
+const reactivateServiceSchema = z.object({
+  type: z.literal('service_reactivate'),
+  id: z.string().uuid(),
+  merchant_id: z.string().uuid(),
 });
 
 export async function PUT(request: NextRequest) {
@@ -306,6 +341,47 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    // Réactivation d'une prestation archivée (la remet sur la vitrine, en fin de liste).
+    const reactivateParsed = reactivateServiceSchema.safeParse(body);
+    if (reactivateParsed.success) {
+      const { id, merchant_id } = reactivateParsed.data;
+
+      if (!await verifyOwnership(supabase, merchant_id, user.id)) {
+        return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+      }
+
+      if (await countActiveServices(supabase, merchant_id) >= MAX_SERVICES_PER_MERCHANT) {
+        return NextResponse.json({ error: `Maximum ${MAX_SERVICES_PER_MERCHANT} prestations actives` }, { status: 400 });
+      }
+
+      // Position en fin de liste : MAX(position) actif + 1 (le count ne suffit pas si la
+      // numérotation a des trous après reorders/suppressions → réactivée au milieu sinon).
+      const { data: last } = await supabase
+        .from('merchant_services')
+        .select('position')
+        .eq('merchant_id', merchant_id)
+        .is('archived_at', null)
+        .order('position', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const { data: service, error } = await supabase
+        .from('merchant_services')
+        .update({ archived_at: null, position: (last?.position ?? 0) + 1 })
+        .eq('id', id)
+        .eq('merchant_id', merchant_id)
+        .not('archived_at', 'is', null)
+        .select()
+        .single();
+
+      // .single() sur une presta non archivée / introuvable → pas une erreur serveur.
+      if (error || !service) {
+        return NextResponse.json({ error: 'Prestation introuvable ou déjà active' }, { status: 404 });
+      }
+
+      return NextResponse.json({ service });
+    }
+
     const categoryParsed = updateCategorySchema.safeParse(body);
     if (categoryParsed.success) {
       const { id, merchant_id, name } = categoryParsed.data;
@@ -404,19 +480,52 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
-    const table = type === 'category' ? 'merchant_service_categories' : 'merchant_services';
+    if (type === 'category') {
+      const { error } = await supabase
+        .from('merchant_service_categories')
+        .delete()
+        .eq('id', id)
+        .eq('merchant_id', merchant_id);
+      if (error) {
+        logger.error('Delete category error:', error);
+        return NextResponse.json({ error: 'Erreur lors de la suppression' }, { status: 500 });
+      }
+      return NextResponse.json({ success: true });
+    }
+
+    // Prestation : si elle est référencée par un RDV (lien junction OU colonne legacy),
+    // on ARCHIVE (la ligne reste → les RDV gardent le nom). Sinon hard delete (ménage propre).
+    // Comptage via le client admin pour ne pas dépendre des RLS de planning_slot_services.
+    const admin = getSupabaseAdmin();
+    const [{ count: junctionCount }, { count: legacyCount }] = await Promise.all([
+      admin.from('planning_slot_services').select('slot_id', { count: 'exact', head: true }).eq('service_id', id),
+      admin.from('merchant_planning_slots').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant_id).eq('service_id', id),
+    ]);
+    const isUsed = (junctionCount || 0) > 0 || (legacyCount || 0) > 0;
+
+    if (isUsed) {
+      const { error } = await supabase
+        .from('merchant_services')
+        .update({ archived_at: new Date().toISOString() })
+        .eq('id', id)
+        .eq('merchant_id', merchant_id);
+      if (error) {
+        logger.error('Archive service error:', error);
+        return NextResponse.json({ error: 'Erreur lors de la suppression' }, { status: 500 });
+      }
+      return NextResponse.json({ success: true, archived: true });
+    }
+
     const { error } = await supabase
-      .from(table)
+      .from('merchant_services')
       .delete()
       .eq('id', id)
       .eq('merchant_id', merchant_id);
-
     if (error) {
-      logger.error(`Delete ${type} error:`, error);
+      logger.error('Delete service error:', error);
       return NextResponse.json({ error: 'Erreur lors de la suppression' }, { status: 500 });
     }
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, archived: false });
   } catch (error) {
     logger.error('Services DELETE error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });

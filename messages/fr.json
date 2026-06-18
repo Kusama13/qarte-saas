@@ -1666,7 +1666,15 @@
     "svcAddBtn": "Ajouter la prestation",
     "svcIn": "dans",
     "svcNoCat": "Sans catégorie",
-    "svcAddCat": "Ajouter une catégorie"
+    "svcAddCat": "Ajouter une catégorie",
+    "svcDeleteConfirm": "Supprimer cette prestation ? Si des RDV l'utilisent, elle sera juste archivée (retirée de ta vitrine) et tes RDV gardent l'info. Sinon elle est supprimée.",
+    "svcArchivedToast": "Prestation archivée (retirée de ta vitrine, tes RDV gardent l'info)",
+    "svcDeletedToast": "Prestation supprimée",
+    "svcReactivatedToast": "Prestation réactivée",
+    "svcActionError": "Une erreur est survenue",
+    "svcArchivedTitle": "Prestations archivées",
+    "svcArchivedHint": "Masquées de ta vitrine mais conservées : les RDV qui les utilisent gardent leur intitulé. Tu peux les remettre quand tu veux.",
+    "svcReactivate": "Réactiver"
   },
   "dashHome": {
     "greeting": "Bonjour,",

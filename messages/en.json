@@ -1679,7 +1679,15 @@
     "svcAddBtn": "Add service",
     "svcIn": "in",
     "svcNoCat": "No category",
-    "svcAddCat": "Add a category"
+    "svcAddCat": "Add a category",
+    "svcDeleteConfirm": "Delete this service? If any bookings use it, it will just be archived (hidden from your page) and your bookings keep the info. Otherwise it's deleted.",
+    "svcArchivedToast": "Service archived (hidden from your page, your bookings keep the info)",
+    "svcDeletedToast": "Service deleted",
+    "svcReactivatedToast": "Service reactivated",
+    "svcActionError": "Something went wrong",
+    "svcArchivedTitle": "Archived services",
+    "svcArchivedHint": "Hidden from your page but kept: bookings using them keep their label. You can restore them anytime.",
+    "svcReactivate": "Reactivate"
   },
   "dashHome": {
     "greeting": "Hello,",
