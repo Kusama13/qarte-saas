@@ -90,6 +90,7 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
       .from('merchant_services')
       .select('id, name, price, position, category_id, duration, description, price_from')
       .eq('merchant_id', (merchant as any).id)
+      .is('archived_at', null)
       .order('position'),
     supabaseAdmin
       .from('merchant_service_categories')
