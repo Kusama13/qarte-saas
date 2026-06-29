@@ -166,7 +166,8 @@ export default function SubscriptionPage() {
     }
     return false;
   });
-  // Features par tier. `all_in` utilise "inheritsFromFidelity" + liste des extras uniquement.
+  // Avantages de base (programme fidélité, vitrine, avis Google, parrainage, offre new) —
+  // affichés dans la carte unique Tout-en-un, en tête des extras planning/SMS/etc.
   const fidelityFeatures = [
     t('featureStampsCashback'),
     t('featureProPage'),
@@ -353,7 +354,7 @@ export default function SubscriptionPage() {
     }
   };
 
-  const handleChangeTier = async (newTier: 'fidelity' | 'all_in') => {
+  const handleChangeTier = async (newTier: 'all_in') => {
     if (!merchant || merchant.plan_tier === newTier) return;
     setChangingTier(true);
     try {
@@ -367,7 +368,7 @@ export default function SubscriptionPage() {
         setToast({ type: 'error', message: data.error || t('paymentError') });
         return;
       }
-      setToast({ type: 'success', message: newTier === 'all_in' ? t('upgradeSuccess') : t('downgradeSuccess') });
+      setToast({ type: 'success', message: t('upgradeSuccess') });
       setShowChangeTierModal(false);
       await refetchContext();
     } catch (error) {
@@ -433,19 +434,16 @@ export default function SubscriptionPage() {
   });
   // Redirection forcée vers cette page = essai expiré (grâce ou complet) ou past_due bloqué.
   const isRedirectForced = trialStatus.isInGracePeriod || trialStatus.isFullyExpired || pastDueBlocked;
-  const hasStripe = !!merchant?.stripe_subscription_id;
-  const showSubscribeCTA = !isPaid && !isCanceling && !hasStripe && !polling;
-
   const isLegacy = isPayingMerchant && isLegacyMerchant(merchant);
-  const canChangeTier = isPayingMerchant && (!isLegacy || isSuperAdmin);
   const effectiveTier: PlanTier = isPayingMerchant
     ? (isLegacy ? 'all_in' : ((merchant?.plan_tier as PlanTier) || 'all_in'))
     : planTier;
   const isFidelityPlan = effectiveTier === 'fidelity';
+  // Fidélité retirée : seul un abonné Fidélité (non-legacy) peut encore changer de plan (upgrade
+  // vers Tout-en-un). Un abonné Tout-en-un n'a plus de plan alternatif. Super_admin = support.
+  const canChangeTier = isPayingMerchant && (!isLegacy || isSuperAdmin) && (isFidelityPlan || isSuperAdmin);
   const tierDisplayName = isFidelityPlan ? t('tierFidelityName') : t('tierAllInName');
-  const fidelityPlan = buildPlan('fidelity', billingPlan, locale);
   const allInPlan = buildPlan('all_in', billingPlan, locale);
-  const fidelitySemestrial = buildPlan('fidelity', 'semestrial', locale);
   const allInSemestrial = buildPlan('all_in', 'semestrial', locale);
   // Intervalle réel depuis Stripe (source de vérité) ; fallback sur billing_interval DB.
   // Inclut 'annual' pour les abonnés legacy.
@@ -595,42 +593,23 @@ export default function SubscriptionPage() {
                 />
               </div>
 
-              {/* Dual cards grid — Tout-en-un en premier (mobile top + desktop left) */}
-              <div className="grid gap-5 md:grid-cols-2 items-stretch">
-                <div className="order-1 md:order-2">
-                  <PlanCard
-                    tier="fidelity"
-                    interval={billingPlan}
-                    priceDisplay={fidelityPlan.priceDisplay}
-                    priceSep={fidelityPlan.sep}
-                    totalLabel={fidelityPlan.label}
-                    originalRef={billingPlan === 'semestrial' ? fidelitySemestrial.originalRef : undefined}
-                    persona={t('tierFidelityPersona')}
-                    features={fidelityFeatures}
-                    ctaLabel={t('chooseFidelityCta')}
-                    onSelect={() => handleSubscribe('fidelity')}
-                    loading={subscribing && planTier === 'fidelity'}
-                    disabled={subscribing}
-                  />
-                </div>
-                <div className="order-2 md:order-1">
-                  <PlanCard
-                    tier="all_in"
-                    interval={billingPlan}
-                    priceDisplay={allInPlan.priceDisplay}
-                    priceSep={allInPlan.sep}
-                    totalLabel={allInPlan.label}
-                    originalRef={billingPlan === 'semestrial' ? allInSemestrial.originalRef : undefined}
-                    persona={t('tierAllInPersona')}
-                    features={allInExtrasFeatures}
-                    inheritsFromFidelity
-                    recommended
-                    ctaLabel={t('startAllInCta')}
-                    onSelect={() => handleSubscribe('all_in')}
-                    loading={subscribing && planTier === 'all_in'}
-                    disabled={subscribing}
-                  />
-                </div>
+              {/* Carte unique Tout-en-un (Fidélité retirée juillet 2026) */}
+              <div className="max-w-md mx-auto w-full">
+                <PlanCard
+                  tier="all_in"
+                  interval={billingPlan}
+                  priceDisplay={allInPlan.priceDisplay}
+                  priceSep={allInPlan.sep}
+                  totalLabel={allInPlan.label}
+                  originalRef={billingPlan === 'semestrial' ? allInSemestrial.originalRef : undefined}
+                  persona={t('tierAllInPersona')}
+                  features={[...fidelityFeatures, ...allInExtrasFeatures]}
+                  recommended
+                  ctaLabel={t('startAllInCta')}
+                  onSelect={() => handleSubscribe('all_in')}
+                  loading={subscribing && planTier === 'all_in'}
+                  disabled={subscribing}
+                />
               </div>
 
               {/* Reassurance */}
@@ -808,18 +787,14 @@ export default function SubscriptionPage() {
           <h3 className="text-lg font-bold text-gray-900">{t(isFidelityPlan ? 'changeTierTitleUpgrade' : 'changeTierTitle')}</h3>
           <p className="text-sm text-gray-500">{t(isFidelityPlan ? 'changeTierDescUpgrade' : 'changeTierDesc')}</p>
 
-          {/* Un abonné Fidélité ne se voit pas reproposer l'offre Fidélité (les grandfathered 19€
-              ne doivent pas découvrir le nouveau tarif 14€) : il peut seulement upgrader vers Tout-en-un. */}
-          {((isFidelityPlan ? ['all_in'] : ['fidelity', 'all_in']) as PlanTier[]).map(tier => {
-            const isCurrent = merchant?.plan_tier === tier;
-            const isDowngrade = merchant?.plan_tier === 'all_in' && tier === 'fidelity';
-            const interval = normalizeBillingInterval(merchant?.billing_interval);
-            const price = TIER_PRICE_LABELS[tier][interval];
+          {/* Fidélité retirée : seul Tout-en-un est proposé (upgrade pour les abonnés Fidélité). */}
+          {(() => {
+            const isCurrent = merchant?.plan_tier === 'all_in';
+            const price = TIER_PRICE_LABELS.all_in[normalizeBillingInterval(merchant?.billing_interval)];
             return (
               <button
-                key={tier}
                 disabled={isCurrent || changingTier}
-                onClick={() => handleChangeTier(tier)}
+                onClick={() => handleChangeTier('all_in')}
                 className={`w-full text-left rounded-xl border-2 px-4 py-3 transition-all ${
                   isCurrent
                     ? 'border-emerald-300 bg-emerald-50 cursor-default'
@@ -828,23 +803,17 @@ export default function SubscriptionPage() {
               >
                 <div className="flex items-baseline justify-between mb-1">
                   <span className="text-sm font-bold text-gray-900">
-                    {tier === 'fidelity' ? t('tierFidelityName') : t('tierAllInName')}
+                    {t('tierAllInName')}
                     {isCurrent && <span className="ml-2 text-[10px] font-bold uppercase text-emerald-700">· {t('changeTierCurrent')}</span>}
                   </span>
                   <span className="text-sm font-bold text-gray-900">{price}</span>
                 </div>
                 <p className="text-xs text-gray-500 leading-snug">
-                  {tier === 'fidelity' ? t('tierFidelityHint') : t('tierAllInHint')}
+                  {t('tierAllInHint')}
                 </p>
-                {isDowngrade && !isCurrent && (
-                  <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-amber-50 p-2 text-[11px] text-amber-800">
-                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                    <span>{t('changeTierDowngradeWarning')}</span>
-                  </div>
-                )}
               </button>
             );
-          })}
+          })()}
 
           <p className="text-[11px] text-gray-400 text-center">{t('changeTierProrationNote')}</p>
         </div>

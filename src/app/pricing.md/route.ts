@@ -6,15 +6,13 @@ export function GET() {
 
 > Logiciel tout-en-un pour salons de beauté : réservation en ligne, fidélité digitale et vitrine SEO.
 
-## Plans
+## Plan
 
 ### Tout-en-un (réservation + fidélité + vitrine + SMS)
 - **Mensuel** : 24 EUR/mois (sans engagement)
 - **6 mois** : 120 EUR pour 6 mois (équivalent 20 EUR/mois — un mois offert, engagement ferme 6 mois)
 
-### Fidélité (fidélité + vitrine + avis Google + parrainage, sans planning ni résa en ligne)
-- **Mensuel** : 14 EUR/mois (sans engagement)
-- **6 mois** : 70 EUR pour 6 mois (équivalent ~12 EUR/mois — un mois offert, engagement ferme 6 mois)
+> L'ancien plan Fidélité (14 EUR/mois) n'est plus proposé aux nouveaux salons. Les salons déjà abonnés conservent leur tarif.
 
 ### Conditions communes
 - **Essai gratuit** : 3 jours, sans carte bancaire
@@ -70,7 +68,7 @@ export function GET() {
 
 ## Dernière mise à jour
 
-2026-04-16
+2026-06-18
 `;
 
   return new Response(content, {

@@ -21,23 +21,15 @@ interface Feature {
 }
 
 const PLANS = {
-  fidelity: {
-    ...PLAN_PRICES.fidelity,
-    features: [
-      { key: 'fidelityFeature1', highlighted: true },
-      { key: 'fidelityFeature2', highlighted: true },
-      { key: 'fidelityFeature3' },
-      { key: 'fidelityFeature4' },
-      { key: 'fidelityFeature5' },
-      { key: 'fidelityFeature6' },
-    ] as Feature[],
-  },
   all_in: {
     ...PLAN_PRICES.all_in,
     features: [
       { key: 'allInFeature1', highlighted: true },
-      { key: 'allInFeature2', highlighted: true },
+      { key: 'fidelityFeature1', highlighted: true },
+      { key: 'fidelityFeature2' },
+      { key: 'allInFeature2' },
       { key: 'allInFeature3' },
+      { key: 'fidelityFeature5' },
       { key: 'allInFeature4' },
       { key: 'allInFeature5' },
       { key: 'allInFeature6' },
@@ -50,8 +42,7 @@ export function PricingSection() {
   const t = useTranslations('pricing');
   const [billing, setBilling] = useState<Billing>('semestrial');
 
-  // 6 mois : monthlyEquiv = total / 6 (95/6 ≈ 16€ Fidélité, 120/6 = 20€ Tout-en-un).
-  const fidelityPrice = billing === 'monthly' ? PLANS.fidelity.monthly : Math.round(PLANS.fidelity.semestrial / 6);
+  // 6 mois : monthlyEquiv = total / 6 (120/6 = 20€ Tout-en-un).
   const allInPrice = billing === 'monthly' ? PLANS.all_in.monthly : Math.round(PLANS.all_in.semestrial / 6);
 
   // Ligne SMS dynamique : 100 mensuel / 110 6 mois — effet upsell visible.
@@ -128,53 +119,8 @@ export function PricingSection() {
           </div>
         </div>
 
-        {/* 2 pricing cards */}
-        <div className={`grid md:grid-cols-2 gap-5 md:gap-6 max-w-5xl mx-auto ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.2s' }}>
-
-          {/* ── Fidélité card ── */}
-          <div className="relative bg-white border border-gray-200 rounded-3xl shadow-sm hover:shadow-md transition-shadow duration-300 p-8 md:p-10 flex flex-col">
-            <div className="mb-5">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('fidelityName')}</h3>
-              <p className="text-[15px] text-gray-600 leading-snug">
-                {t.rich('fidelityTagline', {
-                  em: (chunks) => <em className="font-[family-name:var(--font-display)] italic text-gray-900">{chunks}</em>,
-                })}
-              </p>
-            </div>
-
-            <div className="mb-5">
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-5xl md:text-6xl font-extrabold tracking-tighter text-gray-900">{fidelityPrice}€</span>
-                <span className="text-base font-semibold text-gray-400">{t('perMonth')}</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                {billing === 'semestrial' ? t('monthlyEquivSemestrial', { amount: PLANS.fidelity.semestrial }) : t('perDayFidelity')}
-              </p>
-              {billing === 'semestrial' && (
-                <span className="inline-block mt-2 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">
-                  {t('semestrialSavingFidelity')}
-                </span>
-              )}
-            </div>
-
-            <p className="text-xs text-gray-500 mb-5 leading-relaxed border-l-2 border-gray-200 pl-3">
-              {t('fidelityFor')}
-            </p>
-
-            {renderFeatures(PLANS.fidelity.features, 'text-indigo-500')}
-
-            <Link
-              href="/auth/merchant/signup"
-              onClick={() => { trackCtaClick('pricing_fidelity', 'pricing_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-              className="block w-full py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-black transition-colors duration-300 text-center text-sm uppercase tracking-wider shadow-md shadow-gray-900/15"
-            >
-              {t('ctaTrialFidelity')}
-            </Link>
-            <p className="text-xs text-center text-gray-600 mt-3">{t('trustLine')}</p>
-          </div>
-
-          {/* ── Tout-en-un card (Recommended) ── */}
-          <div className="relative bg-white border-2 border-indigo-500 rounded-3xl shadow-xl shadow-indigo-200/40 p-8 md:p-10 flex flex-col">
+        {/* Carte unique Tout-en-un (Recommended) */}
+        <div className={`relative max-w-md mx-auto bg-white border-2 border-indigo-500 rounded-3xl shadow-xl shadow-indigo-200/40 p-8 md:p-10 flex flex-col ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.2s' }}>
             <div className="absolute -top-4 left-1/2 -translate-x-1/2">
               <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold rounded-full shadow-lg shadow-indigo-500/30 uppercase tracking-wider">
                 <Star className="w-3 h-3 fill-current" />
@@ -211,10 +157,6 @@ export function PricingSection() {
               {t('allInFor')}
             </p>
 
-            <p className="text-[11px] font-bold text-indigo-600 mb-3 uppercase tracking-widest flex items-center gap-1.5">
-              <span className="h-px w-4 bg-indigo-300" />
-              {t('allInIncludesPrefix')}
-            </p>
             {renderFeatures(allInFeatures, 'text-violet-500')}
 
             <Link
@@ -225,7 +167,6 @@ export function PricingSection() {
               {t('ctaTrialAllIn')}
             </Link>
             <p className="text-xs text-center text-gray-600 mt-3">{t('trustLine')}</p>
-          </div>
         </div>
 
         {/* Comparison vs competitors */}

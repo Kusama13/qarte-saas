@@ -38,11 +38,11 @@ describe('recommendTierForMerchant', () => {
     expect(result).toBe('all_in');
   });
 
-  it('returns "fidelity" when merchant has visits but no planning bookings', async () => {
+  it('returns null when merchant has visits but no planning bookings (Fidélité retirée)', async () => {
     const supa = stubSupabase(0, 5);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await recommendTierForMerchant(supa as any, 'merchant-2');
-    expect(result).toBe('fidelity');
+    expect(result).toBeNull();
   });
 
   it('returns null when merchant has no engagement (no bookings, no visits)', async () => {

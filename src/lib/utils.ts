@@ -133,7 +133,7 @@ export function ensureTextContrast(hex: string, minRatio = 3): string {
   if (ratio >= minRatio) return hex;
 
   // Darken the color until we meet the ratio
-  let factor = 0.9;
+  const factor = 0.9;
   let dr = r, dg = g, db = b;
   for (let i = 0; i < 20; i++) {
     dr *= factor;

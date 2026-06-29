@@ -297,7 +297,7 @@ export async function sendTrialEndingEmail(
   shopName: string,
   daysRemaining: number,
   locale: EmailLocale = 'fr',
-  recommendedTier: 'fidelity' | 'all_in' | null = null,
+  recommendedTier: 'all_in' | null = null,
   stats: TrialEndingStats = {},
 ): Promise<SendEmailResult> {
   const subject = pickTrialEndingSubject(locale, shopName, daysRemaining, stats);

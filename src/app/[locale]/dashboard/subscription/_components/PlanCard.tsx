@@ -17,7 +17,6 @@ interface PlanCardProps {
   originalRef?: string;
   persona: string;
   features: ReactNode[];
-  inheritsFromFidelity?: boolean;
   recommended?: boolean;
   ctaLabel: string;
   onSelect: () => void;
@@ -34,7 +33,6 @@ export default function PlanCard({
   originalRef,
   persona,
   features,
-  inheritsFromFidelity,
   recommended,
   ctaLabel,
   onSelect,
@@ -82,16 +80,6 @@ export default function PlanCard({
       </div>
 
       <ul className="space-y-2.5 mb-6 flex-1">
-        {inheritsFromFidelity && (
-          <li className="flex items-start gap-2.5 pb-2 mb-1 border-b border-slate-100">
-            <div className={`shrink-0 w-4 h-4 rounded-full flex items-center justify-center mt-0.5 ${
-              isRecommended ? 'bg-[#4b0082]' : 'bg-emerald-500'
-            }`}>
-              <Check className="w-2.5 h-2.5 text-white" strokeWidth={3.5} />
-            </div>
-            <span className="text-[13px] font-bold text-slate-900">{t('planIncludesAllFidelity')}</span>
-          </li>
-        )}
         {features.map((feature, i) => (
           <li key={i} className="flex items-start gap-2.5">
             <div className={`shrink-0 w-4 h-4 rounded-full flex items-center justify-center mt-0.5 ${
