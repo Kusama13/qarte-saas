@@ -55,19 +55,14 @@ function CGVContentFR() {
           3. Tarification et modalités de paiement
         </h2>
         <p className="text-gray-600">
-          Le Service est proposé selon deux formules, au choix du Client :
+          Le Service est proposé selon la formule suivante :
         </p>
-        <p className="text-gray-600 mt-3"><strong>Formule Fidélité</strong> — programme de fidélité digital + page professionnelle + relances et avis Google :</p>
-        <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-1">
-          <li><strong>Mensuel :</strong> 14€ par mois, sans engagement, renouvelable par tacite reconduction chaque mois.</li>
-          <li><strong>6 mois :</strong> 70€ pour 6 mois (soit ~12€/mois — un mois offert), facturé en une fois, engagement ferme de six (6) mois.</li>
-        </ul>
-        <p className="text-gray-600 mt-3"><strong>Formule Tout-en-un</strong> — Formule Fidélité + réservation en ligne, planning et gestion des acomptes :</p>
+        <p className="text-gray-600 mt-3"><strong>Formule Tout-en-un</strong> — programme de fidélité digital + page professionnelle + relances et avis Google + réservation en ligne, planning et gestion des acomptes :</p>
         <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-1">
           <li><strong>Mensuel :</strong> 24€ par mois, sans engagement, renouvelable par tacite reconduction chaque mois.</li>
           <li><strong>6 mois :</strong> 120€ pour 6 mois (soit 20€/mois — un mois offert), facturé en une fois, engagement ferme de six (6) mois.</li>
         </ul>
-        <p className="text-gray-600 mt-2 text-sm italic">Les Clients ayant souscrit avant mai 2026 à un abonnement annuel (190€/an Fidélité ou 240€/an Tout-en-un) restent soumis aux conditions de cet abonnement annuel jusqu&apos;à son terme. Les Clients ayant souscrit la formule Fidélité avant juin 2026 (19€/mois ou 95€/6 mois) conservent ce tarif jusqu&apos;à résiliation.</p>
+        <p className="text-gray-600 mt-2 text-sm italic">Les Clients déjà abonnés à la formule Fidélité conservent leur tarif jusqu&apos;à résiliation : 14€/mois ou 70€/6 mois (ou 19€/mois et 95€/6 mois pour les souscriptions antérieures à juin 2026). Les abonnements annuels souscrits avant mai 2026 (190€/an Fidélité ou 240€/an Tout-en-un) restent soumis à leurs conditions jusqu&apos;à leur terme. La formule Fidélité n&apos;est plus proposée aux nouvelles souscriptions.</p>
         <p className="text-gray-600 mt-3"><strong>Essai gratuit :</strong> un essai gratuit de 3 jours est proposé sans carte bancaire. À l&apos;issue de l&apos;essai, le Client doit souscrire une formule pour continuer à utiliser le Service.</p>
         <p className="text-gray-600 mt-3">
           Les prix indiqués s&apos;entendent hors taxes (HT). La TVA applicable au jour de la facturation (20% pour la France, taux applicable dans le pays de résidence du Client pour la Belgique et la Suisse) est ajoutée au tarif HT. Le paiement est effectué par carte bancaire via la plateforme sécurisée Stripe. Le Client peut basculer d&apos;une formule à l&apos;autre à tout moment ; un prorata est appliqué en cas d&apos;upgrade en cours de période et le changement prend effet à la prochaine échéance en cas de downgrade.

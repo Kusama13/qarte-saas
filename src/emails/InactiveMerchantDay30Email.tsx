@@ -11,7 +11,8 @@ import { getEmailT, type EmailLocale } from './translations';
 
 interface InactiveMerchantDay30EmailProps {
   shopName: string;
-  /** Plan tier : change l'option 2 (fidelity = "30 min founder" / all_in = "downgrade Fidélité") */
+  /** Plan tier : adapte l'option 1 (fidelity = upgrade vers Tout-en-un / all_in = coup de main pour reprendre).
+   *  Les abonnés Fidélité existants restent ciblés ; Fidélité n'est plus proposée aux nouveaux. */
   planTier?: 'fidelity' | 'all_in';
   locale?: EmailLocale;
 }

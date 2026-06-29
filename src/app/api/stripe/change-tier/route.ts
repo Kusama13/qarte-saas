@@ -19,6 +19,15 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) return NextResponse.json({ error: 'Paramètres invalides' }, { status: 400 });
     const newTier = parsed.data.tier;
 
+    // Fidélité retirée (juillet 2026) : plus aucun passage VERS Fidélité. Les abonnés
+    // Fidélité actuels peuvent toujours upgrader vers Tout-en-un (newTier='all_in').
+    if (newTier === 'fidelity') {
+      return NextResponse.json(
+        { error: 'plan_unavailable', message: 'Le plan Fidélité n\'est plus proposé.' },
+        { status: 400 },
+      );
+    }
+
     const admin = getSupabaseAdmin();
     const { data: merchant } = await admin
       .from('merchants')
@@ -87,12 +96,6 @@ export async function POST(request: NextRequest) {
         logger.info('sms_quota_prorata_set', { merchantId: merchant.id, prorata, baseQuota });
       }
     }
-    // Si downgrade Tout-en-un → Fidélité : clear override (Fidélité quota = 0 de toute façon)
-    if (merchant.plan_tier === 'all_in' && newTier === 'fidelity') {
-      updatePayload.sms_quota_override = null;
-      updatePayload.sms_quota_override_cycle_anchor = null;
-    }
-
     // Persist new tier — webhook will also fire but we update eagerly for the redirect.
     await admin
       .from('merchants')

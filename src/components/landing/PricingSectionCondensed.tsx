@@ -7,6 +7,7 @@ import { ttEvents } from '@/components/analytics/TikTokPixel';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { Star, ArrowRight, Check } from 'lucide-react';
+import { PLAN_PRICES } from '@/lib/landing-pricing';
 
 export function PricingSectionCondensed() {
   const { ref, isInView } = useInView();
@@ -29,51 +30,8 @@ export function PricingSectionCondensed() {
           </p>
         </div>
 
-        {/* 2 cards */}
-        <div className={`grid sm:grid-cols-2 gap-4 md:gap-5 max-w-3xl mx-auto mb-8 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.1s' }}>
-
-          {/* Fidélité card */}
-          <div className="relative bg-white border border-gray-200 rounded-3xl p-6 md:p-7 flex flex-col shadow-sm">
-            <div className="mb-4">
-              <h3 className="text-2xl md:text-2xl font-bold text-gray-900 mb-1">
-                <span className="font-[family-name:var(--font-display)] italic font-extrabold text-indigo-600">
-                  {t('fidelityName')}
-                </span>
-              </h3>
-              <p className="text-sm text-gray-500 leading-snug">{t('condensedFidelityHint')}</p>
-            </div>
-
-            <div className="mb-1 flex items-baseline gap-1">
-              <span className="text-4xl md:text-5xl font-extrabold tracking-tighter text-gray-900 tabular-nums">14€</span>
-              <span className="text-sm font-semibold text-gray-400">{t('perMonth')}</span>
-            </div>
-            <div className="mb-5 flex items-center gap-2 flex-wrap">
-              <p className="text-sm text-gray-600">{t('condensedFidelitySemestrial')}</p>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 uppercase tracking-wider">−1 mois offert</span>
-            </div>
-
-            <ul className="space-y-2.5 mb-6 flex-1">
-              {(['condensedFidelityF1', 'condensedFidelityF2', 'condensedFidelityF3'] as const).map(k => (
-                <li key={k} className="flex items-start gap-2.5">
-                  <div className="shrink-0 w-4 h-4 md:w-5 md:h-5 rounded-full bg-emerald-500 flex items-center justify-center mt-0.5 md:mt-1">
-                    <Check className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" strokeWidth={3.5} />
-                  </div>
-                  <span className="text-sm md:text-base text-gray-600 leading-relaxed">{t(k)}</span>
-                </li>
-              ))}
-            </ul>
-
-            <Link
-              href="/auth/merchant/signup"
-              onClick={() => { trackCtaClick('pricing_fidelity_condensed', 'pricing_section_condensed'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-              className="block w-full py-3.5 bg-gray-900 text-white text-sm font-bold rounded-2xl hover:bg-black transition-colors text-center whitespace-nowrap shadow-md shadow-gray-900/15"
-            >
-              {t('ctaTrialFidelity')}
-            </Link>
-          </div>
-
-          {/* Tout-en-un card (recommended) */}
-          <div className="relative bg-white border-2 border-indigo-500 rounded-3xl p-6 md:p-7 flex flex-col shadow-xl shadow-indigo-200/40">
+        {/* Carte unique Tout-en-un */}
+        <div className={`relative max-w-md mx-auto mb-8 bg-white border-2 border-indigo-500 rounded-3xl p-6 md:p-7 flex flex-col shadow-xl shadow-indigo-200/40 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.1s' }}>
             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
               <span className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-[11px] font-bold rounded-full shadow-lg shadow-indigo-500/30 uppercase tracking-wider">
                 <Star className="w-2.5 h-2.5 fill-current" />
@@ -91,7 +49,7 @@ export function PricingSectionCondensed() {
             </div>
 
             <div className="mb-1 flex items-baseline gap-1">
-              <span className="text-4xl md:text-5xl font-extrabold tracking-tighter text-gray-900 tabular-nums">24€</span>
+              <span className="text-4xl md:text-5xl font-extrabold tracking-tighter text-gray-900 tabular-nums">{PLAN_PRICES.all_in.monthly}€</span>
               <span className="text-sm font-semibold text-gray-400">{t('perMonth')}</span>
             </div>
             <div className="mb-5 flex items-center gap-2 flex-wrap">
@@ -100,12 +58,6 @@ export function PricingSectionCondensed() {
             </div>
 
             <ul className="space-y-2.5 mb-6 flex-1">
-              <li className="flex items-start gap-2.5 pb-2 mb-1 border-b border-gray-100">
-                <div className="shrink-0 w-4 h-4 md:w-5 md:h-5 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center mt-0.5 md:mt-1">
-                  <Check className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" strokeWidth={3.5} />
-                </div>
-                <span className="text-sm md:text-base font-bold text-gray-900 leading-relaxed">{t('allInIncludesPrefix')}</span>
-              </li>
               {(['condensedAllInF1', 'condensedAllInF2', 'condensedAllInF3'] as const).map(k => (
                 <li key={k} className="flex items-start gap-2.5">
                   <div className="shrink-0 w-4 h-4 md:w-5 md:h-5 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center mt-0.5 md:mt-1">
@@ -123,7 +75,6 @@ export function PricingSectionCondensed() {
             >
               {t('ctaTrialAllIn')}
             </Link>
-          </div>
         </div>
 
         {/* Trust line */}

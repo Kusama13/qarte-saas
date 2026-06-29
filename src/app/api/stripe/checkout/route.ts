@@ -17,14 +17,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parse plan preference from body
+    // Parse plan preference from body.
+    // Fidélité n'est plus proposée aux nouveaux (juillet 2026) : tout nouveau checkout = Tout-en-un.
+    // Les abonnés Fidélité existants restent gérés via le portail Stripe + change-tier (upgrade).
     let planChoice: BillingInterval = 'monthly';
-    let tierChoice: PlanTier = 'all_in';
+    const tierChoice: PlanTier = 'all_in';
     try {
       const body = await request.json();
       if (body.plan === 'annual') planChoice = 'annual';
       else if (body.plan === 'semestrial') planChoice = 'semestrial';
-      if (body.tier === 'fidelity') tierChoice = 'fidelity';
     } catch {
       // No body or invalid JSON = default to monthly all_in
     }
