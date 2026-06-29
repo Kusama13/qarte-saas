@@ -23,10 +23,8 @@ import {
 } from 'lucide-react';
 import { PLAN_PRICES, AMBASSADOR_COMMISSION, formatCommission } from '@/lib/landing-pricing';
 
-const PRICE_MIN = PLAN_PRICES.fidelity.monthly;
-const PRICE_MAX = PLAN_PRICES.all_in.monthly;
-const COMMISSION_MIN = AMBASSADOR_COMMISSION.fidelity;
-const COMMISSION_MAX = AMBASSADOR_COMMISSION.all_in;
+const PRICE = PLAN_PRICES.all_in.monthly;
+const COMMISSION = AMBASSADOR_COMMISSION.all_in;
 
 const CTA_CLASS = 'group relative inline-flex items-center justify-center gap-2 px-10 py-5 bg-gradient-to-r from-indigo-600/90 to-violet-600/90 backdrop-blur-md text-white font-bold text-base sm:text-lg rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] border border-white/20';
 const INPUT_CLASS = 'w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 bg-white';
@@ -256,10 +254,8 @@ function AmbassadeurForm() {
 function EarningsSimulator() {
   const t = useTranslations('ambassador');
   const [referrals, setReferrals] = useState(5);
-  const monthlyMin = Math.round(referrals * COMMISSION_MIN);
-  const monthlyMax = Math.round(referrals * COMMISSION_MAX);
-  const yearlyMin = monthlyMin * 12;
-  const yearlyMax = monthlyMax * 12;
+  const monthly = Math.round(referrals * COMMISSION);
+  const yearly = monthly * 12;
 
   return (
     <div className="bg-white/70 backdrop-blur-xl border border-white/80 rounded-3xl shadow-xl shadow-indigo-100/30 p-6 md:p-10">
@@ -289,12 +285,12 @@ function EarningsSimulator() {
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 rounded-2xl p-5 text-center">
           <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-1">{t('simulatorMonthly')}</p>
-          <p className="text-2xl md:text-3xl font-black text-gray-900 tabular-nums">{monthlyMin}–{monthlyMax}&euro;</p>
+          <p className="text-2xl md:text-3xl font-black text-gray-900 tabular-nums">{monthly}&euro;</p>
           <p className="text-xs text-gray-400 mt-1">{t('simulatorPerMonth')}</p>
         </div>
         <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-5 text-center">
           <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">{t('simulatorYearly')}</p>
-          <p className="text-2xl md:text-3xl font-black text-gray-900 tabular-nums">{yearlyMin}–{yearlyMax}&euro;</p>
+          <p className="text-2xl md:text-3xl font-black text-gray-900 tabular-nums">{yearly}&euro;</p>
           <p className="text-xs text-gray-400 mt-1">{t('simulatorPerYear')}</p>
         </div>
       </div>
@@ -519,11 +515,11 @@ export default function AmbassadeurContent() {
                 <p className="text-indigo-200 text-sm font-medium">{t('stat1')}</p>
               </div>
               <div>
-                <p className="text-4xl md:text-5xl font-black text-white mb-1 tabular-nums">{PRICE_MIN}–{PRICE_MAX}&euro;</p>
+                <p className="text-4xl md:text-5xl font-black text-white mb-1 tabular-nums">{PRICE}&euro;</p>
                 <p className="text-indigo-200 text-sm font-medium">{t('stat2')}</p>
               </div>
               <div>
-                <p className="text-4xl md:text-5xl font-black text-white mb-1 tabular-nums">{formatCommission(COMMISSION_MIN)}–{formatCommission(COMMISSION_MAX)}&euro;</p>
+                <p className="text-4xl md:text-5xl font-black text-white mb-1 tabular-nums">{formatCommission(COMMISSION)}&euro;</p>
                 <p className="text-indigo-200 text-sm font-medium">{t('stat3')}</p>
               </div>
             </div>
