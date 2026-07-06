@@ -15,6 +15,7 @@ import GiftCardModal from './GiftCardModal';
 import { useInView } from '@/hooks/useInView';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency, detectBookingPlatform, displayPhoneWithFlag, getCurrencyForCountry, extractCityFromAddress } from '@/lib/utils';
+import { isSlotBeforeLeadTime, normalizeBookingMinLead } from '@/lib/booking-window';
 import { trackCtaClick } from '@/lib/analytics';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
@@ -113,6 +114,7 @@ type MerchantPublic = Pick<
   | 'trial_ends_at'
   | 'booking_mode'
   | 'buffer_minutes'
+  | 'booking_min_lead_hours'
   | 'allow_customer_cancel'
   | 'cancel_deadline_days'
   | 'allow_customer_reschedule'
@@ -282,6 +284,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
     [merchantLocalDate],
   );
   const nowTime = merchantNowHHMM;
+  const minLeadHours = normalizeBookingMinLead(merchant.booking_min_lead_hours);
   const planningByMonth = useMemo(() => {
     if (!merchant.planning_enabled || planningSlots.length === 0) return [];
     const grouped: { month: string; days: { label: string; dateStr: string; times: { raw: string; display: string }[] }[] }[] = [];
@@ -290,6 +293,8 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
     for (const slot of planningSlots) {
       // Skip past slots for today
       if (slot.slot_date === todayLocal && slot.start_time <= nowTime) continue;
+      // Skip les créneaux dans le délai minimum de réservation (mig 181, multi-jours)
+      if (isSlotBeforeLeadTime(slot.slot_date, slot.start_time, minLeadHours, merchant.country)) continue;
 
       const d = new Date(slot.slot_date + 'T00:00:00');
       const monthKey = `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
@@ -309,7 +314,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
       monthGroup.days[monthGroup.days.length - 1].times.push({ raw: slot.start_time, display: timeStr });
     }
     return grouped;
-  }, [planningSlots, merchant.planning_enabled, todayLocal, nowTime]);
+  }, [planningSlots, merchant.planning_enabled, merchant.country, todayLocal, nowTime, minLeadHours]);
   // En mode creneaux, on affiche la section meme sans slots dispo (empty state explicite
   // vs disparition silencieuse). Mode libre garde son gate canBookOnline (horaires requis).
   const hasPlanning = merchant.planning_enabled && (isFreeMod ? canBookOnline : true);

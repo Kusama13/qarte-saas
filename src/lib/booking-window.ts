@@ -27,6 +27,32 @@ export function normalizeBookingHorizon(value: unknown): BookingHorizonDays {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Délai minimum avant réservation (mig 181) — miroir de l'horizon, borne basse.
+// Empêche les résas de dernière minute : une cliente ne peut réserver en ligne
+// qu'au-delà de `booking_min_lead_hours` heures. Contrairement à l'horizon (en
+// jours), le délai s'exprime en heures et s'étale sur plusieurs jours → on
+// raisonne en instants, pas en dates.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Valeur par défaut — aucun délai, comportement historique. */
+export const BOOKING_MIN_LEAD_HOURS = 0;
+
+/** Choix proposés au merchant dans les paramètres planning. */
+export const BOOKING_MIN_LEAD_OPTIONS = [0, 24, 72] as const;
+
+export type BookingMinLeadHours = (typeof BOOKING_MIN_LEAD_OPTIONS)[number];
+
+/**
+ * Coerce une valeur DB (NULL/undefined/legacy) vers un délai valide. Source
+ * unique pour tous les consommateurs — fallback 0 (aucun délai) si invalide.
+ */
+export function normalizeBookingMinLead(value: unknown): BookingMinLeadHours {
+  return (BOOKING_MIN_LEAD_OPTIONS as readonly number[]).includes(value as number)
+    ? (value as BookingMinLeadHours)
+    : BOOKING_MIN_LEAD_HOURS;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Past-slot guard (source unique vitrine + APIs)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -52,6 +78,42 @@ export function isSlotInPast(
   const tz = getTimezoneForCountry(country);
   const slotInstant = fromZonedTime(`${slotDate}T${slotTime}:00`, tz);
   return slotInstant.getTime() < now.getTime();
+}
+
+/**
+ * Renvoie true si le créneau tombe AVANT le seuil `now + leadHours` (délai
+ * minimum de réservation, mig 181). Généralisation d'`isSlotInPast` : leadHours
+ * = 0 → court-circuit (jamais bloqué), comportement historique. Raisonne en
+ * instants → gère nativement un délai qui déborde sur plusieurs jours (72 h).
+ * Sémantique stricte `<` (cohérente avec `isSlotInPast`).
+ *
+ * Appliqué partout où `isSlotInPast` l'est (book, customer-edit reschedule,
+ * free-slots, free-availability, listing public, ProgrammeView, BookingModal).
+ */
+export function isSlotBeforeLeadTime(
+  slotDate: string,
+  slotTime: string,
+  leadHours: number,
+  country?: string,
+  now: Date = new Date(),
+): boolean {
+  if (!leadHours) return false;
+  const tz = getTimezoneForCountry(country);
+  const slotInstant = fromZonedTime(`${slotDate}T${slotTime}:00`, tz);
+  return slotInstant.getTime() < now.getTime() + leadHours * 3_600_000;
+}
+
+/**
+ * Date `YYYY-MM-DD` (fuseau merchant) du seuil de délai minimum : premier jour
+ * qui peut contenir un créneau réservable. Sert à borner la borne basse des
+ * calendriers vitrine (les jours entièrement dans la fenêtre sont désactivés ;
+ * le jour-frontière garde ses créneaux tardifs, filtrés par `isSlotBeforeLeadTime`).
+ * leadHours = 0 → aujourd'hui (fuseau merchant).
+ */
+export function leadCutoffDate(leadHours: number, country?: string, now: Date = new Date()): string {
+  const tz = getTimezoneForCountry(country);
+  const cutoff = new Date(now.getTime() + (leadHours || 0) * 3_600_000);
+  return formatInTimeZone(cutoff, tz, 'yyyy-MM-dd');
 }
 
 /**

@@ -16,7 +16,7 @@ import { detectPaymentProvider } from '@/lib/payment-providers';
 import { computeBookingPrice } from '@/lib/booking-pricing';
 import FollowupScheduler from './FollowupScheduler';
 import { computeDepositInfo } from '@/lib/deposit';
-import { normalizeBookingHorizon } from '@/lib/booking-window';
+import { normalizeBookingHorizon, isSlotBeforeLeadTime, normalizeBookingMinLead, leadCutoffDate } from '@/lib/booking-window';
 import { haversineKm } from '@/lib/geo';
 
 type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
@@ -31,7 +31,7 @@ type MerchantBooking = Pick<
   'welcome_offer_enabled' | 'welcome_offer_description' | 'welcome_offer_discount_percent' | 'subscription_status' | 'booking_mode' |
   'allow_customer_cancel' | 'cancel_deadline_days' | 'allow_customer_reschedule' | 'reschedule_deadline_days' |
   'home_service_enabled' | 'home_service_radius_km' | 'shop_lat' | 'shop_lng' | 'booking_horizon_days' |
-  'recurring_followup_enabled'
+  'booking_min_lead_hours' | 'recurring_followup_enabled'
 >;
 
 interface BookingModalProps {
@@ -371,6 +371,7 @@ export default function BookingModal({
   // horaires libres du même jour qui, eux, tiennent la durée de la prestation.
   // On calcule today + now dans le fuseau merchant : sinon une cliente avec
   // horloge décalée verrait des créneaux que le serveur rejette (`slot_in_past`).
+  const minLeadHours = normalizeBookingMinLead(merchant.booking_min_lead_hours);
   const validDaySlots = useMemo(() => {
     if (isFreeMod || !slotDate || totalDuration === 0) return [];
     const tz = getTimezoneForCountry(merchant.country);
@@ -379,11 +380,13 @@ export default function BookingModal({
     return planningSlots
       .filter(s => s.slot_date === slotDate)
       .filter(s => slotDate !== todayStr || timeToMinutes(s.start_time) >= nowMins)
+      // Délai minimum de réservation (mig 181, peut couvrir plusieurs jours)
+      .filter(s => !isSlotBeforeLeadTime(s.slot_date, s.start_time, minLeadHours, merchant.country))
       .filter(s => slotFitsDuration(s.start_time))
       .map(s => s.start_time)
       .sort((a, b) => timeToMinutes(a) - timeToMinutes(b));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFreeMod, slotDate, totalDuration, planningSlots, bookedSlots, merchant.country]);
+  }, [isFreeMod, slotDate, totalDuration, planningSlots, bookedSlots, merchant.country, minLeadHours]);
 
   const effectiveDate = isFreeMod ? selectedDate : (slotDate || '');
   const effectiveTime = isFreeMod ? selectedTime : (pickedTime || '');
@@ -525,8 +528,8 @@ export default function BookingModal({
         // `slot_in_past` = la cliente a cliqué sur un créneau pile au moment où
         // il devenait périmé (race UI ↔ NOW serveur). Message dédié + reset
         // pour qu'elle puisse re-piocher dans la liste fraîchement filtrée.
-        if (data.error === 'slot_in_past') {
-          setError(t('slotInPast'));
+        if (data.error === 'slot_in_past' || data.error === 'slot_before_lead_time') {
+          setError(data.error === 'slot_before_lead_time' ? t('slotTooSoon') : t('slotInPast'));
           if (isFreeMod) {
             setSelectedTime('');
             setFreeSlotsBump(n => n + 1); // re-fetch /free-slots, le cache contient encore le slot expiré
@@ -1032,6 +1035,10 @@ export default function BookingModal({
                   const bcp47 = toBCP47(locale);
                   const today = new Date(); today.setHours(0, 0, 0, 0);
                   const todayStr = today.toISOString().split('T')[0];
+                  // Borne basse : le délai minimum de réservation avance le 1er jour
+                  // sélectionnable (mig 181). Jours entièrement dans la fenêtre désactivés ;
+                  // le jour-frontière garde ses créneaux tardifs (filtrés par validDaySlots).
+                  const minDateStr = minLeadHours > 0 ? leadCutoffDate(minLeadHours, merchant.country) : todayStr;
                   const maxDate = new Date(today); maxDate.setDate(today.getDate() + normalizeBookingHorizon(merchant.booking_horizon_days));
                   const maxDateStr = maxDate.toISOString().split('T')[0];
 
@@ -1092,7 +1099,7 @@ export default function BookingModal({
                         {cells.map((day, idx) => {
                           if (day === null) return <span key={`e-${idx}`} />;
                           const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                          const isPast = dateStr < todayStr;
+                          const isPast = dateStr < minDateStr;
                           const isFuture = dateStr > maxDateStr;
                           const isSelected = dateStr === selectedDate;
                           const isToday = dateStr === todayStr;

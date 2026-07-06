@@ -6,7 +6,7 @@ import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit
 import { sendMerchantPush } from '@/lib/merchant-push';
 import { sendBookingRescheduledEmail, sendBookingCancelledEmail } from '@/lib/email';
 import { getTodayForCountry, formatDate } from '@/lib/utils';
-import { isSlotInPast } from '@/lib/booking-window';
+import { isSlotInPast, isSlotBeforeLeadTime, normalizeBookingMinLead } from '@/lib/booking-window';
 import { reserveAndEnrich } from '@/lib/booking-reserve';
 import { safeRevoke } from '@/lib/booking-loyalty';
 import logger from '@/lib/logger';
@@ -81,7 +81,7 @@ async function commonChecks(
   // Fetch merchant
   const { data: merchant, error: merchantErr } = await supabaseAdmin
     .from('merchants')
-    .select('id, allow_customer_cancel, allow_customer_reschedule, cancel_deadline_days, reschedule_deadline_days, country, shop_name, locale, user_id, booking_mode, buffer_minutes')
+    .select('id, allow_customer_cancel, allow_customer_reschedule, cancel_deadline_days, reschedule_deadline_days, country, shop_name, locale, user_id, booking_mode, buffer_minutes, booking_min_lead_hours')
     .eq('id', merchantId)
     .single();
 
@@ -257,6 +257,12 @@ export async function PATCH(request: NextRequest) {
     // de backdater — saisie a posteriori légitime.
     if (isSlotInPast(new_date, new_time, merchant.country)) {
       return NextResponse.json({ error: 'slot_in_past' }, { status: 400 });
+    }
+
+    // Garde délai minimum (mig 181) : une cliente ne contourne pas la règle
+    // anti dernière minute en déplaçant son RDV vers un créneau trop proche.
+    if (isSlotBeforeLeadTime(new_date, new_time, normalizeBookingMinLead(merchant.booking_min_lead_hours), merchant.country)) {
+      return NextResponse.json({ error: 'slot_before_lead_time' }, { status: 400 });
     }
 
     // Symbiose résa → fidélité : un déplacement remet le RDV dans le futur → retirer un

@@ -63,7 +63,7 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
       'planning_enabled, planning_message, planning_message_expires, booking_message, ' +
       'auto_booking_enabled, deposit_link, deposit_percent, deposit_amount, phone, display_phone, country, ' +
       'student_offer_enabled, student_offer_description, subscription_status, past_due_since, plan_tier, trial_ends_at, ' +
-      'booking_mode, buffer_minutes, booking_horizon_days, home_service_enabled, home_service_radius_km, shop_lat, shop_lng, hide_address_on_public_page, ' +
+      'booking_mode, buffer_minutes, booking_horizon_days, booking_min_lead_hours, home_service_enabled, home_service_radius_km, shop_lat, shop_lng, hide_address_on_public_page, ' +
       'allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days, recurring_followup_enabled, ' +
       'contest_enabled, contest_prize, google_place_id, ' +
       'gift_card_enabled, gift_card_amounts, gift_card_message, gift_card_services_enabled, gift_card_expiry_months'

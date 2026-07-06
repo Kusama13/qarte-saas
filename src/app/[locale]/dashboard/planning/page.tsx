@@ -44,7 +44,7 @@ import { useToast } from '@/components/ui/Toast';
 import { Link } from '@/i18n/navigation';
 import { usePullToRefreshRegister } from '@/components/shared/PullToRefresh';
 import { hasValidOpeningHours } from '@/lib/opening-hours';
-import { BOOKING_HORIZON_OPTIONS, type BookingHorizonDays } from '@/lib/booking-window';
+import { BOOKING_HORIZON_OPTIONS, type BookingHorizonDays, BOOKING_MIN_LEAD_OPTIONS, type BookingMinLeadHours } from '@/lib/booking-window';
 
 const VIEW_MODE_KEY = 'qarte_planning_view';
 const VIEW_MODES = ['day', '2day', 'week'] as const;
@@ -75,6 +75,7 @@ export default function PlanningDashboard() {
     depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     bookingMode, setBookingMode, bufferMinutes, setBufferMinutes,
     bookingHorizonDays, setBookingHorizonDays,
+    bookingMinLeadHours, setBookingMinLeadHours,
     homeServiceEnabled, setHomeServiceEnabled,
     hideAddressOnPublicPage, setHideAddressOnPublicPage,
     homeServiceRadiusKm, setHomeServiceRadiusKm,
@@ -581,6 +582,7 @@ export default function PlanningDashboard() {
         booking_mode: bookingMode,
         buffer_minutes: bufferMinutes,
         booking_horizon_days: bookingHorizonDays,
+        booking_min_lead_hours: bookingMinLeadHours,
         home_service_enabled: homeServiceEnabled,
         home_service_radius_km: homeServiceEnabled ? homeServiceRadiusKm : null,
         shop_lat: shopLat,
@@ -1376,6 +1378,19 @@ export default function PlanningDashboard() {
                     options={BOOKING_HORIZON_OPTIONS.map(v => ({ value: String(v), label: t('horizonMonths', { n: v / 30 }) }))}
                     value={String(bookingHorizonDays)}
                     onChange={(v) => setBookingHorizonDays(Number(v) as BookingHorizonDays)}
+                  />
+                </SettingCard>
+              )}
+
+              {/* Card: Délai minimum de réservation — anti dernière minute (mig 181) */}
+              {autoBookingEnabled && (
+                <SettingCard icon={Clock} title={t('minLeadTitle')} className="sm:col-span-2">
+                  <p className="text-[11px] text-gray-500 mb-3">{t('minLeadHint')}</p>
+                  <ChipGroup
+                    fill
+                    options={BOOKING_MIN_LEAD_OPTIONS.map(v => ({ value: String(v), label: v === 0 ? t('minLeadNone') : t('minLeadHours', { h: v }) }))}
+                    value={String(bookingMinLeadHours)}
+                    onChange={(v) => setBookingMinLeadHours(Number(v) as BookingMinLeadHours)}
                   />
                 </SettingCard>
               )}

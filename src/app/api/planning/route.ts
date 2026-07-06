@@ -8,7 +8,7 @@ import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 import { requirePlanFeature } from '@/lib/api-helpers';
 import { recomputeDayTravel } from '@/lib/travel-recompute';
-import { normalizeBookingHorizon, isSlotInPast } from '@/lib/booking-window';
+import { normalizeBookingHorizon, isSlotInPast, isSlotBeforeLeadTime, normalizeBookingMinLead } from '@/lib/booking-window';
 import { validateAppliedDiscounts } from '@/lib/applied-discounts';
 import { buildServiceLines } from '@/lib/booking-pricing';
 import { customerAddressFields } from '@/lib/customer-address';
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       // Fetch merchant country for timezone-aware date
       const { data: merchantRow } = await supabaseAdmin
         .from('merchants')
-        .select('country, booking_horizon_days')
+        .select('country, booking_horizon_days, booking_min_lead_hours')
         .eq('id', merchantId)
         .single();
       const today = getTodayForCountry(merchantRow?.country);
@@ -66,11 +66,14 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
       }
 
-      // Filtre les créneaux du jour dont l'heure est déjà passée (heure merchant).
-      // La DB filtre la date, JS coupe l'heure pour aujourd'hui — volume borné par
-      // l'horizon, négligeable.
+      // Filtre les créneaux du jour dont l'heure est déjà passée (heure merchant)
+      // + ceux qui tombent dans le délai minimum de réservation (mig 181, peut
+      // couvrir plusieurs jours). La DB filtre la date, JS coupe l'heure — volume
+      // borné par l'horizon, négligeable.
+      const minLead = normalizeBookingMinLead(merchantRow?.booking_min_lead_hours);
       const slots = (data || []).filter(s =>
-        s.slot_date !== today || !isSlotInPast(s.slot_date, s.start_time, merchantRow?.country),
+        (s.slot_date !== today || !isSlotInPast(s.slot_date, s.start_time, merchantRow?.country)) &&
+        !isSlotBeforeLeadTime(s.slot_date, s.start_time, minLead, merchantRow?.country),
       );
 
       return NextResponse.json({ slots });

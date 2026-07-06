@@ -228,7 +228,9 @@ export default function UpcomingAppointmentsSection({
         }, 1500);
       } else {
         const data = await res.json();
-        setError(data.error || t('rescheduleError'));
+        // Codes serveur → message lisible (créneau devenu périmé / trop proche du délai mini).
+        const known: Record<string, string> = { slot_in_past: t('rescheduleSlotInPast'), slot_before_lead_time: t('rescheduleSlotTooSoon') };
+        setError(known[data.error as string] || t('rescheduleError'));
       }
     } catch {
       setError(t('rescheduleError'));

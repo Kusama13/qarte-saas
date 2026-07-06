@@ -8,7 +8,7 @@ import { getSupabase } from '@/lib/supabase';
 import type { PlanningSlot, CustomerSearchResult, MerchantCountry, BookingMode, BookingDepositFailure } from '@/types';
 import { getWeekStart, formatDate, getSlotServiceIds, SERVICE_COLORS } from './utils';
 import { toLocalPhone } from '@/lib/utils';
-import { BOOKING_HORIZON_DAYS, normalizeBookingHorizon, type BookingHorizonDays } from '@/lib/booking-window';
+import { BOOKING_HORIZON_DAYS, normalizeBookingHorizon, type BookingHorizonDays, BOOKING_MIN_LEAD_HOURS, normalizeBookingMinLead, type BookingMinLeadHours } from '@/lib/booking-window';
 
 export interface ServiceWithDuration {
   id: string;
@@ -101,6 +101,7 @@ export function usePlanningState() {
   const [bookingMode, setBookingMode] = useState<BookingMode>('slots');
   const [bufferMinutes, setBufferMinutes] = useState<0 | 10 | 15 | 20 | 30>(0);
   const [bookingHorizonDays, setBookingHorizonDays] = useState<BookingHorizonDays>(BOOKING_HORIZON_DAYS);
+  const [bookingMinLeadHours, setBookingMinLeadHours] = useState<BookingMinLeadHours>(BOOKING_MIN_LEAD_HOURS);
   // Service à domicile
   const [homeServiceEnabled, setHomeServiceEnabled] = useState(false);
   const [hideAddressOnPublicPage, setHideAddressOnPublicPage] = useState(false);
@@ -185,6 +186,7 @@ export function usePlanningState() {
       setBookingMode((merchant.booking_mode as BookingMode) || 'slots');
       setBufferMinutes((merchant.buffer_minutes as 0 | 10 | 15 | 20 | 30) || 0);
       setBookingHorizonDays(normalizeBookingHorizon(merchant.booking_horizon_days));
+      setBookingMinLeadHours(normalizeBookingMinLead(merchant.booking_min_lead_hours));
       setHomeServiceEnabled(!!merchant.home_service_enabled);
       setHideAddressOnPublicPage(!!merchant.hide_address_on_public_page);
       setHomeServiceRadiusKm(merchant.home_service_radius_km ?? null);
@@ -751,6 +753,7 @@ export function usePlanningState() {
     depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     bookingMode, setBookingMode, bufferMinutes, setBufferMinutes,
     bookingHorizonDays, setBookingHorizonDays,
+    bookingMinLeadHours, setBookingMinLeadHours,
     homeServiceEnabled, setHomeServiceEnabled,
     hideAddressOnPublicPage, setHideAddressOnPublicPage,
     homeServiceRadiusKm, setHomeServiceRadiusKm,
