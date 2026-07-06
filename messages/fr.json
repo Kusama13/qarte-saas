@@ -2427,7 +2427,10 @@
     "toastAttendanceNoShow": "Absence enregistrée",
     "toastDepositConfirmed": "Acompte confirmé",
     "toastBringBackSuccess": "Réservation restaurée",
-    "toastCustomerCreated": "{name} ajoutée à tes clientes"
+    "toastCustomerCreated": "{name} ajoutée à tes clientes",
+    "bookingLoyaltyTitle": "Fidélité sur les réservations",
+    "bookingLoyaltyToggle": "Créditer un point quand une cliente vient à son RDV",
+    "bookingLoyaltyDesc": "Chaque réservation honorée ajoute un point sur la carte de fidélité (ou le prix de la presta si tu es en cagnotte). Une absence ne crédite rien."
   },
   "qrDownload": {
     "title": "Mon QR code & Kit promo",
@@ -3436,7 +3439,9 @@
     "viewAll": "Voir tout ({count})",
     "noHistory": "Aucun historique",
     "tier": "palier {number}",
-    "appointmentAt": "Rendez-vous à {time}"
+    "appointmentAt": "Rendez-vous à {time}",
+    "bookingValidated": "Réservation",
+    "bookingValidatedAmount": "Réservation ({amount})"
   },
   "tierProgress": {
     "confirmedVisits": "Passages confirmés",

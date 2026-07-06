@@ -8,6 +8,7 @@ import { sendBookingRescheduledEmail, sendBookingCancelledEmail } from '@/lib/em
 import { getTodayForCountry, formatDate } from '@/lib/utils';
 import { isSlotInPast } from '@/lib/booking-window';
 import { reserveAndEnrich } from '@/lib/booking-reserve';
+import { safeRevoke } from '@/lib/booking-loyalty';
 import logger from '@/lib/logger';
 import type { EmailLocale } from '@/emails/translations';
 
@@ -155,6 +156,10 @@ export async function DELETE(request: NextRequest) {
     const { supabaseAdmin, merchant, slot } = checks;
     const isFreeMod = merchant.booking_mode === 'free';
 
+    // Symbiose résa → fidélité : retirer le point éventuellement crédité AVANT de vider/supprimer
+    // le créneau (en mode libre la suppression orphelinerait la ligne visits). No-op si non crédité.
+    await safeRevoke(supabaseAdmin, slot_id);
+
     if (isFreeMod) {
       // Mode libre: delete slot entirely (no empty slots in libre)
       await Promise.all([
@@ -175,6 +180,7 @@ export async function DELETE(request: NextRequest) {
           deposit_reminder_sent_at: null,
           booked_online: false,
           booked_at: null,
+          attendance_status: null,
           ...NULL_CUSTOM_SERVICE,
         })
         .eq('id', slot_id);
@@ -252,6 +258,14 @@ export async function PATCH(request: NextRequest) {
     if (isSlotInPast(new_date, new_time, merchant.country)) {
       return NextResponse.json({ error: 'slot_in_past' }, { status: 400 });
     }
+
+    // Symbiose résa → fidélité : un déplacement remet le RDV dans le futur → retirer un
+    // éventuel point crédité sur le créneau source (no-op dans le cas normal, RDV futur non honoré).
+    // On réinitialise aussi la présence de la source : le RPC move_booking ne le fait pas, sinon
+    // le créneau source (ou le créneau cible s'il la recopie) garderait un "Venue" périmé.
+    await safeRevoke(supabaseAdmin, slot_id);
+    await supabaseAdmin.from('merchant_planning_slots').update({ attendance_status: null }).eq('id', slot_id);
+
     const isFreeMod = merchant.booking_mode === 'free';
 
     let newSlotId: string;

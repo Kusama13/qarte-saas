@@ -92,7 +92,7 @@ export default function HistorySection({
       flagged_reason: v.flagged_reason,
       tier: undefined as number | undefined,
       reward_description: undefined as string | undefined,
-      source: null as string | null,
+      source: v.source || null,
       amount_spent: v.amount_spent ?? null,
       serviceNames: undefined as string[] | undefined,
     })),
@@ -235,6 +235,12 @@ export default function HistorySection({
                 if (isAdjustment) return t('adjustment');
                 if (isPending) return t('pending');
                 if (isRejected) return t('rejected');
+                // Passage issu d'une réservation honorée (mig 180) : libellé dédié.
+                if (item.type === 'visit' && item.source === 'booking') {
+                  return item.amount_spent != null && item.amount_spent > 0
+                    ? t('bookingValidatedAmount', { amount: formatCurrency(Number(item.amount_spent || 0), merchant.country, locale) })
+                    : t('bookingValidated');
+                }
                 if (item.amount_spent != null && item.amount_spent > 0) {
                   return t('visitValidatedAmount', { amount: formatCurrency(Number(item.amount_spent || 0), merchant.country, locale) });
                 }

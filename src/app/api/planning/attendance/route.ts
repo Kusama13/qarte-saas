@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authorizeMerchant } from '@/lib/api-helpers';
+import { syncBookingLoyalty } from '@/lib/booking-loyalty';
 import logger from '@/lib/logger';
 
 const patchSchema = z.object({
@@ -35,6 +36,10 @@ export async function PATCH(request: NextRequest) {
       logger.error('attendance PATCH error', error);
       return NextResponse.json({ error: 'Créneau introuvable' }, { status: 404 });
     }
+
+    // Symbiose résa → fidélité : Venue crédite un point, tout autre statut le retire.
+    // No-op si l'option merchant est OFF / pas de cliente reliée / déjà à jour.
+    await syncBookingLoyalty(auth.supabaseAdmin, slot_id, attendance_status === 'attended');
 
     return NextResponse.json({ success: true, attendance_status: data.attendance_status });
   } catch (error) {

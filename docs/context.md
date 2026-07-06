@@ -229,6 +229,13 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `ReviewPrompt` sur la carte (dismissable definitivement via localStorage)
 - Config dans `/dashboard/program` (ExtrasSection)
 
+### Symbiose Réservation ↔ Fidélité (mig 180, opt-in `booking_earns_loyalty`, défaut OFF)
+- Une **réservation honorée** crédite automatiquement un point sur la carte : **+1 tampon** (mode passage) ou le **prix de la presta** (`total_price`, mode cagnotte). Libellé **« Réservation du X »** sur la carte cliente (`HistorySection`, `visits.source='booking'`).
+- **« Le point suit la présence »** : le crédit se déclenche quand `attendance_status='attended'` — soit au **« Venue »** manuel (`/api/planning/attendance` PATCH), soit à l'**auto-mark J+1** de `morning-jobs` (7h). **No-show → aucun point** ; un point crédité est **retiré** si le RDV passe en `no_show`/annulé/supprimé/replanifié (helper `revokeBookingLoyalty`).
+- Helper unique `src/lib/booking-loyalty.ts` (`creditBookingLoyalty` / `revokeBookingLoyalty`). Garde-fous : toggle ON, créneau primary réservé avec `customer_id` (walk-in texte libre ignoré), non déjà crédité, **dédup jour** (si un passage confirmé existe déjà ce jour-là, le scan gagne → 1 point/jour).
+- **Idempotence fail-safe** : index unique partiel `visits(planning_slot_id)` → au pire un point manquant, jamais de double ni de corruption (même en cas de réutilisation de créneau). Wrappers `safeRevoke` / `syncBookingLoyalty` (ne jettent jamais) branchés sur **tous** les points de sortie d'état (attendance `PATCH`, annulation `planning` PATCH + DELETE en lot pré-requêté, `customer-edit` cancel+reschedule, `shift-slot`) + reset `attendance_status` à l'annulation **et au déplacement** (le RPC `move_booking` ne le réinitialise pas). Le checkin exclut `source='booking'` de ses comptes Shield/idempotence.
+- Réglage : **Planning > Paramètres** (`LoyaltyBookingCard`, visible si résa en ligne active). Une résa honorée compte aussi comme **passage** dans les stats (choix assumé).
+
 ### Push Notifications
 - Programmees (10h/19h), manuelles, automations (welcome, close_to_reward, reward_ready, inactive, reward_reminder, events)
 - Batched 50, pause 100ms entre batches

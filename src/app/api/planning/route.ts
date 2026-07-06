@@ -12,6 +12,7 @@ import { normalizeBookingHorizon, isSlotInPast } from '@/lib/booking-window';
 import { validateAppliedDiscounts } from '@/lib/applied-discounts';
 import { buildServiceLines } from '@/lib/booking-pricing';
 import { customerAddressFields } from '@/lib/customer-address';
+import { safeRevoke } from '@/lib/booking-loyalty';
 
 async function verifyOwnership(supabase: Awaited<ReturnType<typeof createRouteHandlerSupabaseClient>>, merchantId: string, userId: string) {
   const { data } = await supabase
@@ -279,6 +280,9 @@ export async function PATCH(request: NextRequest) {
       updateData.booked_at = null;
       updateData.deposit_confirmed = null;
       updateData.deposit_deadline_at = null;
+      // Reset présence : un créneau réutilisé ne doit pas garder un "Venue" périmé
+      // (sinon incohérence stats + double-crédit fidélité au re-booking).
+      updateData.attendance_status = null;
     }
     // else : edition d'une resa existante, on preserve booked_at
     if (client_phone !== undefined) {
@@ -544,6 +548,10 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Erreur lors de la mise à jour' }, { status: 500 });
     }
 
+    // Symbiose résa → fidélité : annuler une résa retire le point éventuellement crédité.
+    // Avant tout delete_if_empty (sinon la ligne visits perd son lien planning_slot_id).
+    if (!trimmedName && wasBooked) await safeRevoke(supabaseAdmin, slotId);
+
     const smsType: 'confirmation_deposit' | 'confirmation_no_deposit' | null =
       (send_sms && deposit_confirmed === true) ? 'confirmation_deposit'
       : send_sms ? 'confirmation_no_deposit'
@@ -676,6 +684,18 @@ export async function DELETE(request: NextRequest) {
       .select('slot_date')
       .in('id', slotIds);
     const affectedDates = Array.from(new Set((deletedSlots || []).map((s) => s.slot_date)));
+
+    // Symbiose résa → fidélité : retirer les points crédités par ces résas AVANT suppression
+    // (sinon ON DELETE SET NULL orpheline la ligne visits et le point reste). Une seule requête
+    // repère les créneaux réellement crédités (souvent zéro) au lieu de N revoke à vide.
+    const { data: creditedVisits } = await supabaseAdmin
+      .from('visits')
+      .select('planning_slot_id')
+      .in('planning_slot_id', slotIds)
+      .eq('source', 'booking');
+    for (const v of creditedVisits || []) {
+      if (v.planning_slot_id) await safeRevoke(supabaseAdmin, v.planning_slot_id);
+    }
 
     // Also delete filler slots linked to any deleted primary slot
     await supabaseAdmin

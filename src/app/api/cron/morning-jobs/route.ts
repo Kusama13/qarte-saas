@@ -12,6 +12,7 @@ import { isLegalSendTime } from '@/lib/sms-compliance';
 import { resend, EMAIL_FROM, EMAIL_HEADERS } from '@/lib/resend';
 import { verifyCronAuth, batchGetUserEmails, rateLimitDelay } from '@/lib/cron-helpers';
 import { sendFollowupDepositReminders } from '@/lib/followup-reminders';
+import { creditBookingLoyalty } from '@/lib/booking-loyalty';
 import logger from '@/lib/logger';
 
 const supabase = createClient(
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
   const results = {
     birthdayVouchers: { processed: 0, created: 0, skipped: 0, errors: 0 },
     depositDeadline: { released: 0, warned: 0 },
-    attendanceAutoMarked: { count: 0 },
+    attendanceAutoMarked: { count: 0, creditedLoyalty: 0 },
     contestPrizeReminder: { processed: 0, alerted: 0 },
     googleReviewsCachePurge: { deleted: 0 },
     followupDepositReminders: { processed: 0, remindersSent: 0, errors: 0 },
@@ -361,9 +362,32 @@ export async function GET(request: NextRequest) {
       .not('client_name', 'is', null)
       .neq('client_name', '__blocked__')
       .is('primary_slot_id', null)
-      .select('id');
+      .select('id, merchant_id, customer_id');
     if (markErr) throw markErr;
     results.attendanceAutoMarked.count = marked?.length || 0;
+
+    // Symbiose résa → fidélité : créditer les résas fraîchement passées "Venue", pour les
+    // merchants ayant activé l'option. Résas reliées à une cliente uniquement (walk-in ignoré).
+    const bookingSlots = (marked || []).filter((s) => s.customer_id);
+    if (bookingSlots.length > 0) {
+      const merchantIds = [...new Set(bookingSlots.map((s) => s.merchant_id))];
+      const { data: optedIn } = await supabase
+        .from('merchants')
+        .select('id')
+        .in('id', merchantIds)
+        .eq('booking_earns_loyalty', true);
+      const optedInSet = new Set((optedIn || []).map((m) => m.id));
+      let credited = 0;
+      for (const s of bookingSlots) {
+        if (!optedInSet.has(s.merchant_id)) continue;
+        try {
+          if ((await creditBookingLoyalty(supabase, s.id)) === 'credited') credited++;
+        } catch (e) {
+          logger.error('morning-jobs booking loyalty credit error', e);
+        }
+      }
+      results.attendanceAutoMarked.creditedLoyalty = credited;
+    }
     sectionStatuses.push({ name: 'attendanceAutoMark', status: 'ok' });
   } catch (err) {
     logger.error('attendance auto-mark error:', err);
