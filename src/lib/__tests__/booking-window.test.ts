@@ -13,12 +13,12 @@ describe('normalizeBookingMinLead', () => {
   it('accepte les valeurs valides', () => {
     expect(normalizeBookingMinLead(0)).toBe(0);
     expect(normalizeBookingMinLead(24)).toBe(24);
-    expect(normalizeBookingMinLead(72)).toBe(72);
+    expect(normalizeBookingMinLead(48)).toBe(48);
   });
   it('retombe sur 0 pour toute valeur invalide/legacy', () => {
     expect(normalizeBookingMinLead(null)).toBe(0);
     expect(normalizeBookingMinLead(undefined)).toBe(0);
-    expect(normalizeBookingMinLead(48)).toBe(0);
+    expect(normalizeBookingMinLead(72)).toBe(0);
     expect(normalizeBookingMinLead('24')).toBe(0);
   });
 });
@@ -37,11 +37,11 @@ describe('isSlotBeforeLeadTime', () => {
     expect(isSlotBeforeLeadTime('2026-06-10', '23:00', 24, 'FR', NOW)).toBe(true);
   });
 
-  it('72 h : le délai s\'étale sur plusieurs jours', () => {
-    // seuil = vendredi 13 juin 14:00
-    expect(isSlotBeforeLeadTime('2026-06-12', '18:00', 72, 'FR', NOW)).toBe(true);
-    expect(isSlotBeforeLeadTime('2026-06-13', '13:59', 72, 'FR', NOW)).toBe(true);
-    expect(isSlotBeforeLeadTime('2026-06-13', '14:01', 72, 'FR', NOW)).toBe(false);
+  it('48 h : le délai s\'étale sur plusieurs jours', () => {
+    // seuil = jeudi 12 juin 14:00
+    expect(isSlotBeforeLeadTime('2026-06-11', '18:00', 48, 'FR', NOW)).toBe(true);
+    expect(isSlotBeforeLeadTime('2026-06-12', '13:59', 48, 'FR', NOW)).toBe(true);
+    expect(isSlotBeforeLeadTime('2026-06-12', '14:01', 48, 'FR', NOW)).toBe(false);
   });
 
   it('sémantique stricte < (pile au seuil = accepté)', () => {
@@ -61,8 +61,8 @@ describe('leadCutoffDate', () => {
   it('délai 0 → aujourd\'hui (fuseau merchant)', () => {
     expect(leadCutoffDate(0, 'FR', NOW)).toBe('2026-06-10');
   });
-  it('24 h / 72 h → date du seuil', () => {
+  it('24 h / 48 h → date du seuil', () => {
     expect(leadCutoffDate(24, 'FR', NOW)).toBe('2026-06-11');
-    expect(leadCutoffDate(72, 'FR', NOW)).toBe('2026-06-13');
+    expect(leadCutoffDate(48, 'FR', NOW)).toBe('2026-06-12');
   });
 });

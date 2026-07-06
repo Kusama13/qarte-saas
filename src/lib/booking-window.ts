@@ -38,7 +38,7 @@ export function normalizeBookingHorizon(value: unknown): BookingHorizonDays {
 export const BOOKING_MIN_LEAD_HOURS = 0;
 
 /** Choix proposés au merchant dans les paramètres planning. */
-export const BOOKING_MIN_LEAD_OPTIONS = [0, 24, 72] as const;
+export const BOOKING_MIN_LEAD_OPTIONS = [0, 24, 48] as const;
 
 export type BookingMinLeadHours = (typeof BOOKING_MIN_LEAD_OPTIONS)[number];
 
@@ -84,7 +84,7 @@ export function isSlotInPast(
  * Renvoie true si le créneau tombe AVANT le seuil `now + leadHours` (délai
  * minimum de réservation, mig 181). Généralisation d'`isSlotInPast` : leadHours
  * = 0 → court-circuit (jamais bloqué), comportement historique. Raisonne en
- * instants → gère nativement un délai qui déborde sur plusieurs jours (72 h).
+ * instants → gère nativement un délai qui déborde sur plusieurs jours (48 h).
  * Sémantique stricte `<` (cohérente avec `isSlotInPast`).
  *
  * Appliqué partout où `isSlotInPast` l'est (book, customer-edit reschedule,

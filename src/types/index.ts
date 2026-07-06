@@ -170,7 +170,7 @@ export interface Merchant {
   // Horizon de réservation : jusqu'à combien de jours à l'avance la cliente peut réserver (mig 168)
   booking_horizon_days: 30 | 60 | 90;
   // Délai minimum avant réservation : anti dernière minute, 0 = aucun (mig 181)
-  booking_min_lead_hours: 0 | 24 | 72;
+  booking_min_lead_hours: 0 | 24 | 48;
   // Service à domicile — calcul durée de trajet entre RDV
   home_service_enabled: boolean;
   home_service_radius_km: number | null;
