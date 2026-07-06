@@ -2442,7 +2442,20 @@
     "toastCustomerCreated": "{name} added to your customers",
     "bookingLoyaltyTitle": "Loyalty on bookings",
     "bookingLoyaltyToggle": "Credit a stamp when a client shows up",
-    "bookingLoyaltyDesc": "Every honored booking adds a stamp to the loyalty card (or the service price in cashback mode). A no-show credits nothing."
+    "bookingLoyaltyDesc": "Every honored booking adds a stamp to the loyalty card (or the service price in cashback mode). A no-show credits nothing.",
+    "bookingLoyaltyHelpButton": "How it works",
+    "bookingLoyaltyHelpTitle": "Loyalty on bookings, made clear",
+    "bookingLoyaltyHelpIntro": "When a client books online and shows up, you can add a loyalty point automatically. No card to stamp by hand: the point follows attendance.",
+    "bookingLoyaltyHelpStep1Title": "She shows up, she earns a point",
+    "bookingLoyaltyHelpStep1Desc": "As soon as you mark the appointment as attended (or the next morning if you forget), a point is added to her card.",
+    "bookingLoyaltyHelpStep2Title": "A point she recognizes",
+    "bookingLoyaltyHelpStep2Desc": "On her card, the point shows up as \"Booking on June 12\". Your client sees where it comes from.",
+    "bookingLoyaltyHelpStep3Title": "A no-show earns nothing",
+    "bookingLoyaltyHelpStep3Desc": "If the client doesn't come, no point. And if you mark an already-credited appointment as a no-show, the point is removed automatically.",
+    "bookingLoyaltyHelpStep4Title": "In pot mode",
+    "bookingLoyaltyHelpStep4Desc": "If you accumulate amounts instead of stamps, the price of the booked service is added to her pot.",
+    "bookingLoyaltyHelpDedup": "One point per day only: if your client shows up for her appointment and also scans her card in-store the same day, she earns one point, not two.",
+    "bookingLoyaltyHelpOnline": "This only applies to online bookings linked to a client. A slot you block yourself in your calendar credits nothing."
   },
   "qrDownload": {
     "title": "My QR Code & Promo Kit",

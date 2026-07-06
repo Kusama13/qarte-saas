@@ -2430,7 +2430,20 @@
     "toastCustomerCreated": "{name} ajoutée à tes clientes",
     "bookingLoyaltyTitle": "Fidélité sur les réservations",
     "bookingLoyaltyToggle": "Créditer un point quand une cliente vient à son RDV",
-    "bookingLoyaltyDesc": "Chaque réservation honorée ajoute un point sur la carte de fidélité (ou le prix de la presta si tu es en cagnotte). Une absence ne crédite rien."
+    "bookingLoyaltyDesc": "Chaque réservation honorée ajoute un point sur la carte de fidélité (ou le prix de la presta si tu es en cagnotte). Une absence ne crédite rien.",
+    "bookingLoyaltyHelpButton": "Comment ça marche",
+    "bookingLoyaltyHelpTitle": "La fidélité sur les réservations, en clair",
+    "bookingLoyaltyHelpIntro": "Quand une cliente réserve en ligne et vient à son rendez-vous, tu peux lui ajouter un point de fidélité sans rien faire de plus. Pas de carte à tamponner à la main : le point suit sa présence.",
+    "bookingLoyaltyHelpStep1Title": "Elle vient, elle gagne un point",
+    "bookingLoyaltyHelpStep1Desc": "Dès que tu marques « Venue » sur le rendez-vous (ou le lendemain matin si tu oublies), un point s'ajoute sur sa carte.",
+    "bookingLoyaltyHelpStep2Title": "Un point qu'elle reconnaît",
+    "bookingLoyaltyHelpStep2Desc": "Sur sa carte, le point s'affiche avec « Réservation du 12 juin ». Ta cliente voit d'où il vient.",
+    "bookingLoyaltyHelpStep3Title": "Une absence ne compte pas",
+    "bookingLoyaltyHelpStep3Desc": "Si la cliente ne vient pas, aucun point. Et si tu passes en « absente » un rendez-vous déjà crédité, le point est retiré tout seul.",
+    "bookingLoyaltyHelpStep4Title": "En mode cagnotte",
+    "bookingLoyaltyHelpStep4Desc": "Si tu cumules des montants plutôt que des tampons, c'est le prix de la prestation réservée qui s'ajoute à sa cagnotte.",
+    "bookingLoyaltyHelpDedup": "Un seul point par jour : si ta cliente vient à son RDV et scanne aussi sa carte en caisse le même jour, elle gagne un point, pas deux.",
+    "bookingLoyaltyHelpOnline": "Ça ne concerne que les réservations en ligne reliées à une cliente. Un créneau que tu bloques toi-même dans ton agenda ne crédite rien."
   },
   "qrDownload": {
     "title": "Mon QR code & Kit promo",
