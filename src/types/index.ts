@@ -158,6 +158,7 @@ export interface Merchant {
   reschedule_deadline_days: number;
   // RDV de suivi récurrents (+3/+6 sem.) proposés en fin de résa, acompte différé (mig 177)
   recurring_followup_enabled: boolean;
+  booking_earns_loyalty?: boolean;
   // Public page link on loyalty card
   show_public_page_on_card: boolean;
   signup_source: string | null;
@@ -457,6 +458,9 @@ export interface Visit {
   status: VisitStatus;
   flagged_reason: string | null;
   ip_hash: string | null;
+  // Origine du passage : 'scan' (caisse, défaut) ou 'booking' (réservation honorée, mig 180)
+  source?: 'scan' | 'booking';
+  planning_slot_id?: string | null;
 }
 
 // Pending visit with customer info for moderation widget

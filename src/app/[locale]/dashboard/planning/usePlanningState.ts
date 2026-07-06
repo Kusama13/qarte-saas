@@ -89,6 +89,7 @@ export function usePlanningState() {
   const [cancelDeadlineDays, setCancelDeadlineDays] = useState('1');
   const [rescheduleDeadlineDays, setRescheduleDeadlineDays] = useState('1');
   const [recurringFollowupEnabled, setRecurringFollowupEnabled] = useState(false);
+  const [bookingEarnsLoyalty, setBookingEarnsLoyalty] = useState(false);
   const [depositLink, setDepositLink] = useState('');
   const [depositLinkLabel, setDepositLinkLabel] = useState('');
   const [depositLink2, setDepositLink2] = useState('');
@@ -180,6 +181,7 @@ export function usePlanningState() {
       setCancelDeadlineDays(String(merchant.cancel_deadline_days ?? 1));
       setRescheduleDeadlineDays(String(merchant.reschedule_deadline_days ?? 1));
       setRecurringFollowupEnabled(!!merchant.recurring_followup_enabled);
+      setBookingEarnsLoyalty(!!merchant.booking_earns_loyalty);
       setBookingMode((merchant.booking_mode as BookingMode) || 'slots');
       setBufferMinutes((merchant.buffer_minutes as 0 | 10 | 15 | 20 | 30) || 0);
       setBookingHorizonDays(normalizeBookingHorizon(merchant.booking_horizon_days));
@@ -744,6 +746,7 @@ export function usePlanningState() {
     autoBookingEnabled, setAutoBookingEnabled,
     allowCustomerCancel, setAllowCustomerCancel, allowCustomerReschedule, setAllowCustomerReschedule,
     recurringFollowupEnabled, setRecurringFollowupEnabled,
+    bookingEarnsLoyalty, setBookingEarnsLoyalty,
     cancelDeadlineDays, setCancelDeadlineDays, rescheduleDeadlineDays, setRescheduleDeadlineDays,
     depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     bookingMode, setBookingMode, bufferMinutes, setBufferMinutes,

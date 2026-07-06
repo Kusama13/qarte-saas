@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { sendBookingSms } from '@/lib/sms';
 import logger from '@/lib/logger';
 import { recomputeDayTravel } from '@/lib/travel-recompute';
+import { safeRevoke } from '@/lib/booking-loyalty';
 
 const shiftSlotSchema = z.object({
   merchantId: z.string().uuid(),
@@ -66,6 +67,13 @@ export async function POST(request: NextRequest) {
     // Booked slot with force flag → use the atomic RPC that transfers booking data
     // (source stays in grid as a free slot, target is created or reused)
     if (slot.client_name && force) {
+      // Symbiose résa → fidélité : la résa quitte ce créneau (crédit lié à l'ancien slot_id).
+      // On retire un éventuel point crédité sur la source ; le créneau cible sera crédité à sa
+      // présence. On réinitialise aussi la présence (move_booking ne le fait pas → pas de "Venue"
+      // périmé sur la source, ni recopié sur la cible). No-op dans le cas normal (RDV futur).
+      await safeRevoke(supabaseAdmin, slotId);
+      await supabaseAdmin.from('merchant_planning_slots').update({ attendance_status: null }).eq('id', slotId);
+
       const { data: merchantData } = await supabaseAdmin
         .from('merchants')
         .select('booking_mode, buffer_minutes')

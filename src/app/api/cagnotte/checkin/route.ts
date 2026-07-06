@@ -193,6 +193,7 @@ export async function POST(request: NextRequest) {
         .select('id, status, points_earned, flagged_reason, amount_spent')
         .eq('customer_id', customer.id)
         .eq('merchant_id', merchant.id)
+        .eq('source', 'scan')
         .gte('visited_at', threeMinAgo)
         .order('visited_at', { ascending: false })
         .limit(1)
@@ -203,6 +204,7 @@ export async function POST(request: NextRequest) {
             .select('*', { count: 'exact', head: true })
             .eq('customer_id', customer.id)
             .eq('merchant_id', merchant.id)
+            .eq('source', 'scan')
             .gte('visited_at', todayStart)
             .in('status', ['confirmed', 'pending'])
         : Promise.resolve({ count: 0 } as { count: number }),

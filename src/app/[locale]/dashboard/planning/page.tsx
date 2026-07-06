@@ -9,6 +9,7 @@ import { CalendarDays, CalendarCheck, CalendarRange, ChevronLeft, ChevronRight, 
 import { DepositCard } from './settings/DepositCard';
 import { CustomerEditCard } from './settings/CustomerEditCard';
 import { FollowupCard } from './settings/FollowupCard';
+import { LoyaltyBookingCard } from './settings/LoyaltyBookingCard';
 import { HomeServiceCard } from './settings/HomeServiceCard';
 import type { BookingMode, MerchantCountry, BookingDepositFailure } from '@/types';
 import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
@@ -69,6 +70,7 @@ export default function PlanningDashboard() {
     autoBookingEnabled, setAutoBookingEnabled,
     allowCustomerCancel, setAllowCustomerCancel, allowCustomerReschedule, setAllowCustomerReschedule,
     recurringFollowupEnabled, setRecurringFollowupEnabled,
+    bookingEarnsLoyalty, setBookingEarnsLoyalty,
     cancelDeadlineDays, setCancelDeadlineDays, rescheduleDeadlineDays, setRescheduleDeadlineDays,
     depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     bookingMode, setBookingMode, bufferMinutes, setBufferMinutes,
@@ -575,6 +577,7 @@ export default function PlanningDashboard() {
         cancel_deadline_days: parseInt(cancelDeadlineDays) || 1,
         reschedule_deadline_days: parseInt(rescheduleDeadlineDays) || 1,
         recurring_followup_enabled: autoBookingEnabled && recurringFollowupEnabled,
+        booking_earns_loyalty: autoBookingEnabled && bookingEarnsLoyalty,
         booking_mode: bookingMode,
         buffer_minutes: bufferMinutes,
         booking_horizon_days: bookingHorizonDays,
@@ -1468,6 +1471,10 @@ export default function PlanningDashboard() {
                 onEnabledChange={setRecurringFollowupEnabled}
                 bookingMode={bookingMode}
                 bookingHorizonDays={bookingHorizonDays}
+              />
+              <LoyaltyBookingCard
+                enabled={bookingEarnsLoyalty}
+                onEnabledChange={setBookingEarnsLoyalty}
               />
             </>
           )}
