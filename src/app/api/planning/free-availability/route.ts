@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import { getTodayForCountry } from '@/lib/utils';
+import { normalizeBookingMinLead, leadCutoffDate } from '@/lib/booking-window';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
@@ -112,7 +113,7 @@ export async function GET(request: NextRequest) {
     // Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, booking_mode, buffer_minutes, country, auto_booking_enabled, planning_enabled, opening_hours, home_service_enabled')
+      .select('id, booking_mode, buffer_minutes, country, auto_booking_enabled, planning_enabled, opening_hours, home_service_enabled, booking_min_lead_hours')
       .eq('id', merchantId)
       .is('deleted_at', null)
       .single();
@@ -135,9 +136,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ availability: {} });
     }
 
-    // Cap le range a today..today+MAX_RANGE_DAYS pour eviter abus
+    // Cap le range a today..today+MAX_RANGE_DAYS pour eviter abus. La borne basse
+    // suit le délai minimum de réservation (mig 181) : les jours entièrement dans
+    // la fenêtre ne renvoient pas de pastille. leadFloor === today quand délai = 0.
     const today = getTodayForCountry(merchant.country as MerchantCountry);
-    const effectiveFrom = from < today ? today : from;
+    const leadFloor = leadCutoffDate(normalizeBookingMinLead(merchant.booking_min_lead_hours), merchant.country as MerchantCountry);
+    const effectiveFrom = from < leadFloor ? leadFloor : from;
     const cap = addDays(today, MAX_RANGE_DAYS);
     const effectiveTo = to > cap ? cap : to;
     if (effectiveFrom > effectiveTo) {

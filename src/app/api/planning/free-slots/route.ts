@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
-import { getTodayForCountry } from '@/lib/utils';
-import { getMinutesSinceMidnightForCountry } from '@/lib/booking-window';
+import { getMinutesSinceMidnightForCountry, normalizeBookingMinLead, leadCutoffDate } from '@/lib/booking-window';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
@@ -63,7 +62,7 @@ export async function GET(request: NextRequest) {
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, booking_mode, buffer_minutes, country, auto_booking_enabled, planning_enabled, opening_hours, home_service_enabled, home_service_radius_km, shop_lat, shop_lng')
+      .select('id, booking_mode, buffer_minutes, country, auto_booking_enabled, planning_enabled, opening_hours, home_service_enabled, home_service_radius_km, shop_lat, shop_lng, booking_min_lead_hours')
       .eq('id', merchantId)
       .is('deleted_at', null)
       .single();
@@ -80,9 +79,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ slots: [] });
     }
 
-    // 2. Validate date is not in the past
-    const today = getTodayForCountry(merchant.country as MerchantCountry);
-    if (date < today) {
+    // 2. Validate date is bookable : ni passée, ni dans le délai minimum (mig 181,
+    // peut couvrir plusieurs jours). leadCutoff === aujourd'hui quand délai = 0.
+    const now = new Date();
+    const minLead = normalizeBookingMinLead(merchant.booking_min_lead_hours);
+    const leadCutoff = leadCutoffDate(minLead, merchant.country as MerchantCountry, now);
+    if (date < leadCutoff) {
       return NextResponse.json({ slots: [] });
     }
 
@@ -165,10 +167,15 @@ export async function GET(request: NextRequest) {
     const lastStart = closeMins - totalDuration;
     const baseCandidates: number[] = [];
 
+    // Jour-frontière du seuil (= aujourd'hui si délai 0) : on coupe aux minutes
+    // avant le seuil. Les jours entièrement dans la fenêtre ont déjà été rejetés
+    // plus haut (date < leadCutoff). refInstant = maintenant si délai 0, sinon le seuil.
+    // minLead=0 → refInstant === now (seuil = maintenant), reproduit le cut passé
+    // historique ; minLead>0 → refInstant = seuil, applique la borne du jour-frontière.
     let earliestStartToday = openMins;
-    if (date === today) {
-      const nowMins = getMinutesSinceMidnightForCountry(merchant.country as MerchantCountry);
-      earliestStartToday = Math.max(openMins, nowMins);
+    if (date === leadCutoff) {
+      const refMins = getMinutesSinceMidnightForCountry(merchant.country as MerchantCountry, new Date(now.getTime() + minLead * 3_600_000));
+      earliestStartToday = Math.max(openMins, refMins);
     }
 
     for (let t = openMins; t <= lastStart; t += 15) {

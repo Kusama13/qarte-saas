@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import { formatPhoneNumber, validatePhone, getTimezoneForCountry, getTodayForCountry, getAllPhoneFormats, getAppUrl, getCurrencyForCountry, truncate } from '@/lib/utils';
-import { normalizeBookingHorizon, isSlotInPast } from '@/lib/booking-window';
+import { normalizeBookingHorizon, isSlotInPast, isSlotBeforeLeadTime, normalizeBookingMinLead } from '@/lib/booking-window';
 import { isMerchantBlocked } from '@/lib/merchant-access';
 import type { EmailLocale } from '@/emails/translations';
 import { computeDepositDeadline, computeDepositAmount } from '@/lib/deposit';
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, past_due_since, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, deposit_only_for_new_customers, welcome_offer_enabled, welcome_offer_description, welcome_offer_discount_percent, booking_mode, buffer_minutes, booking_horizon_days, home_service_enabled, home_service_radius_km, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days, recurring_followup_enabled')
+      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, past_due_since, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, deposit_only_for_new_customers, welcome_offer_enabled, welcome_offer_description, welcome_offer_discount_percent, booking_mode, buffer_minutes, booking_horizon_days, booking_min_lead_hours, home_service_enabled, home_service_radius_km, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days, recurring_followup_enabled')
       .eq('id', merchant_id)
       .single();
 
@@ -123,6 +123,14 @@ export async function POST(request: NextRequest) {
     // dashboard n'est PAS gardé ici — un merchant peut légitimement backdater.
     if (isSlotInPast(slot_date, slot_time, merchant.country)) {
       return NextResponse.json({ error: 'slot_in_past' }, { status: 400 });
+    }
+
+    // Garde délai minimum : refuse une résa cliente trop proche (anti dernière
+    // minute, mig 181). Borne basse, miroir de l'horizon. Skip pour les RDV de
+    // suivi (cadence merchant, toujours loin) ; non appliqué au manual-booking
+    // dashboard (comme le past-guard, le merchant peut caler du dernière minute).
+    if (!isFollowup && isSlotBeforeLeadTime(slot_date, slot_time, normalizeBookingMinLead(merchant.booking_min_lead_hours), merchant.country)) {
+      return NextResponse.json({ error: 'slot_before_lead_time' }, { status: 400 });
     }
 
     // 2. Format & validate phone
