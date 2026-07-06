@@ -161,6 +161,11 @@ export async function POST(request: NextRequest) {
         phone: formattedPhone,
         country: merchantCountry,
         stamps_required: defaultStamps[shop_type] || 10,
+        // Symbiose résa → fidélité activée par défaut pour les nouveaux merchants (mig 180).
+        // Ne crédite que les résas EN LIGNE honorées (garde booked_online dans booking-loyalty.ts),
+        // donc sans effet tant que la résa en ligne n'est pas activée. Les merchants existants
+        // gardent leur valeur (défaut colonne FALSE) et restent en opt-in.
+        booking_earns_loyalty: true,
         ...(signup_source && { signup_source: String(signup_source).slice(0, 100) }),
         ...(referred_by_merchant_id && { referred_by_merchant_id }),
         ...(locale === 'en' && { locale: 'en' }),

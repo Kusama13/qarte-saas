@@ -578,7 +578,10 @@ export default function PlanningDashboard() {
         cancel_deadline_days: parseInt(cancelDeadlineDays) || 1,
         reschedule_deadline_days: parseInt(rescheduleDeadlineDays) || 1,
         recurring_followup_enabled: autoBookingEnabled && recurringFollowupEnabled,
-        booking_earns_loyalty: autoBookingEnabled && bookingEarnsLoyalty,
+        // Découplé de autoBookingEnabled : sinon le défaut ON (nouveaux merchants) sauterait
+        // au 1er enregistrement de réglages avant que la résa en ligne soit activée. Inoffensif :
+        // le crédit ne se déclenche que sur une vraie résa en ligne honorée (garde booked_online).
+        booking_earns_loyalty: bookingEarnsLoyalty,
         booking_mode: bookingMode,
         buffer_minutes: bufferMinutes,
         booking_horizon_days: bookingHorizonDays,
