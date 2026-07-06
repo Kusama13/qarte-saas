@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import { formatPhoneNumber, validatePhone, getTimezoneForCountry, getTodayForCountry, getAllPhoneFormats, getAppUrl, getCurrencyForCountry, truncate } from '@/lib/utils';
 import { normalizeBookingHorizon, isSlotInPast, isSlotBeforeLeadTime, normalizeBookingMinLead } from '@/lib/booking-window';
+import { projectBookingLoyalty, type BookingLoyaltyPreview } from '@/lib/booking-loyalty';
 import { isMerchantBlocked } from '@/lib/merchant-access';
 import type { EmailLocale } from '@/emails/translations';
 import { computeDepositDeadline, computeDepositAmount } from '@/lib/deposit';
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, past_due_since, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, deposit_only_for_new_customers, welcome_offer_enabled, welcome_offer_description, welcome_offer_discount_percent, booking_mode, buffer_minutes, booking_horizon_days, booking_min_lead_hours, home_service_enabled, home_service_radius_km, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days, recurring_followup_enabled')
+      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, booking_earns_loyalty, reward_description, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, past_due_since, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, deposit_only_for_new_customers, welcome_offer_enabled, welcome_offer_description, welcome_offer_discount_percent, booking_mode, buffer_minutes, booking_horizon_days, booking_min_lead_hours, home_service_enabled, home_service_radius_km, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days, recurring_followup_enabled')
       .eq('id', merchant_id)
       .single();
 
@@ -719,6 +720,25 @@ export async function POST(request: NextRequest) {
     // 10c. SMS confirmation to client — only for deposit bookings (sent after merchant validates)
     // No-deposit bookings: client sees confirmation in BookingModal + gets J-1 reminder SMS
 
+    // 10d. Bloc fidélité pour l'écran de confirmation (résa en ligne honorée = 1 point / +montant).
+    // Projection prête à afficher, formulation client au futur (le point suit la venue). Skip pour
+    // les RDV de suivi (plusieurs créneaux) et si l'option merchant est OFF. Nouvelle cliente : la
+    // carte vient d'être créée à 0 (cf. plus haut), inutile de la relire.
+    let loyalty: BookingLoyaltyPreview | null = null;
+    if (merchant.booking_earns_loyalty && customerId && !isFollowup) {
+      let current = 0;
+      if (!isNewCustomer) {
+        const { data: card } = await supabaseAdmin
+          .from('loyalty_cards')
+          .select('current_stamps')
+          .eq('customer_id', customerId)
+          .eq('merchant_id', merchant_id)
+          .maybeSingle();
+        current = Number(card?.current_stamps || 0);
+      }
+      loyalty = projectBookingLoyalty(merchant.loyalty_mode, current, Number(merchant.stamps_required || 0), merchant.reward_description, totalPrice);
+    }
+
     // 11. Set phone cookie + return
     const jsonResponse = NextResponse.json({
       success: true,
@@ -731,6 +751,7 @@ export async function POST(request: NextRequest) {
         total_duration: totalDuration,
         slots_blocked: slotsBlocked,
         is_new_customer: isNewCustomer,
+        loyalty,
       },
       deposit,
       member_benefit: memberDiscount || memberSkipDeposit ? {

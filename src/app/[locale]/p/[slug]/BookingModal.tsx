@@ -17,6 +17,7 @@ import { computeBookingPrice } from '@/lib/booking-pricing';
 import FollowupScheduler from './FollowupScheduler';
 import { computeDepositInfo } from '@/lib/deposit';
 import { normalizeBookingHorizon, isSlotBeforeLeadTime, normalizeBookingMinLead, leadCutoffDate } from '@/lib/booking-window';
+import type { BookingLoyaltyPreview } from '@/lib/booking-loyalty';
 import { haversineKm } from '@/lib/geo';
 
 type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
@@ -157,6 +158,7 @@ export default function BookingModal({
   const [bookingResult, setBookingResult] = useState<{
     date: string; time: string; services: { name: string; price: number; duration: number }[];
     total_price: number; total_duration: number; is_new_customer?: boolean;
+    loyalty?: BookingLoyaltyPreview | null;
   } | null>(null);
   const [depositResult, setDepositResult] = useState<{
     link: string;
@@ -1492,6 +1494,49 @@ export default function BookingModal({
                     <span className="font-bold text-gray-900">{formatCurrency(bookingResult.total_price, country, locale)}</span>
                   </div>
                 </div>
+
+                {/* Fidélité : ce que la venue rapportera (résa en ligne honorée = 1 point / +montant). */}
+                {bookingResult.loyalty && (() => {
+                  const L = bookingResult.loyalty;
+                  if (L.mode === 'cagnotte') {
+                    return (
+                      <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 mb-3 flex items-start gap-2">
+                        <Gift className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <p className="text-[13px] text-emerald-800 leading-snug">
+                          {t('loyaltyCagnotteLine', { amount: formatCurrency(L.addedAmount, country, locale) })}
+                        </p>
+                      </div>
+                    );
+                  }
+                  const projected = L.projectedStamps;
+                  const isReady = L.state === 'reward_ready';
+                  return (
+                    <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 mb-3">
+                      <div className="flex items-start gap-2">
+                        <Gift className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <p className="text-[13px] font-semibold text-emerald-800 leading-snug">
+                          {isReady
+                            ? (L.rewardDescription ? t('loyaltyRewardReady', { reward: L.rewardDescription }) : t('loyaltyRewardReadyNoDesc'))
+                            : L.state === 'first_point'
+                              ? t('loyaltyFirstPoint')
+                              : t('loyaltyEarnLine')}
+                        </p>
+                      </div>
+                      {!isReady && L.stampsRequired > 0 && (
+                        <div className="mt-2 pl-6">
+                          <div className="h-1.5 rounded-full bg-emerald-100 overflow-hidden">
+                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.round((projected / L.stampsRequired) * 100)}%` }} />
+                          </div>
+                          <p className="text-[12px] text-emerald-700 mt-1.5">
+                            {L.remaining > 0 && L.rewardDescription
+                              ? t('loyaltyRemaining', { n: L.remaining, reward: L.rewardDescription })
+                              : t('loyaltyProgress', { current: projected, target: L.stampsRequired })}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <PolicyNotice merchant={merchant} t={t} className="mb-4" />
 

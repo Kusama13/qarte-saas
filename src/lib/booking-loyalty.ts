@@ -22,16 +22,61 @@ type Admin = SupabaseClient;
 export type CreditResult = 'credited' | 'skipped' | 'already' | 'error';
 export type RevokeResult = 'revoked' | 'none' | 'error';
 
+/**
+ * Projection fidélité affichée sur la confirmation de résa (vitrine). Read-only, prête à
+ * afficher — ne mute rien. Centralise la règle de crédit (+1 tampon, montant = prix presta)
+ * pour qu'elle ne diverge pas de `creditBookingLoyalty`, et le libellé d'état côté client.
+ */
+export type BookingLoyaltyPreview = {
+  mode: 'visit' | 'cagnotte';
+  currentStamps: number;
+  projectedStamps: number;
+  stampsRequired: number;
+  remaining: number;
+  rewardDescription: string | null;
+  state: 'first_point' | 'in_progress' | 'reward_ready';
+  addedAmount: number;
+};
+
+export function projectBookingLoyalty(
+  mode: string | null | undefined,
+  currentStamps: number,
+  stampsRequired: number,
+  rewardDescription: string | null | undefined,
+  totalPrice: number,
+): BookingLoyaltyPreview {
+  const isCagnotte = mode === 'cagnotte';
+  const projectedStamps = stampsRequired > 0 ? Math.min(currentStamps + 1, stampsRequired) : currentStamps + 1;
+  const state = currentStamps >= stampsRequired && stampsRequired > 0
+    ? 'reward_ready'
+    : currentStamps === 0
+      ? 'first_point'
+      : 'in_progress';
+  return {
+    mode: isCagnotte ? 'cagnotte' : 'visit',
+    currentStamps,
+    projectedStamps,
+    stampsRequired,
+    remaining: Math.max(0, stampsRequired - projectedStamps),
+    rewardDescription: rewardDescription || null,
+    state,
+    addedAmount: isCagnotte ? totalPrice : 0,
+  };
+}
+
 export async function creditBookingLoyalty(admin: Admin, slotId: string): Promise<CreditResult> {
   const { data: slot } = await admin
     .from('merchant_planning_slots')
-    .select('id, merchant_id, customer_id, total_price, slot_date, start_time, attendance_status, primary_slot_id, client_name')
+    .select('id, merchant_id, customer_id, total_price, slot_date, start_time, attendance_status, primary_slot_id, client_name, booked_online')
     .eq('id', slotId)
     .maybeSingle();
 
-  // Garde-fous créneau : réservé, primary (pas un filler), honoré, relié à une cliente.
+  // Garde-fous créneau : réservé en ligne, primary (pas un filler), honoré, relié à une cliente.
+  // booked_online uniquement : une résa saisie à la main au dashboard ne crédite pas (le merchant
+  // gère sa fidélité au comptoir comme il veut ; cohérent avec le libellé du modal côté réglage).
   if (!slot) return 'skipped';
   if (!slot.customer_id || slot.primary_slot_id) return 'skipped';
+  if (!slot.booked_online) return 'skipped';
   if (slot.attendance_status !== 'attended') return 'skipped';
   if (!slot.client_name || slot.client_name === '__blocked__') return 'skipped';
 

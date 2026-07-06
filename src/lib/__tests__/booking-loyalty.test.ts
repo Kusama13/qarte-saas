@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { creditBookingLoyalty, revokeBookingLoyalty } from '../booking-loyalty';
+import { creditBookingLoyalty, revokeBookingLoyalty, projectBookingLoyalty } from '../booking-loyalty';
 
 /**
  * Stub Supabase chaînable minimal. Résout chaque requête selon (table, opération) via `cfg`.
@@ -56,7 +56,7 @@ function makeStub(cfg: Record<string, unknown>) {
 const ATTENDED_SLOT = {
   id: 'slot-1', merchant_id: 'm1', customer_id: 'c1', total_price: 45,
   slot_date: '2026-06-12', start_time: '14:00', attendance_status: 'attended',
-  primary_slot_id: null, client_name: 'Sophie',
+  primary_slot_id: null, client_name: 'Sophie', booked_online: true,
 };
 const VISIT_MERCHANT = { id: 'm1', loyalty_mode: 'visit', booking_earns_loyalty: true, stamps_required: 10, country: 'FR' };
 
@@ -75,6 +75,12 @@ describe('creditBookingLoyalty', () => {
   it('skips a filler slot (primary_slot_id set)', async () => {
     const { admin } = makeStub({ slot: { ...ATTENDED_SLOT, primary_slot_id: 'p1' }, merchant: VISIT_MERCHANT });
     expect(await creditBookingLoyalty(admin, 'slot-1')).toBe('skipped');
+  });
+
+  it('skips a manual dashboard booking (booked_online false)', async () => {
+    const { admin, calls } = makeStub({ slot: { ...ATTENDED_SLOT, booked_online: false }, merchant: VISIT_MERCHANT });
+    expect(await creditBookingLoyalty(admin, 'slot-1')).toBe('skipped');
+    expect(calls.inserts).toHaveLength(0);
   });
 
   it('skips when the slot is not attended', async () => {
@@ -149,5 +155,29 @@ describe('revokeBookingLoyalty', () => {
     const cardUpdate = calls.updates.find((c) => c.table === 'loyalty_cards');
     expect(cardUpdate?.payload.current_stamps).toBe(0);
     expect(cardUpdate?.payload.current_amount).toBe(0);
+  });
+});
+
+describe('projectBookingLoyalty', () => {
+  it('nouvelle carte (0 tampon) → état first_point', () => {
+    const p = projectBookingLoyalty('visit', 0, 10, '1 brushing offert', 30);
+    expect(p).toMatchObject({ mode: 'visit', state: 'first_point', projectedStamps: 1, remaining: 9, addedAmount: 0 });
+  });
+
+  it('en cours → projette +1 tampon et le restant', () => {
+    const p = projectBookingLoyalty('visit', 7, 10, '1 brushing offert', 30);
+    expect(p).toMatchObject({ state: 'in_progress', currentStamps: 7, projectedStamps: 8, remaining: 2 });
+  });
+
+  it('carte déjà pleine → reward_ready, restant plancher 0', () => {
+    const p = projectBookingLoyalty('visit', 10, 10, '1 brushing offert', 30);
+    expect(p.state).toBe('reward_ready');
+    expect(p.projectedStamps).toBe(10);
+    expect(p.remaining).toBe(0);
+  });
+
+  it('cagnotte → addedAmount = prix presta, mode cagnotte', () => {
+    const p = projectBookingLoyalty('cagnotte', 3, 10, null, 45);
+    expect(p).toMatchObject({ mode: 'cagnotte', addedAmount: 45, rewardDescription: null });
   });
 });
