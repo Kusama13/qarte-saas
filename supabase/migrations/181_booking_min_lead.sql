@@ -14,4 +14,4 @@
 -- n'est PAS bridée (le merchant peut caler un RDV de dernière minute lui-même).
 
 ALTER TABLE merchants ADD COLUMN IF NOT EXISTS booking_min_lead_hours SMALLINT
-  NOT NULL DEFAULT 0 CHECK (booking_min_lead_hours IN (0, 24, 72));
+  NOT NULL DEFAULT 0 CHECK (booking_min_lead_hours IN (0, 24, 48));
