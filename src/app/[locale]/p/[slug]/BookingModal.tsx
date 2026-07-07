@@ -3,6 +3,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Clock, ChevronRight, ChevronLeft, ChevronDown, Loader2, Gift, CreditCard, CalendarDays, Hourglass, Info, Crown } from 'lucide-react';
+import ImageLightbox from '@/components/shared/ImageLightbox';
+import ServiceThumbnail from '@/components/shared/ServiceThumbnail';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { formatTime, toBCP47, formatCurrency, validateEmail, getTimezoneForCountry } from '@/lib/utils';
@@ -20,7 +22,7 @@ import { normalizeBookingHorizon, isSlotBeforeLeadTime, normalizeBookingMinLead,
 import type { BookingLoyaltyPreview } from '@/lib/booking-loyalty';
 import { haversineKm } from '@/lib/geo';
 
-type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
+type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean; image_url: string | null };
 type ServiceCategory = { id: string; name: string; position: number };
 type PlanningSlotPublic = { slot_date: string; start_time: string };
 type PromoOffer = { id: string; title: string; description: string; expires_at: string | null; discount_percent: number | null; target_service_ids: string[] | null };
@@ -153,6 +155,7 @@ export default function BookingModal({
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [customerMessage, setCustomerMessage] = useState('');
+  const [serviceLightbox, setServiceLightbox] = useState<{ src: string; alt: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bookingResult, setBookingResult] = useState<{
@@ -620,6 +623,7 @@ export default function BookingModal({
   const stickyDeposit = depositInfo;
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
@@ -674,40 +678,54 @@ export default function BookingModal({
                 {(() => {
                   const renderServiceBtn = (svc: Service) => {
                     const selected = selectedServiceIds.has(svc.id);
+                    // Conteneur = div (porte le style sélectionné) avec 2 boutons distincts :
+                    // vignette → agrandit sans cocher, reste → coche. Pas d'imbrication de <button>.
                     return (
-                      <button
+                      <div
                         key={svc.id}
-                        type="button"
-                        onClick={() => toggleService(svc.id)}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
                           selected
                             ? 'bg-opacity-10 border-2'
                             : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
                         }`}
                         style={selected ? { backgroundColor: `${p}10`, borderColor: p } : undefined}
                       >
-                        <div
-                          className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-colors ${
-                            selected ? 'border-transparent' : 'border-gray-300'
-                          }`}
-                          style={selected ? { backgroundColor: p } : undefined}
+                        {svc.image_url && (
+                          <ServiceThumbnail
+                            src={svc.image_url}
+                            alt={svc.name}
+                            label={t('enlargePhotoAria', { name: svc.name })}
+                            onEnlarge={() => setServiceLightbox({ src: svc.image_url!, alt: svc.name })}
+                          />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => toggleService(svc.id)}
+                          className="flex-1 min-w-0 flex items-center gap-3 text-left"
                         >
-                          {selected && <Check className="w-3 h-3 text-white" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900">{svc.name}</p>
-                          {svc.duration && (
-                            <p className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5">
-                              <Clock className="w-3 h-3" />
-                              {formatDuration(svc.duration, locale)}
-                            </p>
-                          )}
-                        </div>
-                        <p className="text-sm font-bold text-gray-700 shrink-0">
-                          {svc.price_from && <span className="text-[10px] font-normal text-gray-500">{t('from')} </span>}
-                          {formatCurrency(Number(svc.price), country, locale)}
-                        </p>
-                      </button>
+                          <div
+                            className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-colors ${
+                              selected ? 'border-transparent' : 'border-gray-300'
+                            }`}
+                            style={selected ? { backgroundColor: p } : undefined}
+                          >
+                            {selected && <Check className="w-3 h-3 text-white" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900">{svc.name}</p>
+                            {svc.duration && (
+                              <p className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5">
+                                <Clock className="w-3 h-3" />
+                                {formatDuration(svc.duration, locale)}
+                              </p>
+                            )}
+                          </div>
+                          <p className="text-sm font-bold text-gray-700 shrink-0">
+                            {svc.price_from && <span className="text-[10px] font-normal text-gray-500">{t('from')} </span>}
+                            {formatCurrency(Number(svc.price), country, locale)}
+                          </p>
+                        </button>
+                      </div>
                     );
                   };
 
@@ -1752,5 +1770,12 @@ export default function BookingModal({
         )}
       </motion.div>
     </motion.div>
+    <ImageLightbox
+      src={serviceLightbox?.src ?? null}
+      alt={serviceLightbox?.alt ?? ''}
+      onClose={() => setServiceLightbox(null)}
+      closeLabel={t('closeLightbox')}
+    />
+    </>
   );
 }

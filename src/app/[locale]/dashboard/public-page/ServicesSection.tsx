@@ -17,10 +17,12 @@ import {
   Tag,
   Archive,
   RotateCcw,
+  Camera,
 } from 'lucide-react';
 import type { Merchant } from '@/types';
 import type { ServiceCategory, Service } from './types';
 import { formatCurrency } from '@/lib/utils';
+import { compressServiceImage } from '@/lib/image-compression';
 import { MAX_SERVICES_PER_MERCHANT } from '@/lib/plan-tiers';
 import { useLocale, useTranslations } from 'next-intl';
 import { useToast } from '@/components/ui/Toast';
@@ -102,6 +104,9 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
   // Edit category
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editCategoryName, setEditCategoryName] = useState('');
+
+  // Photo prestation (upload en cours)
+  const [uploadingImageId, setUploadingImageId] = useState<string | null>(null);
 
   // Collapsed categories
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
@@ -380,6 +385,66 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
     }
   };
 
+  // Persiste l'URL photo (ou null) d'une prestation via le PUT existant. Renvoie les
+  // champs actuels pour ne rien écraser ; le serveur purge l'ancienne image du Storage.
+  const patchServiceImage = async (serviceId: string, image_url: string | null) => {
+    const svc = services.find(s => s.id === serviceId);
+    if (!svc) return;
+    try {
+      const res = await fetch('/api/services', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'service', id: serviceId, merchant_id: merchant.id,
+          name: svc.name, price: svc.price, category_id: svc.category_id,
+          duration: svc.duration, description: svc.description, price_from: svc.price_from,
+          image_url,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.service) {
+        setServices(prev => prev.map(s => s.id === serviceId ? data.service : s));
+        revalidateVitrine();
+      } else {
+        addToast(t('svcImageError'), 'error');
+      }
+    } catch {
+      addToast(t('svcImageError'), 'error');
+    }
+  };
+
+  const handleServiceImageUpload = async (serviceId: string, file: File) => {
+    setUploadingImageId(serviceId);
+    try {
+      const compressed = await compressServiceImage(file);
+      const fd = new FormData();
+      fd.append('file', compressed);
+      fd.append('merchantId', merchant.id);
+      fd.append('folder', 'services');
+      const up = await fetch('/api/upload', { method: 'POST', body: fd });
+      const upData = await up.json();
+      if (!up.ok || !upData.url) {
+        addToast(upData.error || t('svcImageError'), 'error');
+        return;
+      }
+      await patchServiceImage(serviceId, upData.url);
+    } catch {
+      addToast(t('svcImageError'), 'error');
+    } finally {
+      setUploadingImageId(null);
+    }
+  };
+
+  const handleServiceImageRemove = async (serviceId: string) => {
+    if (!window.confirm(t('svcImageRemoveConfirm'))) return;
+    setUploadingImageId(serviceId);
+    try {
+      await patchServiceImage(serviceId, null);
+    } finally {
+      setUploadingImageId(null);
+    }
+  };
+
   const handleDeleteService = async (id: string) => {
     // Le merchant ne sait pas si la presta est réservée → message générique, toast précis après.
     if (!window.confirm(t('svcDeleteConfirm'))) return;
@@ -585,6 +650,55 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
           </div>
         ) : (
           <div className="flex items-center gap-3">
+            {/* Tuile photo (facultative) : cliquer = ajouter/remplacer, croix = retirer. */}
+            <div className="shrink-0">
+              <input
+                type="file"
+                accept="image/*"
+                id={`svc-img-${service.id}`}
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleServiceImageUpload(service.id, f);
+                  e.target.value = '';
+                }}
+              />
+              {service.image_url ? (
+                <div className="relative w-10 h-10">
+                  <label
+                    htmlFor={`svc-img-${service.id}`}
+                    title={t('svcImageReplace')}
+                    className="block w-10 h-10 rounded-lg overflow-hidden border border-gray-200 cursor-pointer"
+                  >
+                    {uploadingImageId === service.id ? (
+                      <span className="w-full h-full flex items-center justify-center bg-gray-50">
+                        <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                      </span>
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={service.image_url} alt={service.name} loading="lazy" className="w-full h-full object-cover" />
+                    )}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => handleServiceImageRemove(service.id)}
+                    aria-label={t('svcImageRemove')}
+                    className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <label
+                  htmlFor={`svc-img-${service.id}`}
+                  aria-label={t('svcImageAdd')}
+                  title={t('svcImageAdd')}
+                  className="w-10 h-10 rounded-lg border border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:border-indigo-400 hover:text-indigo-500 cursor-pointer transition-colors"
+                >
+                  {uploadingImageId === service.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                </label>
+              )}
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-medium text-gray-700 truncate">{service.name}</p>
               <div className="flex items-center gap-2 mt-0.5">

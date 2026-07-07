@@ -1676,7 +1676,12 @@
     "svcActionError": "Something went wrong",
     "svcArchivedTitle": "Archived services",
     "svcArchivedHint": "Hidden from your page but kept: bookings using them keep their label. You can restore them anytime.",
-    "svcReactivate": "Reactivate"
+    "svcReactivate": "Reactivate",
+    "svcImageAdd": "Add a photo",
+    "svcImageReplace": "Replace photo",
+    "svcImageRemove": "Remove photo",
+    "svcImageRemoveConfirm": "Remove this service's photo?",
+    "svcImageError": "The photo could not be saved. Please try again."
   },
   "dashHome": {
     "greeting": "Hello,",
@@ -2992,7 +2997,8 @@
     "prevPhoto": "Previous photo",
     "nextPhoto": "Next photo",
     "jsonLdOffer": "Digital loyalty program",
-    "scanOnMobile": "Scan to open on mobile"
+    "scanOnMobile": "Scan to open on mobile",
+    "enlargePhotoAria": "Enlarge photo of {name}"
   },
   "simulatedCard": {
     "afterVisits": "After {count} visits",
@@ -3856,7 +3862,9 @@
       "morning": "Morning",
       "afternoon": "Afternoon",
       "evening": "Evening"
-    }
+    },
+    "enlargePhotoAria": "Enlarge photo of {name}",
+    "closeLightbox": "Close"
   },
   "merchantPush": {
     "promptTitle": "Enable notifications",

@@ -69,3 +69,14 @@ export async function compressOfferImage(file: File): Promise<File> {
     maxWidthOrHeight: 1200,
   });
 }
+
+/**
+ * Compress an image for a service thumbnail (vignette + agrandissement vitrine).
+ * ~900px suffit pour la vignette et le plein écran mobile.
+ */
+export async function compressServiceImage(file: File): Promise<File> {
+  return compressImage(file, {
+    maxSizeMB: 0.8,
+    maxWidthOrHeight: 900,
+  });
+}
