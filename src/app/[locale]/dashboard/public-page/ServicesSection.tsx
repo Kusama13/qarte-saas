@@ -679,13 +679,16 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                       <img src={service.image_url} alt={service.name} loading="lazy" className="w-full h-full object-cover" />
                     )}
                   </label>
+                  {/* Retrait : pastille sombre dans le coin de la vignette → × blanc lisible sur
+                      n'importe quelle photo, et jamais rogné par un conteneur overflow-hidden. */}
                   <button
                     type="button"
                     onClick={() => handleServiceImageRemove(service.id)}
                     aria-label={t('svcImageRemove')}
-                    className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    title={t('svcImageRemove')}
+                    className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-gray-900/65 hover:bg-red-600 flex items-center justify-center text-white shadow-sm ring-1 ring-white/70 transition-colors"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-3 h-3" strokeWidth={2.75} />
                   </button>
                 </div>
               ) : (
