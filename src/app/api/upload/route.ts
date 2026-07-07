@@ -15,6 +15,9 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const merchantId = formData.get('merchantId') as string;
+    // Dossier de rangement dans le bucket (allowlist stricte — pas de path injecté par le client).
+    const folderRaw = formData.get('folder');
+    const folder = folderRaw === 'services' ? 'services' : 'offers';
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -65,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Use detected extension (not user-provided filename)
-    const filename = `offers/${merchantId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${detectedExt}`;
+    const filename = `${folder}/${merchantId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${detectedExt}`;
 
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage

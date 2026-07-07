@@ -4,7 +4,20 @@ import { z } from 'zod';
 import logger from '@/lib/logger';
 import { MAX_SERVICES_PER_MERCHANT } from '@/lib/plan-tiers';
 
-const SERVICE_COLUMNS = 'id, name, price, position, category_id, duration, description, price_from';
+const SERVICE_COLUMNS = 'id, name, price, position, category_id, duration, description, price_from, image_url';
+
+// Retire une photo de prestation du Storage (bucket `images`, dossier `services/`).
+// Guard sur le préfixe pour ne jamais toucher une URL hors de notre dossier.
+async function removeServiceImage(url: string | null | undefined) {
+  if (!url || !url.includes('/images/services/')) return;
+  const path = url.split('/images/')[1];
+  if (!path) return;
+  try {
+    await getSupabaseAdmin().storage.from('images').remove([path]);
+  } catch (e) {
+    logger.error('Remove service image error:', e);
+  }
+}
 
 // ── Helper: verify merchant ownership
 async function verifyOwnership(supabase: Awaited<ReturnType<typeof createRouteHandlerSupabaseClient>>, merchantId: string, userId: string) {
@@ -98,6 +111,7 @@ const createServiceSchema = z.object({
   duration: z.number().int().min(1).max(600).nullable().optional(),
   description: z.string().max(500).nullable().optional(),
   price_from: z.boolean().optional(),
+  image_url: z.string().url().max(1000).nullable().optional(),
 });
 
 const createCategorySchema = z.object({
@@ -152,7 +166,7 @@ export async function POST(request: NextRequest) {
     // Try service
     const serviceParsed = createServiceSchema.safeParse(body);
     if (serviceParsed.success) {
-      const { merchant_id, name, price, category_id, duration, description, price_from } = serviceParsed.data;
+      const { merchant_id, name, price, category_id, duration, description, price_from, image_url } = serviceParsed.data;
 
       if (!await verifyOwnership(supabase, merchant_id, user.id)) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
@@ -174,6 +188,7 @@ export async function POST(request: NextRequest) {
           duration: duration || null,
           description: description?.trim() || null,
           price_from: price_from || false,
+          image_url: image_url || null,
         })
         .select()
         .single();
@@ -204,6 +219,7 @@ const updateServiceSchema = z.object({
   duration: z.number().int().min(1).max(600).nullable().optional(),
   description: z.string().max(500).nullable().optional(),
   price_from: z.boolean().optional(),
+  image_url: z.string().url().max(1000).nullable().optional(),
 });
 
 const updateCategorySchema = z.object({
@@ -408,7 +424,7 @@ export async function PUT(request: NextRequest) {
 
     const serviceParsed = updateServiceSchema.safeParse(body);
     if (serviceParsed.success) {
-      const { id, merchant_id, name, price, category_id, duration, description, price_from } = serviceParsed.data;
+      const { id, merchant_id, name, price, category_id, duration, description, price_from, image_url } = serviceParsed.data;
 
       if (!await verifyOwnership(supabase, merchant_id, user.id)) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
@@ -428,6 +444,20 @@ export async function PUT(request: NextRequest) {
         updateData.price_from = price_from;
       }
 
+      // Photo : si elle change (nouvelle ou retirée), on récupère l'ancienne pour la
+      // purger du Storage après un update réussi (pas d'orphelins).
+      let oldImageUrl: string | null = null;
+      if (image_url !== undefined) {
+        updateData.image_url = image_url || null;
+        const { data: prev } = await supabase
+          .from('merchant_services')
+          .select('image_url')
+          .eq('id', id)
+          .eq('merchant_id', merchant_id)
+          .maybeSingle();
+        oldImageUrl = prev?.image_url ?? null;
+      }
+
       const { data: service, error } = await supabase
         .from('merchant_services')
         .update(updateData)
@@ -439,6 +469,10 @@ export async function PUT(request: NextRequest) {
       if (error) {
         logger.error('Update service error:', error);
         return NextResponse.json({ error: 'Erreur lors de la mise à jour' }, { status: 500 });
+      }
+
+      if (oldImageUrl && oldImageUrl !== (image_url || null)) {
+        await removeServiceImage(oldImageUrl);
       }
 
       return NextResponse.json({ service });
@@ -516,6 +550,15 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: true, archived: true });
     }
 
+    // Hard delete : on récupère la photo pour la purger du Storage après coup.
+    // (Archive → on garde la photo : la presta peut être réactivée.)
+    const { data: toDelete } = await supabase
+      .from('merchant_services')
+      .select('image_url')
+      .eq('id', id)
+      .eq('merchant_id', merchant_id)
+      .maybeSingle();
+
     const { error } = await supabase
       .from('merchant_services')
       .delete()
@@ -525,6 +568,7 @@ export async function DELETE(request: NextRequest) {
       logger.error('Delete service error:', error);
       return NextResponse.json({ error: 'Erreur lors de la suppression' }, { status: 500 });
     }
+    await removeServiceImage(toDelete?.image_url);
     return NextResponse.json({ success: true, archived: false });
   } catch (error) {
     logger.error('Services DELETE error:', error);

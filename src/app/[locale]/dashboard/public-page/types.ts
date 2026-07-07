@@ -13,4 +13,5 @@ export interface Service {
   duration: number | null;
   description: string | null;
   price_from: boolean;
+  image_url: string | null;
 }

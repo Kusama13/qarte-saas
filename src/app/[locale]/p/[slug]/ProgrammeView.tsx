@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Flame, Trophy, CalendarDays, CalendarCheck, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard, Wallet, Tag, Home, ArrowUp } from 'lucide-react';
+import { Gift, Users, Flame, Trophy, CalendarDays, CalendarCheck, MapPin, Navigation, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard, Wallet, Tag, Home, ArrowUp } from 'lucide-react';
+import ImageLightbox from '@/components/shared/ImageLightbox';
+import ServiceThumbnail from '@/components/shared/ServiceThumbnail';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import GoogleReviewsSection from '@/components/vitrine/GoogleReviewsSection';
 import type { GoogleReviewsData } from '@/lib/google-places';
@@ -13,7 +15,6 @@ import SimulatedCard from './SimulatedCard';
 import BookingModal from './BookingModal';
 import GiftCardModal from './GiftCardModal';
 import { useInView } from '@/hooks/useInView';
-import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency, detectBookingPlatform, displayPhoneWithFlag, getCurrencyForCountry, extractCityFromAddress } from '@/lib/utils';
 import { isSlotBeforeLeadTime, normalizeBookingMinLead } from '@/lib/booking-window';
 import { trackCtaClick } from '@/lib/analytics';
@@ -48,7 +49,7 @@ const HOURS_BADGE_STYLES = {
 } as const;
 
 type ServiceCategory = { id: string; name: string; position: number };
-type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
+type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean; image_url: string | null };
 type PromoOffer = { id: string; title: string; description: string; expires_at: string | null; discount_percent: number | null; target_service_ids: string[] | null };
 
 type PlanningSlotPublic = { slot_date: string; start_time: string };
@@ -158,6 +159,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
     past_due_since: merchant.past_due_since,
   });
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [serviceLightbox, setServiceLightbox] = useState<{ src: string; alt: string } | null>(null);
   const [servicesExpanded, setServicesExpanded] = useState(false);
   const [planningExpanded, setPlanningExpanded] = useState(false);
   const [hoursExpanded, setHoursExpanded] = useState(false);
@@ -220,21 +222,6 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
       .catch(() => {});
   }, [merchant.id, isDemo, demoOffer]);
   const glassCard = 'rounded-2xl overflow-hidden bg-white border border-black/[0.06] shadow-[0_1px_2px_rgba(15,10,40,0.04),0_8px_24px_rgba(15,10,40,0.05)]';
-
-  // Keyboard navigation for lightbox
-  const handleLightboxKey = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') setLightboxIndex(null);
-    if (e.key === 'ArrowLeft') setLightboxIndex(prev => prev === null ? null : (prev - 1 + photos.length) % photos.length);
-    if (e.key === 'ArrowRight') setLightboxIndex(prev => prev === null ? null : (prev + 1) % photos.length);
-  }, [photos.length]);
-
-  useBodyScrollLock(lightboxIndex !== null);
-
-  useEffect(() => {
-    if (lightboxIndex === null) return;
-    document.addEventListener('keydown', handleLightboxKey);
-    return () => document.removeEventListener('keydown', handleLightboxKey);
-  }, [lightboxIndex, handleLightboxKey]);
 
   // Flèche "retour en haut" : apparaît un peu après le scroll (~600px).
   useEffect(() => {
@@ -971,9 +958,19 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 key={svc.id}
                 className={`py-3 ${!isLast && !(idx === visibleItems.length - 1 && !servicesExpanded) ? 'border-b border-gray-100/80' : ''}`}
               >
-                <div className="flex items-center justify-between">
-                  <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
-                  <div className="flex items-center gap-2 shrink-0 ml-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {svc.image_url && (
+                      <ServiceThumbnail
+                        src={svc.image_url}
+                        alt={svc.name}
+                        label={t('enlargePhotoAria', { name: svc.name })}
+                        onEnlarge={() => setServiceLightbox({ src: svc.image_url!, alt: svc.name })}
+                      />
+                    )}
+                    <p className="text-[13px] font-medium text-gray-700 min-w-0">{svc.name}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
                     {svc.duration && (
                       <span className="text-[11px] text-gray-500 flex items-center gap-0.5">
                         <Clock className="w-3 h-3" />
@@ -987,7 +984,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                   </div>
                 </div>
                 {svc.description && (
-                  <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">{svc.description}</p>
+                  <p className={`text-[11px] text-gray-500 mt-0.5 leading-snug ${svc.image_url ? 'pl-[54px]' : ''}`}>{svc.description}</p>
                 )}
               </div>
             );
@@ -1427,66 +1424,25 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
       </AnimatePresence>
 
       {/* ── LIGHTBOX ── */}
-      <AnimatePresence>
-        {lightboxIndex !== null && photos[lightboxIndex] && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-            onClick={() => setLightboxIndex(null)}
-          >
-            <button
-              type="button"
-              aria-label={t('closeLightbox')}
-              className="absolute top-4 right-4 p-3 text-white/80 hover:text-white transition-colors z-10"
-              onClick={() => setLightboxIndex(null)}
-            >
-              <X className="w-5 h-5" />
-            </button>
+      {/* Galerie réalisations : lightbox partagée avec navigation prev/next */}
+      <ImageLightbox
+        src={lightboxIndex !== null && photos[lightboxIndex] ? photos[lightboxIndex].url : null}
+        alt={lightboxIndex !== null && photos[lightboxIndex] ? t('realisationAlt', { name: merchant.shop_name, position: photos[lightboxIndex].position }) : ''}
+        onClose={() => setLightboxIndex(null)}
+        closeLabel={t('closeLightbox')}
+        onPrev={photos.length > 1 ? () => setLightboxIndex(prev => prev === null ? null : (prev - 1 + photos.length) % photos.length) : undefined}
+        onNext={photos.length > 1 ? () => setLightboxIndex(prev => prev === null ? null : (prev + 1) % photos.length) : undefined}
+        prevLabel={t('prevPhoto')}
+        nextLabel={t('nextPhoto')}
+      />
 
-            {photos.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  aria-label={t('prevPhoto')}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 p-3 text-white/60 hover:text-white transition-colors z-10"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLightboxIndex(prev => prev === null ? null : (prev - 1 + photos.length) % photos.length);
-                  }}
-                >
-                  <ChevronLeft className="w-6 h-6" />
-                </button>
-                <button
-                  type="button"
-                  aria-label={t('nextPhoto')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-3 text-white/60 hover:text-white transition-colors z-10"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLightboxIndex(prev => prev === null ? null : (prev + 1) % photos.length);
-                  }}
-                >
-                  <ChevronRight className="w-6 h-6" />
-                </button>
-              </>
-            )}
-
-            <motion.img
-              key={lightboxIndex}
-              initial={{ opacity: 0, scale: 0.92 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.92 }}
-              transition={{ duration: 0.2 }}
-              src={photos[lightboxIndex].url}
-              alt={t('realisationAlt', { name: merchant.shop_name, position: photos[lightboxIndex].position })}
-              className="max-w-[90vw] max-h-[85vh] object-contain rounded-xl"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Agrandissement d'une photo de prestation (vitrine) */}
+      <ImageLightbox
+        src={serviceLightbox?.src ?? null}
+        alt={serviceLightbox?.alt ?? ''}
+        onClose={() => setServiceLightbox(null)}
+        closeLabel={t('closeLightbox')}
+      />
 
       {/* ── Desktop QR code — scan to open on mobile ── */}
       <div className="hidden lg:flex fixed bottom-6 right-6 z-40 flex-col items-center gap-2 rounded-2xl bg-white/95 p-3 shadow-lg border border-gray-100">

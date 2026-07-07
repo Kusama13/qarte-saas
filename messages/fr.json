@@ -1663,7 +1663,12 @@
     "svcActionError": "Une erreur est survenue",
     "svcArchivedTitle": "Prestations archivées",
     "svcArchivedHint": "Masquées de ta vitrine mais conservées : les RDV qui les utilisent gardent leur intitulé. Tu peux les remettre quand tu veux.",
-    "svcReactivate": "Réactiver"
+    "svcReactivate": "Réactiver",
+    "svcImageAdd": "Ajouter une photo",
+    "svcImageReplace": "Remplacer la photo",
+    "svcImageRemove": "Retirer la photo",
+    "svcImageRemoveConfirm": "Retirer la photo de cette prestation ?",
+    "svcImageError": "La photo n'a pas pu être enregistrée. Réessaie."
   },
   "dashHome": {
     "greeting": "Bonjour,",
@@ -2993,7 +2998,8 @@
     "prevPhoto": "Photo précédente",
     "nextPhoto": "Photo suivante",
     "jsonLdOffer": "Programme de fidélité digitale",
-    "scanOnMobile": "Scanner pour ouvrir sur mobile"
+    "scanOnMobile": "Scanner pour ouvrir sur mobile",
+    "enlargePhotoAria": "Agrandir la photo de {name}"
   },
   "simulatedCard": {
     "afterVisits": "Après {count} visites",
@@ -3857,7 +3863,9 @@
       "morning": "Matin",
       "afternoon": "Après-midi",
       "evening": "Soirée"
-    }
+    },
+    "enlargePhotoAria": "Agrandir la photo de {name}",
+    "closeLightbox": "Fermer"
   },
   "merchantPush": {
     "promptTitle": "Active les notifs",
