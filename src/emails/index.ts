@@ -39,6 +39,8 @@ export { ReactivationTiedeEmail } from './ReactivationTiedeEmail';
 export { ReactivationAncienEmail } from './ReactivationAncienEmail';
 export { BookingNotificationEmail } from './BookingNotificationEmail';
 export { BookingConfirmationEmail } from './BookingConfirmationEmail';
+export { BookingReminderEmail } from './BookingReminderEmail';
+export { PracticalDetailsBox } from './PracticalDetailsBox';
 export { BookingRescheduledEmail } from './BookingRescheduledEmail';
 export { BookingCancelledEmail } from './BookingCancelledEmail';
 export { FollowupRecapEmail } from './FollowupRecapEmail';

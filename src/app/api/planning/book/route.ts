@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, booking_earns_loyalty, reward_description, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, past_due_since, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, deposit_only_for_new_customers, welcome_offer_enabled, welcome_offer_description, welcome_offer_discount_percent, booking_mode, buffer_minutes, booking_horizon_days, booking_min_lead_hours, home_service_enabled, home_service_radius_km, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days, recurring_followup_enabled')
+      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, booking_earns_loyalty, reward_description, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, past_due_since, plan_tier, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, deposit_only_for_new_customers, welcome_offer_enabled, welcome_offer_description, welcome_offer_discount_percent, booking_mode, buffer_minutes, booking_horizon_days, booking_min_lead_hours, home_service_enabled, home_service_radius_km, shop_lat, shop_lng, allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days, recurring_followup_enabled, booking_reminder_details, booking_reminder_in_confirmation')
       .eq('id', merchant_id)
       .single();
 
@@ -685,6 +685,7 @@ export async function POST(request: NextRequest) {
         loyaltyCardUrl: `${getAppUrl()}/customer/card/${merchant.id}`,
         cancelPolicyDays: merchant.allow_customer_cancel ? (merchant.cancel_deadline_days ?? 1) : null,
         reschedulePolicyDays: merchant.allow_customer_reschedule ? (merchant.reschedule_deadline_days ?? 1) : null,
+        practicalDetails: merchant.booking_reminder_in_confirmation ? (merchant.booking_reminder_details || null) : null,
         locale: (merchant.locale as EmailLocale) || 'fr',
       }).catch(err => logger.error('Booking confirmation email (client) failed:', err));
     }

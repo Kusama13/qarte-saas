@@ -90,6 +90,9 @@ export function usePlanningState() {
   const [rescheduleDeadlineDays, setRescheduleDeadlineDays] = useState('1');
   const [recurringFollowupEnabled, setRecurringFollowupEnabled] = useState(false);
   const [bookingEarnsLoyalty, setBookingEarnsLoyalty] = useState(false);
+  const [bookingReminderEmailEnabled, setBookingReminderEmailEnabled] = useState(false);
+  const [bookingReminderInConfirmation, setBookingReminderInConfirmation] = useState(false);
+  const [bookingReminderDetails, setBookingReminderDetails] = useState('');
   const [depositLink, setDepositLink] = useState('');
   const [depositLinkLabel, setDepositLinkLabel] = useState('');
   const [depositLink2, setDepositLink2] = useState('');
@@ -183,6 +186,9 @@ export function usePlanningState() {
       setRescheduleDeadlineDays(String(merchant.reschedule_deadline_days ?? 1));
       setRecurringFollowupEnabled(!!merchant.recurring_followup_enabled);
       setBookingEarnsLoyalty(!!merchant.booking_earns_loyalty);
+      setBookingReminderEmailEnabled(!!merchant.booking_reminder_email_enabled);
+      setBookingReminderInConfirmation(!!merchant.booking_reminder_in_confirmation);
+      setBookingReminderDetails(merchant.booking_reminder_details || '');
       setBookingMode((merchant.booking_mode as BookingMode) || 'slots');
       setBufferMinutes((merchant.buffer_minutes as 0 | 10 | 15 | 20 | 30) || 0);
       setBookingHorizonDays(normalizeBookingHorizon(merchant.booking_horizon_days));
@@ -749,6 +755,9 @@ export function usePlanningState() {
     allowCustomerCancel, setAllowCustomerCancel, allowCustomerReschedule, setAllowCustomerReschedule,
     recurringFollowupEnabled, setRecurringFollowupEnabled,
     bookingEarnsLoyalty, setBookingEarnsLoyalty,
+    bookingReminderEmailEnabled, setBookingReminderEmailEnabled,
+    bookingReminderInConfirmation, setBookingReminderInConfirmation,
+    bookingReminderDetails, setBookingReminderDetails,
     cancelDeadlineDays, setCancelDeadlineDays, rescheduleDeadlineDays, setRescheduleDeadlineDays,
     depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     bookingMode, setBookingMode, bufferMinutes, setBufferMinutes,
