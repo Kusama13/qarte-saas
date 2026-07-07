@@ -39,6 +39,7 @@ import {
   WinBackEmail,
   BookingNotificationEmail,
   BookingConfirmationEmail,
+  BookingReminderEmail,
   BookingRescheduledEmail,
   BookingCancelledEmail,
   FollowupRecapEmail,
@@ -1153,6 +1154,7 @@ interface BookingConfirmationParams {
   loyaltyCardUrl: string;
   cancelPolicyDays?: number | null;
   reschedulePolicyDays?: number | null;
+  practicalDetails?: string | null;
   locale: EmailLocale;
 }
 
@@ -1173,6 +1175,33 @@ export async function sendBookingConfirmationEmail(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return sendEmail(to, subject, BookingConfirmationEmail as any, params as any, {
     logLabel: 'Booking confirmation email',
+  });
+}
+
+interface BookingReminderParams {
+  shopName: string;
+  clientFirstName: string;
+  date: string;
+  time: string;
+  services: string[];
+  salonAddress?: string | null;
+  practicalDetails?: string | null;
+  loyaltyCardUrl: string;
+  cancelPolicyDays?: number | null;
+  reschedulePolicyDays?: number | null;
+  locale: EmailLocale;
+}
+
+export async function sendBookingReminderEmail(
+  to: string,
+  params: BookingReminderParams
+): Promise<SendEmailResult> {
+  const subject = params.locale === 'en'
+    ? `Reminder: your appointment tomorrow — ${params.shopName}`
+    : `Rappel : votre rendez-vous demain — ${params.shopName}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return sendEmail(to, subject, BookingReminderEmail as any, params as any, {
+    logLabel: 'Booking reminder email',
   });
 }
 

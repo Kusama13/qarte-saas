@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
-import { CalendarDays, CalendarCheck, CalendarRange, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, AlertTriangle, X, Trash2, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical, Settings, Save, MapPin } from 'lucide-react';
+import { CalendarDays, CalendarCheck, CalendarRange, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, AlertTriangle, X, Trash2, Bell, Clock, Lock, Search, UserCheck, UserPlus, Instagram, Gift, ChevronDown, MoreVertical, Settings, Save, MapPin, Mail } from 'lucide-react';
 import { DepositCard } from './settings/DepositCard';
 import { CustomerEditCard } from './settings/CustomerEditCard';
 import { FollowupCard } from './settings/FollowupCard';
@@ -71,6 +71,9 @@ export default function PlanningDashboard() {
     allowCustomerCancel, setAllowCustomerCancel, allowCustomerReschedule, setAllowCustomerReschedule,
     recurringFollowupEnabled, setRecurringFollowupEnabled,
     bookingEarnsLoyalty, setBookingEarnsLoyalty,
+    bookingReminderEmailEnabled, setBookingReminderEmailEnabled,
+    bookingReminderInConfirmation, setBookingReminderInConfirmation,
+    bookingReminderDetails, setBookingReminderDetails,
     cancelDeadlineDays, setCancelDeadlineDays, rescheduleDeadlineDays, setRescheduleDeadlineDays,
     depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     bookingMode, setBookingMode, bufferMinutes, setBufferMinutes,
@@ -582,6 +585,11 @@ export default function PlanningDashboard() {
         // au 1er enregistrement de réglages avant que la résa en ligne soit activée. Inoffensif :
         // le crédit ne se déclenche que sur une vraie résa en ligne honorée (garde booked_online).
         booking_earns_loyalty: bookingEarnsLoyalty,
+        booking_reminder_email_enabled: bookingReminderEmailEnabled,
+        // Sous-option du rappel : sans rappel actif, pas d'ajout en confirmation.
+        booking_reminder_in_confirmation: bookingReminderEmailEnabled && bookingReminderInConfirmation,
+        // Sauvé indépendamment : on ne perd pas le texte si le merchant coupe le rappel.
+        booking_reminder_details: bookingReminderDetails.trim() || null,
         booking_mode: bookingMode,
         buffer_minutes: bufferMinutes,
         booking_horizon_days: bookingHorizonDays,
@@ -1542,6 +1550,42 @@ export default function PlanningDashboard() {
                 {pushError && (
                   <p className="text-[11px] text-red-500 font-medium mt-1.5">{pushError}</p>
                 )}
+              </SettingCard>
+
+              {/* Card: Rappel par email la veille (+ infos pratiques, aussi en confirmation en option) */}
+              <SettingCard
+                icon={Mail}
+                title={t('reminderEmailTitle')}
+                tone="violet"
+                className="sm:col-span-2"
+                headerRight={<Switch checked={bookingReminderEmailEnabled} onChange={setBookingReminderEmailEnabled} tone="violet" size="md" ariaLabel={t('reminderEmailTitle')} />}
+              >
+                <p className="text-[11px] text-gray-500 leading-relaxed">{t('reminderEmailHint')}</p>
+
+                {bookingReminderEmailEnabled && (
+                  <div className="mt-3 space-y-2.5">
+                    <textarea
+                      value={bookingReminderDetails}
+                      onChange={(e) => setBookingReminderDetails(e.target.value)}
+                      placeholder={t('reminderEmailPlaceholder')}
+                      maxLength={600}
+                      rows={4}
+                      className="w-full px-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 resize-none"
+                    />
+                    <p className="text-[11px] text-gray-400 text-right -mt-1">{bookingReminderDetails.length}/600</p>
+                    <label className="flex items-start gap-2.5 cursor-pointer pt-0.5">
+                      <input
+                        type="checkbox"
+                        checked={bookingReminderInConfirmation}
+                        onChange={(e) => setBookingReminderInConfirmation(e.target.checked)}
+                        className="mt-0.5 w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500 shrink-0"
+                      />
+                      <span className="text-[11px] text-gray-600 leading-snug min-w-0">{t('reminderAlsoConfirmation')}</span>
+                    </label>
+                  </div>
+                )}
+
+                <p className="text-[11px] text-gray-400 leading-relaxed mt-2.5">{t('reminderEmailSmsNote')}</p>
               </SettingCard>
 
               {/* Card: Message public */}

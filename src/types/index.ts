@@ -159,6 +159,10 @@ export interface Merchant {
   // RDV de suivi récurrents (+3/+6 sem.) proposés en fin de résa, acompte différé (mig 177)
   recurring_followup_enabled: boolean;
   booking_earns_loyalty?: boolean;
+  // Infos pratiques avant le RDV (mig 183) : 2 canaux indépendants + le texte
+  booking_reminder_email_enabled?: boolean;
+  booking_reminder_in_confirmation?: boolean;
+  booking_reminder_details?: string | null;
   // Public page link on loyalty card
   show_public_page_on_card: boolean;
   signup_source: string | null;

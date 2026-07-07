@@ -8,6 +8,7 @@ import {
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
 import { EmailSignoff } from './EmailSignoff';
+import { PracticalDetailsBox } from './PracticalDetailsBox';
 import type { EmailLocale } from './translations';
 
 interface ServiceDetail {
@@ -49,6 +50,8 @@ interface BookingConfirmationEmailProps {
   loyaltyCardUrl: string;
   cancelPolicyDays?: number | null;
   reschedulePolicyDays?: number | null;
+  /** Infos pratiques du merchant (adresse, accès, consignes...). Facultatif. */
+  practicalDetails?: string | null;
   locale?: EmailLocale;
 }
 
@@ -79,6 +82,7 @@ export function BookingConfirmationEmail({
   loyaltyCardUrl,
   cancelPolicyDays,
   reschedulePolicyDays,
+  practicalDetails,
   locale = 'fr',
 }: BookingConfirmationEmailProps) {
   const isEn = locale === 'en';
@@ -194,6 +198,10 @@ export function BookingConfirmationEmail({
             <span style={receivedValueBold}>{formatPriceEmail(remainingBalance, currency, isEn)}</span>
           </Text>
         </Section>
+      )}
+
+      {!isPending && practicalDetails && (
+        <PracticalDetailsBox details={practicalDetails} locale={locale} />
       )}
 
       {!isPending && (
