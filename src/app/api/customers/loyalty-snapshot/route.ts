@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
       admin.from('vouchers').select('id', { count: 'exact', head: true })
         .eq('customer_id', customerId).eq('merchant_id', merchantId).eq('is_used', false)
         .or(`expires_at.is.null,expires_at.gt.${nowIso}`),
-      admin.from('customers').select('first_name, last_name, phone_number, birth_month, birth_day').eq('id', customerId).maybeSingle(),
+      admin.from('customers').select('first_name, last_name, phone_number, birth_month, birth_day').eq('id', customerId).eq('merchant_id', merchantId).maybeSingle(),
     ]);
 
     const redemptions = redemptionsRes.data || [];

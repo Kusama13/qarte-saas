@@ -1238,7 +1238,7 @@ export default function BookingDetailsModal({
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 ml-6">
-                <button onClick={() => onShiftSlot(overlap.nextSlot.id, overlap.suggestedTime)} disabled={saving} className="px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50">
+                <button onClick={() => onShiftSlot(overlap.nextSlot.id, overlap.suggestedTime, undefined, true)} disabled={saving} className="px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50">
                   {t('shiftNextSlot', { newTime: formatTime(overlap.suggestedTime, locale) })}
                 </button>
                 <button onClick={() => onDelete(overlap.nextSlot.id)} disabled={saving} className="px-3 py-1.5 rounded-lg bg-white text-orange-700 border border-orange-200 text-xs font-semibold hover:bg-orange-100 transition-colors disabled:opacity-50">

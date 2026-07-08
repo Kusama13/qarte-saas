@@ -242,7 +242,7 @@ export default function DayView({
               }}
             >
               <div className="text-xs font-bold tabular-nums leading-tight" style={{ color: textColor }}>
-                {formatTime(slot.start_time, locale)} — {formatTime(endTime, locale)}
+                {formatTime(slot.start_time, locale)} – {formatTime(endTime, locale)}
               </div>
               {/* Créneau réservé : le nom de la cliente est l'info prioritaire, la prestation vient dessous.
                   Créneau libre (sans cliente) : on montre la prestation comme avant. */}
