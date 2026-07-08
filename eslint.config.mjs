@@ -10,6 +10,10 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    // Fichiers générés / build — jamais à linter (next lint les ignorait ; l'ESLint CLI non).
+    ignores: [".next/**", "out/**", "build/**", "next-env.d.ts", "public/**", "coverage/**"],
+  },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     rules: {
@@ -17,6 +21,9 @@ const eslintConfig = [
       "@typescript-eslint/no-explicit-any": "warn",
       "react/no-unescaped-entities": "off",
       "@next/next/no-img-element": "warn",
+      // Règle Pages Router : en App Router (pas de dossier pages/) elle sur-signale
+      // les liens internes <a> (report répété sur une même ligne). Non pertinente ici.
+      "@next/next/no-html-link-for-pages": "off",
     },
   },
   {

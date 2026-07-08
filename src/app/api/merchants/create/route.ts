@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import logger from '@/lib/logger';
 import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
@@ -9,6 +10,17 @@ import type { MerchantCountry } from '@/types';
 
 // Client avec service role (bypass RLS)
 const supabaseAdmin = getSupabaseAdmin();
+
+const createSchema = z.object({
+  user_id: z.string().uuid(),
+  shop_name: z.string().trim().min(1),
+  shop_type: z.enum(['coiffeur', 'barbier', 'institut_beaute', 'onglerie', 'spa', 'estheticienne', 'tatouage', 'autre']),
+  phone: z.string().trim().min(1),
+  shop_address: z.string().trim().optional().default(''),
+  country: z.enum(['FR', 'BE', 'CH', 'LU', 'US', 'GB', 'CA', 'AU', 'ES', 'IT']).optional().default('FR'),
+  signup_source: z.string().optional(),
+  locale: z.string().optional(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,19 +33,18 @@ export async function POST(request: NextRequest) {
       return rateLimitResponse(rateLimit.resetTime);
     }
 
-    const body = await request.json();
-    const { user_id, shop_name, shop_type, shop_address, phone, country, signup_source, locale } = body;
-    const trimmedShopName = shop_name?.trim() || '';
-    const trimmedAddress = shop_address?.trim() || '';
-    const merchantCountry: MerchantCountry = country || 'FR';
-    const formattedPhone = formatPhoneNumber(phone, merchantCountry);
-
-    if (!user_id || !trimmedShopName || !shop_type || !phone) {
+    const parsed = createSchema.safeParse(await request.json());
+    if (!parsed.success) {
       return NextResponse.json(
         { error: 'Champs requis manquants' },
         { status: 400 }
       );
     }
+    const { user_id, shop_name, shop_type, shop_address, phone, country, signup_source, locale } = parsed.data;
+    const trimmedShopName = shop_name;
+    const trimmedAddress = shop_address;
+    const merchantCountry: MerchantCountry = country;
+    const formattedPhone = formatPhoneNumber(phone, merchantCountry);
 
     // Vérifier l'authentification — Bearer token obligatoire (C12)
     const authHeader = request.headers.get('authorization');

@@ -64,7 +64,7 @@ export default function SmsRecent({ merchantId, smsUsage, showQuota }: Props) {
       const phones = Array.from(new Set(rows.map((r) => r.phone_to).filter(Boolean)));
 
       // 2) Fetch first_name des clients de ce merchant pour ces phones
-      let phoneToName = new Map<string, string>();
+      const phoneToName = new Map<string, string>();
       if (phones.length > 0) {
         const { data: cardsData } = await supabase
           .from('loyalty_cards')

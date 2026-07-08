@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
 import logger from '@/lib/logger';
+import { computeCashback } from '@/lib/loyalty-progress';
 
 const redeemSchema = z.object({
   loyalty_card_id: z.string().uuid(),
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
       );
     }
     const percent = Number(rawPercent);
-    const rewardValue = Math.round(currentAmount * percent) / 100;
+    const rewardValue = computeCashback(currentAmount, percent);
 
     // Cagnotte: ALWAYS reset current_amount to 0 on any redemption
     // Stamps: reset to 0 only for tier 2 (or tier 1 if tier 2 is not enabled) — same as stamps mode

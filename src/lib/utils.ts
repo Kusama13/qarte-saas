@@ -280,6 +280,19 @@ export function getTodayStartForCountry(country?: string): string {
   return fromZonedTime(new Date(todayStr + 'T00:00:00'), tz).toISOString();
 }
 
+/** UTC [start, end) ISO bounds of a YYYY-MM-DD calendar day, in the merchant's timezone.
+ *  DST-safe (end = local midnight of the next calendar day, not start + 24h). */
+export function getDayBoundsForCountry(dateStr: string, country?: string): { start: string; end: string } {
+  const tz = getTimezoneForCountry(country);
+  const next = new Date(`${dateStr}T00:00:00Z`);
+  next.setUTCDate(next.getUTCDate() + 1);
+  const nextStr = next.toISOString().slice(0, 10);
+  return {
+    start: fromZonedTime(new Date(`${dateStr}T00:00:00`), tz).toISOString(),
+    end: fromZonedTime(new Date(`${nextStr}T00:00:00`), tz).toISOString(),
+  };
+}
+
 /** @deprecated Use getTodayForCountry(country) for country-aware logic. */
 export function getTodayInParis(): string {
   return getTodayForCountry('FR');

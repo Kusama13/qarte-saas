@@ -45,6 +45,17 @@ export interface LoyaltyProgress {
 }
 
 /**
+ * Cashback cagnotte, arrondi au centime. `percent` = entier (ex: 5 pour 5%). Source unique
+ * de la formule `Math.round(amount * percent) / 100` (redeem, checkin, affichage carte/dashboard)
+ * pour que le montant annoncé et le montant débité ne divergent jamais sur l'arrondi.
+ */
+export function computeCashback(amount: number | null | undefined, percent: number | null | undefined): number {
+  const p = Number(percent || 0);
+  if (p <= 0) return 0;
+  return Math.round(Number(amount || 0) * p) / 100;
+}
+
+/**
  * @param tier1Redeemed vrai si le palier 1 a déjà été consommé dans le cycle tier2 courant
  *   (pertinent seulement quand tier2 est activé). Défaut false.
  */
@@ -72,9 +83,7 @@ export function getLoyaltyProgress(
   const rewardReady = isTier2Ready || (isTier1Ready && !tier1Redeemed);
   const rewardLabel = (isTier2Ready ? merchant.tier2_reward_description : merchant.reward_description) || null;
 
-  const cashbackValue = isCagnotte && merchant.cagnotte_percent
-    ? Math.round(currentAmount * Number(merchant.cagnotte_percent)) / 100
-    : 0;
+  const cashbackValue = isCagnotte ? computeCashback(currentAmount, merchant.cagnotte_percent) : 0;
 
   return {
     mode: isCagnotte ? 'cagnotte' : 'visit',

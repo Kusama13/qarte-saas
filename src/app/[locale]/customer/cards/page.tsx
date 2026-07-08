@@ -50,9 +50,9 @@ export default function CustomerCardsPage() {
 
       const sorted: LoyaltyCardWithMerchant[] = data.cards.sort((a: LoyaltyCardWithMerchant, b: LoyaltyCardWithMerchant) => {
         const aReady = (a.current_stamps >= a.stamps_required && !a.tier1_redeemed) ||
-          (a.tier2_enabled && a.current_stamps >= (a.tier2_stamps_required || a.stamps_required * 2));
+          (!!a.tier2_enabled && a.tier2_stamps_required != null && a.current_stamps >= a.tier2_stamps_required);
         const bReady = (b.current_stamps >= b.stamps_required && !b.tier1_redeemed) ||
-          (b.tier2_enabled && b.current_stamps >= (b.tier2_stamps_required || b.stamps_required * 2));
+          (!!b.tier2_enabled && b.tier2_stamps_required != null && b.current_stamps >= b.tier2_stamps_required);
         if (aReady && !bReady) return -1;
         if (!aReady && bReady) return 1;
         if (!a.last_visit_date && !b.last_visit_date) return 0;
@@ -147,8 +147,9 @@ export default function CustomerCardsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {cards.map((card, index) => {
               const tier1Required = card.stamps_required;
-              const tier2Enabled = card.tier2_enabled;
-              const tier2Required = card.tier2_stamps_required || tier1Required * 2;
+              // Aligné sur getLoyaltyProgress : tier2 actif seulement si le seuil est configuré.
+              const tier2Enabled = !!card.tier2_enabled && card.tier2_stamps_required != null;
+              const tier2Required = card.tier2_stamps_required ?? tier1Required * 2;
 
               const isTier1Ready = card.current_stamps >= tier1Required;
               const isTier2Ready = !!tier2Enabled && card.current_stamps >= tier2Required;
