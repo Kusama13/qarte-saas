@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authorizeMerchant } from '@/lib/api-helpers';
+import { authorizeMerchant, requirePlanFeature } from '@/lib/api-helpers';
 import { syncBookingLoyalty } from '@/lib/booking-loyalty';
 import logger from '@/lib/logger';
 
@@ -23,6 +23,9 @@ export async function PATCH(request: NextRequest) {
 
     const auth = await authorizeMerchant(merchant_id);
     if (auth.response) return auth.response;
+
+    const tierBlock = await requirePlanFeature(auth.supabaseAdmin, merchant_id, 'planning');
+    if (tierBlock) return tierBlock;
 
     const { data, error } = await auth.supabaseAdmin
       .from('merchant_planning_slots')
