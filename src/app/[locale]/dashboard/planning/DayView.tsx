@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Plus, Lock, Car } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot, MerchantCountry } from '@/types';
-import { formatTime, formatCurrency } from '@/lib/utils';
+import { formatTime, formatCurrency, readableTextColor } from '@/lib/utils';
 import { formatDate, timeToMinutes, minutesToTime, computeDayRevenue } from './utils';
 import type { ServiceWithDuration } from './usePlanningState';
 import {
@@ -225,7 +225,7 @@ export default function DayView({
           const bgVivid = slot.client_name
             ? `${accent}E6` // 90% opacity → punchy color
             : '#ecfdf5'; // light emerald for empty slots
-          const textColor = slot.client_name ? '#ffffff' : '#065f46';
+          const textColor = slot.client_name ? readableTextColor(accent, { alpha: 0.9 }) : '#065f46';
 
           const endTime = minutesToTime(timeToMinutes(slot.start_time) + durationMins);
           return (

@@ -552,7 +552,7 @@ export async function PATCH(request: NextRequest) {
           smsType: 'booking_cancelled',
           locale: cancelMerchant.locale || 'fr',
           subscriptionStatus: cancelMerchant.subscription_status,
-        }).catch(() => {});
+        }).catch((err) => logger.error('Planning cancel SMS failed', err));
       }
     }
 
@@ -597,7 +597,7 @@ export async function PATCH(request: NextRequest) {
           smsType,
           locale: smsMerchant.locale || 'fr',
           subscriptionStatus: smsMerchant.subscription_status,
-        }).catch(() => {});
+        }).catch((err) => logger.error('Planning status SMS failed', err));
       }
     }
 

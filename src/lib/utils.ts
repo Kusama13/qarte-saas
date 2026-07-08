@@ -147,6 +147,26 @@ export function ensureTextContrast(hex: string, minRatio = 3): string {
   return `#${toHex(dr)}${toHex(dg)}${toHex(db)}`;
 }
 
+/**
+ * Picks a readable text color (white or near-black) to sit ON TOP of a solid
+ * background color, per WCAG relative luminance. Dark backgrounds get white text,
+ * light backgrounds get dark text. `alpha` composites the background over white
+ * first (for backgrounds rendered with opacity, e.g. `#rrggbbE6` = 0.9).
+ */
+export function readableTextColor(hex: string, opts?: { alpha?: number; dark?: string }): string {
+  const dark = opts?.dark ?? '#1f2937';
+  const alpha = opts?.alpha ?? 1;
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return '#ffffff';
+  const blend = (c: number) => (c * alpha + 255 * (1 - alpha)) / 255; // composite over white
+  const r = blend(parseInt(hex.slice(1, 3), 16));
+  const g = blend(parseInt(hex.slice(3, 5), 16));
+  const b = blend(parseInt(hex.slice(5, 7), 16));
+  const toLinear = (c: number) => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  const lum = 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+  const whiteContrast = 1.05 / (lum + 0.05); // contrast ratio of white text vs this bg
+  return whiteContrast >= 4.5 ? '#ffffff' : dark;
+}
+
 export function generateSlug(shopName: string): string {
   let slug = shopName.toLowerCase().trim();
   slug = slug.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
