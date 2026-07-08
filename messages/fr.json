@@ -3117,6 +3117,14 @@
     "stampsAccumulated": "Passages cumulés",
     "viewFullCard": "Voir ma carte complète"
   },
+  "scanConfirm": {
+    "hello": "Bonjour {name} !",
+    "subtitle": "Validez votre passage chez {shop} pour gagner votre tampon.",
+    "validate": "Valider ma visite",
+    "validating": "Validation...",
+    "viewCard": "Voir ma carte",
+    "notYou": "Ce n'est pas vous ?"
+  },
   "scanPending": {
     "title": "Passage en cours de vérification",
     "message": "Pour votre sécurité, ce passage doit être validé par {name}.",
