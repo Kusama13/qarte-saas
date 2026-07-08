@@ -1,10 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, Clock, ChevronRight, Wallet, AlertTriangle, Trash2, Undo2, Search, X, Clipboard, Check, ArrowUpRight, MessageCircle } from 'lucide-react';
+import { CalendarDays, Clock, ChevronRight, Wallet, AlertTriangle, Trash2, Undo2, Search, X, Clipboard, Check, ArrowUpRight, MessageCircle, Gift } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot, BookingDepositFailure } from '@/types';
 import { formatTime, toBCP47, formatCurrency, formatPhoneLabel, getVitrineUrl } from '@/lib/utils';
+import { getLoyaltyProgress, type MerchantLoyaltyConfig } from '@/lib/loyalty-progress';
 import { useCopyToClipboard } from '@/hooks/useCopyToClipboard';
 import { getSlotServiceIds, formatDate, colorBorderStyle, endTimeFromStart, formatDateLong, customServiceDisplayName } from './utils';
 import type { ServiceWithDuration } from './usePlanningState';
@@ -16,6 +17,7 @@ interface ReservationsSectionProps {
   locale: string;
   merchantCountry: string;
   merchantSlug: string | null;
+  loyaltyConfig?: MerchantLoyaltyConfig | null;
   onEditSlot: (slot: PlanningSlot) => void;
   deepLinkSlotId?: string | null;
   onDeepLinkHandled?: () => void;
@@ -32,7 +34,7 @@ interface DayGroup {
   slots: PlanningSlot[];
 }
 
-export default function ReservationsSection({ slots, services, serviceColorMap, locale, merchantCountry, merchantSlug, onEditSlot, deepLinkSlotId, onDeepLinkHandled, depositFailures, onBringBackFailure, onDeleteFailure }: ReservationsSectionProps) {
+export default function ReservationsSection({ slots, services, serviceColorMap, locale, merchantCountry, merchantSlug, loyaltyConfig, onEditSlot, deepLinkSlotId, onDeepLinkHandled, depositFailures, onBringBackFailure, onDeleteFailure }: ReservationsSectionProps) {
   const t = useTranslations('planning');
   const [showPast, setShowPast] = useState(false);
   const [showFailures, setShowFailures] = useState(true);
@@ -297,6 +299,9 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
           const svcIds = getSlotServiceIds(slot);
           const slotColors = svcIds.map(id => serviceColorMap.get(id)).filter(Boolean) as string[];
 
+          // Badge fidélité (glanceable) : la récompense prête, signal le plus actionnable.
+          const rewardReady = !!slot.loyalty && !!loyaltyConfig && getLoyaltyProgress(slot.loyalty, loyaltyConfig).rewardReady;
+
           return (
             <button
               key={slot.id}
@@ -345,6 +350,11 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                         title={t('customerMessageLabel')}
                       >
                         <MessageCircle className="w-3 h-3" />
+                      </span>
+                    )}
+                    {rewardReady && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <Gift className="w-3 h-3" />{t('loyaltyRewardReady')}
                       </span>
                     )}
                   </div>

@@ -289,15 +289,26 @@ export default function WeekView({
                     <div className="text-[9px] font-bold tabular-nums leading-tight truncate" style={{ color: textColor }}>
                       {formatTime(slot.start_time, locale)}–{formatTime(endTime, locale)}
                     </div>
-                    {serviceNames && height >= 32 && (
-                      <p className="text-[10px] font-bold leading-tight mt-0.5 line-clamp-2" style={{ color: textColor }}>
-                        {serviceNames}
-                      </p>
-                    )}
-                    {slot.client_name && height >= 56 && (
-                      <p className="text-[9px] font-medium truncate leading-tight mt-0.5 opacity-90" style={{ color: textColor }}>
-                        {slot.client_name}
-                      </p>
+                    {/* Réservé : nom de la cliente prioritaire ; libre : prestation comme avant. */}
+                    {slot.client_name ? (
+                      <>
+                        {height >= 32 && (
+                          <p className="text-[10px] font-bold truncate leading-tight mt-0.5" style={{ color: textColor }}>
+                            {slot.client_name}
+                          </p>
+                        )}
+                        {serviceNames && height >= 52 && (
+                          <p className="text-[9px] font-medium leading-tight mt-0.5 line-clamp-1 opacity-90" style={{ color: textColor }}>
+                            {serviceNames}
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      serviceNames && height >= 32 && (
+                        <p className="text-[10px] font-bold leading-tight mt-0.5 line-clamp-2" style={{ color: textColor }}>
+                          {serviceNames}
+                        </p>
+                      )
                     )}
                   </button>
                 );

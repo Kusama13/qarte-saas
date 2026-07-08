@@ -226,7 +226,6 @@ export default function DayView({
             ? `${accent}E6` // 90% opacity → punchy color
             : '#ecfdf5'; // light emerald for empty slots
           const textColor = slot.client_name ? '#ffffff' : '#065f46';
-          const subTextColor = slot.client_name ? 'rgba(255,255,255,0.85)' : '#10b981';
 
           const endTime = minutesToTime(timeToMinutes(slot.start_time) + durationMins);
           return (
@@ -245,15 +244,27 @@ export default function DayView({
               <div className="text-xs font-bold tabular-nums leading-tight" style={{ color: textColor }}>
                 {formatTime(slot.start_time, locale)} — {formatTime(endTime, locale)}
               </div>
-              {serviceNames && height >= 40 && (
-                <p className="text-sm font-bold leading-tight mt-0.5 line-clamp-2" style={{ color: textColor }}>
-                  {serviceNames}
-                </p>
-              )}
-              {slot.client_name && height >= 64 && (
-                <p className="text-[11px] font-medium truncate leading-tight mt-0.5 opacity-90" style={{ color: textColor }}>
-                  {slot.client_name}
-                </p>
+              {/* Créneau réservé : le nom de la cliente est l'info prioritaire, la prestation vient dessous.
+                  Créneau libre (sans cliente) : on montre la prestation comme avant. */}
+              {slot.client_name ? (
+                <>
+                  {height >= 40 && (
+                    <p className="text-sm font-bold truncate leading-tight mt-0.5" style={{ color: textColor }}>
+                      {slot.client_name}
+                    </p>
+                  )}
+                  {serviceNames && height >= 60 && (
+                    <p className="text-[11px] font-medium leading-tight mt-0.5 line-clamp-1 opacity-90" style={{ color: textColor }}>
+                      {serviceNames}
+                    </p>
+                  )}
+                </>
+              ) : (
+                serviceNames && height >= 40 && (
+                  <p className="text-sm font-bold leading-tight mt-0.5 line-clamp-2" style={{ color: textColor }}>
+                    {serviceNames}
+                  </p>
+                )
               )}
             </button>
           );

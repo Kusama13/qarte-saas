@@ -17,6 +17,7 @@ import { compressOfferImage } from '@/lib/image-compression';
 import { computeBookingPrice, CUSTOM_SERVICE_LINE_ID } from '@/lib/booking-pricing';
 import { timeToMinutes, minutesToTime, roundUp5, formatDuration, getSlotServiceIds, colorBorderStyle, computeDepositAmount, CUSTOM_SERVICE_DEFAULT_NAME, formatDateLong, endTimeFromStart } from './utils';
 import CustomServicePicker from './CustomServicePicker';
+import LoyaltyBand, { type FullCardPayload } from './LoyaltyBand';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import type { BookingDraft, ServiceWithDuration } from './usePlanningState';
 
@@ -86,6 +87,7 @@ interface BookingDetailsModalProps {
   onGoBack: () => void;
   onClose: () => void;
   onFetchClientHistory: (customerId: string) => Promise<PlanningSlot[]>;
+  onOpenLoyaltyCard?: (payload: FullCardPayload) => void;
 }
 
 export default function BookingDetailsModal({
@@ -117,6 +119,7 @@ export default function BookingDetailsModal({
   onGoBack,
   onClose,
   onFetchClientHistory,
+  onOpenLoyaltyCard,
 }: BookingDetailsModalProps) {
   useBodyScrollLock(true);
   const t = useTranslations('planning');
@@ -814,6 +817,18 @@ export default function BookingDetailsModal({
                 </a>
               )}
             </div>
+          )}
+
+          {/* ── Fidélité : où en est la cliente sur sa carte ── */}
+          {draft.customerId && (
+            <LoyaltyBand
+              customerId={draft.customerId}
+              merchantId={merchantId}
+              merchantCountry={merchantCountry}
+              locale={locale}
+              slotEarnsPoint={slot.booked_online && (slot.attendance_status == null || slot.attendance_status === 'pending')}
+              onOpenFullCard={onOpenLoyaltyCard}
+            />
           )}
 
           {pinnedNotes.length > 0 && (

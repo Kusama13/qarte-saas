@@ -119,7 +119,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
-    return NextResponse.json({ slots: data || [] });
+    // Attache l'état fidélité (léger) par créneau relié à une cliente — uniquement pour la liste
+    // des réservations (badge « récompense prête »), seule surface qui le consomme. Les grilles
+    // jour/semaine ne l'affichent pas → on évite la requête sur ce hot path. Query batchée (pas de N+1).
+    let slots = data || [];
+    const wantLoyalty = searchParams.get('booked') === 'true';
+    const customerIds = wantLoyalty
+      ? [...new Set(slots.map(s => s.customer_id).filter((id): id is string => !!id))]
+      : [];
+    if (customerIds.length > 0) {
+      const { data: cards } = await supabaseAdmin
+        .from('loyalty_cards')
+        .select('customer_id, current_stamps, current_amount')
+        .eq('merchant_id', merchantId)
+        .in('customer_id', customerIds);
+      const byCustomer = new Map((cards || []).map(c => [c.customer_id, c]));
+      slots = slots.map(s => ({
+        ...s,
+        loyalty: s.customer_id ? (byCustomer.get(s.customer_id) ?? null) : null,
+      }));
+    }
+
+    return NextResponse.json({ slots });
   } catch (error) {
     logger.error('Planning GET error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
