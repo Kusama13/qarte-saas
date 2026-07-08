@@ -31,7 +31,10 @@ import AddSlotsModal from './AddSlotsModal';
 import CopyWeekModal from './CopyWeekModal';
 import ConfirmDeleteSlotsModal from './ConfirmDeleteSlotsModal';
 import ClientSelectModal from './ClientSelectModal';
+import { createPortal } from 'react-dom';
 import BookingDetailsModal from './BookingDetailsModal';
+import type { FullCardPayload } from './LoyaltyBand';
+import { CustomerManagementModal } from '@/components/dashboard/CustomerManagementModal';
 import BringBackBookingModal from './BringBackBookingModal';
 import ReservationsSection from './ReservationsSection';
 import DayView from './DayView';
@@ -98,6 +101,9 @@ export default function PlanningDashboard() {
   } = state;
 
   const { saving: savingSettings, saved: savedSettings, save: saveSettings } = useDashboardSave(2000);
+
+  // Fiche fidélité complète ouverte depuis une réservation (CustomerManagementModal).
+  const [loyaltyCardPayload, setLoyaltyCardPayload] = useState<FullCardPayload | null>(null);
 
   // Sous-navigation de l'onglet Paramètres : n'affiche qu'une section à la fois
   // (l'état des réglages est partagé + le bouton Enregistrer est global, donc switcher
@@ -1281,6 +1287,7 @@ export default function PlanningDashboard() {
           locale={locale}
           merchantCountry={merchant?.country || 'FR'}
           merchantSlug={merchant?.slug || null}
+          loyaltyConfig={merchant}
           onEditSlot={openEditSlot}
           deepLinkSlotId={deepLinkSlotId}
           onDeepLinkHandled={() => setDeepLinkSlotId(null)}
@@ -2482,9 +2489,41 @@ export default function PlanningDashboard() {
             onGoBack={goBackToClientSelect}
             onClose={closeModal}
             onFetchClientHistory={fetchClientHistory}
+            onOpenLoyaltyCard={setLoyaltyCardPayload}
           />
         )}
       </AnimatePresence>
+
+      {/* Fiche fidélité complète, ouverte depuis une réservation. Portée dans body pour passer
+          AU-DESSUS de la fiche résa (elle-même portée dans body via createPortal). */}
+      {loyaltyCardPayload && merchant && typeof document !== 'undefined' && createPortal(
+        <CustomerManagementModal
+          isOpen
+          onClose={() => setLoyaltyCardPayload(null)}
+          onSuccess={() => { fetchSlots().catch(() => {}); }}
+          customerId={loyaltyCardPayload.customerId}
+          merchantId={merchant.id}
+          loyaltyCardId={loyaltyCardPayload.card.loyaltyCardId}
+          firstName={loyaltyCardPayload.customer.firstName}
+          lastName={loyaltyCardPayload.customer.lastName}
+          phoneNumber={loyaltyCardPayload.customer.phoneNumber}
+          currentStamps={loyaltyCardPayload.card.currentStamps}
+          currentAmount={loyaltyCardPayload.card.currentAmount}
+          tier1Redeemed={loyaltyCardPayload.card.tier1Redeemed}
+          birthMonth={loyaltyCardPayload.customer.birthMonth}
+          birthDay={loyaltyCardPayload.customer.birthDay}
+          stampsRequired={merchant.stamps_required || 10}
+          tier2Enabled={merchant.tier2_enabled}
+          tier2StampsRequired={merchant.tier2_stamps_required ?? undefined}
+          tier2RewardDescription={merchant.tier2_reward_description || undefined}
+          rewardDescription={merchant.reward_description || undefined}
+          isCagnotte={merchant.loyalty_mode === 'cagnotte'}
+          cagnottePercent={merchant.cagnotte_percent ?? undefined}
+          cagnotteTier2Percent={merchant.cagnotte_tier2_percent ?? undefined}
+          country={merchant.country || 'FR'}
+        />,
+        document.body,
+      )}
     </div>
   );
 }

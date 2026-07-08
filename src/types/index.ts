@@ -270,6 +270,9 @@ export interface PlanningSlot {
   planning_slot_photos?: PlanningSlotPhoto[];
   planning_slot_result_photos?: PlanningSlotResultPhoto[];
   customer?: { instagram_handle: string | null; tiktok_handle: string | null; facebook_url: string | null } | null;
+  // État fidélité léger (stamps/amount) attaché par /api/planning?booked=true, pour le badge liste.
+  // null = walk-in / sans carte. Le détail complet vient de /api/customers/loyalty-snapshot.
+  loyalty?: { current_stamps: number; current_amount: number } | null;
 }
 
 export interface BookingDepositFailure {
