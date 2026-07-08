@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Heart, Gift, Sparkles, CalendarCheck, Wallet, Crown, Ticket, ChevronRight, Loader2 } from 'lucide-react';
+import { Heart, Gift, Sparkles, CalendarCheck, Wallet, Crown, Ticket, ChevronRight, Loader2, HelpCircle, QrCode, Plus } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { Modal } from '@/components/ui';
 import type { LoyaltyProgress } from '@/lib/loyalty-progress';
 
 interface SnapshotCard { loyaltyCardId: string; currentStamps: number; currentAmount: number; tier1Redeemed: boolean }
@@ -53,6 +54,7 @@ export default function LoyaltyBand({ customerId, merchantId, merchantCountry, l
   const t = useTranslations('planning');
   const [snap, setSnap] = useState<Snapshot | null>(null);
   const [loading, setLoading] = useState(true);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -110,12 +112,23 @@ export default function LoyaltyBand({ customerId, merchantId, merchantCountry, l
   if (snap.vouchersCount > 0) stats.push(<span key="vouchers" className="inline-flex items-center gap-1 text-emerald-600 font-semibold"><Ticket className="w-3 h-3" />{t('loyaltyVouchers', { count: snap.vouchersCount })}</span>);
 
   return (
+    <>
     <div className={`rounded-2xl border p-4 ${reward ? 'border-emerald-200 bg-emerald-50/60' : 'border-rose-100 bg-rose-50/40'}`}>
       {/* En-tête */}
       <div className="flex items-center justify-between gap-2">
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-rose-500">
-          <Heart className="w-3.5 h-3.5" fill="currentColor" />{t('loyaltyBandTitle')}
-        </span>
+        <div className="flex items-center gap-1">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-rose-500">
+            <Heart className="w-3.5 h-3.5" fill="currentColor" />{t('loyaltyBandTitle')}
+          </span>
+          <button
+            type="button"
+            onClick={() => setHelpOpen(true)}
+            aria-label={t('loyaltyHelpTitle')}
+            className="text-rose-400 hover:text-rose-600 transition-colors"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+          </button>
+        </div>
         {!snap.hasCard ? (
           <span className="text-[11px] text-gray-400 font-medium">{t('loyaltyNoCard')}</span>
         ) : isCagnotte ? (
@@ -179,5 +192,45 @@ export default function LoyaltyBand({ customerId, merchantId, merchantCountry, l
         </button>
       )}
     </div>
+
+    <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t('loyaltyHelpTitle')} size="md">
+      <div className="space-y-5">
+        {/* Automatique */}
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 mb-2">{t('loyaltyHelpAutoLabel')}</p>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3">
+              <div className="shrink-0 w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center"><QrCode className="w-4 h-4 text-rose-500" /></div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-gray-900">{t('loyaltyHelpScanTitle')}</p>
+                <p className="text-[13px] text-gray-600 leading-snug">{t('loyaltyHelpScanDesc')}</p>
+              </div>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="shrink-0 w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center"><CalendarCheck className="w-4 h-4 text-emerald-600" /></div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-gray-900">{t('loyaltyHelpBookingTitle')}</p>
+                <p className="text-[13px] text-gray-600 leading-snug">{t('loyaltyHelpBookingDesc')}</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        {/* Manuel */}
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">{t('loyaltyHelpManualLabel')}</p>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3">
+              <div className="shrink-0 w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center"><Plus className="w-4 h-4 text-gray-600" /></div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-gray-900">{t('loyaltyHelpManualTitle')}</p>
+                <p className="text-[13px] text-gray-600 leading-snug">{t('loyaltyHelpManualDesc')}</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </Modal>
+    </>
   );
 }
