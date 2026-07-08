@@ -178,6 +178,11 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `shield_enabled` (BOOL, defaut true), wording : "verification automatique"
 - Toggle on/off : `PendingPointsWidget` (accueil dashboard, visible uniquement si clients > 0) + `/dashboard/settings` (carte dediee en haut, toujours accessible)
 
+### Validation explicite de la visite (fin de l'auto-tampon au ré-ouverture du lien)
+- **Problème résolu** : une cliente reconnue (cookie téléphone) qui **rouvrait le lien de scan** (depuis son historique / Instagram / favoris, souvent des heures ou jours après) était **créditée automatiquement** — d'où des faux passages (même jour → « en attente » à valider ; jours après → faux tampon). L'auto-checkin dans `scan/[code]/page.tsx` (auto-login) + un garde-fou `localStorage` par jour/navigateur étaient la cause.
+- **Correctif (mode passage)** : ouvrir le lien ne tamponne plus. Une cliente reconnue (auto par cookie **ou** en tapant son numéro) arrive sur l'écran **`ScanConfirmVisitScreen`** (`step='confirm-visit'`) : « Bonjour {prénom} » + **« Valider ma visite »** (seul chemin qui crédite) + **« Voir ma carte »** (consulte ses points **sans créditer**) + « Ce n'est pas vous ? ». Le garde-fou `localStorage` est supprimé. `processCheckin` ne se déclenche plus que sur 3 actions explicites : inscription nouveau client, confirmation montant cagnotte, bouton « Valider ma visite ».
+- **Mode cagnotte inchangé** (déjà explicite : saisie du montant). Le Shield côté serveur (quarantaine 2ᵉ passage/jour) est **inchangé**.
+
 ### Offre Duo (mig 082)
 - `duo_offer_enabled` (BOOL, defaut false) + `duo_offer_description` (TEXT) sur table `merchants`
 - Config dans `/dashboard/program` (ExtrasSection) : toggle + description + suggestions

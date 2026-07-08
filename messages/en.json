@@ -3116,6 +3116,14 @@
     "stampsAccumulated": "Accumulated visits",
     "viewFullCard": "View my full card"
   },
+  "scanConfirm": {
+    "hello": "Hi {name}!",
+    "subtitle": "Confirm your visit at {shop} to earn your stamp.",
+    "validate": "Confirm my visit",
+    "validating": "Confirming...",
+    "viewCard": "View my card",
+    "notYou": "Not you?"
+  },
   "scanPending": {
     "title": "Visit under review",
     "message": "For your security, this visit must be validated by {name}.",

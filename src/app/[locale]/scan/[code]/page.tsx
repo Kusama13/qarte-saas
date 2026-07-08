@@ -30,11 +30,11 @@ import { trackQrScanned, trackCardCreated, trackPointEarned, trackRewardRedeemed
 import { useTranslations } from 'next-intl';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { ScanSuccessStep } from '@/components/loyalty';
-import { WelcomeBanner, ScanRewardScreen, ScanAlreadyCheckedScreen, ScanPendingScreen } from '@/components/scan';
+import { WelcomeBanner, ScanRewardScreen, ScanAlreadyCheckedScreen, ScanConfirmVisitScreen, ScanPendingScreen } from '@/components/scan';
 import { SuspendedBanner } from '@/components/shared/SuspendedBanner';
 import { isMerchantBlocked } from '@/lib/merchant-access';
 
-type Step = 'phone' | 'register' | 'amount' | 'amount-confirm' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward' | 'pending' | 'banned' | 'referral-success';
+type Step = 'phone' | 'register' | 'amount' | 'amount-confirm' | 'checkin' | 'success' | 'already-checked' | 'confirm-visit' | 'error' | 'reward' | 'pending' | 'banned' | 'referral-success';
 
 interface ReferralInfo {
   valid: boolean;
@@ -190,11 +190,6 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     const autoLogin = async () => {
       if (autoLoginAttempted || loading || !merchant || submitting || refCode || welcomeCode || offerId) return;
 
-      // Guard: skip auto-login if already auto-checked-in today for this scan code
-      const lastAutoCheckin = localStorage.getItem(`qarte_checkin_${code}`);
-      const today = new Date().toDateString();
-      if (lastAutoCheckin === today) return;
-
       if (step === 'phone') {
         setAutoLoginAttempted(true);
         setSubmitting(true);
@@ -211,8 +206,9 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               if (merchant.loyalty_mode === 'cagnotte') {
                 setStep('amount');
               } else {
-                await processCheckin(data.customer, data.phone);
-                localStorage.setItem(`qarte_checkin_${code}`, today);
+                // Cliente reconnue : on ne tamponne plus automatiquement. Elle valide
+                // explicitement sa visite (évite les faux tampons quand le lien est rouvert).
+                setStep('confirm-visit');
               }
             } else if (data.existsGlobally && data.customer) {
               const createResponse = await fetch('/api/customers/register', {
@@ -231,8 +227,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 if (merchant.loyalty_mode === 'cagnotte') {
                   setStep('amount');
                 } else {
-                  await processCheckin(createData.customer, data.phone);
-                  localStorage.setItem(`qarte_checkin_${code}`, today);
+                  setStep('confirm-visit');
                 }
               }
             }
@@ -353,7 +348,8 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           if (merchant.loyalty_mode === 'cagnotte') {
             setStep('amount');
           } else {
-            await processCheckin(data.customer);
+            // Cliente reconnue : validation explicite de la visite (plus d'auto-tampon).
+            setStep('confirm-visit');
           }
         } else if (data.existsGlobally) {
           // Client exists globally but not for this merchant
@@ -390,7 +386,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               if (merchant.loyalty_mode === 'cagnotte') {
                 setStep('amount');
               } else {
-                await processCheckin(createData.customer);
+                setStep('confirm-visit');
               }
             } else {
               console.error('Create failed:', createData);
@@ -1220,6 +1216,18 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             tier1Redeemed={tier1Redeemed}
             primaryColor={primaryColor}
             secondaryColor={secondaryColor}
+          />
+        )}
+
+        {step === 'confirm-visit' && merchant && customer && (
+          <ScanConfirmVisitScreen
+            firstName={customer.first_name}
+            shopName={merchant.shop_name}
+            primaryColor={primaryColor}
+            viewCardHref={`/customer/card/${merchant.id}`}
+            submitting={submitting}
+            onValidate={() => processCheckin(customer)}
+            onNotYou={() => { setStep('phone'); setPhoneNumber(''); setAutoLoginAttempted(true); }}
           />
         )}
 
