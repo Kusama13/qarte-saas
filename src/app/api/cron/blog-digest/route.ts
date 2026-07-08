@@ -23,6 +23,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Coupe-circuit : envois blog en pause (quota Resend gratuit).
+  // Réactiver en posant BLOG_EMAILS_ENABLED=true côté env (sans redéploiement de code).
+  if (process.env.BLOG_EMAILS_ENABLED !== 'true') {
+    return NextResponse.json({ disabled: 'blog_emails_off' });
+  }
+
   // 1. Throttle global : >= 3 jours depuis le dernier dispatch tous articles confondus
   const { data: recent } = await supabase
     .from('blog_email_dispatches')
