@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Gift, Trophy, Coins, Minus, Plus } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
-import { formatCurrency, calculateCashback } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
+import { computeCashback } from '@/lib/loyalty-progress';
 import { ROLES } from '@/lib/customer-modal-styles';
 
 const SIGNIFICANT_STAMP_DELTA = 5;
@@ -189,7 +190,7 @@ export function CustomerAdjustTab({
       <div className={`rounded-xl border ${ROLES.neutral.border} ${ROLES.neutral.bg} p-4 sm:p-5 space-y-4 sm:space-y-5`}>
         {isCagnotte && (() => {
           const activePercent = (tier2Reached || (tier1Redeemed && tier2Enabled)) ? (cagnotteTier2Percent || cagnottePercent) : cagnottePercent;
-          const activeValue = formatCurrency(calculateCashback(currentAmount, activePercent), country);
+          const activeValue = formatCurrency(computeCashback(currentAmount, activePercent), country);
           return (
             <div className="flex items-baseline justify-between pb-2.5 border-b border-gray-200/70">
               <div className="flex items-center gap-1.5">
@@ -299,8 +300,8 @@ export function CustomerAdjustTab({
             <div className="mt-2.5 text-xs sm:text-sm text-center text-gray-500 space-y-0.5">
               <p>{t('newTotal')} : <span className="font-semibold">{formatCurrency(newAmount, country)}</span></p>
               <p>
-                {t('newCagnotte')} : <span className={`font-semibold ${ROLES.success.text}`}>{formatCurrency(calculateCashback(newAmount, cagnottePercent), country)} ({cagnottePercent}%)</span>
-                {cagnotteTier2Percent && tier1Redeemed && <span className={`${ROLES.premium.text} ml-1`}>/ {formatCurrency(calculateCashback(newAmount, cagnotteTier2Percent), country)} ({cagnotteTier2Percent}%)</span>}
+                {t('newCagnotte')} : <span className={`font-semibold ${ROLES.success.text}`}>{formatCurrency(computeCashback(newAmount, cagnottePercent), country)} ({cagnottePercent}%)</span>
+                {cagnotteTier2Percent && tier1Redeemed && <span className={`${ROLES.premium.text} ml-1`}>/ {formatCurrency(computeCashback(newAmount, cagnotteTier2Percent), country)} ({cagnotteTier2Percent}%)</span>}
               </p>
             </div>
           )}

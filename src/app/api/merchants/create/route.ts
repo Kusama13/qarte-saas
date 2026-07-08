@@ -6,7 +6,6 @@ import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/l
 import { sendWelcomeEmail, sendAffiliationWelcomeEmail, sendNewMerchantNotification, cancelScheduledEmail } from '@/lib/email';
 import { generateSlug, generateScanCode, generateReferralCode, formatPhoneNumber } from '@/lib/utils';
 import { PG_UNIQUE_VIOLATION } from '@/lib/postgres-errors';
-import type { MerchantCountry } from '@/types';
 
 // Client avec service role (bypass RLS)
 const supabaseAdmin = getSupabaseAdmin();
@@ -40,10 +39,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { user_id, shop_name, shop_type, shop_address, phone, country, signup_source, locale } = parsed.data;
-    const trimmedShopName = shop_name;
-    const trimmedAddress = shop_address;
-    const merchantCountry: MerchantCountry = country;
+    const { user_id, shop_name: trimmedShopName, shop_type, shop_address: trimmedAddress,
+            phone, country: merchantCountry, signup_source, locale } = parsed.data;
     const formattedPhone = formatPhoneNumber(phone, merchantCountry);
 
     // Vérifier l'authentification — Bearer token obligatoire (C12)

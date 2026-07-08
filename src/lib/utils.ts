@@ -224,10 +224,6 @@ export function formatEUR(amount: number, locale: string = 'fr'): string {
   return amount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-export function calculateCashback(amount: number, percent: number): number {
-  return Math.round(amount * percent) / 100;
-}
-
 export const MONTH_LABELS_FR: Record<string, string> = {
   '01': 'Janvier', '02': 'Février', '03': 'Mars', '04': 'Avril',
   '05': 'Mai', '06': 'Juin', '07': 'Juillet', '08': 'Août',

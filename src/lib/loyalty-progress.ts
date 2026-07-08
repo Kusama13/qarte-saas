@@ -50,9 +50,12 @@ export interface LoyaltyProgress {
  * pour que le montant annoncé et le montant débité ne divergent jamais sur l'arrondi.
  */
 export function computeCashback(amount: number | null | undefined, percent: number | null | undefined): number {
-  const p = Number(percent || 0);
-  if (p <= 0) return 0;
-  return Math.round(Number(amount || 0) * p) / 100;
+  return Math.round(Number(amount || 0) * Number(percent || 0)) / 100;
+}
+
+/** Tier 2 réellement actif : activé ET seuil configuré. Règle partagée (dashboard, PWA, snapshot). */
+export function isTier2Active(cfg: { tier2_enabled?: boolean | null; tier2_stamps_required?: number | null }): boolean {
+  return !!cfg.tier2_enabled && cfg.tier2_stamps_required != null;
 }
 
 /**
@@ -69,7 +72,7 @@ export function getLoyaltyProgress(
   const currentAmount = Number(card?.current_amount || 0);
 
   const stampsRequired = Number(merchant.stamps_required || 10);
-  const tier2Enabled = !!merchant.tier2_enabled && !!merchant.tier2_stamps_required;
+  const tier2Enabled = isTier2Active(merchant);
   const tier2Required = Number(merchant.tier2_stamps_required || 0);
 
   const isTier1Ready = currentStamps >= stampsRequired;
