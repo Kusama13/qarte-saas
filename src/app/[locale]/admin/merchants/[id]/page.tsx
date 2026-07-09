@@ -1220,6 +1220,17 @@ export default function MerchantDetailPage() {
           {merchant.hide_address_on_public_page && (
             <FeatureBadge active icon={<EyeOff className="w-3 h-3" />} label="Adresse masquée" />
           )}
+          <FeatureBadge active={!!merchant.booking_earns_loyalty} icon={<Heart className="w-3 h-3" />} label="Résa → fidélité" />
+          <FeatureBadge active={!!merchant.booking_reminder_email_enabled} icon={<Mail className="w-3 h-3" />} label="Rappel email J-1" />
+          {merchant.booking_reminder_in_confirmation && (
+            <FeatureBadge active icon={<Mail className="w-3 h-3" />} label="Infos en confirmation" />
+          )}
+          {Number(merchant.booking_min_lead_hours || 0) > 0 && (
+            <FeatureBadge active icon={<Clock className="w-3 h-3" />} label={`Délai mini ${merchant.booking_min_lead_hours}h`} />
+          )}
+          {merchant.booking_horizon_days != null && merchant.booking_horizon_days !== 90 && (
+            <FeatureBadge active icon={<CalendarDays className="w-3 h-3" />} label={`Horizon ${merchant.booking_horizon_days}j`} />
+          )}
         </div>
 
         {merchant.welcome_offer_enabled && (
@@ -1264,6 +1275,22 @@ export default function MerchantDetailPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {merchant.booking_reminder_details && (
+          <div className="p-3 bg-violet-50 rounded-lg border border-violet-200">
+            <div className="flex items-center gap-2 mb-1">
+              <Mail className="w-3.5 h-3.5 text-violet-600" />
+              <span className="font-medium text-gray-900 text-xs">Infos pratiques (rappel email / confirmation)</span>
+              {merchant.booking_reminder_in_confirmation && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700">aussi en confirmation</span>
+              )}
+              {!merchant.booking_reminder_email_enabled && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">rappel désactivé</span>
+              )}
+            </div>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">{merchant.booking_reminder_details}</p>
           </div>
         )}
 
