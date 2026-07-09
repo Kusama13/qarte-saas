@@ -77,10 +77,11 @@ import logger from './logger';
  * Le transactionnel n'est jamais compté ni bloqué. Fail-open : si le compteur est
  * indisponible (ex. migration 184 pas encore appliquée), on n'empêche pas l'envoi.
  */
-const MARKETING_DAILY_CAP = Number(process.env.EMAIL_MARKETING_DAILY_CAP ?? 60);
+const rawMarketingCap = Number(process.env.EMAIL_MARKETING_DAILY_CAP ?? 60);
+// Cap invalide (NaN, négatif) → Infinity = plafond désactivé (jamais dépassé).
+const MARKETING_DAILY_CAP = Number.isFinite(rawMarketingCap) && rawMarketingCap >= 0 ? rawMarketingCap : Infinity;
 
 async function marketingBudgetExceeded(): Promise<boolean> {
-  if (!(MARKETING_DAILY_CAP >= 0)) return false;
   try {
     const { data } = await getSupabaseAdmin()
       .from('email_daily_counters')
@@ -147,8 +148,9 @@ async function sendEmail<P extends Record<string, unknown>>(
   if (check) return check;
 
   const label = options?.logLabel ?? subject;
+  const isMarketing = options?.category === 'marketing';
 
-  if (options?.category === 'marketing' && await marketingBudgetExceeded()) {
+  if (isMarketing && await marketingBudgetExceeded()) {
     logger.warn(`Marketing email skipped (budget ${MARKETING_DAILY_CAP}/j atteint) : ${label}`);
     return { success: false, error: 'marketing_daily_cap' };
   }
@@ -188,7 +190,7 @@ async function sendEmail<P extends Record<string, unknown>>(
         }
 
         logger.info(`${label} sent to ${to}`);
-        if (options?.category === 'marketing') await bumpMarketingCounter();
+        if (isMarketing) await bumpMarketingCounter();
         return { success: true };
       } catch (sendErr) {
         if (attempt < MAX_RETRIES) {

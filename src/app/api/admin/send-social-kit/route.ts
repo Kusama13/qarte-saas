@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeAdmin } from '@/lib/api-helpers';
 import { sendQRCodeEmail } from '@/lib/email';
-import { TRACKING_CODES } from '@/lib/email-tracking-codes';
+import { TRACKING_CODES, wasEmailSent, markEmailSent } from '@/lib/email-tracking-codes';
 import logger from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
@@ -18,16 +18,8 @@ export async function POST(request: NextRequest) {
 
     // Dédup : ne pas re-servir un merchant déjà tamponné (le kit QR n'a de sens qu'une fois).
     // `force: true` pour un renvoi explicite. Empêche un appel en boucle de re-blaster tout le parc.
-    if (!force) {
-      const { data: already } = await supabaseAdmin
-        .from('pending_email_tracking')
-        .select('merchant_id')
-        .eq('merchant_id', merchantId)
-        .eq('reminder_day', TRACKING_CODES.QR_CODE_SENT)
-        .maybeSingle();
-      if (already) {
-        return NextResponse.json({ skipped: 'already_sent' });
-      }
+    if (!force && await wasEmailSent(supabaseAdmin, merchantId, TRACKING_CODES.QR_CODE_SENT)) {
+      return NextResponse.json({ skipped: 'already_sent' });
     }
 
     // Fetch merchant data
@@ -76,13 +68,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Trace l'envoi (dédup partagé avec le cron onboarding). ignoreDuplicates : garde le 1er sent_at.
-    await supabaseAdmin
-      .from('pending_email_tracking')
-      .upsert(
-        { merchant_id: merchantId, reminder_day: TRACKING_CODES.QR_CODE_SENT, pending_count: 0 },
-        { onConflict: 'merchant_id,reminder_day', ignoreDuplicates: true }
-      );
+    // Trace l'envoi (dédup partagé avec le cron onboarding).
+    await markEmailSent(supabaseAdmin, merchantId, TRACKING_CODES.QR_CODE_SENT);
 
     return NextResponse.json({ success: true, email: userEmail });
   } catch (error) {
