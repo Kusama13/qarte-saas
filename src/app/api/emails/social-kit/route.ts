@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { sendQRCodeEmail } from '@/lib/email';
+import { TRACKING_CODES } from '@/lib/email-tracking-codes';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -57,6 +58,15 @@ export async function POST() {
         { status: 500 }
       );
     }
+
+    // Trace l'envoi (dédup partagé avec le cron onboarding). Self-serve : pas de blocage,
+    // mais on enregistre pour que le cron ne renvoie pas le même kit.
+    await supabaseAdmin
+      .from('pending_email_tracking')
+      .upsert(
+        { merchant_id: merchant.id, reminder_day: TRACKING_CODES.QR_CODE_SENT, pending_count: 0 },
+        { onConflict: 'merchant_id,reminder_day', ignoreDuplicates: true }
+      );
 
     return NextResponse.json({ success: true });
   } catch (error) {

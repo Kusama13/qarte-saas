@@ -56,7 +56,9 @@ Required env vars (server-side):
 `OVH_APP_KEY`, `OVH_APP_SECRET`, `OVH_CONSUMER_KEY`, `OVH_SMS_SERVICE`, `OVH_SMS_SENDER`,
 `SMS_PARTNER_API_KEY`, `SMS_PARTNER_SENDER` (default "Qarte"), `SMS_PARTNER_ENABLED` ("true" pour router le transactionnel FR/BE), `SMS_PARTNER_SANDBOX` ("true" en dev), `SMS_PARTNER_DLR_SECRET` (mig 162 — secret query du webhook DLR `/api/sms-partner/dlr`, configurer aussi côté dashboard SMS Partner comme `urlDlr=${NEXT_PUBLIC_APP_URL}/api/sms-partner/dlr?secret=...`),
 `OPENROUTESERVICE_API_KEY` (mode service à domicile, signup gratuit https://openrouteservice.org/dev/),
-`GOOGLE_MAPS_API_KEY` (Places API New — note + avis Google sur la vitrine `/p/[slug]` ; restreindre la clé à Places API ; quota gratuit suffisant à l'échelle actuelle grâce au cache 72h)
+`GOOGLE_MAPS_API_KEY` (Places API New — note + avis Google sur la vitrine `/p/[slug]` ; restreindre la clé à Places API ; quota gratuit suffisant à l'échelle actuelle grâce au cache 72h),
+`EMAIL_MARKETING_DAILY_CAP` (mig 184 — plafond quotidien des emails **marketing** dans `sendEmail`, défaut 60 ; le transactionnel n'est jamais compté ni bloqué. Protège le quota Resend gratuit 100/j. Monter la valeur si Resend repasse en payant),
+`BLOG_EMAILS_ENABLED` ("true" pour réactiver les crons blog-digest/blog-drip, coupés par défaut depuis la bascule Resend gratuit)
 
 Public (NEXT_PUBLIC_):
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`

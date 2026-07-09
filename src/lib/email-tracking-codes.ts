@@ -9,6 +9,7 @@
 export const TRACKING_CODES = {
   // Trial onboarding
   WELCOME: -200,
+  QR_CODE_SENT: -103, // kit QR "tout est prêt — lance ton programme" (dédup cron + routes admin/self-serve)
   PROGRAM_REMINDER_J1: -301,
   VITRINE_REMINDER_J3: -304,
   PLANNING_REMINDER_J4: -308,

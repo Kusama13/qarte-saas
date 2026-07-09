@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { sendQRCodeEmail } from '@/lib/email';
+import { TRACKING_CODES } from '@/lib/email-tracking-codes';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -43,7 +44,7 @@ export async function POST() {
       .from('pending_email_tracking')
       .select('id')
       .eq('merchant_id', merchant.id)
-      .eq('reminder_day', -103)
+      .eq('reminder_day', TRACKING_CODES.QR_CODE_SENT)
       .maybeSingle();
 
     if (existing) {
@@ -73,7 +74,7 @@ export async function POST() {
     // Mark as sent so cron doesn't send again
     await supabaseAdmin.from('pending_email_tracking').insert({
       merchant_id: merchant.id,
-      reminder_day: -103,
+      reminder_day: TRACKING_CODES.QR_CODE_SENT,
       pending_count: 0,
     });
 

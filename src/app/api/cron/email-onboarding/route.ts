@@ -275,14 +275,14 @@ export async function GET(request: NextRequest) {
       const qrCandidates = configuredActiveMerchants;
 
       if (qrCandidates.length > 0) {
-        const qrToSend = qrCandidates.filter(m => !globalTrackingSet.has(`${m.id}:-103`));
+        const qrToSend = qrCandidates.filter(m => !globalTrackingSet.has(`${m.id}:${TRACKING_CODES.QR_CODE_SENT}`));
         results.qrCode.processed = qrCandidates.length;
         results.qrCode.skipped = qrCandidates.length - qrToSend.length;
 
         if (qrToSend.length > 0) {
           await processEmailSection(supabase, {
             candidates: qrToSend,
-            trackingCode: -103,
+            trackingCode: TRACKING_CODES.QR_CODE_SENT,
             emailMap: globalEmailMap,
             alreadySentSet: new Set(),
             stats: results.qrCode,
@@ -320,7 +320,7 @@ export async function GET(request: NextRequest) {
           .from('pending_email_tracking')
           .select('merchant_id, sent_at')
           .in('merchant_id', scriptIds)
-          .eq('reminder_day', -103)
+          .eq('reminder_day', TRACKING_CODES.QR_CODE_SENT)
           .limit(5000);
 
         const qrSent2DaysAgo = new Set(

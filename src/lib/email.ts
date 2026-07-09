@@ -68,7 +68,40 @@ import {
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import type { BookingConfirmationMode } from '@/emails/BookingConfirmationEmail';
+import { getSupabaseAdmin } from './supabase';
+import { getTodayForCountry } from './utils';
 import logger from './logger';
+
+/**
+ * Budget quotidien des emails marketing (garde-fou anti-saturation Resend).
+ * Le transactionnel n'est jamais compté ni bloqué. Fail-open : si le compteur est
+ * indisponible (ex. migration 184 pas encore appliquée), on n'empêche pas l'envoi.
+ */
+const MARKETING_DAILY_CAP = Number(process.env.EMAIL_MARKETING_DAILY_CAP ?? 60);
+
+async function marketingBudgetExceeded(): Promise<boolean> {
+  if (!(MARKETING_DAILY_CAP >= 0)) return false;
+  try {
+    const { data } = await getSupabaseAdmin()
+      .from('email_daily_counters')
+      .select('count')
+      .eq('day', getTodayForCountry('FR'))
+      .eq('category', 'marketing')
+      .maybeSingle();
+    return Number(data?.count ?? 0) >= MARKETING_DAILY_CAP;
+  } catch (e) {
+    logger.error('marketingBudgetExceeded check failed (fail-open)', e);
+    return false;
+  }
+}
+
+async function bumpMarketingCounter(): Promise<void> {
+  try {
+    await getSupabaseAdmin().rpc('increment_email_counter', { p_day: getTodayForCountry('FR'), p_category: 'marketing' });
+  } catch (e) {
+    logger.error('bumpMarketingCounter failed', e);
+  }
+}
 
 function checkResend() {
   if (!resend) {
@@ -106,12 +139,19 @@ async function sendEmail<P extends Record<string, unknown>>(
     logLabel?: string;
     merchantId?: string;
     attachments?: Array<{ filename: string; path?: string; content?: string }>;
+    /** 'marketing' = soumis au budget quotidien (anti-saturation Resend). Défaut 'transactional' (jamais bloqué). */
+    category?: 'transactional' | 'marketing';
   }
 ): Promise<SendEmailResult> {
   const check = checkResend();
   if (check) return check;
 
   const label = options?.logLabel ?? subject;
+
+  if (options?.category === 'marketing' && await marketingBudgetExceeded()) {
+    logger.warn(`Marketing email skipped (budget ${MARKETING_DAILY_CAP}/j atteint) : ${label}`);
+    return { success: false, error: 'marketing_daily_cap' };
+  }
 
   try {
     const element = Component(props);
@@ -148,6 +188,7 @@ async function sendEmail<P extends Record<string, unknown>>(
         }
 
         logger.info(`${label} sent to ${to}`);
+        if (options?.category === 'marketing') await bumpMarketingCounter();
         return { success: true };
       } catch (sendErr) {
         if (attempt < MAX_RETRIES) {
@@ -405,6 +446,7 @@ export async function sendActivationStalledEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'activationStalled', { shopName }), ActivationStalledEmail, { shopName, shopType, locale }, {
     logLabel: `Activation stalled email (S0 J+3)`,
+    category: 'marketing',
   });
 }
 
@@ -655,6 +697,7 @@ export async function sendPendingPointsEmail(
 
   return sendEmail(to, subject, PendingPointsEmail, { shopName, pendingCount, isReminder, daysSinceFirst, locale }, {
     logLabel: `Pending points email (${pendingCount} pending, reminder: ${isReminder})`,
+    category: 'marketing',
   });
 }
 
@@ -749,6 +792,7 @@ export async function sendProgramReminderEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'programReminder', { shopName }), ProgramReminderEmail, { shopName, locale }, {
     logLabel: 'Program reminder email',
+    category: 'marketing',
   });
 }
 
@@ -857,6 +901,7 @@ export async function sendQRCodeEmail(
     locale,
   }, {
     logLabel: 'QR code email',
+    category: 'marketing',
   });
 }
 
@@ -869,6 +914,7 @@ export async function sendFirstScanEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'firstScan', { shopName }), FirstScanEmail, { shopName, referralCode, slug, locale }, {
     logLabel: 'First scan email',
+    category: 'marketing',
   });
 }
 
@@ -880,6 +926,7 @@ export async function sendFirstBookingEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'firstBooking', { shopName }), FirstBookingEmail, { shopName, slug, locale }, {
     logLabel: 'First booking email',
+    category: 'marketing',
   });
 }
 
@@ -892,6 +939,7 @@ export async function sendFirstRewardEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'firstReward'), FirstRewardEmail, { shopName, rewardDescription, isCagnotte, locale }, {
     logLabel: 'First reward email',
+    category: 'marketing',
   });
 }
 
@@ -939,6 +987,7 @@ export async function sendBlogDigestEmail(
     },
     {
       logLabel: 'Blog digest email',
+      category: 'marketing',
       merchantId,
     },
   );
@@ -978,6 +1027,7 @@ export async function sendFirstClientScriptEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'firstClientScript'), FirstClientScriptEmail, { shopName, shopType, rewardDescription, stampsRequired, loyaltyMode, locale }, {
     logLabel: 'First client script email',
+    category: 'marketing',
   });
 }
 
@@ -1043,6 +1093,7 @@ export async function sendVitrineReminderEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'vitrineReminder', { shopName }), VitrineReminderEmail, { shopName, daysRemaining, locale }, {
     logLabel: 'Vitrine reminder email',
+    category: 'marketing',
   });
 }
 
@@ -1054,6 +1105,7 @@ export async function sendPlanningReminderEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'planningReminder', { shopName }), PlanningReminderEmail, { shopName, daysRemaining, locale }, {
     logLabel: 'Planning reminder email',
+    category: 'marketing',
   });
 }
 
@@ -1281,6 +1333,7 @@ export async function sendReferralPromoEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'referralPromo'), ReferralPromoEmail, { shopName, slug, locale }, {
     logLabel: 'Referral promo email',
+    category: 'marketing',
   });
 }
 
@@ -1292,6 +1345,7 @@ export async function sendReferralReminderEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'referralReminder', { shopName }), ReferralReminderEmail, { shopName, slug, locale }, {
     logLabel: 'Referral reminder email',
+    category: 'marketing',
   });
 }
 
@@ -1321,6 +1375,7 @@ export async function sendSocialProofEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'socialProof', { shopName }), SocialProofEmail, { shopName, locale }, {
     logLabel: 'Social proof email',
+    category: 'marketing',
   });
 }
 
