@@ -33,6 +33,7 @@ import { ScanSuccessStep } from '@/components/loyalty';
 import { WelcomeBanner, ScanRewardScreen, ScanAlreadyCheckedScreen, ScanConfirmVisitScreen, ScanPendingScreen } from '@/components/scan';
 import { SuspendedBanner } from '@/components/shared/SuspendedBanner';
 import { isMerchantBlocked } from '@/lib/merchant-access';
+import { isStandalonePWA } from '@/lib/push';
 
 type Step = 'phone' | 'register' | 'amount' | 'amount-confirm' | 'checkin' | 'success' | 'already-checked' | 'confirm-visit' | 'error' | 'reward' | 'pending' | 'banned' | 'referral-success';
 
@@ -138,8 +139,39 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   // Previous stamps for success animation (old → new)
   const [previousStamps, setPreviousStamps] = useState(0);
 
+  // Empêche l'installation du lien de scan en app : on désactive la capability
+  // PWA (iOS + Android) le temps qu'on est sur cette page, restaurée en quittant.
+  // Sans ce meta, « Ajouter à l'écran d'accueil » depuis le scan crée un simple
+  // marque-page (onglet navigateur) au lieu d'une app standalone qui ré-ouvrirait
+  // « Valider ma visite ». On mute uniquement l'attribut d'un <meta> existant géré
+  // par Next (jamais de remove/append de node → évite React #310, cf useInstallPrompt).
+  useEffect(() => {
+    const restore: Array<[Element, string | null]> = [];
+    ['apple-mobile-web-app-capable', 'mobile-web-app-capable'].forEach((name) => {
+      const el = document.querySelector(`meta[name="${name}"]`);
+      if (el) {
+        restore.push([el, el.getAttribute('content')]);
+        el.setAttribute('content', 'no');
+      }
+    });
+    return () => {
+      restore.forEach(([el, prev]) => {
+        if (prev !== null) el.setAttribute('content', prev);
+      });
+    };
+  }, []);
+
   // Fetch merchant + referral info in parallel
   useEffect(() => {
+    // PWA installée sur le lien de scan : si l'app est ouverte en standalone
+    // (icône écran d'accueil), on ne présente PAS « Valider ma visite » (la
+    // cliente pourrait se tamponner de chez elle). On la renvoie vers ses cartes
+    // — répare aussi les icônes déjà installées. Le scan en onglet navigateur
+    // n'est jamais standalone. `loading` reste true → le loader s'affiche.
+    if (isStandalonePWA()) {
+      router.replace('/customer/cards');
+      return;
+    }
     const init = async () => {
       const merchantPromise = supabase
         .from('merchants')
@@ -183,7 +215,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     };
 
     init();
-  }, [code, refCode, welcomeCode, offerId]);
+  }, [code, refCode, welcomeCode, offerId, router]);
 
   // Auto-login effect: check HttpOnly cookie via /api/customers/me
   useEffect(() => {
