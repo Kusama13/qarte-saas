@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { sendQRCodeEmail } from '@/lib/email';
+import { TRACKING_CODES, wasEmailSent, markEmailSent } from '@/lib/email-tracking-codes';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -38,15 +39,8 @@ export async function POST() {
       );
     }
 
-    // Check if already sent (avoid duplicates with cron)
-    const { data: existing } = await supabaseAdmin
-      .from('pending_email_tracking')
-      .select('id')
-      .eq('merchant_id', merchant.id)
-      .eq('reminder_day', -103)
-      .maybeSingle();
-
-    if (existing) {
+    // Déjà envoyé ? (dédup partagé avec le cron)
+    if (await wasEmailSent(supabaseAdmin, merchant.id, TRACKING_CODES.QR_CODE_SENT)) {
       return NextResponse.json({ success: true, alreadySent: true });
     }
 
@@ -70,12 +64,8 @@ export async function POST() {
       );
     }
 
-    // Mark as sent so cron doesn't send again
-    await supabaseAdmin.from('pending_email_tracking').insert({
-      merchant_id: merchant.id,
-      reminder_day: -103,
-      pending_count: 0,
-    });
+    // Trace l'envoi pour que le cron ne renvoie pas.
+    await markEmailSent(supabaseAdmin, merchant.id, TRACKING_CODES.QR_CODE_SENT);
 
     return NextResponse.json({ success: true });
   } catch (error) {

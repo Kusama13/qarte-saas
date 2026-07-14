@@ -6,9 +6,12 @@
  * (qui peuvent exister pour des systèmes legacy).
  */
 
+import type { SupabaseClient } from '@supabase/supabase-js';
+
 export const TRACKING_CODES = {
   // Trial onboarding
   WELCOME: -200,
+  QR_CODE_SENT: -103, // kit QR "tout est prêt — lance ton programme" (dédup cron + routes admin/self-serve)
   PROGRAM_REMINDER_J1: -301,
   VITRINE_REMINDER_J3: -304,
   PLANNING_REMINDER_J4: -308,
@@ -31,3 +34,24 @@ export const TRACKING_CODES = {
 } as const;
 
 export type TrackingCode = (typeof TRACKING_CODES)[keyof typeof TRACKING_CODES];
+
+/** Un email a-t-il déjà été tracé pour ce merchant + code ? (dédup mono-marchand) */
+export async function wasEmailSent(supabase: SupabaseClient, merchantId: string, code: number): Promise<boolean> {
+  const { data } = await supabase
+    .from('pending_email_tracking')
+    .select('merchant_id')
+    .eq('merchant_id', merchantId)
+    .eq('reminder_day', code)
+    .maybeSingle();
+  return !!data;
+}
+
+/** Trace un email envoyé (dédup). `ignoreDuplicates` : conserve le 1er sent_at, ne lève pas sur doublon. */
+export async function markEmailSent(supabase: SupabaseClient, merchantId: string, code: number): Promise<void> {
+  await supabase
+    .from('pending_email_tracking')
+    .upsert(
+      { merchant_id: merchantId, reminder_day: code, pending_count: 0 },
+      { onConflict: 'merchant_id,reminder_day', ignoreDuplicates: true },
+    );
+}

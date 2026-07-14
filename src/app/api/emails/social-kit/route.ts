@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { sendQRCodeEmail } from '@/lib/email';
+import { TRACKING_CODES, wasEmailSent, markEmailSent } from '@/lib/email-tracking-codes';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -38,6 +39,11 @@ export async function POST() {
       );
     }
 
+    // Déjà envoyé ? (dédup partagé avec le cron, cohérent avec /api/emails/qr-code)
+    if (await wasEmailSent(supabaseAdmin, merchant.id, TRACKING_CODES.QR_CODE_SENT)) {
+      return NextResponse.json({ success: true, alreadySent: true });
+    }
+
     const result = await sendQRCodeEmail(
       user.email!,
       merchant.shop_name,
@@ -57,6 +63,9 @@ export async function POST() {
         { status: 500 }
       );
     }
+
+    // Trace l'envoi pour que le cron ne renvoie pas.
+    await markEmailSent(supabaseAdmin, merchant.id, TRACKING_CODES.QR_CODE_SENT);
 
     return NextResponse.json({ success: true });
   } catch (error) {

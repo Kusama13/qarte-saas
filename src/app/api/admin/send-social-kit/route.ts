@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeAdmin } from '@/lib/api-helpers';
 import { sendQRCodeEmail } from '@/lib/email';
+import { TRACKING_CODES, wasEmailSent, markEmailSent } from '@/lib/email-tracking-codes';
 import logger from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
@@ -9,10 +10,16 @@ export async function POST(request: NextRequest) {
   const { supabaseAdmin } = auth;
 
   try {
-    const { merchantId } = await request.json();
+    const { merchantId, force } = await request.json();
 
     if (!merchantId) {
       return NextResponse.json({ error: 'merchantId requis' }, { status: 400 });
+    }
+
+    // Dédup : ne pas re-servir un merchant déjà tamponné (le kit QR n'a de sens qu'une fois).
+    // `force: true` pour un renvoi explicite. Empêche un appel en boucle de re-blaster tout le parc.
+    if (!force && await wasEmailSent(supabaseAdmin, merchantId, TRACKING_CODES.QR_CODE_SENT)) {
+      return NextResponse.json({ skipped: 'already_sent' });
     }
 
     // Fetch merchant data
@@ -60,6 +67,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Trace l'envoi (dédup partagé avec le cron onboarding).
+    await markEmailSent(supabaseAdmin, merchantId, TRACKING_CODES.QR_CODE_SENT);
 
     return NextResponse.json({ success: true, email: userEmail });
   } catch (error) {
