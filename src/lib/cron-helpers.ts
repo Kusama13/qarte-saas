@@ -162,11 +162,20 @@ export async function fetchAllTracking(supabase: SupabaseClient, merchantIds: st
   const PAGE_SIZE = 1000;
   let offset = 0;
   while (true) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('pending_email_tracking')
       .select('merchant_id, reminder_day')
       .in('merchant_id', merchantIds)
+      // Ordre stable OBLIGATOIRE : sans lui, `.range()` peut chevaucher/sauter des
+      // lignes entre les pages → tracking incomplet → dédup effondré → réenvoi à
+      // toute la base. (merchant_id, reminder_day) est unique donc totalement stable.
+      .order('merchant_id', { ascending: true })
+      .order('reminder_day', { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
+    // Fail-safe : une lecture partielle du tracking effondrerait le dédup et
+    // réenverrait les emails à toute la base. On préfère planter le cron (0 email)
+    // plutôt que de spammer.
+    if (error) throw new Error(`fetchAllTracking failed: ${error.message}`);
     if (!data || data.length === 0) break;
     allRows.push(...data);
     if (data.length < PAGE_SIZE) break;

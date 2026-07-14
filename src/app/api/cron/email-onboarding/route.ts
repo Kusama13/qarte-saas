@@ -79,13 +79,24 @@ export async function GET(request: NextRequest) {
     allTracking.map(t => `${t.merchant_id}:${t.reminder_day}`)
   );
 
+  // Onboarding/nurture : on n'écrit qu'aux abonnés actifs ou aux essais ENCORE
+  // en cours. Un essai dont la date de fin est passée (même dans la grace de 3j)
+  // a déjà vu l'onboarding : on ne le relance plus. Sinon on spamme les comptes
+  // expirés (471/526 aujourd'hui) et on crame le quota Resend. Exclut aussi
+  // past_due / canceled, et no_contact / bounce / désinscrit via canEmail.
+  const canReceiveOnboarding = (m: {
+    subscription_status: string; trial_ends_at: string | null;
+    no_contact?: boolean | null; email_bounced_at?: string | null; email_unsubscribed_at?: string | null;
+  }) =>
+    canEmail(m) &&
+    (m.subscription_status === 'active' ||
+      (m.subscription_status === 'trial' && !!m.trial_ends_at && new Date(m.trial_ends_at) > now));
+
   const configuredActiveMerchants = allMerchantsList.filter(m =>
-    m.reward_description !== null && m.reward_description !== '' &&
-    ['trial', 'active'].includes(m.subscription_status) && canEmail(m)
+    m.reward_description !== null && m.reward_description !== '' && canReceiveOnboarding(m)
   );
   const unconfiguredActiveMerchants = allMerchantsList.filter(m =>
-    m.reward_description === null &&
-    ['trial', 'active'].includes(m.subscription_status) && canEmail(m)
+    m.reward_description === null && canReceiveOnboarding(m)
   );
 
   // ==================== ACTIVATION STALLED (S0 J+1, priorité haute) ====================
@@ -241,7 +252,7 @@ export async function GET(request: NextRequest) {
       const fortyEightHoursAgoSP = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
       const socialProofCandidates = allMerchantsList.filter(m =>
-        m.subscription_status === 'trial' && canEmail(m) &&
+        canReceiveOnboarding(m) &&
         m.created_at >= fortyNineHoursAgoSP.toISOString() &&
         m.created_at <= fortyEightHoursAgoSP.toISOString() &&
         !emailedAtJ2.has(m.id) &&
