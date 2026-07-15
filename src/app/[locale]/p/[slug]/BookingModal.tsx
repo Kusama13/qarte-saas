@@ -1346,7 +1346,15 @@ export default function BookingModal({
                       className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-sm leading-relaxed resize-none transition-colors focus:outline-none focus:ring-2 focus:bg-white"
                       style={{ '--tw-ring-color': `${p}40` } as React.CSSProperties}
                     />
-                    <p className="text-[11px] text-gray-400 mt-1 leading-snug">{t('messageHint')}</p>
+                    <div className="flex items-start justify-between gap-2 mt-1">
+                      <p className="text-[11px] text-gray-400 leading-snug">{t('messageHint')}</p>
+                      <span
+                        className={`text-[11px] leading-snug tabular-nums shrink-0 ${customerMessage.length >= 450 ? 'text-amber-600' : 'text-gray-400'}`}
+                        aria-live="polite"
+                      >
+                        {customerMessage.length}/500
+                      </span>
+                    </div>
                   </div>
                 </div>
 
