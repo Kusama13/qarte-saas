@@ -6,6 +6,7 @@ import { sendBookingSms, sendMarketingSms, getGlobalSmsConfig, PAID_STATUSES } f
 import { fetchOptedOutPhones, hasSmsLog, type CustomerEmbed } from '@/lib/sms-audience';
 import { getTimezoneForCountry } from '@/lib/utils';
 import { isLegalSendTime } from '@/lib/sms-compliance';
+import { REVIEW_SMS_ENABLED } from '@/lib/sms-freeze';
 import logger from '@/lib/logger';
 
 export const maxDuration = 300;
@@ -207,7 +208,11 @@ export async function GET(request: NextRequest) {
   // Marketing → plancher legal 10h (isLegalSendTime). Fenetre [H-2h, H-36h]
   // pour donner plusieurs tentatives si le cap daily bloque aujourd'hui.
   // Dedup 60j par phone+merchant. Cap 1 marketing/jour cross-types.
-  for (const m of activeMerchants) {
+  // Gel global (2026-07-22, cf. sms-freeze.ts) : coupe la section entiere, meme si des
+  // merchants ont encore post_visit_review_enabled=true en base. Liens Google trop longs
+  // -> jusqu'a 6 SMS factures par demande sur leur quota inclus.
+  const reviewCandidates = REVIEW_SMS_ENABLED ? activeMerchants : [];
+  for (const m of reviewCandidates) {
     if (Date.now() - startedAt > 285_000) break;
     if (!m.post_visit_review_enabled) continue;
     const reviewLink = m.review_link?.trim();

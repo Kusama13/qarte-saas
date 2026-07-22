@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import { REVIEW_SMS_ENABLED } from '@/lib/sms-freeze';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -36,7 +37,8 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (!merchant) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
-    return NextResponse.json({ settings: merchant });
+    // reviewSmsFrozen : permet au dashboard d'afficher le toggle verrouille + son motif.
+    return NextResponse.json({ settings: merchant, reviewSmsFrozen: !REVIEW_SMS_ENABLED });
   } catch (error) {
     logger.error('SMS automations GET error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
@@ -72,6 +74,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Aucun champ valide' }, { status: 400 });
     }
 
+    // Gel (cf. sms-freeze.ts) : tant que REVIEW_SMS_ENABLED n'est pas remis a true,
+    // on refuse toute reactivation du SMS de demande d'avis.
+    if (!REVIEW_SMS_ENABLED && safeUpdates.post_visit_review_enabled === true) {
+      return NextResponse.json(
+        { error: 'Les SMS de demande d\'avis sont temporairement désactivés.' },
+        { status: 409 },
+      );
+    }
+
     await supabaseAdmin.from('merchants').update(safeUpdates).eq('id', merchantId);
 
     const { data: settings } = await supabaseAdmin
@@ -80,7 +91,7 @@ export async function POST(request: NextRequest) {
       .eq('id', merchantId)
       .single();
 
-    return NextResponse.json({ settings });
+    return NextResponse.json({ settings, reviewSmsFrozen: !REVIEW_SMS_ENABLED });
   } catch (error) {
     logger.error('SMS automations POST error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });

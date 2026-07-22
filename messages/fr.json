@@ -1176,6 +1176,7 @@
       "referralDisabledHint": "Active d'abord le programme de parrainage pour utiliser cette automatisation.",
       "planningDisabledHint": "Active d'abord le planning en ligne pour utiliser ce rappel.",
       "googleReviewMissingHint": "Ajoute ton lien Google Review dans les paramètres pour activer cette automatisation.",
+      "reviewSmsFrozenHint": "En pause pour le moment : sur certains salons, le lien Google était si long qu'une seule demande d'avis coûtait jusqu'à 6 SMS. On la remet en route dès que c'est corrigé.",
       "rewardMissingHint": "Configure la récompense de ton programme de fidélité pour activer cette automatisation.",
       "tierUpgradeHint": "Disponible sur l'offre complète.",
       "fidelityBannerTitle": "Tu es en plan Fidélité",

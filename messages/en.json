@@ -1192,6 +1192,7 @@
       "referralDisabledHint": "Enable the referral program first to use this automation.",
       "planningDisabledHint": "Enable online booking first to use this reminder.",
       "googleReviewMissingHint": "Add your Google Review link in your settings to enable this automation.",
+      "reviewSmsFrozenHint": "Paused for now: on some salons the Google link was so long that a single review request cost up to 6 SMS. We'll switch it back on once it's fixed.",
       "rewardMissingHint": "Set your loyalty reward to enable this automation.",
       "tierUpgradeHint": "Available on the full plan.",
       "fidelityBannerTitle": "You're on the Loyalty plan",
