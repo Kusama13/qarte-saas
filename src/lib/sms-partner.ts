@@ -96,7 +96,21 @@ export async function sendSmsPartner(phone: string, message: string): Promise<{ 
       return { success: false, error: errMsg };
     }
 
-    return { success: true, jobId: String(data.message_id) };
+    // Garde-fou (incident 2026-07-22) : la passerelle SMS Partner peut se degrader
+    // et repondre un accuse generique `{success:true, code:200, message:"Request
+    // queued for processing"}` SANS `message_id` — elle repond alors pareil sans
+    // cle API et sur un endpoint inexistant. Sans identifiant, l'envoi n'est ni
+    // tracable (pas de DLR) ni livre en pratique. On le traite comme un echec :
+    // sinon on marque "sent" un SMS fantome et le fallback OVH ne part jamais.
+    // Le message ne matche aucun pattern du classifier -> classe 'unknown' -> fallback OVH.
+    const messageId = data.message_id;
+    if (messageId === undefined || messageId === null || String(messageId).trim() === '') {
+      const errMsg = `[HTTP ${res.status}] SMS Partner: accuse sans message_id (passerelle degradee)`;
+      logger.error(`[sms-partner] Send failed: ${errMsg}`);
+      return { success: false, error: errMsg };
+    }
+
+    return { success: true, jobId: String(messageId) };
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     logger.error(`[sms-partner] Error: ${errMsg}`);
