@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
         smsType: 'confirmation_no_deposit',
         locale: m.locale || 'fr',
         subscriptionStatus: m.subscription_status,
-      }).catch(() => {});
+      }).catch((err) => logger.error('Manual booking confirmation SMS failed', err));
     }
 
     return NextResponse.json({ success: true, slotId: slot.id, customer_id: customer_id || null });

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { getTodayForCountry, generateReferralCode } from '@/lib/utils';
+import { getTodayForCountry, getDayBoundsForCountry, generateReferralCode } from '@/lib/utils';
 import { PG_UNIQUE_VIOLATION } from '@/lib/postgres-errors';
 import logger from '@/lib/logger';
 
@@ -96,8 +96,9 @@ export async function creditBookingLoyalty(admin: Admin, slotId: string): Promis
   if (existing) return 'already';
 
   // Dédup jour : si la cliente a déjà un passage confirmé ce jour-là (scan), on ne recrédite pas.
-  const dayStart = `${slot.slot_date}T00:00:00Z`;
-  const nextDay = new Date(new Date(dayStart).getTime() + 86_400_000).toISOString();
+  // Bornes de la journée dans le fuseau du merchant (un scan tôt/tard côté CH/BE ne sort plus
+  // de la fenêtre à cause du décalage UTC).
+  const { start: dayStart, end: nextDay } = getDayBoundsForCountry(slot.slot_date, merchant.country);
   const { count: sameDay } = await admin
     .from('visits')
     .select('id', { count: 'exact', head: true })

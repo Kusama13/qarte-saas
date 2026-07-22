@@ -25,8 +25,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { isIOSDevice, isStandalonePWA } from '@/lib/push';
 import { trackPwaInstalled } from '@/lib/analytics';
 import { ensureTextContrast } from '@/lib/utils';
+import { computeCashback } from '@/lib/loyalty-progress';
 import { sparkleGrand } from '@/lib/sparkles';
-import { DEMO_MERCHANTS_FLAT as DEMO_MERCHANTS } from '@/lib/demo-merchants';
 import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus, MemberCard, Voucher } from '@/types';
 import { useTranslations } from 'next-intl';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -195,7 +195,10 @@ export default function CustomerCardPage({
         try {
           let m;
           if (merchantId.startsWith('demo-')) {
-            m = DEMO_MERCHANTS[merchantId];
+            // Import dynamique : le jeu de démo (~72 Ko) ne part dans le bundle que
+            // lorsqu'une carte de démonstration est réellement ouverte.
+            const { DEMO_MERCHANTS_FLAT } = await import('@/lib/demo-merchants');
+            m = DEMO_MERCHANTS_FLAT[merchantId];
             if (!m) { router.push('/'); return; }
           } else {
             const response = await fetch(`/api/merchants/preview?id=${merchantId}`);
@@ -631,7 +634,7 @@ export default function CustomerCardPage({
     const _isCagnotte = card.merchant.loyalty_mode === 'cagnotte';
     const _currentAmount = Number(card.current_amount || 0);
     const _cagnottePercent = Number((_showingTier2 ? card.merchant.cagnotte_tier2_percent : card.merchant.cagnotte_percent) || 0);
-    const _cashbackAmount = _isCagnotte ? Math.round(_currentAmount * _cagnottePercent) / 100 : 0;
+    const _cashbackAmount = _isCagnotte ? computeCashback(_currentAmount, _cagnottePercent) : 0;
 
     return {
       isRewardReady: _isRewardReady,
@@ -1305,7 +1308,7 @@ export default function CustomerCardPage({
         onDone={() => { setShowRedeemModal(false); setRedeemSuccess(false); if (merchant.review_link) setShowReviewModal(true); }}
         isCagnotte={merchant.loyalty_mode === 'cagnotte'}
         cashbackAmount={merchant.loyalty_mode === 'cagnotte'
-          ? Math.round(Number(card.current_amount || 0) * Number((redeemTier === 2 ? merchant.cagnotte_tier2_percent : merchant.cagnotte_percent) || 0)) / 100
+          ? computeCashback(card.current_amount, redeemTier === 2 ? merchant.cagnotte_tier2_percent : merchant.cagnotte_percent)
           : undefined}
         country={merchant.country}
       />

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { motion } from 'framer-motion';
 import { ChevronRight, CreditCard, LogOut, Trophy, Gift } from 'lucide-react';
+import { isTier2Active } from '@/lib/loyalty-progress';
 
 interface LoyaltyCardWithMerchant {
   merchant_id: string;
@@ -50,9 +51,9 @@ export default function CustomerCardsPage() {
 
       const sorted: LoyaltyCardWithMerchant[] = data.cards.sort((a: LoyaltyCardWithMerchant, b: LoyaltyCardWithMerchant) => {
         const aReady = (a.current_stamps >= a.stamps_required && !a.tier1_redeemed) ||
-          (a.tier2_enabled && a.current_stamps >= (a.tier2_stamps_required || a.stamps_required * 2));
+          (isTier2Active(a) && a.current_stamps >= (a.tier2_stamps_required ?? 0));
         const bReady = (b.current_stamps >= b.stamps_required && !b.tier1_redeemed) ||
-          (b.tier2_enabled && b.current_stamps >= (b.tier2_stamps_required || b.stamps_required * 2));
+          (isTier2Active(b) && b.current_stamps >= (b.tier2_stamps_required ?? 0));
         if (aReady && !bReady) return -1;
         if (!aReady && bReady) return 1;
         if (!a.last_visit_date && !b.last_visit_date) return 0;
@@ -147,8 +148,8 @@ export default function CustomerCardsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {cards.map((card, index) => {
               const tier1Required = card.stamps_required;
-              const tier2Enabled = card.tier2_enabled;
-              const tier2Required = card.tier2_stamps_required || tier1Required * 2;
+              const tier2Enabled = isTier2Active(card);
+              const tier2Required = card.tier2_stamps_required ?? 0;
 
               const isTier1Ready = card.current_stamps >= tier1Required;
               const isTier2Ready = !!tier2Enabled && card.current_stamps >= tier2Required;

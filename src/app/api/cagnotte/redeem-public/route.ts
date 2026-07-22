@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { getAuthenticatedPhone } from '@/lib/customer-auth';
+import { computeCashback } from '@/lib/loyalty-progress';
 import logger from '@/lib/logger';
 
 const redeemSchema = z.object({
@@ -141,7 +142,7 @@ export async function POST(request: NextRequest) {
       );
     }
     const percent = Number(rawPercent);
-    const rewardValue = Math.round(currentAmount * percent) / 100;
+    const rewardValue = computeCashback(currentAmount, percent);
 
     // Cagnotte: ALWAYS reset current_amount to 0
     // Stamps: reset to 0 only for tier 2 (or tier 1 if tier 2 is not enabled)

@@ -147,6 +147,26 @@ export function ensureTextContrast(hex: string, minRatio = 3): string {
   return `#${toHex(dr)}${toHex(dg)}${toHex(db)}`;
 }
 
+/**
+ * Picks a readable text color (white or near-black) to sit ON TOP of a solid
+ * background color, per WCAG relative luminance. Dark backgrounds get white text,
+ * light backgrounds get dark text. `alpha` composites the background over white
+ * first (for backgrounds rendered with opacity, e.g. `#rrggbbE6` = 0.9).
+ */
+export function readableTextColor(hex: string, opts?: { alpha?: number; dark?: string }): string {
+  const dark = opts?.dark ?? '#1f2937';
+  const alpha = opts?.alpha ?? 1;
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return '#ffffff';
+  const blend = (c: number) => (c * alpha + 255 * (1 - alpha)) / 255; // composite over white
+  const r = blend(parseInt(hex.slice(1, 3), 16));
+  const g = blend(parseInt(hex.slice(3, 5), 16));
+  const b = blend(parseInt(hex.slice(5, 7), 16));
+  const toLinear = (c: number) => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  const lum = 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+  const whiteContrast = 1.05 / (lum + 0.05); // contrast ratio of white text vs this bg
+  return whiteContrast >= 4.5 ? '#ffffff' : dark;
+}
+
 export function generateSlug(shopName: string): string {
   let slug = shopName.toLowerCase().trim();
   slug = slug.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -204,10 +224,6 @@ export function formatEUR(amount: number, locale: string = 'fr'): string {
   return amount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-export function calculateCashback(amount: number, percent: number): number {
-  return Math.round(amount * percent) / 100;
-}
-
 export const MONTH_LABELS_FR: Record<string, string> = {
   '01': 'Janvier', '02': 'Février', '03': 'Mars', '04': 'Avril',
   '05': 'Mai', '06': 'Juin', '07': 'Juillet', '08': 'Août',
@@ -258,6 +274,19 @@ export function getTodayStartForCountry(country?: string): string {
   const todayStr = formatInTimeZone(new Date(), tz, 'yyyy-MM-dd');
   // Convert local midnight in that timezone → UTC
   return fromZonedTime(new Date(todayStr + 'T00:00:00'), tz).toISOString();
+}
+
+/** UTC [start, end) ISO bounds of a YYYY-MM-DD calendar day, in the merchant's timezone.
+ *  DST-safe (end = local midnight of the next calendar day, not start + 24h). */
+export function getDayBoundsForCountry(dateStr: string, country?: string): { start: string; end: string } {
+  const tz = getTimezoneForCountry(country);
+  const next = new Date(`${dateStr}T00:00:00Z`);
+  next.setUTCDate(next.getUTCDate() + 1);
+  const nextStr = next.toISOString().slice(0, 10);
+  return {
+    start: fromZonedTime(new Date(`${dateStr}T00:00:00`), tz).toISOString(),
+    end: fromZonedTime(new Date(`${nextStr}T00:00:00`), tz).toISOString(),
+  };
 }
 
 /** @deprecated Use getTodayForCountry(country) for country-aware logic. */

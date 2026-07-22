@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
             smsType: 'booking_moved',
             locale: smsMerchant.locale || 'fr',
             subscriptionStatus: smsMerchant.subscription_status,
-          }).catch(() => {});
+          }).catch((err) => logger.error('Shift-slot moved SMS failed', err));
         }
       }
 

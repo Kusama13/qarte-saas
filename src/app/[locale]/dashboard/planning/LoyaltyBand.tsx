@@ -124,7 +124,7 @@ export default function LoyaltyBand({ customerId, merchantId, merchantCountry, l
             type="button"
             onClick={() => setHelpOpen(true)}
             aria-label={t('loyaltyHelpTitle')}
-            className="text-rose-400 hover:text-rose-600 transition-colors"
+            className="-m-1.5 p-1.5 text-rose-400 hover:text-rose-600 transition-colors"
           >
             <HelpCircle className="w-3.5 h-3.5" />
           </button>
@@ -186,7 +186,7 @@ export default function LoyaltyBand({ customerId, merchantId, merchantCountry, l
         <button
           type="button"
           onClick={openFullCard}
-          className="mt-3 inline-flex items-center gap-0.5 text-[11px] font-bold text-rose-600 hover:text-rose-700 transition-colors"
+          className="mt-2 -mb-1 inline-flex items-center gap-0.5 py-1.5 text-[11px] font-bold text-rose-600 hover:text-rose-700 transition-colors"
         >
           {t('loyaltyOpenFullCard')}<ChevronRight className="w-3.5 h-3.5" />
         </button>

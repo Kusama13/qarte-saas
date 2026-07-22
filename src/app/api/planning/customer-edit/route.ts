@@ -208,7 +208,7 @@ export async function DELETE(request: NextRequest) {
       title: 'RDV annule',
       body: `${slot.client_name} a annule son RDV du ${formattedDate} a ${slot.start_time}`,
       url: `/dashboard/planning?date=${slot.slot_date}`,
-    }).catch(() => {});
+    }).catch((err) => logger.error('Customer-edit cancel push failed', err));
 
     // Fire-and-forget: email notification
     (async () => {
@@ -429,7 +429,7 @@ export async function PATCH(request: NextRequest) {
       title: 'RDV deplace',
       body: `${slot.client_name} a deplace son RDV du ${oldDate} ${slot.start_time} au ${newDateFormatted} ${new_time}`,
       url: `/dashboard/planning?date=${new_date}`,
-    }).catch(() => {});
+    }).catch((err) => logger.error('Customer-edit reschedule push failed', err));
 
     // Fire-and-forget: email notification
     (async () => {

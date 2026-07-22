@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getLoyaltyProgress, computeTier1Redeemed } from '@/lib/loyalty-progress';
+import { getLoyaltyProgress, computeTier1Redeemed, computeCashback, isTier2Active } from '@/lib/loyalty-progress';
 
 describe('getLoyaltyProgress', () => {
   const visitMerchant = { loyalty_mode: 'visit', stamps_required: 10, reward_description: 'Un brushing offert' };
@@ -81,5 +81,35 @@ describe('computeTier1Redeemed', () => {
       { tier: 2, redeemed_at: '2026-02-01T10:00:00Z' },
     ];
     expect(computeTier1Redeemed(r)).toBe(false);
+  });
+});
+
+describe('computeCashback', () => {
+  it('arrondit au centime (percent entier)', () => {
+    expect(computeCashback(100, 5)).toBe(5);       // 5% de 100
+    expect(computeCashback(247.5, 5)).toBe(12.38); // round(1237.5)/100
+    expect(computeCashback(33.33, 10)).toBe(3.33);
+  });
+
+  it('null-safe : montant ou pourcentage manquant → 0', () => {
+    expect(computeCashback(null, 5)).toBe(0);
+    expect(computeCashback(100, null)).toBe(0);
+    expect(computeCashback(undefined, undefined)).toBe(0);
+    expect(computeCashback(0, 5)).toBe(0);
+  });
+
+  it('cohérent avec getLoyaltyProgress.cashbackValue', () => {
+    const merchant = { loyalty_mode: 'cagnotte', stamps_required: 10, cagnotte_percent: 5 };
+    const p = getLoyaltyProgress({ current_amount: 247.5 }, merchant);
+    expect(p.cashbackValue).toBe(computeCashback(247.5, 5));
+  });
+});
+
+describe('isTier2Active', () => {
+  it('actif seulement si activé ET seuil configuré', () => {
+    expect(isTier2Active({ tier2_enabled: true, tier2_stamps_required: 20 })).toBe(true);
+    expect(isTier2Active({ tier2_enabled: true, tier2_stamps_required: null })).toBe(false);
+    expect(isTier2Active({ tier2_enabled: false, tier2_stamps_required: 20 })).toBe(false);
+    expect(isTier2Active({})).toBe(false);
   });
 });

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Lock, Car } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot, MerchantCountry } from '@/types';
-import { formatTime, formatCurrency, toBCP47 } from '@/lib/utils';
+import { formatTime, formatCurrency, toBCP47, readableTextColor } from '@/lib/utils';
 import { formatDate, timeToMinutes, minutesToTime, computeDayRevenue } from './utils';
 import type { ServiceWithDuration } from './usePlanningState';
 import {
@@ -271,7 +271,7 @@ export default function WeekView({
                 }
                 const accent = color || (slot.client_name ? '#6366f1' : '#10b981');
                 const bgVivid = slot.client_name ? `${accent}E6` : '#ecfdf5';
-                const textColor = slot.client_name ? '#ffffff' : '#065f46';
+                const textColor = slot.client_name ? readableTextColor(accent, { alpha: 0.9 }) : '#065f46';
                 const endTime = minutesToTime(timeToMinutes(slot.start_time) + durationMins);
                 return (
                   <button

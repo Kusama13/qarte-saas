@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
 
     // Si {prenom}, on fetch les firstnames via la table customers (1 query batch).
     // Sinon, prenom='' (comportement avant) — pas de query supplementaire.
-    let firstNameByPhone: Map<string, string | null> = new Map();
+    const firstNameByPhone: Map<string, string | null> = new Map();
     if (usesPersonalization && phonesToSend.length > 0) {
       const { data: cust } = await supabaseAdmin
         .from('customers')

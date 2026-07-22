@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient, getSupabaseAdmin } from '@/lib/supabase';
-import { getCurrencyForCountry } from '@/lib/utils';
+import { getCurrencyForCountry, getTodayForCountry } from '@/lib/utils';
 import { getLoyaltyProgress, computeTier1Redeemed } from '@/lib/loyalty-progress';
 import logger from '@/lib/logger';
 
@@ -54,19 +54,21 @@ export async function GET(request: NextRequest) {
         ? admin.from('redemptions').select('tier, redeemed_at').eq('loyalty_card_id', card.id)
         : Promise.resolve({ data: [] as { tier: number; redeemed_at: string }[] }),
       admin.from('visits').select('amount_spent').eq('customer_id', customerId).eq('merchant_id', merchantId).eq('status', 'confirmed'),
-      // Dépensé en réservations : toutes ses résas non annulées (client_name conservé), hors filler,
-      // hors no-show. Prix = total_price snapshot, sinon somme des prestations (fallback identique à
-      // l'analytics, sinon 0 pour les résas sans total_price → faux zéro).
+      // Dépensé en réservations : ses résas passées (jusqu'à aujourd'hui, fuseau merchant), non
+      // annulées (client_name conservé), hors filler, hors no-show. On exclut les RDV FUTURS
+      // (pas encore honorés) pour ne pas gonfler le « dépensé ». Prix = total_price snapshot,
+      // sinon somme des prestations (fallback identique à l'analytics, sinon 0 → faux zéro).
       admin.from('merchant_planning_slots')
         .select('total_price, custom_service_price, attendance_status, planning_slot_services(service:merchant_services!service_id(price))')
         .eq('customer_id', customerId).eq('merchant_id', merchantId)
+        .lte('slot_date', getTodayForCountry(merchant.country))
         .is('primary_slot_id', null).not('client_name', 'is', null).neq('client_name', '__blocked__'),
       admin.from('member_cards').select('valid_until, program:member_programs!inner(name, benefit_label, discount_percent, merchant_id)')
         .eq('customer_id', customerId).eq('program.merchant_id', merchantId).gt('valid_until', nowIso).maybeSingle(),
       admin.from('vouchers').select('id', { count: 'exact', head: true })
         .eq('customer_id', customerId).eq('merchant_id', merchantId).eq('is_used', false)
         .or(`expires_at.is.null,expires_at.gt.${nowIso}`),
-      admin.from('customers').select('first_name, last_name, phone_number, birth_month, birth_day').eq('id', customerId).maybeSingle(),
+      admin.from('customers').select('first_name, last_name, phone_number, birth_month, birth_day').eq('id', customerId).eq('merchant_id', merchantId).maybeSingle(),
     ]);
 
     const redemptions = redemptionsRes.data || [];

@@ -6,6 +6,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import type { VisitStatus, MerchantCountry } from '@/types';
 import { setPhoneCookie } from '@/lib/customer-auth';
+import { computeCashback } from '@/lib/loyalty-progress';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -387,11 +388,11 @@ export async function POST(request: NextRequest) {
     if (tier2RewardUnlocked && merchant.cagnotte_tier2_percent) {
       rewardUnlocked = true;
       rewardTier = 2;
-      rewardValue = Math.round(newAmount * Number(merchant.cagnotte_tier2_percent)) / 100;
+      rewardValue = computeCashback(newAmount, merchant.cagnotte_tier2_percent);
     } else if (tier1RewardUnlocked && merchant.cagnotte_percent) {
       rewardUnlocked = true;
       rewardTier = 1;
-      rewardValue = Math.round(newAmount * Number(merchant.cagnotte_percent)) / 100;
+      rewardValue = computeCashback(newAmount, merchant.cagnotte_percent);
     }
 
     const response = {

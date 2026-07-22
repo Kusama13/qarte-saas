@@ -716,7 +716,7 @@ export async function POST(request: NextRequest) {
       body: pushBody,
       url: `/dashboard/planning?date=${slot_date}`,
       tag: 'qarte-merchant-booking',
-    }).catch(() => {});
+    }).catch((err) => logger.error('Booking merchant push failed', err));
 
     // 10c. SMS confirmation to client — only for deposit bookings (sent after merchant validates)
     // No-deposit bookings: client sees confirmation in BookingModal + gets J-1 reminder SMS
