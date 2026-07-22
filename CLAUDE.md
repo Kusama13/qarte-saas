@@ -58,7 +58,8 @@ Required env vars (server-side):
 `OPENROUTESERVICE_API_KEY` (mode service à domicile, signup gratuit https://openrouteservice.org/dev/),
 `GOOGLE_MAPS_API_KEY` (Places API New — note + avis Google sur la vitrine `/p/[slug]` ; restreindre la clé à Places API ; quota gratuit suffisant à l'échelle actuelle grâce au cache 72h),
 `EMAIL_MARKETING_DAILY_CAP` (mig 184 — plafond quotidien des emails **marketing** dans `sendEmail`, défaut 60 ; le transactionnel n'est jamais compté ni bloqué. Protège le quota Resend gratuit 100/j. Monter la valeur si Resend repasse en payant),
-`BLOG_EMAILS_ENABLED` ("true" pour réactiver les crons blog-digest/blog-drip, coupés par défaut depuis la bascule Resend gratuit)
+`BLOG_EMAILS_ENABLED` ("true" pour réactiver les crons blog-digest/blog-drip, coupés par défaut depuis la bascule Resend gratuit),
+`REVIEW_SMS_ENABLED` ("true" pour réactiver le SMS de demande d'avis, **gelé** depuis le 2026-07-22 — 15 merchants sur 74 avaient collé une URL Google brute jusqu'à 669 car. comme `review_link`, ce qui facturait jusqu'à 6 SMS par demande sur leur quota inclus. Gel à 3 niveaux : cron `sms-hourly`, API `/api/sms/automations`, toggle dashboard verrouillé. Voir `src/lib/sms-freeze.ts`. Ne réactiver qu'après avoir raccourci les liens)
 
 Public (NEXT_PUBLIC_):
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`

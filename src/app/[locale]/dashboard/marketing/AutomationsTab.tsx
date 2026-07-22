@@ -186,6 +186,9 @@ export default function AutomationsTab({ merchantId, shopName, planTier = 'all_i
   const [smsSettings, setSmsSettings] = useState<SmsSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+  // Gel serveur du SMS de demande d'avis (cf. sms-freeze.ts) : l'API refuse la
+  // reactivation, on verrouille donc le toggle plutot que de laisser cliquer dans le vide.
+  const [reviewSmsFrozen, setReviewSmsFrozen] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -195,6 +198,7 @@ export default function AutomationsTab({ merchantId, shopName, planTier = 'all_i
         const data = await res.json();
         if (res.ok && data.settings) {
           setSmsSettings(mapSettings(data.settings));
+          setReviewSmsFrozen(!!data.reviewSmsFrozen);
         }
       } catch {
         // silent
@@ -354,7 +358,11 @@ export default function AutomationsTab({ merchantId, shopName, planTier = 'all_i
         enabled={(smsSettings?.post_visit_review_enabled ?? false) && !googleReviewMissing}
         loading={loading}
         updating={updating}
-        {...gateCard('post_visit_review_enabled', googleReviewMissing, t('googleReviewMissingHint'))}
+        {...gateCard(
+          'post_visit_review_enabled',
+          reviewSmsFrozen || googleReviewMissing,
+          reviewSmsFrozen ? t('reviewSmsFrozenHint') : t('googleReviewMissingHint'),
+        )}
         onToggle={toggleSmsAutomation}
         t={t}
       />
