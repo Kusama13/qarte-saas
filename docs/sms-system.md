@@ -118,7 +118,7 @@ Validité : valable pendant l'abonnement actif. Perdus à la résiliation. Strip
 | `gift_card_expiry_reminder` (J-7 destinataire) | Transactionnel | SMS Partner | SMS Partner | OVH |
 | `past_due_initial` (dunning J0) | Transactionnel critique (Qarte→merchant) | SMS Partner | SMS Partner | OVH |
 | `past_due_reminder` (dunning J+2) | Transactionnel critique (Qarte→merchant) | SMS Partner | SMS Partner | OVH |
-| `review_request` | Marketing | OVH | OVH | OVH |
+| `review_request` | Marketing | **GELÉ** (voir ci-dessous) | **GELÉ** | **GELÉ** |
 | `voucher_expiry` | Marketing | OVH | OVH | OVH |
 | `campaign` | Marketing | OVH | OVH | OVH |
 | `referral_invite` | Marketing | OVH | OVH | OVH |
@@ -126,6 +126,21 @@ Validité : valable pendant l'abonnement actif. Perdus à la résiliation. Strip
 | `near_reward` | Marketing | OVH | OVH | OVH |
 
 **Règle simple** : SMS Partner = transactionnel FR/BE uniquement. OVH = tout le reste (marketing global + transactionnel CH + tout transactionnel si feature flag à `false`).
+
+#### Gel du SMS de demande d'avis (2026-07-22)
+
+`review_request` est **coupé** via `REVIEW_SMS_ENABLED` (défaut `false`), voir [`src/lib/sms-freeze.ts`](../src/lib/sms-freeze.ts).
+
+**Cause** : 15 merchants sur 74 avaient collé une **URL Google brute** comme `review_link` (jusqu'à **669 caractères**). Le corps du SMS étant un template avec le lien interpolé, le message partait en **2 à 6 segments facturés** au lieu d'1 — prélevés sur le **quota inclus du merchant** (100/mois). Aucun compteur de caractères ne pouvait les alerter puisque le texte n'est pas saisi par elles.
+
+**Gel à 3 niveaux** (un flag remis à `true` en base ne suffit pas à rouvrir) :
+1. cron `sms-hourly` — section entière court-circuitée ;
+2. `/api/sms/automations` — refuse la réactivation du toggle (409) ;
+3. dashboard — toggle verrouillé + motif affiché (`reviewSmsFrozenHint`).
+
+Les 8 merchants qui avaient `post_visit_review_enabled=true` ont été basculés à `false` en base.
+
+**Avant de réactiver** (`REVIEW_SMS_ENABLED="true"` sur Vercel, sans redéploiement) : mettre en place un redirecteur court `getqarte.com/r/<slug>` garantissant 1 seul segment quelle que soit l'URL collée. Sans ça, le problème revient à l'identique.
 
 #### Canal séparé : SMS marketing aux merchants en essai (Qarte → prospects)
 
@@ -416,7 +431,7 @@ Ajout :
 | `reminder_j0_enabled` | Rappel J-0 | hourly cron H-3 | `planning_enabled` |
 | `referral_reward_sms_enabled` | Récompense parrain | `/api/vouchers/use` | `referral_program_enabled` |
 | `referral_invite_sms_enabled` | Invitation parrain | hourly cron 10h-11h, dedup 60j | `referral_program_enabled` |
-| `post_visit_review_enabled` | Avis Google | hourly cron H+2 après récompense (palier 1 ou 2), dedup 60j | `review_link` défini |
+| `post_visit_review_enabled` | Avis Google — **GELÉ depuis 2026-07-22** (`REVIEW_SMS_ENABLED`) | hourly cron H+2 après récompense (palier 1 ou 2), dedup 60j | `review_link` défini |
 | `voucher_expiry_sms_enabled` | Voucher expire | hourly cron 10h-11h, dedup daily | — |
 | `near_reward_sms_enabled` | Plus qu'un tampon | hourly cron 10h-11h, dedup 60j | `reward_description` défini |
 | `inactive_sms_enabled` | Relance inactif | hourly cron 10h-11h, dedup 60j | — |
