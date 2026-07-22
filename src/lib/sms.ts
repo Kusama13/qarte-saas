@@ -607,6 +607,14 @@ interface SendOutcome {
   errorClass: SmsErrorClass | null;
   errorMessage: string | null;
   fallbackAttempted: boolean;
+  /** Classe d'erreur du provider PRIMAIRE, conservee meme si le fallback a reussi.
+   *  Sans ca, un fallback OVH reussi ecrase errorClass en 'success' et masquerait
+   *  une cle API cassee (aucune alerte admin ne partirait). */
+  primaryErrorClass?: SmsErrorClass | null;
+  /** Provider primaire tente, pour attribuer l'alerte au bon fournisseur. */
+  primaryProvider?: SmsProvider;
+  /** Erreur du primaire — seul cas ou errorMessage la perd : fallback reussi (null). */
+  primaryErrorMessage?: string | null;
 }
 
 async function sendWithIntelligentFallback(
@@ -626,21 +634,25 @@ async function sendWithIntelligentFallback(
     return { status: 'sent', finalProvider: primary, msgId: r1.jobId, errorClass: 'success', errorMessage: null, fallbackAttempted: false };
   }
 
-  // 2. Erreurs non-fallback-ables (invalid_phone, config_error) → echec direct
-  if (class1 === 'invalid_phone' || class1 === 'config_error') {
-    return { status: 'failed', finalProvider: primary, errorClass: class1, errorMessage: r1.error || null, fallbackAttempted: false };
+  // 2. Seul invalid_phone est non-fallback-able : un numero invalide le restera chez OVH.
+  //    config_error N'EST PLUS bloquant (incident 2026-07-22, rotation de cle SMS Partner) :
+  //    une cle cassee ou mal copiee ne doit pas priver les clientes de leurs confirmations
+  //    alors que l'autre provider fonctionne. On bascule sur OVH ET on conserve l'alerte
+  //    admin via primaryErrorClass, pour ne pas masquer le probleme de config.
+  if (class1 === 'invalid_phone') {
+    return { status: 'failed', finalProvider: primary, errorClass: class1, errorMessage: r1.error || null, fallbackAttempted: false, primaryErrorClass: class1, primaryProvider: primary };
   }
 
   // 3. Timeout sur SMS Partner → ambigu, attendre DLR (pas de fallback immediat)
   // OVH timeout → fallback safe (OVH n'a pas de DLR fiable, doublon < perte)
   if (class1 === 'timeout' && primary === 'sms_partner') {
-    return { status: 'pending_verify', finalProvider: primary, errorClass: 'timeout', errorMessage: r1.error || null, fallbackAttempted: false };
+    return { status: 'pending_verify', finalProvider: primary, errorClass: 'timeout', errorMessage: r1.error || null, fallbackAttempted: false, primaryErrorClass: class1, primaryProvider: primary };
   }
 
   // 4. Fallback safe sur l'autre provider (timeout OVH, no_credit, server_error, rate_limit, unknown)
   // Pas de fallback si primary etait deja OVH (notre fallback ultime — sauf si on autorise SMS Partner pour CH plus tard, hors scope).
   if (primary === 'ovh') {
-    return { status: 'failed', finalProvider: 'ovh', errorClass: class1, errorMessage: r1.error || null, fallbackAttempted: false };
+    return { status: 'failed', finalProvider: 'ovh', errorClass: class1, errorMessage: r1.error || null, fallbackAttempted: false, primaryErrorClass: class1, primaryProvider: primary };
   }
 
   // primary = sms_partner, on essaie OVH
@@ -649,7 +661,7 @@ async function sendWithIntelligentFallback(
   const class2 = classifyOvhError(r2);
 
   if (r2.success) {
-    return { status: 'sent', finalProvider: 'ovh', msgId: r2.jobId, errorClass: 'success', errorMessage: null, fallbackAttempted: true };
+    return { status: 'sent', finalProvider: 'ovh', msgId: r2.jobId, errorClass: 'success', errorMessage: null, fallbackAttempted: true, primaryErrorClass: class1, primaryProvider: primary, primaryErrorMessage: r1.error || null };
   }
 
   // 2 echecs : on log le pire des deux + flag fallback_attempted
@@ -659,6 +671,8 @@ async function sendWithIntelligentFallback(
     errorClass: class2,
     errorMessage: `[${primary}] ${r1.error || 'unknown'} | [ovh] ${r2.error || 'unknown'}`,
     fallbackAttempted: true,
+    primaryErrorClass: class1,
+    primaryProvider: primary,
   };
 }
 
@@ -675,10 +689,17 @@ async function handleErrorSideEffects(
     if (outcome.errorClass === 'invalid_phone') {
       await recordInvalidPhone(supabase, phone, outcome.finalProvider, outcome.errorMessage || 'invalid phone reported by provider');
     }
-    if (outcome.errorClass === 'config_error') {
+    // config_error : on alerte MEME si le fallback OVH a livre le SMS (errorClass vaut
+    // alors 'success'), sinon une cle API cassee resterait totalement invisible.
+    const configErrorProvider =
+      outcome.primaryErrorClass === 'config_error' ? (outcome.primaryProvider ?? outcome.finalProvider)
+        : outcome.errorClass === 'config_error' ? outcome.finalProvider
+          : null;
+    if (configErrorProvider) {
+      const recovered = outcome.status === 'sent';
       await notifySmsAdmin(supabase, 'config_error', {
-        message: `Erreur de configuration ${outcome.finalProvider} detectee a l'envoi d'un SMS transactionnel. Verifie les env vars Vercel (cle API, signature, consumer key).`,
-        details: { provider: outcome.finalProvider, error: outcome.errorMessage || 'unknown' },
+        message: `Erreur de configuration ${configErrorProvider} detectee a l'envoi d'un SMS transactionnel.${recovered ? ' Le SMS est bien parti via le fallback OVH, mais la config reste cassee.' : ''} Verifie les env vars Vercel (cle API, signature, consumer key).`,
+        details: { provider: configErrorProvider, error: outcome.primaryErrorMessage || outcome.errorMessage || 'unknown', recoveredViaFallback: recovered ? 'oui' : 'non' },
         cta: { label: 'Ouvrir Vercel env', url: 'https://vercel.com/judes-projects-967485ba/qarte-saas/settings/environment-variables' },
       });
     }
