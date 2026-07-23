@@ -89,7 +89,7 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
               {isAlt ? t('altHeroTitle', { competitor: competitorName }) : t('heroTitle', { competitor: competitorName })}
             </h1>
             <p className="text-[1.05rem] md:text-lg lg:text-xl text-gray-800 max-w-2xl mx-auto mb-8 leading-relaxed">
-              {isAlt ? t('altHeroSubtitle', { competitor: competitorName }) : t('heroSubtitle', { competitor: competitorName, price: '24\u20AC' })}
+              {isAlt ? t('altHeroSubtitle', { competitor: competitorName }) : t('heroSubtitle', { competitor: competitorName, price: '34\u20AC' })}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
@@ -301,7 +301,7 @@ export default function CompareContent({ competitor, variant = 'compare' }: Comp
               <div className="relative bg-white/70 backdrop-blur-xl border border-white/80 rounded-3xl shadow-xl shadow-indigo-100/30 p-8 md:p-12 text-center">
                 <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('pricingFromLabel')}</p>
                 <div className="inline-flex items-baseline justify-center gap-1.5 mb-2">
-                  <span className="text-6xl md:text-7xl font-extrabold tracking-tighter text-gray-900">19</span>
+                  <span className="text-6xl md:text-7xl font-extrabold tracking-tighter text-gray-900">34</span>
                   <span className="text-xl font-semibold text-gray-400">&euro;/mois</span>
                 </div>
                 <p className="text-xs font-medium text-indigo-600 mb-6">{t('pricingTwoPlans')}</p>
