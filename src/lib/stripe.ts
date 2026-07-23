@@ -14,18 +14,18 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 export const PLAN = {
   name: 'Tout-en-un',
   tier: 'all_in' as const,
-  price: 24,
+  price: 34,
   priceId: (process.env.STRIPE_PRICE_ID || '').trim(),
   interval: 'month' as const,
 };
 
-// Plan 6 mois Tout-en-un — engagement ferme 6 mois, 1 mois offert (5×24 = 120€).
+// Plan 6 mois Tout-en-un — engagement ferme 6 mois, 1 mois offert (5×34 = 170€).
 // Stripe : interval='month', interval_count=6 (configuré côté dashboard Stripe).
 export const PLAN_SEMESTRIAL = {
   name: 'Tout-en-un 6 mois',
   tier: 'all_in' as const,
-  price: 120,
-  monthlyEquivalent: 20,
+  price: 170,
+  monthlyEquivalent: 28,
   priceId: (process.env.STRIPE_PRICE_ID_SEMESTRIAL || '').trim(),
   interval: 'month' as const,
   intervalCount: 6 as const,
@@ -72,19 +72,30 @@ export const PLAN_FIDELITY_ANNUAL = {
   interval: 'year' as const,
 };
 
-// Legacy Fidélité prices (19€ mensuel / 95€ 6 mois) — abonnés grandfathered avant le
-// passage à 14€/70€. Reconnus par le webhook pour rester mappés 'fidelity'. Pas de nouveau checkout.
-export const PLAN_FIDELITY_LEGACY_PRICE_IDS = {
-  monthly: (process.env.STRIPE_PRICE_FIDELITY_LEGACY || '').trim(),
-  semestrial: (process.env.STRIPE_PRICE_FIDELITY_SEMESTRIAL_LEGACY || '').trim(),
-};
+// Parse une liste de price IDs legacy séparés par virgule. Chaque changement de prix
+// AJOUTE l'ancien ID à la liste (sans écraser les générations précédentes) — d'où le
+// support multi-valeurs plutôt qu'un slot unique par cycle.
+const parseIds = (env: string | undefined): string[] =>
+  (env || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
 
-// Legacy Tout-en-un prices — kept so existing subscribers who still pay against
-// these IDs are still mapped to 'all_in' by the webhook. Not used for new checkouts.
-export const PLAN_LEGACY_PRICE_IDS = {
-  monthly: (process.env.STRIPE_PRICE_ID_LEGACY || '').trim(),
-  annual: (process.env.STRIPE_PRICE_ID_ANNUAL_LEGACY || '').trim(),
-};
+// Legacy price IDs — abonnés grandfathered qui paient encore un ancien tarif. Le webhook
+// les mappe au bon tier (le cycle n'a pas d'importance : il est dérivé séparément de
+// `subscription.items.data[0].price.recurring`). D'où une liste plate par tier, toutes
+// générations et tous cycles confondus. Chaque changement de prix AJOUTE l'ancien ID à
+// l'env correspondant (valeurs séparées par virgule) — pas de nouveau checkout dessus.
+export const PLAN_FIDELITY_LEGACY_PRICE_IDS: string[] = [
+  ...parseIds(process.env.STRIPE_PRICE_FIDELITY_LEGACY),
+  ...parseIds(process.env.STRIPE_PRICE_FIDELITY_SEMESTRIAL_LEGACY),
+];
+
+export const PLAN_LEGACY_PRICE_IDS: string[] = [
+  ...parseIds(process.env.STRIPE_PRICE_ID_LEGACY),
+  ...parseIds(process.env.STRIPE_PRICE_ID_SEMESTRIAL_LEGACY),
+  ...parseIds(process.env.STRIPE_PRICE_ID_ANNUAL_LEGACY),
+];
 
 // USD plans for EN merchants
 export const PLAN_EN = {

@@ -59,14 +59,14 @@ const SMS_FEATURE_KEY: Record<BillingInterval, 'featureSmsMonthly' | 'featureSms
 };
 
 const FALLBACK_PLAN_PRICE: Record<BillingInterval, number> = {
-  monthly: 24,
-  semestrial: 120,
+  monthly: 34,
+  semestrial: 170,
   annual: 240,
 };
 
 const TIER_PRICE_LABELS: Record<PlanTier, Record<BillingInterval, string>> = {
   fidelity: { monthly: '14€/mois', semestrial: '70€/6 mois', annual: '190€/an' },
-  all_in: { monthly: '24€/mois', semestrial: '120€/6 mois', annual: '240€/an' },
+  all_in: { monthly: '34€/mois', semestrial: '170€/6 mois', annual: '240€/an' },
 };
 
 const TIER_PRICES: Record<PlanTier, Record<PickerInterval, { monthlyEquivalent: number; total: number }>> = {
@@ -75,8 +75,8 @@ const TIER_PRICES: Record<PlanTier, Record<PickerInterval, { monthlyEquivalent: 
     semestrial: { monthlyEquivalent: 70 / 6, total: 70 },
   },
   all_in: {
-    monthly: { monthlyEquivalent: 24, total: 24 },
-    semestrial: { monthlyEquivalent: 120 / 6, total: 120 },
+    monthly: { monthlyEquivalent: 34, total: 34 },
+    semestrial: { monthlyEquivalent: 170 / 6, total: 170 },
   },
 };
 

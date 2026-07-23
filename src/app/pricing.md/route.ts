@@ -9,8 +9,8 @@ export function GET() {
 ## Plan
 
 ### Tout-en-un (réservation + fidélité + vitrine + SMS)
-- **Mensuel** : 24 EUR/mois (sans engagement)
-- **6 mois** : 120 EUR pour 6 mois (équivalent 20 EUR/mois — un mois offert, engagement ferme 6 mois)
+- **Mensuel** : 34 EUR/mois (sans engagement)
+- **6 mois** : 170 EUR pour 6 mois (équivalent 28 EUR/mois — un mois offert, engagement ferme 6 mois)
 
 > L'ancien plan Fidélité (14 EUR/mois) n'est plus proposé aux nouveaux salons. Les salons déjà abonnés conservent leur tarif.
 
@@ -53,7 +53,7 @@ export function GET() {
 
 | Critère | Qarte | Planity | Treatwell | Booksy |
 |---------|-------|---------|-----------|--------|
-| Abonnement | 24 EUR/mois ou 20 EUR/mois (6 mois) | dès 59 EUR/mois | dès 35 EUR/mois | 29-79 EUR/mois |
+| Abonnement | 34 EUR/mois ou 28 EUR/mois (6 mois) | dès 59 EUR/mois | dès 35 EUR/mois | 29-79 EUR/mois |
 | Commission | 0 % | 0 % | Oui (marketplace) | 0 % (option Boost) |
 | Fidélité intégrée | Oui | Basique | Limitée | Oui |
 | Engagement | Aucun (mensuel) ou 6 mois | 12 mois | 12 mois | Mensuel |

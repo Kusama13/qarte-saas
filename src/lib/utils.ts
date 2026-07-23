@@ -323,27 +323,36 @@ export interface TrialStatus {
   gracePeriodDays: number;
 }
 
-// Pricing history — old price before 2026-04-05, new price after
-const PRICE_CHANGE_DATE = '2026-04-05';
+// Pricing history — bornes de tarif Tout-en-un successives.
+const PRICE_CHANGE_DATE = '2026-04-05';   // avant → legacy 19€/190€
+const PRICE_CHANGE_DATE_2 = '2026-07-23'; // à partir de → Tout-en-un 34€/170€ (avant → 24€/120€)
 
 /**
- * Monthly equivalent price for a merchant. Handles le pricing split d'avril 2026,
- * les 2 tiers (Fidélité 14€ / Tout-en-un 24€), et les 3 cycles (mensuel, 6 mois, annuel).
- * - Legacy merchants (billing_period_start before split) → 19€/190€ (tarif historique)
- * - Post-split Fidélité → 14€/70€/190€ (depuis juin 2026 ; les abonnés 19€/95€ grandfathered
- *   sont approximés au tarif courant — pas de prix par-merchant stocké)
- * - Post-split Tout-en-un (default) → 24€/120€/240€
+ * Monthly equivalent price for a merchant (approximation MRR admin — pas de prix par-merchant stocké).
+ * Gère les 2 tiers (Fidélité / Tout-en-un) et les 3 cycles (mensuel, 6 mois, annuel).
+ * - Legacy (billing_period_start < 2026-04-05) → 19€/190€
+ * - Fidélité → 14€/70€/190€ (abonnés 19€/95€ grandfathered approximés au tarif courant)
+ * - Tout-en-un avant 2026-07-23 → 24€/120€/240€
+ * - Tout-en-un à partir du 2026-07-23 → 34€/170€/240€
+ *
+ * STOPGAP : chaque changement de prix ajoute une borne de date ici. Le vrai montant existe
+ * déjà côté Stripe (`subscription.items.data[0].price.unit_amount`, dispo dans le webhook via
+ * `session.amount_total`). L'état cible = le persister sur la ligne merchant au checkout pour
+ * remplacer cette approximation par un simple SUM — au lieu d'ajouter une PRICE_CHANGE_DATE_3.
  */
 export function getMerchantMonthlyPrice(merchant: {
   billing_interval: string | null;
   billing_period_start: string | null;
   plan_tier?: string | null;
 }): number {
-  const isLegacy = merchant.billing_period_start && merchant.billing_period_start < PRICE_CHANGE_DATE;
+  const start = merchant.billing_period_start;
+  const isLegacy = start && start < PRICE_CHANGE_DATE;
   const isFidelity = !isLegacy && merchant.plan_tier === 'fidelity';
+  // Tout-en-un au nouveau tarif : abonnés à partir de la 2ᵉ borne (>= DATE_2 implique non-legacy).
+  const isNewAllIn = !isFidelity && !!start && start >= PRICE_CHANGE_DATE_2;
   const annualTotal = isLegacy || isFidelity ? 190 : 240;
-  const semestrialTotal = isFidelity ? 70 : 120;
-  const monthly = isLegacy ? 19 : isFidelity ? 14 : 24;
+  const semestrialTotal = isFidelity ? 70 : isNewAllIn ? 170 : 120;
+  const monthly = isLegacy ? 19 : isFidelity ? 14 : isNewAllIn ? 34 : 24;
   if (merchant.billing_interval === 'annual') return Math.round(annualTotal / 12 * 100) / 100;
   if (merchant.billing_interval === 'semestrial') return Math.round(semestrialTotal / 6 * 100) / 100;
   return monthly;

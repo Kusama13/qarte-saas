@@ -452,7 +452,7 @@ export default function Page() {
             <p className="text-base text-gray-700 leading-relaxed mb-4">
               Qarte est la seule plateforme de réservation salon FR/BE/CH (mai 2026) qui te laisse
               coller ton lien Revolut (ou PayPal, SumUp) dans ta vitrine. Ta cliente clique, paie,
-              ça tombe chez toi. Direct. Pas un centime pour Qarte (24€/mois fixes, tout compris).
+              ça tombe chez toi. Direct. Pas un centime pour Qarte (34€/mois fixes, tout compris).
             </p>
             <p className="text-base text-gray-700 leading-relaxed mb-4">
               <strong>14 services au choix</strong> : Revolut, PayPal, SumUp, Lydia, Stripe, Wise,
@@ -530,7 +530,7 @@ export default function Page() {
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
               <p className="text-sm text-amber-900 leading-relaxed">
                 💡 <strong>Sur 1 an, ce que Booksy te prélève couvre 3 ans 7 mois
-                d&apos;abonnement Qarte</strong> (24€/mois). Le calcul est vite fait.
+                d&apos;abonnement Qarte</strong> (34€/mois). Le calcul est vite fait.
               </p>
             </div>
           </section>
@@ -611,7 +611,7 @@ export default function Page() {
             </p>
             <p className="text-base text-gray-700 leading-relaxed mb-4">
               Pourquoi ? Parce que la commission sur l&apos;acompte, c&apos;est leur gagne-pain.
-              Nous, on vit de l&apos;abonnement 24€/mois (tout compris). Pas besoin de te grappiller
+              Nous, on vit de l&apos;abonnement 34€/mois (tout compris). Pas besoin de te grappiller
               1,80% en plus.
             </p>
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">

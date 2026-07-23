@@ -116,7 +116,7 @@ const jsonLd = {
           name: 'Est-ce que Planity ou Booksy gèrent le service à domicile comme Qarte ?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Pas de la même façon. Planity et Booksy n\'ont pas de mode service à domicile dédié : ni rayon d\'intervention, ni calcul de trajet entre RDV, ni option pour masquer ton adresse perso. Treatwell propose une recherche par zone côté cliente mais ne calcule rien pour toi. Chez Qarte, tout est inclus dans le forfait (24 € par mois).',
+            text: 'Pas de la même façon. Planity et Booksy n\'ont pas de mode service à domicile dédié : ni rayon d\'intervention, ni calcul de trajet entre RDV, ni option pour masquer ton adresse perso. Treatwell propose une recherche par zone côté cliente mais ne calcule rien pour toi. Chez Qarte, tout est inclus dans le forfait (34 € par mois).',
           },
         },
         {
@@ -258,7 +258,7 @@ export default function Page() {
               La plupart des logiciels de résa traitent ce cas comme un cas spécial. <strong>Planity et
               Booksy</strong> ignorent les trajets et te laissent les caler à la main. <strong>Treatwell</strong>{' '}
               propose une recherche par zone à la cliente mais ne calcule rien pour toi. Chez Qarte,
-              tout est inclus dans le forfait à 24 € par mois, et c&apos;est automatique.
+              tout est inclus dans le forfait à 34 € par mois, et c&apos;est automatique.
             </p>
             <p className="text-base text-gray-700 leading-relaxed mt-4">
               Si tu veux aussi sécuriser tes RDV avec un acompte (et arrêter les no-show), on a
@@ -471,7 +471,7 @@ export default function Page() {
                   dédié : ni rayon d&apos;intervention, ni calcul de trajet entre RDV, ni option
                   pour masquer ton adresse perso. Treatwell propose une recherche par zone côté
                   cliente mais ne calcule rien pour toi. Chez Qarte, tout est inclus dans le
-                  forfait à 24 € par mois.
+                  forfait à 34 € par mois.
                 </p>
               </div>
               <div>

@@ -10,8 +10,8 @@ const PLAN_LABEL: Record<BillingInterval, string> = {
 };
 
 const FALLBACK_AMOUNT: Record<BillingInterval, number> = {
-  monthly: 24,
-  semestrial: 120,
+  monthly: 34,
+  semestrial: 170,
   annual: 240,
 };
 import { createClient } from '@supabase/supabase-js';
@@ -31,11 +31,11 @@ import type { SubscriptionStatus, PlanTier } from '@/types';
 function tierFromPriceId(priceId: string | null | undefined): PlanTier | null {
   if (!priceId) return null;
   if (priceId === PLAN_FIDELITY.priceId || priceId === PLAN_FIDELITY_ANNUAL.priceId || priceId === PLAN_FIDELITY_SEMESTRIAL.priceId) return 'fidelity';
-  // Legacy Fidélité prices (19€/95€) — abonnés grandfathered avant le passage à 14€/70€
-  if (priceId === PLAN_FIDELITY_LEGACY_PRICE_IDS.monthly || priceId === PLAN_FIDELITY_LEGACY_PRICE_IDS.semestrial) return 'fidelity';
+  // Legacy Fidélité prices (ex. 19€/95€) — abonnés grandfathered avant les baisses de prix
+  if (PLAN_FIDELITY_LEGACY_PRICE_IDS.includes(priceId)) return 'fidelity';
   if (priceId === PLAN.priceId || priceId === PLAN_ANNUAL.priceId || priceId === PLAN_SEMESTRIAL.priceId) return 'all_in';
-  // Legacy Tout-en-un prices — existing subscribers stay on these
-  if (priceId === PLAN_LEGACY_PRICE_IDS.monthly || priceId === PLAN_LEGACY_PRICE_IDS.annual) return 'all_in';
+  // Legacy Tout-en-un prices — existing subscribers stay on these (24€/120€ + générations antérieures)
+  if (PLAN_LEGACY_PRICE_IDS.includes(priceId)) return 'all_in';
   return null;
 }
 

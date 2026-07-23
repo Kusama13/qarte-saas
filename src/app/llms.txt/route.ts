@@ -15,7 +15,7 @@ Salons de coiffure, barbiers, instituts de beauté, ongleries, spas, esthéticie
 - Interconnexion : le client qui réserve reçoit automatiquement sa carte de fidélité
 
 ## Tarif
-Tout-en-un : 24 EUR/mois (sans engagement) ou 120 EUR/6 mois (engagement 6 mois, un mois offert — soit 20 EUR/mois).
+Tout-en-un : 34 EUR/mois (sans engagement) ou 170 EUR/6 mois (engagement 6 mois, un mois offert — soit 28 EUR/mois).
 Fidélité : 14 EUR/mois (sans engagement) ou 70 EUR/6 mois (engagement 6 mois, un mois offert — soit ~12 EUR/mois).
 Essai gratuit 3 jours, 0 % commission.
 100 SMS transactionnels inclus/mois (110 sur 6 mois, 0,075 EUR/SMS au-delà). Carte NFC en option à 20 EUR.
