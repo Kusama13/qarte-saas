@@ -7,7 +7,7 @@ import { ArrowRight, TrendingDown, Wallet, MessageSquare, CreditCard } from 'luc
 
 const BOOKSY_SUBSCRIPTION_MONTHLY = 60;
 const BOOKSY_SMS_UNIT_COST = 0.10;
-const QARTE_MONTHLY = 24;
+const QARTE_MONTHLY = 34;
 const QARTE_SMS_INCLUDED = 100;
 
 function formatEUR(n: number): string {
@@ -179,7 +179,7 @@ export default function BooksyCostCalculator() {
                     <span className="font-semibold text-emerald-600">0 €</span>
                   </div>
                   <div className="flex items-center justify-between text-gray-700">
-                    <span className="flex items-center gap-2"><CreditCard className="w-4 h-4 text-indigo-400" /> Abonnement (24€/mois)</span>
+                    <span className="flex items-center gap-2"><CreditCard className="w-4 h-4 text-indigo-400" /> Abonnement (34€/mois)</span>
                     <span className="font-semibold">{formatEUR(calc.qarteSubYear)}</span>
                   </div>
                   <div className="flex items-center justify-between text-gray-700">
@@ -224,7 +224,7 @@ export default function BooksyCostCalculator() {
             <p><strong className="text-gray-900">Commissions Booksy :</strong> avec l&apos;option Boost, Booksy prélève une commission sur les nouvelles clientes venues de leur marketplace. Sans Boost, Booksy ne prend pas de commission : ajuste le curseur à 0% si tu n&apos;utilises pas le Boost.</p>
             <p><strong className="text-gray-900">Abonnement Booksy :</strong> plan Pro autour de 60€/mois (Starter ~29€, Premium ~100€).</p>
             <p><strong className="text-gray-900">SMS Booksy :</strong> tarif moyen 0,10€/SMS envoyé (rappel, confirmation, marketing) en supplément de l&apos;abonnement.</p>
-            <p><strong className="text-gray-900">Qarte :</strong> 24€/mois tout compris. 100 SMS/mois inclus. Au-delà, pack à 0,075€/SMS. Zéro commission, jamais.</p>
+            <p><strong className="text-gray-900">Qarte :</strong> 34€/mois tout compris. 100 SMS/mois inclus. Au-delà, pack à 0,075€/SMS. Zéro commission, jamais.</p>
             <p className="text-xs text-gray-400 pt-4">Les tarifs Booksy sont des estimations publiques 2026. Vérifie tes factures pour le détail exact. Cet outil est indicatif.</p>
           </div>
         </div>

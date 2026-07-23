@@ -11,7 +11,7 @@
 
 export const PLAN_PRICES = {
   fidelity: { monthly: 14, semestrial: 70, monthlyEquiv: 12, annual: 190 },
-  all_in: { monthly: 24, semestrial: 120, monthlyEquiv: 20, annual: 240 },
+  all_in: { monthly: 34, semestrial: 170, monthlyEquiv: 28, annual: 240 },
 } as const;
 
 /** Commission ambassadeur appliquee sur le prix mensuel paye par le marchand. */

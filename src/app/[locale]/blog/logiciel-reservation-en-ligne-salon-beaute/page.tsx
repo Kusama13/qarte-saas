@@ -70,7 +70,7 @@ const jsonLd = {
           name: 'Quel est le meilleur logiciel de réservation en ligne pour un salon de coiffure ?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: "Il n'y a pas de meilleur logiciel universel. Planity domine en France sur l'annuaire (2,5M visiteurs/mois) mais prend 30 €/mois + commission sur nouveaux clients. Qarte (24 €/mois sans commission) convient aux salons qui veulent fidéliser leur fichier et être propriétaires de leur audience. Treatwell est adapté aux grandes villes et gros salons. Booksy est la référence pour les barbershops.",
+            text: "Il n'y a pas de meilleur logiciel universel. Planity domine en France sur l'annuaire (2,5M visiteurs/mois) mais prend 30 €/mois + commission sur nouveaux clients. Qarte (34 €/mois sans commission) convient aux salons qui veulent fidéliser leur fichier et être propriétaires de leur audience. Treatwell est adapté aux grandes villes et gros salons. Booksy est la référence pour les barbershops.",
           },
         },
         {
@@ -78,7 +78,7 @@ const jsonLd = {
           name: 'Combien coûte un logiciel de réservation pour salon de beauté en 2026 ?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: "Les tarifs vont de 19 € à 79 €/mois selon les fonctionnalités et le nombre de collaborateurs. Planity : ~30 €/mois + commissions. Treatwell : à partir de 35 €/mois + 2,5 % de commission. Booksy : 29-79 €/mois selon le plan. Qarte : 24 €/mois sans commission ni frais par réservation.",
+            text: "Les tarifs vont de 19 € à 79 €/mois selon les fonctionnalités et le nombre de collaborateurs. Planity : ~30 €/mois + commissions. Treatwell : à partir de 35 €/mois + 2,5 % de commission. Booksy : 29-79 €/mois selon le plan. Qarte : 34 €/mois sans commission ni frais par réservation.",
           },
         },
         {
@@ -151,7 +151,7 @@ const tools: Tool[] = [
   {
     name: 'Qarte',
     tag: 'Réservation + fidélité + vitrine',
-    price: '24 €/mois',
+    price: '34 €/mois',
     commission: '0 % sur toutes les réservations',
     marketplace: false,
     loyalty: 'Intégrée (tampons + cagnotte)',
@@ -401,7 +401,7 @@ export default function Page() {
                     <td className="px-4 py-3">29,90 €/mois</td>
                     <td className="px-4 py-3">dès 35 €/mois</td>
                     <td className="px-4 py-3">29-79 €/mois</td>
-                    <td className="px-4 py-3 bg-indigo-50/30 font-semibold">24 €/mois</td>
+                    <td className="px-4 py-3 bg-indigo-50/30 font-semibold">34 €/mois</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3 font-semibold">Commission</td>
@@ -613,7 +613,7 @@ export default function Page() {
                 <p className="text-base text-gray-700 leading-relaxed">
                   Il n&apos;y a pas de meilleur logiciel universel. <strong>Planity</strong> domine en France sur
                   l&apos;annuaire (2,5 M visiteurs/mois) mais prend 30 €/mois + commission sur nouveaux clients.{' '}
-                  <strong>Qarte</strong> (24 €/mois sans commission) convient aux salons qui veulent fidéliser leur
+                  <strong>Qarte</strong> (34 €/mois sans commission) convient aux salons qui veulent fidéliser leur
                   fichier et être propriétaires de leur audience. <strong>Treatwell</strong> est adapté aux grandes
                   villes et gros salons. <strong>Booksy</strong> est la référence pour les barbershops.
                 </p>
@@ -625,7 +625,7 @@ export default function Page() {
                 <p className="text-base text-gray-700 leading-relaxed">
                   Les tarifs vont de <strong>19 € à 79 €/mois</strong> selon les fonctionnalités et le nombre de
                   collaborateurs. Planity : dès 59 €/mois, sans commission. Treatwell : à partir de 35 €/mois +
-                  commission marketplace. Booksy : 29-79 €/mois selon le plan. Qarte : 24 €/mois, tout compris.
+                  commission marketplace. Booksy : 29-79 €/mois selon le plan. Qarte : 34 €/mois, tout compris.
                 </p>
               </div>
               <div>
@@ -673,7 +673,7 @@ export default function Page() {
             </h3>
             <p className="text-indigo-100 mb-6 max-w-xl mx-auto">
               Réservation en ligne avec acompte, programme de fidélité digital, page salon SEO, SMS de rappel
-              automatiques. 24 €/mois sans commission, sans engagement.
+              automatiques. 34 €/mois sans commission, sans engagement.
             </p>
             <Link
               href="/auth/merchant/signup"

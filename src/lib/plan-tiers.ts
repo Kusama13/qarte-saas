@@ -5,7 +5,7 @@ export type { BillingInterval };
  * Plan tiers Qarte (avril 2026).
  * - fidelity (14€/70€/190€) : fidélité seule. Pas de planning, résa, ni campagnes SMS manuelles.
  *   SMS anniversaire offert sans quota (coût absorbé) ; parrainage via pack. Abonnés 19€/95€ grandfathered.
- * - all_in (24€/120€/240€) : full features. 100 SMS marketing/mois (compteur unique pour
+ * - all_in (34€/170€ ; abonnés d'avant le 2026-07-23 : 24€/120€) : full features. 100 SMS marketing/mois (compteur unique pour
  *   anniversaire + parrainage + auto + campagnes manuelles). +10 si abonnement 6 mois,
  *   +20 si abonnement annuel.
  *

@@ -719,7 +719,7 @@ export default function Page() {
             </h3>
             <p className="text-violet-100 mb-6 max-w-xl mx-auto">
               Carte de fidélité digitale, réservation avec acompte, SMS rappel, vitrine SEO,
-              parrainage&nbsp;: tout est inclus dans Qarte. Forfait 24 €/mois, 0 commission, 3 jours d&apos;essai gratuit.
+              parrainage&nbsp;: tout est inclus dans Qarte. Forfait 34 €/mois, 0 commission, 3 jours d&apos;essai gratuit.
             </p>
             <Link
               href="/auth/merchant/signup"

@@ -108,7 +108,7 @@ const jsonLd = {
           name: 'Quel est le prix d\'une carte de fidélité digitale pour un salon de beauté ?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Les solutions au forfait coûtent entre 19 € et 50 € par mois (Qarte 19 €/mois en Fidélité, 24 €/mois en Tout-en-un avec vitrine + réservation). Les solutions à la commission prennent 1 à 3 % par passage. Sur un salon avec 200 visites/mois, le forfait revient toujours moins cher. Méfie-toi des outils gratuits qui se rattrapent sur ta data ou des pubs envoyées à tes clientes.',
+            text: 'Les solutions au forfait coûtent entre 19 € et 50 € par mois (Qarte 19 €/mois en Fidélité, 34 €/mois en Tout-en-un avec vitrine + réservation). Les solutions à la commission prennent 1 à 3 % par passage. Sur un salon avec 200 visites/mois, le forfait revient toujours moins cher. Méfie-toi des outils gratuits qui se rattrapent sur ta data ou des pubs envoyées à tes clientes.',
           },
         },
         {
@@ -451,7 +451,7 @@ export default function Page() {
 
             <p className="text-base text-gray-700 leading-relaxed">
               Au-delà de la carte de fidélité, regarde aussi ce que l&apos;outil propose en plus.
-              Qarte inclut dans son forfait Tout-en-un (24 €/mois) : ta vitrine SEO,
+              Qarte inclut dans son forfait Tout-en-un (34 €/mois) : ta vitrine SEO,
               ta <Link href="/blog/logiciel-reservation-en-ligne-salon-beaute" className="text-violet-700 underline hover:text-violet-900">réservation en ligne</Link>,
               les SMS de rappel, le parrainage, les bons cadeaux, et l&apos;anti
                 <Link href="/blog/eviter-no-show-salon-rendez-vous" className="text-violet-700 underline hover:text-violet-900"> no-show</Link>.
@@ -516,7 +516,7 @@ export default function Page() {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2">Quel est le prix d&apos;une carte de fidélité digitale pour un salon de beauté ?</h3>
-                <p className="text-base text-gray-700 leading-relaxed">Les solutions au forfait coûtent entre 19 € et 50 € par mois (Qarte 19 €/mois en Fidélité, 24 €/mois en Tout-en-un avec vitrine + réservation). Les solutions à la commission prennent 1 à 3 % par passage. Sur un salon avec 200 visites/mois, le forfait revient toujours moins cher. Méfie-toi des outils gratuits qui se rattrapent sur ta data ou des pubs envoyées à tes clientes.</p>
+                <p className="text-base text-gray-700 leading-relaxed">Les solutions au forfait coûtent entre 19 € et 50 € par mois (Qarte 19 €/mois en Fidélité, 34 €/mois en Tout-en-un avec vitrine + réservation). Les solutions à la commission prennent 1 à 3 % par passage. Sur un salon avec 200 visites/mois, le forfait revient toujours moins cher. Méfie-toi des outils gratuits qui se rattrapent sur ta data ou des pubs envoyées à tes clientes.</p>
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2">Que se passe-t-il si ma cliente perd son téléphone ?</h3>

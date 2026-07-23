@@ -92,7 +92,7 @@ const jsonLd = {
           name: 'Comment fidéliser les clientes d\'un salon de beauté sans passer par une marketplace ?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'La méthode la plus efficace combine : une page de réservation qui t\'appartient (sans concurrentes à côté), une carte de fidélité automatique dès la 1ère visite, des SMS de rappel et d\'anniversaire, et un programme de parrainage. Qarte intègre tout ça en un seul outil à 24€/mois.',
+            text: 'La méthode la plus efficace combine : une page de réservation qui t\'appartient (sans concurrentes à côté), une carte de fidélité automatique dès la 1ère visite, des SMS de rappel et d\'anniversaire, et un programme de parrainage. Qarte intègre tout ça en un seul outil à 34€/mois.',
           },
         },
       ],
@@ -361,7 +361,7 @@ export default function Page() {
                   <tr>
                     <td className="px-4 py-3">Prix mensuel</td>
                     <td className="px-4 py-3 text-gray-500">Abonnement dès 59€/mois</td>
-                    <td className="px-4 py-3 font-semibold text-emerald-700">24€/mois tout inclus</td>
+                    <td className="px-4 py-3 font-semibold text-emerald-700">34€/mois tout inclus</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3">Carte de fidélité</td>
@@ -429,7 +429,7 @@ export default function Page() {
                 <p className="text-base text-gray-700 leading-relaxed">
                   Une page de réservation qui t&apos;appartient + une carte de fidélité automatique dès la 1ère
                   visite + des SMS de rappel et d&apos;anniversaire + un programme de parrainage. Qarte intègre
-                  tout ça à <strong>24€/mois</strong>.
+                  tout ça à <strong>34€/mois</strong>.
                 </p>
               </div>
             </div>
@@ -443,7 +443,7 @@ export default function Page() {
             </h3>
             <p className="text-rose-100 mb-6 max-w-xl mx-auto">
               Carte de fidélité automatique, SMS de rappel, parrainage, avis Google : tout en un,
-              à 24€/mois sans engagement.
+              à 34€/mois sans engagement.
             </p>
             <Link
               href="/auth/merchant/signup"

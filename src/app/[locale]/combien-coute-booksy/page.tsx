@@ -5,7 +5,7 @@ import BooksyCostCalculator from './BooksyCostCalculator';
 
 export const metadata: Metadata = {
   title: 'Combien te coûte vraiment Booksy ? — Calculateur 2026',
-  description: 'Calcule en 30 secondes combien tu perds chaque année en commissions, SMS et abonnement Booksy. Compare avec Qarte (24€/mois, 0% commission, SMS inclus).',
+  description: 'Calcule en 30 secondes combien tu perds chaque année en commissions, SMS et abonnement Booksy. Compare avec Qarte (34€/mois, 0% commission, SMS inclus).',
   openGraph: {
     title: 'Combien te coûte vraiment Booksy ? — Calculateur 2026',
     description: 'Calcule en 30 secondes combien tu perds chaque année en commissions, SMS et abonnement Booksy.',
