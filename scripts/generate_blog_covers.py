@@ -273,6 +273,27 @@ ARTICLES = [
             'field, ultra sharp foreground, cinematic'
         ),
     },
+    {
+        'id': 14,
+        'filename': 'article-14-cover.png',
+        'label': 'RENTRÉE',
+        'label_rgb': (16, 185, 129),     # emerald
+        'title_lines': [
+            'Remplir ton agenda',
+            'de septembre',
+            'dès cet été',
+        ],
+        'platform_line': 'Réservation en ligne  ·  Relance  ·  Fidélité',
+        'imagen_prompt': (
+            'Warm modern French beauty salon interior in late summer golden afternoon light, '
+            'a polished wooden reception desk in the foreground with an open leather appointment '
+            'agenda and fresh seasonal flowers with green eucalyptus and white blooms in a glass '
+            'vase, elegant empty styling chairs softly visible in the background, tall windows '
+            'with warm sunlight, lush green plants, calm inviting atmosphere, no people, no text, '
+            'no logos, editorial lifestyle photography, 35mm wide angle, warm creamy tones with '
+            'subtle emerald and gold highlights, luxury Parisian decor, ultra sharp, cinematic'
+        ),
+    },
 ]
 
 

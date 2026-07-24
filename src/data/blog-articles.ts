@@ -16,6 +16,16 @@ export interface BlogArticle {
  */
 export const BLOG_ARTICLES: BlogArticle[] = [
   {
+    slug: 'remplir-agenda-septembre-salon-beaute',
+    title: 'Rentrée de septembre : remplir l\'agenda de ton salon dès l\'été',
+    description:
+      'En août c\'est calme, mais septembre est le mois où tes clientes reprennent. Comment remplir ton agenda de rentrée dès maintenant : faire reprendre RDV avant les congés, garder ta réservation en ligne ouverte pendant l\'été, et réveiller les clientes disparues depuis le printemps.',
+    readTime: '8 min',
+    category: 'Croissance',
+    date: '2026-07-24',
+    image: '/blog/social/article-14-cover.png',
+  },
+  {
     slug: 'faire-revenir-clientes-prochain-rdv-salon',
     title: 'Faire revenir ses clientes : leur faire reprendre le prochain RDV tout de suite',
     description:
