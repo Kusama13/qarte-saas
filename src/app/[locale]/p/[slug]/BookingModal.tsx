@@ -492,10 +492,14 @@ export default function BookingModal({
   };
 
   const handleSubmit = async () => {
-    if (!firstName.trim() || !phone.trim()) return;
+    if (!firstName.trim() || !phone.trim() || !email.trim()) return;
 
     const trimmedEmail = email.trim();
-    if (trimmedEmail && !validateEmail(trimmedEmail)) {
+    if (!trimmedEmail) {
+      setError(t('emailRequired'));
+      return;
+    }
+    if (!validateEmail(trimmedEmail)) {
       setError(t('emailInvalid'));
       return;
     }
@@ -515,7 +519,7 @@ export default function BookingModal({
           phone_country: phoneCountry,
           first_name: firstName.trim(),
           last_name: lastName.trim() || undefined,
-          ...(trimmedEmail && { customer_email: trimmedEmail }),
+          customer_email: trimmedEmail,
           ...(customerMessage.trim() && { customer_message: customerMessage.trim() }),
           service_ids: Array.from(selectedServiceIds),
           ...(isFreeMod && { booking_mode: 'free' }),
@@ -1306,7 +1310,7 @@ export default function BookingModal({
                   {/* Email (auto-rempli si reconnu) */}
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1.5">
-                      {t('email')}
+                      {t('email')} *
                       {prefilledFromLookup.email && email.trim() && (
                         <span className="text-[10px] font-medium text-emerald-600 flex items-center gap-0.5">
                           <Check className="w-2.5 h-2.5" /> {t('prefilledFromPhone')}
@@ -1759,7 +1763,7 @@ export default function BookingModal({
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={submitting || !firstName.trim() || !phone.trim()}
+                  disabled={submitting || !firstName.trim() || !phone.trim() || !email.trim()}
                   className="flex-[2] py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center justify-center gap-2"
                   style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
                 >

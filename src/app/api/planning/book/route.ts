@@ -42,7 +42,13 @@ const bookSchema = z.object({
   // RDV de suivi récurrent (+3/+6 sem.) : acompte différé (rappel J-7), pas d'envoi
   // cliente immédiat, bypass de l'horizon de réservation. Cf. mig 177.
   followup: z.boolean().optional(),
-});
+}).refine(
+  // Email obligatoire pour une résa en ligne (confirmation par mail, moins de SMS).
+  // Exception : les RDV de suivi (followup) réutilisent l'email déjà donné à la résa
+  // principale et ne redemandent rien à la cliente.
+  (d) => d.followup === true || (!!d.customer_email && d.customer_email.trim().length > 0),
+  { message: 'email_required', path: ['customer_email'] },
+);
 
 // Cap de sécurité pour les RDV de suivi (bypass de booking_horizon_days).
 const FOLLOWUP_MAX_DAYS = 120;
