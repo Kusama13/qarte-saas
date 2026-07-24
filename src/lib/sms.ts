@@ -71,17 +71,20 @@ export type MarketingSmsType = 'campaign' | 'welcome' | 'review_request' | 'vouc
 
 const SMS_TEMPLATES: Record<string, Record<SmsType, (...args: string[]) => string>> = {
   fr: {
-    reminder_j1: (shop, time) => `Rappel : RDV demain à ${time} chez ${shop}. Cumulez vos points fidélité lors de votre passage !`,
-    reminder_j0: (shop, time) => `Rappel : RDV aujourd'hui à ${time} chez ${shop}. À tout à l'heure !`,
-    confirmation_no_deposit: (shop, date, time) => `RDV confirmé chez ${shop} le ${date} à ${time}. Cumulez vos points fidélité lors de votre passage !`,
-    confirmation_deposit: (shop, date, time) => `Acompte validé ! RDV chez ${shop} le ${date} à ${time}. À bientôt !`,
+    // Templates courts et 100% GSM-7 (pas d'accent majuscule, pas de tail marketing) pour
+    // garantir 1 seul segment facturé. Voir sms-freeze/segments : "À"/"É" majuscules et
+    // les phrases longues faisaient basculer certains SMS en 2 segments (UCS-2 / >160).
+    reminder_j1: (shop, time) => `Rappel : RDV demain à ${time} chez ${shop}.`,
+    reminder_j0: (shop, time) => `Rappel : RDV aujourd'hui à ${time} chez ${shop}.`,
+    confirmation_no_deposit: (shop, date, time) => `RDV confirmé chez ${shop} le ${date} à ${time}.`,
+    confirmation_deposit: (shop, date, time) => `Acompte validé ! RDV chez ${shop} le ${date} à ${time}.`,
     // (shop, date, time, link) — lien de paiement merchant.deposit_link
     deposit_request: (shop, date, time, link) => `Acompte à régler pour votre RDV chez ${shop} le ${date} à ${time} : ${link}`,
     // Rappel acompte 7 jours avant un RDV de suivi (mig 177). Même wording que deposit_request.
     deposit_reminder: (shop, date, time, link) => `Acompte à régler pour votre RDV chez ${shop} le ${date} à ${time} : ${link}`,
     birthday: (shop, gift, name) => name ? `${name}, joyeux anniversaire ! ${shop} vous offre : ${gift}. Rendez-vous vite pour en profiter !` : `Joyeux anniversaire ! ${shop} vous offre : ${gift}. Rendez-vous vite pour en profiter !`,
     referral_reward: (shop, reward) => `Bonne nouvelle ! Votre filleul(e) a utilisé sa récompense. Votre cadeau vous attend chez ${shop} : ${reward}`,
-    booking_moved: (shop, date, time) => `Votre RDV chez ${shop} a été déplacé au ${date} à ${time}. À bientôt !`,
+    booking_moved: (shop, date, time) => `Votre RDV chez ${shop} déplacé au ${date} à ${time}.`,
     booking_cancelled: (shop, date, time) => `Votre RDV chez ${shop} le ${date} à ${time} a été annulé. Contactez-nous pour reprogrammer.`,
     // 4e arg `gift` = "un bon cadeau de 50€" OU "1 coupe + 1 brushing" selon kind
     gift_card_received: (shop, sender, gift, recipient) => recipient ? `${recipient}, ${sender} t'offre ${gift} chez ${shop} ! Retrouve ton bon dans ta carte fidélité : getqarte.com` : `${sender} t'offre ${gift} chez ${shop} ! Retrouve ton bon dans ta carte fidélité : getqarte.com`,
@@ -90,9 +93,9 @@ const SMS_TEMPLATES: Record<string, Record<SmsType, (...args: string[]) => strin
     gift_card_expiry_reminder: (shop, recipient, gift, date) => recipient ? `${recipient}, ton ${gift} chez ${shop} expire le ${date}. Pense a en profiter, prends RDV : getqarte.com` : `Ton ${gift} chez ${shop} expire le ${date}. Pense a en profiter, prends RDV : getqarte.com`,
   },
   en: {
-    reminder_j1: (shop, time) => `Reminder: appointment tomorrow at ${time} at ${shop}. Earn loyalty points on your visit!`,
-    reminder_j0: (shop, time) => `Reminder: appointment today at ${time} at ${shop}. See you soon!`,
-    confirmation_no_deposit: (shop, date, time) => `Booking confirmed at ${shop} on ${date} at ${time}. Earn loyalty points on your visit!`,
+    reminder_j1: (shop, time) => `Reminder: appointment tomorrow at ${time} at ${shop}.`,
+    reminder_j0: (shop, time) => `Reminder: appointment today at ${time} at ${shop}.`,
+    confirmation_no_deposit: (shop, date, time) => `Booking confirmed at ${shop} on ${date} at ${time}.`,
     confirmation_deposit: (shop, date, time) => `Deposit confirmed! Appointment at ${shop} on ${date} at ${time}. See you soon!`,
     deposit_request: (shop, date, time, link) => `Deposit due for your booking at ${shop} on ${date} at ${time}: ${link}`,
     deposit_reminder: (shop, date, time, link) => `Deposit due for your booking at ${shop} on ${date} at ${time}: ${link}`,
